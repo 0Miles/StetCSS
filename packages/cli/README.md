@@ -20,11 +20,11 @@
       <img alt="NPM Version" src="https://img.shields.io/github/v/release/master-co/css?include_prereleases&color=f6f7f8&label=&style=for-the-badge&logo=github">
     </picture>
   </a>
-  <a aria-label="NPM Package" href="https://www.npmjs.com/package/@master/css-cli">
+  <a aria-label="NPM Package" href="https://www.npmjs.com/package/@stet-css/cli">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/npm/dm/@master/css-cli?color=212022&label=%20&logo=npm&style=for-the-badge">
-      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/npm/dm/@master/css-cli?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
-      <img alt="NPM package ( download / month )" src="https://img.shields.io/npm/dm/@master/css-cli?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
+      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/npm/dm/@stet-css/cli?color=212022&label=%20&logo=npm&style=for-the-badge">
+      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/npm/dm/@stet-css/cli?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
+      <img alt="NPM package ( download / month )" src="https://img.shields.io/npm/dm/@stet-css/cli?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
     </picture>
   </a>
   <a aria-label="Discord Community" href="https://discord.gg/sZNKpAAAw6">
@@ -55,25 +55,25 @@
 ## Installation
 
 ```bash
-npm install -D @master/css-cli
+npm install -D @stet-css/cli
 ```
 
-Run the package binary directly with `npx @master/css-cli`. The package does not expose `mcss` or `mastercss` aliases.
+Run the package binary directly with `npx @stet-css/cli`. The package does not expose `mcss` or `mastercss` aliases.
 
 ## Commands
 
-### `npx @master/css-cli [source paths]`
+### `npx @stet-css/cli [source paths]`
 
 Scan source files, detect Master CSS classes, generate CSS rules, and write the generated CSS file.
 
 ```bash
-npx @master/css-cli index.html main.js
+npx @stet-css/cli index.html main.js
 ```
 
 When no source paths are passed, the CLI scans the current project with the default scanner `include` and `exclude` options.
 
 ```bash
-npx @master/css-cli
+npx @stet-css/cli
 ```
 
 Options:
@@ -84,18 +84,18 @@ Options:
 | `-v, --verbose <level>` | `number` | `1` | Logging level. Use `0` to silence terminal output. |
 | `-w, --watch` | `boolean` | `false` | Watch files and rebuild continuously. |
 
-### `npx @master/css-cli lint [source paths]`
+### `npx @stet-css/cli lint [source paths]`
 
 Run machine-readable Master CSS diagnostics for agents, MCP servers, editor tools, and native CI checks. JavaScript and VS Code projects should still use ESLint as the main human lint workflow; this command is a native preflight surface that shares the same class policy engine.
 
 ```bash
-npx @master/css-cli lint index.html main.js
+npx @stet-css/cli lint index.html main.js
 ```
 
 Use JSON output for tools:
 
 ```bash
-cat src/App.tsx | npx @master/css-cli lint --exit-code never --stdin --stdin-filepath src/App.tsx
+cat src/App.tsx | npx @stet-css/cli lint --exit-code never --stdin --stdin-filepath src/App.tsx
 ```
 
 Options:
@@ -114,12 +114,12 @@ Options:
 
 The JSON report uses `version: 1`. Tooling can rely on the top-level `version`, `cwd`, `manifest`, `files`, and `summary` fields. Diagnostic `data` objects may gain additional fields as Master CSS reports become more precise.
 
-### `npx @master/css-cli inspect [source paths]`
+### `npx @stet-css/cli inspect [source paths]`
 
 Inspect scanner state, managed stylesheet entries, generated CSS size, and explicit missing CSS checks. This command is for MCP servers, AI agents, build diagnostics, and support tooling that need machine-readable extraction state, not class policy linting.
 
 ```bash
-npx @master/css-cli inspect --classes "btn card" --format json --exit-code never
+npx @stet-css/cli inspect --classes "btn card" --format json --exit-code never
 ```
 
 Use `--classes` to ask whether specific class names are present in the generated CSS path. The report explains each checked class as `generated`, `native-css`, `safelist`, `invalid`, `blocklisted`, or `not-detected`.

@@ -5,7 +5,7 @@ import {
   findCSSStatementEnd,
   readCSSIdent,
   skipCSSWhitespace
-} from '@master/css-lexer'
+} from '@stet-css/lexer'
 
 export function tokenizeCustomVariantBlock(source: string, start: number, end: number, tokens: HighlightTokenItem[]) {
   for (let cursor = start; cursor < end;) {

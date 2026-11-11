@@ -1,4 +1,4 @@
-# @master/css-schema
+# @stet-css/schema
 
 Public Master CSS schema and wire-format contracts.
 

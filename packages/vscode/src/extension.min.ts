@@ -1,9 +1,9 @@
 import path from 'path'
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient/node'
 import { commands, Disposable, EventEmitter, ExtensionContext, languages, ProgressLocation, Range, SemanticTokens, SemanticTokensLegend, TextEdit, window, workspace, type CancellationToken, type FormattingOptions, type LogOutputChannel, type Position, type ProviderResult, type TextDocument } from 'vscode'
-import { ACTIVE_SEMANTIC_TOKENS_REQUEST, DOCUMENT_SEMANTIC_TOKENS_REQUEST, settings, type Settings } from '@master/css-language-server'
-import { applyMasterCSSDirectiveFormatEdits, formatMasterCSSDirectives, SEMANTIC_TOKENS_LEGEND } from '@master/css-language'
-import { isCompatibleMasterCSSPackageVersion, resolveMasterCSSWorkspacePackages } from '@master/css-project/workspace'
+import { ACTIVE_SEMANTIC_TOKENS_REQUEST, DOCUMENT_SEMANTIC_TOKENS_REQUEST, settings, type Settings } from '@stet-css/language-server'
+import { applyMasterCSSDirectiveFormatEdits, formatMasterCSSDirectives, SEMANTIC_TOKENS_LEGEND } from '@stet-css/language'
+import { isCompatibleMasterCSSPackageVersion, resolveMasterCSSWorkspacePackages } from '@stet-css/project/workspace'
 
 let client: LanguageClient
 let outputChannel: LogOutputChannel
@@ -47,8 +47,8 @@ function getBundledLanguageServerVersion(context: ExtensionContext) {
     devDependencies?: Record<string, string>
     version?: string
   }
-  return packageJSON.dependencies?.['@master/css-language-server']
-    ?? packageJSON.devDependencies?.['@master/css-language-server']
+  return packageJSON.dependencies?.['@stet-css/language-server']
+    ?? packageJSON.devDependencies?.['@stet-css/language-server']
     ?? packageJSON.version
 }
 
@@ -65,12 +65,12 @@ function resolveWorkspaceServerModule(context: ExtensionContext, bundledServerMo
     const resolution = resolveMasterCSSWorkspacePackages(workspaceFolder.uri.fsPath)
     const languageServer = resolution.languageServer
     if (!languageServer) {
-      log(`Using bundled language server because ${workspaceFolder.uri.fsPath} does not resolve @master/css-language-server/server.`)
+      log(`Using bundled language server because ${workspaceFolder.uri.fsPath} does not resolve @stet-css/language-server/server.`)
       resolution.errors.forEach(({ name, message }) => log(`Workspace package resolution warning for ${name}: ${message}`))
       return bundledServerModule
     }
     if (!isCompatibleMasterCSSPackageVersion(languageServer.version, bundledVersion)) {
-      log(`Using bundled language server because ${workspaceFolder.uri.fsPath} resolves incompatible @master/css-language-server ${languageServer.version ?? '(unknown version)'}.`)
+      log(`Using bundled language server because ${workspaceFolder.uri.fsPath} resolves incompatible @stet-css/language-server ${languageServer.version ?? '(unknown version)'}.`)
       return bundledServerModule
     }
     resolvedServers.push(path.resolve(languageServer.entry))

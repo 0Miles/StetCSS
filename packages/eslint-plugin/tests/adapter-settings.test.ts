@@ -40,7 +40,7 @@ jsxTester.run('adapter source matching defaults', rule, {
 
 createTester({
   settings: {
-    '@master/css': {
+    '@stet-css': {
       classAttributes: ['data-(?:class|tw)', 'className'],
       classFunctions: ['tw', 'tokens\\.cx'],
       classDeclarations: ['styles', 'classes(?:List)?']

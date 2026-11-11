@@ -14,7 +14,7 @@ import masterCSSNextStaticLoader from '../src/static-loader'
 function createFixture() {
   const root = mkdtempSync(join(tmpdir(), 'master-css-next-static-'))
   mkdirSync(join(root, 'app'), { recursive: true })
-  writeFileSync(join(root, 'app/globals.css'), '@import "@master/css";')
+  writeFileSync(join(root, 'app/globals.css'), '@import "@stet-css/core";')
   return root
 }
 
@@ -101,10 +101,10 @@ describe('Next static mode', () => {
     expect(css).toContain('margin:0')
   })
 
-  it('replaces @master/css imports for dev CSS chunks and preserves ordinary CSS', async () => {
+  it('replaces @stet-css/core imports for dev CSS chunks and preserves ordinary CSS', async () => {
     const root = createFixture()
     writeFileSync(join(root, 'app/globals.css'), `
-      @import "@master/css";
+      @import "@stet-css/core";
 
       @theme {
         --color-primary: #ff0000;
@@ -124,7 +124,7 @@ describe('Next static mode', () => {
     await scanStaticFixtureModule(statePath, pagePath)
 
     const source = `
-      @import "@master/css";
+      @import "@stet-css/core";
 
       .main {
         color: var(--color-primary);
@@ -143,7 +143,7 @@ describe('Next static mode', () => {
     expect(readFileSync(outputPath, 'utf-8')).toContain('--color-primary:red')
   })
 
-  it('prunes dev CSS chunks that import @master/css', async () => {
+  it('prunes dev CSS chunks that import @stet-css/core', async () => {
     const root = createFixture()
     const pagePath = join(root, 'app/page.tsx')
     writeFileSync(pagePath, `
@@ -159,7 +159,7 @@ describe('Next static mode', () => {
     await scanStaticFixtureModule(statePath, pagePath)
 
     const replaced = await runStaticCSSLoader(statePath, join(root, 'app/globals.css'), `
-      @import "@master/css";
+      @import "@stet-css/core";
 
       .main {
         color: red;
@@ -175,7 +175,7 @@ describe('Next static mode', () => {
     expect(readFileSync(outputPath, 'utf-8')).toContain('.main')
     expect(replaced).not.toContain('.unused')
     expect(replaced).toContain('../.master/next.css')
-    expect(replaced).not.toContain('@master/css')
+    expect(replaced).not.toContain('@stet-css/core')
     expect(readFileSync(outputPath, 'utf-8')).not.toContain('.unused')
   })
 
@@ -183,7 +183,7 @@ describe('Next static mode', () => {
     const root = createFixture()
     writeFileSync(join(root, 'theme.css'), '@theme { --color-primary: #00f; }')
     writeFileSync(join(root, 'app/globals.css'), `
-      @import "@master/css";
+      @import "@stet-css/core";
       @import "../theme.css";
     `)
 
@@ -195,7 +195,7 @@ describe('Next static mode', () => {
     const result = await runStaticCSSLoaderWithDependencies(
       statePath,
       join(root, 'app/globals.css'),
-      '@import "@master/css";'
+      '@import "@stet-css/core";'
     )
 
     expect(result.dependencies).toContain(outputPath)
@@ -203,7 +203,7 @@ describe('Next static mode', () => {
     expect(result.dependencies).toContain(join(root, 'theme.css'))
   })
 
-  it('ignores app stylesheets with @theme when they do not import @master/css', async () => {
+  it('ignores app stylesheets with @theme when they do not import @stet-css/core', async () => {
     const root = createFixture()
     const outputPath = resolveStaticOutputPath(root)
     const statePath = resolveStaticStatePath(outputPath)
@@ -303,7 +303,7 @@ describe('Next static mode', () => {
     const globalsPath = join(root, 'app/globals.css')
     const pagePath = join(root, 'app/page.tsx')
     writeFileSync(globalsPath, `
-      @import "@master/css";
+      @import "@stet-css/core";
 
       .card {
         color: red;
@@ -324,7 +324,7 @@ describe('Next static mode', () => {
     expect(readFileSync(outputPath, 'utf-8')).toContain('color: red')
 
     writeFileSync(globalsPath, `
-      @import "@master/css";
+      @import "@stet-css/core";
 
       .card {
         color: blue;

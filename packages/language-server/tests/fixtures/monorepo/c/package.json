@@ -2,6 +2,6 @@
   "name": "vscode-playground-package-c",
   "private": true,
   "devDependencies": {
-    "@master/css": "workspace:^"
+    "@stet-css/core": "workspace:^"
   }
 }

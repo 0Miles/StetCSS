@@ -1,4 +1,4 @@
-import css from '@master/eslint-plugin-css'
+import css from '@stet-css/eslint-plugin'
 import type { Linter } from 'eslint'
 
 const recommended: Linter.Config[] = [

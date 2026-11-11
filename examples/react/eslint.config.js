@@ -6,7 +6,7 @@ import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
-import css from '@master/eslint-config-css'
+import css from '@stet-css/eslint-config'
 
 export default defineConfig([
   globalIgnores(['dist/**']),

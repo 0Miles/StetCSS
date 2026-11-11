@@ -1,8 +1,8 @@
-# AI Notes For `@master/css-server`
+# AI Notes For `@stet-css/server`
 
 ## Responsibility
 
-`@master/css-server` renders required CSS from HTML.
+`@stet-css/server` renders required CSS from HTML.
 
 ## Owns
 
@@ -57,10 +57,10 @@
 ## Validation
 
 ```sh
-pnpm --filter @master/css-server test
-pnpm --filter @master/css-server lint
-pnpm --filter @master/css-server type-check
-pnpm --filter @master/css-server build
+pnpm --filter @stet-css/server test
+pnpm --filter @stet-css/server lint
+pnpm --filter @stet-css/server type-check
+pnpm --filter @stet-css/server build
 ```
 
 Fixture output lives in `tests/fixtures/**/generated.css`; update it only for intentional output changes.

@@ -1,6 +1,6 @@
 import {
   toManifestPreloadLinkTag
-} from '@master/css-integration/manifest-facade'
+} from '@stet-css/integration/manifest-facade'
 import type { Compilation, Compiler } from 'webpack'
 import type { MasterCSSWebpackContext, WebpackSubPlugin } from '../plugin'
 

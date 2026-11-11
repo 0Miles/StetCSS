@@ -18,10 +18,10 @@
 import { describe, test, expect, vi } from 'vitest'
 import { SyncHook, AsyncSeriesHook } from 'tapable'
 import MasterCSSPlugin from '../src'
-import { VIRTUAL_MANIFEST_ID, MASTER_CSS_MANIFEST_QUERY } from '@master/css-integration/manifest-module'
-import { VIRTUAL_CSS_ID } from '@master/css-integration/style-module'
-import { VIRTUAL_EMITTED_GLOBALS_ID } from '@master/css-integration/emitted-globals-module'
-import { createStylesheetDirectives } from '@master/css-stylesheet'
+import { VIRTUAL_MANIFEST_ID, MASTER_CSS_MANIFEST_QUERY } from '@stet-css/integration/manifest-module'
+import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
+import { VIRTUAL_EMITTED_GLOBALS_ID } from '@stet-css/integration/emitted-globals-module'
+import { createStylesheetDirectives } from '@stet-css/stylesheet'
 import { transformStyleSource } from '../src/utils/transform-style-source'
 import masterCSSStyleCSSLoader from '../src/style-css-loader'
 import { addFileDependency } from '../src/utils/file-dependencies'
@@ -361,7 +361,7 @@ describe('MasterCSSPlugin (C1 race fix)', () => {
     const modulePath = path.join(root, 'Home.module.css')
     try {
       writeFileSync(entryPath, [
-        '@import "@master/css";',
+        '@import "@stet-css/core";',
         '.global-section { padding-block: var(--spacing-5xl); }'
       ].join('\n'))
 
@@ -767,7 +767,7 @@ describe('MasterCSSPlugin (C1 race fix)', () => {
     expect(resolveData.request).toBe('theme.css')
   })
 
-  test('leaves CSS @import @master/css package imports unchanged', async () => {
+  test('leaves CSS @import @stet-css/core package imports unchanged', async () => {
     const plugin = makePlugin()
     const { compiler } = makeFakeCompiler()
     ;(compiler as any).webpack = { sources: { RawSource: function NoopSource(this: object) { /* stub */ } } }
@@ -776,7 +776,7 @@ describe('MasterCSSPlugin (C1 race fix)', () => {
     const normalModuleFactory = makeNormalModuleFactory()
     compiler.hooks.normalModuleFactory.call(normalModuleFactory)
     const resolveData = {
-      request: '@master/css',
+      request: '@stet-css/core',
       context: process.cwd(),
       contextInfo: {
         issuer: path.join(process.cwd(), 'src/styles.css')
@@ -786,10 +786,10 @@ describe('MasterCSSPlugin (C1 race fix)', () => {
 
     await resolveBefore(normalModuleFactory, resolveData)
 
-    expect(resolveData.request).toBe('@master/css')
+    expect(resolveData.request).toBe('@stet-css/core')
   })
 
-  test('leaves non-CSS @master/css imports unchanged', async () => {
+  test('leaves non-CSS @stet-css/core imports unchanged', async () => {
     const plugin = makePlugin()
     const { compiler } = makeFakeCompiler()
     ;(compiler as any).webpack = { sources: { RawSource: function NoopSource(this: object) { /* stub */ } } }
@@ -798,7 +798,7 @@ describe('MasterCSSPlugin (C1 race fix)', () => {
     const normalModuleFactory = makeNormalModuleFactory()
     compiler.hooks.normalModuleFactory.call(normalModuleFactory)
     const resolveData = {
-      request: '@master/css',
+      request: '@stet-css/core',
       context: process.cwd(),
       contextInfo: {
         issuer: path.join(process.cwd(), 'src/main.ts')
@@ -808,7 +808,7 @@ describe('MasterCSSPlugin (C1 race fix)', () => {
 
     await resolveBefore(normalModuleFactory, resolveData)
 
-    expect(resolveData.request).toBe('@master/css')
+    expect(resolveData.request).toBe('@stet-css/core')
   })
 
   test('adds managed CSS entry files as virtual manifest dependencies', async () => {
@@ -928,18 +928,18 @@ describe('MasterCSSPlugin (C1 race fix)', () => {
     const root = mkdtempSync(path.join(tmpdir(), 'master-css-webpack-package-'))
     const entryPath = path.join(root, 'app.css')
     try {
-      writeFileSync(entryPath, '@import "@master/css";')
+      writeFileSync(entryPath, '@import "@stet-css/core";')
 
       const plugin = await new MasterCSSPlugin({
         verbose: 0
       }, root).init()
 
-      await (plugin as any).processModuleContents([[entryPath, '@import "@master/css";']], () => false)
+      await (plugin as any).processModuleContents([[entryPath, '@import "@stet-css/core";']], () => false)
       const css = await (plugin as any).createExtractedCSS()
 
       expect(css).toContain('@layer base')
       expect(css).toContain('text-rendering: geometricprecision')
-      expect(css).not.toContain('@master/css')
+      expect(css).not.toContain('@stet-css/core')
     } finally {
       rmSync(root, { recursive: true, force: true })
     }

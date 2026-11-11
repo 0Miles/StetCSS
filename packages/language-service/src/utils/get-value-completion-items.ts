@@ -1,8 +1,8 @@
 import { type CompletionItem, CompletionItemKind } from 'vscode-languageserver-protocol'
-import { MasterCSS, createDefaultCSS, type Variable, generateCSS } from '@master/css-language'
+import { MasterCSS, createDefaultCSS, type Variable, generateCSS } from '@stet-css/language'
 import createCSSMarkdownDocumentation from './create-css-markdown-documentation'
 import sortCompletionItems from './sort-completion-items'
-import { getMdnPropertySyntax, getMdnPropertyValueNames } from '@master/css-language'
+import { getMdnPropertySyntax, getMdnPropertyValueNames } from '@stet-css/language'
 import { createCompletionIndex, type CompletionIndex } from './completion-index'
 
 const SCOPED_VARIABLE_PRIORITY = 'aaaa'
@@ -81,7 +81,7 @@ export default function getValueCompletionItems(css: MasterCSS = createDefaultCS
         completionItem.kind = CompletionItemKind.Color
         completionItem.detail = variable.name
       } else {
-        // todo: @master/css should support getTextByVariable(variable)
+        // todo: @stet-css/core should support getTextByVariable(variable)
         const configKey = 'variables.' + (variable.namespace ? variable.namespace + '.' + variable.key : variable.name)
         const valueToken = variable.value ?? variable.name
         // detail is shown in the detail pane

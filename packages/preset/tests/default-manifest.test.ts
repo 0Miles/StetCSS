@@ -8,14 +8,14 @@ import {
   builtinNativeValueNamespaces,
   MasterCSS,
   type MasterCSSCreateOptions
-} from '@master/css-engine'
-import UtilityType from '@master/css-schema/utility-type'
+} from '@stet-css/engine'
+import UtilityType from '@stet-css/schema/utility-type'
 import {
   createDefaultManifestFromSourceFile,
   createDefaultNativeCSSFromSourceFile
 } from '../scripts/generate-default-manifest'
 import defaultManifestJSON from '../src/default-manifest.json' with { type: 'json' }
-import { flattenMasterCSSManifestVariables, type MasterCSSManifest } from '@master/css-schema/manifest'
+import { flattenMasterCSSManifestVariables, type MasterCSSManifest } from '@stet-css/schema/manifest'
 
 const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
 
@@ -232,7 +232,7 @@ function getCompiledDefaultManifest() {
   return compiledDefaultManifest
 }
 
-describe('@master/css-preset defaultManifest', () => {
+describe('@stet-css/preset defaultManifest', () => {
   it('matches the readable preset sources', () => {
     const manifest = getCompiledDefaultManifest()
     const utilities = manifest.utilities || []

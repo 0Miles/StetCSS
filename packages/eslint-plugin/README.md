@@ -20,11 +20,11 @@
       <img alt="NPM Version" src="https://img.shields.io/github/v/release/master-co/css?include_prereleases&color=f6f7f8&label=&style=for-the-badge&logo=github">
     </picture>
   </a>
-  <a aria-label="NPM Package" href="https://www.npmjs.com/package/@master/eslint-plugin-css">
+  <a aria-label="NPM Package" href="https://www.npmjs.com/package/@stet-css/eslint-plugin">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/npm/dm/@master/eslint-plugin-css?color=212022&label=%20&logo=npm&style=for-the-badge">
-      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/npm/dm/@master/eslint-plugin-css?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
-      <img alt="NPM package ( download / month )" src="https://img.shields.io/npm/dm/@master/eslint-plugin-css?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
+      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/npm/dm/@stet-css/eslint-plugin?color=212022&label=%20&logo=npm&style=for-the-badge">
+      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/npm/dm/@stet-css/eslint-plugin?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
+      <img alt="NPM package ( download / month )" src="https://img.shields.io/npm/dm/@stet-css/eslint-plugin?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
     </picture>
   </a>
   <a aria-label="Discord Community" href="https://discord.gg/sZNKpAAAw6">
@@ -55,10 +55,10 @@
 ## Installation
 
 ```bash
-npm install -D @master/eslint-plugin-css
+npm install -D @stet-css/eslint-plugin
 ```
 
-The recommended config is also available through `@master/eslint-config-css`.
+The recommended config is also available through `@stet-css/eslint-config`.
 
 In Visual Studio Code, install the VS Code ESLint extension to surface these diagnostics and run sort-on-save. The Master CSS extension provides completion, hover, colors, highlighting, directive diagnostics, manifest diagnostics, and directive formatting; it does not duplicate class policy warnings by default.
 
@@ -68,7 +68,7 @@ Use ESLint flat configuration:
 
 ```js
 import { defineConfig } from 'eslint/config'
-import css from '@master/eslint-config-css'
+import css from '@stet-css/eslint-config'
 import htmlParser from '@angular-eslint/template-parser'
 import tsParser from '@typescript-eslint/parser'
 
@@ -88,7 +88,7 @@ export default defineConfig([
   ...css,
   {
     rules: {
-      '@master/css/no-invalid-classes': ['error', {
+      '@stet-css/no-invalid-classes': ['error', {
         disallowUnknownClass: true
       }]
     }
@@ -98,7 +98,7 @@ export default defineConfig([
 
 ## Rules
 
-### `@master/css/sort-classes`
+### `@stet-css/sort-classes`
 
 Sorts Master CSS classes into a consistent and logical order.
 
@@ -108,13 +108,13 @@ import { defineConfig } from 'eslint/config'
 export default defineConfig([
   {
     rules: {
-      '@master/css/sort-classes': 'warn'
+      '@stet-css/sort-classes': 'warn'
     }
   }
 ])
 ```
 
-### `@master/css/no-invalid-classes`
+### `@stet-css/no-invalid-classes`
 
 Disallows invalid Master CSS classes.
 
@@ -124,7 +124,7 @@ import { defineConfig } from 'eslint/config'
 export default defineConfig([
   {
     rules: {
-      '@master/css/no-invalid-classes': 'error'
+      '@stet-css/no-invalid-classes': 'error'
     }
   }
 ])
@@ -138,7 +138,7 @@ import { defineConfig } from 'eslint/config'
 export default defineConfig([
   {
     rules: {
-      '@master/css/no-invalid-classes': ['error', {
+      '@stet-css/no-invalid-classes': ['error', {
         disallowUnknownClass: true
       }]
     }
@@ -146,7 +146,7 @@ export default defineConfig([
 ])
 ```
 
-### `@master/css/prefer-canonical-classes`
+### `@stet-css/prefer-canonical-classes`
 
 Prefers canonical Master CSS class forms, including semantic utilities, theme tokens, property aliases, composition utilities, and condition suffix order.
 
@@ -156,7 +156,7 @@ import { defineConfig } from 'eslint/config'
 export default defineConfig([
   {
     rules: {
-      '@master/css/prefer-canonical-classes': 'warn'
+      '@stet-css/prefer-canonical-classes': 'warn'
     }
   }
 ])
@@ -166,18 +166,18 @@ For example, this rule can fix `text-align:center` to `text-center`, `font:16px`
 
 The same canonicalization applies to unquoted `@compose` class lists. In CSS, declaration-like classes are moved to native declarations and suffixes are moved to `@variant`, `@dark`, or `@light` blocks when the rewrite is safe.
 
-Standalone CSS files are included by default when using `@master/eslint-config-css`:
+Standalone CSS files are included by default when using `@stet-css/eslint-config`:
 
 ```js
 import { defineConfig } from 'eslint/config'
-import css from '@master/eslint-config-css'
+import css from '@stet-css/eslint-config'
 
 export default defineConfig([
   ...css
 ])
 ```
 
-Direct plugin users can add `css.configs.stylesheet` from `@master/eslint-plugin-css` alongside the recommended config.
+Direct plugin users can add `css.configs.stylesheet` from `@stet-css/eslint-plugin` alongside the recommended config.
 
 You can disable specific canonicalization families:
 
@@ -187,7 +187,7 @@ import { defineConfig } from 'eslint/config'
 export default defineConfig([
   {
     rules: {
-      '@master/css/prefer-canonical-classes': ['warn', {
+      '@stet-css/prefer-canonical-classes': ['warn', {
         preferStaticUtilities: true,
         preferThemeTokens: true,
         preferPropertyAliases: true,
@@ -203,7 +203,7 @@ export default defineConfig([
 ])
 ```
 
-### `@master/css/no-conflicting-classes`
+### `@stet-css/no-conflicting-classes`
 
 Disallows classes that emit the same CSS declaration properties for the same variant.
 
@@ -213,7 +213,7 @@ import { defineConfig } from 'eslint/config'
 export default defineConfig([
   {
     rules: {
-      '@master/css/no-conflicting-classes': 'warn'
+      '@stet-css/no-conflicting-classes': 'warn'
     }
   }
 ])
@@ -221,7 +221,7 @@ export default defineConfig([
 
 When two classes conflict, the later class is treated as the effective one and the fix removes the earlier class. For partially overlapping spacing, physical inset, radius, and border width/color/style shorthands, the fix preserves the surviving declarations by splitting the earlier class, such as `mx:md ml:lg` to `mr:md ml:lg` or `b-solid bt-dashed` to `br-solid bb-solid bl-solid bt-dashed`.
 
-### `@master/css/no-unapproved-raw-values`
+### `@stet-css/no-unapproved-raw-values`
 
 Disallows raw values in token-backed utilities unless they are explicitly allowed. This rule is opt-in team policy and is not enabled by the recommended config.
 
@@ -231,7 +231,7 @@ import { defineConfig } from 'eslint/config'
 export default defineConfig([
   {
     rules: {
-      '@master/css/no-unapproved-raw-values': ['warn', {
+      '@stet-css/no-unapproved-raw-values': ['warn', {
         allowProperties: ['width', 'height'],
         allowedPatterns: ['^var\\(', '^calc\\(']
       }]
@@ -244,7 +244,7 @@ For example, this rule reports `font:15px`, `m:17px`, and `fg:#123456` when thos
 
 ## Settings
 
-Settings live under the `@master/css` settings key:
+Settings live under the `@stet-css/core` settings key:
 
 ```js
 import { defineConfig } from 'eslint/config'
@@ -252,7 +252,7 @@ import { defineConfig } from 'eslint/config'
 export default defineConfig([
   {
     settings: {
-      '@master/css': {
+      '@stet-css': {
         classAttributes: ['class', 'className'],
         classFunctions: ['clsx', 'classList.add'],
         classDeclarations: ['classes'],

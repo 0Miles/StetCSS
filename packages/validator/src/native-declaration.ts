@@ -1,5 +1,5 @@
-import { MasterCSS } from '@master/css'
-import type { MasterCSSOptions, MasterCSSManifest, MasterCSSEmittedGlobals, NativeCSSDeclarationMatcher } from '@master/css'
+import { MasterCSS } from '@stet-css/core'
+import type { MasterCSSOptions, MasterCSSManifest, MasterCSSEmittedGlobals, NativeCSSDeclarationMatcher } from '@stet-css/core'
 import { lexer, parse, property as propertyName } from 'css-tree'
 import { isTargetError } from './validate-css'
 

@@ -39,10 +39,10 @@ export type {
 } from './native-value-namespaces'
 export { builtinSelectorAliases } from './selector-aliases'
 export type { MasterCSSBuiltinSelectorAliases } from './selector-aliases'
-export * from '@master/css-schema/manifest'
+export * from '@stet-css/schema/manifest'
 export type * from './emitted-globals'
 export type { Utility as GeneratedRule } from './utility'
 export type {
   MasterCSSGeneratedRuleIR,
   MasterCSSHydrationManifest
-} from '@master/css-schema/hydration-manifest'
+} from '@stet-css/schema/hydration-manifest'

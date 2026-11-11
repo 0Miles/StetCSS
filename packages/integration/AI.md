@@ -1,8 +1,8 @@
-# AI Notes For `@master/css-integration`
+# AI Notes For `@stet-css/integration`
 
 ## Responsibility
 
-`@master/css-integration` owns adapter-neutral contracts shared by official build and framework integrations.
+`@stet-css/integration` owns adapter-neutral contracts shared by official build and framework integrations.
 
 ## Owns
 
@@ -55,8 +55,8 @@
 ## Validation
 
 ```sh
-pnpm --filter @master/css-integration test
-pnpm --filter @master/css-integration lint
-pnpm --filter @master/css-integration type-check
-pnpm --filter @master/css-integration build
+pnpm --filter @stet-css/integration test
+pnpm --filter @stet-css/integration lint
+pnpm --filter @stet-css/integration type-check
+pnpm --filter @stet-css/integration build
 ```

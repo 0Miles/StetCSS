@@ -4,7 +4,7 @@ import type { SemanticTokens } from 'vscode-languageserver-protocol'
 import {
   renderSemanticTokens as renderLanguageSemanticTokens,
   renderSemanticTokensAtPosition as renderLanguageSemanticTokensAtPosition
-} from '@master/css-language'
+} from '@stet-css/language'
 
 export function renderSemanticTokensAtPosition(this: CSSLanguageService, document: TextDocument, position: Parameters<CSSLanguageService['getClassPosition']>[1]): SemanticTokens | undefined {
   return renderLanguageSemanticTokensAtPosition(

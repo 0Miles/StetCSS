@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { expect, test } from 'vitest'
 import plugin from '../src'
 import { createPresetManifest } from './helpers/create-preset-manifest'
-import UtilityType from '@master/css-schema/utility-type'
+import UtilityType from '@stet-css/schema/utility-type'
 import isSameOrChildPath from '../src/utils/is-same-or-child-path'
 
 test('uses explicit Master CSS manifest objects from ESLint settings', async () => {
@@ -21,7 +21,7 @@ test('uses explicit Master CSS manifest objects from ESLint settings', async () 
         {
           files: ['**/*.jsx'],
           plugins: {
-            '@master/css': plugin
+            '@stet-css': plugin
           },
           languageOptions: {
             parserOptions: {
@@ -33,7 +33,7 @@ test('uses explicit Master CSS manifest objects from ESLint settings', async () 
             }
           },
           settings: {
-            '@master/css': {
+            '@stet-css': {
               manifest: createPresetManifest({
                 utilities: [
                   {
@@ -57,7 +57,7 @@ test('uses explicit Master CSS manifest objects from ESLint settings', async () 
             }
           },
           rules: {
-            '@master/css/no-invalid-classes': [
+            '@stet-css/no-invalid-classes': [
               'error',
               {
                 disallowUnknownClass: true
@@ -100,7 +100,7 @@ test('uses project-level CSS manifest entries from the ESLint workspace', async 
         {
           files: ['**/*.jsx'],
           plugins: {
-            '@master/css': plugin
+            '@stet-css': plugin
           },
           languageOptions: {
             parserOptions: {
@@ -112,7 +112,7 @@ test('uses project-level CSS manifest entries from the ESLint workspace', async 
             }
           },
           rules: {
-            '@master/css/no-invalid-classes': [
+            '@stet-css/no-invalid-classes': [
               'error',
               {
                 disallowUnknownClass: true

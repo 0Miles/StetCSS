@@ -94,8 +94,8 @@ export const staticFixtureSources = [
             <section id="install" class="grid gap:4x">
               <h2 class="m:0 font:28px font:bold">Installation</h2>
               <p class="m:0 leading:1.7 fg:slate-70">Install the package, import the stylesheet, and keep source detection explicit so generated CSS remains reproducible.</p>
-              <pre class="m:0 p:5x r:10px bg:slate-95 fg:white overflow:auto font:14px leading:1.6"><code>npm install @master/css
-import '@master/css'</code></pre>
+              <pre class="m:0 p:5x r:10px bg:slate-95 fg:white overflow:auto font:14px leading:1.6"><code>npm install @stet-css/core
+import '@stet-css/core'</code></pre>
             </section>
             <section id="api" class="grid gap:4x">
               <h2 class="m:0 font:28px font:bold">API surface</h2>
@@ -146,8 +146,8 @@ import '@master/css'</code></pre>
             <section id="install" class="grid gap-4">
               <h2 class="m-0 text-3xl font-bold">Installation</h2>
               <p class="m-0 leading-relaxed text-slate-700">Install the package, import the stylesheet, and keep source detection explicit so generated CSS remains reproducible.</p>
-              <pre class="m-0 p-5 rounded-xl bg-slate-950 text-white overflow-auto text-sm leading-relaxed"><code>npm install @master/css
-import '@master/css'</code></pre>
+              <pre class="m-0 p-5 rounded-xl bg-slate-950 text-white overflow-auto text-sm leading-relaxed"><code>npm install @stet-css/core
+import '@stet-css/core'</code></pre>
             </section>
             <section id="api" class="grid gap-4">
               <h2 class="m-0 text-3xl font-bold">API surface</h2>

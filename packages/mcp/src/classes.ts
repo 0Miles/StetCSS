@@ -1,9 +1,9 @@
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
-import CSSLanguageService from '@master/css-language-service'
-import { inspectMasterCSSClass } from '@master/css-engine/inspect'
-import type { MasterCSSManifest } from '@master/css-engine'
-import { createCSSWithNativeDeclarations } from '@master/css-validator/native-declaration'
+import CSSLanguageService from '@stet-css/language-service'
+import { inspectMasterCSSClass } from '@stet-css/engine/inspect'
+import type { MasterCSSManifest } from '@stet-css/engine'
+import { createCSSWithNativeDeclarations } from '@stet-css/validator/native-declaration'
 import type MasterCSSMCPContext from './context'
 import { createMCPTextDocument, getLanguageId } from './document'
 import { loadWorkspaceManifest } from './project'
@@ -12,7 +12,7 @@ import { resolveSourceFiles, scanProject } from './scan'
 const CLASS_EXTRACTION_VERSION = 1
 const CLASS_TRACE_VERSION = 1
 const require = createRequire(import.meta.url)
-const defaultManifest = require('@master/css-preset/default-manifest.json') as MasterCSSManifest
+const defaultManifest = require('@stet-css/preset/default-manifest.json') as MasterCSSManifest
 
 export interface ExtractClassesOptions {
   content?: string

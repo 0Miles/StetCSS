@@ -2,7 +2,7 @@ import defineVisitors from '../utils/define-visitors'
 import resolveContext from '../utils/resolve-context'
 import createRule from '../create-rule'
 import { noInvalidClassesOptionsSchema } from '../settings-schema'
-import { createInvalidClassesReport } from '@master/css-lint'
+import { createInvalidClassesReport } from '@stet-css/lint'
 import reportLintDiagnostics from '../utils/report-lint-diagnostics'
 import defineSourceVisitors, { shouldUseSourceVisitors } from '../utils/define-source-visitors'
 

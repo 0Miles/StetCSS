@@ -1,18 +1,18 @@
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import fg from 'fast-glob'
-import { createMasterCSSInspectionReport } from '@master/css-diagnostics'
-import { inspectMasterCSSClass } from '@master/css-engine/inspect'
-import { createCSSWithNativeDeclarations } from '@master/css-validator/native-declaration'
-import { parseHTML } from '@master/css-server'
+import { createMasterCSSInspectionReport } from '@stet-css/diagnostics'
+import { inspectMasterCSSClass } from '@stet-css/engine/inspect'
+import { createCSSWithNativeDeclarations } from '@stet-css/validator/native-declaration'
+import { parseHTML } from '@stet-css/server'
 import type MasterCSSMCPContext from './context'
 import { loadWorkspaceManifest } from './project'
-import type { MasterCSSManifest } from '@master/css-engine'
+import type { MasterCSSManifest } from '@stet-css/engine'
 
 const DEFAULT_SOURCE_PATTERNS = ['**/*.{html,htm,js,jsx,cjs,ts,tsx,mts,cts,svelte,astro,vue,md,mdx,pug,php}']
 const DEFAULT_IGNORE_PATTERNS = ['**/node_modules/**', 'node_modules']
 const require = createRequire(import.meta.url)
-const defaultManifest = require('@master/css-preset/default-manifest.json') as MasterCSSManifest
+const defaultManifest = require('@stet-css/preset/default-manifest.json') as MasterCSSManifest
 
 export interface ScanProjectOptions {
   patterns?: string[]

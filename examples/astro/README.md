@@ -1,6 +1,6 @@
 # Master CSS Astro example
 
-This example uses `@master/css.astro` with its default `progressive` mode.
+This example uses `@stet-css/astro` with its default `progressive` mode.
 
 The integration:
 
@@ -31,7 +31,7 @@ The integration:
 
 ```astro
 <style is:global>
-  @import '@master/css';
+  @import '@stet-css/core';
 </style>
 ```
 

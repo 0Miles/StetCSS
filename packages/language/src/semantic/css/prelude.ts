@@ -7,7 +7,7 @@ import {
   isCSSIdentStart,
   readCSSIdent,
   skipCSSWhitespace
-} from '@master/css-lexer'
+} from '@stet-css/lexer'
 
 const SOURCE_MODIFIERS = new Set(['not'])
 const PRESERVE_PARAMETERS = new Set(['native'])

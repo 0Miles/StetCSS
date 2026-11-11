@@ -2,7 +2,7 @@ import type { Plugin } from 'vite'
 import {
   MANIFEST_ASSET_FILE,
   toManifestPreloadLinkAttrs
-} from '@master/css-integration/manifest-facade'
+} from '@stet-css/integration/manifest-facade'
 import type { PluginContext } from '../core'
 import { hasModulePreloadLink, toAssetHref } from '../utils/html'
 

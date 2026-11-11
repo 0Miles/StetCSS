@@ -11,8 +11,8 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@master/css": "workspace:^",
-    "@master/css.svelte": "workspace:^"
+    "@stet-css/core": "workspace:^",
+    "@stet-css/svelte": "workspace:^"
   },
   "devDependencies": {
     "@fontsource/fira-mono": "^5.2.7",

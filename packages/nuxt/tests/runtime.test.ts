@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { $fetch } from '@nuxt/test-utils'
 import { createPage } from '@nuxt/test-utils/e2e'
 import { dirname, resolve } from 'node:path'
-import { MASTER_CSS_HYDRATION_MANIFEST_SCRIPT_ID } from '@master/css-schema/hydration-manifest'
+import { MASTER_CSS_HYDRATION_MANIFEST_SCRIPT_ID } from '@stet-css/schema/hydration-manifest'
 import { setupNuxtTest } from './setup-test'
 
 const __filename = fileURLToPath(import.meta.url)

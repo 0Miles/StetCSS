@@ -204,7 +204,7 @@ export async function writeStaticWorkspace(workspace: string, fixtureId: Benchma
   const sourceHtml = tool.family === 'master' ? fixture.masterHtml : fixture.tailwindHtml
   const html = isViteTool(tool) ? addViteEntryScript(sourceHtml) : sourceHtml
   const css = tool.family === 'master'
-    ? '@import "@master/css";\n@source "./index.html";\n.benchmark-root{box-sizing:border-box}\n'
+    ? '@import "@stet-css/core";\n@source "./index.html";\n.benchmark-root{box-sizing:border-box}\n'
     : '@import "tailwindcss";\n@source "./index.html";\n.benchmark-root{box-sizing:border-box}\n'
 
   await writeWorkspaceFiles(workspace, {
@@ -241,7 +241,7 @@ function resolveBuildCommand(tool: StaticBuildTool) {
 function resolveBuildArgs(tool: StaticBuildTool) {
   if (tool.command === 'master-cli') {
     return [
-      resolveBenchmarkPackageFile('@master/css-cli', 'dist/bin/index.js'),
+      resolveBenchmarkPackageFile('@stet-css/cli', 'dist/bin/index.js'),
       'index.html',
       '-o',
       'dist/output.css',
@@ -274,7 +274,7 @@ function resolveBuildArgs(tool: StaticBuildTool) {
 
 function renderViteConfig(tool: StaticBuildTool) {
   const pluginImport = tool.command === 'master-vite'
-    ? 'import masterCSS from "@master/css.vite"'
+    ? 'import masterCSS from "@stet-css/vite"'
     : 'import tailwindcss from "@tailwindcss/vite"'
   const plugin = tool.command === 'master-vite'
     ? "masterCSS({ mode: 'static' })"

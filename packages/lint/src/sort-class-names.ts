@@ -1,5 +1,5 @@
-import { compareRulePriority, type GeneratedRule, type MasterCSS } from '@master/css-engine'
-import UtilityType from '@master/css-schema/utility-type'
+import { compareRulePriority, type GeneratedRule, type MasterCSS } from '@stet-css/engine'
+import UtilityType from '@stet-css/schema/utility-type'
 
 const LAYER_ORDER = ['theme', 'base', 'defaults', 'components', 'utilities']
 const UNKNOWN_PROPERTY_GROUP_ORDER = 99

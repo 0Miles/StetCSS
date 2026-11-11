@@ -1,9 +1,9 @@
-import { defaultManifest, UtilityType, type MasterCSSManifest } from '@master/css-language'
+import { defaultManifest, UtilityType, type MasterCSSManifest } from '@stet-css/language'
 import {
   flattenMasterCSSManifestVariables,
   groupMasterCSSManifestVariables,
   type MasterCSSManifestVariable
-} from '@master/css-schema/manifest'
+} from '@stet-css/schema/manifest'
 
 type PlanVariableDraft = MasterCSSManifestVariable
 type ManifestUtilityDraft = Partial<NonNullable<MasterCSSManifest['utilities']>[number]> & {

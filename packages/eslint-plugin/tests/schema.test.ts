@@ -6,7 +6,7 @@ import { masterCSSSettingsSchema } from '../src/settings-schema'
 const baseConfig: Linter.Config = {
   files: ['**/*.jsx'],
   plugins: {
-    '@master/css': plugin
+    '@stet-css': plugin
   },
   languageOptions: {
     parserOptions: {
@@ -45,28 +45,28 @@ test('keeps Master CSS settings schema separate from rule option schemas', () =>
 
 test('accepts no-invalid-classes rule options explicitly', async () => {
   const [result] = await createESLint({
-    '@master/css/no-invalid-classes': ['error', { disallowUnknownClass: true }]
+    '@stet-css/no-invalid-classes': ['error', { disallowUnknownClass: true }]
   }).lintText(`<div className="unknown-class" />`, { filePath: 'index.jsx' })
 
   expect(result.messages).toHaveLength(1)
-  expect(result.messages[0].ruleId).toBe('@master/css/no-invalid-classes')
+  expect(result.messages[0].ruleId).toBe('@stet-css/no-invalid-classes')
 })
 
 test('rejects unknown no-invalid-classes rule options', async () => {
   await expect(createESLint({
-    '@master/css/no-invalid-classes': ['error', { classAttributes: ['className'] }]
+    '@stet-css/no-invalid-classes': ['error', { classAttributes: ['className'] }]
   }).lintText(`<div className="block" />`, { filePath: 'index.jsx' }))
     .rejects.toThrow()
 })
 
 test('rejects rule options for rules configured through settings only', async () => {
   await expect(createESLint({
-    '@master/css/sort-classes': ['error', { classAttributes: ['className'] }]
+    '@stet-css/sort-classes': ['error', { classAttributes: ['className'] }]
   }).lintText(`<div className="block" />`, { filePath: 'index.jsx' }))
     .rejects.toThrow()
 
   await expect(createESLint({
-    '@master/css/no-conflicting-classes': ['error', { classFunctions: ['ctl'] }]
+    '@stet-css/no-conflicting-classes': ['error', { classFunctions: ['ctl'] }]
   }).lintText(`<div className="block" />`, { filePath: 'index.jsx' }))
     .rejects.toThrow()
 })
@@ -83,6 +83,6 @@ test('provides an opt-in stylesheet config', async () => {
   }).lintText(`.btn { @compose contain:content; }`, { filePath: 'index.css' })
 
   expect(diagnosticResult.messages).toHaveLength(1)
-  expect(diagnosticResult.messages[0].ruleId).toBe('@master/css/prefer-canonical-classes')
+  expect(diagnosticResult.messages[0].ruleId).toBe('@stet-css/prefer-canonical-classes')
   expect(fixResult.output).toBe('.btn { contain: content; }')
 })

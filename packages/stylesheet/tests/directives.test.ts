@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import CSSScanner from '@master/css-scanner'
+import CSSScanner from '@stet-css/scanner'
 import { collectStylesheetDirectives, removeStylesheetDirectiveStatements } from '../src/directives'
 import {
   createExtractedCSS,
@@ -152,7 +152,7 @@ describe('stylesheet CSS directives', () => {
 
     const styleCSSSources = new Map()
     const result = await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'app/a/a.css'), `
-      @import "@master/css";
+      @import "@stet-css/core";
       @source './*.tsx';
 
       .card {
@@ -195,7 +195,7 @@ describe('stylesheet CSS directives', () => {
 
     const styleCSSSources = new Map()
     await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'app/a/a.css'), `
-      @import "@master/css";
+      @import "@stet-css/core";
       @import '../shared.css';
     `)
 

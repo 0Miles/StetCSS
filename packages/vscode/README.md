@@ -10,7 +10,7 @@
 
 Master CSS for Visual Studio Code provides manifest-aware language features for Master CSS classes, CSS directives, and project-specific tokens. The extension starts the bundled Master CSS language server, loads the nearest project manifest, and brings completion, hover, TextMate directive highlighting, semantic class-list highlighting, color tools, directive diagnostics, and directive formatting into supported files.
 
-For the complete VS Code workflow, use this extension together with the official VS Code ESLint extension. Master CSS owns completion, hover, colors, highlighting, directive diagnostics, manifest diagnostics, and directive formatting. ESLint owns class policy diagnostics and sort-on-save for rules such as `@master/css/sort-classes`, `@master/css/prefer-canonical-classes`, and `@master/css/no-conflicting-classes`.
+For the complete VS Code workflow, use this extension together with the official VS Code ESLint extension. Master CSS owns completion, hover, colors, highlighting, directive diagnostics, manifest diagnostics, and directive formatting. ESLint owns class policy diagnostics and sort-on-save for rules such as `@stet-css/sort-classes`, `@stet-css/prefer-canonical-classes`, and `@stet-css/no-conflicting-classes`.
 
 ## Quick Start
 
@@ -26,10 +26,10 @@ Enable suggestions inside strings so utility completions appear in markup, JSX, 
 }
 ```
 
-For project-aware tokens, create a CSS entry that imports `@master/css`, or declare a Master CSS package dependency in the project `package.json`.
+For project-aware tokens, create a CSS entry that imports `@stet-css/core`, or declare a Master CSS package dependency in the project `package.json`.
 
 ```css
-@import "@master/css";
+@import "@stet-css/core";
 
 @theme {
   --color-primary: #4f46e5;
@@ -61,9 +61,9 @@ For CSS, SCSS, and LESS document formatting, the extension delegates to VS Code'
 
 `masterCSS.workspaces` defaults to `auto`. In auto mode, the language server always creates a root workspace and also detects:
 
-- CSS files importing `@master/css`
+- CSS files importing `@stet-css/core`
 - CSS files containing the lightweight `@master entry;` marker
-- `package.json` files that declare Master CSS package dependencies such as `@master/css`, `@master/css-runtime`, or official integration packages matching `@master/css*`
+- `package.json` files that declare Master CSS package dependencies such as `@stet-css/core`, `@stet-css/runtime`, or official integration packages matching `@stet-css/core*`
 
 Each detected workspace gets its own language service and project manifest. In monorepos, this lets each package use its nearest Master CSS manifest while still keeping the root workspace available.
 
@@ -231,7 +231,7 @@ Use this after changing dependencies, workspace layout, or project manifest file
 
 ## Documentation
 
-See the [language service guide](https://rc.css.master.co/guide/language-service), the [`@master/css-language-service`](../language-service) README, and the [`@master/css-language-server`](../language-server) README for deeper details.
+See the [language service guide](https://rc.css.master.co/guide/language-service), the [`@stet-css/language-service`](../language-service) README, and the [`@stet-css/language-server`](../language-server) README for deeper details.
 
 ## Community
 

@@ -1,5 +1,5 @@
-import { createHydrationManifest, type MasterCSS, type MasterCSSEmittedGlobals, type MasterCSSManifest } from '@master/css'
-import { createServerCSS, parseHTML } from '@master/css-server'
+import { createHydrationManifest, type MasterCSS, type MasterCSSEmittedGlobals, type MasterCSSManifest } from '@stet-css/core'
+import { createServerCSS, parseHTML } from '@stet-css/server'
 import {
   MASTER_CSS_HYDRATION_MANIFEST_ASSET_BASE,
   MASTER_CSS_HYDRATION_MANIFEST_ATTR,
@@ -7,11 +7,11 @@ import {
   createMasterCSSHydrationManifestScript,
   MASTER_CSS_HYDRATION_MANIFEST_SCRIPT_ID,
   serializeMasterCSSHydrationManifest
-} from '@master/css-schema/hydration-manifest'
-import { MASTER_CSS_RUNTIME_STYLE_ID } from '@master/css-schema/runtime-style'
-import { escapeRegExp } from '@master/css-lexer'
+} from '@stet-css/schema/hydration-manifest'
+import { MASTER_CSS_RUNTIME_STYLE_ID } from '@stet-css/schema/runtime-style'
+import { escapeRegExp } from '@stet-css/lexer'
 import type { Handle } from '@sveltejs/kit'
-import { toHashedManifestAssetFileName } from '@master/css-integration/node'
+import { toHashedManifestAssetFileName } from '@stet-css/integration/node'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 

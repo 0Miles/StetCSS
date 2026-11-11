@@ -17,17 +17,17 @@
 ## Installation
 
 ```bash
-npm install @master/css-language
+npm install @stet-css/language
 ```
 
 ## Usage
 
-`@master/css-language` provides editor-neutral Master CSS language primitives such as semantic token legends, class-list tokenizers, class-position scanning, directive formatting, browser semantic tokens, Shiki integration, and the shared TextMate grammar.
+`@stet-css/language` provides editor-neutral Master CSS language primitives such as semantic token legends, class-list tokenizers, class-position scanning, directive formatting, browser semantic tokens, Shiki integration, and the shared TextMate grammar.
 
 ### Semantic token legend
 
 ```js
-import { SEMANTIC_TOKENS_LEGEND } from '@master/css-language'
+import { SEMANTIC_TOKENS_LEGEND } from '@stet-css/language'
 ```
 
 ### Browser semantic tokens
@@ -38,7 +38,7 @@ Use the browser subpath when a web editor needs Master CSS semantic tokens witho
 import {
   SEMANTIC_TOKENS_LEGEND,
   renderBrowserSemanticTokens
-} from '@master/css-language/browser'
+} from '@stet-css/language/browser'
 
 const semanticTokens = renderBrowserSemanticTokens(source, 'html', { manifest })
 ```
@@ -53,7 +53,7 @@ Use the Shiki subpath to register the shared TextMate injection grammar and deco
 import {
   masterCSSShikiLanguage,
   transformerMasterCSS
-} from '@master/css-language/shiki'
+} from '@stet-css/language/shiki'
 ```
 
 ### Class positions
@@ -61,7 +61,7 @@ import {
 Use `getClassPositions()` when a tool needs raw class spans without LSP service lifecycle.
 
 ```ts
-import { getClassPositions, languageSettings } from '@master/css-language'
+import { getClassPositions, languageSettings } from '@stet-css/language'
 
 const positions = getClassPositions(textDocument, languageSettings)
 ```
@@ -74,7 +74,7 @@ Use `formatMasterCSSDirectives()` when an editor integration needs source-offset
 import {
   applyMasterCSSDirectiveFormatEdits,
   formatMasterCSSDirectives
-} from '@master/css-language'
+} from '@stet-css/language'
 
 const edits = formatMasterCSSDirectives(source)
 const formatted = applyMasterCSSDirectiveFormatEdits(source, edits)

@@ -1,8 +1,8 @@
-# AI Notes For `@master/css-language-server`
+# AI Notes For `@stet-css/language-server`
 
 ## Responsibility
 
-`@master/css-language-server` wraps the language service in LSP.
+`@stet-css/language-server` wraps the language service in LSP.
 
 ## Owns
 
@@ -13,8 +13,8 @@
 
 ## Does Not Own
 
-- Editor-neutral class scanning or semantic token primitives; use `@master/css-language`.
-- Stateful feature implementation; use `@master/css-language-service`.
+- Editor-neutral class scanning or semantic token primitives; use `@stet-css/language`.
+- Stateful feature implementation; use `@stet-css/language-service`.
 - VS Code extension activation or packaging.
 - CSS directive lexical highlighting, which is TextMate-first.
 
@@ -35,7 +35,7 @@
 
 - `workspaces: 'auto'` discovery from manifest entry files and package dependencies.
 - Closest workspace selection for monorepos.
-- Manifest loading through `@master/css-project`.
+- Manifest loading through `@stet-css/project`.
 - Restart behavior after manifest or settings saves.
 - Advertising LSP capabilities that are not implemented and tested.
 
@@ -55,10 +55,10 @@
 ## Validation
 
 ```sh
-pnpm --filter @master/css-language-server test
-pnpm --filter @master/css-language-server lint
-pnpm --filter @master/css-language-server type-check
-pnpm --filter @master/css-language-server build
+pnpm --filter @stet-css/language-server test
+pnpm --filter @stet-css/language-server lint
+pnpm --filter @stet-css/language-server type-check
+pnpm --filter @stet-css/language-server build
 ```
 
 Use or extend `tests/custom-workspace.test.ts`, `tests/monorepo.test.ts`, and `tests/fixtures`.

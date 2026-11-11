@@ -1,5 +1,5 @@
 {
-  "name": "@master/css.webpack",
+  "name": "@stet-css/webpack",
   "type": "module",
   "scripts": {
     "build": "tsdown --config ../../shared/tsdown-package.config.ts",
@@ -54,12 +54,12 @@
     "webpack": ">=5"
   },
   "dependencies": {
-    "@master/css": "workspace:^",
-    "@master/css-runtime": "workspace:^",
-    "@master/css-scanner": "workspace:^",
-    "@master/css-integration": "workspace:^",
-    "@master/css-project": "workspace:^",
-    "@master/css-stylesheet": "workspace:^",
+    "@stet-css/core": "workspace:^",
+    "@stet-css/runtime": "workspace:^",
+    "@stet-css/scanner": "workspace:^",
+    "@stet-css/integration": "workspace:^",
+    "@stet-css/project": "workspace:^",
+    "@stet-css/stylesheet": "workspace:^",
     "consola": "^3.4.2",
     "webpack-virtual-modules": "^0.6.2"
   },

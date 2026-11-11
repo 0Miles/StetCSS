@@ -1,8 +1,8 @@
-# AI Notes For `@master/css-schema`
+# AI Notes For `@stet-css/schema`
 
 ## Responsibility
 
-`@master/css-schema` owns public, dependency-light Master CSS schema and wire-format contracts.
+`@stet-css/schema` owns public, dependency-light Master CSS schema and wire-format contracts.
 
 ## Owns
 
@@ -69,8 +69,8 @@
 ## Validation
 
 ```sh
-pnpm --filter @master/css-schema test
-pnpm --filter @master/css-schema lint
-pnpm --filter @master/css-schema type-check
-pnpm --filter @master/css-schema build
+pnpm --filter @stet-css/schema test
+pnpm --filter @stet-css/schema lint
+pnpm --filter @stet-css/schema type-check
+pnpm --filter @stet-css/schema build
 ```

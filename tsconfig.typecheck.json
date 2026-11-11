@@ -14,7 +14,7 @@
       "path": "./packages/diagnostics/tsconfig.typecheck.json"
     },
     {
-      "path": "./packages/facade/tsconfig.typecheck.json"
+      "path": "./packages/core/tsconfig.typecheck.json"
     },
     {
       "path": "./packages/engine/tsconfig.typecheck.json"
@@ -57,9 +57,6 @@
     },
     {
       "path": "./packages/project/tsconfig.typecheck.json"
-    },
-    {
-      "path": "./packages/react/tsconfig.typecheck.json"
     },
     {
       "path": "./packages/runtime/tsconfig.typecheck.json"

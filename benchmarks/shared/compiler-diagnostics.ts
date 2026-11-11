@@ -9,10 +9,10 @@ import {
   type CompileCSSManifestSourceOptions,
   type CompileCSSOptions,
   type CompileCSSResult
-} from '@master/css-compiler'
-import { findCSSManifestEntryFiles } from '@master/css-project/entries'
-import CSSScanner from '@master/css-scanner'
-import { extractClassCandidates } from '@master/css-source'
+} from '@stet-css/compiler'
+import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
+import CSSScanner from '@stet-css/scanner'
+import { extractClassCandidates } from '@stet-css/source'
 import {
   cleanStyleRequest,
   collectCSSVariableReferences,
@@ -26,15 +26,15 @@ import {
   type ScannerState,
   type StyleCSSSource,
   type StyleCSSSources
-} from '@master/css-stylesheet'
+} from '@stet-css/stylesheet'
 import {
   hasStylesheetDirectives,
   hasStylesheetSourceDirectives,
   mergeStylesheetSourceOptions,
   resolveStylesheetSourcePaths,
   type StylesheetSourceOptions
-} from '@master/css-stylesheet/directives'
-import type { MasterCSSManifest } from '@master/css-schema/manifest'
+} from '@stet-css/stylesheet/directives'
+import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 import type { CompilerDiagnosticRecorder } from '../../packages/compiler/src/diagnostics'
 import { renderCompiledManifestCSS } from '../../packages/stylesheet/src/render'
 import fg from 'fast-glob'
@@ -457,7 +457,7 @@ async function createDiagnosticExtractedCSS(options: {
 async function compileMasterCSSPackage(projectDir: string, recorder: DiagnosticRecorder) {
   recorder.setCount('master-package-shortcut-fallback-count', 1)
   const graph = recorder.time('master-import-graph-resolution-ms', () => resolveMasterCSSPackageCompileSource(projectDir))
-  const result = await compileDiagnosticStyleCSS(graph.dependencies[0] || '@master/css', graph.source, {
+  const result = await compileDiagnosticStyleCSS(graph.dependencies[0] || '@stet-css/core', graph.source, {
     projectDir
   }, recorder, 'master-package')
   return {

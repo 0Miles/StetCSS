@@ -9,11 +9,11 @@
     "preview": "vite preview --host 127.0.0.1 --port 4174"
   },
   "devDependencies": {
-    "@master/css-integration": "workspace:^",
+    "@stet-css/integration": "workspace:^",
     "typescript": "^7.0.2",
     "vite": "^8.0.10"
   },
   "dependencies": {
-    "@master/css": "workspace:^"
+    "@stet-css/core": "workspace:^"
   }
 }

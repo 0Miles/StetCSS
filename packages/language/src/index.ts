@@ -10,7 +10,7 @@ export * from './semantic/scopes'
 export * from './semantic/tokenize-class'
 export * from './semantic/tokenize-css'
 export * from './semantic/types'
-export type { MasterCSSManifest } from '@master/css-schema/manifest'
+export type { MasterCSSManifest } from '@stet-css/schema/manifest'
 export {
   default as getClassPositions,
   ClassPositionCache,

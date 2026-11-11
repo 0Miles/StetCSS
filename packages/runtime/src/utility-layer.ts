@@ -1,4 +1,4 @@
-import { AnimationRule, compareRulePriority, Rule, VariableRule, type GeneratedRule } from '@master/css-engine'
+import { AnimationRule, compareRulePriority, Rule, VariableRule, type GeneratedRule } from '@stet-css/engine'
 import RuntimeLayer from './layer'
 import type HydratedGeneratedRule from './generated-rule'
 

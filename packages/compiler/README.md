@@ -1,18 +1,18 @@
-# @master/css-compiler
+# @stet-css/compiler
 
 Compile Master CSS stylesheet directives into manifest data, native CSS, and directive metadata.
 
 ## Installation
 
 ```bash
-npm install @master/css-compiler
+npm install @stet-css/compiler
 ```
 
 ## Responsibility
 
-`@master/css-compiler` is the CSS source compiler for Master CSS. It parses CSS manifest directives such as `@settings`, `@theme`, `@custom-variant`, `@defaults`, `@components`, `@utilities`, local `@compose`, top-level extraction directives, native CSS, and CSS import graphs.
+`@stet-css/compiler` is the CSS source compiler for Master CSS. It parses CSS manifest directives such as `@settings`, `@theme`, `@custom-variant`, `@defaults`, `@components`, `@utilities`, local `@compose`, top-level extraction directives, native CSS, and CSS import graphs.
 
-The compiler delegates class semantics and rule generation to `@master/css-engine`; project entry discovery belongs to `@master/css-project`.
+The compiler delegates class semantics and rule generation to `@stet-css/engine`; project entry discovery belongs to `@stet-css/project`.
 
 ## API
 
@@ -27,7 +27,7 @@ import {
   compileCSSManifest,
   compileCSSManifestFile,
   compileProjectManifest,
-} from '@master/css-compiler'
+} from '@stet-css/compiler'
 ```
 
 Common flows:
@@ -42,16 +42,16 @@ Compiler results include the compiled manifest, dependency paths, warnings, nati
 
 ### Browser entry
 
-Use `@master/css-compiler/browser` when CSS import resolution is not needed.
+Use `@stet-css/compiler/browser` when CSS import resolution is not needed.
 
 ```ts
-import { compileCSSManifest } from '@master/css-compiler/browser'
+import { compileCSSManifest } from '@stet-css/compiler/browser'
 ```
 
 The browser compiler rejects `@reference` directives because they require filesystem resolution.
 
 ## Related packages
 
-- `@master/css-engine` executes compiled manifests.
-- `@master/css-project` discovers and loads project CSS manifest entries.
-- `@master/css-stylesheet` composes stylesheet entries for static rendering.
+- `@stet-css/engine` executes compiled manifests.
+- `@stet-css/project` discovers and loads project CSS manifest entries.
+- `@stet-css/stylesheet` composes stylesheet entries for static rendering.

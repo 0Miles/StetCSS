@@ -1,4 +1,4 @@
-import { MASTER_CSS_VALUE_UNIT_PATTERN } from '@master/css-lexer'
+import { MASTER_CSS_VALUE_UNIT_PATTERN } from '@stet-css/lexer'
 
 /**
  * Extract class-like candidates from arbitrary source content (HTML, JSX, TS,

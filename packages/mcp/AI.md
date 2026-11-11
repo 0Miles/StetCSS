@@ -1,8 +1,8 @@
-# AI Notes For `@master/css-mcp`
+# AI Notes For `@stet-css/mcp`
 
 ## Responsibility
 
-`@master/css-mcp` exposes high-level Master CSS tools through the Model Context Protocol for AI clients.
+`@stet-css/mcp` exposes high-level Master CSS tools through the Model Context Protocol for AI clients.
 
 ## Owns
 
@@ -35,8 +35,8 @@
 ## Validation
 
 ```sh
-pnpm --filter @master/css-mcp test
-pnpm --filter @master/css-mcp lint
-pnpm --filter @master/css-mcp type-check
-pnpm --filter @master/css-mcp build
+pnpm --filter @stet-css/mcp test
+pnpm --filter @stet-css/mcp lint
+pnpm --filter @stet-css/mcp type-check
+pnpm --filter @stet-css/mcp build
 ```

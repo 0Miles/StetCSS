@@ -2,8 +2,8 @@ import {
   parseMasterCSSClassList,
   type MasterCSSClassListItem,
   type MasterCSSClassListParseOptions
-} from '@master/css-lexer'
-import type { MasterCSS } from '@master/css-engine'
+} from '@stet-css/lexer'
+import type { MasterCSS } from '@stet-css/engine'
 import sortClassNames from './sort-class-names'
 
 export type MasterCSSClassListEditOptions = Pick<MasterCSSClassListParseOptions, 'unescape'>

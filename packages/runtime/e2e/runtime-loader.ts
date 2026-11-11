@@ -1,4 +1,4 @@
-import defaultManifestJSON from '@master/css-preset/default-manifest.json' with { type: 'json' }
+import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 import CSSRuntime, { type MasterCSSHydrationManifest, type MasterCSSManifest } from '../src'
 
 const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest

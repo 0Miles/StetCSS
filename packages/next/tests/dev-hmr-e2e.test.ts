@@ -34,7 +34,7 @@ function getFreePort() {
 
 function createGlobalsCSS(compose: string) {
   return [
-    '@import "@master/css";',
+    '@import "@stet-css/core";',
     '',
     '@components {',
     '    probe {',

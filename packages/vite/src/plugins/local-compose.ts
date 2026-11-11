@@ -1,6 +1,6 @@
 import type { ModuleNode, Plugin, ViteDevServer } from 'vite'
-import { loadProjectManifest } from '@master/css-project/manifest'
-import { findCSSManifestEntryFiles } from '@master/css-project/entries'
+import { loadProjectManifest } from '@stet-css/project/manifest'
+import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
 import {
   collectStyleCSSDependencies,
   createStyleEntryEmittedGlobals,
@@ -8,7 +8,7 @@ import {
   isStyleCSSRequest,
   resolveMasterStyleSource,
   transformLocalStyleCSS
-} from '@master/css-stylesheet'
+} from '@stet-css/stylesheet'
 import type { PluginContext } from '../core'
 import type { PluginOptions } from '../options'
 import { includesFile } from '../utils/path'

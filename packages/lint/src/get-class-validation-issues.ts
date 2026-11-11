@@ -1,5 +1,5 @@
-import { validate } from '@master/css-validator'
-import type { MasterCSS } from '@master/css-engine'
+import { validate } from '@stet-css/validator'
+import type { MasterCSS } from '@stet-css/engine'
 import { formatClassName, formatReason } from './diagnostic-format'
 
 export interface ClassValidationOptions {

@@ -203,7 +203,7 @@ async function runMasterCLIStartupDiagnostic(workspace: string, fixtureId: Bench
   recorder.setCount('source-file-count', 1)
 
   const command = await runCommand(process.execPath, [
-    resolveBenchmarkPackageFile('@master/css-cli', 'dist/bin/index.js'),
+    resolveBenchmarkPackageFile('@stet-css/cli', 'dist/bin/index.js'),
     'index.html',
     '-o',
     'dist/output.css',
@@ -212,26 +212,26 @@ async function runMasterCLIStartupDiagnostic(workspace: string, fixtureId: Bench
   ], workspace)
   recorder.addTiming('cli-command-elapsed-ms', command.elapsedMs)
 
-  const cliPackageFile = resolveBenchmarkPackageFile('@master/css-cli', 'package.json')
+  const cliPackageFile = resolveBenchmarkPackageFile('@stet-css/cli', 'package.json')
   await runImportProbeBatch(workspace, recorder, [
-    ['cli-bin-module-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css-cli', 'dist/bin/index.js'))],
+    ['cli-bin-module-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/cli', 'dist/bin/index.js'))],
     ['cli-commander-import-ms', 'commander', cliPackageFile],
-    ['cli-core-module-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css-cli', 'dist/core.js'))],
-    ['cli-scan-module-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css-cli', 'dist/scan.js'))],
-    ['cli-scanner-import-ms', '@master/css-scanner', cliPackageFile],
-    ['cli-stylesheet-import-ms', '@master/css-stylesheet', cliPackageFile],
-    ['cli-project-entries-import-ms', '@master/css-project/entries', cliPackageFile],
+    ['cli-core-module-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/cli', 'dist/core.js'))],
+    ['cli-scan-module-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/cli', 'dist/scan.js'))],
+    ['cli-scanner-import-ms', '@stet-css/scanner', cliPackageFile],
+    ['cli-stylesheet-import-ms', '@stet-css/stylesheet', cliPackageFile],
+    ['cli-project-entries-import-ms', '@stet-css/project/entries', cliPackageFile],
     ['cli-fast-glob-import-ms', 'fast-glob', cliPackageFile],
     ['cli-chokidar-import-ms', 'chokidar', cliPackageFile],
     ['cli-consola-import-ms', 'consola', cliPackageFile],
-    ['cli-master-css-import-ms', '@master/css', cliPackageFile]
+    ['cli-master-css-import-ms', '@stet-css/core', cliPackageFile]
   ])
 
   const parseProbe = await runProbe(workspace, 'cli-commander-parse', renderCLICommanderParseProbe(cliPackageFile))
   recorder.addMeasurements(parseProbe.metrics)
 
   const cliProbe = await runProbe(workspace, 'cli-run-program', renderCLIRunProgramProbe(
-    resolveBenchmarkPackageFile('@master/css-cli', 'dist/core.js')
+    resolveBenchmarkPackageFile('@stet-css/cli', 'dist/core.js')
   ))
   recorder.addTiming('cli-probe-command-elapsed-ms', cliProbe.elapsedMs)
   recorder.addMeasurements(cliProbe.metrics)
@@ -329,40 +329,40 @@ async function runImportProbeBatch(
 }
 
 async function runViteImportProbes(workspace: string, recorder: DiagnosticRecorder) {
-  const vitePackageFile = resolveBenchmarkPackageFile('@master/css.vite', 'package.json')
+  const vitePackageFile = resolveBenchmarkPackageFile('@stet-css/vite', 'package.json')
   await runImportProbeBatch(workspace, recorder, [
-    ['master-vite-index-module-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/index.js'))],
-    ['master-vite-core-module-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/core.js'))],
-    ['master-vite-options-module-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/options.js'))],
-    ['master-vite-common-module-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/common.js'))],
-    ['master-vite-mode-runtime-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/modes/runtime.js'))],
-    ['master-vite-mode-static-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/modes/static.js'))],
-    ['master-vite-mode-progressive-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/modes/progressive.js'))],
-    ['master-vite-mode-pre-render-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/modes/pre-render.js'))],
-    ['master-vite-plugin-context-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/plugins/context.js'))],
-    ['master-vite-plugin-manifest-loader-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/plugins/manifest-loader.js'))],
-    ['master-vite-plugin-manifest-virtual-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/plugins/manifest-virtual-module.js'))],
-    ['master-vite-plugin-emitted-globals-virtual-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/plugins/emitted-globals-virtual-module.js'))],
-    ['master-vite-plugin-scanner-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/plugins/scanner.js'))],
-    ['master-vite-plugin-usage-graph-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/plugins/usage-graph.js'))],
-    ['master-vite-plugin-local-compose-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/plugins/local-compose.js'))],
-    ['master-vite-plugin-style-entry-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/plugins/style-entry.js'))],
-    ['master-vite-plugin-style-entry-hmr-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/plugins/style-entry-hmr.js'))],
-    ['master-vite-plugin-style-entry-build-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/plugins/style-entry-build.js'))],
-    ['master-vite-plugin-inject-runtime-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/plugins/inject-runtime.js'))],
-    ['master-vite-plugin-manifest-preload-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/plugins/manifest-preload.js'))],
-    ['master-vite-plugin-avoid-fouc-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/plugins/avoid-fouc.js'))],
-    ['master-vite-plugin-pre-render-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/plugins/pre-render.js'))],
-    ['master-vite-util-extracted-css-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/utils/extracted-css.js'))],
-    ['master-vite-util-register-style-source-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/utils/register-style-source.js'))],
-    ['master-vite-util-scanner-context-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@master/css.vite', 'dist/utils/scanner-context.js'))],
-    ['vite-css-scanner-import-ms', '@master/css-scanner', vitePackageFile],
-    ['vite-css-stylesheet-import-ms', '@master/css-stylesheet', vitePackageFile],
-    ['vite-css-project-manifest-import-ms', '@master/css-project/manifest', vitePackageFile],
-    ['vite-css-project-entries-import-ms', '@master/css-project/entries', vitePackageFile],
-    ['vite-css-integration-node-import-ms', '@master/css-integration/node', vitePackageFile],
-    ['vite-css-server-import-ms', '@master/css-server', vitePackageFile],
-    ['vite-css-runtime-import-ms', '@master/css-runtime', vitePackageFile],
+    ['master-vite-index-module-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/index.js'))],
+    ['master-vite-core-module-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/core.js'))],
+    ['master-vite-options-module-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/options.js'))],
+    ['master-vite-common-module-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/common.js'))],
+    ['master-vite-mode-runtime-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/modes/runtime.js'))],
+    ['master-vite-mode-static-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/modes/static.js'))],
+    ['master-vite-mode-progressive-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/modes/progressive.js'))],
+    ['master-vite-mode-pre-render-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/modes/pre-render.js'))],
+    ['master-vite-plugin-context-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/context.js'))],
+    ['master-vite-plugin-manifest-loader-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/manifest-loader.js'))],
+    ['master-vite-plugin-manifest-virtual-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/manifest-virtual-module.js'))],
+    ['master-vite-plugin-emitted-globals-virtual-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/emitted-globals-virtual-module.js'))],
+    ['master-vite-plugin-scanner-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/scanner.js'))],
+    ['master-vite-plugin-usage-graph-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/usage-graph.js'))],
+    ['master-vite-plugin-local-compose-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/local-compose.js'))],
+    ['master-vite-plugin-style-entry-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/style-entry.js'))],
+    ['master-vite-plugin-style-entry-hmr-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/style-entry-hmr.js'))],
+    ['master-vite-plugin-style-entry-build-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/style-entry-build.js'))],
+    ['master-vite-plugin-inject-runtime-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/inject-runtime.js'))],
+    ['master-vite-plugin-manifest-preload-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/manifest-preload.js'))],
+    ['master-vite-plugin-avoid-fouc-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/avoid-fouc.js'))],
+    ['master-vite-plugin-pre-render-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/pre-render.js'))],
+    ['master-vite-util-extracted-css-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/utils/extracted-css.js'))],
+    ['master-vite-util-register-style-source-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/utils/register-style-source.js'))],
+    ['master-vite-util-scanner-context-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/utils/scanner-context.js'))],
+    ['vite-css-scanner-import-ms', '@stet-css/scanner', vitePackageFile],
+    ['vite-css-stylesheet-import-ms', '@stet-css/stylesheet', vitePackageFile],
+    ['vite-css-project-manifest-import-ms', '@stet-css/project/manifest', vitePackageFile],
+    ['vite-css-project-entries-import-ms', '@stet-css/project/entries', vitePackageFile],
+    ['vite-css-integration-node-import-ms', '@stet-css/integration/node', vitePackageFile],
+    ['vite-css-server-import-ms', '@stet-css/server', vitePackageFile],
+    ['vite-css-runtime-import-ms', '@stet-css/runtime', vitePackageFile],
     ['vite-magic-string-import-ms', 'magic-string', vitePackageFile]
   ])
 }
@@ -413,7 +413,7 @@ function renderCLICommanderParseProbe(cliPackageFile: string) {
     'const startedAt = performance.now()',
     'const program = new Command()',
     'program',
-    '    .name("@master/css")',
+    '    .name("@stet-css/core")',
     '    .description("Master CSS CLI")',
     '    .version("0.0.0")',
     '    .argument("[source paths...]", "The glob pattern paths to scan sources")',
@@ -440,7 +440,7 @@ function renderCLIRunProgramProbe(coreFile: string) {
     `const { default: runProgram } = await import(pathToFileURL(${JSON.stringify(coreFile)}).href)`,
     'metrics["cli-entry-import-ms"] = performance.now() - importStartedAt',
     'const runStartedAt = performance.now()',
-    'await runProgram(["node", "@master/css", "index.html", "-o", "dist/output.css", "-v", "0"])',
+    'await runProgram(["node", "@stet-css/core", "index.html", "-o", "dist/output.css", "-v", "0"])',
     'metrics["cli-run-program-ms"] = performance.now() - runStartedAt',
     'metrics["cli-child-process-uptime-ms"] = performance.now()',
     `console.log(${JSON.stringify(probeMarker)} + JSON.stringify(metrics))`,
@@ -459,7 +459,7 @@ function renderViteStartupProbe() {
     'const vite = await import("vite")',
     'metrics["vite-import-ms"] = performance.now() - viteImportStartedAt',
     'const masterViteImportStartedAt = performance.now()',
-    'const masterCSSModule = await import("@master/css.vite")',
+    'const masterCSSModule = await import("@stet-css/vite")',
     'metrics["master-vite-import-ms"] = performance.now() - masterViteImportStartedAt',
     'const pluginFactoryStartedAt = performance.now()',
     'const plugins = instrumentMasterVitePlugins(masterCSSModule.default({ mode: "static" }))',

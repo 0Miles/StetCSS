@@ -5,10 +5,10 @@ import {
   type CSSLanguageRuntime,
   type MasterCSS,
   createDefaultCSS
-} from '@master/css-language'
-import type { Variable } from '@master/css-language'
-import { getMdnPseudoClassNames, getMdnPseudoElementNames } from '@master/css-language'
-import { generateSelector } from '@master/css-engine/compiler'
+} from '@stet-css/language'
+import type { Variable } from '@stet-css/language'
+import { getMdnPseudoClassNames, getMdnPseudoElementNames } from '@stet-css/language'
+import { generateSelector } from '@stet-css/engine/compiler'
 import getUtilityInfo from './get-utility-info'
 import sortCompletionItems from './sort-completion-items'
 

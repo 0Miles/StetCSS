@@ -1,4 +1,4 @@
-import CSSLanguageService from '@master/css-language-service'
+import CSSLanguageService from '@stet-css/language-service'
 import type MasterCSSMCPContext from './context'
 import { loadWorkspaceManifest } from './project'
 import { createMCPTextDocument } from './document'

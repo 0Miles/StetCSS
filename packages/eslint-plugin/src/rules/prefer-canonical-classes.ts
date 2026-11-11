@@ -7,7 +7,7 @@ import {
   createCanonicalComposeDirectiveReport,
   defaultCanonicalClassNameOptions,
   type CanonicalClassNameOptions
-} from '@master/css-lint'
+} from '@stet-css/lint'
 import type { ResolvedClassNode } from '../utils/resolve-class-node'
 import type { ResolvedComposeDirectiveClassNode } from '../utils/resolve-compose-directive-class-nodes'
 import reportLintDiagnostics from '../utils/report-lint-diagnostics'

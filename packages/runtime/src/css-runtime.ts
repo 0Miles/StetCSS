@@ -1,6 +1,6 @@
-import type { MasterCSSManifest } from '@master/css-schema/manifest'
-import type { MasterCSSEmittedGlobals } from '@master/css-engine'
-import type { MasterCSSHydrationManifest } from '@master/css-schema/hydration-manifest'
+import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { MasterCSSEmittedGlobals } from '@stet-css/engine'
+import type { MasterCSSHydrationManifest } from '@stet-css/schema/hydration-manifest'
 import CSSRuntime from './core'
 
 type CSSRuntimeHostConstructor = new (...args: any[]) => HTMLElement

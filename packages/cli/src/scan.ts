@@ -1,6 +1,6 @@
-import type { ScannerOptions } from '@master/css-scanner'
-import type CSSScanner from '@master/css-scanner'
-import type { StyleCSSSources } from '@master/css-stylesheet'
+import type { ScannerOptions } from '@stet-css/scanner'
+import type CSSScanner from '@stet-css/scanner'
+import type { StyleCSSSources } from '@stet-css/stylesheet'
 import type { FSWatcher } from 'chokidar'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -11,9 +11,9 @@ type FastGlob = Pick<typeof import('fast-glob'), 'sync'>
 type Chokidar = typeof import('chokidar').default
 type Logger = ReturnType<typeof import('consola').createConsola>
 type Bytes = (value: number) => string
-type CSSScannerConstructor = typeof import('@master/css-scanner').default
-type StylesheetModule = typeof import('@master/css-stylesheet')
-type ProjectEntriesModule = typeof import('@master/css-project/entries')
+type CSSScannerConstructor = typeof import('@stet-css/scanner').default
+type StylesheetModule = typeof import('@stet-css/stylesheet')
+type ProjectEntriesModule = typeof import('@stet-css/project/entries')
 
 let scannerModulePromise: Promise<CSSScannerConstructor> | undefined
 let stylesheetModulePromise: Promise<StylesheetModule> | undefined
@@ -242,17 +242,17 @@ export default async function runScan(specifiedSourcePaths: string[] = [], optio
 }
 
 function loadCSSScanner() {
-  scannerModulePromise ||= import('@master/css-scanner').then((mod) => mod.default)
+  scannerModulePromise ||= import('@stet-css/scanner').then((mod) => mod.default)
   return scannerModulePromise
 }
 
 function loadStylesheetModule() {
-  stylesheetModulePromise ||= import('@master/css-stylesheet')
+  stylesheetModulePromise ||= import('@stet-css/stylesheet')
   return stylesheetModulePromise
 }
 
 function loadProjectEntriesModule() {
-  projectEntriesModulePromise ||= import('@master/css-project/entries')
+  projectEntriesModulePromise ||= import('@stet-css/project/entries')
   return projectEntriesModulePromise
 }
 

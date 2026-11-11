@@ -20,18 +20,18 @@
       <img alt="NPM Version" src="https://img.shields.io/github/v/release/master-co/css?include_prereleases&color=f6f7f8&label=&style=for-the-badge&logo=github">
     </picture>
   </a>
-  <a aria-label="NPM Package" href="https://www.npmjs.com/package/@master/css-runtime">
+  <a aria-label="NPM Package" href="https://www.npmjs.com/package/@stet-css/runtime">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/npm/dm/@master/css-runtime?color=212022&label=%20&logo=npm&style=for-the-badge">
-      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/npm/dm/@master/css-runtime?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
-      <img alt="NPM package ( download / month )" src="https://img.shields.io/npm/dm/@master/css-runtime?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
+      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/npm/dm/@stet-css/runtime?color=212022&label=%20&logo=npm&style=for-the-badge">
+      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/npm/dm/@stet-css/runtime?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
+      <img alt="NPM package ( download / month )" src="https://img.shields.io/npm/dm/@stet-css/runtime?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
     </picture>
   </a>
-  <a aria-label="JSDelivr" href="https://www.jsdelivr.com/package/npm/@master/css-runtime">
+  <a aria-label="JSDelivr" href="https://www.jsdelivr.com/package/npm/@stet-css/runtime">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/jsdelivr/npm/hm/@master/css-runtime?color=212022&label=%20&logo=jsdelivr&style=for-the-badge">
-      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/jsdelivr/npm/hm/@master/css-runtime?color=f6f7f8&label=%20&logo=jsdelivr&style=for-the-badge">
-      <img alt="JSDelivr hits (npm scoped)" src="https://img.shields.io/jsdelivr/npm/hm/@master/css-runtime?color=f6f7f8&label=%20&logo=jsdelivr&style=for-the-badge">
+      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/jsdelivr/npm/hm/@stet-css/runtime?color=212022&label=%20&logo=jsdelivr&style=for-the-badge">
+      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/jsdelivr/npm/hm/@stet-css/runtime?color=f6f7f8&label=%20&logo=jsdelivr&style=for-the-badge">
+      <img alt="JSDelivr hits (npm scoped)" src="https://img.shields.io/jsdelivr/npm/hm/@stet-css/runtime?color=f6f7f8&label=%20&logo=jsdelivr&style=for-the-badge">
     </picture>
   </a>
   <a aria-label="Discord Community" href="https://discord.gg/sZNKpAAAw6">
@@ -62,13 +62,13 @@
 ## Installation
 
 ```bash
-npm install @master/css-runtime
+npm install @stet-css/runtime
 ```
 
 Initialize the runtime with the project manifest and emitted global CSS state provided by an official integration:
 
 ```js
-import CSSRuntime from '@master/css-runtime'
+import CSSRuntime from '@stet-css/runtime'
 import manifest from 'virtual:master-css-manifest'
 import emittedGlobals from 'virtual:master-css-emitted-globals'
 
@@ -93,7 +93,7 @@ The IIFE imports `default-manifest.json` next to the runtime script as a JSON mo
 ### `CSSRuntime`
 
 ```ts
-import CSSRuntime from '@master/css-runtime'
+import CSSRuntime from '@stet-css/runtime'
 import manifest from 'virtual:master-css-manifest'
 
 const cssRuntime = CSSRuntime.create({ manifest })
@@ -132,7 +132,7 @@ MutationObserver additions update `classCounts` immediately. Existing and retain
 ### Progressive Hydration
 
 ```ts
-import CSSRuntime from '@master/css-runtime'
+import CSSRuntime from '@stet-css/runtime'
 import manifest from 'virtual:master-css-manifest'
 import emittedGlobals from 'virtual:master-css-emitted-globals'
 

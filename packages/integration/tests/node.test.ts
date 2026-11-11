@@ -34,7 +34,7 @@ afterEach(() => {
   }
 })
 
-describe('@master/css-integration/node', () => {
+describe('@stet-css/integration/node', () => {
   it('encodes resolved and filesystem virtual module paths', () => {
     const root = path.resolve('/project')
     const file = path.join(root, 'src', 'theme.css')
@@ -50,6 +50,23 @@ describe('@master/css-integration/node', () => {
     expect(toVirtualEmittedGlobalsModulePath(root)).toBe(path.join(root, 'node_modules', '.master-css', 'master-css-emitted-globals.js'))
     expect(toVirtualModulePackageJSONPath(root)).toBe(path.join(root, 'node_modules', '.master-css', 'package.json'))
     expect(createVirtualDefaultManifestModulePathPattern().test(toVirtualDefaultManifestModulePath(root))).toBe(true)
+  })
+
+  it('keeps virtual manifest file names within the file system name limit for deep source paths', () => {
+    const root = path.resolve('/project')
+    const deepFile = path.join(root, ...Array.from({ length: 12 }, (_, index) => `nested-directory-${index}`), 'theme.css')
+    const otherDeepFile = deepFile.replace('theme.css', 'other.css')
+    const moduleName = path.basename(toVirtualCSSManifestModulePath(root, deepFile))
+    const assetName = path.basename(toVirtualCSSManifestAssetPath(root, deepFile))
+
+    expect(Buffer.byteLength(moduleName)).toBeLessThanOrEqual(255)
+    expect(Buffer.byteLength(assetName)).toBeLessThanOrEqual(255)
+    expect(moduleName).toMatch(/\.manifest\.js$/)
+    expect(assetName).toMatch(/\.manifest\.json$/)
+    expect(toVirtualCSSManifestModulePath(root, deepFile)).toBe(toVirtualCSSManifestModulePath(root, deepFile))
+    expect(toVirtualCSSManifestModulePath(root, otherDeepFile)).not.toBe(toVirtualCSSManifestModulePath(root, deepFile))
+    expect(path.basename(toVirtualCSSManifestModulePath(root, path.join(root, 'src', 'theme.css'))))
+      .toBe(`${Buffer.from(path.join(root, 'src', 'theme.css')).toString('base64url')}.manifest.js`)
   })
 
   it('hashes manifest asset file names', () => {

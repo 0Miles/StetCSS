@@ -1,12 +1,12 @@
-import { MasterCSS, createHydrationManifest } from '@master/css'
-import type { MasterCSSManifest } from '@master/css-schema/manifest'
+import { MasterCSS, createHydrationManifest } from '@stet-css/core'
+import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 import {
   MASTER_CSS_HYDRATION_MANIFEST_ATTR,
   MASTER_CSS_HYDRATION_MANIFEST_SCRIPT_ID,
   serializeMasterCSSHydrationManifest,
   type MasterCSSHydrationManifest
-} from '@master/css-schema/hydration-manifest'
-import { MASTER_CSS_RUNTIME_STYLE_ID } from '@master/css-schema/runtime-style'
+} from '@stet-css/schema/hydration-manifest'
+import { MASTER_CSS_RUNTIME_STYLE_ID } from '@stet-css/schema/runtime-style'
 import parseHTML from './parse-html'
 import getDefaultManifest from './default-manifest'
 import createServerCSS from './create-server-css'

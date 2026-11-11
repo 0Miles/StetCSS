@@ -1,11 +1,11 @@
 import rule from '../src/rules/sort-classes'
 import { createTester } from './testers'
 import { createPresetManifest } from './helpers/create-preset-manifest'
-import UtilityType from '@master/css-schema/utility-type'
+import UtilityType from '@stet-css/schema/utility-type'
 
 createTester({
   settings: {
-    '@master/css': {
+    '@stet-css': {
       classAttributes: ['test', 'className', 'class'],
       manifest: createPresetManifest({
         utilities: [

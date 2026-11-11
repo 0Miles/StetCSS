@@ -1,6 +1,6 @@
 import parseHTML from './parse-html'
-import { MasterCSS } from '@master/css'
-import type { MasterCSSManifest } from '@master/css-schema/manifest'
+import { MasterCSS } from '@stet-css/core'
+import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 import getDefaultManifest from './default-manifest'
 import createServerCSS from './create-server-css'
 

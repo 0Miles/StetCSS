@@ -1,5 +1,5 @@
 {
-  "name": "@master/css-scanner",
+  "name": "@stet-css/scanner",
   "type": "module",
   "scripts": {
     "build": "tsdown --config ../../shared/tsdown-package.config.ts",
@@ -66,17 +66,17 @@
     "provenance": true
   },
   "dependencies": {
-    "@master/css": "workspace:^",
-    "@master/css-preset": "workspace:^",
-    "@master/css-source": "workspace:^",
-    "@master/css-validator": "workspace:^",
+    "@stet-css/core": "workspace:^",
+    "@stet-css/preset": "workspace:^",
+    "@stet-css/source": "workspace:^",
+    "@stet-css/validator": "workspace:^",
     "consola": "^3.4.2",
     "defu": "^6.1.7",
     "minimatch": "^10.2.5",
-    "@master/css-schema": "workspace:^",
-    "@master/css-lexer": "workspace:^"
+    "@stet-css/schema": "workspace:^",
+    "@stet-css/lexer": "workspace:^"
   },
   "devDependencies": {
-    "@master/css-compiler": "workspace:^"
+    "@stet-css/compiler": "workspace:^"
   }
 }

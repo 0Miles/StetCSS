@@ -71,9 +71,9 @@ async function createSmokeReport(): Promise<BenchmarkReport> {
     generatedAt: new Date().toISOString(),
     environment: collectEnvironment(),
     packages: await collectPackageVersions([
-      '@master/css',
-      '@master/css-cli',
-      '@master/css-runtime',
+      '@stet-css/core',
+      '@stet-css/cli',
+      '@stet-css/runtime',
       'cheerio'
     ]),
     fixtures: benchmarkFixtures,

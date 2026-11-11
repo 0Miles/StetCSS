@@ -1,5 +1,5 @@
-import { generateValidRules } from '@master/css-validator'
-import type { MasterCSS } from '@master/css-engine'
+import { generateValidRules } from '@stet-css/validator'
+import type { MasterCSS } from '@stet-css/engine'
 import { equalDeclarations, equalVariants } from './rule-signatures'
 
 export interface ClassConflict {

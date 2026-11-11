@@ -38,43 +38,43 @@
     },
     "packages": [
         {
-            "name": "@master/css",
+            "name": "@stet-css/core",
             "version": "workspace:^"
         },
         {
-            "name": "@master/css-cli",
+            "name": "@stet-css/cli",
             "version": "workspace:^"
         },
         {
-            "name": "@master/css-compiler",
+            "name": "@stet-css/compiler",
             "version": "workspace:^"
         },
         {
-            "name": "@master/css-engine",
+            "name": "@stet-css/engine",
             "version": "workspace:^"
         },
         {
-            "name": "@master/css-project",
+            "name": "@stet-css/project",
             "version": "workspace:^"
         },
         {
-            "name": "@master/css-scanner",
+            "name": "@stet-css/scanner",
             "version": "workspace:^"
         },
         {
-            "name": "@master/css-source",
+            "name": "@stet-css/source",
             "version": "workspace:^"
         },
         {
-            "name": "@master/css-stylesheet",
+            "name": "@stet-css/stylesheet",
             "version": "workspace:^"
         },
         {
-            "name": "@master/css-validator",
+            "name": "@stet-css/validator",
             "version": "workspace:^"
         },
         {
-            "name": "@master/css.vite",
+            "name": "@stet-css/vite",
             "version": "workspace:^"
         },
         {

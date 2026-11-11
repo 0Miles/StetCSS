@@ -1,8 +1,8 @@
 import { expect, test } from 'vitest'
-import { MasterCSS } from '@master/css-engine'
-import defaultManifestJSON from '@master/css-preset/default-manifest.json' with { type: 'json' }
+import { MasterCSS } from '@stet-css/engine'
+import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 import { compileCSSManifest } from '../src/browser'
-import type { MasterCSSManifest } from '@master/css-schema/manifest'
+import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 
 const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
 

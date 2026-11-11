@@ -1,5 +1,5 @@
 {
-  "name": "@master/css-mcp",
+  "name": "@stet-css/mcp",
   "type": "module",
   "scripts": {
     "build": "tsdown --config ../../shared/tsdown-package.config.ts",
@@ -56,16 +56,16 @@
     "provenance": true
   },
   "dependencies": {
-    "@master/css-compiler": "workspace:^",
-    "@master/css-engine": "workspace:^",
-    "@master/css-diagnostics": "workspace:^",
-    "@master/css-language-service": "workspace:^",
-    "@master/css-lexer": "workspace:^",
-    "@master/css-lint": "workspace:^",
-    "@master/css-preset": "workspace:^",
-    "@master/css-project": "workspace:^",
-    "@master/css-server": "workspace:^",
-    "@master/css-validator": "workspace:^",
+    "@stet-css/compiler": "workspace:^",
+    "@stet-css/engine": "workspace:^",
+    "@stet-css/diagnostics": "workspace:^",
+    "@stet-css/language-service": "workspace:^",
+    "@stet-css/lexer": "workspace:^",
+    "@stet-css/lint": "workspace:^",
+    "@stet-css/preset": "workspace:^",
+    "@stet-css/project": "workspace:^",
+    "@stet-css/server": "workspace:^",
+    "@stet-css/validator": "workspace:^",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "fast-glob": "^3.3.3",
     "vscode-languageserver-textdocument": "^1.0.12",

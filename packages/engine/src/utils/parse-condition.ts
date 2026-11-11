@@ -1,6 +1,6 @@
 import { CONDITION_COMPARABLE_FEATURES, CONDITION_COMPARISON_OPERATORS, CONDITION_FEATURE_ALIASES, CONDITION_IDENTIFIERS, CONDITION_LOGICAL_OPERATORS } from '../common'
 import type MasterCSS from '../core'
-import type { MasterCSSManifestConditionIdentifier } from '@master/css-schema/manifest'
+import type { MasterCSSManifestConditionIdentifier } from '@stet-css/schema/manifest'
 import parsePair from './parse-pair'
 import parseValue from './parse-value'
 import replaceCharOutsideQuotes from './replace-char-outside-quotes'

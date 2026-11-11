@@ -5,5 +5,5 @@
 </template>
 
 <style>
-@import '@master/css';
+@import '@stet-css/core';
 </style>

@@ -3,14 +3,14 @@ import {
   createManifestFromCSSResult,
   type CompileCSSOptions,
   type CompileCSSResult
-} from '@master/css-compiler'
+} from '@stet-css/compiler'
 import {
   isMasterCSSPackageStyleFile as isMasterCSSCompilerPackageStyleFile,
   resolveMasterCSSPackageImportGraph
-} from '@master/css-compiler'
-import type { MasterCSSEmittedGlobals } from '@master/css'
-import type { createCSSWithNativeDeclarations } from '@master/css-validator/native-declaration'
-import type { MasterCSSManifest } from '@master/css-schema/manifest'
+} from '@stet-css/compiler'
+import type { MasterCSSEmittedGlobals } from '@stet-css/core'
+import type { createCSSWithNativeDeclarations } from '@stet-css/validator/native-declaration'
+import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 import { renderCompiledManifestCSS, type RenderCompiledManifestCSSResult } from './render'
 import {
   findCSSImportStatements,
@@ -22,9 +22,9 @@ import {
   MASTER_CSS_ENTRY_DIRECTIVE_NAME,
   normalizeMasterCSSModuleIds,
   parseCSSImportSource
-} from '@master/css-lexer'
-import { extractClassCandidates } from '@master/css-source'
-import { VIRTUAL_CSS_ID } from '@master/css-integration/style-module'
+} from '@stet-css/lexer'
+import { extractClassCandidates } from '@stet-css/source'
+import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
 import { createRequire } from 'node:module'
 import { dirname, extname, join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -44,7 +44,7 @@ import {
 import { filterExcludedClasses } from './class-exclusion'
 
 export * from './directives'
-export { collectCSSVariableReferences } from '@master/css-lexer'
+export { collectCSSVariableReferences } from '@stet-css/lexer'
 
 export const STYLE_CSS_REQUEST_RE = /\.(css|scss|sass)(?:[?#].*)?$/
 
@@ -410,11 +410,11 @@ export function hasLocalStyleDirectives(source: string) {
 }
 
 function isStyleCSSHostImport(importSource: string, masterImport: string) {
-  return importSource === masterImport || (masterImport === '@master/css' && normalizeStyleCSSModuleIds().has(importSource))
+  return importSource === masterImport || (masterImport === '@stet-css/core' && normalizeStyleCSSModuleIds().has(importSource))
 }
 
 export function createStyleCSSHostSource(source: string, options: CreateStyleCSSHostSourceOptions = {}) {
-  const masterImport = options.masterImport || '@master/css'
+  const masterImport = options.masterImport || '@stet-css/core'
   const masterSource = options.masterSource
   const hasMasterSource = Object.prototype.hasOwnProperty.call(options, 'masterSource')
   const cleanSource = removeMasterStyleDirectives(source).code
@@ -519,7 +519,7 @@ export async function createMasterCSSPackageHostSource(
   }
 
   const graph = resolveMasterCSSPackageCompileSource(projectDir)
-  const result = await compileStyleCSS(graph.dependencies[0] || '@master/css', graph.source, {
+  const result = await compileStyleCSS(graph.dependencies[0] || '@stet-css/core', graph.source, {
     ...options,
     preserveNativeCSS: true
   })
@@ -866,7 +866,7 @@ function hasMasterCSSPackageSource(styleCSSSources?: StyleCSSSources) {
 
 async function compileMasterCSSPackage(projectDir: string | undefined, options: CompileStyleCSSOptions) {
   const graph = resolveMasterCSSPackageCompileSource(projectDir)
-  const result = await compileStyleCSS(graph.dependencies[0] || '@master/css', graph.source, options)
+  const result = await compileStyleCSS(graph.dependencies[0] || '@stet-css/core', graph.source, options)
   return {
     ...result,
     dependencies: graph.dependencies

@@ -1,6 +1,6 @@
 import MasterCSS from './core'
-import type { ResolvedVariableValue, Variable } from '@master/css-schema/css-syntax'
-import { replaceCSSVariableReferences } from '@master/css-lexer'
+import type { ResolvedVariableValue, Variable } from '@stet-css/schema/css-syntax'
+import { replaceCSSVariableReferences } from '@stet-css/lexer'
 import { normalizeEngineVariableValue } from './utils/css-variables'
 
 export default class VariableRule {

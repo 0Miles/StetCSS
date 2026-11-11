@@ -1,23 +1,23 @@
 export const MASTER_CSS_VERSION = 'rc'
 
 export const MASTER_CSS_PACKAGES = {
-  css: '@master/css',
-  runtime: '@master/css-runtime',
-  preset: '@master/css-preset',
-  cli: '@master/css-cli',
-  vite: '@master/css.vite',
-  next: '@master/css.next',
-  nuxt: '@master/css.nuxt',
-  astro: '@master/css.astro',
-  svelte: '@master/css.svelte',
-  svelteAddon: '@master/css-sv',
-  webpack: '@master/css.webpack',
-  eslintConfig: '@master/eslint-config-css',
-  mcp: '@master/css-mcp'
+  css: '@stet-css/core',
+  runtime: '@stet-css/runtime',
+  preset: '@stet-css/preset',
+  cli: '@stet-css/cli',
+  vite: '@stet-css/vite',
+  next: '@stet-css/next',
+  nuxt: '@stet-css/nuxt',
+  astro: '@stet-css/astro',
+  svelte: '@stet-css/svelte',
+  svelteAddon: '@stet-css/sv',
+  webpack: '@stet-css/webpack',
+  eslintConfig: '@stet-css/eslint-config',
+  mcp: '@stet-css/mcp'
 } as const
 
 export const CANONICAL_ESLINT_CONFIG = `import { defineConfig } from 'eslint/config'
-import css from '@master/eslint-config-css'
+import css from '@stet-css/eslint-config'
 
 export default defineConfig([
   ...css

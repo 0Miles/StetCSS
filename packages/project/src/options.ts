@@ -1,5 +1,5 @@
-import type { CompileCSSManifestResult, CompileProjectManifestResult } from '@master/css-compiler'
-import type { MasterCSSManifest } from '@master/css-schema/manifest'
+import type { CompileCSSManifestResult, CompileProjectManifestResult } from '@stet-css/compiler'
+import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 
 export interface LoadManifestOptions {
   baseManifest?: MasterCSSManifest

@@ -6,7 +6,7 @@ import {
   addStylesheetImportToLayout
 } from '../src/transforms'
 
-describe('@master/css-sv transforms', () => {
+describe('@stet-css/sv transforms', () => {
   test('adds the Master CSS Svelte Vite plugin idempotently', () => {
     const input = `
 import { sveltekit } from '@sveltejs/kit/vite'
@@ -20,7 +20,7 @@ export default defineConfig({
     const twice = addMasterCSSVitePlugin(once)
 
     expect(twice).toBe(once)
-    expect(once).toContain(`import masterCSS from '@master/css.svelte/vite';`)
+    expect(once).toContain(`import masterCSS from '@stet-css/svelte/vite';`)
     expect(once).toContain('plugins: [sveltekit(), masterCSS()]')
   })
 
@@ -29,7 +29,7 @@ export default defineConfig({
     const twice = addMasterCSSStylesheetImport(once)
 
     expect(twice).toBe(once)
-    expect(once).toContain("@import '@master/css';")
+    expect(once).toContain("@import '@stet-css/core';")
     expect(once).toContain('body {')
   })
 
@@ -44,7 +44,7 @@ export default defineConfig({
   test('creates a server hook when none exists', () => {
     const output = addMasterCSSServerHook('', 'ts')
 
-    expect(output).toContain(`import masterCSSSvelteHandle from '@master/css.svelte/hooks.server';`)
+    expect(output).toContain(`import masterCSSSvelteHandle from '@stet-css/svelte/hooks.server';`)
     expect(output).toContain(`import type { Handle } from '@sveltejs/kit';`)
     expect(output).toContain('const masterCSSHandle: Handle = masterCSSSvelteHandle;')
     expect(output).toContain('export const handle')

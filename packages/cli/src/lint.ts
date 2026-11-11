@@ -1,4 +1,4 @@
-import { createCSSWithNativeDeclarations } from '@master/css-validator'
+import { createCSSWithNativeDeclarations } from '@stet-css/validator'
 import {
   fixMasterCSSContent,
   lintMasterCSSContent,
@@ -8,8 +8,8 @@ import {
   type MasterCSSLintRuleId,
   type MasterCSSLintSourceDiagnostic,
   type MasterCSSLintSummary
-} from '@master/css-lint'
-import { loadProjectManifest } from '@master/css-project/manifest'
+} from '@stet-css/lint'
+import { loadProjectManifest } from '@stet-css/project/manifest'
 import fg from 'fast-glob'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -118,7 +118,7 @@ function formatStylish(report: CLILintReport) {
     if (!result.diagnostics.length) continue
     lines.push(result.filePath)
     for (const diagnostic of result.diagnostics) {
-      lines.push(`  ${diagnostic.loc.start.line}:${diagnostic.loc.start.column}  ${diagnostic.severity}  ${diagnostic.message}  ${diagnostic.ruleId ? `@master/css/${diagnostic.ruleId}` : diagnostic.code}`)
+      lines.push(`  ${diagnostic.loc.start.line}:${diagnostic.loc.start.column}  ${diagnostic.severity}  ${diagnostic.message}  ${diagnostic.ruleId ? `@stet-css/core/${diagnostic.ruleId}` : diagnostic.code}`)
     }
   }
   return lines.length ? `${lines.join('\n')}\n` : ''

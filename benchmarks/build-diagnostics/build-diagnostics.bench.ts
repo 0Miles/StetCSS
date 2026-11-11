@@ -191,12 +191,12 @@ async function createBuildDiagnosticsReport(): Promise<BenchmarkReport> {
     generatedAt: new Date().toISOString(),
     environment: collectEnvironment(),
     packages: await collectPackageVersions([
-      '@master/css',
-      '@master/css-cli',
-      '@master/css-project',
-      '@master/css-scanner',
-      '@master/css-stylesheet',
-      '@master/css.vite',
+      '@stet-css/core',
+      '@stet-css/cli',
+      '@stet-css/project',
+      '@stet-css/scanner',
+      '@stet-css/stylesheet',
+      '@stet-css/vite',
       'fast-glob',
       'vite'
     ]),

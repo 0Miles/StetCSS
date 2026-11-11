@@ -4,14 +4,14 @@ import { dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node
 import {
   inspectCSS,
   resolveMasterCSSPackageEntryFile
-} from '@master/css-compiler'
+} from '@stet-css/compiler'
 import {
   createMasterCSSManifestEntryPattern,
   hasMasterCSSManifestEntrypoint as hasMasterCSSManifestEntrypointFallback,
   isMasterCSSModuleId,
   normalizeMasterCSSModuleIds
-} from '@master/css-lexer'
-import { stripResourceQuery } from '@master/css-integration/manifest-module'
+} from '@stet-css/lexer'
+import { stripResourceQuery } from '@stet-css/integration/manifest-module'
 
 const CSS_MANIFEST_ENTRY_IGNORED_DIRECTORIES = new Set([
   'node_modules',
@@ -22,7 +22,7 @@ const CSS_MANIFEST_ENTRY_IGNORED_DIRECTORIES = new Set([
   '.svelte-kit'
 ])
 
-const MASTER_CSS_PACKAGE_NAME_PATTERN = /^@master\/css(?:$|[.-])/
+const MASTER_CSS_PACKAGE_NAME_PATTERN = /^@stet-css\/(?!eslint-|create$)/
 
 const PACKAGE_JSON_DEPENDENCY_FIELDS = [
   'dependencies',

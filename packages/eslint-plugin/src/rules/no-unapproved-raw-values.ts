@@ -4,7 +4,7 @@ import createRule from '../create-rule'
 import {
   createUnapprovedRawValueClassesReport,
   type RawValuePolicyOptions
-} from '@master/css-lint'
+} from '@stet-css/lint'
 import reportLintDiagnostics from '../utils/report-lint-diagnostics'
 import defineSourceVisitors, { shouldUseSourceVisitors } from '../utils/define-source-visitors'
 

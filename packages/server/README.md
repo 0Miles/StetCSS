@@ -20,11 +20,11 @@
       <img alt="NPM Version" src="https://img.shields.io/github/v/release/master-co/css?include_prereleases&color=f6f7f8&label=&style=for-the-badge&logo=github">
     </picture>
   </a>
-  <a aria-label="NPM Package" href="https://www.npmjs.com/package/@master/css-server">
+  <a aria-label="NPM Package" href="https://www.npmjs.com/package/@stet-css/server">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/npm/dm/@master/css-server?color=212022&label=%20&logo=npm&style=for-the-badge">
-      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/npm/dm/@master/css-server?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
-      <img alt="NPM package ( download / month )" src="https://img.shields.io/npm/dm/@master/css-server?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
+      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/npm/dm/@stet-css/server?color=212022&label=%20&logo=npm&style=for-the-badge">
+      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/npm/dm/@stet-css/server?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
+      <img alt="NPM package ( download / month )" src="https://img.shields.io/npm/dm/@stet-css/server?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
     </picture>
   </a>
   <a aria-label="Discord Community" href="https://discord.gg/sZNKpAAAw6">
@@ -55,10 +55,10 @@
 ## Installation
 
 ```bash
-npm install @master/css-server
+npm install @stet-css/server
 ```
 
-`@master/css-server` renders required Master CSS from HTML. It parses HTML, extracts class names, creates a `MasterCSS` instance, and injects or updates `<style id="master-css">`.
+`@stet-css/server` renders required Master CSS from HTML. It parses HTML, extracts class names, creates a `MasterCSS` instance, and injects or updates `<style id="master-css">`.
 
 ## API
 
@@ -67,7 +67,7 @@ npm install @master/css-server
 Render HTML and inject generated CSS.
 
 ```ts
-import { render } from '@master/css-server'
+import { render } from '@stet-css/server'
 
 const result = render('<div class="text:center"></div>', manifest)
 
@@ -80,7 +80,7 @@ console.log(result.css.text)
 Render only the CSS needed by an HTML string.
 
 ```ts
-import { renderCSS } from '@master/css-server'
+import { renderCSS } from '@stet-css/server'
 
 const css = renderCSS('<div class="text:center"></div>', manifest)
 ```
@@ -90,7 +90,7 @@ const css = renderCSS('<div class="text:center"></div>', manifest)
 Parse HTML into the lightweight DOM representation used by the server renderer.
 
 ```ts
-import { parseHTML } from '@master/css-server'
+import { parseHTML } from '@stet-css/server'
 
 const document = parseHTML('<html><head></head><body></body></html>')
 ```

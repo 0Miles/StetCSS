@@ -1,23 +1,23 @@
-# @master/css-preset
+# @stet-css/preset
 
 The default Master CSS preset source and compiled manifest.
 
 ## Installation
 
 ```bash
-npm install @master/css-preset
+npm install @stet-css/preset
 ```
 
-Most applications should import preset styles through `@master/css`. Use this package directly when tooling needs the preset package boundary.
+Most applications should import preset styles through `@stet-css/core`. Use this package directly when tooling needs the preset package boundary.
 
 ## CSS entries
 
 ```css
-@import '@master/css-preset';
-@import '@master/css-preset/base.css';
-@import '@master/css-preset/theme.css';
-@import '@master/css-preset/variants.css';
-@import '@master/css-preset/utilities.css';
+@import '@stet-css/preset';
+@import '@stet-css/preset/base.css';
+@import '@stet-css/preset/theme.css';
+@import '@stet-css/preset/variants.css';
+@import '@stet-css/preset/utilities.css';
 ```
 
 The default index entry contains:
@@ -40,13 +40,13 @@ The default index entry contains:
 The compiled default manifest is available as JSON:
 
 ```ts
-import defaultManifest from '@master/css-preset/default-manifest.json'
+import defaultManifest from '@stet-css/preset/default-manifest.json'
 ```
 
 The generated manifest is derived from the preset CSS source. Do not edit generated manifest output by hand.
 
 ## Related packages
 
-- `@master/css` re-exports the preset CSS entries for application use.
-- `@master/css-engine` owns built-in key aliases and native value namespaces.
-- `@master/css-compiler` compiles preset CSS source into manifest data.
+- `@stet-css/core` re-exports the preset CSS entries for application use.
+- `@stet-css/engine` owns built-in key aliases and native value namespaces.
+- `@stet-css/compiler` compiles preset CSS source into manifest data.

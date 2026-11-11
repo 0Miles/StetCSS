@@ -2,9 +2,9 @@ import {
   compileCSSManifest,
   initCSSCompiler,
   type CompileCSSManifestResult
-} from '@master/css-compiler/browser'
-import type { MasterCSSEmittedGlobals } from '@master/css'
-import type { MasterCSSManifest } from '@master/css-schema/manifest'
+} from '@stet-css/compiler/browser'
+import type { MasterCSSEmittedGlobals } from '@stet-css/core'
+import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 import { renderCompiledManifestCSS } from './render'
 
 export interface CompileBrowserStyleCSSOptions {

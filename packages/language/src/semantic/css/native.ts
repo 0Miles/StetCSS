@@ -2,7 +2,7 @@ import { pushHighlightToken, type HighlightTokenItem } from '../highlight'
 import {
   collectCSSDeclarationRanges,
   findCSSClosingQuote
-} from '@master/css-lexer'
+} from '@stet-css/lexer'
 
 type DeclarationPropertyMode = 'none' | 'settings' | 'theme'
 

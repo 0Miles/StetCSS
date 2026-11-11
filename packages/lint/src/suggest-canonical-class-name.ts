@@ -3,15 +3,15 @@ import {
   builtinNativeValueNamespaces,
   type GeneratedRule,
   type MasterCSS
-} from '@master/css-engine'
+} from '@stet-css/engine'
 import {
   inspectMasterCSSClass,
   normalizeMasterCSSNumericValue,
   type MasterCSSClassInspection
-} from '@master/css-engine/inspect'
-import { splitMasterCSSTopLevel } from '@master/css-lexer'
-import UtilityType from '@master/css-schema/utility-type'
-import type { Variable } from '@master/css-schema/css-syntax'
+} from '@stet-css/engine/inspect'
+import { splitMasterCSSTopLevel } from '@stet-css/lexer'
+import UtilityType from '@stet-css/schema/utility-type'
+import type { Variable } from '@stet-css/schema/css-syntax'
 import {
   getDeclarationPropertySignature,
   getRulesSignature,

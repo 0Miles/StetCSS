@@ -1,8 +1,8 @@
-# AI Notes For `@master/css-runtime`
+# AI Notes For `@stet-css/runtime`
 
 ## Responsibility
 
-`@master/css-runtime` runs Master CSS in the browser. It observes DOM class changes, creates or hydrates `style#master-css`, tracks class usage counts, registers emittedGlobals global CSS counts, and inserts/removes native CSS rules.
+`@stet-css/runtime` runs Master CSS in the browser. It observes DOM class changes, creates or hydrates `style#master-css`, tracks class usage counts, registers emittedGlobals global CSS counts, and inserts/removes native CSS rules.
 
 `CSSRuntime` directly extends `MasterCSS`; any value-level logic added to runtime source, engine core, engine root value exports, schema value constants, preset manifest loading, or other runtime-imported modules can enter the browser runtime bundle.
 
@@ -77,17 +77,17 @@ Runtime does not expose a global event bus or tooling observer API. Third-party 
 ## Validation
 
 ```sh
-pnpm --filter @master/css-runtime e2e
-pnpm --filter @master/css-runtime lint
-pnpm --filter @master/css-runtime type-check
-pnpm --filter @master/css-runtime build
+pnpm --filter @stet-css/runtime e2e
+pnpm --filter @stet-css/runtime lint
+pnpm --filter @stet-css/runtime type-check
+pnpm --filter @stet-css/runtime build
 ```
 
 Use or extend `e2e/lifecycle.test.ts`, `e2e/class-usages.test.ts`, `e2e/progressive/**`, and issue-specific browser regressions.
 
 ## Benchmark Guidance
 
-Run `pnpm --filter @master/css-runtime bench` when changing DOM observation, class tracking, lifecycle behavior, hydration, runtime layer insertion/deletion, CSSOM mutation, or the global browser bundle. Correctness e2e should remain browser correctness, not timing assertions. Report benchmark status, global runtime asset impact, memory/cold-start/runtime CPU/CSSOM tradeoffs, and whether generated CSS output, progressive hydration, or fallback hydration changed.
+Run `pnpm --filter @stet-css/runtime bench` when changing DOM observation, class tracking, lifecycle behavior, hydration, runtime layer insertion/deletion, CSSOM mutation, or the global browser bundle. Correctness e2e should remain browser correctness, not timing assertions. Report benchmark status, global runtime asset impact, memory/cold-start/runtime CPU/CSSOM tradeoffs, and whether generated CSS output, progressive hydration, or fallback hydration changed.
 
 ## Bundle Audit Notes
 

@@ -1,8 +1,8 @@
-# AI Notes For `@master/css-engine`
+# AI Notes For `@stet-css/engine`
 
 ## Responsibility
 
-`@master/css-engine` executes `MasterCSSManifest` values. It owns class matching, value parsing, selector and condition parsing/generation, variable and animation insertion, cascade layers, rule priority sorting, hydration manifest generation, CSS text emission, and built-in registries.
+`@stet-css/engine` executes `MasterCSSManifest` values. It owns class matching, value parsing, selector and condition parsing/generation, variable and animation insertion, cascade layers, rule priority sorting, hydration manifest generation, CSS text emission, and built-in registries.
 
 ## Owns
 
@@ -15,8 +15,8 @@
 
 ## Does Not Own
 
-- CSS-first authoring or manifest lowering; use `@master/css-compiler`.
-- Default preset source or generated default manifest; use `@master/css-preset`.
+- CSS-first authoring or manifest lowering; use `@stet-css/compiler`.
+- Default preset source or generated default manifest; use `@stet-css/preset`.
 - Project discovery, CSS import graphs, runtime DOM behavior, server rendering, scanning, language tooling, ESLint, examples, or site docs.
 - Manifest-provided key aliases or native namespace registries; those are engine built-ins.
 
@@ -47,7 +47,7 @@
 ## Risk Areas
 
 - Class matching and compiled utility order.
-- `src/core.ts` and root value exports are runtime-covered because `@master/css-runtime` extends `MasterCSS`.
+- `src/core.ts` and root value exports are runtime-covered because `@stet-css/runtime` extends `MasterCSS`.
 - Value, selector, and condition parsing/generation.
 - Priority sorting and cascade layer insertion.
 - Variable, animation, emittedGlobals, and hydration behavior.
@@ -68,12 +68,12 @@
 ## Validation
 
 ```sh
-pnpm --filter @master/css-engine test
-pnpm --filter @master/css-engine lint
-pnpm --filter @master/css-engine type-check
-pnpm --filter @master/css-engine build
+pnpm --filter @stet-css/engine test
+pnpm --filter @stet-css/engine lint
+pnpm --filter @stet-css/engine type-check
+pnpm --filter @stet-css/engine build
 ```
 
 ## Benchmark Guidance
 
-Run `pnpm --filter @master/css-engine bench` when changing class matching, rule creation, generation, parsing, priority sorting, layer insertion, manifest loading, manifest compilation, or cache/index behavior. Correctness validation must run first. Report benchmark status, `dist/core.js` raw/gzip/brotli size risk, memory/cold-start/runtime CPU tradeoffs, and whether CSS output or cascade order changed. For runtime-covered core changes, also report likely `@master/css-runtime` browser bundle impact.
+Run `pnpm --filter @stet-css/engine bench` when changing class matching, rule creation, generation, parsing, priority sorting, layer insertion, manifest loading, manifest compilation, or cache/index behavior. Correctness validation must run first. Report benchmark status, `dist/core.js` raw/gzip/brotli size risk, memory/cold-start/runtime CPU tradeoffs, and whether CSS output or cascade order changed. For runtime-covered core changes, also report likely `@stet-css/runtime` browser bundle impact.

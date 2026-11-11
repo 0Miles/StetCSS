@@ -100,9 +100,9 @@ async function createCSSOutputReport(): Promise<BenchmarkReport> {
     generatedAt: new Date().toISOString(),
     environment: collectEnvironment(),
     packages: await collectPackageVersions([
-      '@master/css',
-      '@master/css-cli',
-      '@master/css.vite',
+      '@stet-css/core',
+      '@stet-css/cli',
+      '@stet-css/vite',
       'tailwindcss',
       '@tailwindcss/cli',
       '@tailwindcss/vite',

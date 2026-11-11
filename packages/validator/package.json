@@ -1,5 +1,5 @@
 {
-  "name": "@master/css-validator",
+  "name": "@stet-css/validator",
   "type": "module",
   "scripts": {
     "build": "tsdown --config ../../shared/tsdown-package.config.ts",
@@ -54,10 +54,10 @@
     "provenance": true
   },
   "dependencies": {
-    "@master/css": "workspace:^",
-    "@master/css-preset": "workspace:^",
+    "@stet-css/core": "workspace:^",
+    "@stet-css/preset": "workspace:^",
     "css-tree": "^3.2.1",
-    "@master/css-schema": "workspace:^"
+    "@stet-css/schema": "workspace:^"
   },
   "devDependencies": {
     "@types/css-tree": "^2.3.11",

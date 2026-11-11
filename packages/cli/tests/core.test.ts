@@ -42,7 +42,7 @@ function runFailedCLI(args: string[], options: { cwd?: string, input?: string } 
 describe('root command', () => {
   it('shows scan options and the lint subcommand', () => {
     const output = runCLI(['--help'])
-    expect(output).toContain('Usage: @master/css-cli [options] [command] [source paths...]')
+    expect(output).toContain('Usage: @stet-css/cli [options] [command] [source paths...]')
     expect(output).toContain('-w, --watch')
     expect(output).toContain('--no-export')
     expect(output).toContain('Commands:')

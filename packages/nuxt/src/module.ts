@@ -3,16 +3,16 @@ import { mkdirSync, realpathSync, writeFileSync } from 'node:fs'
 import { dirname, resolve as resolvePath } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { name } from '../package.json'
-import masterCSS from '@master/css.vite'
-import { VIRTUAL_MANIFEST_ID } from '@master/css-integration/manifest-module'
+import masterCSS from '@stet-css/vite'
+import { VIRTUAL_MANIFEST_ID } from '@stet-css/integration/manifest-module'
 import {
   toBrowserManifestFacadeModule,
   toInlineManifestModule
-} from '@master/css-integration/manifest-facade'
-import { toHashedManifestAssetFileName } from '@master/css-integration/node'
-import { loadProjectManifestJSON } from '@master/css-project/manifest'
-import { findCSSManifestEntryFiles } from '@master/css-project/entries'
-import { collectStyleCSSDependencies } from '@master/css-stylesheet'
+} from '@stet-css/integration/manifest-facade'
+import { toHashedManifestAssetFileName } from '@stet-css/integration/node'
+import { loadProjectManifestJSON } from '@stet-css/project/manifest'
+import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
+import { collectStyleCSSDependencies } from '@stet-css/stylesheet'
 import type { ModuleNode, Plugin } from 'vite'
 import defaultOptions, { type ModuleOptions } from './options'
 

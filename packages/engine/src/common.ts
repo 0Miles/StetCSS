@@ -1,5 +1,5 @@
-import { MASTER_CSS_VALUE_UNIT_PATTERN, MASTER_CSS_VALUE_UNITS } from '@master/css-lexer'
-import type { MasterCSSManifestConditionIdentifier } from '@master/css-schema/manifest'
+import { MASTER_CSS_VALUE_UNIT_PATTERN, MASTER_CSS_VALUE_UNITS } from '@stet-css/lexer'
+import type { MasterCSSManifestConditionIdentifier } from '@stet-css/schema/manifest'
 
 export const VALUE_DELIMITERS = {
   '(': ')',

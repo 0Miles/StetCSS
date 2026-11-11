@@ -30,11 +30,11 @@ function buildPackage() {
 }
 
 function createFixture(root: string) {
-  const baseCSS = readFileSync(require.resolve('@master/css/base.css'), 'utf-8')
+  const baseCSS = readFileSync(require.resolve('@stet-css/core/base.css'), 'utf-8')
   writeFileSync(join(root, 'entry.js'), 'console.log("webpack runtime fixture")\n')
   writeFileSync(join(root, 'app.css'), [
     '@master entry;',
-    '@import "@master/css";',
+    '@import "@stet-css/core";',
     ''
   ].join('\n'))
   return {

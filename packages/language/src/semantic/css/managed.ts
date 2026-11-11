@@ -7,7 +7,7 @@ import {
   isCSSIdentStart,
   readCSSIdent,
   skipCSSWhitespace
-} from '@master/css-lexer'
+} from '@stet-css/lexer'
 
 export const MANAGED_DEFINITION_DIRECTIVES = new Set(['defaults', 'components', 'utilities'])
 

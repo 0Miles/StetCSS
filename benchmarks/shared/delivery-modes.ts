@@ -4,8 +4,8 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { extname, isAbsolute, relative, resolve } from 'node:path'
 import { performance } from 'node:perf_hooks'
 import type { Browser, Page } from '@playwright/test'
-import { render } from '@master/css-server'
-import type { MasterCSSManifest } from '@master/css'
+import { render } from '@stet-css/server'
+import type { MasterCSSManifest } from '@stet-css/core'
 import { benchmarkAdapters } from '../fixtures/manifest'
 import { getStaticFixtureSource, staticFixtureIds } from '../fixtures/static'
 import { summarizeBytes } from './bytes'
@@ -1416,14 +1416,14 @@ function getContentType(file: string) {
 }
 
 async function readRuntimeBundle() {
-  const file = resolveBenchmarkPackageFile('@master/css-runtime', 'dist/global.min.js')
-  assertExistingFile(file, 'Run `pnpm --filter @master/css-runtime build` before `bench:master-delivery-modes`.')
+  const file = resolveBenchmarkPackageFile('@stet-css/runtime', 'dist/global.min.js')
+  assertExistingFile(file, 'Run `pnpm --filter @stet-css/runtime build` before `bench:master-delivery-modes`.')
   return readFile(file)
 }
 
 async function readDefaultManifestJSON() {
-  const file = resolveBenchmarkPackageFile('@master/css-preset', 'src/default-manifest.json')
-  assertExistingFile(file, 'Expected @master/css-preset default manifest to exist.')
+  const file = resolveBenchmarkPackageFile('@stet-css/preset', 'src/default-manifest.json')
+  assertExistingFile(file, 'Expected @stet-css/preset default manifest to exist.')
   return readFile(file)
 }
 

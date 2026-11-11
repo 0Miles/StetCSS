@@ -1,4 +1,4 @@
-import type { Variable } from '@master/css-schema/css-syntax'
+import type { Variable } from '@stet-css/schema/css-syntax'
 
 function formatAlphaPercentage(value: number) {
   return String(Object.is(value, -0) ? 0 : value).replace(/^(-?)0\./, '$1.') + '%'

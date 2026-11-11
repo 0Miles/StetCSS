@@ -8,7 +8,7 @@ import type { MasterCSS } from '../master-css'
 import {
   collectCSSDirectiveRanges,
   type CSSDirectiveRuleRange
-} from '@master/css-lexer'
+} from '@stet-css/lexer'
 
 const CSS_LANGUAGE_IDS = new Set(['css', 'scss', 'less'])
 

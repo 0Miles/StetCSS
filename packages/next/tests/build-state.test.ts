@@ -24,7 +24,7 @@ describe('resolveMasterCSSBuildState', () => {
     const root = createFixtureDir()
     const entry = join(root, 'app/globals.css')
     writeFileSync(entry, [
-      '@import "@master/css";',
+      '@import "@stet-css/core";',
       '',
       '.hidden-card {',
       '    @compose hidden;',

@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
-import UtilityType from '@master/css-schema/utility-type'
-import { createCSSWithNativeDeclarations } from '@master/css-validator'
+import UtilityType from '@stet-css/schema/utility-type'
+import { createCSSWithNativeDeclarations } from '@stet-css/validator'
 import {
   defaultCanonicalClassNameOptions,
   defaultClassLintSettings,

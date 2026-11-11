@@ -1,8 +1,8 @@
-# AI Notes For `@master/css-source`
+# AI Notes For `@stet-css/source`
 
 ## Responsibility
 
-`@master/css-source` owns source-level class candidate extraction and source adapters shared by static rendering and framework integrations.
+`@stet-css/source` owns source-level class candidate extraction and source adapters shared by static rendering and framework integrations.
 
 ## Owns
 
@@ -16,7 +16,7 @@
 
 - Class validation, scanner state, or CSS generation.
 - Engine, compiler, runtime, server, language service, build integration, framework integration, examples, or site behavior.
-- Low-level lexical ranges, directive/import scanners, class tokenization, or CSS unit constants; use `@master/css-lexer`.
+- Low-level lexical ranges, directive/import scanners, class tokenization, or CSS unit constants; use `@stet-css/lexer`.
 
 ## Public Surface
 
@@ -60,8 +60,8 @@
 ## Validation
 
 ```sh
-pnpm --filter @master/css-source test
-pnpm --filter @master/css-source lint
-pnpm --filter @master/css-source type-check
-pnpm --filter @master/css-source build
+pnpm --filter @stet-css/source test
+pnpm --filter @stet-css/source lint
+pnpm --filter @stet-css/source type-check
+pnpm --filter @stet-css/source build
 ```

@@ -1,5 +1,5 @@
-import type { GeneratedRule, MasterCSS } from '@master/css-engine'
-import { inspectMasterCSSClass } from '@master/css-engine/inspect'
+import type { GeneratedRule, MasterCSS } from '@stet-css/engine'
+import { inspectMasterCSSClass } from '@stet-css/engine/inspect'
 import {
   equalVariants,
   getDeclarationSignature

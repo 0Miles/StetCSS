@@ -1,5 +1,5 @@
 import { test, expect, it } from 'vitest'
-import { extractClassCandidates } from '@master/css-source'
+import { extractClassCandidates } from '@stet-css/source'
 
 it('extract latent classes from js raw', () => {
     const content = `
@@ -138,7 +138,7 @@ test('group', () => {
 test('import', () => {
     expect(extractClassCandidates(`
         import * as fs from 'fs'
-        import css from '@master/css'
+        import css from '@stet-css/core'
         require('fs')
         await import('file:///')
     `))

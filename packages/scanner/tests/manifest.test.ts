@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test, expect } from 'vitest'
-import { compileCSSManifest } from '@master/css-compiler'
+import { compileCSSManifest } from '@stet-css/compiler'
 
 test('uses default manifest settings without implicit manifest entry discovery', async () => {
   const scanner = await new CSSScanner({}, __dirname).init()

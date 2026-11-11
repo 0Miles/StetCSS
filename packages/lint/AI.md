@@ -1,8 +1,8 @@
-# AI Notes For `@master/css-lint`
+# AI Notes For `@stet-css/lint`
 
 ## Responsibility
 
-`@master/css-lint` owns framework-neutral Master CSS class lint policy. It sorts class names, detects conflicting classes, validates class diagnostics for lint consumers, and suggests canonical class names and class groups.
+`@stet-css/lint` owns framework-neutral Master CSS class lint policy. It sorts class names, detects conflicting classes, validates class diagnostics for lint consumers, and suggests canonical class names and class groups.
 
 ## Owns
 
@@ -21,8 +21,8 @@
 - Project manifest discovery or filesystem access.
 - Source extraction adapters.
 - Engine CSS generation semantics.
-- Class-list token/range parsing; use `@master/css-lexer`.
-- Class semantic inspection; use tooling-only helpers from `@master/css-engine/inspect`.
+- Class-list token/range parsing; use `@stet-css/lexer`.
+- Class semantic inspection; use tooling-only helpers from `@stet-css/engine/inspect`.
 - Language service lifecycle, scanner, runtime, framework, or site behavior.
 
 ## Public Surface
@@ -60,15 +60,15 @@
 ## Risk Areas
 
 - Ordering, conflict, and canonical suggestion behavior must match generated engine rules.
-- Do not duplicate class parsing, value segment splitting, numeric normalization, or generated-rule private field inspection in this package. Do not add lint-only inspection helpers to `MasterCSS`; use `@master/css-engine/inspect`.
+- Do not duplicate class parsing, value segment splitting, numeric normalization, or generated-rule private field inspection in this package. Do not add lint-only inspection helpers to `MasterCSS`; use `@stet-css/engine/inspect`.
 - Validation diagnostics must preserve scanner and ESLint expectations.
 - This package must not import ESLint, project resolution, filesystem, scanner, language service, or framework packages.
 
 ## Validation
 
 ```sh
-pnpm --filter @master/css-lint test
-pnpm --filter @master/css-lint lint
-pnpm --filter @master/css-lint type-check
-pnpm --filter @master/css-lint build
+pnpm --filter @stet-css/lint test
+pnpm --filter @stet-css/lint lint
+pnpm --filter @stet-css/lint type-check
+pnpm --filter @stet-css/lint build
 ```

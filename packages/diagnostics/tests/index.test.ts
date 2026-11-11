@@ -8,7 +8,7 @@ function createTempDir(prefix: string) {
   return mkdtempSync(join(tmpdir(), prefix))
 }
 
-describe('@master/css-diagnostics', () => {
+describe('@stet-css/diagnostics', () => {
   it('reports scanner state, per-file discoveries, and missing CSS diagnostics', async () => {
     const cwd = createTempDir('master-css-diagnostics-inspect-')
     try {

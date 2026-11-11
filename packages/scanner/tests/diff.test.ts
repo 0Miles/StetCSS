@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest'
-import { extractClassCandidates } from '@master/css-source'
+import { extractClassCandidates } from '@stet-css/source'
 import fs from 'node:fs'
 import path from 'node:path'
 import { glob } from 'fast-glob'

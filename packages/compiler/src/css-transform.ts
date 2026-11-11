@@ -10,7 +10,7 @@ export function setCSSTransform(transformer: CSSTransform) {
 
 export function getCSSTransform() {
   if (!transform) {
-    throw new Error('@master/css-compiler requires a CSS transform implementation. Use the default Node entry or initialize the browser entry.')
+    throw new Error('@stet-css/compiler requires a CSS transform implementation. Use the default Node entry or initialize the browser entry.')
   }
   return transform
 }

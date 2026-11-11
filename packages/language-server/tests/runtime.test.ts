@@ -24,10 +24,10 @@ test('falls back to the bundled runtime when workspace packages are missing', as
   const cwd = mkdtempSync(join(tmpdir(), 'master-css-language-server-runtime-'))
   try {
     writeFileSync(join(cwd, 'package.json'), JSON.stringify({ private: true }))
-    const brokenCSSPackageDir = join(cwd, 'node_modules', '@master', 'css')
+    const brokenCSSPackageDir = join(cwd, 'node_modules', '@stet-css', 'core')
     mkdirSync(brokenCSSPackageDir, { recursive: true })
     writeFileSync(join(brokenCSSPackageDir, 'package.json'), JSON.stringify({
-      name: '@master/css',
+      name: '@stet-css/core',
       type: 'module',
       exports: {
         '.': './missing.js'

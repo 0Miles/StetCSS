@@ -1,8 +1,8 @@
-# AI Notes For `@master/css.svelte`
+# AI Notes For `@stet-css/svelte`
 
 ## Responsibility
 
-`@master/css.svelte` provides a SvelteKit Vite wrapper and a SvelteKit server hook that injects early streamed CSS through `@master/css-server`.
+`@stet-css/svelte` provides a SvelteKit Vite wrapper and a SvelteKit server hook that injects early streamed CSS through `@stet-css/server`.
 
 ## Owns
 
@@ -15,7 +15,7 @@
 - Server rendering internals.
 - Vite mode semantics beyond the wrapper.
 - Generated CSS semantics.
-- Svelte source extraction implementation; `@master/css-source` owns it.
+- Svelte source extraction implementation; `@stet-css/source` owns it.
 
 ## Public Surface
 
@@ -47,8 +47,8 @@
 ## Validation
 
 ```sh
-pnpm --filter @master/css.svelte test
-pnpm --filter @master/css.svelte lint
-pnpm --filter @master/css.svelte check
-pnpm --filter @master/css.svelte build
+pnpm --filter @stet-css/svelte test
+pnpm --filter @stet-css/svelte lint
+pnpm --filter @stet-css/svelte check
+pnpm --filter @stet-css/svelte build
 ```

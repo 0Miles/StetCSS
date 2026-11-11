@@ -1,5 +1,5 @@
 {
-  "name": "@master/css-lint",
+  "name": "@stet-css/lint",
   "type": "module",
   "scripts": {
     "build": "tsdown --config ../../shared/tsdown-package.config.ts",
@@ -48,13 +48,13 @@
     "provenance": true
   },
   "dependencies": {
-    "@master/css-engine": "workspace:^",
-    "@master/css-language": "workspace:^",
-    "@master/css-lexer": "workspace:^",
-    "@master/css-schema": "workspace:^",
-    "@master/css-validator": "workspace:^"
+    "@stet-css/engine": "workspace:^",
+    "@stet-css/language": "workspace:^",
+    "@stet-css/lexer": "workspace:^",
+    "@stet-css/schema": "workspace:^",
+    "@stet-css/validator": "workspace:^"
   },
   "devDependencies": {
-    "@master/css-preset": "workspace:^"
+    "@stet-css/preset": "workspace:^"
   }
 }

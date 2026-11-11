@@ -1,15 +1,15 @@
 import { expect } from 'vitest'
-import UtilityType from '@master/css-schema/utility-type'
+import UtilityType from '@stet-css/schema/utility-type'
 import type {
   MasterCSSManifest,
   MasterCSSManifestCSSDeclarations,
   MasterCSSManifestVariable,
   MasterCSSManifestUtilityLayerName,
   MasterCSSManifestUtilityRule
-} from '@master/css-schema/manifest'
-import { flattenMasterCSSManifestVariables, groupMasterCSSManifestVariables } from '@master/css-schema/manifest'
+} from '@stet-css/schema/manifest'
+import { flattenMasterCSSManifestVariables, groupMasterCSSManifestVariables } from '@stet-css/schema/manifest'
 import { builtinNativeValueNamespaces, MasterCSS } from '../../src'
-import defaultManifestJSON from '@master/css-preset/default-manifest.json' with { type: 'json' }
+import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 
 const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
 const nativeFallbackProperties = new Set([

@@ -1,5 +1,4 @@
 import editJsonFile from 'edit-json-file'
-import copyOrSymlink from '~/internal/utils/copy-or-symlink'
 import settings from '../language-server/src/settings'
 import { SEMANTIC_TOKEN_MODIFIERS } from '../language/src/common'
 import { MASTER_CSS_SEMANTIC_TOKEN_SCOPE_MAP } from '../language/src/semantic/scopes'
@@ -10,12 +9,12 @@ import {
 import { dirname, join } from 'node:path'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
-import { readFileSync, writeFileSync } from 'node:fs'
+import { cpSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 
 const packageJSONPath = fileURLToPath(new URL('./package.json', import.meta.url))
 const pkg = editJsonFile(packageJSONPath, { stringify_width: 2 })
 const compilerRequire = createRequire(fileURLToPath(new URL('../compiler/package.json', import.meta.url)))
-const MASTER_CSS_GRAMMAR_PATH = './node_modules/@master/css-language/syntaxes/master-css.tmLanguage.json'
+const MASTER_CSS_GRAMMAR_PATH = './node_modules/@stet-css/language/syntaxes/master-css.tmLanguage.json'
 
 pkg.unset('contributes.languages')
 pkg.unset('contributes.css')
@@ -123,7 +122,7 @@ pkg.set('contributes.configuration', {
         'array'
       ],
       'default': settings.workspaces,
-      'description': 'Configure Master CSS workspaces. The default auto mode detects CSS files with @master entry; or @import "@master/css", and package.json files that declare Master CSS package dependencies.'
+      'description': 'Configure Master CSS workspaces. The default auto mode detects CSS files with @master entry; or @import "@stet-css/core", and package.json files that declare Master CSS package dependencies.'
     }
   }
 })
@@ -132,4 +131,7 @@ pkg.save()
 const packageJSON = readFileSync(packageJSONPath, 'utf8')
 if (!packageJSON.endsWith('\n')) writeFileSync(packageJSONPath, `${packageJSON}\n`)
 
-copyOrSymlink(join(dirname(compilerRequire.resolve('css-tree/package.json')), 'data'), fileURLToPath(new URL('./data', import.meta.url)))
+const cssTreeDataDir = join(dirname(compilerRequire.resolve('css-tree/package.json')), 'data')
+const extensionDataDir = fileURLToPath(new URL('./data', import.meta.url))
+rmSync(extensionDataDir, { recursive: true, force: true })
+cpSync(cssTreeDataDir, extensionDataDir, { recursive: true, dereference: true })

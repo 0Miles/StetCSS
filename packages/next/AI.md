@@ -1,8 +1,8 @@
-# AI Notes For `@master/css.next`
+# AI Notes For `@stet-css/next`
 
 ## Responsibility
 
-`@master/css.next` integrates Master CSS with Next.js.
+`@stet-css/next` integrates Master CSS with Next.js.
 
 ## Owns
 
@@ -60,17 +60,17 @@
 ## Dangerous Changes
 
 - Hiding request-time limitations behind build-time behavior.
-- Making static mode rely on `nextConfig.webpack` or `@master/css.webpack`.
+- Making static mode rely on `nextConfig.webpack` or `@stet-css/webpack`.
 - Broadening JS loader rules beyond manifest-import handling.
 - Reintroducing React tree wrappers for automatic runtime injection.
 
 ## Validation
 
 ```sh
-pnpm --filter @master/css.next test
-pnpm --filter @master/css.next lint
-pnpm --filter @master/css.next type-check
-pnpm --filter @master/css.next build
+pnpm --filter @stet-css/next test
+pnpm --filter @stet-css/next lint
+pnpm --filter @stet-css/next type-check
+pnpm --filter @stet-css/next build
 ```
 
-Run `pnpm --filter @master/css.next e2e` and build `packages/next/playground` when integration behavior changes.
+Run `pnpm --filter @stet-css/next e2e` and build `packages/next/playground` when integration behavior changes.

@@ -26,7 +26,7 @@ test.concurrent('recognizes @master entry as the only Master entry directive', (
   })
   expect(inspectCSS('@master;').hasMasterEntry).toBe(false)
   expect(inspectCSS('@master global;').hasMasterEntry).toBe(false)
-  expect(inspectCSS('@import "@master/css";').hasMasterEntry).toBe(true)
+  expect(inspectCSS('@import "@stet-css/core";').hasMasterEntry).toBe(true)
 })
 
 test.concurrent('strips @master entry before CSS transform', () => {
@@ -48,7 +48,7 @@ test('resolves CSS-only preset package root to stylesheet entry', () => {
   })
 
   const entry = resolveMasterCSSPackageEntryFile(
-    '@master/css-preset',
+    '@stet-css/preset',
     fileURLToPath(import.meta.url),
     repoRoot
   )
@@ -61,12 +61,12 @@ test('resolves CSS-only preset package root to stylesheet entry', () => {
 test('resolves package stylesheet entry before requiring the package JavaScript entry', () => {
   const root = mkdtempSync(join(tmpdir(), 'master-css-package-entry-'))
   try {
-    const packageRoot = join(root, 'node_modules/@master/css')
+    const packageRoot = join(root, 'node_modules/@stet-css/core')
     const entryFile = join(root, 'src/app.css')
     mkdirSync(join(packageRoot, 'src'), { recursive: true })
     mkdirSync(dirname(entryFile), { recursive: true })
     writeFileSync(join(packageRoot, 'package.json'), JSON.stringify({
-      name: '@master/css',
+      name: '@stet-css/core',
       style: './src/index.css',
       exports: {
         '.': {
@@ -77,10 +77,10 @@ test('resolves package stylesheet entry before requiring the package JavaScript 
       }
     }))
     writeFileSync(join(packageRoot, 'src/index.css'), '@theme { --color-primary: #123456; }')
-    writeFileSync(entryFile, '@import "@master/css";')
+    writeFileSync(entryFile, '@import "@stet-css/core";')
 
     const packageStyleEntry = join(realpathSync(packageRoot), 'src/index.css')
-    const entry = resolveMasterCSSPackageEntryFile('@master/css', entryFile, root)
+    const entry = resolveMasterCSSPackageEntryFile('@stet-css/core', entryFile, root)
     const result = compileProjectManifest([entryFile], { root })
 
     expect(entry).toBe(packageStyleEntry)

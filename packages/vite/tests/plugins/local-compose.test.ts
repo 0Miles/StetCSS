@@ -64,7 +64,7 @@ describe('LocalComposePlugin', () => {
     const root = createFixture()
     try {
       writeFileSync(path.join(root, 'app.css'), [
-        '@import "@master/css";',
+        '@import "@stet-css/core";',
         '.global-section { padding-block: var(--spacing-5xl); }'
       ].join('\n'))
       const context = createContext(root)

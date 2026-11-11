@@ -9,16 +9,16 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@master/css": "workspace:^",
+    "@stet-css/core": "workspace:^",
     "next": "^16.2.10",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },
   "devDependencies": {
     "@eslint/compat": "^2.1.0",
-    "@master/css-cli": "workspace:^",
-    "@master/css.next": "workspace:^",
-    "@master/eslint-config-css": "workspace:^",
+    "@stet-css/cli": "workspace:^",
+    "@stet-css/next": "workspace:^",
+    "@stet-css/eslint-config": "workspace:^",
     "@types/node": "^25.9.4",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",

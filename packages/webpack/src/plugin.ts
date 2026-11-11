@@ -1,18 +1,18 @@
-import { CSSScanner, type ScannerOptions } from '@master/css-scanner'
-import type { MasterCSSEmittedGlobals } from '@master/css'
-import { toManifestJSON } from '@master/css-integration/manifest-module'
+import { CSSScanner, type ScannerOptions } from '@stet-css/scanner'
+import type { MasterCSSEmittedGlobals } from '@stet-css/core'
+import { toManifestJSON } from '@stet-css/integration/manifest-module'
 import {
   toBrowserManifestFacadeModule,
   toInlineManifestModule
-} from '@master/css-integration/manifest-facade'
+} from '@stet-css/integration/manifest-facade'
 import {
   toHashedManifestAssetFileName,
   toVirtualCSSModulePath,
   toVirtualDefaultManifestModulePath,
   toVirtualEmittedGlobalsModulePath
-} from '@master/css-integration/node'
-import { loadProjectManifest } from '@master/css-project/manifest'
-import { findCSSManifestEntryFiles } from '@master/css-project/entries'
+} from '@stet-css/integration/node'
+import { loadProjectManifest } from '@stet-css/project/manifest'
+import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
 import {
   cleanStyleRequest,
   collectStyleCSSDependencies,
@@ -21,8 +21,8 @@ import {
   registerStyleCSSSource as registerStylesheetCSSSource,
   resolveMasterStyleSource,
   type StyleCSSSources
-} from '@master/css-stylesheet'
-import { toEmittedGlobalsModule } from '@master/css-integration/emitted-globals-module'
+} from '@stet-css/stylesheet'
+import { toEmittedGlobalsModule } from '@stet-css/integration/emitted-globals-module'
 import type { Compiler } from 'webpack'
 import type VirtualModulesPlugin from 'webpack-virtual-modules'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'

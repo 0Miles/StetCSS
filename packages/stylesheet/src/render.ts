@@ -1,8 +1,8 @@
-import { AnimationRule, VariableRule, type MasterCSSEmittedGlobals } from '@master/css'
-import { collectAnimationNamesFromDeclaration } from '@master/css-engine'
-import { collectCSSVariableReferences } from '@master/css-lexer'
-import { createCSSWithNativeDeclarations } from '@master/css-validator/native-declaration'
-import type { MasterCSSManifest } from '@master/css-schema/manifest'
+import { AnimationRule, VariableRule, type MasterCSSEmittedGlobals } from '@stet-css/core'
+import { collectAnimationNamesFromDeclaration } from '@stet-css/engine'
+import { collectCSSVariableReferences } from '@stet-css/lexer'
+import { createCSSWithNativeDeclarations } from '@stet-css/validator/native-declaration'
+import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 
 type StylesheetCSS = ReturnType<typeof createCSSWithNativeDeclarations>
 

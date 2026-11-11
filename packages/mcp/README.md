@@ -5,13 +5,13 @@ Model Context Protocol server for Master CSS tooling. It lets AI clients inspect
 ## Installation
 
 ```bash
-npm install -D @master/css-mcp
+npm install -D @stet-css/mcp
 ```
 
 You can also run it directly:
 
 ```bash
-npx -y @master/css-mcp@rc --root /absolute/path/to/project
+npx -y @stet-css/mcp@rc --root /absolute/path/to/project
 ```
 
 ## MCP client config
@@ -23,7 +23,7 @@ Most MCP clients accept a command and arguments for stdio servers:
   "mcpServers": {
     "master-css": {
       "command": "npx",
-      "args": ["-y", "@master/css-mcp@rc", "--root", "/absolute/path/to/project"]
+      "args": ["-y", "@stet-css/mcp@rc", "--root", "/absolute/path/to/project"]
     }
   }
 }

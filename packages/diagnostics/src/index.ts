@@ -1,10 +1,10 @@
-import CSSScanner, { type ScannerOptions } from '@master/css-scanner'
+import CSSScanner, { type ScannerOptions } from '@stet-css/scanner'
 import {
   createExtractedCSSResult,
   registerStyleCSSSource,
   type StyleCSSSources
-} from '@master/css-stylesheet'
-import { findCSSManifestEntryFiles } from '@master/css-project/entries'
+} from '@stet-css/stylesheet'
+import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
 import fg from 'fast-glob'
 import fs from 'node:fs'
 import path from 'node:path'

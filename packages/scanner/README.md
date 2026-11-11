@@ -20,11 +20,11 @@
       <img alt="NPM Version" src="https://img.shields.io/github/v/release/master-co/css?include_prereleases&color=f6f7f8&label=&style=for-the-badge&logo=github">
     </picture>
   </a>
-  <a aria-label="NPM Package" href="https://www.npmjs.com/package/@master/css-scanner">
+  <a aria-label="NPM Package" href="https://www.npmjs.com/package/@stet-css/scanner">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/npm/dm/@master/css-scanner?color=212022&label=%20&logo=npm&style=for-the-badge">
-      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/npm/dm/@master/css-scanner?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
-      <img alt="NPM package ( download / month )" src="https://img.shields.io/npm/dm/@master/css-scanner?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
+      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/npm/dm/@stet-css/scanner?color=212022&label=%20&logo=npm&style=for-the-badge">
+      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/npm/dm/@stet-css/scanner?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
+      <img alt="NPM package ( download / month )" src="https://img.shields.io/npm/dm/@stet-css/scanner?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
     </picture>
   </a>
   <a aria-label="Discord Community" href="https://discord.gg/sZNKpAAAw6">
@@ -55,15 +55,15 @@
 ## Installation
 
 ```bash
-npm install @master/css-scanner
+npm install @stet-css/scanner
 ```
 
-`@master/css-scanner` is the Node.js content-scanning engine behind Master CSS static rendering. It scans supplied source text, validates possible classes, inserts generated rules, and maintains scanner state for build integrations. Source discovery, file watching, and CSS file output are owned by CLI/framework/build integrations.
+`@stet-css/scanner` is the Node.js content-scanning engine behind Master CSS static rendering. It scans supplied source text, validates possible classes, inserts generated rules, and maintains scanner state for build integrations. Source discovery, file watching, and CSS file output are owned by CLI/framework/build integrations.
 
 ## Usage
 
 ```js
-import { CSSScanner } from '@master/css-scanner'
+import { CSSScanner } from '@stet-css/scanner'
 
 const scanner = new CSSScanner(options, cwd)
 ```
@@ -75,8 +75,8 @@ const scanner = new CSSScanner(options, cwd)
 Default options are exported from the root package and the side-effect-free `./options` subpath:
 
 ```js
-import { scannerOptions } from '@master/css-scanner'
-import defaultScannerOptions from '@master/css-scanner/options'
+import { scannerOptions } from '@stet-css/scanner'
+import defaultScannerOptions from '@stet-css/scanner/options'
 ```
 
 | Option | Type | Description |
@@ -107,10 +107,10 @@ Bare source globs are resolved from `cwd`. Globs that start with `./` or `../` a
 
 ## Native CSS pruning
 
-Prune native CSS class selector rules from a stylesheet by importing `@master/css` in that stylesheet:
+Prune native CSS class selector rules from a stylesheet by importing `@stet-css/core` in that stylesheet:
 
 ```css
-@import "@master/css";
+@import "@stet-css/core";
 @import "./styles/btn.css";
 
 .card {
@@ -126,10 +126,10 @@ Local relative `.css` imports are expanded, the Master import is replaced by gen
 
 ## Class candidate extraction
 
-Use `@master/css-source` when a tool only needs unvalidated class-like candidates from source content:
+Use `@stet-css/source` when a tool only needs unvalidated class-like candidates from source content:
 
 ```ts
-import { extractClassCandidates } from '@master/css-source'
+import { extractClassCandidates } from '@stet-css/source'
 
 const result = extractClassCandidates(source)
 ```

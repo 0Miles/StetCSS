@@ -94,10 +94,10 @@ describe('InjectRuntimePlugin', () => {
 
       expect(html).toMatch(/<script\b[^>]*\bsrc="\/assets\/[^"]+\.js"/)
       expect(html).toMatch(/<link\b(?=[^>]*\brel="modulepreload")(?=[^>]*\bcrossorigin)(?![^>]*\bas="json")(?=[^>]*\bhref="\/assets\/[^"]+\.js")[^>]*>/)
-      expect(html).not.toContain('@master/css-runtime')
+      expect(html).not.toContain('@stet-css/runtime')
       expect(html).not.toContain(RUNTIME_ENTRY_ID)
-      expect(jsSources).not.toContain(`from '@master/css-runtime'`)
-      expect(jsSources).not.toContain(`from "@master/css-runtime"`)
+      expect(jsSources).not.toContain(`from '@stet-css/runtime'`)
+      expect(jsSources).not.toContain(`from "@stet-css/runtime"`)
     } finally {
       rmSync(root, { recursive: true, force: true })
     }

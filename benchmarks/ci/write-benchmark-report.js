@@ -72,7 +72,7 @@ function normalizeEngineReport(raw, baseMetadata) {
 
   return {
     ...baseMetadata,
-    package: '@master/css-engine',
+    package: '@stet-css/engine',
     packageSlug: 'engine',
     tool: 'vitest bench',
     config: {
@@ -92,7 +92,7 @@ function normalizeRuntimeReport(raw, baseMetadata) {
 
   return {
     ...baseMetadata,
-    package: '@master/css-runtime',
+    package: '@stet-css/runtime',
     packageSlug: 'runtime',
     tool: raw.tool || 'playwright',
     browser: raw.browser,

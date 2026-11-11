@@ -204,7 +204,7 @@
             "array"
           ],
           "default": "auto",
-          "description": "Configure Master CSS workspaces. The default auto mode detects CSS files with @master entry; or @import \"@master/css\", and package.json files that declare Master CSS package dependencies."
+          "description": "Configure Master CSS workspaces. The default auto mode detects CSS files with @master entry; or @import \"@stet-css/core\", and package.json files that declare Master CSS package dependencies."
         }
       }
     },
@@ -471,7 +471,7 @@
     "grammars": [
       {
         "scopeName": "master-css.directive.injection",
-        "path": "./node_modules/@master/css-language/syntaxes/master-css.tmLanguage.json",
+        "path": "./node_modules/@stet-css/language/syntaxes/master-css.tmLanguage.json",
         "injectTo": [
           "source.css",
           "source.css.scss",
@@ -491,10 +491,10 @@
     "provenance": true
   },
   "devDependencies": {
-    "@master/css-language": "workspace:^",
-    "@master/css-language-server": "workspace:^",
-    "@master/css-language-service": "workspace:^",
-    "@master/css-project": "workspace:^",
+    "@stet-css/language": "workspace:^",
+    "@stet-css/language-server": "workspace:^",
+    "@stet-css/language-service": "workspace:^",
+    "@stet-css/project": "workspace:^",
     "@shikijs/langs": "4.2.0",
     "@types/vscode": "^1.120.0",
     "@vscode/vsce": "^3.9.2",

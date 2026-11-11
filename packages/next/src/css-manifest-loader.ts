@@ -1,14 +1,14 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
-import { loadManifestJSONSync } from '@master/css-project/manifest-sync'
-import { loadProjectManifestJSON } from '@master/css-project/manifest'
-import { findCSSManifestEntryFiles, isCSSManifestRequest } from '@master/css-project/entries'
-import { toHashedManifestAssetFileName } from '@master/css-integration/node'
+import { loadManifestJSONSync } from '@stet-css/project/manifest-sync'
+import { loadProjectManifestJSON } from '@stet-css/project/manifest'
+import { findCSSManifestEntryFiles, isCSSManifestRequest } from '@stet-css/project/entries'
+import { toHashedManifestAssetFileName } from '@stet-css/integration/node'
 import {
   toInlineManifestModule,
   toUniversalManifestFacadeModule
-} from '@master/css-integration/manifest-facade'
-import { collectStyleCSSDependencies } from '@master/css-stylesheet'
+} from '@stet-css/integration/manifest-facade'
+import { collectStyleCSSDependencies } from '@stet-css/stylesheet'
 
 interface LoaderContext {
   resourcePath: string
@@ -88,7 +88,7 @@ function loadCSSManifestJSON(context: LoaderContext) {
 export default function masterCSSManifestLoader(this: LoaderContext) {
   const callback = this.async?.()
   if (!callback) {
-    throw new Error('[@master/css.next] CSS manifest loader requires an async loader context.')
+    throw new Error('[@stet-css/next] CSS manifest loader requires an async loader context.')
   }
   const options = this.getOptions?.() || {}
   const result = options.virtual

@@ -1,8 +1,8 @@
-# AI Notes For `@master/css-diagnostics`
+# AI Notes For `@stet-css/diagnostics`
 
 ## Responsibility
 
-`@master/css-diagnostics` owns adapter-neutral project inspection reports for tooling that needs scanner state, stylesheet entry metadata, generated CSS size, and missing CSS diagnostics.
+`@stet-css/diagnostics` owns adapter-neutral project inspection reports for tooling that needs scanner state, stylesheet entry metadata, generated CSS size, and missing CSS diagnostics.
 
 ## Owns
 
@@ -14,7 +14,7 @@
 
 ## Does Not Own
 
-- Class lint policy, class-list edits, or source-content linting; use `@master/css-lint`.
+- Class lint policy, class-list edits, or source-content linting; use `@stet-css/lint`.
 - CLI argument parsing, stdout formatting, exit code behavior, or watch lifecycle.
 - MCP tool registration, workspace write safety, or preview token validation.
 - Engine class semantics, CSS output behavior, scanner extraction heuristics, or stylesheet compilation semantics.
@@ -34,8 +34,8 @@
 ## Validation
 
 ```sh
-pnpm --filter @master/css-diagnostics test
-pnpm --filter @master/css-diagnostics lint
-pnpm --filter @master/css-diagnostics type-check
-pnpm --filter @master/css-diagnostics build
+pnpm --filter @stet-css/diagnostics test
+pnpm --filter @stet-css/diagnostics lint
+pnpm --filter @stet-css/diagnostics type-check
+pnpm --filter @stet-css/diagnostics build
 ```

@@ -1,5 +1,5 @@
-import CSSScanner, { type ScannerOptions } from '@master/css-scanner'
-import defaultScannerOptions from '@master/css-scanner/options'
+import CSSScanner, { type ScannerOptions } from '@stet-css/scanner'
+import defaultScannerOptions from '@stet-css/scanner/options'
 import {
   createStyleCSSHostSource,
   createExtractedCSS as createStylesheetStaticCSS,
@@ -9,8 +9,8 @@ import {
   resolveMasterStyleSource,
   registerStyleCSSSource,
   type StyleCSSSources
-} from '@master/css-stylesheet'
-import { findCSSManifestEntryFiles } from '@master/css-project/entries'
+} from '@stet-css/stylesheet'
+import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, relative, resolve } from 'node:path'
@@ -145,7 +145,7 @@ function createSession(projectDir: string, outputPath: string, options: Resolved
         await writeStaticCSS(outputPath, cssText)
       })
       .catch((error: unknown) => {
-        console.error('[@master/css.next] failed to write static CSS:', error)
+        console.error('[@stet-css/next] failed to write static CSS:', error)
       })
     return writeChain
   }

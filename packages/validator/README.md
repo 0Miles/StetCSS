@@ -20,11 +20,11 @@
       <img alt="NPM Version" src="https://img.shields.io/github/v/release/master-co/css?include_prereleases&color=f6f7f8&label=&style=for-the-badge&logo=github">
     </picture>
   </a>
-  <a aria-label="NPM Package" href="https://www.npmjs.com/package/@master/css-validator">
+  <a aria-label="NPM Package" href="https://www.npmjs.com/package/@stet-css/validator">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/npm/dm/@master/css-validator?color=212022&label=%20&logo=npm&style=for-the-badge">
-      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/npm/dm/@master/css-validator?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
-      <img alt="NPM package ( download / month )" src="https://img.shields.io/npm/dm/@master/css-validator?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
+      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/npm/dm/@stet-css/validator?color=212022&label=%20&logo=npm&style=for-the-badge">
+      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/npm/dm/@stet-css/validator?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
+      <img alt="NPM package ( download / month )" src="https://img.shields.io/npm/dm/@stet-css/validator?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
     </picture>
   </a>
   <a aria-label="Discord Community" href="https://discord.gg/sZNKpAAAw6">
@@ -55,10 +55,10 @@
 ## Installation
 
 ```bash
-npm install @master/css-validator
+npm install @stet-css/validator
 ```
 
-`@master/css-validator` validates CSS rules generated from Master CSS classes, including at-rules, selectors, and declarations. It is a Node.js package used by extraction and linting workflows.
+`@stet-css/validator` validates CSS rules generated from Master CSS classes, including at-rules, selectors, and declarations. It is a Node.js package used by extraction and linting workflows.
 
 ## API
 
@@ -67,7 +67,7 @@ npm install @master/css-validator
 Validates whether a string is a valid Master CSS class.
 
 ```ts
-import { isClassValid } from '@master/css-validator'
+import { isClassValid } from '@stet-css/validator'
 
 isClassValid('text-center')
 // => true
@@ -87,7 +87,7 @@ isClassValid(syntax: string, css?: MasterCSS): boolean
 Validates a class and returns generated rules.
 
 ```ts
-import { generateValidRules } from '@master/css-validator'
+import { generateValidRules } from '@stet-css/validator'
 
 generateValidRules('text-center')
 // => [{...}]
@@ -107,7 +107,7 @@ generateValidRules(syntax: string, css?: MasterCSS): Rule[]
 Validates a class and returns syntax errors.
 
 ```ts
-import { validate } from '@master/css-validator'
+import { validate } from '@stet-css/validator'
 
 validate('text-center')
 // => []

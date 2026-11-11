@@ -4,8 +4,8 @@ import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { extname, isAbsolute, relative, resolve } from 'node:path'
 import { performance } from 'node:perf_hooks'
 import { chromium, type Browser, type BrowserContext, type CDPSession, type Page } from '@playwright/test'
-import { render } from '@master/css-server'
-import type { MasterCSSManifest } from '@master/css'
+import { render } from '@stet-css/server'
+import type { MasterCSSManifest } from '@stet-css/core'
 import { benchmarkAdapters, benchmarkFixtures } from '../fixtures/manifest'
 import { summarizeBytes } from './bytes'
 import { analyzeCSSStructure } from './css-structure'
@@ -754,11 +754,11 @@ async function createBrowserLifecycleReport(): Promise<BenchmarkReport> {
       version: browserVersion
     },
     packages: await collectPackageVersions([
-      '@master/css',
-      '@master/css-cli',
-      '@master/css-runtime',
-      '@master/css-server',
-      '@master/css-preset',
+      '@stet-css/core',
+      '@stet-css/cli',
+      '@stet-css/runtime',
+      '@stet-css/server',
+      '@stet-css/preset',
       '@playwright/test',
       'tailwindcss',
       '@tailwindcss/cli'
@@ -896,7 +896,7 @@ async function buildLifecycleStaticCSS(options: {
     'package.json': `${JSON.stringify({ private: true, type: 'module' }, null, 2)}\n`,
     'index.html': options.html,
     'input.css': options.family === 'master'
-      ? '@import "@master/css";\n@source "./index.html";\n.benchmark-root{box-sizing:border-box}\n'
+      ? '@import "@stet-css/core";\n@source "./index.html";\n.benchmark-root{box-sizing:border-box}\n'
       : '@import "tailwindcss";\n@source "./index.html";\n.benchmark-root{box-sizing:border-box}\n'
   })
   await mkdir(resolve(workspace, 'dist'), { recursive: true })
@@ -905,7 +905,7 @@ async function buildLifecycleStaticCSS(options: {
     await runCommand(
       process.execPath,
       [
-        resolveBenchmarkPackageFile('@master/css-cli', 'dist/bin/index.js'),
+        resolveBenchmarkPackageFile('@stet-css/cli', 'dist/bin/index.js'),
         'index.html',
         '-o',
         'dist/output.css',
@@ -2261,8 +2261,8 @@ function getContentType(file: string) {
 async function readRuntimeBundle() {
   if (!runtimeBundlePromise) {
     runtimeBundlePromise = (async () => {
-      const file = resolveBenchmarkPackageFile('@master/css-runtime', 'dist/global.min.js')
-      assertExistingFile(file, 'Run `pnpm --filter @master/css-runtime build` before `bench:browser-lifecycle`.')
+      const file = resolveBenchmarkPackageFile('@stet-css/runtime', 'dist/global.min.js')
+      assertExistingFile(file, 'Run `pnpm --filter @stet-css/runtime build` before `bench:browser-lifecycle`.')
       return readFile(file)
     })()
   }
@@ -2272,8 +2272,8 @@ async function readRuntimeBundle() {
 async function readDefaultManifestJSON() {
   if (!defaultManifestJSONPromise) {
     defaultManifestJSONPromise = (async () => {
-      const file = resolveBenchmarkPackageFile('@master/css-preset', 'src/default-manifest.json')
-      assertExistingFile(file, 'Expected @master/css-preset default manifest to exist.')
+      const file = resolveBenchmarkPackageFile('@stet-css/preset', 'src/default-manifest.json')
+      assertExistingFile(file, 'Expected @stet-css/preset default manifest to exist.')
       return readFile(file)
     })()
   }

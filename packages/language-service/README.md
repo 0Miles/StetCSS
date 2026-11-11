@@ -20,18 +20,18 @@
       <img alt="NPM Version" src="https://img.shields.io/github/v/release/master-co/css?include_prereleases&color=f6f7f8&label=&style=for-the-badge&logo=github">
     </picture>
   </a>
-  <a aria-label="NPM Package" href="https://www.npmjs.com/package/@master/css-language-service">
+  <a aria-label="NPM Package" href="https://www.npmjs.com/package/@stet-css/language-service">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/npm/dm/@master/css-language-service?color=212022&label=%20&logo=npm&style=for-the-badge">
-      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/npm/dm/@master/css-language-service?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
-      <img alt="NPM package ( download / month )" src="https://img.shields.io/npm/dm/@master/css-language-service?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
+      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/npm/dm/@stet-css/language-service?color=212022&label=%20&logo=npm&style=for-the-badge">
+      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/npm/dm/@stet-css/language-service?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
+      <img alt="NPM package ( download / month )" src="https://img.shields.io/npm/dm/@stet-css/language-service?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
     </picture>
   </a>
-  <a aria-label="JSDelivr" href="https://www.jsdelivr.com/package/npm/@master/css-language-service">
+  <a aria-label="JSDelivr" href="https://www.jsdelivr.com/package/npm/@stet-css/language-service">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/jsdelivr/npm/hm/@master/css-language-service?color=212022&label=%20&logo=jsdelivr&style=for-the-badge">
-      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/jsdelivr/npm/hm/@master/css-language-service?color=f6f7f8&label=%20&logo=jsdelivr&style=for-the-badge">
-      <img alt="JSDelivr hits (npm scoped)" src="https://img.shields.io/jsdelivr/npm/hm/@master/css-language-service?color=f6f7f8&label=%20&logo=jsdelivr&style=for-the-badge">
+      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/jsdelivr/npm/hm/@stet-css/language-service?color=212022&label=%20&logo=jsdelivr&style=for-the-badge">
+      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/jsdelivr/npm/hm/@stet-css/language-service?color=f6f7f8&label=%20&logo=jsdelivr&style=for-the-badge">
+      <img alt="JSDelivr hits (npm scoped)" src="https://img.shields.io/jsdelivr/npm/hm/@stet-css/language-service?color=f6f7f8&label=%20&logo=jsdelivr&style=for-the-badge">
     </picture>
   </a>
   <a aria-label="Discord Community" href="https://discord.gg/sZNKpAAAw6">
@@ -62,18 +62,18 @@
 ## Installation
 
 ```bash
-npm install @master/css-language-service
+npm install @stet-css/language-service
 ```
 
 ## Usage
 
 ```js
-import CSSLanguageService from '@master/css-language-service'
+import CSSLanguageService from '@stet-css/language-service'
 
 const languageService = new CSSLanguageService(customSettings)
 ```
 
-`CSSLanguageService` provides stateful completion, hover, color, color presentation, and semantic token features around the editor-neutral primitives in `@master/css-language`.
+`CSSLanguageService` provides stateful completion, hover, color, color presentation, and semantic token features around the editor-neutral primitives in `@stet-css/language`.
 
 ### Semantic tokens
 
@@ -108,7 +108,7 @@ const edits = languageService.formatDirectives(textDocument, range)
 ## Settings
 
 ```js
-import { settings } from '@master/css-language-service'
+import { settings } from '@stet-css/language-service'
 ```
 
 | Setting | Type | Default | Description |
@@ -126,4 +126,4 @@ import { settings } from '@master/css-language-service'
 | `formatDirectives` | `boolean` | `true` | Enables Master CSS directive formatting. |
 | `embeddedSyntaxHighlighting` | `'active' \| 'always' \| 'off'` | `'active'` | Controls embedded semantic token highlighting. |
 
-Use `@master/css-language` directly for browser helpers, Shiki integration, TextMate grammar assets, and raw class-position scanning.
+Use `@stet-css/language` directly for browser helpers, Shiki integration, TextMate grammar assets, and raw class-position scanning.

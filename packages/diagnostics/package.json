@@ -1,5 +1,5 @@
 {
-  "name": "@master/css-diagnostics",
+  "name": "@stet-css/diagnostics",
   "type": "module",
   "scripts": {
     "build": "tsdown --config ../../shared/tsdown-package.config.ts",
@@ -48,9 +48,9 @@
     "provenance": true
   },
   "dependencies": {
-    "@master/css-project": "workspace:^",
-    "@master/css-scanner": "workspace:^",
-    "@master/css-stylesheet": "workspace:^",
+    "@stet-css/project": "workspace:^",
+    "@stet-css/scanner": "workspace:^",
+    "@stet-css/stylesheet": "workspace:^",
     "fast-glob": "^3.3.3"
   }
 }

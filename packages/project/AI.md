@@ -1,8 +1,8 @@
-# AI Notes For `@master/css-project`
+# AI Notes For `@stet-css/project`
 
 ## Responsibility
 
-`@master/css-project` resolves project-level Master CSS manifest entries, workspace roots, explicit CSS manifest resources, and project manifest module source.
+`@stet-css/project` resolves project-level Master CSS manifest entries, workspace roots, explicit CSS manifest resources, and project manifest module source.
 
 ## Owns
 
@@ -13,9 +13,9 @@
 
 ## Does Not Own
 
-- CSS import graph resolution or directive parsing; delegate to `@master/css-compiler`.
-- Virtual module and query id helpers; use `@master/css-integration`.
-- Public schema and wire-format contracts; use `@master/css-schema`.
+- CSS import graph resolution or directive parsing; delegate to `@stet-css/compiler`.
+- Virtual module and query id helpers; use `@stet-css/integration`.
+- Public schema and wire-format contracts; use `@stet-css/schema`.
 - Engine matching, runtime hydration, extraction state, or framework adapter behavior.
 
 ## Public Surface
@@ -35,7 +35,7 @@
 ## Risk Areas
 
 - Manifest loading affects ESLint, language tooling, Vite, Webpack, Next, Nuxt, CLI, and framework query loaders.
-- Entry discovery must only check top-level `@master entry;` and `@import "@master/css"` markers.
+- Entry discovery must only check top-level `@master entry;` and `@import "@stet-css/core"` markers.
 - CSS dependencies must come from compiler results, not hardcoded package CSS filenames.
 - JavaScript/TypeScript manifest loading is intentionally unsupported.
 
@@ -54,8 +54,8 @@
 ## Validation
 
 ```sh
-pnpm --filter @master/css-project test
-pnpm --filter @master/css-project lint
-pnpm --filter @master/css-project type-check
-pnpm --filter @master/css-project build
+pnpm --filter @stet-css/project test
+pnpm --filter @stet-css/project lint
+pnpm --filter @stet-css/project type-check
+pnpm --filter @stet-css/project build
 ```

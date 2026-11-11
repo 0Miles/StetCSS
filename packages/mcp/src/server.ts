@@ -566,7 +566,7 @@ function registerTools(server: McpServer, context: MasterCSSMCPContext) {
 export function createMasterCSSMCPServer(options: MasterCSSMCPContextOptions = {}): MasterCSSMCPServerInstance {
   const context = new MasterCSSMCPContext(options)
   const server = new McpServer({
-    name: '@master/css-mcp',
+    name: '@stet-css/mcp',
     version: readPackageVersion()
   })
   registerResources(server, context)

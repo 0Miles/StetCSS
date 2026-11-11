@@ -17,7 +17,7 @@ describe('scanner source adapters', () => {
       .toEqual(['block'])
   })
 
-  test('uses built-in source adapters from @master/css-source by default', async () => {
+  test('uses built-in source adapters from @stet-css/source by default', async () => {
     const scanner = await new CSSScanner({}).init()
 
     await expect(scanner.collectCandidates('index.html', `

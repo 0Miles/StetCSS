@@ -1,8 +1,8 @@
-# AI Notes For `@master/css-validator`
+# AI Notes For `@stet-css/validator`
 
 ## Responsibility
 
-`@master/css-validator` validates whether generated Master CSS text is valid CSS.
+`@stet-css/validator` validates whether generated Master CSS text is valid CSS.
 
 ## Owns
 
@@ -56,10 +56,10 @@
 ## Validation
 
 ```sh
-pnpm --filter @master/css-validator test
-pnpm --filter @master/css-validator lint
-pnpm --filter @master/css-validator type-check
-pnpm --filter @master/css-validator build
+pnpm --filter @stet-css/validator test
+pnpm --filter @stet-css/validator lint
+pnpm --filter @stet-css/validator type-check
+pnpm --filter @stet-css/validator build
 ```
 
 Use or extend `tests/css.test.ts`, `tests/test.ts`, and `tests/utils`.

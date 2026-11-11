@@ -16,8 +16,8 @@ const packageDir = resolve(here, '..')
 const distDir = resolve(packageDir, 'dist')
 const serverPath = resolve(distDir, 'server.min.js')
 const extensionPath = resolve(distDir, 'extension.min.js')
-const sourceGrammarPath = './node_modules/@master/css-language/syntaxes/master-css.tmLanguage.json'
-const stagedGrammarPath = './dist/node_modules/@master/css-language/syntaxes/master-css.tmLanguage.json'
+const sourceGrammarPath = './node_modules/@stet-css/language/syntaxes/master-css.tmLanguage.json'
+const stagedGrammarPath = './dist/node_modules/@stet-css/language/syntaxes/master-css.tmLanguage.json'
 
 function readPackageJSON(path = resolve(packageDir, 'package.json')) {
   return JSON.parse(readFileSync(path, 'utf8'))
@@ -185,7 +185,7 @@ test('extension bundle keeps vscode external without default import interop', ()
 test('extension bundle includes workspace language server resolution fallback', () => {
   const source = readFileSync(extensionPath, 'utf8')
 
-  expect(source).toContain('@master/css-language-server/server')
+  expect(source).toContain('@stet-css/language-server/server')
   expect(source).toContain('Using workspace language server')
   expect(source).toContain('Using bundled language server')
 })

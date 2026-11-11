@@ -1,7 +1,7 @@
 import rule from '../src/rules/prefer-canonical-classes'
 import { createTester, jsxTester } from './testers'
 import { createPresetManifest } from './helpers/create-preset-manifest'
-import UtilityType from '@master/css-schema/utility-type'
+import UtilityType from '@stet-css/schema/utility-type'
 import stylesheetParser from '../src/stylesheet-parser'
 
 const cssParser = {
@@ -339,7 +339,7 @@ jsxTester.run('prefer canonical classes', rule, {
 
 createTester({
     settings: {
-        '@master/css': {
+        '@stet-css': {
             manifest: createPresetManifest({
                 utilities: [
                     {
@@ -361,7 +361,7 @@ createTester({
 
 createTester({
     settings: {
-        '@master/css': {
+        '@stet-css': {
             manifest: customManifest
         }
     }

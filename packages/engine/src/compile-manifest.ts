@@ -1,6 +1,6 @@
 import { type PropertiesHyphen } from 'csstype'
-import type { Variable } from '@master/css-schema/css-syntax'
-import { isNativeCSSShorthandProperty } from '@master/css-schema/native-css-shorthand'
+import type { Variable } from '@stet-css/schema/css-syntax'
+import { isNativeCSSShorthandProperty } from '@stet-css/schema/native-css-shorthand'
 import type {
   MasterCSSManifest,
   MasterCSSManifestAnimations,
@@ -11,9 +11,9 @@ import type {
   MasterCSSManifestVariableAliasSet,
   MasterCSSManifestVariantBranch,
   MasterCSSManifestVariantToken
-} from '@master/css-schema/manifest'
-import { flattenMasterCSSManifestVariables } from '@master/css-schema/manifest'
-import UtilityType from '@master/css-schema/utility-type'
+} from '@stet-css/schema/manifest'
+import { flattenMasterCSSManifestVariables } from '@stet-css/schema/manifest'
+import UtilityType from '@stet-css/schema/utility-type'
 import { MATCH_NAME_BOUNDARY } from './common'
 import builtinKeyAliases from './key-aliases'
 import builtinNativeValueNamespaces, { type MasterCSSBuiltinNativeValueNamespace } from './native-value-namespaces'

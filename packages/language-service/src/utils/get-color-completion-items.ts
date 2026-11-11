@@ -1,4 +1,4 @@
-import { MasterCSS, createDefaultCSS } from '@master/css-language'
+import { MasterCSS, createDefaultCSS } from '@stet-css/language'
 import { type CompletionItem, CompletionItemKind } from 'vscode-languageserver-protocol'
 import sortCompletionItems from './sort-completion-items'
 

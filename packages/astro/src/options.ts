@@ -1,4 +1,4 @@
-import { type PluginOptions, options as defaultPluginOptions } from '@master/css.vite'
+import { type PluginOptions, options as defaultPluginOptions } from '@stet-css/vite'
 
 const options: IntegrationOptions = {
   ...defaultPluginOptions,

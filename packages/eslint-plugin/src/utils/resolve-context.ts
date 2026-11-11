@@ -1,8 +1,8 @@
 import type { RuleContext } from '@typescript-eslint/utils/ts-eslint'
 import settings, { Settings } from '../settings'
 import { MasterCSS, MasterCSSManifest, createCSSWithNativeDeclarations, defaultManifest } from './master-css'
-import { findMasterCSSWorkspaceDirectoriesSync } from '@master/css-project/entries'
-import { loadProjectManifestSync } from '@master/css-project/manifest-sync'
+import { findMasterCSSWorkspaceDirectoriesSync } from '@stet-css/project/entries'
+import { loadProjectManifestSync } from '@stet-css/project/manifest-sync'
 import path from 'node:path'
 import { existsSync } from 'node:fs'
 import isSameOrChildPath from './is-same-or-child-path'
@@ -69,7 +69,7 @@ function resolvePlan(workspaceDir: string, manifest?: MasterCSSManifest) {
 }
 
 export default function resolveContext(context: RuleContext<any, any[]>) {
-  const resolvedSettings = Object.assign({}, settings, context.settings?.['@master/css'])
+  const resolvedSettings = Object.assign({}, settings, context.settings?.['@stet-css'])
   const filename = getContextFilename(context)
   const workspaceDir = filename ? resolveWorkspaceDirectory(context, filename) : context.cwd || process.cwd()
   let css = cssCaches.find(cache => cache.manifest === resolvedSettings.manifest &&

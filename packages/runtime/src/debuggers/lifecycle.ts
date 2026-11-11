@@ -1,6 +1,6 @@
 import log from './log'
 import type CSSRuntime from '../core'
-import type { MasterCSSManifest } from '@master/css-schema/manifest'
+import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 import type { HydrateResult } from '../types'
 
 export function debugRuntimeCreated(cssRuntime: CSSRuntime) {

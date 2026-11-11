@@ -120,12 +120,12 @@ export function createSetupPlan(options: SetupOptions = {}): SetupPlan {
   if (framework === 'svelte') {
     commands.push({
       command: packageManager === 'pnpm'
-        ? 'pnpm dlx sv add @master/css-sv'
+        ? 'pnpm dlx sv add @stet-css/sv'
         : packageManager === 'yarn'
-          ? 'yarn dlx sv add @master/css-sv'
+          ? 'yarn dlx sv add @stet-css/sv'
           : packageManager === 'bun'
-            ? 'bunx sv add @master/css-sv'
-            : 'npx sv add @master/css-sv',
+            ? 'bunx sv add @stet-css/sv'
+            : 'npx sv add @stet-css/sv',
       reason: 'SvelteKit file setup is delegated to the official Svelte CLI add-on.'
     })
   } else {
@@ -144,7 +144,7 @@ export function createSetupPlan(options: SetupOptions = {}): SetupPlan {
   if (mcp) {
     pushDependency(dependencies, MASTER_CSS_PACKAGES.mcp, true, version)
     commands.push({
-      command: `npx -y @master/css-mcp@${version} --root ${root}`,
+      command: `npx -y @stet-css/mcp@${version} --root ${root}`,
       reason: 'Use this stdio command when registering the Master CSS MCP server in an MCP client.'
     })
   }
@@ -276,7 +276,7 @@ function filesForFramework(root: string, framework: Framework, warnings: string[
       if (viteConfigPath) {
         files.unshift(planTextFile(root, viteConfigPath, addMasterCSSStaticVitePlugin, createStaticViteConfig(), 'Register the Master CSS Vite plugin in static mode.'))
       } else {
-        warnings.push('No vite.config.ts or vite.config.js was found. Add @master/css.vite to the Laravel Vite config manually after setup.')
+        warnings.push('No vite.config.ts or vite.config.js was found. Add @stet-css/vite to the Laravel Vite config manually after setup.')
       }
       return files
     }
@@ -285,7 +285,7 @@ function filesForFramework(root: string, framework: Framework, warnings: string[
         planTextFile(root, firstExistingPath(root, ['vite.config.ts', 'vite.config.js', 'vite.config.mjs'], 'vite.config.ts'), (content) => addMasterCSSVitePlugin(content, mode), createViteConfig(mode), 'Register the Master CSS Vite plugin.'),
         planTextFile(root, 'src/index.css', addMasterCSSImportToStylesheet, createMasterCSSStylesheet(), 'Create or update the Lit project CSS entry.'),
         planTextFile(root, 'src/vite-env.d.ts', addViteClientTypes, `/// <reference types="vite/client" />
-/// <reference types="@master/css-integration/client" />
+/// <reference types="@stet-css/integration/client" />
 `, 'Add Vite and Master CSS integration client types.')
       ]
       const elementPath = findExistingPath(root, ['src/my-element.ts', 'src/my-element.js'])

@@ -1,14 +1,14 @@
-# AI Notes For `@master/css-language-service`
+# AI Notes For `@stet-css/language-service`
 
 ## Responsibility
 
-`@master/css-language-service` provides the stateful editor intelligence wrapper around manifest-driven Master CSS knowledge.
+`@stet-css/language-service` provides the stateful editor intelligence wrapper around manifest-driven Master CSS knowledge.
 
 ## Owns
 
 - Language service settings and feature gating.
 - Completion, hover/generated CSS previews, colors, and color presentations.
-- `TextDocument` methods that delegate class-position and semantic token primitives to `@master/css-language`.
+- `TextDocument` methods that delegate class-position and semantic token primitives to `@stet-css/language`.
 - Thin wrappers around editor-neutral language primitives.
 
 ## Does Not Own
@@ -16,7 +16,7 @@
 - Engine syntax behavior.
 - LSP capabilities and workspace lifecycle.
 - Browser helpers, Shiki helpers, TextMate grammar ownership, semantic tokenizer ownership, or class-position scanner ownership.
-- Raw class-list parsing and unescape behavior; that flows through `@master/css-language` from `@master/css-lexer`.
+- Raw class-list parsing and unescape behavior; that flows through `@stet-css/language` from `@stet-css/lexer`.
 - Diagnostics without language-server coordination.
 
 ## Public Surface
@@ -61,10 +61,10 @@
 ## Validation
 
 ```sh
-pnpm --filter @master/css-language-service test
-pnpm --filter @master/css-language-service lint
-pnpm --filter @master/css-language-service type-check
-pnpm --filter @master/css-language-service build
+pnpm --filter @stet-css/language-service test
+pnpm --filter @stet-css/language-service lint
+pnpm --filter @stet-css/language-service type-check
+pnpm --filter @stet-css/language-service build
 ```
 
 Use or extend `tests/get-class-position`, `tests/suggest-syntax`, `tests/inspect-syntax.test.ts`, `tests/render-syntax-colors.test.ts`, and `tests/edit-syntax-colors.test.ts`.

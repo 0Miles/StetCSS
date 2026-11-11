@@ -119,10 +119,10 @@ async function createProgressiveHydrationDiagnosticsReport(): Promise<BenchmarkR
     generatedAt: new Date().toISOString(),
     environment: collectEnvironment(),
     packages: await collectPackageVersions([
-      '@master/css',
-      '@master/css-runtime',
-      '@master/css-server',
-      '@master/css-preset',
+      '@stet-css/core',
+      '@stet-css/runtime',
+      '@stet-css/server',
+      '@stet-css/preset',
       '@playwright/test'
     ]),
     fixtures: getProgressiveHydrationDiagnosticFixtures(),

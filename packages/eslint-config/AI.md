@@ -1,8 +1,8 @@
-# AI Notes For `@master/eslint-config-css`
+# AI Notes For `@stet-css/eslint-config`
 
 ## Responsibility
 
-`@master/eslint-config-css` combines the recommended class linting config and stylesheet linting config from `@master/eslint-plugin-css`.
+`@stet-css/eslint-config` combines the recommended class linting config and stylesheet linting config from `@stet-css/eslint-plugin`.
 
 ## Owns
 
@@ -26,7 +26,7 @@
 ## Risk Areas
 
 - Public config compatibility.
-- Drift from `@master/eslint-plugin-css` recommended config.
+- Drift from `@stet-css/eslint-plugin` recommended config.
 
 ## Safe Changes
 
@@ -36,13 +36,13 @@
 ## Dangerous Changes
 
 - Diverging from the plugin recommended config without a clear reason.
-- Adding rule behavior here instead of in `@master/eslint-plugin-css`.
+- Adding rule behavior here instead of in `@stet-css/eslint-plugin`.
 
 ## Validation
 
 ```sh
-pnpm --filter @master/eslint-config-css test
-pnpm --filter @master/eslint-config-css lint
-pnpm --filter @master/eslint-config-css type-check
-pnpm --filter @master/eslint-config-css build
+pnpm --filter @stet-css/eslint-config test
+pnpm --filter @stet-css/eslint-config lint
+pnpm --filter @stet-css/eslint-config type-check
+pnpm --filter @stet-css/eslint-config build
 ```

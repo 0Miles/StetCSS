@@ -1,6 +1,6 @@
-import { loadProjectManifest } from '@master/css-project/manifest'
-import { findCSSManifestEntryFiles } from '@master/css-project/entries'
-import { resolveMasterCSSWorkspacePackages } from '@master/css-project/workspace'
+import { loadProjectManifest } from '@stet-css/project/manifest'
+import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
+import { resolveMasterCSSWorkspacePackages } from '@stet-css/project/workspace'
 import type MasterCSSMCPContext from './context'
 import { getErrorMessage } from './result'
 

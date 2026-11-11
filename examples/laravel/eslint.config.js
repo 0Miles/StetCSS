@@ -1,7 +1,7 @@
 import js from '@eslint/js'
 import { fixupConfigRules, fixupPluginRules } from '@eslint/compat'
 import { defineConfig, globalIgnores } from 'eslint/config'
-import css from '@master/eslint-config-css'
+import css from '@stet-css/eslint-config'
 import prettier from 'eslint-config-prettier'
 import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
@@ -46,7 +46,7 @@ export default defineConfig([
   ...css,
   {
     rules: {
-      '@master/css/no-invalid-classes': 'warn'
+      '@stet-css/no-invalid-classes': 'warn'
     }
   },
   prettier

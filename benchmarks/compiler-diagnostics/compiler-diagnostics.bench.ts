@@ -88,13 +88,13 @@ async function createCompilerDiagnosticsReport(): Promise<BenchmarkReport> {
     generatedAt: new Date().toISOString(),
     environment: collectEnvironment(),
     packages: await collectPackageVersions([
-      '@master/css',
-      '@master/css-compiler',
-      '@master/css-engine',
-      '@master/css-project',
-      '@master/css-scanner',
-      '@master/css-source',
-      '@master/css-stylesheet',
+      '@stet-css/core',
+      '@stet-css/compiler',
+      '@stet-css/engine',
+      '@stet-css/project',
+      '@stet-css/scanner',
+      '@stet-css/source',
+      '@stet-css/stylesheet',
       'fast-glob'
     ]),
     fixtures: getStaticBenchmarkFixtures(benchmarkFixtures),
@@ -170,7 +170,7 @@ function toMetricLabel(id: string) {
 
 function toMetricDescription(id: string) {
   if (id.startsWith('master-internal-')) {
-    return 'Compiler lowering metric collected while compiling the @master/css package source.'
+    return 'Compiler lowering metric collected while compiling the @stet-css/core package source.'
   }
   if (id.startsWith('outer-')) {
     return 'Compiler lowering metric collected while finalizing the extracted stylesheet manifest.'

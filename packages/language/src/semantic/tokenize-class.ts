@@ -1,5 +1,5 @@
 import { UtilityType, type MasterCSS } from '../master-css'
-import { inspectMasterCSSClass } from '@master/css-engine/inspect'
+import { inspectMasterCSSClass } from '@stet-css/engine/inspect'
 import {
   collectMasterCSSClassListTokenRanges,
   tokenizeMasterCSSAtQuery,
@@ -7,7 +7,7 @@ import {
   tokenizeMasterCSSState,
   tokenizeMasterCSSValue,
   type MasterCSSLexicalTokenItem
-} from '@master/css-lexer'
+} from '@stet-css/lexer'
 import { pushHighlightToken, toSemanticTokenItems, type HighlightTokenItem } from './highlight'
 
 function toHighlightTokenItems(tokens: MasterCSSLexicalTokenItem[]): HighlightTokenItem[] {

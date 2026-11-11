@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import {
   MASTER_CSS_HYDRATION_MANIFEST_ATTR,
   MASTER_CSS_HYDRATION_MANIFEST_SCRIPT_ID
-} from '@master/css-schema/hydration-manifest'
+} from '@stet-css/schema/hydration-manifest'
 import execPnpmSync from './helpers/pnpm-command'
 
 const packageDir = dirname(fileURLToPath(new URL('../package.json', import.meta.url)))

@@ -33,15 +33,15 @@
     },
     "packages": [
         {
-            "name": "@master/css",
+            "name": "@stet-css/core",
             "version": "workspace:^"
         },
         {
-            "name": "@master/css-cli",
+            "name": "@stet-css/cli",
             "version": "workspace:^"
         },
         {
-            "name": "@master/css.vite",
+            "name": "@stet-css/vite",
             "version": "workspace:^"
         },
         {

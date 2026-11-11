@@ -4,7 +4,7 @@ import {
   removeSourceRanges,
   replaceSourceRanges,
   type SourceRange
-} from '@master/css-lexer'
+} from '@stet-css/lexer'
 
 export {
   createSourceLocationResolver,

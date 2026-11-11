@@ -1,4 +1,4 @@
-import type { NativeCSSDeclarationMatcher } from '@master/css-engine'
+import type { NativeCSSDeclarationMatcher } from '@stet-css/engine'
 import { lexer, parse, property as propertyName } from 'css-tree'
 
 const matches = new Map<string, boolean>()

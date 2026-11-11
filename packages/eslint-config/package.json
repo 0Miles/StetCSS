@@ -1,5 +1,5 @@
 {
-  "name": "@master/eslint-config-css",
+  "name": "@stet-css/eslint-config",
   "type": "module",
   "scripts": {
     "build": "tsdown --config ../../shared/tsdown-package.config.ts",
@@ -43,7 +43,7 @@
     "provenance": true
   },
   "dependencies": {
-    "@master/eslint-plugin-css": "workspace:^"
+    "@stet-css/eslint-plugin": "workspace:^"
   },
   "peerDependencies": {
     "eslint": ">=9.0.0"

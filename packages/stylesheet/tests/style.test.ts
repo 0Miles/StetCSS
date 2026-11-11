@@ -2,14 +2,14 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import defaultManifestJSON from '@master/css-preset/default-manifest.json' with { type: 'json' }
-import type { MasterCSSManifest } from '@master/css-schema/manifest'
+import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
+import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 import {
   compileCSSManifest,
   createManifestFromCSSResult,
   resolveMasterCSSPackageImportGraph
-} from '@master/css-compiler'
-import CSSScanner from '@master/css-scanner'
+} from '@stet-css/compiler'
+import CSSScanner from '@stet-css/scanner'
 import {
   compileStyleCSS,
   compileRenderedStyleCSS,
@@ -97,16 +97,16 @@ describe('style CSS extraction helpers', () => {
     expect(result.generatedCSS).toContain('--color-primary:red')
   })
 
-  it('replaces @master/css imports with CSS import modifiers', () => {
+  it('replaces @stet-css/core imports with CSS import modifiers', () => {
     const result = replaceStyleCSSImports([
-      '@import "@master/css" layer(master);',
+      '@import "@stet-css/core" layer(master);',
       '@import url(\'master.css\') layer(master);',
       '@import "./other.css";'
     ].join('\n'), '/* master */')
 
     expect(result.replaced).toBe(true)
     expect(result.code).toContain('/* master */')
-    expect(result.code).not.toContain('@master/css')
+    expect(result.code).not.toContain('@stet-css/core')
     expect(result.code).toContain('@import url(\'master.css\') layer(master);')
     expect(result.code).toContain('@import "./other.css";')
   })
@@ -122,7 +122,7 @@ describe('style CSS extraction helpers', () => {
       '.native-card { color: var(--color-active); }'
     ].join('\n'))
     const source = [
-      '@import "@master/css";',
+      '@import "@stet-css/core";',
       '@import "./home.css";'
     ].join('\n')
     const resolvedSource = resolveMasterStyleSource(entryPath, source, root)
@@ -147,7 +147,7 @@ describe('style CSS extraction helpers', () => {
   })
 
   it('detects Master CSS entrypoints and preservation directives separately', () => {
-    expect(hasMasterStyleEntrypoint('@import "@master/css";')).toBe(true)
+    expect(hasMasterStyleEntrypoint('@import "@stet-css/core";')).toBe(true)
     expect(hasMasterStyleEntrypoint('@master entry;')).toBe(true)
     expect(hasMasterStyleEntrypoint('@master;')).toBe(false)
     expect(hasMasterStyleEntrypoint('@master global;')).toBe(false)
@@ -156,10 +156,10 @@ describe('style CSS extraction helpers', () => {
     expect(hasMasterStyleEntrypoint('@theme { --color-primary: red; }')).toBe(false)
     expect(hasMasterStyleEntrypoint('@import "./other.css";')).toBe(false)
     expect(isMasterStyleSource('@theme { --color-primary: red; }')).toBe(false)
-    expect(isMasterStyleSource('@import "@master/css";')).toBe(true)
+    expect(isMasterStyleSource('@import "@stet-css/core";')).toBe(true)
     expect(isMasterStyleSource(resolveStyleCSSImportGraph(
       join(createFixture(), 'app/globals.css'),
-      '@import "@master/css";',
+      '@import "@stet-css/core";',
       undefined,
       { expandMasterCSSPackage: false }
     ).source)).toBe(true)
@@ -347,7 +347,7 @@ describe('style CSS extraction helpers', () => {
     const root = createFixture()
     const globalsPath = join(root, 'app/globals.css')
     const pagePath = join(root, 'app/page.css')
-    writeFileSync(globalsPath, '@import "@master/css";')
+    writeFileSync(globalsPath, '@import "@stet-css/core";')
 
     const result = await transformLocalStyleCSS(pagePath, `
       @reference "./globals.css";
@@ -363,7 +363,7 @@ describe('style CSS extraction helpers', () => {
     expect(result.code).toContain('.home-section{padding-block:var(--spacing-5xl)}')
     expect(result.code).toContain('--spacing-5xl:')
     expect(result.code).not.toContain('@reference')
-    expect(result.code).not.toContain('@master/css')
+    expect(result.code).not.toContain('@stet-css/core')
     expect(result.dependencies).toContain(pagePath)
     expect(result.dependencies).toContain(globalsPath)
   })
@@ -373,7 +373,7 @@ describe('style CSS extraction helpers', () => {
     const globalsPath = join(root, 'app/globals.css')
     const pagePath = join(root, 'app/page.css')
     writeFileSync(globalsPath, [
-      '@import "@master/css";',
+      '@import "@stet-css/core";',
       '.global-section { padding-block: var(--spacing-5xl); }'
     ].join('\n'))
 
@@ -427,7 +427,7 @@ describe('style CSS extraction helpers', () => {
     const root = createFixture()
     const result = resolveMasterStyleSource(
       join(root, 'app/globals.css'),
-      '@import "@master/css";',
+      '@import "@stet-css/core";',
       root
     )
 
@@ -442,7 +442,7 @@ describe('style CSS extraction helpers', () => {
     )).toBeUndefined()
     expect(resolveMasterStyleSource(
       join(root, 'app/main.ts'),
-      '@import "@master/css";',
+      '@import "@stet-css/core";',
       root
     )).toBeUndefined()
     expect(resolveMasterStyleSource(
@@ -463,7 +463,7 @@ describe('style CSS extraction helpers', () => {
     })
     const graph = resolveMasterCSSPackageImportGraph(process.cwd())
     const compileSource = removeMasterStyleDirectives(removeStyleCSSImports(graph.source).code).code
-    const compiledResult = await compileStyleCSS(graph.dependencies[0] || '@master/css', compileSource, {
+    const compiledResult = await compileStyleCSS(graph.dependencies[0] || '@stet-css/core', compileSource, {
       projectDir: process.cwd(),
       preserveNativeCSS: true
     })
@@ -483,7 +483,7 @@ describe('style CSS extraction helpers', () => {
     expect(hostSource.source).toContain('text-rendering: geometricprecision')
     expect(hostSource.source).toContain('--font-family-sans:var(--font-sans, ui-sans-serif)')
     expect(hostSource.source).toContain('--font-family-mono:var(--font-mono, ui-monospace)')
-    expect(hostSource.source).not.toContain('@master/css/base.css')
+    expect(hostSource.source).not.toContain('@stet-css/core/base.css')
     expect(hostSource.source).not.toContain('virtual:master-utilities.css')
     expect(hostSource.source).not.toContain('@master')
   })
@@ -494,7 +494,7 @@ describe('style CSS extraction helpers', () => {
     await scanner.init()
 
     const styleCSSSources = new Map()
-    const result = await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'app/globals.css'), '@import "@master/css";')
+    const result = await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'app/globals.css'), '@import "@stet-css/core";')
 
     expect(result.dependencies.some((dependency: string) => dependency.endsWith('default-manifest.json'))).toBe(true)
     expect(result.dependencies.some((dependency: string) => dependency.endsWith('default-native.css'))).toBe(true)
@@ -525,7 +525,7 @@ describe('style CSS extraction helpers', () => {
   })
 
   it('treats an empty host source as an intentionally handled Master CSS import', () => {
-    const result = createStyleCSSHostSource('@import "@master/css";', {
+    const result = createStyleCSSHostSource('@import "@stet-css/core";', {
       masterSource: ''
     })
 
@@ -534,7 +534,7 @@ describe('style CSS extraction helpers', () => {
 
   it('keeps native imports before generated host CSS', () => {
     const masterFirst = createStyleCSSHostSource([
-      '@import "@master/css";',
+      '@import "@stet-css/core";',
       '@import "@fontsource/fira-mono";',
       '',
       '.card { color: red; }'
@@ -543,7 +543,7 @@ describe('style CSS extraction helpers', () => {
     })
     const masterLast = createStyleCSSHostSource([
       '@import "@fontsource/fira-mono";',
-      '@import "@master/css";',
+      '@import "@stet-css/core";',
       '',
       '.card { color: red; }'
     ].join('\n'), {
@@ -558,7 +558,7 @@ describe('style CSS extraction helpers', () => {
     const result = createStyleCSSHostSource([
       '@import url("@fontsource/fira-mono") layer(fonts) screen;',
       '@import "normalize.css" layer(reset);',
-      '@import "@master/css";'
+      '@import "@stet-css/core";'
     ].join('\n'), {
       masterSource: '#master-css-slot{--slot:0}'
     })
@@ -577,7 +577,7 @@ describe('style CSS extraction helpers', () => {
 
     const styleCSSSources = new Map()
     await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'app/globals.css'), `
-      @import "@master/css";
+      @import "@stet-css/core";
 
       @theme {
         --color-primary: #ff0000;
@@ -638,7 +638,7 @@ describe('style CSS extraction helpers', () => {
     expect(css).toContain('.fg\\:red{color:var(--color-red)}')
     expect(css).not.toContain('@master')
     expect(css).not.toContain('virtual:master-utilities.css')
-    expect(css).not.toContain('@master/css')
+    expect(css).not.toContain('@stet-css/core')
   })
 
   it('keeps non-expandable native imports out of generated managed CSS', async () => {
@@ -648,7 +648,7 @@ describe('style CSS extraction helpers', () => {
 
     const styleCSSSources = new Map()
     await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'app/globals.css'), [
-      '@import "@master/css";',
+      '@import "@stet-css/core";',
       '@import "@fontsource/fira-mono";',
       '',
       '.card {',
@@ -665,7 +665,7 @@ describe('style CSS extraction helpers', () => {
 
     expect(css).toContain('.card')
     expect(css).not.toContain('@fontsource/fira-mono')
-    expect(css).not.toContain('@master/css')
+    expect(css).not.toContain('@stet-css/core')
   })
 
   it('reports emittedGlobals variables and animations emitted by the Master CSS entry', async () => {
@@ -815,7 +815,7 @@ describe('style CSS extraction helpers', () => {
 
     const styleCSSSources = new Map()
     const result = await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'app/globals.css'), `
-      @import "@master/css";
+      @import "@stet-css/core";
       @import "./styles/btn.css";
 
       .card {
@@ -851,7 +851,7 @@ describe('style CSS extraction helpers', () => {
 
     const styleCSSSources = new Map()
     await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'app/globals.css'), `
-      @import "@master/css";
+      @import "@stet-css/core";
       @preserve native;
 
       .card {
@@ -894,7 +894,7 @@ describe('style CSS extraction helpers', () => {
 
     const styleCSSSources = new Map()
     await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'app/globals.css'), `
-      @import "@master/css";
+      @import "@stet-css/core";
       @preserve native;
       @import "./styles/btn.css";
     `)
@@ -946,7 +946,7 @@ describe('style CSS extraction helpers', () => {
     await scanner.init()
 
     const styleCSSSources = new Map()
-    await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'app/globals.css'), '@import "@master/css";')
+    await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'app/globals.css'), '@import "@stet-css/core";')
     await scanner.scan(join(root, 'app/page.html'), '<div class="block"></div>')
 
     const css = await createExtractedCSS({
@@ -960,7 +960,7 @@ describe('style CSS extraction helpers', () => {
     expect(css).toContain('text-rendering: geometricprecision')
     expect(css).toMatch(/font-family:\s*var\(--font-family-sans\)/)
     expect(css).not.toContain('.block{display:block}')
-    expect(css).not.toContain('@master/css')
+    expect(css).not.toContain('@stet-css/core')
   })
 
   it('returns empty CSS when generated output is disabled without style sources', async () => {

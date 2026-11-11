@@ -1,5 +1,5 @@
-import type { MasterCSSManifest } from '@master/css-schema/manifest'
-import type { SourceAdapter } from '@master/css-source'
+import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { SourceAdapter } from '@stet-css/source'
 
 const scannerOptions: ScannerOptions = {
   // enable verbose Logs

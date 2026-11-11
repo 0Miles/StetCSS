@@ -4,9 +4,9 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import withMasterCSS from '../src'
 import { getRegisteredOptions } from '../src/options'
-import { VIRTUAL_MANIFEST_ID } from '@master/css-integration/manifest-module'
-import { VIRTUAL_CSS_ID } from '@master/css-integration/style-module'
-import { VIRTUAL_EMITTED_GLOBALS_ID } from '@master/css-integration/emitted-globals-module'
+import { VIRTUAL_MANIFEST_ID } from '@stet-css/integration/manifest-module'
+import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
+import { VIRTUAL_EMITTED_GLOBALS_ID } from '@stet-css/integration/emitted-globals-module'
 
 const toPosixPath = (value: string) => value.replace(/\\/g, '/')
 const virtualManifestProjectPath = 'node_modules/.master-css/master-css-manifest.js'
@@ -15,7 +15,7 @@ const composedAdapterProjectPath = 'node_modules/.master-css/master-css-next-ada
 const instrumentationClientProjectPath = 'node_modules/.master-css/master-css-next-instrumentation-client.js'
 const nextInstrumentationClientId = 'private-next-instrumentation-client'
 const masterCSSUserInstrumentationClientId = 'private-next-master-css-user-instrumentation-client'
-const removedReactPackageName = ['@master', 'css.react'].join('/')
+const removedReactPackageName = ['@stet-css', 'react'].join('/')
 
 function readGeneratedInstrumentationClientSource(root: string) {
   const cwd = process.cwd()
@@ -33,7 +33,7 @@ const AsyncFunction = async function () { }.constructor as new (...args: string[
 function toRunnableInstrumentationClientSource(source: string) {
   return source
     .replace(`import 'private-next-master-css-user-instrumentation-client'`, `await importModule('private-next-master-css-user-instrumentation-client')`)
-    .replace(`import CSSRuntime from '@master/css-runtime'`, `const CSSRuntime = await importDefault('@master/css-runtime')`)
+    .replace(`import CSSRuntime from '@stet-css/runtime'`, `const CSSRuntime = await importDefault('@stet-css/runtime')`)
     .replace(`import masterCSSManifest from 'virtual:master-css-manifest'`, `const masterCSSManifest = await importDefault('virtual:master-css-manifest')`)
     .replace(`import masterCSSEmittedGlobals from 'virtual:master-css-emitted-globals'`, `const masterCSSEmittedGlobals = await importDefault('virtual:master-css-emitted-globals')`)
     .replaceAll(`import('virtual:master-css-manifest')`, `importModule('virtual:master-css-manifest')`)
@@ -303,7 +303,7 @@ describe('withMasterCSS', () => {
     try {
       const source = readGeneratedInstrumentationClientSource(root)
 
-      expect(source).toContain(`import CSSRuntime from '@master/css-runtime'`)
+      expect(source).toContain(`import CSSRuntime from '@stet-css/runtime'`)
       expect(source).toContain(`import masterCSSManifest from 'virtual:master-css-manifest'`)
       expect(source).toContain('import.meta.turbopackHot')
       expect(source).toContain('import.meta.webpackHot')
@@ -326,7 +326,7 @@ describe('withMasterCSS', () => {
 
       await runInstrumentationClient(source, {
         'private-next-master-css-user-instrumentation-client': {},
-        '@master/css-runtime': cssRuntimeModule,
+        '@stet-css/runtime': cssRuntimeModule,
         'virtual:master-css-manifest': Promise.resolve({ default: manifest }),
         'virtual:master-css-emitted-globals': Promise.resolve({ default: emittedGlobals })
       })
@@ -352,7 +352,7 @@ describe('withMasterCSS', () => {
 
       await runInstrumentationClient(source, {
         'private-next-master-css-user-instrumentation-client': {},
-        '@master/css-runtime': cssRuntimeModule,
+        '@stet-css/runtime': cssRuntimeModule,
         'virtual:master-css-manifest': { default: manifest },
         'virtual:master-css-emitted-globals': { default: emittedGlobals }
       })

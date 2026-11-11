@@ -1,20 +1,20 @@
 import {
   MASTER_CSS_MANIFEST_QUERY,
   stripMasterCSSManifestQuery
-} from '@master/css-integration/manifest-module'
+} from '@stet-css/integration/manifest-module'
 import {
   toBrowserManifestFacadeModule,
   toInlineManifestModule
-} from '@master/css-integration/manifest-facade'
+} from '@stet-css/integration/manifest-facade'
 import {
   toHashedManifestAssetFileName,
   toVirtualCSSManifestModulePath
-} from '@master/css-integration/node'
-import { loadManifestJSON } from '@master/css-project/manifest'
+} from '@stet-css/integration/node'
+import { loadManifestJSON } from '@stet-css/project/manifest'
 import type { Compiler } from 'webpack'
 import type { MasterCSSWebpackContext, WebpackSubPlugin } from '../plugin'
-import { isCSSManifestRequest } from '@master/css-project/entries'
-import { collectStyleCSSDependencies } from '@master/css-stylesheet'
+import { isCSSManifestRequest } from '@stet-css/project/entries'
+import { collectStyleCSSDependencies } from '@stet-css/stylesheet'
 import { addFileDependency } from '../utils/file-dependencies'
 
 export default function ManifestLoaderPlugin(context: MasterCSSWebpackContext): WebpackSubPlugin {

@@ -9,14 +9,14 @@ test('recommended config autofixes cross-rule class lists to a stable result', a
     plugin.configs.recommended,
     {
       settings: {
-        '@master/css': {
+        '@stet-css': {
           manifest: createPresetManifest()
         }
       }
     }
   ]
   const preferCanonicalOnly = new ESLint({
-    fix: (message) => message.ruleId === '@master/css/prefer-canonical-classes',
+    fix: (message) => message.ruleId === '@stet-css/prefer-canonical-classes',
     overrideConfigFile: true,
     overrideConfig
   })
@@ -34,8 +34,8 @@ test('recommended config autofixes cross-rule class lists to a stable result', a
   expect(canonicalOutput).toBe(`clsx('size:md size:md block')`)
   if (!canonicalOutput) throw new Error('Expected canonical output')
   expect(canonicalResult.messages.map((message) => message.ruleId)).toEqual([
-    '@master/css/sort-classes',
-    '@master/css/no-conflicting-classes'
+    '@stet-css/sort-classes',
+    '@stet-css/no-conflicting-classes'
   ])
 
   const [fixedResult] = await recommendedFix.lintText(canonicalOutput, { filePath: 'fixture.js' })
@@ -60,7 +60,7 @@ test('recommended config autofixes mdx fenced examples', async () => {
     },
     {
       settings: {
-        '@master/css': {
+        '@stet-css': {
           manifest: createPresetManifest()
         }
       }
@@ -89,11 +89,11 @@ test('recommended config autofixes mdx fenced examples', async () => {
   ].join('\n'))
 
   const disabledSource = [
-    '{/* eslint-disable @master/css/sort-classes -- intentional example */}',
+    '{/* eslint-disable @stet-css/sort-classes -- intentional example */}',
     '```html',
     '<button class="fg:white bg:blue-60">Save</button>',
     '```',
-    '{/* eslint-enable @master/css/sort-classes */}'
+    '{/* eslint-enable @stet-css/sort-classes */}'
   ].join('\n')
   const [disabledResult] = await recommendedFix.lintText(disabledSource, { filePath: 'fixture.mdx' })
   expect(disabledResult.output).toBeUndefined()

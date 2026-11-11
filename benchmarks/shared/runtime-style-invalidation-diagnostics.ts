@@ -596,10 +596,10 @@ async function createRuntimeStyleInvalidationDiagnosticsReport(): Promise<Benchm
       }
       : undefined,
     packages: await collectPackageVersions([
-      '@master/css',
-      '@master/css-runtime',
-      '@master/css-server',
-      '@master/css-preset',
+      '@stet-css/core',
+      '@stet-css/runtime',
+      '@stet-css/server',
+      '@stet-css/preset',
       '@tailwindcss/cli',
       '@playwright/test'
     ]),
@@ -612,7 +612,7 @@ async function createRuntimeStyleInvalidationDiagnosticsReport(): Promise<Benchm
     limits: [
       'This suite is diagnostic-only and does not publish public benchmark claims.',
       'The dynamic and stress-dom fixtures use the interaction-cost mutation-cleanup-cycle page harness.',
-      'Runtime/progressive variants are measured with benchmark-injected instrumentation; @master/css-runtime source behavior is not changed by this suite.',
+      'Runtime/progressive variants are measured with benchmark-injected instrumentation; @stet-css/runtime source behavior is not changed by this suite.',
       'Observer-paused variants intentionally disconnect the runtime MutationObserver inside the benchmark page only.',
       'Retained-volume variants seed inactive generated rules into runtime state to isolate retained stylesheet volume cost.',
       'Trace-derived event names can change across Chromium versions; raw trace artifacts are kept for review before optimization work.'

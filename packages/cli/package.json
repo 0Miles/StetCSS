@@ -1,5 +1,5 @@
 {
-  "name": "@master/css-cli",
+  "name": "@stet-css/cli",
   "scripts": {
     "build": "tsdown --config ../../shared/tsdown-package.config.ts",
     "dev": "tsdown --config ../../shared/tsdown-package.config.ts --watch",
@@ -35,15 +35,15 @@
     "provenance": true
   },
   "dependencies": {
-    "@master/css": "workspace:^",
-    "@master/css-diagnostics": "workspace:^",
-    "@master/css-lexer": "workspace:^",
-    "@master/css-language": "workspace:^",
-    "@master/css-lint": "workspace:^",
-    "@master/css-project": "workspace:^",
-    "@master/css-scanner": "workspace:^",
-    "@master/css-stylesheet": "workspace:^",
-    "@master/css-validator": "workspace:^",
+    "@stet-css/core": "workspace:^",
+    "@stet-css/diagnostics": "workspace:^",
+    "@stet-css/lexer": "workspace:^",
+    "@stet-css/language": "workspace:^",
+    "@stet-css/lint": "workspace:^",
+    "@stet-css/project": "workspace:^",
+    "@stet-css/scanner": "workspace:^",
+    "@stet-css/stylesheet": "workspace:^",
+    "@stet-css/validator": "workspace:^",
     "bytes": "^3.1.2",
     "chokidar": "^5.0.0",
     "commander": "^14.0.3",

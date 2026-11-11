@@ -15,7 +15,7 @@ it('basic extract', async () => {
     fs.writeFileSync(join(cwd, 'a.html'), '<h1 class="bg:primary fg:primary">Hello World</h1>', { flag: 'w' })
     fs.writeFileSync(join(cwd, 'b.html'), '<h1 class="m:12x text-center font:sans font:heavy font:48px">Hello World</h1>', { flag: 'w' })
     fs.writeFileSync(join(cwd, 'main.css'), `
-      @import "@master/css";
+      @import "@stet-css/core";
       @theme {
         --color-primary: var(--blue);
       }

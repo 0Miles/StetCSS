@@ -3,7 +3,7 @@ import {
   collectCSSQuotedStringRanges,
   type CSSDirectiveRuleRange,
   type SourceRange
-} from '@master/css-lexer'
+} from '@stet-css/lexer'
 
 export interface MasterCSSDirectiveFormatEdit {
   start: number

@@ -2,7 +2,7 @@ import {
   collectCSSDirectiveRanges,
   parseMasterCSSClassList,
   type SourceRange
-} from '@master/css-lexer'
+} from '@stet-css/lexer'
 import type { RuleContext } from '@typescript-eslint/utils/ts-eslint'
 import type { ResolvedClassListNode, ResolvedClassNode } from './resolve-class-node'
 

@@ -1,4 +1,4 @@
-@import '@master/css';
+@import '@stet-css/core';
 
 #root {
   max-width: 1280px;

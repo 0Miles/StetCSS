@@ -19,7 +19,7 @@ Environment:
 - Dynamic and stress-dom fixtures only.
 - Master runtime and Master progressive modes only for runtime internals.
 - Local Chromium trace timings only; trace event names and scheduling can vary by Chromium version.
-- Instrumentation is benchmark-only and does not change `@master/css-runtime` source behavior.
+- Instrumentation is benchmark-only and does not change `@stet-css/runtime` source behavior.
 - Raw reports, traces, screenshots, and temporary workspaces stay under `benchmarks/.results/**` and are not committed.
 
 ## Confirmed Hotspot

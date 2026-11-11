@@ -1,7 +1,7 @@
 import defineVisitors from '../utils/define-visitors'
 import resolveContext from '../utils/resolve-context'
 import createRule from '../create-rule'
-import { createConflictingClassesReport } from '@master/css-lint'
+import { createConflictingClassesReport } from '@stet-css/lint'
 import reportLintDiagnostics from '../utils/report-lint-diagnostics'
 import defineSourceVisitors, { shouldUseSourceVisitors } from '../utils/define-source-visitors'
 

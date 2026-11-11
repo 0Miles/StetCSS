@@ -599,10 +599,10 @@ async function createRuntimeMutationDiagnosticsReport(): Promise<BenchmarkReport
       version: browserVersion
     },
     packages: await collectPackageVersions([
-      '@master/css',
-      '@master/css-runtime',
-      '@master/css-server',
-      '@master/css-preset',
+      '@stet-css/core',
+      '@stet-css/runtime',
+      '@stet-css/server',
+      '@stet-css/preset',
       '@playwright/test'
     ]),
     fixtures: getRuntimeMutationDiagnosticFixtures(),
@@ -616,7 +616,7 @@ async function createRuntimeMutationDiagnosticsReport(): Promise<BenchmarkReport
       'Only the dynamic and stress-dom fixtures are measured, using the interaction-cost mutation-cleanup-cycle scenario.',
       'The trace-window axis compares ending trace collection before the deferred product cleanup flush with keeping the current post-interaction settle window.',
       'The rule-state axis compares first-time temporary rule generation with preseeded temporary runtime rules.',
-      'Instrumentation is injected into the benchmark page harness; @master/css-runtime source and public behavior are not changed.',
+      'Instrumentation is injected into the benchmark page harness; @stet-css/runtime source and public behavior are not changed.',
       'MutationObserver and CSSRuntime.ensureClassRules/deleteClassRules wrappers add measurement overhead, so use these numbers to localize costs, not as public performance claims.',
       'Progressive variants fail if they fall back to runtime rendering before the cleanup scenario.',
       'Trace-derived event names can change across Chromium versions, so raw trace artifacts are kept for review before optimization work.'

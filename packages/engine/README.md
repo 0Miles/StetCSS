@@ -1,16 +1,16 @@
-# @master/css-engine
+# @stet-css/engine
 
 The manifest-driven Master CSS engine.
 
 ## Installation
 
 ```bash
-npm install @master/css-engine
+npm install @stet-css/engine
 ```
 
 ## Responsibility
 
-`@master/css-engine` executes `MasterCSSManifest` values. It owns class matching, value parsing, selector and at-rule parsing/generation, variable and animation insertion, cascade layers, rule priority sorting, hydration manifest generation, CSS text emission, and built-in key/namespace registries.
+`@stet-css/engine` executes `MasterCSSManifest` values. It owns class matching, value parsing, selector and at-rule parsing/generation, variable and animation insertion, cascade layers, rule priority sorting, hydration manifest generation, CSS text emission, and built-in key/namespace registries.
 
 This package does not discover project files, resolve CSS imports, compile CSS directives, or integrate with frameworks.
 
@@ -19,7 +19,7 @@ This package does not discover project files, resolve CSS imports, compile CSS d
 ### `MasterCSS`
 
 ```ts
-import { MasterCSS } from '@master/css-engine'
+import { MasterCSS } from '@stet-css/engine'
 
 const css = MasterCSS.create({ manifest })
 
@@ -40,28 +40,28 @@ console.log(css.text)
 
 ### Compiler helpers
 
-`@master/css-engine/compiler` exposes parse, generate, inspect, and built-in registry helpers used by the compiler, language tooling, docs, and tests.
+`@stet-css/engine/compiler` exposes parse, generate, inspect, and built-in registry helpers used by the compiler, language tooling, docs, and tests.
 
 ```ts
 import {
   builtinKeyAliases,
   builtinNativeValueNamespaces,
   compareRulePriority,
-} from '@master/css-engine/compiler'
+} from '@stet-css/engine/compiler'
 ```
 
 ### Inspection helpers
 
-`@master/css-engine/inspect` exposes tooling-only class inspection helpers for lint and language tooling without adding those methods to the runtime-covered `MasterCSS` prototype.
+`@stet-css/engine/inspect` exposes tooling-only class inspection helpers for lint and language tooling without adding those methods to the runtime-covered `MasterCSS` prototype.
 
 ```ts
-import { inspectMasterCSSClass } from '@master/css-engine/inspect'
+import { inspectMasterCSSClass } from '@stet-css/engine/inspect'
 
 const inspection = inspectMasterCSSClass(css, 'fg:red:hover')
 ```
 
 ## Related packages
 
-- `@master/css` is the public facade over this package and the default preset.
-- `@master/css-compiler` lowers CSS directives into manifests.
-- `@master/css-runtime` runs the engine against live browser DOM roots.
+- `@stet-css/core` is the public facade over this package and the default preset.
+- `@stet-css/compiler` lowers CSS directives into manifests.
+- `@stet-css/runtime` runs the engine against live browser DOM roots.

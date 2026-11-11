@@ -1,11 +1,11 @@
-import defaultManifestJSON from '@master/css-preset/default-manifest.json' with { type: 'json' }
-import UtilityType from '@master/css-schema/utility-type'
+import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
+import UtilityType from '@stet-css/schema/utility-type'
 import {
   flattenMasterCSSManifestVariables,
   groupMasterCSSManifestVariables,
   type MasterCSSManifest,
   type MasterCSSManifestVariable
-} from '@master/css-schema/manifest'
+} from '@stet-css/schema/manifest'
 
 const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
 

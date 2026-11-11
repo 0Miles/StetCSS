@@ -1,4 +1,4 @@
-import UtilityType from '@master/css-schema/utility-type'
+import UtilityType from '@stet-css/schema/utility-type'
 import type {
   CSSDirectiveManifestInput as SharedCSSDirectiveManifestInput,
   CSSDirectiveUtilityDefinition,
@@ -6,7 +6,7 @@ import type {
   CSSDirectiveUtilityPatternDefinition,
   CSSDirectiveUtilityRuleDefinition,
   CSSDirectiveVariableDefinition
-} from '@master/css-schema/css-directives'
+} from '@stet-css/schema/css-directives'
 import type {
   MasterCSSManifest,
   MasterCSSManifestAnimations,
@@ -26,21 +26,21 @@ import type {
   MasterCSSManifestVariant,
   MasterCSSManifestVariantBranch,
   MasterCSSManifestVariants
-} from '@master/css-schema/manifest'
-import { flattenMasterCSSManifestVariables, groupMasterCSSManifestVariables } from '@master/css-schema/manifest'
+} from '@stet-css/schema/manifest'
+import { flattenMasterCSSManifestVariables, groupMasterCSSManifestVariables } from '@stet-css/schema/manifest'
 import {
   createCompilerCSS,
   parseCondition,
   parseSelector
-} from '@master/css-engine/compiler'
+} from '@stet-css/engine/compiler'
 import {
   addCompilerDiagnosticCount,
   setCompilerDiagnosticCount,
   timeCompilerDiagnostic,
   type CompilerDiagnosticRecorder
 } from './diagnostics'
-import { builtinNamespaces } from '@master/css-engine'
-import { isNativeCSSShorthandProperty } from '@master/css-schema/native-css-shorthand'
+import { builtinNamespaces } from '@stet-css/engine'
+import { isNativeCSSShorthandProperty } from '@stet-css/schema/native-css-shorthand'
 import { normalizeStylesheetValue } from './stylesheet-value'
 
 export type CSSDirectiveManifestInput = SharedCSSDirectiveManifestInput

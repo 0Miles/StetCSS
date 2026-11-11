@@ -8,10 +8,10 @@ import {
   removeMasterStyleDirectives,
   resolveMasterStyleSource,
   transformLocalStyleCSS
-} from '@master/css-stylesheet'
-import { VIRTUAL_CSS_ID } from '@master/css-integration/style-module'
-import { loadProjectManifest } from '@master/css-project/manifest'
-import { findCSSManifestEntryFiles } from '@master/css-project/entries'
+} from '@stet-css/stylesheet'
+import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
+import { loadProjectManifest } from '@stet-css/project/manifest'
+import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
 
 interface TransformStyleSourceOptions {
   projectDir?: string

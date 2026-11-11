@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises'
-import CSSLanguageService from '@master/css-language-service'
+import CSSLanguageService from '@stet-css/language-service'
 import type MasterCSSMCPContext from './context'
 import { applyTextEdits, createMCPTextDocument, getLanguageId, type Range, type TextEdit } from './document'
 import { resolveSourceFiles } from './scan'

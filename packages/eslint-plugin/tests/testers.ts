@@ -2,7 +2,7 @@ import { RuleTester, RuleTesterConfig } from '@typescript-eslint/rule-tester'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { createPresetManifest } from './helpers/create-preset-manifest'
-import type { MasterCSSManifest } from '@master/css'
+import type { MasterCSSManifest } from '@stet-css/core'
 
 const configs = {
   jsx: {
@@ -20,13 +20,13 @@ const configs = {
 
 function withPresetManifest(config: RuleTesterConfig): RuleTesterConfig {
   const settings = config.settings as Record<string, any> | undefined
-  const masterCSSSettings = settings?.['@master/css'] || {}
+  const masterCSSSettings = settings?.['@stet-css'] || {}
   const planOption = masterCSSSettings.manifest as Partial<MasterCSSManifest> | undefined
   return {
     ...config,
     settings: {
       ...settings,
-      '@master/css': {
+      '@stet-css': {
         ...masterCSSSettings,
         manifest: createPresetManifest(planOption)
       }

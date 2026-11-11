@@ -1,7 +1,7 @@
-import type { MasterCSS } from '@master/css-engine'
-import { inspectMasterCSSClass } from '@master/css-engine/inspect'
-import { parseMasterCSSClassList, splitMasterCSSTopLevel } from '@master/css-lexer'
-import UtilityType from '@master/css-schema/utility-type'
+import type { MasterCSS } from '@stet-css/engine'
+import { inspectMasterCSSClass } from '@stet-css/engine/inspect'
+import { parseMasterCSSClassList, splitMasterCSSTopLevel } from '@stet-css/lexer'
+import UtilityType from '@stet-css/schema/utility-type'
 import {
   replaceClassGroupInClassList,
   replaceClassNameInClassList

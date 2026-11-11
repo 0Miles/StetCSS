@@ -1,5 +1,5 @@
 {
-  "name": "@master/css-language-service",
+  "name": "@stet-css/language-service",
   "type": "module",
   "scripts": {
     "build": "tsdown --config ../../shared/tsdown-package.config.ts",
@@ -17,9 +17,9 @@
     "directory": "packages/language-service"
   },
   "dependencies": {
-    "@master/css": "workspace:^",
-    "@master/css-engine": "workspace:^",
-    "@master/css-language": "workspace:^",
+    "@stet-css/core": "workspace:^",
+    "@stet-css/engine": "workspace:^",
+    "@stet-css/language": "workspace:^",
     "colorjs.io": "^0.6.1",
     "defu": "^6.1.7",
     "js-beautify": "^1.15.4",
@@ -30,7 +30,7 @@
   "devDependencies": {
     "@types/vscode": "^1.125.0",
     "vscode-languageserver": "^10.0.0",
-    "@master/css-schema": "workspace:^"
+    "@stet-css/schema": "workspace:^"
   },
   "sideEffects": false,
   "main": "./dist/index.js",

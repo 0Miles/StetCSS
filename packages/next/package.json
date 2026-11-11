@@ -1,5 +1,5 @@
 {
-  "name": "@master/css.next",
+  "name": "@stet-css/next",
   "type": "module",
   "scripts": {
     "build": "tsdown --config ../../shared/tsdown-package.config.ts",
@@ -64,15 +64,15 @@
     "next": ">=16"
   },
   "dependencies": {
-    "@master/css": "workspace:^",
-    "@master/css-scanner": "workspace:^",
-    "@master/css-integration": "workspace:^",
-    "@master/css-project": "workspace:^",
-    "@master/css-runtime": "workspace:^",
-    "@master/css-server": "workspace:^",
-    "@master/css-stylesheet": "workspace:^",
-    "@master/css-schema": "workspace:^",
-    "@master/css-lexer": "workspace:^"
+    "@stet-css/core": "workspace:^",
+    "@stet-css/scanner": "workspace:^",
+    "@stet-css/integration": "workspace:^",
+    "@stet-css/project": "workspace:^",
+    "@stet-css/runtime": "workspace:^",
+    "@stet-css/server": "workspace:^",
+    "@stet-css/stylesheet": "workspace:^",
+    "@stet-css/schema": "workspace:^",
+    "@stet-css/lexer": "workspace:^"
   },
   "devDependencies": {
     "@types/react": "^19.2.17",

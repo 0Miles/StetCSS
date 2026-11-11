@@ -8,7 +8,7 @@ import {
   type CSSDirectiveUtilityDefinition,
   type CSSDirectiveUtilityRuleDefinition,
   type CSSDirectiveVariableDefinition
-} from '@master/css-schema/css-directives'
+} from '@stet-css/schema/css-directives'
 import type { PropertiesHyphen } from 'csstype'
 import {
   compareRulePriority,
@@ -19,8 +19,8 @@ import {
   parseSelector,
   type GeneratedRule,
   type MasterCSS
-} from '@master/css-engine/compiler'
-import type { MasterCSSManifest, MasterCSSManifestUtilityLayerName } from '@master/css-schema/manifest'
+} from '@stet-css/engine/compiler'
+import type { MasterCSSManifest, MasterCSSManifestUtilityLayerName } from '@stet-css/schema/manifest'
 import { createMasterCSSManifest, createVariableNameResolver, type CSSDirectiveVariableNameResolver } from './master-css-manifest'
 import { combineStyleSelectors } from './utils/selectors'
 import wrapConditions from './utils/wrap-conditions'

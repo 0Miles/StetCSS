@@ -1,7 +1,7 @@
 import {
   formatMasterCSSDirectives,
   type MasterCSSDirectiveFormatEdit
-} from '@master/css-language'
+} from '@stet-css/language'
 import type { Range, TextEdit } from 'vscode-languageserver-protocol'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 

@@ -13,7 +13,7 @@ export async function loadOptionalPeer<T>(specifier: string, label: string): Pro
       if (!warnedPeers.has(specifier)) {
         warnedPeers.add(specifier)
         const message = error instanceof Error ? ` ${error.message}` : ''
-        console.warn(`[@master/css-source] Optional ${label} parser "${specifier}" could not be loaded; falling back to text extraction.${message}`)
+        console.warn(`[@stet-css/source] Optional ${label} parser "${specifier}" could not be loaded; falling back to text extraction.${message}`)
       }
       return undefined
     })

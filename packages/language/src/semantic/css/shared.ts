@@ -1,4 +1,4 @@
-import { type SourceRange } from '@master/css-lexer'
+import { type SourceRange } from '@stet-css/lexer'
 
 export interface ScanOptions {
   positionOffset?: number

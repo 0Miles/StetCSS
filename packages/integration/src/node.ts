@@ -10,7 +10,7 @@ import {
   EMPTY_EMITTED_GLOBALS_MODULE,
   VIRTUAL_EMITTED_GLOBALS_FILE
 } from './emitted-globals-module'
-import { MASTER_CSS_HYDRATION_MANIFEST_FILE_BASENAME } from '@master/css-schema/hydration-manifest'
+import { MASTER_CSS_HYDRATION_MANIFEST_FILE_BASENAME } from '@stet-css/schema/hydration-manifest'
 
 export const RESOLVED_MASTER_CSS_MANIFEST_QUERY_PREFIX = '\0master-css-manifest:'
 export const VIRTUAL_MODULE_DIR = 'node_modules/.master-css'
@@ -44,8 +44,14 @@ export function toVirtualModulePackageJSONPath(context: string) {
   return join(context, ...VIRTUAL_MODULE_DIR_SEGMENTS, 'package.json')
 }
 
+// File systems cap a single file name at 255 bytes; leave room for the `.manifest.json` suffix.
+const MAX_ENCODED_VIRTUAL_FILENAME_LENGTH = 200
+
 function encodeVirtualFilename(id: string) {
-  return Buffer.from(id).toString('base64url')
+  const encoded = Buffer.from(id).toString('base64url')
+  if (encoded.length <= MAX_ENCODED_VIRTUAL_FILENAME_LENGTH) return encoded
+  // `.` never appears in base64url, so hashed names cannot collide with encoded ones.
+  return `h.${createHash('sha256').update(id).digest('hex')}`
 }
 
 export function toVirtualCSSManifestModulePath(context: string, file: string) {

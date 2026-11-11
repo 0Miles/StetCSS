@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'vitest'
-import { MasterCSS } from '@master/css-engine'
+import { MasterCSS } from '@stet-css/engine'
 import { compileCSS, compileCSSManifest } from '../src'
 import type { CompilerDiagnosticRecorder } from '../src/diagnostics'
-import defaultManifestJSON from '@master/css-preset/default-manifest.json' with { type: 'json' }
-import { flattenMasterCSSManifestVariables, type MasterCSSManifest } from '@master/css-schema/manifest'
-import UtilityType from '@master/css-schema/utility-type'
+import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
+import { flattenMasterCSSManifestVariables, type MasterCSSManifest } from '@stet-css/schema/manifest'
+import UtilityType from '@stet-css/schema/utility-type'
 
 const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
 

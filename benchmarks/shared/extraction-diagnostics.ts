@@ -6,15 +6,15 @@ import {
   AnimationRule,
   VariableRule,
   type MasterCSSEmittedGlobals
-} from '@master/css'
+} from '@stet-css/core'
 import {
   createManifestFromCSSResult,
   resolveMasterCSSPackageImportGraph,
   type CompileCSSResult
-} from '@master/css-compiler'
-import { collectAnimationNamesFromDeclaration } from '@master/css-engine'
-import { findCSSManifestEntryFiles } from '@master/css-project/entries'
-import CSSScanner from '@master/css-scanner'
+} from '@stet-css/compiler'
+import { collectAnimationNamesFromDeclaration } from '@stet-css/engine'
+import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
+import CSSScanner from '@stet-css/scanner'
 import {
   collectCSSVariableReferences,
   compileStyleCSS,
@@ -26,17 +26,17 @@ import {
   type ScannerState,
   type StyleCSSSource,
   type StyleCSSSources
-} from '@master/css-stylesheet'
-import { extractClassCandidates } from '@master/css-source'
+} from '@stet-css/stylesheet'
+import { extractClassCandidates } from '@stet-css/source'
 import {
   hasStylesheetDirectives,
   hasStylesheetSourceDirectives,
   mergeStylesheetSourceOptions,
   resolveStylesheetSourcePaths,
   type StylesheetSourceOptions
-} from '@master/css-stylesheet/directives'
-import { createCSSWithNativeDeclarations } from '@master/css-validator/native-declaration'
-import type { MasterCSSManifest } from '@master/css-schema/manifest'
+} from '@stet-css/stylesheet/directives'
+import { createCSSWithNativeDeclarations } from '@stet-css/validator/native-declaration'
+import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 import fg from 'fast-glob'
 import { getStaticFixtureSource } from '../fixtures/static'
 import { hashBytes, summarizeBytes } from './bytes'
@@ -363,7 +363,7 @@ async function createDiagnosticExtractedCSS(options: {
 async function compileMasterCSSPackage(projectDir: string, recorder: DiagnosticRecorder) {
   recorder.setCount('master-package-shortcut-fallback-count', 1)
   const graph = recorder.timeSync('master-import-graph-resolution-ms', () => resolveMasterCSSPackageCompileSource(projectDir))
-  const result = await recorder.time('master-package-css-compilation-ms', () => compileStyleCSS(graph.dependencies[0] || '@master/css', graph.source, {
+  const result = await recorder.time('master-package-css-compilation-ms', () => compileStyleCSS(graph.dependencies[0] || '@stet-css/core', graph.source, {
     projectDir
   }))
   return {

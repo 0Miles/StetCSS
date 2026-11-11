@@ -1,6 +1,6 @@
 import scannerOptions, { type ScannerOptions } from './options'
-import { MasterCSS } from '@master/css'
-import type { MasterCSSManifest } from '@master/css-schema/manifest'
+import { MasterCSS } from '@stet-css/core'
+import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 import { createRequire } from 'node:module'
 import {
   extractClassCandidates,
@@ -11,14 +11,14 @@ import {
   svelteAdapter,
   vueAdapter,
   type SourceAdapter
-} from '@master/css-source'
+} from '@stet-css/source'
 import { Minimatch } from 'minimatch'
 import { createConsola } from 'consola'
 import { defu } from 'defu'
-import { createCSSWithNativeDeclarations, generateValidRules } from '@master/css-validator'
+import { createCSSWithNativeDeclarations, generateValidRules } from '@stet-css/validator'
 import { EventEmitter } from 'node:events'
 import { createHash } from 'node:crypto'
-import { cssEscape } from '@master/css-lexer'
+import { cssEscape } from '@stet-css/lexer'
 import path from 'path'
 import {
   createClassExclusionMatcher,
@@ -55,7 +55,7 @@ const sourceLikeExtensions = new Set([
 
 const sourceMatchOptions = { dot: true }
 const require = createRequire(import.meta.url)
-const defaultManifest = require('@master/css-preset/default-manifest.json') as MasterCSSManifest
+const defaultManifest = require('@stet-css/preset/default-manifest.json') as MasterCSSManifest
 const logger = createConsola({ level: 3 })
 
 interface SourceMatchers {

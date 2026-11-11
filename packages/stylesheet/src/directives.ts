@@ -8,8 +8,8 @@ import {
   mergeCSSDirectiveExtractionPolicy,
   removeStandaloneCSSDirectives,
   type StandaloneCSSDirectiveStatement
-} from '@master/css-compiler'
-import type { CSSDirectiveExtractionPolicy } from '@master/css-schema/css-directives'
+} from '@stet-css/compiler'
+import type { CSSDirectiveExtractionPolicy } from '@stet-css/schema/css-directives'
 
 export type StylesheetDirectives = CSSDirectiveExtractionPolicy
 

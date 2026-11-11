@@ -2,10 +2,10 @@ import { existsSync, readFileSync, realpathSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, extname, isAbsolute, resolve } from 'node:path'
 import { transform } from 'lightningcss'
-import type { MasterCSSManifest } from '@master/css-schema/manifest'
-import { stringifyMasterCSSManifestJSON } from '@master/css-schema/manifest-json'
-import type { CSSDirectiveReference } from '@master/css-schema/css-directives'
-import { MASTER_CSS_ENTRY_DIRECTIVE_NAME } from '@master/css-lexer'
+import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import { stringifyMasterCSSManifestJSON } from '@stet-css/schema/manifest-json'
+import type { CSSDirectiveReference } from '@stet-css/schema/css-directives'
+import { MASTER_CSS_ENTRY_DIRECTIVE_NAME } from '@stet-css/lexer'
 import { createMasterCSSManifest } from './master-css-manifest'
 import lowerCSSDirectives from './lower-css-directives'
 import type { CompilerDiagnosticRecorder } from './diagnostics'
@@ -44,8 +44,8 @@ export type {
 setCSSTransform(transform)
 
 const require = createRequire(import.meta.url)
-const MASTER_CSS_PACKAGE_ID = '@master/css'
-const MASTER_CSS_PACKAGE_IDS = new Set([MASTER_CSS_PACKAGE_ID, '@master/css-preset'])
+const MASTER_CSS_PACKAGE_ID = '@stet-css/core'
+const MASTER_CSS_PACKAGE_IDS = new Set([MASTER_CSS_PACKAGE_ID, '@stet-css/preset'])
 
 interface CSSPackageJSON {
   name?: unknown

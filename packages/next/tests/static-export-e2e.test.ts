@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { MASTER_CSS_HYDRATION_MANIFEST_ATTR } from '@master/css-schema/hydration-manifest'
+import { MASTER_CSS_HYDRATION_MANIFEST_ATTR } from '@stet-css/schema/hydration-manifest'
 import execPnpmSync from './helpers/pnpm-command'
 
 const packageDir = dirname(fileURLToPath(new URL('../package.json', import.meta.url)))

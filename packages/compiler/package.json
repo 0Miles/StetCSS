@@ -1,5 +1,5 @@
 {
-  "name": "@master/css-compiler",
+  "name": "@stet-css/compiler",
   "type": "module",
   "scripts": {
     "build": "tsdown --config ../../shared/tsdown-package.config.ts",
@@ -53,16 +53,16 @@
     "provenance": true
   },
   "dependencies": {
-    "@master/css-engine": "workspace:^",
-    "@master/css-lexer": "workspace:^",
+    "@stet-css/engine": "workspace:^",
+    "@stet-css/lexer": "workspace:^",
     "css-tree": "^3.2.1",
     "csstype": "^3.2.3",
     "lightningcss": "^1.32.0",
     "lightningcss-wasm": "^1.32.0",
-    "@master/css-schema": "workspace:^"
+    "@stet-css/schema": "workspace:^"
   },
   "devDependencies": {
-    "@master/css-preset": "workspace:^",
+    "@stet-css/preset": "workspace:^",
     "@types/css-tree": "^2.3.11"
   }
 }

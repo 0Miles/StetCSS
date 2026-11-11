@@ -1,18 +1,18 @@
-# @master/css-stylesheet
+# @stet-css/stylesheet
 
 Stylesheet entry pipeline for Master CSS static rendering.
 
 ## Installation
 
 ```bash
-npm install @master/css-stylesheet
+npm install @stet-css/stylesheet
 ```
 
 ## Responsibility
 
-`@master/css-stylesheet` detects Master CSS stylesheet entries, resolves stylesheet import graphs, compiles CSS-first directives, registers stylesheet sources, prunes native CSS using scanner state, and composes final CSS with emittedGlobals metadata.
+`@stet-css/stylesheet` detects Master CSS stylesheet entries, resolves stylesheet import graphs, compiles CSS-first directives, registers stylesheet sources, prunes native CSS using scanner state, and composes final CSS with emittedGlobals metadata.
 
-It accepts structural scanner state from callers; it does not depend on `@master/css-scanner` or scan source files directly except when resolving stylesheet `@source` directives through supplied options.
+It accepts structural scanner state from callers; it does not depend on `@stet-css/scanner` or scan source files directly except when resolving stylesheet `@source` directives through supplied options.
 
 ## API
 
@@ -24,7 +24,7 @@ import {
   registerStyleCSSSource,
   createStyleCSSManifest,
   createExtractedCSS,
-} from '@master/css-stylesheet'
+} from '@stet-css/stylesheet'
 ```
 
 Common API areas:
@@ -45,7 +45,7 @@ Extraction directive helpers are exported from `./directives`.
 import {
   collectStylesheetDirectives,
   createStylesheetSourceOptions,
-} from '@master/css-stylesheet/directives'
+} from '@stet-css/stylesheet/directives'
 ```
 
 For user-facing CSS directive syntax, see [CSS directives](https://rc.css.master.co/reference/directives).
@@ -55,7 +55,7 @@ For user-facing CSS directive syntax, see [CSS directives](https://rc.css.master
 Browser-safe CSS directive compilation and class rendering are exported from `./browser`. This subpath does not include filesystem import graphs, Sass preprocessing, or source scanning.
 
 ```ts
-import { compileBrowserStyleCSS } from '@master/css-stylesheet/browser'
+import { compileBrowserStyleCSS } from '@stet-css/stylesheet/browser'
 
 const result = await compileBrowserStyleCSS('@theme { --color-brand: #ff0; }', {
   baseManifest,

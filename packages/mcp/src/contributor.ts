@@ -104,7 +104,7 @@ const PACKAGE_COMMON_PACKS: Record<string, string[]> = {
   source: ['.ai/context/package-boundaries.md', '.ai/context/testing.md'],
   engine: ['.ai/context/css-output.md', '.ai/context/performance.md'],
   preset: ['.ai/context/css-output.md'],
-  facade: ['.ai/context/package-boundaries.md', '.ai/context/css-output.md'],
+  core: ['.ai/context/package-boundaries.md', '.ai/context/css-output.md'],
   compiler: ['.ai/context/css-output.md', '.ai/context/package-boundaries.md'],
   project: ['.ai/context/package-boundaries.md'],
   integration: ['.ai/context/package-boundaries.md'],

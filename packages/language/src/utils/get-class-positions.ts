@@ -3,7 +3,7 @@ import type { Position } from 'vscode-languageserver-protocol'
 import findMatchingPairs from './find-matching-brackets'
 import escapeRegexp from 'lodash.escaperegexp'
 import { parseSync, visitorKeys } from 'oxc-parser'
-import { collectCSSDirectiveRanges, parseMasterCSSClassList } from '@master/css-lexer'
+import { collectCSSDirectiveRanges, parseMasterCSSClassList } from '@stet-css/lexer'
 
 export interface ClassPosition {
   range: { start: number, end: number }

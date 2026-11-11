@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module'
-import type { MasterCSSManifest } from '@master/css-schema/manifest'
+import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 
 const require = createRequire(import.meta.url)
-const defaultManifest = require('@master/css-preset/default-manifest.json') as MasterCSSManifest
+const defaultManifest = require('@stet-css/preset/default-manifest.json') as MasterCSSManifest
 
 export default defaultManifest

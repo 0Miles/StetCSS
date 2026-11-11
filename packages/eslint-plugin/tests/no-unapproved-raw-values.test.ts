@@ -1,4 +1,4 @@
-import UtilityType from '@master/css-schema/utility-type'
+import UtilityType from '@stet-css/schema/utility-type'
 import { expect, test } from 'vitest'
 import plugin from '../src/plugin'
 import recommended from '../src/configs/recommended'
@@ -91,7 +91,7 @@ jsxTester.run('no unapproved raw values', rule, {
 
 createTester({
   settings: {
-    '@master/css': {
+    '@stet-css': {
       manifest: createPresetManifest({
         utilities: [
           {
@@ -113,7 +113,7 @@ createTester({
 
 createTester({
   settings: {
-    '@master/css': {
+    '@stet-css': {
       manifest: customManifest
     }
   }
@@ -133,7 +133,7 @@ createTester({
 
 createTester({
   settings: {
-    '@master/css': {
+    '@stet-css': {
       manifest: registryFieldManifest
     }
   }
@@ -185,5 +185,5 @@ jsxTester.run('no unapproved raw values parser smoke tests', rule, {
 
 test('registers rule without enabling it in recommended config', () => {
   expect(plugin.rules?.['no-unapproved-raw-values']).toBe(rule)
-  expect(recommended.rules?.['@master/css/no-unapproved-raw-values']).toBeUndefined()
+  expect(recommended.rules?.['@stet-css/no-unapproved-raw-values']).toBeUndefined()
 })

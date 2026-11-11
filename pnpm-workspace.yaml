@@ -3,16 +3,12 @@ packages:
   - 'examples/*'
   - 'benchmarks'
   - 'shared'
-  - 'internal'
-  - 'site'
 
 allowBuilds:
-  '@aronrepo/*': true
   '@firebase/util': true
   '@parcel/watcher': true
   '@swc/core': true
   '@vscode/vsce-sign': true
-  aronrepo: true
   esbuild: true
   keytar: true
   lmdb: true
@@ -23,8 +19,6 @@ allowBuilds:
   workerd: true
 
 minimumReleaseAgeExclude:
-  - '@aronrepo/*'
-  - aronrepo
   - '@typescript/typescript-aix-ppc64@7.0.2'
   - '@typescript/typescript-darwin-arm64@7.0.2'
   - '@typescript/typescript-darwin-x64@7.0.2'

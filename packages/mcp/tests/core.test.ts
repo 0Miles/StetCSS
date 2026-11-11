@@ -42,7 +42,7 @@ function createContributorFixture() {
     }
   })
   writeJSON(join(root, 'packages/engine/package.json'), {
-    name: '@master/css-engine',
+    name: '@stet-css/engine',
     scripts: {
       build: 'tsdown',
       lint: 'eslint',
@@ -50,21 +50,21 @@ function createContributorFixture() {
       'type-check': 'tsc -b tsconfig.typecheck.json'
     }
   })
-  writeFileSync(join(root, 'packages/engine/AI.md'), '# AI Notes For `@master/css-engine`')
+  writeFileSync(join(root, 'packages/engine/AI.md'), '# AI Notes For `@stet-css/engine`')
   writeJSON(join(root, 'packages/runtime/package.json'), {
-    name: '@master/css-runtime',
+    name: '@stet-css/runtime',
     scripts: {
       e2e: 'playwright test',
       lint: 'eslint',
       test: 'vitest'
     },
     dependencies: {
-      '@master/css-engine': 'workspace:^'
+      '@stet-css/engine': 'workspace:^'
     }
   })
-  writeFileSync(join(root, 'packages/runtime/AI.md'), '# AI Notes For `@master/css-runtime`')
+  writeFileSync(join(root, 'packages/runtime/AI.md'), '# AI Notes For `@stet-css/runtime`')
   writeJSON(join(root, 'packages/mcp/package.json'), {
-    name: '@master/css-mcp',
+    name: '@stet-css/mcp',
     scripts: {
       build: 'tsdown',
       lint: 'eslint',
@@ -72,25 +72,25 @@ function createContributorFixture() {
       'type-check': 'tsc -b tsconfig.typecheck.json'
     }
   })
-  writeFileSync(join(root, 'packages/mcp/AI.md'), '# AI Notes For `@master/css-mcp`')
+  writeFileSync(join(root, 'packages/mcp/AI.md'), '# AI Notes For `@stet-css/mcp`')
   writeJSON(join(root, 'packages/create/package.json'), {
-    name: '@master/create-css',
+    name: '@stet-css/create',
     scripts: {
       build: 'tsdown',
       lint: 'eslint',
       test: 'vitest'
     }
   })
-  writeFileSync(join(root, 'packages/create/AI.md'), '# AI Notes For `@master/create-css`')
+  writeFileSync(join(root, 'packages/create/AI.md'), '# AI Notes For `@stet-css/create`')
   writeJSON(join(root, 'packages/css-sv/package.json'), {
-    name: '@master/css-sv',
+    name: '@stet-css/sv',
     scripts: {
       build: 'tsdown',
       lint: 'eslint',
       test: 'vitest'
     }
   })
-  writeFileSync(join(root, 'packages/css-sv/AI.md'), '# AI Notes For `@master/css-sv`')
+  writeFileSync(join(root, 'packages/css-sv/AI.md'), '# AI Notes For `@stet-css/sv`')
   writeJSON(join(root, 'site/package.json'), {
     name: 'site',
     private: true,
@@ -137,7 +137,7 @@ afterEach(() => {
   }
 })
 
-describe('@master/css-mcp', () => {
+describe('@stet-css/mcp', () => {
   it('registers tools, resources, prompts, and renders CSS through MCP', async () => {
     const root = createTempDir('master-css-mcp-basic-')
     const connection = await connect(root)
@@ -200,11 +200,11 @@ describe('@master/css-mcp', () => {
     writeJSON(join(root, 'package.json'), {
       name: 'setup-fixture',
       devDependencies: {
-        '@master/css': 'workspace:^',
-        '@master/css-cli': 'workspace:^',
-        '@master/create-css': 'workspace:^',
-        '@master/css-sv': 'workspace:^',
-        '@master/eslint-config-css': 'workspace:^'
+        '@stet-css/core': 'workspace:^',
+        '@stet-css/cli': 'workspace:^',
+        '@stet-css/create': 'workspace:^',
+        '@stet-css/sv': 'workspace:^',
+        '@stet-css/eslint-config': 'workspace:^'
       },
       scripts: {
         build: 'master-css src/index.html -o master.css'
@@ -229,31 +229,31 @@ describe('@master/css-mcp', () => {
       expect(audit.version).toBe(1)
       expect(audit.manifest.entries).toHaveLength(1)
       expect(audit.packages.declared).toContainEqual(expect.objectContaining({
-        name: '@master/css'
+        name: '@stet-css/core'
       }))
       expect(audit.packages.declared).toEqual(expect.arrayContaining([
-        expect.objectContaining({ name: '@master/create-css' }),
-        expect.objectContaining({ name: '@master/css-sv' }),
-        expect.objectContaining({ name: '@master/eslint-config-css' })
+        expect.objectContaining({ name: '@stet-css/create' }),
+        expect.objectContaining({ name: '@stet-css/sv' }),
+        expect.objectContaining({ name: '@stet-css/eslint-config' })
       ]))
       expect(audit.packages.setup).toEqual(expect.arrayContaining([
-        expect.objectContaining({ name: '@master/create-css' }),
-        expect.objectContaining({ name: '@master/css-sv' })
+        expect.objectContaining({ name: '@stet-css/create' }),
+        expect.objectContaining({ name: '@stet-css/sv' })
       ]))
       expect(audit.summary.setupPackages).toBe(2)
       expect(audit.integrations).toEqual(expect.arrayContaining([
         expect.objectContaining({
-          name: '@master/css-cli'
+          name: '@stet-css/cli'
         }),
         expect.objectContaining({
-          name: '@master/eslint-config-css'
+          name: '@stet-css/eslint-config'
         })
       ]))
       const integrationPackageNames = audit.integrations
         .filter((integration: { type: string }) => integration.type === 'package')
         .map((integration: { name: string }) => integration.name)
-      expect(integrationPackageNames).not.toContain('@master/create-css')
-      expect(integrationPackageNames).not.toContain('@master/css-sv')
+      expect(integrationPackageNames).not.toContain('@stet-css/create')
+      expect(integrationPackageNames).not.toContain('@stet-css/sv')
 
       const directives = parseToolJSON(await connection.client.callTool({
         name: 'mastercss_inspect_directives',
@@ -395,7 +395,7 @@ describe('@master/css-mcp', () => {
       expect(report.audience).toBe('master-css-repository-contributors')
       expect(report.status).toBe('loaded')
       expect(report.affectedPackages).toContainEqual(expect.objectContaining({
-        name: '@master/css-engine',
+        name: '@stet-css/engine',
         path: 'packages/engine',
         aiNotes: 'packages/engine/AI.md'
       }))
@@ -414,10 +414,10 @@ describe('@master/css-mcp', () => {
         severity: 'high'
       }))
       expect(report.validation.commands).toContainEqual(expect.objectContaining({
-        command: 'pnpm --filter @master/css-engine test'
+        command: 'pnpm --filter @stet-css/engine test'
       }))
       expect(report.validation.commands).toContainEqual(expect.objectContaining({
-        command: 'pnpm --filter @master/css-engine lint'
+        command: 'pnpm --filter @stet-css/engine lint'
       }))
     } finally {
       await connection.close()
@@ -453,19 +453,19 @@ describe('@master/css-mcp', () => {
         }
       }))
       expect(tests.validation.commands).toContainEqual(expect.objectContaining({
-        command: 'pnpm --filter @master/css-runtime e2e'
+        command: 'pnpm --filter @stet-css/runtime e2e'
       }))
 
       const graph = parseToolJSON(await connection.client.callTool({
         name: 'mastercss_package_graph',
         arguments: {
-          packageName: '@master/css-engine'
+          packageName: '@stet-css/engine'
         }
       }))
       expect(graph.packages).toEqual([
         expect.objectContaining({
-          name: '@master/css-engine',
-          dependents: ['@master/css-runtime']
+          name: '@stet-css/engine',
+          dependents: ['@stet-css/runtime']
         })
       ])
     } finally {
@@ -490,12 +490,12 @@ describe('@master/css-mcp', () => {
       expect(report.status).toBe('loaded')
       expect(report.affectedPackages).toEqual(expect.arrayContaining([
         expect.objectContaining({
-          name: '@master/create-css',
+          name: '@stet-css/create',
           path: 'packages/create',
           aiNotes: 'packages/create/AI.md'
         }),
         expect.objectContaining({
-          name: '@master/css-sv',
+          name: '@stet-css/sv',
           path: 'packages/css-sv',
           aiNotes: 'packages/css-sv/AI.md'
         })
@@ -510,16 +510,16 @@ describe('@master/css-mcp', () => {
       ]))
       expect(report.validation.commands).toEqual(expect.arrayContaining([
         expect.objectContaining({
-          command: 'pnpm --filter @master/create-css test'
+          command: 'pnpm --filter @stet-css/create test'
         }),
         expect.objectContaining({
-          command: 'pnpm --filter @master/create-css lint'
+          command: 'pnpm --filter @stet-css/create lint'
         }),
         expect.objectContaining({
-          command: 'pnpm --filter @master/css-sv test'
+          command: 'pnpm --filter @stet-css/sv test'
         }),
         expect.objectContaining({
-          command: 'pnpm --filter @master/css-sv lint'
+          command: 'pnpm --filter @stet-css/sv lint'
         })
       ]))
     } finally {

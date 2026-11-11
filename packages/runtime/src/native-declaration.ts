@@ -1,4 +1,4 @@
-import type { NativeCSSDeclarationMatcher } from '@master/css-engine'
+import type { NativeCSSDeclarationMatcher } from '@stet-css/engine'
 
 const supportsCache = new Map<string, boolean>()
 

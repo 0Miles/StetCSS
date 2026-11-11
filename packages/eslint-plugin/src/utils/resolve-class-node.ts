@@ -1,5 +1,5 @@
 import { RuleContext } from '@typescript-eslint/utils/ts-eslint'
-import { parseMasterCSSClassList } from '@master/css-lexer'
+import { parseMasterCSSClassList } from '@stet-css/lexer'
 
 export type ResolvedClassListUnescape = string | false
 

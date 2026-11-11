@@ -71,21 +71,21 @@ const STATIC_EXTENSION_PATHS = [
   'README.md',
   'icon.png'
 ]
-const MASTER_CSS_SOURCE_GRAMMAR_PATH = './node_modules/@master/css-language/syntaxes/master-css.tmLanguage.json'
-const MASTER_CSS_STAGED_GRAMMAR_PATH = './dist/node_modules/@master/css-language/syntaxes/master-css.tmLanguage.json'
+const MASTER_CSS_SOURCE_GRAMMAR_PATH = './node_modules/@stet-css/language/syntaxes/master-css.tmLanguage.json'
+const MASTER_CSS_STAGED_GRAMMAR_PATH = './dist/node_modules/@stet-css/language/syntaxes/master-css.tmLanguage.json'
 
 const BASE_RUNTIME_PACKAGES = [
   'lightningcss',
   'detect-libc',
   'oxc-parser',
   '@oxc-project/types',
-  '@master/css-preset',
+  '@stet-css/preset',
   'mdn-data'
 ]
 const RUNTIME_PACKAGE_OWNERS = [
   {
-    owner: '@master/css-language',
-    matches: (packageName) => packageName === 'mdn-data' || packageName === '@master/css-preset'
+    owner: '@stet-css/language',
+    matches: (packageName) => packageName === 'mdn-data' || packageName === '@stet-css/preset'
   },
   {
     owner: 'oxc-parser',
@@ -227,7 +227,7 @@ async function copyRuntimePackage(stagingDir, packageName) {
 }
 
 async function copyTextMateGrammar(stagingDir) {
-  const sourcePath = packageRequire.resolve('@master/css-language/syntaxes/master-css.tmLanguage.json')
+  const sourcePath = packageRequire.resolve('@stet-css/language/syntaxes/master-css.tmLanguage.json')
   const destinationPath = join(stagingDir, MASTER_CSS_STAGED_GRAMMAR_PATH)
   await mkdir(dirname(destinationPath), { recursive: true })
   await cp(sourcePath, destinationPath, { force: true })

@@ -1,7 +1,7 @@
 import type MasterCSS from './core'
 import type { Utility } from './utility'
-import type { Variable } from '@master/css-schema/css-syntax'
-import type { MasterCSSManifestUtilityMatcher } from '@master/css-schema/manifest'
+import type { Variable } from '@stet-css/schema/css-syntax'
+import type { MasterCSSManifestUtilityMatcher } from '@stet-css/schema/manifest'
 
 export interface MasterCSSNormalizedNumericValue {
   kind: 'number' | 'rem'

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { compileCSSManifestFile, compileProjectManifest } from '../src'
-import { flattenMasterCSSManifestVariables } from '@master/css-schema/manifest'
+import { flattenMasterCSSManifestVariables } from '@stet-css/schema/manifest'
 
 function createFixture() {
   const root = mkdtempSync(join(tmpdir(), 'master-css-reference-'))
@@ -122,7 +122,7 @@ describe('CSS @reference', () => {
     try {
       const entryPath = join(root, 'src/app.css')
       writeFileSync(entryPath, [
-        '@import "@master/css";',
+        '@import "@stet-css/core";',
         '@import "fake-font/index.css";',
         '',
         '@theme {',

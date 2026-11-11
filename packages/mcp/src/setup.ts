@@ -1,8 +1,8 @@
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { findCSSManifestEntryFiles } from '@master/css-project/entries'
-import { resolveMasterCSSWorkspacePackages } from '@master/css-project/workspace'
+import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
+import { resolveMasterCSSWorkspacePackages } from '@stet-css/project/workspace'
 import type MasterCSSMCPContext from './context'
 import { loadWorkspaceManifest } from './project'
 import { getErrorMessage } from './result'
@@ -17,38 +17,38 @@ const LOCKFILES: Record<string, string> = {
 }
 
 const MASTER_CSS_PACKAGES = [
-  '@master/css',
-  '@master/css-cli',
-  '@master/css-mcp',
-  '@master/create-css',
-  '@master/css-runtime',
-  '@master/css-language-server',
-  '@master/css.vite',
-  '@master/css.webpack',
-  '@master/css.next',
-  '@master/css.nuxt',
-  '@master/css.astro',
-  '@master/css.svelte',
-  '@master/css-sv',
-  '@master/eslint-config-css',
-  '@master/eslint-plugin-css'
+  '@stet-css/core',
+  '@stet-css/cli',
+  '@stet-css/mcp',
+  '@stet-css/create',
+  '@stet-css/runtime',
+  '@stet-css/language-server',
+  '@stet-css/vite',
+  '@stet-css/webpack',
+  '@stet-css/next',
+  '@stet-css/nuxt',
+  '@stet-css/astro',
+  '@stet-css/svelte',
+  '@stet-css/sv',
+  '@stet-css/eslint-config',
+  '@stet-css/eslint-plugin'
 ]
 
 const INTEGRATION_PACKAGES = [
-  '@master/css-cli',
-  '@master/css.vite',
-  '@master/css.webpack',
-  '@master/css.next',
-  '@master/css.nuxt',
-  '@master/css.astro',
-  '@master/css.svelte',
-  '@master/eslint-config-css',
-  '@master/eslint-plugin-css'
+  '@stet-css/cli',
+  '@stet-css/vite',
+  '@stet-css/webpack',
+  '@stet-css/next',
+  '@stet-css/nuxt',
+  '@stet-css/astro',
+  '@stet-css/svelte',
+  '@stet-css/eslint-config',
+  '@stet-css/eslint-plugin'
 ]
 
 const SETUP_PACKAGES = [
-  '@master/create-css',
-  '@master/css-sv'
+  '@stet-css/create',
+  '@stet-css/sv'
 ]
 
 interface PackageJSON {
@@ -138,7 +138,7 @@ function detectIntegrations(packageJSON: PackageJSON | undefined) {
       version: dependencies[name]
     }))
   const scriptHints = Object.entries(scripts)
-    .filter(([, script]) => /master-css|@master\/css|mcss/.test(script))
+    .filter(([, script]) => /master-css|@stet-css\/|mcss/.test(script))
     .map(([name, script]) => ({
       type: 'script' as const,
       name,
@@ -182,12 +182,12 @@ export async function auditSetup(context: MasterCSSMCPContext) {
     })
   }
 
-  if (!declaredPackages.some((pkg) => pkg.name === '@master/css')) {
-    pushDiagnostic(diagnostics, 'warning', 'missing-master-css-package', 'package.json does not declare @master/css.')
+  if (!declaredPackages.some((pkg) => pkg.name === '@stet-css/core')) {
+    pushDiagnostic(diagnostics, 'warning', 'missing-master-css-package', 'package.json does not declare @stet-css/core.')
   }
 
   if (!resolvedPackages.css) {
-    pushDiagnostic(diagnostics, 'error', 'unresolved-master-css-package', 'The @master/css package could not be resolved from this workspace.', {
+    pushDiagnostic(diagnostics, 'error', 'unresolved-master-css-package', 'The @stet-css/core package could not be resolved from this workspace.', {
       errors: resolvedPackages.errors
     })
   }
@@ -205,7 +205,7 @@ export async function auditSetup(context: MasterCSSMCPContext) {
   }
 
   for (const error of resolvedPackages.errors) {
-    if (error.name === '@master/css') continue
+    if (error.name === '@stet-css/core') continue
     pushDiagnostic(diagnostics, 'info', 'package-resolution-info', error.message, {
       packageName: error.name
     })

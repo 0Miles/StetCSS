@@ -73,11 +73,11 @@ async function createMasterDeliveryModeReport(): Promise<BenchmarkReport> {
       version: browserVersion
     },
     packages: await collectPackageVersions([
-      '@master/css',
-      '@master/css-cli',
-      '@master/css-runtime',
-      '@master/css-server',
-      '@master/css-preset',
+      '@stet-css/core',
+      '@stet-css/cli',
+      '@stet-css/runtime',
+      '@stet-css/server',
+      '@stet-css/preset',
       '@playwright/test',
       'tailwindcss',
       '@tailwindcss/cli'
@@ -92,7 +92,7 @@ async function createMasterDeliveryModeReport(): Promise<BenchmarkReport> {
       'This suite measures local Chromium initial payload, page load, and Master CSS runtime/progressive adoption cost only.',
       'Master static and Tailwind static variants use CLI-generated external CSS from equivalent rendered fixture intent, not identical class strings.',
       'Master runtime uses the built browser runtime bundle and default manifest JSON; no upfront generated CSS is delivered.',
-      'Master progressive uses @master/css-server to inline style#master-css and hydration manifest, then the built browser runtime adopts that CSS.',
+      'Master progressive uses @stet-css/server to inline style#master-css and hydration manifest, then the built browser runtime adopts that CSS.',
       'Progressive fallback is reported as progressive-adopted = 0 so fixture-specific hydration issues remain visible in the report.',
       'This suite does not measure post-load mutation, route transition, HMR, dev workflow, Vite injection cost, CDN behavior, or public real-world page variance.',
       'Trace-derived event names can change across Chromium versions, so raw trace artifacts are kept for review before publishing public conclusions.'

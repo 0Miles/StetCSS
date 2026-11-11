@@ -35,12 +35,12 @@ const nativeProperties = [
 
 if (!existsSync(globalBundleFile) || !existsSync(defaultManifestFile)) {
   console.error('Runtime benchmark requires built runtime global artifacts.')
-  console.error('Run `pnpm --filter @master/css-runtime build` first.')
+  console.error('Run `pnpm --filter @stet-css/runtime build` first.')
   process.exit(1)
 }
 
-const { MasterCSS, createHydrationManifest } = await import('@master/css-engine')
-const defaultManifest = (await import('@master/css-preset/default-manifest.json', { with: { type: 'json' } })).default
+const { MasterCSS, createHydrationManifest } = await import('@stet-css/engine')
+const defaultManifest = (await import('@stet-css/preset/default-manifest.json', { with: { type: 'json' } })).default
 const browserTypes = {
   chromium,
   firefox,
@@ -338,7 +338,7 @@ async function writeResults(results, browserVersion) {
   await mkdir(dirname(outputFile), { recursive: true })
   await writeFile(outputFile, `${JSON.stringify({
     schemaVersion: 1,
-    package: '@master/css-runtime',
+    package: '@stet-css/runtime',
     tool: 'playwright',
     generatedAt: new Date().toISOString(),
     browser: {

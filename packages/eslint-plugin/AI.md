@@ -1,8 +1,8 @@
-# AI Notes For `@master/eslint-plugin-css`
+# AI Notes For `@stet-css/eslint-plugin`
 
 ## Responsibility
 
-`@master/eslint-plugin-css` adapts Master CSS lint helpers to ESLint. It detects class locations, reports diagnostics, and applies autofixes through ESLint rule APIs.
+`@stet-css/eslint-plugin` adapts Master CSS lint helpers to ESLint. It detects class locations, reports diagnostics, and applies autofixes through ESLint rule APIs.
 
 ## Owns
 
@@ -14,9 +14,9 @@
 ## Does Not Own
 
 - Engine CSS generation semantics.
-- Class lint policy owned by `@master/css-lint`.
-- Class-list token/range parsing owned by `@master/css-lexer`.
-- Framework-neutral class-list edit text owned by `@master/css-lint`.
+- Class lint policy owned by `@stet-css/lint`.
+- Class-list token/range parsing owned by `@stet-css/lexer`.
+- Framework-neutral class-list edit text owned by `@stet-css/lint`.
 - Source extraction adapters outside ESLint visitors.
 - Language service or LSP behavior.
 
@@ -43,7 +43,7 @@
 - Autofix whitespace, quote, and range preservation.
 - Keep AST/report/fixer orchestration here, but delegate token/range parsing and class-list replacement text to lower packages.
 - Manifest cache scoping by cwd/settings.
-- Adapter drift from `@master/css-lint` policy helpers.
+- Adapter drift from `@stet-css/lint` policy helpers.
 
 ## Safe Changes
 
@@ -61,10 +61,10 @@
 ## Validation
 
 ```sh
-pnpm --filter @master/eslint-plugin-css test
-pnpm --filter @master/eslint-plugin-css lint
-pnpm --filter @master/eslint-plugin-css type-check
-pnpm --filter @master/eslint-plugin-css build
+pnpm --filter @stet-css/eslint-plugin test
+pnpm --filter @stet-css/eslint-plugin lint
+pnpm --filter @stet-css/eslint-plugin type-check
+pnpm --filter @stet-css/eslint-plugin build
 ```
 
 Use or extend `tests/*.test.ts` and issue fixtures for rule behavior changes.

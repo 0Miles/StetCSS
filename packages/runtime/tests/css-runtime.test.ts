@@ -1,6 +1,6 @@
 import { cssRuntime } from '../src'
 import type CSSRuntime from '../src'
-import type { MasterCSSManifest } from '@master/css-schema/manifest'
+import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 
 const manifest = { version: 1 } satisfies MasterCSSManifest
 

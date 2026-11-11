@@ -8,8 +8,8 @@
     "preview": "nuxt preview"
   },
   "dependencies": {
-    "@master/css": "workspace:^",
-    "@master/css.nuxt": "workspace:^"
+    "@stet-css/core": "workspace:^",
+    "@stet-css/nuxt": "workspace:^"
   },
   "devDependencies": {
     "@types/node": "^25.9.4",

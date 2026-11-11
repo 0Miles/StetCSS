@@ -1,11 +1,11 @@
 import { readFile } from 'node:fs/promises'
 import { basename } from 'node:path'
-import { collectCSSDirectiveRanges } from '@master/css-lexer'
+import { collectCSSDirectiveRanges } from '@stet-css/lexer'
 import {
   compileCSSManifest,
   compileCSSManifestFile,
   type CompileCSSManifestResult
-} from '@master/css-compiler'
+} from '@stet-css/compiler'
 import type MasterCSSMCPContext from './context'
 import { createMCPTextDocument } from './document'
 import { summarizeManifest } from './manifest-summary'

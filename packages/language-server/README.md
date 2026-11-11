@@ -20,18 +20,18 @@
       <img alt="NPM Version" src="https://img.shields.io/github/v/release/master-co/css?include_prereleases&color=f6f7f8&label=&style=for-the-badge&logo=github">
     </picture>
   </a>
-  <a aria-label="NPM Package" href="https://www.npmjs.com/package/@master/css-language-server">
+  <a aria-label="NPM Package" href="https://www.npmjs.com/package/@stet-css/language-server">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/npm/dm/@master/css-language-server?color=212022&label=%20&logo=npm&style=for-the-badge">
-      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/npm/dm/@master/css-language-server?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
-      <img alt="NPM package ( download / month )" src="https://img.shields.io/npm/dm/@master/css-language-server?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
+      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/npm/dm/@stet-css/language-server?color=212022&label=%20&logo=npm&style=for-the-badge">
+      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/npm/dm/@stet-css/language-server?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
+      <img alt="NPM package ( download / month )" src="https://img.shields.io/npm/dm/@stet-css/language-server?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
     </picture>
   </a>
-  <a aria-label="JSDelivr" href="https://www.jsdelivr.com/package/npm/@master/css-language-server">
+  <a aria-label="JSDelivr" href="https://www.jsdelivr.com/package/npm/@stet-css/language-server">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/jsdelivr/npm/hm/@master/css-language-server?color=212022&label=%20&logo=jsdelivr&style=for-the-badge">
-      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/jsdelivr/npm/hm/@master/css-language-server?color=f6f7f8&label=%20&logo=jsdelivr&style=for-the-badge">
-      <img alt="JSDelivr hits (npm scoped)" src="https://img.shields.io/jsdelivr/npm/hm/@master/css-language-server?color=f6f7f8&label=%20&logo=jsdelivr&style=for-the-badge">
+      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/jsdelivr/npm/hm/@stet-css/language-server?color=212022&label=%20&logo=jsdelivr&style=for-the-badge">
+      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/jsdelivr/npm/hm/@stet-css/language-server?color=f6f7f8&label=%20&logo=jsdelivr&style=for-the-badge">
+      <img alt="JSDelivr hits (npm scoped)" src="https://img.shields.io/jsdelivr/npm/hm/@stet-css/language-server?color=f6f7f8&label=%20&logo=jsdelivr&style=for-the-badge">
     </picture>
   </a>
   <a aria-label="Discord Community" href="https://discord.gg/sZNKpAAAw6">
@@ -62,20 +62,20 @@
 ## Installation
 
 ```bash
-npm install @master/css-language-server
+npm install @stet-css/language-server
 ```
 
 ## Usage
 
 ```js
-import CSSLanguageServer from '@master/css-language-server'
+import CSSLanguageServer from '@stet-css/language-server'
 
 const languageServer = new CSSLanguageServer(connection, customSettings)
 ```
 
-`CSSLanguageServer` wraps `@master/css-language-service` with LSP workspace lifecycle, completion, hover, document color, color presentation, semantic token, and directive formatting handlers.
+`CSSLanguageServer` wraps `@stet-css/language-service` with LSP workspace lifecycle, completion, hover, document color, color presentation, semantic token, and directive formatting handlers.
 
-Diagnostics are intentionally limited to language-server-owned behavior: CSS directive diagnostics and project manifest loading diagnostics. Class syntax and policy rules such as sorting, canonical class preference, conflict detection, invalid classes, and raw-value approval are owned by `@master/eslint-plugin-css`.
+Diagnostics are intentionally limited to language-server-owned behavior: CSS directive diagnostics and project manifest loading diagnostics. Class syntax and policy rules such as sorting, canonical class preference, conflict detection, invalid classes, and raw-value approval are owned by `@stet-css/eslint-plugin`.
 
 ## Semantic tokens
 
@@ -98,7 +98,7 @@ Directive formatting normalizes safe directive spacing and repairs class-list im
 ## Settings
 
 ```js
-import { settings } from '@master/css-language-server'
+import { settings } from '@stet-css/language-server'
 ```
 
 | Setting | Type | Default | Description |
@@ -108,4 +108,4 @@ import { settings } from '@master/css-language-server'
 | `formatDirectives` | `boolean` | `true` | Enables LSP document and range formatting for Master CSS directives. |
 | `embeddedSyntaxHighlighting` | `'active' \| 'always' \| 'off'` | `'active'` | Inherited language-service semantic token mode. |
 
-With `workspaces: 'auto'`, the server creates workspaces from CSS files importing `@master/css`, CSS files containing the lightweight `@master entry;` marker, and `package.json` files that declare Master CSS package dependencies.
+With `workspaces: 'auto'`, the server creates workspaces from CSS files importing `@stet-css/core`, CSS files containing the lightweight `@master entry;` marker, and `package.json` files that declare Master CSS package dependencies.

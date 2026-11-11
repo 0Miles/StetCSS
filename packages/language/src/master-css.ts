@@ -1,9 +1,9 @@
-import { MasterCSS, type CompiledUtility, type NativeCSSDeclarationMatcher } from '@master/css'
-import { builtinKeyAliases, builtinNativeValueNamespaces } from '@master/css-engine'
-import defaultManifestJSON from '@master/css-preset/default-manifest.json' with { type: 'json' }
-import UtilityType from '@master/css-schema/utility-type'
-import type { ValueComponent, Variable } from '@master/css-schema/css-syntax'
-import type { MasterCSSManifest, MasterCSSManifestConditionNode } from '@master/css-schema/manifest'
+import { MasterCSS, type CompiledUtility, type NativeCSSDeclarationMatcher } from '@stet-css/core'
+import { builtinKeyAliases, builtinNativeValueNamespaces } from '@stet-css/engine'
+import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
+import UtilityType from '@stet-css/schema/utility-type'
+import type { ValueComponent, Variable } from '@stet-css/schema/css-syntax'
+import type { MasterCSSManifest, MasterCSSManifestConditionNode } from '@stet-css/schema/manifest'
 import { getMdnPropertySyntax } from './utils/mdn-css-data'
 
 export type { CompiledUtility, ValueComponent, Variable }

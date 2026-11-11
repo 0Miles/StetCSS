@@ -15,7 +15,7 @@ interface OutputChunkLike {
 function isRuntimeModuleId(id: string) {
   const normalized = id.replace(/\\/g, '/')
   return normalized === RUNTIME_ENTRY_ID
-    || normalized.endsWith('/@master/css.vite/dist/runtime.js')
+    || normalized.endsWith('/@stet-css/vite/dist/runtime.js')
     || normalized.endsWith('/packages/vite/dist/runtime.js')
     || normalized.endsWith('/packages/vite/src/runtime.ts')
 }

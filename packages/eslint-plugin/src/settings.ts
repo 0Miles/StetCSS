@@ -1,4 +1,4 @@
-import { defaultClassLintSettings } from '@master/css-lint'
+import { defaultClassLintSettings } from '@stet-css/lint'
 import type { MasterCSSManifest } from './utils/master-css'
 
 const settings = {

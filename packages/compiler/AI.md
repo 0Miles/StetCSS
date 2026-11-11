@@ -1,8 +1,8 @@
-# AI Notes For `@master/css-compiler`
+# AI Notes For `@stet-css/compiler`
 
 ## Responsibility
 
-`@master/css-compiler` is the canonical CSS source compiler for Master CSS. It parses Master CSS stylesheet directives and native CSS, resolves CSS import graphs, detects project entry markers, parses standalone extraction directives, and lowers CSS-first authoring into `MasterCSSManifest` values.
+`@stet-css/compiler` is the canonical CSS source compiler for Master CSS. It parses Master CSS stylesheet directives and native CSS, resolves CSS import graphs, detects project entry markers, parses standalone extraction directives, and lowers CSS-first authoring into `MasterCSSManifest` values.
 
 ## Owns
 
@@ -15,7 +15,7 @@
 ## Does Not Own
 
 - Runtime class execution; use the manifest-driven engine.
-- Project entry discovery; use `@master/css-project`.
+- Project entry discovery; use `@stet-css/project`.
 - Build or framework lifecycle behavior.
 - PostCSS reintroduction.
 - Unrelated `.css` source scanning for class usage.
@@ -37,7 +37,7 @@
 
 ## Risk Areas
 
-- `@master entry;` and `@import "@master/css"` are equivalent user project entry markers; package CSS files must not contain `@master entry;`.
+- `@master entry;` and `@import "@stet-css/core"` are equivalent user project entry markers; package CSS files must not contain `@master entry;`.
 - Defining components, utilities, variables, variants, or animations does not emit CSS by itself; classes still need use or extraction.
 - Directive syntax changes may require language token updates and docs updates.
 - Native `@layer` blocks are not compiler-managed; use managed directives for generated definitions.
@@ -59,10 +59,10 @@
 ## Validation
 
 ```sh
-pnpm --filter @master/css-compiler test
-pnpm --filter @master/css-compiler lint
-pnpm --filter @master/css-compiler type-check
-pnpm --filter @master/css-compiler build
+pnpm --filter @stet-css/compiler test
+pnpm --filter @stet-css/compiler lint
+pnpm --filter @stet-css/compiler type-check
+pnpm --filter @stet-css/compiler build
 ```
 
 ## Directive Notes

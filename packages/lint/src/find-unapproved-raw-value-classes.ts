@@ -1,7 +1,7 @@
-import { generateValidRules } from '@master/css-validator'
-import type { MasterCSS } from '@master/css-engine'
-import { inspectMasterCSSClass } from '@master/css-engine/inspect'
-import { splitMasterCSSTopLevel } from '@master/css-lexer'
+import { generateValidRules } from '@stet-css/validator'
+import type { MasterCSS } from '@stet-css/engine'
+import { inspectMasterCSSClass } from '@stet-css/engine/inspect'
+import { splitMasterCSSTopLevel } from '@stet-css/lexer'
 
 export interface RawValuePolicyOptions {
   allowRawValues?: boolean

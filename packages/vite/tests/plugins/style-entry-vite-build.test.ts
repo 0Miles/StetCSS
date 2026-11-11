@@ -63,7 +63,7 @@ function expectMasterBaseCSS(css: string) {
 }
 
 describe('StyleEntryPlugin Vite build integration', () => {
-  test('keeps package imports legal when @master/css appears first in the import block', async () => {
+  test('keeps package imports legal when @stet-css/core appears first in the import block', async () => {
     const css = await buildCSSFixture({
       appClass: 'block',
       plugins: [
@@ -71,7 +71,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
       ],
       prefix: 'master-css-vite-import-order-',
       styleCSS: [
-        '@import "@master/css";',
+        '@import "@stet-css/core";',
         '@import "fake-font/index.css";',
         '',
         ':root { --native-color: red; }'
@@ -90,14 +90,14 @@ describe('StyleEntryPlugin Vite build integration', () => {
     expect(css).toContain('.block{display:block}')
     expect(css.indexOf('.fake-font')).toBeLessThan(css.indexOf('.block{display:block}'))
     expect(css).not.toContain('#master-css-slot')
-    expect(css).not.toContain('@master/css')
+    expect(css).not.toContain('@stet-css/core')
   })
 
   test('default runtime mode emits preset base CSS for the root Master CSS import', async () => {
     const css = await buildCSSFixture({
       appClass: 'block',
       styleCSS: [
-        '@import "@master/css";',
+        '@import "@stet-css/core";',
         '',
         'body { margin: 0; }'
       ].join('\n')
@@ -106,7 +106,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
     expectMasterBaseCSS(css)
     expect(css).toMatch(/body\s*\{\s*margin:\s*0/)
     expect(css).not.toContain('.block{display:block}')
-    expect(css).not.toContain('@master/css')
+    expect(css).not.toContain('@stet-css/core')
     expect(css).not.toContain('#master-css-slot')
   })
 
@@ -117,7 +117,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
         masterCSS({ mode })
       ],
       styleCSS: [
-        '@import "@master/css";',
+        '@import "@stet-css/core";',
         '',
         'body { margin: 0; }'
       ].join('\n')
@@ -126,7 +126,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
     expectMasterBaseCSS(css)
     expect(css).toMatch(/body\s*\{\s*margin:\s*0/)
     expect(css).not.toContain('.block{display:block}')
-    expect(css).not.toContain('@master/css')
+    expect(css).not.toContain('@stet-css/core')
     expect(css).not.toContain('#master-css-slot')
   })
 
@@ -137,7 +137,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
         masterCSS({ mode: 'static' })
       ],
       styleCSS: [
-        '@import "@master/css";',
+        '@import "@stet-css/core";',
         '',
         'body { margin: 0; }'
       ].join('\n')
@@ -145,14 +145,14 @@ describe('StyleEntryPlugin Vite build integration', () => {
 
     expectMasterBaseCSS(css)
     expect(css).toContain('.block{display:block}')
-    expect(css).not.toContain('@master/css')
+    expect(css).not.toContain('@stet-css/core')
     expect(css).not.toContain('#master-css-slot')
   })
 
   test('default runtime mode lets Vite expand the explicit base.css subpath import', async () => {
     const css = await buildCSSFixture({
       styleCSS: [
-        '@import "@master/css/base.css";',
+        '@import "@stet-css/core/base.css";',
         '',
         'body { margin: 0; }'
       ].join('\n')
@@ -160,7 +160,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
 
     expectMasterBaseCSS(css)
     expect(css).toMatch(/body\s*\{\s*margin:\s*0/)
-    expect(css).not.toContain('@master/css/base.css')
+    expect(css).not.toContain('@stet-css/core/base.css')
     expect(css).not.toContain('#master-css-slot')
   })
 })

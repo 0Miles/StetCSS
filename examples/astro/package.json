@@ -12,8 +12,8 @@
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
-    "@master/css": "workspace:^",
-    "@master/css.astro": "workspace:^",
+    "@stet-css/core": "workspace:^",
+    "@stet-css/astro": "workspace:^",
     "astro": "^6.4.8"
   }
 }

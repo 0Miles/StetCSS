@@ -1,8 +1,8 @@
-# AI Notes For `@master/css-scanner`
+# AI Notes For `@stet-css/scanner`
 
 ## Responsibility
 
-`@master/css-scanner` statically scans source files, validates possible Master CSS classes, inserts valid rules through engine layers, and maintains scanner state for build integrations.
+`@stet-css/scanner` statically scans source files, validates possible Master CSS classes, inserts valid rules through engine layers, and maintains scanner state for build integrations.
 
 ## Owns
 
@@ -13,10 +13,10 @@
 
 ## Does Not Own
 
-- Source-format-aware adapters or raw candidate extraction; use `@master/css-source`.
+- Source-format-aware adapters or raw candidate extraction; use `@stet-css/source`.
 - File watching, output writing, and build lifecycle orchestration.
-- Stylesheet entry handling, CSS-first stylesheet compilation, native CSS pruning, extraction directives, generated CSS composition, or emittedGlobals manifest output; use `@master/css-stylesheet`.
-- Project manifest discovery, workspace detection, or manifest loading; callers should use `@master/css-project`.
+- Stylesheet entry handling, CSS-first stylesheet compilation, native CSS pruning, extraction directives, generated CSS composition, or emittedGlobals manifest output; use `@stet-css/stylesheet`.
+- Project manifest discovery, workspace detection, or manifest loading; callers should use `@stet-css/project`.
 
 ## Public Surface
 
@@ -34,9 +34,9 @@
 
 ## Risk Areas
 
-- Built-in source adapter behavior from `@master/css-source`.
+- Built-in source adapter behavior from `@stet-css/source`.
 - Async extraction must be awaited by all scanner consumers.
-- `extractClassCandidates()` false positives and false negatives in `@master/css-source`.
+- `extractClassCandidates()` false positives and false negatives in `@stet-css/source`.
 - `invalidClasses` and `validClasses` cache behavior.
 - Reset loops from integration-managed dependencies.
 - Module exclude matching.
@@ -59,10 +59,10 @@
 ## Validation
 
 ```sh
-pnpm --filter @master/css-scanner test
-pnpm --filter @master/css-scanner lint
-pnpm --filter @master/css-scanner type-check
-pnpm --filter @master/css-scanner build
+pnpm --filter @stet-css/scanner test
+pnpm --filter @stet-css/scanner lint
+pnpm --filter @stet-css/scanner type-check
+pnpm --filter @stet-css/scanner build
 ```
 
 Use or extend `tests/extract.test.ts`, `tests/syntax.test.ts`, and `tests/source`.

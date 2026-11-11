@@ -1,6 +1,6 @@
 import type { PropertiesHyphen } from 'csstype'
-import type { Variable } from '@master/css-schema/css-syntax'
-import { collectCSSVariableReferences } from '@master/css-lexer'
+import type { Variable } from '@stet-css/schema/css-syntax'
+import { collectCSSVariableReferences } from '@stet-css/lexer'
 
 export default function collectVariableNames(declarations: PropertiesHyphen, variables: Map<string, Variable>) {
   const variableNames = new Set<string>()

@@ -6,7 +6,7 @@ import {
 } from '../src/manifest'
 import { stringifyMasterCSSManifestJSON } from '../src/manifest-json'
 
-describe('@master/css-schema manifest helpers', () => {
+describe('@stet-css/schema manifest helpers', () => {
   it('groups and flattens manifest variables', () => {
     const variables = groupMasterCSSManifestVariables([
       { namespace: 'color', key: 'brand', value: '#123' },

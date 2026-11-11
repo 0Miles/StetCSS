@@ -3,18 +3,18 @@ import { TextDocument } from 'vscode-languageserver-textdocument'
 import path from 'node:path'
 import { readFile } from 'node:fs/promises'
 import { pathToFileURL } from 'node:url'
-import CSSLanguageService from '@master/css-language-service'
-import { compileCSSManifest } from '@master/css-compiler'
+import CSSLanguageService from '@stet-css/language-service'
+import { compileCSSManifest } from '@stet-css/compiler'
 import { Settings } from './settings'
 import {
   findCSSManifestEntryFiles,
   findMasterCSSWorkspaceDirectories
-} from '@master/css-project/entries'
-import { loadProjectManifest } from '@master/css-project/manifest'
-import { resolveMasterCSSWorkspacePackages, type MasterCSSWorkspacePackageResolution } from '@master/css-project/workspace'
+} from '@stet-css/project/entries'
+import { loadProjectManifest } from '@stet-css/project/manifest'
+import { resolveMasterCSSWorkspacePackages, type MasterCSSWorkspacePackageResolution } from '@stet-css/project/workspace'
 import { defu } from 'defu'
 import settings from './settings'
-import type { MasterCSSManifest } from '@master/css-schema/manifest'
+import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 import {
   AT_TRIGGER_CHARACTER,
   DECLARATION_SEPARATOR_TRIGGER_CHARACTER,
@@ -23,16 +23,16 @@ import {
   QUERY_TRIGGER_CHARACTERS,
   SELECTOR_TRIGGER_CHARACTERS,
   VALUE_TRIGGER_CHARACTERS
-} from '@master/css-language-service/common'
+} from '@stet-css/language-service/common'
 import {
   defaultCSSLanguageRuntime,
   matchesLanguageServiceNativeDeclaration,
   SEMANTIC_TOKENS_LEGEND,
   type CSSLanguageRuntime
-} from '@master/css-language'
+} from '@stet-css/language'
 import glob from 'fast-glob'
 import { URI } from 'vscode-uri'
-import { CSSDirectiveError, type CSSDirectiveSourceReference } from '@master/css-schema/css-directives'
+import { CSSDirectiveError, type CSSDirectiveSourceReference } from '@stet-css/schema/css-directives'
 
 export declare interface Workspace {
   uri: string
@@ -486,9 +486,9 @@ export default class CSSLanguageServer {
       resolution = resolveMasterCSSWorkspacePackages(cwd)
       workspace.languageRuntimeResolution = resolution
       const missingPackages = [
-        !resolution.css && '@master/css',
-        !resolution.engine && '@master/css-engine',
-        !resolution.presetManifest && '@master/css-preset/default-manifest.json'
+        !resolution.css && '@stet-css/core',
+        !resolution.engine && '@stet-css/engine',
+        !resolution.presetManifest && '@stet-css/preset/default-manifest.json'
       ].filter(Boolean)
       if (missingPackages.length) {
         throw new Error(`Missing workspace package(s): ${missingPackages.join(', ')}`)

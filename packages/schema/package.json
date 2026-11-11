@@ -1,5 +1,5 @@
 {
-  "name": "@master/css-schema",
+  "name": "@stet-css/schema",
   "type": "module",
   "scripts": {
     "build": "tsdown --config ../../shared/tsdown-package.config.ts",

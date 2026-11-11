@@ -1,8 +1,8 @@
-# AI Notes For `@master/css-lexer`
+# AI Notes For `@stet-css/lexer`
 
 ## Responsibility
 
-`@master/css-lexer` owns dependency-free lexical scanning and source range contracts shared by Master CSS tooling.
+`@stet-css/lexer` owns dependency-free lexical scanning and source range contracts shared by Master CSS tooling.
 
 ## Owns
 
@@ -54,14 +54,14 @@
 ## Dangerous Changes
 
 - Depending on engine, compiler, scanner, language, language-service, integrations, or editor packages.
-- Moving source candidate extraction here from `@master/css-source`.
+- Moving source candidate extraction here from `@stet-css/source`.
 - Validating or generating CSS in this package.
 
 ## Validation
 
 ```sh
-pnpm --filter @master/css-lexer test
-pnpm --filter @master/css-lexer lint
-pnpm --filter @master/css-lexer type-check
-pnpm --filter @master/css-lexer build
+pnpm --filter @stet-css/lexer test
+pnpm --filter @stet-css/lexer lint
+pnpm --filter @stet-css/lexer type-check
+pnpm --filter @stet-css/lexer build
 ```

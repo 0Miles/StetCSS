@@ -1,5 +1,5 @@
 {
-  "name": "@master/css-project",
+  "name": "@stet-css/project",
   "type": "module",
   "scripts": {
     "build": "tsdown --config ../../shared/tsdown-package.config.ts",
@@ -59,10 +59,10 @@
     "provenance": true
   },
   "dependencies": {
-    "@master/css-compiler": "workspace:^",
-    "@master/css-integration": "workspace:^",
-    "@master/css-lexer": "workspace:^",
-    "@master/css-preset": "workspace:^",
-    "@master/css-schema": "workspace:^"
+    "@stet-css/compiler": "workspace:^",
+    "@stet-css/integration": "workspace:^",
+    "@stet-css/lexer": "workspace:^",
+    "@stet-css/preset": "workspace:^",
+    "@stet-css/schema": "workspace:^"
   }
 }

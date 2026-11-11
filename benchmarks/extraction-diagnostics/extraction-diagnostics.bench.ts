@@ -40,7 +40,7 @@ const metricMetadata: Record<typeof extractionDiagnosticMetricIds[number], Omit<
   'master-import-graph-resolution-ms': {
     label: 'Master package import graph',
     unit: 'ms',
-    description: 'Time spent resolving the @master/css package CSS import graph.'
+    description: 'Time spent resolving the @stet-css/core package CSS import graph.'
   },
   'master-package-artifact-read-ms': {
     label: 'Master package artifact read',
@@ -50,7 +50,7 @@ const metricMetadata: Record<typeof extractionDiagnosticMetricIds[number], Omit<
   'master-package-css-compilation-ms': {
     label: 'Master package CSS compilation',
     unit: 'ms',
-    description: 'Time spent compiling the @master/css package stylesheet source.'
+    description: 'Time spent compiling the @stet-css/core package stylesheet source.'
   },
   'entry-css-compilation-ms': {
     label: 'Entry CSS compilation',
@@ -145,12 +145,12 @@ const metricMetadata: Record<typeof extractionDiagnosticMetricIds[number], Omit<
   'master-package-shortcut-hit-count': {
     label: 'Master package shortcut hits',
     unit: 'count',
-    description: 'Whether the default preset artifact shortcut was used for the @master/css package source.'
+    description: 'Whether the default preset artifact shortcut was used for the @stet-css/core package source.'
   },
   'master-package-shortcut-fallback-count': {
     label: 'Master package shortcut fallbacks',
     unit: 'count',
-    description: 'Whether the diagnostic extraction path fell back to compiling the @master/css package source.'
+    description: 'Whether the diagnostic extraction path fell back to compiling the @stet-css/core package source.'
   },
   'native-css-source-count': {
     label: 'Native CSS sources',
@@ -256,14 +256,14 @@ async function createExtractionDiagnosticsReport(): Promise<BenchmarkReport> {
     generatedAt: new Date().toISOString(),
     environment: collectEnvironment(),
     packages: await collectPackageVersions([
-      '@master/css',
-      '@master/css-compiler',
-      '@master/css-engine',
-      '@master/css-project',
-      '@master/css-scanner',
-      '@master/css-source',
-      '@master/css-stylesheet',
-      '@master/css-validator',
+      '@stet-css/core',
+      '@stet-css/compiler',
+      '@stet-css/engine',
+      '@stet-css/project',
+      '@stet-css/scanner',
+      '@stet-css/source',
+      '@stet-css/stylesheet',
+      '@stet-css/validator',
       'fast-glob'
     ]),
     fixtures: getStaticBenchmarkFixtures(benchmarkFixtures),

@@ -25,23 +25,23 @@
     },
     "packages": [
         {
-            "name": "@master/css",
+            "name": "@stet-css/core",
             "version": "workspace:^"
         },
         {
-            "name": "@master/css-cli",
+            "name": "@stet-css/cli",
             "version": "workspace:^"
         },
         {
-            "name": "@master/css-runtime",
+            "name": "@stet-css/runtime",
             "version": "workspace:^"
         },
         {
-            "name": "@master/css-server",
+            "name": "@stet-css/server",
             "version": "workspace:^"
         },
         {
-            "name": "@master/css-preset",
+            "name": "@stet-css/preset",
             "version": "workspace:^"
         },
         {

@@ -1,4 +1,4 @@
-import { ThemeLayer, VariableRule } from '@master/css-engine'
+import { ThemeLayer, VariableRule } from '@stet-css/engine'
 import findNativeCSSRuleIndex from './utils/find-native-css-rule-index'
 import CSSRuntime from './core'
 

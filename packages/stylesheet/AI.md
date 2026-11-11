@@ -1,8 +1,8 @@
-# AI Notes For `@master/css-stylesheet`
+# AI Notes For `@stet-css/stylesheet`
 
 ## Responsibility
 
-`@master/css-stylesheet` owns the stylesheet entry pipeline for static rendering.
+`@stet-css/stylesheet` owns the stylesheet entry pipeline for static rendering.
 
 ## Owns
 
@@ -14,9 +14,9 @@
 
 ## Does Not Own
 
-- Source scanner state; accept structural scanner state instead of depending on `@master/css-scanner`.
-- Raw source adapters or class candidate extraction; use `@master/css-source` when needed.
-- Project CSS manifest discovery; callers should use `@master/css-project`.
+- Source scanner state; accept structural scanner state instead of depending on `@stet-css/scanner`.
+- Raw source adapters or class candidate extraction; use `@stet-css/source` when needed.
+- Project CSS manifest discovery; callers should use `@stet-css/project`.
 - Engine CSS output semantics.
 
 ## Public Surface
@@ -51,7 +51,7 @@
 
 ## Dangerous Changes
 
-- Depending directly on `@master/css-scanner`.
+- Depending directly on `@stet-css/scanner`.
 - Scanning arbitrary source files directly outside supplied `@source` options.
 - Changing engine CSS output here without focused tests and explanation.
 - Duplicating project manifest discovery.
@@ -59,8 +59,8 @@
 ## Validation
 
 ```sh
-pnpm --filter @master/css-stylesheet test
-pnpm --filter @master/css-stylesheet lint
-pnpm --filter @master/css-stylesheet type-check
-pnpm --filter @master/css-stylesheet build
+pnpm --filter @stet-css/stylesheet test
+pnpm --filter @stet-css/stylesheet lint
+pnpm --filter @stet-css/stylesheet type-check
+pnpm --filter @stet-css/stylesheet build
 ```

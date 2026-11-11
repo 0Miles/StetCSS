@@ -1,7 +1,7 @@
 /** @type {import('eslint').Linter.LegacyConfig} */
 module.exports = {
   extends: [
-    'plugin:@master/css/legacy',
+    'plugin:@stet-css/legacy',
   ],
   overrides: [
     {

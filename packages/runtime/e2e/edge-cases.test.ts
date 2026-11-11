@@ -1,12 +1,12 @@
 import { test, expect, type Page } from '@playwright/test'
-import { MasterCSS, createHydrationManifest } from '@master/css'
-import defaultManifestJSON from '@master/css-preset/default-manifest.json' with { type: 'json' }
-import type { MasterCSSManifest } from '@master/css-schema/manifest'
+import { MasterCSS, createHydrationManifest } from '@stet-css/core'
+import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
+import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 import {
   MASTER_CSS_HYDRATION_MANIFEST_ATTR,
   serializeMasterCSSHydrationManifest
-} from '@master/css-schema/hydration-manifest'
-import { MASTER_CSS_RUNTIME_STYLE_ID } from '@master/css-schema/runtime-style'
+} from '@stet-css/schema/hydration-manifest'
+import { MASTER_CSS_RUNTIME_STYLE_ID } from '@stet-css/schema/runtime-style'
 import init, { getRuntimeLoaderURL } from './init'
 
 const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest

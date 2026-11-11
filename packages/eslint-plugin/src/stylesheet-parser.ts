@@ -8,7 +8,7 @@ function getLocFromIndex(source: string, index: number) {
 
 export default {
   meta: {
-    name: '@master/eslint-plugin-css/stylesheet-parser'
+    name: '@stet-css/eslint-plugin/stylesheet-parser'
   },
   parseForESLint(source: string) {
     return {

@@ -1,17 +1,17 @@
 import type { ModuleNode, Plugin, ViteDevServer } from 'vite'
 import { PluginContext } from '../core'
-import { loadProjectManifest } from '@master/css-project/manifest'
-import { findCSSManifestEntryFiles } from '@master/css-project/entries'
-import { toManifestJSON } from '@master/css-integration/manifest-module'
+import { loadProjectManifest } from '@stet-css/project/manifest'
+import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
+import { toManifestJSON } from '@stet-css/integration/manifest-module'
 import {
   MANIFEST_ASSET_FILE,
   toBrowserManifestFacadeModule,
   toInlineManifestModule,
   toUniversalManifestFacadeModule
-} from '@master/css-integration/manifest-facade'
+} from '@stet-css/integration/manifest-facade'
 import { RESOLVED_VIRTUAL_MANIFEST_ID, VIRTUAL_MANIFEST_ID } from '../common'
 import { PluginOptions } from '../options'
-import { collectStyleCSSDependencies } from '@master/css-stylesheet'
+import { collectStyleCSSDependencies } from '@stet-css/stylesheet'
 import { includesFile } from '../utils/path'
 
 function invalidateManifestModule(module: ModuleNode | undefined, server: ViteDevServer): ModuleNode[] {

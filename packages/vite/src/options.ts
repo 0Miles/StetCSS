@@ -1,4 +1,4 @@
-import type { ScannerOptions } from '@master/css-scanner'
+import type { ScannerOptions } from '@stet-css/scanner'
 
 /* The default options */
 const options: PluginOptions = {

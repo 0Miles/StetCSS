@@ -1,5 +1,5 @@
 import { defineConfig } from 'eslint/config'
-import css from '@master/eslint-config-css'
+import css from '@stet-css/eslint-config'
 import htmlParser from '@angular-eslint/template-parser'
 
 export default defineConfig([

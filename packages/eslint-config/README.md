@@ -20,11 +20,11 @@
       <img alt="NPM Version" src="https://img.shields.io/github/v/release/master-co/css?include_prereleases&color=f6f7f8&label=&style=for-the-badge&logo=github">
     </picture>
   </a>
-  <a aria-label="NPM Package" href="https://www.npmjs.com/package/@master/eslint-config-css">
+  <a aria-label="NPM Package" href="https://www.npmjs.com/package/@stet-css/eslint-config">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/npm/dm/@master/eslint-config-css?color=212022&label=%20&logo=npm&style=for-the-badge">
-      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/npm/dm/@master/eslint-config-css?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
-      <img alt="NPM package ( download / month )" src="https://img.shields.io/npm/dm/@master/eslint-config-css?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
+      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/npm/dm/@stet-css/eslint-config?color=212022&label=%20&logo=npm&style=for-the-badge">
+      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/npm/dm/@stet-css/eslint-config?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
+      <img alt="NPM package ( download / month )" src="https://img.shields.io/npm/dm/@stet-css/eslint-config?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
     </picture>
   </a>
   <a aria-label="Discord Community" href="https://discord.gg/sZNKpAAAw6">
@@ -55,7 +55,7 @@
 ## Installation
 
 ```bash
-npm install -D @master/eslint-config-css
+npm install -D @stet-css/eslint-config
 ```
 
 ## Usage
@@ -64,26 +64,26 @@ Use the flat config in `eslint.config.js`:
 
 ```js
 import { defineConfig } from 'eslint/config'
-import css from '@master/eslint-config-css'
+import css from '@stet-css/eslint-config'
 
 export default defineConfig([
   ...css
 ])
 ```
 
-This package combines the recommended class linting config and the standalone stylesheet config from `@master/eslint-plugin-css`.
+This package combines the recommended class linting config and the standalone stylesheet config from `@stet-css/eslint-plugin`.
 
 For custom rules and settings, configure the plugin rules in the same flat config:
 
 ```js
 import { defineConfig } from 'eslint/config'
-import css from '@master/eslint-config-css'
+import css from '@stet-css/eslint-config'
 
 export default defineConfig([
   ...css,
   {
     rules: {
-      '@master/css/no-invalid-classes': ['error', {
+      '@stet-css/no-invalid-classes': ['error', {
         disallowUnknownClass: true
       }]
     }

@@ -1,17 +1,17 @@
 import { Page } from '@playwright/test'
-import { MasterCSS, createHydrationManifest, type MasterCSSManifest } from '@master/css'
-import defaultManifestJSON from '@master/css-preset/default-manifest.json' with { type: 'json' }
+import { MasterCSS, createHydrationManifest, type MasterCSSManifest } from '@stet-css/core'
+import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 import {
   MASTER_CSS_HYDRATION_MANIFEST_SCRIPT_ID,
   type MasterCSSHydrationManifest
-} from '@master/css-schema/hydration-manifest'
-import { MASTER_CSS_RUNTIME_STYLE_ID } from '@master/css-schema/runtime-style'
+} from '@stet-css/schema/hydration-manifest'
+import { MASTER_CSS_RUNTIME_STYLE_ID } from '@stet-css/schema/runtime-style'
 import {
   flattenMasterCSSManifestVariables,
   groupMasterCSSManifestVariables,
   type MasterCSSManifestVariable
-} from '@master/css-schema/manifest'
-import UtilityType from '@master/css-schema/utility-type'
+} from '@stet-css/schema/manifest'
+import UtilityType from '@stet-css/schema/utility-type'
 import { dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
 import { createServer, type ViteDevServer } from 'vite'

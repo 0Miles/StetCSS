@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'vitest'
-import { MasterCSS } from '@master/css-engine'
+import { MasterCSS } from '@stet-css/engine'
 import defaultManifestJSON from '../src/default-manifest.json' with { type: 'json' }
 import {
   flattenMasterCSSManifestVariables,
   groupMasterCSSManifestVariables,
   type MasterCSSManifest
-} from '@master/css-schema/manifest'
+} from '@stet-css/schema/manifest'
 
 const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
 
@@ -149,7 +149,7 @@ const textHueAliases = [
   ['red', 'var(--color-red-60)', 'var(--color-red-30)']
 ] as const
 
-describe.concurrent('@master/css-preset design token parity', () => {
+describe.concurrent('@stet-css/preset design token parity', () => {
   test('keeps primitive font, spacing, radius, breakpoint, container, color, shadow, and motion tokens', () => {
     expect(findVariable('font-family-sans')).toMatchObject({
       namespace: 'font-family',

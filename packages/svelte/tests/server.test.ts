@@ -4,12 +4,12 @@ import {
   createMasterCSSStaticHydrationManifestWriter,
   injectMasterStyle
 } from '../src/lib/server.js'
-import defaultManifestJSON from '@master/css-preset/default-manifest.json' with { type: 'json' }
+import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 import {
   MASTER_CSS_HYDRATION_MANIFEST_ATTR,
   MASTER_CSS_HYDRATION_MANIFEST_SCRIPT_ID
-} from '@master/css-schema/hydration-manifest'
-import type { MasterCSSManifest } from '@master/css-schema/manifest'
+} from '@stet-css/schema/hydration-manifest'
+import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'

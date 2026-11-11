@@ -1,15 +1,15 @@
 import { createRequire } from 'node:module'
-import CSSLanguageService from '@master/css-language-service'
-import type { MasterCSSManifest } from '@master/css-engine'
-import { createCSSWithNativeDeclarations } from '@master/css-validator/native-declaration'
-import { parseHTML } from '@master/css-server'
+import CSSLanguageService from '@stet-css/language-service'
+import type { MasterCSSManifest } from '@stet-css/engine'
+import { createCSSWithNativeDeclarations } from '@stet-css/validator/native-declaration'
+import { parseHTML } from '@stet-css/server'
 import type MasterCSSMCPContext from './context'
 import { createMCPTextDocument } from './document'
 import { loadWorkspaceManifest } from './project'
 
 const CSS_COMPARE_VERSION = 1
 const require = createRequire(import.meta.url)
-const defaultManifest = require('@master/css-preset/default-manifest.json') as MasterCSSManifest
+const defaultManifest = require('@stet-css/preset/default-manifest.json') as MasterCSSManifest
 
 export interface CompareCSSOptions {
   beforeClassList?: string

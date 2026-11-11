@@ -1,8 +1,8 @@
 import { describe, expect, test, vi } from 'vitest'
 import StyleEntryPlugin from '../../src/plugins/style-entry'
-import { VIRTUAL_CSS_ID } from '@master/css-integration/style-module'
-import defaultManifestJSON from '@master/css-preset/default-manifest.json' with { type: 'json' }
-import type { MasterCSSManifest } from '@master/css-schema/manifest'
+import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
+import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
+import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 
 const SLOT = '#master-css-slot{--slot:0}'
 const RESOLVED_VIRTUAL_CSS_ID = '\0' + VIRTUAL_CSS_ID
@@ -51,13 +51,13 @@ describe('StyleEntryPlugin', () => {
     expect(context.virtualCSSPlaceholderEmitted).toBeUndefined()
   })
 
-  test('treats @master/css import stylesheets as managed native CSS pruning entries', async () => {
+  test('treats @stet-css/core import stylesheets as managed native CSS pruning entries', async () => {
     const context = makeContext('build')
     const plugin = StyleEntryPlugin({ mode: 'static' } as any, context)
 
     const result = await (plugin as any).transform.call(
       {},
-      '@import "@master/css";\n.card{color:red}',
+      '@import "@stet-css/core";\n.card{color:red}',
       '/project/src/style.css'
     )
 
@@ -66,18 +66,18 @@ describe('StyleEntryPlugin', () => {
       pruneNativeCSS: true,
       source: expect.stringContaining('.card')
     })
-    expect(context.styleCSSSources.get('/project/src/style.css').source).not.toContain('@master/css')
+    expect(context.styleCSSSources.get('/project/src/style.css').source).not.toContain('@stet-css/core')
     expect(context.virtualCSSImporters).toBeUndefined()
     expect(context.virtualCSSPlaceholderEmitted).toBe(true)
   })
 
-  test('build transform keeps native imports before the slot when @master/css comes first', async () => {
+  test('build transform keeps native imports before the slot when @stet-css/core comes first', async () => {
     const context = makeContext('build')
     const plugin = StyleEntryPlugin({ mode: 'static' } as any, context)
 
     const result = await (plugin as any).transform.call(
       {},
-      '@import "@master/css";\n@import "@fontsource/fira-mono";\n.card{color:red}',
+      '@import "@stet-css/core";\n@import "@fontsource/fira-mono";\n.card{color:red}',
       '/project/src/style.css'
     )
 
@@ -86,7 +86,7 @@ describe('StyleEntryPlugin', () => {
       pruneNativeCSS: true,
       source: expect.stringContaining('.card')
     })
-    expect(context.styleCSSSources.get('/project/src/style.css').source).not.toContain('@master/css')
+    expect(context.styleCSSSources.get('/project/src/style.css').source).not.toContain('@stet-css/core')
     expect(context.virtualCSSPlaceholderEmitted).toBe(true)
   })
 
@@ -96,7 +96,7 @@ describe('StyleEntryPlugin', () => {
 
     const result = await (plugin as any).transform.call(
       {},
-      '@import "@master/css";\n.card{color:red}',
+      '@import "@stet-css/core";\n.card{color:red}',
       '/project/src/style.css'
     )
 
@@ -125,18 +125,18 @@ describe('StyleEntryPlugin', () => {
     expect(addWatchFile).toHaveBeenCalledWith('/project/src/style.css')
   })
 
-  test('serve transform keeps native imports before generated CSS when @master/css comes first', async () => {
+  test('serve transform keeps native imports before generated CSS when @stet-css/core comes first', async () => {
     const context = makeContext('serve')
     const plugin = StyleEntryPlugin({ mode: 'static' } as any, context)
 
     const result = await (plugin as any).transform.call(
       {},
-      '@import "@master/css";\n@import "@fontsource/fira-mono";\n.card{color:red}',
+      '@import "@stet-css/core";\n@import "@fontsource/fira-mono";\n.card{color:red}',
       '/project/src/style.css'
     )
 
     expect(result.code).toContain('.fg\\:red')
-    expect(result.code).not.toContain('@master/css')
+    expect(result.code).not.toContain('@stet-css/core')
     expect(result.code.indexOf('@import "@fontsource/fira-mono";')).toBe(0)
     expect(result.code.match(/@fontsource\/fira-mono/g)).toHaveLength(1)
     expect(context.virtualCSSImporters).toEqual(new Set(['/project/src/style.css']))
@@ -150,13 +150,13 @@ describe('StyleEntryPlugin', () => {
 
     const result = await (plugin as any).transform.call(
       {},
-      '@import "@master/css";',
+      '@import "@stet-css/core";',
       '/project/src/style.css'
     )
 
     expect(result.code).toContain('@layer base')
     expect(result.code).toContain('text-rendering: geometricprecision')
-    expect(result.code).not.toContain('@master/css')
+    expect(result.code).not.toContain('@stet-css/core')
     expect(result.code).not.toContain(SLOT)
     expect(result.code).not.toContain('.fg\\:red')
     expect(context.styleCSSSources.get('/project/src/style.css')).toMatchObject({
@@ -172,13 +172,13 @@ describe('StyleEntryPlugin', () => {
 
     const result = await (plugin as any).transform.call(
       {},
-      '@import "@master/css";\n@import "@fontsource/fira-mono";',
+      '@import "@stet-css/core";\n@import "@fontsource/fira-mono";',
       '/project/src/style.css'
     )
 
     expect(result.code.indexOf('@import "@fontsource/fira-mono";')).toBe(0)
     expect(result.code).toContain('@layer base')
-    expect(result.code).not.toContain('@master/css')
+    expect(result.code).not.toContain('@stet-css/core')
     expect(result.code).not.toContain(SLOT)
     expect(context.virtualCSSImporters).toEqual(new Set(['/project/src/style.css']))
   })
@@ -202,7 +202,7 @@ describe('StyleEntryPlugin', () => {
     expect(context.virtualCSSPlaceholderEmitted).toBe(true)
   })
 
-  test('ignores standalone @master stylesheets without @master/css imports', async () => {
+  test('ignores standalone @master stylesheets without @stet-css/core imports', async () => {
     const context = makeContext('build')
     const plugin = StyleEntryPlugin({ mode: 'static' } as any, context)
 
@@ -221,7 +221,7 @@ describe('StyleEntryPlugin', () => {
     const context = makeContext('build')
     const plugin = StyleEntryPlugin({ mode: 'static' } as any, context)
 
-    expect(await (plugin as any).transform.call({}, '@import "@master/css";', '/project/src/main.ts')).toBeUndefined()
+    expect(await (plugin as any).transform.call({}, '@import "@stet-css/core";', '/project/src/main.ts')).toBeUndefined()
     expect(await (plugin as any).transform.call({}, '@import "virtual:master-utilities.css";', '/project/src/style.css')).toBeUndefined()
     expect(await (plugin as any).transform.call({}, '@import "theme.css";', '/project/src/style.css')).toBeUndefined()
     expect(await (plugin as any).transform.call({}, '@import "./other.css";', '/project/src/style.css')).toBeUndefined()

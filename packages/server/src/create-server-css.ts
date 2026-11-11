@@ -1,3 +1,3 @@
-import { createCSSWithNativeDeclarations } from '@master/css-validator'
+import { createCSSWithNativeDeclarations } from '@stet-css/validator'
 
 export default createCSSWithNativeDeclarations

@@ -1,12 +1,12 @@
-import CSSScanner from '@master/css-scanner'
-import { loadProjectManifest } from '@master/css-project/manifest'
-import { findCSSManifestEntryFiles } from '@master/css-project/entries'
+import CSSScanner from '@stet-css/scanner'
+import { loadProjectManifest } from '@stet-css/project/manifest'
+import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
 import {
   createExtractedCSS,
   registerStyleCSSSource,
   type StyleCSSSources
-} from '@master/css-stylesheet'
-import type { MasterCSSManifest } from '@master/css'
+} from '@stet-css/stylesheet'
+import type { MasterCSSManifest } from '@stet-css/core'
 import { readFile } from 'node:fs/promises'
 
 export interface MasterCSSBuildState {

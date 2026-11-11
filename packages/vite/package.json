@@ -1,5 +1,5 @@
 {
-  "name": "@master/css.vite",
+  "name": "@stet-css/vite",
   "type": "module",
   "scripts": {
     "build": "tsdown --config ../../shared/tsdown-package.config.ts",
@@ -65,17 +65,17 @@
     "vite": ">=6"
   },
   "dependencies": {
-    "@master/css": "workspace:^",
-    "@master/css-project": "workspace:^",
-    "@master/css-scanner": "workspace:^",
-    "@master/css-integration": "workspace:^",
-    "@master/css-runtime": "workspace:^",
-    "@master/css-server": "workspace:^",
-    "@master/css-stylesheet": "workspace:^",
+    "@stet-css/core": "workspace:^",
+    "@stet-css/project": "workspace:^",
+    "@stet-css/scanner": "workspace:^",
+    "@stet-css/integration": "workspace:^",
+    "@stet-css/runtime": "workspace:^",
+    "@stet-css/server": "workspace:^",
+    "@stet-css/stylesheet": "workspace:^",
     "magic-string": "^0.30.21",
-    "@master/css-schema": "workspace:^"
+    "@stet-css/schema": "workspace:^"
   },
   "devDependencies": {
-    "@master/css-preset": "workspace:^"
+    "@stet-css/preset": "workspace:^"
   }
 }

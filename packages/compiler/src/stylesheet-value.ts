@@ -3,7 +3,7 @@ import {
   findCSSClosingQuote,
   findCSSCommentEnd,
   readCSSFunction
-} from '@master/css-lexer'
+} from '@stet-css/lexer'
 
 const CSS_VARIABLE_ALIAS = /\$(-?[_a-zA-Z0-9-]+)\b/g
 const CSS_NUMBER = /^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/

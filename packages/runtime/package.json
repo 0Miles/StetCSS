@@ -1,5 +1,5 @@
 {
-  "name": "@master/css-runtime",
+  "name": "@stet-css/runtime",
   "type": "module",
   "scripts": {
     "build": "tsdown",
@@ -57,14 +57,14 @@
     "provenance": true
   },
   "dependencies": {
-    "@master/css-engine": "workspace:^",
-    "@master/css-preset": "workspace:^",
-    "@master/css-schema": "workspace:^"
+    "@stet-css/engine": "workspace:^",
+    "@stet-css/preset": "workspace:^",
+    "@stet-css/schema": "workspace:^"
   },
   "devDependencies": {
-    "@master/css": "workspace:^",
-    "@master/css-compiler": "workspace:^",
-    "@master/css-integration": "workspace:^",
+    "@stet-css/core": "workspace:^",
+    "@stet-css/compiler": "workspace:^",
+    "@stet-css/integration": "workspace:^",
     "@playwright/test": "1.61.0"
   }
 }

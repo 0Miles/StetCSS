@@ -1,8 +1,8 @@
-# AI Notes For `@master/css-language`
+# AI Notes For `@stet-css/language`
 
 ## Responsibility
 
-`@master/css-language` owns editor-neutral Master CSS language primitives.
+`@stet-css/language` owns editor-neutral Master CSS language primitives.
 
 ## Owns
 
@@ -21,8 +21,8 @@
 - VS Code extension code.
 - Runtime, server, scanner, or ESLint behavior.
 - Engine syntax or CSS output semantics.
-- Raw class-list splitting/unescape semantics owned by `@master/css-lexer`.
-- Manifest-driven class inspection semantics owned by `@master/css-engine/inspect`.
+- Raw class-list splitting/unescape semantics owned by `@stet-css/lexer`.
+- Manifest-driven class inspection semantics owned by `@stet-css/engine/inspect`.
 
 ## Public Surface
 
@@ -64,10 +64,10 @@
 ## Validation
 
 ```sh
-pnpm --filter @master/css-language test
-pnpm --filter @master/css-language lint
-pnpm --filter @master/css-language type-check
-pnpm --filter @master/css-language build
+pnpm --filter @stet-css/language test
+pnpm --filter @stet-css/language lint
+pnpm --filter @stet-css/language type-check
+pnpm --filter @stet-css/language build
 ```
 
 Use or extend browser, Shiki, class-position scanner, and semantic token tests.

@@ -33,15 +33,15 @@ function runStyleCSSLoader(root: string, resourcePath: string, source: string) {
 }
 
 describe('Next style CSS loader', () => {
-  it('derives native CSS from @master/css instead of hardcoding a package subpath', async () => {
+  it('derives native CSS from @stet-css/core instead of hardcoding a package subpath', async () => {
     const root = createFixture()
     const entryPath = join(root, 'app/globals.css')
-    const result = await runStyleCSSLoader(root, entryPath, '@import "@master/css";')
+    const result = await runStyleCSSLoader(root, entryPath, '@import "@stet-css/core";')
 
     expect(result.content).toContain('@layer base')
     expect(result.content).toContain('text-rendering: geometricprecision')
-    expect(result.content).not.toContain('@master/css/base.css')
-    expect(result.content).not.toContain('@import "@master/css"')
+    expect(result.content).not.toContain('@stet-css/core/base.css')
+    expect(result.content).not.toContain('@import "@stet-css/core"')
     expect(result.content).not.toContain('virtual:master-utilities.css')
     expect(result.dependencies).toContain(entryPath)
     expect(result.dependencies.length).toBeGreaterThan(0)
@@ -69,7 +69,7 @@ describe('Next style CSS loader', () => {
     ].join('\n'))
 
     const result = await runStyleCSSLoader(root, entryPath, [
-      '@import "@master/css";',
+      '@import "@stet-css/core";',
       '@import "./home.css";'
     ].join('\n'))
 
@@ -113,7 +113,7 @@ describe('Next style CSS loader', () => {
     expect(result.content).toContain('background-color:#123456')
     expect(result.content).toContain('color:#fff')
     expect(result.content).not.toContain('@compose')
-    expect(result.content).not.toContain('@master/css')
+    expect(result.content).not.toContain('@stet-css/core')
     expect(result.dependencies).toContain(join(root, 'app/globals.css'))
     expect(result.dependencies).toContain(join(root, 'app/Button.module.css'))
   })
@@ -131,7 +131,7 @@ describe('Next style CSS loader', () => {
 
     expect(result.content).toContain('.button{color:#123456}')
     expect(result.content).not.toContain('@reference')
-    expect(result.content).not.toContain('@master/css')
+    expect(result.content).not.toContain('@stet-css/core')
     expect(result.dependencies).toContain(modulePath)
     expect(result.dependencies).toContain(tokenPath)
   })
@@ -140,7 +140,7 @@ describe('Next style CSS loader', () => {
     const root = createFixture()
     const globalsPath = join(root, 'app/globals.css')
     const pagePath = join(root, 'app/page.css')
-    writeFileSync(globalsPath, '@import "@master/css";')
+    writeFileSync(globalsPath, '@import "@stet-css/core";')
 
     const result = await runStyleCSSLoader(
       root,
@@ -151,7 +151,7 @@ describe('Next style CSS loader', () => {
     expect(result.content).toContain('.home-section{padding-block:var(--spacing-5xl)}')
     expect(result.content).toContain('--spacing-5xl:')
     expect(result.content).not.toContain('@reference')
-    expect(result.content).not.toContain('@master/css')
+    expect(result.content).not.toContain('@stet-css/core')
     expect(result.dependencies).toContain(pagePath)
     expect(result.dependencies).toContain(globalsPath)
   })
@@ -161,7 +161,7 @@ describe('Next style CSS loader', () => {
     const globalsPath = join(root, 'app/globals.css')
     const pagePath = join(root, 'app/page.css')
     writeFileSync(globalsPath, [
-      '@import "@master/css";',
+      '@import "@stet-css/core";',
       '.global-section { padding-block: var(--spacing-5xl); }'
     ].join('\n'))
 
@@ -174,7 +174,7 @@ describe('Next style CSS loader', () => {
     expect(result.content).toContain('.home-section{padding-block:var(--spacing-5xl)}')
     expect(result.content).not.toContain('--spacing-5xl:')
     expect(result.content).not.toContain('@reference')
-    expect(result.content).not.toContain('@master/css')
+    expect(result.content).not.toContain('@stet-css/core')
     expect(result.dependencies).toContain(pagePath)
     expect(result.dependencies).toContain(globalsPath)
   })

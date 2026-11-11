@@ -17,7 +17,7 @@ type CommandPackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun'
 const newProjectCommands = [
   'npm create vite@latest my-app',
   'cd my-app',
-  'npm create @master/css@rc -- --yes'
+  'npm create @stet-css@rc -- --yes'
 ]
 
 export interface CommandOptions {
@@ -72,7 +72,7 @@ export default async function runProgram(argv: string[] = process.argv) {
     .argument('[project name]', 'Deprecated. The installer now updates the current project; use --cwd for another root.')
     .action(async (projectName: string | undefined, options: CommandOptions) => {
       if (projectName && projectName !== 'add') {
-        program.error(`Project scaffolding is not provided by @master/create-css. Create a Vite project first, then run the installer from the project root:\n\n${formatNewProjectCommands()}`)
+        program.error(`Project scaffolding is not provided by @stet-css/create. Create a Vite project first, then run the installer from the project root:\n\n${formatNewProjectCommands()}`)
       }
       await runAdd(options)
     })
@@ -191,7 +191,7 @@ function createTTYPrompt() {
 
 function printNonProjectGuidance(root: string) {
   process.stdout.write(`No package.json was found in ${root}.\n`)
-  process.stdout.write('@master/create-css adds Master CSS to an existing project.\n\n')
+  process.stdout.write('@stet-css/create adds Master CSS to an existing project.\n\n')
   process.stdout.write('Create a Vite project first, then run the installer from the project root:\n\n')
   process.stdout.write(`${formatNewProjectCommands()}\n`)
 }

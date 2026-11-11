@@ -8,14 +8,14 @@ import { describe, it } from 'vitest'
 const require = createRequire(import.meta.url)
 const tscPath = path.join(path.dirname(require.resolve('typescript/package.json')), 'bin', 'tsc')
 
-describe('@master/css-integration/client', () => {
+describe('@stet-css/integration/client', () => {
   it('provides types for Master CSS integration virtual modules', () => {
     const root = mkdtempSync(path.join(tmpdir(), 'master-css-integration-client-'))
 
     try {
-      const cssPackageDir = path.join(root, 'node_modules', '@master', 'css')
-      const enginePackageDir = path.join(root, 'node_modules', '@master', 'css-engine')
-      const integrationPackageDir = path.join(root, 'node_modules', '@master', 'css-integration')
+      const cssPackageDir = path.join(root, 'node_modules', '@stet-css', 'core')
+      const enginePackageDir = path.join(root, 'node_modules', '@stet-css', 'engine')
+      const integrationPackageDir = path.join(root, 'node_modules', '@stet-css', 'integration')
       const sourceDir = path.join(root, 'src')
 
       mkdirSync(cssPackageDir, { recursive: true })
@@ -26,7 +26,7 @@ describe('@master/css-integration/client', () => {
       writeFileSync(
         path.join(cssPackageDir, 'package.json'),
         JSON.stringify({
-          name: '@master/css',
+          name: '@stet-css/core',
           types: './index.d.ts',
           exports: {
             '.': {
@@ -49,7 +49,7 @@ describe('@master/css-integration/client', () => {
       writeFileSync(
         path.join(enginePackageDir, 'package.json'),
         JSON.stringify({
-          name: '@master/css-engine',
+          name: '@stet-css/engine',
           types: './index.d.ts',
           exports: {
             '.': {
@@ -69,7 +69,7 @@ describe('@master/css-integration/client', () => {
       writeFileSync(
         path.join(integrationPackageDir, 'package.json'),
         JSON.stringify({
-          name: '@master/css-integration',
+          name: '@stet-css/integration',
           exports: {
             './client': {
               types: './client.d.ts'
@@ -84,16 +84,16 @@ describe('@master/css-integration/client', () => {
       writeFileSync(
         path.join(sourceDir, 'main.ts'),
         `
-/// <reference types="@master/css-integration/client" />
+/// <reference types="@stet-css/integration/client" />
 
 import 'virtual:master-utilities.css'
 import virtualManifest from 'virtual:master-css-manifest'
 import virtualEmittedGlobals from 'virtual:master-css-emitted-globals'
 import localManifest from './app.css?master-css-manifest'
 
-virtualManifest satisfies import('@master/css-engine').MasterCSSManifest
-virtualEmittedGlobals satisfies import('@master/css/emitted-globals').MasterCSSEmittedGlobals
-localManifest satisfies import('@master/css-engine').MasterCSSManifest
+virtualManifest satisfies import('@stet-css/engine').MasterCSSManifest
+virtualEmittedGlobals satisfies import('@stet-css/core/emitted-globals').MasterCSSEmittedGlobals
+localManifest satisfies import('@stet-css/engine').MasterCSSManifest
 `.trimStart()
       )
       writeFileSync(

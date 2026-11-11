@@ -5,7 +5,7 @@ import {
   type MasterCSS,
   type ClassPosition,
   ClassPositionCache
-} from '@master/css-language'
+} from '@stet-css/language'
 import { defu } from 'defu'
 import EventEmitter from 'node:events'
 import type { Position } from 'vscode-languageserver-protocol'

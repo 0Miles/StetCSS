@@ -1,17 +1,17 @@
-# @master/css.next
+# @stet-css/next
 
 Next.js integration for Master CSS.
 
 ## Installation
 
 ```bash
-npm install @master/css.next
+npm install @stet-css/next
 ```
 
 ## Usage
 
 ```js
-import { withMasterCSS } from '@master/css.next'
+import { withMasterCSS } from '@stet-css/next'
 
 /** @type {import('next').NextConfig} */
 const nextConfig = withMasterCSS({
@@ -23,14 +23,14 @@ export default nextConfig
 
 ## Modes
 
-`@master/css.next` defaults to progressive rendering and supports these mode values:
+`@stet-css/next` defaults to progressive rendering and supports these mode values:
 
 | Mode | Description |
 | --- | --- |
 | `progressive` | Combines pre-rendered first-page CSS with the browser runtime for later client-side class changes. |
 | `runtime` | Injects the browser runtime through the Next.js client instrumentation hook without adding the build adapter. |
 | `pre-render` | Uses the Next.js Adapter API to render CSS into static and pre-rendered HTML outputs during `next build`. |
-| `static` | Scans source files with `@master/css-scanner`, writes a generated stylesheet, and wires Master CSS stylesheet imports into Turbopack CSS processing. |
+| `static` | Scans source files with `@stet-css/scanner`, writes a generated stylesheet, and wires Master CSS stylesheet imports into Turbopack CSS processing. |
 | `null` | Skips rendering modes while keeping the CSS manifest loaders available. |
 
 Use `progressive` when route HTML should carry its first-render CSS and client-side class changes still need runtime coverage. Use `runtime` when CSS should be generated only in the browser. Use `pre-render` when build-rendered HTML should carry first-render CSS without runtime injection. Use `static` when classes are statically visible in source and should be emitted into a generated CSS asset.
@@ -40,7 +40,7 @@ Use `progressive` when route HTML should carry its first-render CSS and client-s
 In static mode, import the generated stylesheet from your app stylesheet:
 
 ```css
-@import '@master/css';
+@import '@stet-css/core';
 
 .main {
   background-color: var(--color-primary);
@@ -54,7 +54,7 @@ In static mode, import the generated stylesheet from your app stylesheet:
 Then enable static mode:
 
 ```js
-import { withMasterCSS } from '@master/css.next'
+import { withMasterCSS } from '@stet-css/next'
 
 /** @type {import('next').NextConfig} */
 const nextConfig = await withMasterCSS({
@@ -66,14 +66,14 @@ const nextConfig = await withMasterCSS({
 export default nextConfig
 ```
 
-Static mode uses source-glob scanning as the correctness baseline. A Turbopack CSS loader replaces `@import '@master/css'` with generated CSS. CSS files that import `@master/css` are treated as native CSS pruning roots by default; add `@preserve native;` when native CSS must be preserved.
+Static mode uses source-glob scanning as the correctness baseline. A Turbopack CSS loader replaces `@import '@stet-css/core'` with generated CSS. CSS files that import `@stet-css/core` are treated as native CSS pruning roots by default; add `@preserve native;` when native CSS must be preserved.
 
 ## Client types
 
-Add `@master/css-integration/client` to a project environment file when TypeScript imports Master CSS virtual modules.
+Add `@stet-css/integration/client` to a project environment file when TypeScript imports Master CSS virtual modules.
 
 ```ts
-/// <reference types="@master/css-integration/client" />
+/// <reference types="@stet-css/integration/client" />
 ```
 
 ## Runtime input imports

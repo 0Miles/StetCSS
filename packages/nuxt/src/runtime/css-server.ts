@@ -1,4 +1,4 @@
-import { render } from '@master/css-server'
+import { render } from '@stet-css/server'
 import type { NitroApp } from 'nitropack'
 // @ts-expect-error virtual module
 import manifest from 'virtual:master-css-manifest'

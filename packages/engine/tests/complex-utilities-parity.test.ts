@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import UtilityType from '@master/css-schema/utility-type'
+import UtilityType from '@stet-css/schema/utility-type'
 import { MasterCSS } from '../src'
 import { cloneManifest, createCSSWithVariables, createDefaultCSS } from './helpers/css-tester'
 

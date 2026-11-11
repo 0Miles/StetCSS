@@ -61,9 +61,9 @@ function resolvePackage(
   resolver: NodeJS.Require
 ): ResolvedMasterCSSWorkspacePackage {
   const entry = resolver.resolve(name)
-  const packageName = name.startsWith('@master/css-preset/') ? '@master/css-preset'
-    : name.startsWith('@master/css-schema/') ? '@master/css-schema'
-      : name.startsWith('@master/css-language-server/') ? '@master/css-language-server'
+  const packageName = name.startsWith('@stet-css/preset/') ? '@stet-css/preset'
+    : name.startsWith('@stet-css/schema/') ? '@stet-css/schema'
+      : name.startsWith('@stet-css/language-server/') ? '@stet-css/language-server'
         : name
   const packageRoot = findPackageDir(entry, packageName)
   if (!packageRoot) {
@@ -104,7 +104,7 @@ function createPackageRequire(resolvedPackage: ResolvedMasterCSSWorkspacePackage
 export function resolveMasterCSSWorkspacePackages(workspaceDir = process.cwd()): MasterCSSWorkspacePackageResolution {
   const errors: MasterCSSWorkspacePackageResolutionError[] = []
   const workspaceRequire = createWorkspaceRequire(workspaceDir)
-  const css = tryResolvePackage('@master/css', workspaceRequire, errors)
+  const css = tryResolvePackage('@stet-css/core', workspaceRequire, errors)
   const result: MasterCSSWorkspacePackageResolution = {
     workspaceDir: resolve(workspaceDir),
     errors,
@@ -113,16 +113,16 @@ export function resolveMasterCSSWorkspacePackages(workspaceDir = process.cwd()):
 
   if (css) {
     const cssRequire = createPackageRequire(css)
-    const engine = tryResolvePackage('@master/css-engine', cssRequire, errors)
+    const engine = tryResolvePackage('@stet-css/engine', cssRequire, errors)
     if (engine) {
       result.engine = engine
       const engineRequire = createPackageRequire(engine)
-      result.utilityType = tryResolvePackage('@master/css-schema/utility-type', engineRequire, errors)
+      result.utilityType = tryResolvePackage('@stet-css/schema/utility-type', engineRequire, errors)
     }
-    result.presetManifest = tryResolvePackage('@master/css-preset/default-manifest.json', cssRequire, errors)
+    result.presetManifest = tryResolvePackage('@stet-css/preset/default-manifest.json', cssRequire, errors)
   }
 
-  const languageServer = tryResolvePackage('@master/css-language-server/server', workspaceRequire, errors)
+  const languageServer = tryResolvePackage('@stet-css/language-server/server', workspaceRequire, errors)
   if (languageServer) result.languageServer = languageServer
 
   return result

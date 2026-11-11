@@ -1,18 +1,18 @@
-# @master/css-source
+# @stet-css/source
 
 Source class extraction helpers for Master CSS tooling.
 
 ## Installation
 
 ```bash
-npm install @master/css-source
+npm install @stet-css/source
 ```
 
 ## Responsibility
 
-`@master/css-source` extracts unvalidated Master CSS class candidates from source text and provides source-format-aware adapters for HTML and JavaScript/TypeScript syntax.
+`@stet-css/source` extracts unvalidated Master CSS class candidates from source text and provides source-format-aware adapters for HTML and JavaScript/TypeScript syntax.
 
-It does not validate classes, generate CSS, maintain scanner state, observe file changes, or resolve manifests. Scanner state belongs to `@master/css-scanner`; file-change invalidation belongs to CLI/build/framework integrations; manifest resolution belongs to `@master/css-project`.
+It does not validate classes, generate CSS, maintain scanner state, observe file changes, or resolve manifests. Scanner state belongs to `@stet-css/scanner`; file-change invalidation belongs to CLI/build/framework integrations; manifest resolution belongs to `@stet-css/project`.
 
 ## API
 
@@ -23,7 +23,7 @@ import {
   extractOxcClasses,
   htmlAdapter,
   oxcAdapter,
-} from '@master/css-source'
+} from '@stet-css/source'
 ```
 
 ### `extractClassCandidates()`
@@ -31,21 +31,21 @@ import {
 Extract raw class-like candidates from source content.
 
 ```ts
-import { extractClassCandidates } from '@master/css-source'
+import { extractClassCandidates } from '@stet-css/source'
 
 const candidates = extractClassCandidates(`
   element.classList.add('transition:transform|.3s', dynamicClass)
 `)
 ```
 
-Candidates are intentionally unvalidated. Pass them through `@master/css-validator` or the scanner before generating CSS.
+Candidates are intentionally unvalidated. Pass them through `@stet-css/validator` or the scanner before generating CSS.
 
 ### Adapters
 
 Use `./adapters` when a caller needs source adapter contracts without the full root API.
 
 ```ts
-import { htmlAdapter, oxcAdapter } from '@master/css-source/adapters'
+import { htmlAdapter, oxcAdapter } from '@stet-css/source/adapters'
 ```
 
 | Adapter | Purpose |

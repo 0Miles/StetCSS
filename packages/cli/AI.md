@@ -1,8 +1,8 @@
-# AI Notes For `@master/css-cli`
+# AI Notes For `@stet-css/cli`
 
 ## Responsibility
 
-`@master/css-cli` exposes the package-name binary for command-line scan and extraction workflows.
+`@stet-css/cli` exposes the package-name binary for command-line scan and extraction workflows.
 
 ## Owns
 
@@ -19,7 +19,7 @@
 
 ## Public Surface
 
-- Binary: `@master/css-cli`.
+- Binary: `@stet-css/cli`.
 - Internal command runner from `src/core.ts`.
 - No public `extract`, `scan`, `render`, `mcss`, or `mastercss` aliases.
 
@@ -52,10 +52,10 @@
 ## Validation
 
 ```sh
-pnpm --filter @master/css-cli test
-pnpm --filter @master/css-cli lint
-pnpm --filter @master/css-cli type-check
-pnpm --filter @master/css-cli build
+pnpm --filter @stet-css/cli test
+pnpm --filter @stet-css/cli lint
+pnpm --filter @stet-css/cli type-check
+pnpm --filter @stet-css/cli build
 ```
 
 Use or extend `tests/extract` and root command tests for command behavior changes.

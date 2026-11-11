@@ -10,24 +10,24 @@ import {
 
 test.concurrent('finds top-level CSS imports without splitting quoted semicolons', () => {
   const source = [
-    '@import url("@master/css") layer(theme);',
+    '@import url("@stet-css/core") layer(theme);',
     '.x { content: "@import url(\\"ignored\\");" }',
     '@import "./a;b.css";'
   ].join('\n')
   const imports = findCSSImportStatements(source)
 
   expect(imports.map((item) => item.statement)).toEqual([
-    '@import url("@master/css") layer(theme);',
+    '@import url("@stet-css/core") layer(theme);',
     '@import "./a;b.css";'
   ])
-  expect(imports.map((item) => parseCSSImportSource(item.statement))).toEqual(['@master/css', './a;b.css'])
+  expect(imports.map((item) => parseCSSImportSource(item.statement))).toEqual(['@stet-css/core', './a;b.css'])
 })
 
 test.concurrent('matches only explicit Master CSS manifest entrypoints', () => {
   const pattern = createMasterCSSManifestEntryPattern()
 
   expect(pattern.test('@master entry;')).toBe(true)
-  expect(pattern.test('@import "@master/css";')).toBe(true)
+  expect(pattern.test('@import "@stet-css/core";')).toBe(true)
   expect(pattern.test('@master;')).toBe(false)
   expect(pattern.test('@master global;')).toBe(false)
 })

@@ -13,7 +13,7 @@ import {
   type CSSDirectiveUtilityDefinition,
   type CSSDirectiveUtilityRuleDefinition,
   type CSSDirectiveVariableValue
-} from '@master/css-schema/css-directives'
+} from '@stet-css/schema/css-directives'
 import type {
   CustomAtRules,
   Declaration,
@@ -36,7 +36,7 @@ import {
   removeSourceRanges,
   skipCSSWhitespace,
   type CSSDirectiveRuleRange
-} from '@master/css-lexer'
+} from '@stet-css/lexer'
 import {
   collectStandaloneCSSDirectiveExtractionPolicy,
   createCSSDirectiveExtractionPolicy,

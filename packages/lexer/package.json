@@ -1,5 +1,5 @@
 {
-  "name": "@master/css-lexer",
+  "name": "@stet-css/lexer",
   "type": "module",
   "scripts": {
     "build": "tsdown --config ../../shared/tsdown-package.config.ts",

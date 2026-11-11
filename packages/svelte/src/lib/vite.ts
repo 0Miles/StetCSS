@@ -1,7 +1,7 @@
-import baseVite, { type PluginOptions } from '@master/css.vite'
+import baseVite, { type PluginOptions } from '@stet-css/vite'
 import type { Plugin } from 'vite'
 
-export const SVELTEKIT_SSR_EXTERNAL = ['@master/css-server']
+export const SVELTEKIT_SSR_EXTERNAL = ['@stet-css/server']
 
 function SvelteKitServerExternalPlugin(): Plugin {
   return {

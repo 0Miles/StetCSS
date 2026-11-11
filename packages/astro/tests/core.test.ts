@@ -12,7 +12,7 @@ import { externalizeAstroHydrationManifests } from '../src/external-hydration-ma
 import {
   MASTER_CSS_HYDRATION_MANIFEST_ATTR,
   MASTER_CSS_HYDRATION_MANIFEST_SCRIPT_ID
-} from '@master/css-schema/hydration-manifest'
+} from '@stet-css/schema/hydration-manifest'
 
 async function setup(options?: Parameters<typeof masterCSS>[0]) {
   const integration = masterCSS(options)
@@ -43,7 +43,7 @@ async function setup(options?: Parameters<typeof masterCSS>[0]) {
   }
 }
 
-describe('@master/css.astro integration', () => {
+describe('@stet-css/astro integration', () => {
   it('defaults to progressive mode', () => {
     expect(defaultOptions.mode).toBe('progressive')
   })

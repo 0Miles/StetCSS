@@ -1,10 +1,10 @@
-import { generateValidRules } from '@master/css-validator'
-import type { GeneratedRule, MasterCSS } from '@master/css-engine'
+import { generateValidRules } from '@stet-css/validator'
+import type { GeneratedRule, MasterCSS } from '@stet-css/engine'
 import {
   inspectMasterCSSClass,
   type MasterCSSClassInspection
-} from '@master/css-engine/inspect'
-import { splitMasterCSSTopLevel } from '@master/css-lexer'
+} from '@stet-css/engine/inspect'
+import { splitMasterCSSTopLevel } from '@stet-css/lexer'
 import { equalVariants } from './rule-signatures'
 import suggestCanonicalClassName from './suggest-canonical-class-name'
 

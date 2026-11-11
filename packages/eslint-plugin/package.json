@@ -1,5 +1,5 @@
 {
-  "name": "@master/eslint-plugin-css",
+  "name": "@stet-css/eslint-plugin",
   "type": "module",
   "scripts": {
     "build": "tsdown --config ../../shared/tsdown-package.config.ts",
@@ -52,18 +52,18 @@
     "provenance": true
   },
   "dependencies": {
-    "@master/css": "workspace:^",
-    "@master/css-lexer": "workspace:^",
-    "@master/css-lint": "workspace:^",
-    "@master/css-project": "workspace:^",
-    "@master/css-preset": "workspace:^",
-    "@master/css-validator": "workspace:^",
+    "@stet-css/core": "workspace:^",
+    "@stet-css/lexer": "workspace:^",
+    "@stet-css/lint": "workspace:^",
+    "@stet-css/project": "workspace:^",
+    "@stet-css/preset": "workspace:^",
+    "@stet-css/validator": "workspace:^",
     "@typescript-eslint/utils": "^8.61.1",
     "typescript-eslint": "^8.61.1"
   },
   "devDependencies": {
     "@angular-eslint/template-parser": "^21.4.0",
-    "@master/css-schema": "workspace:^",
+    "@stet-css/schema": "workspace:^",
     "@angular/compiler": "^21.2.17",
     "@typescript-eslint/rule-tester": "^8.61.1",
     "eslint": "^10.5.0",

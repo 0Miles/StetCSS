@@ -165,7 +165,7 @@ describe('css manifest loader', () => {
     const preserveOnlyPath = join(projectDir, 'app/preserve.css')
     const dependencies: string[] = []
     writeFileSync(entryPath, [
-      '@import "@master/css";',
+      '@import "@stet-css/core";',
       '@theme {',
       '    --color-primary: #123;',
       '}',
@@ -203,7 +203,7 @@ describe('css manifest loader', () => {
     const dependencies: string[] = []
     mkdirSync(join(projectDir, 'app'), { recursive: true })
     writeFileSync(entryPath, [
-      '@import "@master/css";',
+      '@import "@stet-css/core";',
       '@components {',
       '    card {',
       '        @compose bg:neutral-120;',
@@ -220,7 +220,7 @@ describe('css manifest loader', () => {
     expect(dependencies).toContain(entryPath)
 
     writeFileSync(entryPath, [
-      '@import "@master/css";',
+      '@import "@stet-css/core";',
       '@components {',
       '    card {',
       '        @compose block;',

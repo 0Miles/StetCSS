@@ -1,4 +1,4 @@
-import type { MasterCSSManifest } from '@master/css-schema/manifest'
+import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 
 declare const defaultManifest: MasterCSSManifest
 export default defaultManifest

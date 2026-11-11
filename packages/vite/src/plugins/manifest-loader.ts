@@ -3,20 +3,20 @@ import type { PluginContext } from '../core'
 import {
   fromResolvedMasterCSSManifestId,
   toResolvedMasterCSSManifestId
-} from '@master/css-integration/node'
-import { loadManifestJSON } from '@master/css-project/manifest'
-import { isCSSManifestRequest } from '@master/css-project/entries'
+} from '@stet-css/integration/node'
+import { loadManifestJSON } from '@stet-css/project/manifest'
+import { isCSSManifestRequest } from '@stet-css/project/entries'
 import {
   isMasterCSSManifestRequest,
   stripMasterCSSManifestQuery
-} from '@master/css-integration/manifest-module'
+} from '@stet-css/integration/manifest-module'
 import {
   MANIFEST_ASSET_FILE,
   toBrowserManifestFacadeModule,
   toInlineManifestModule,
   toUniversalManifestFacadeModule
-} from '@master/css-integration/manifest-facade'
-import { collectStyleCSSDependencies } from '@master/css-stylesheet'
+} from '@stet-css/integration/manifest-facade'
+import { collectStyleCSSDependencies } from '@stet-css/stylesheet'
 import { includesFile } from '../utils/path'
 
 function invalidateManifestModule(module: ModuleNode | undefined, server: ViteDevServer): ModuleNode[] {

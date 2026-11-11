@@ -2,8 +2,6 @@
 
 .parcel-cache
 .pnpm-store
-.wrangler/
-/internal
 .env.local
 
 # compiled output
@@ -48,11 +46,7 @@ speed-measure-plugin*.json
 *.sublime-workspace
 
 # IDE - VS Code
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+.vscode/
 .history/*
 
 # misc
@@ -81,7 +75,3 @@ packages/nuxt/playground/.output
 **/blob-report/
 **/playwright/.cache/
 **/.svelte-kit
-
-# generated llms.txt indexes (regenerated at build time)
-site/public/llms.txt
-site/public/llms-full.txt

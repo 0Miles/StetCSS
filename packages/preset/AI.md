@@ -1,8 +1,8 @@
-# AI Notes For `@master/css-preset`
+# AI Notes For `@stet-css/preset`
 
 ## Responsibility
 
-`@master/css-preset` owns the default Master CSS stylesheet source and generated default preset artifacts.
+`@stet-css/preset` owns the default Master CSS stylesheet source and generated default preset artifacts.
 
 ## Owns
 
@@ -17,7 +17,7 @@
 - Engine execution behavior.
 - Project manifest discovery.
 - Build integration behavior.
-- Public facade behavior in `@master/css`.
+- Public facade behavior in `@stet-css/core`.
 
 ## Public Surface
 
@@ -58,10 +58,10 @@
 ## Validation
 
 ```sh
-pnpm --filter @master/css-preset test
-pnpm --filter @master/css-preset lint
-pnpm --filter @master/css-preset type-check
-pnpm --filter @master/css-preset build
+pnpm --filter @stet-css/preset test
+pnpm --filter @stet-css/preset lint
+pnpm --filter @stet-css/preset type-check
+pnpm --filter @stet-css/preset build
 ```
 
 ## Utility Definition Notes

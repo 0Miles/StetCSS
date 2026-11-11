@@ -1,6 +1,6 @@
 import { escapeRegExp, findCSSStatementEnd, isCSSIdentChar } from './source'
 
-export const MASTER_CSS_PACKAGE_MODULE_IDS = ['@master/css'] as const
+export const MASTER_CSS_PACKAGE_MODULE_IDS = ['@stet-css/core'] as const
 export const MASTER_CSS_ENTRY_DIRECTIVE_NAME = 'entry'
 
 const MASTER_CSS_PACKAGE_MODULE_ID_SET = new Set<string>(MASTER_CSS_PACKAGE_MODULE_IDS)

@@ -8,10 +8,10 @@ import {
   resolveMasterStyleSource,
   transformLocalStyleCSS,
   collectStyleCSSDependencies
-} from '@master/css-stylesheet'
-import { loadProjectManifest } from '@master/css-project/manifest'
-import { findCSSManifestEntryFiles } from '@master/css-project/entries'
-import { hasMasterCSSImport } from '@master/css-lexer'
+} from '@stet-css/stylesheet'
+import { loadProjectManifest } from '@stet-css/project/manifest'
+import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
+import { hasMasterCSSImport } from '@stet-css/lexer'
 
 interface LoaderContext {
   resourcePath: string
@@ -57,7 +57,7 @@ async function transformStyleSource(resourcePath: string, source: string, projec
   if (resolvedSource) {
     const renderedSource = hasMasterCSSImport(source)
       ? resolvedSource
-      : resolveMasterStyleSource(resourcePath, `@import "@master/css";\n${source}`, projectDir) || resolvedSource
+      : resolveMasterStyleSource(resourcePath, `@import "@stet-css/core";\n${source}`, projectDir) || resolvedSource
     dependencies.push(...renderedSource.dependencies)
     const result = await compileRenderedStyleCSS(resourcePath, renderedSource.source, {
       projectDir,
@@ -124,7 +124,7 @@ async function transformStyleSource(resourcePath: string, source: string, projec
 export default function masterCSSStyleCSSLoader(this: LoaderContext, source: string) {
   const callback = this.async?.()
   if (!callback) {
-    throw new Error('[@master/css.next] Style CSS loader requires an async loader context.')
+    throw new Error('[@stet-css/next] Style CSS loader requires an async loader context.')
   }
   const dependencies = shouldAddStyleDependencies(this.resourcePath, source, this.rootContext)
     ? new Set(collectStyleCSSDependencies(this.resourcePath, source, this.rootContext))

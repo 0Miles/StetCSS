@@ -1,4 +1,4 @@
-import type { MasterCSS } from '@master/css-language'
+import type { MasterCSS } from '@stet-css/language'
 import type { ColorPresentationParams } from 'vscode-languageserver-protocol'
 import Color from 'colorjs.io'
 

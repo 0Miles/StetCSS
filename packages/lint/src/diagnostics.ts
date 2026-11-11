@@ -1,5 +1,5 @@
-import type { MasterCSS } from '@master/css-engine'
-import { parseMasterCSSClassList, type MasterCSSClassListItem } from '@master/css-lexer'
+import type { MasterCSS } from '@stet-css/engine'
+import { parseMasterCSSClassList, type MasterCSSClassListItem } from '@stet-css/lexer'
 import type { ClassValidationOptions } from './get-class-validation-issues'
 import getClassValidationIssues from './get-class-validation-issues'
 import type { MasterCSSClassListEditOptions } from './class-list-edits'

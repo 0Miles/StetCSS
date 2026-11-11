@@ -2,7 +2,7 @@ import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
 const distDir = 'dist'
-const jsonModuleRE = /@master\/css-preset\/default-manifest\.json/
+const jsonModuleRE = /@stet-css\/preset\/default-manifest\.json/
 const jsonImportRE = new RegExp(`from\\s+(['"])(${jsonModuleRE.source})\\1(?!\\s+with\\s*\\{)`, 'g')
 
 async function* walk(dir) {

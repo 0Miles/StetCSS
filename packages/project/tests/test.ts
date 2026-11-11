@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 import { loadManifest, loadManifestJSON, loadProjectManifest } from '../src/manifest'
 import { loadManifestJSONSync, loadManifestSync, loadProjectManifestSync } from '../src/manifest-sync'
-import { MASTER_CSS_MANIFEST_QUERY } from '@master/css-integration/manifest-module'
+import { MASTER_CSS_MANIFEST_QUERY } from '@stet-css/integration/manifest-module'
 import {
   findCSSManifestEntryFiles,
   findMasterCSSWorkspaceDirectories,
@@ -15,7 +15,7 @@ import {
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { isAbsolute, join, relative, sep } from 'node:path'
 import { tmpdir } from 'node:os'
-import { flattenMasterCSSManifestVariables } from '@master/css-schema/manifest'
+import { flattenMasterCSSManifestVariables } from '@stet-css/schema/manifest'
 
 function createFixture() {
   return mkdtempSync(join(tmpdir(), 'master-css-manifester-'))
@@ -147,7 +147,7 @@ test('loads package entry preset manifest from CSS imports', async () => {
   try {
     const entry = join(cwd, 'index.css')
     writeFileSync(entry, `
-      @import "@master/css";
+      @import "@stet-css/core";
 
       @components {
         card {
@@ -159,7 +159,7 @@ test('loads package entry preset manifest from CSS imports', async () => {
     `)
 
     const result = await loadManifest(entry)
-    const packageEntry = resolveMasterCSSPackageEntryFile('@master/css', entry, cwd)
+    const packageEntry = resolveMasterCSSPackageEntryFile('@stet-css/core', entry, cwd)
     expect(packageEntry).toBeTruthy()
     if (!packageEntry) throw new Error('Expected Master CSS package entry')
     expect(result.dependencies).toContain(packageEntry)
@@ -203,7 +203,7 @@ test('loads project-level CSS manifest entries', async () => {
     expect(hasMasterCSSManifestEntrypoint('@master;')).toBe(false)
     expect(hasMasterCSSManifestEntrypoint('@master global;')).toBe(false)
     expect(hasMasterCSSManifestEntrypoint('@preserve native;')).toBe(false)
-    expect(hasMasterCSSManifestEntrypoint('@import "@master/css/index.css";')).toBe(false)
+    expect(hasMasterCSSManifestEntrypoint('@import "@stet-css/core/index.css";')).toBe(false)
     await expect(findCSSManifestEntryFiles(cwd)).resolves.toStrictEqual([entry])
 
     const result = await loadProjectManifest(cwd)
@@ -229,11 +229,11 @@ test('finds Master CSS workspace directories from package and CSS entries', asyn
     mkdirSync(join(cwd, 'docs', 'styles'), { recursive: true })
     writeFileSync(join(cwd, 'packages', 'app', 'package.json'), JSON.stringify({
       dependencies: {
-        '@master/css': 'workspace:*'
+        '@stet-css/core': 'workspace:*'
       }
     }))
     writeFileSync(join(cwd, 'packages', 'app', 'index.css'), '@master entry;')
-    writeFileSync(join(cwd, 'docs', 'styles', 'global.css'), '@import "@master/css";')
+    writeFileSync(join(cwd, 'docs', 'styles', 'global.css'), '@import "@stet-css/core";')
 
     await expect(findMasterCSSWorkspaceDirectories(cwd)).resolves.toStrictEqual([
       cwd,
@@ -252,7 +252,7 @@ test('does not match sibling workspace path prefixes', async () => {
     mkdirSync(join(cwd, 'packages', 'app-kit'), { recursive: true })
     writeFileSync(join(cwd, 'packages', 'app', 'package.json'), JSON.stringify({
       dependencies: {
-        '@master/css': 'workspace:*'
+        '@stet-css/core': 'workspace:*'
       }
     }))
     writeFileSync(join(cwd, 'packages', 'app-kit', 'index.css'), '@master entry;')
@@ -272,38 +272,38 @@ test('resolves Master CSS workspace packages and optional language server', () =
   try {
     writeJSON(join(cwd, 'package.json'), {
       dependencies: {
-        '@master/css': '^1.2.3',
-        '@master/css-language-server': '^1.2.3'
+        '@stet-css/core': '^1.2.3',
+        '@stet-css/language-server': '^1.2.3'
       }
     })
-    const cssDir = writeNodePackage(cwd, '@master/css', {
+    const cssDir = writeNodePackage(cwd, '@stet-css/core', {
       dependencies: {
-        '@master/css-engine': '^1.2.3',
-        '@master/css-preset': '^1.2.3'
+        '@stet-css/engine': '^1.2.3',
+        '@stet-css/preset': '^1.2.3'
       }
     })
-    const engineDir = writeNodePackage(cssDir, '@master/css-engine', {
+    const engineDir = writeNodePackage(cssDir, '@stet-css/engine', {
       dependencies: {
-        '@master/css-schema': '^1.2.3'
+        '@stet-css/schema': '^1.2.3'
       }
     }, {
       'index.js': 'export const builtinKeyAliases = {}; export const builtinNativeValueNamespaces = []'
     })
-    const presetDir = writeNodePackage(cssDir, '@master/css-preset', {
+    const presetDir = writeNodePackage(cssDir, '@stet-css/preset', {
       exports: {
         './default-manifest.json': './default-manifest.json'
       }
     }, {
       'default-manifest.json': '{"version":1}'
     })
-    const schemaDir = writeNodePackage(engineDir, '@master/css-schema', {
+    const schemaDir = writeNodePackage(engineDir, '@stet-css/schema', {
       exports: {
         './utility-type': './utility-type.js'
       }
     }, {
       'utility-type.js': 'export default { Semantic: -2, Shorthand: -1, Normal: 0 }'
     })
-    const languageServerDir = writeNodePackage(cwd, '@master/css-language-server', {
+    const languageServerDir = writeNodePackage(cwd, '@stet-css/language-server', {
       exports: {
         './server': './server.js'
       }
@@ -329,16 +329,16 @@ test('reports missing workspace runtime packages without throwing', () => {
   try {
     writeJSON(join(cwd, 'package.json'), {
       dependencies: {
-        '@master/css': '^1.2.3'
+        '@stet-css/core': '^1.2.3'
       }
     })
-    const cssDir = writeNodePackage(cwd, '@master/css', {})
-    writeNodePackage(cssDir, '@master/css-engine', {
+    const cssDir = writeNodePackage(cwd, '@stet-css/core', {})
+    writeNodePackage(cssDir, '@stet-css/engine', {
       exports: {
         '.': './missing.js'
       }
     }, {})
-    writeNodePackage(cssDir, '@master/css-preset', {
+    writeNodePackage(cssDir, '@stet-css/preset', {
       exports: {
         './default-manifest.json': './missing.json'
       }
@@ -351,10 +351,10 @@ test('reports missing workspace runtime packages without throwing', () => {
     expect(resolution.presetManifest).toBeUndefined()
     const requiredRuntimeErrorNames = resolution.errors
       .map(({ name }) => name)
-      .filter((name) => name !== '@master/css-language-server/server')
+      .filter((name) => name !== '@stet-css/language-server/server')
     expect(requiredRuntimeErrorNames).toEqual([
-      '@master/css-engine',
-      '@master/css-preset/default-manifest.json'
+      '@stet-css/engine',
+      '@stet-css/preset/default-manifest.json'
     ])
   } finally {
     rmSync(cwd, { recursive: true, force: true })
@@ -366,10 +366,10 @@ test('reports invalid package exports as resolution errors', () => {
   try {
     writeJSON(join(cwd, 'package.json'), {
       dependencies: {
-        '@master/css': '^1.2.3'
+        '@stet-css/core': '^1.2.3'
       }
     })
-    writeNodePackage(cwd, '@master/css', {
+    writeNodePackage(cwd, '@stet-css/core', {
       exports: {
         '.': './missing.js'
       }
@@ -379,7 +379,7 @@ test('reports invalid package exports as resolution errors', () => {
 
     expect(resolution.css).toBeUndefined()
     expect(resolution.errors[0]).toMatchObject({
-      name: '@master/css'
+      name: '@stet-css/core'
     })
   } finally {
     rmSync(cwd, { recursive: true, force: true })

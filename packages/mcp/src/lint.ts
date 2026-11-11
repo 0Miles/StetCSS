@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises'
-import { createCSSWithNativeDeclarations } from '@master/css-validator/native-declaration'
+import { createCSSWithNativeDeclarations } from '@stet-css/validator/native-declaration'
 import {
   fixMasterCSSContent,
   lintMasterCSSContent,
@@ -8,7 +8,7 @@ import {
   type MasterCSSLintFileResult,
   type MasterCSSLintRuleId,
   type MasterCSSLintSourceDiagnostic
-} from '@master/css-lint'
+} from '@stet-css/lint'
 import type MasterCSSMCPContext from './context'
 import { resolveSourceFiles } from './scan'
 import { loadWorkspaceManifest } from './project'

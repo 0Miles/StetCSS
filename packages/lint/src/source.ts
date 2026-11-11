@@ -1,10 +1,10 @@
-import type { MasterCSS } from '@master/css-engine'
+import type { MasterCSS } from '@stet-css/engine'
 import {
   collectCSSDirectiveRanges,
   type CSSDirectiveRuleRange,
   type SourceRange
-} from '@master/css-lexer'
-import { getClassPositions, languageSettings } from '@master/css-language'
+} from '@stet-css/lexer'
+import { getClassPositions, languageSettings } from '@stet-css/language'
 import { extname } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import {

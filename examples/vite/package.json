@@ -9,10 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@master/css": "workspace:^"
+    "@stet-css/core": "workspace:^"
   },
   "devDependencies": {
-    "@master/css.vite": "workspace:^",
+    "@stet-css/vite": "workspace:^",
     "typescript": "^7.0.2",
     "vite": "^8.0.16"
   }

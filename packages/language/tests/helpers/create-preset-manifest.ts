@@ -3,7 +3,7 @@ import {
   flattenMasterCSSManifestVariables,
   groupMasterCSSManifestVariables,
   type MasterCSSManifestVariable
-} from '@master/css-schema/manifest'
+} from '@stet-css/schema/manifest'
 
 type PlanVariableDraft = MasterCSSManifestVariable
 type ManifestUtilityDraft = Partial<NonNullable<MasterCSSManifest['utilities']>[number]> & {

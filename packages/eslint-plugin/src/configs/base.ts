@@ -3,6 +3,6 @@ import type { Linter } from 'eslint'
 
 export default {
   plugins: {
-    '@master/css': plugin as any
+    '@stet-css': plugin as any
   }
 } as Linter.Config

@@ -1,1 +1,1 @@
-/// <reference types="@master/css-integration/client" />
+/// <reference types="@stet-css/integration/client" />

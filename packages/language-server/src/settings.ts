@@ -1,4 +1,4 @@
-import { settings as cssLanguageServiceSettings, type Settings as CSSLanguageServiceSettings } from '@master/css-language-service'
+import { settings as cssLanguageServiceSettings, type Settings as CSSLanguageServiceSettings } from '@stet-css/language-service'
 import type { Pattern } from 'fast-glob'
 
 const settings: Settings = {

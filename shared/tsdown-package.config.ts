@@ -12,7 +12,7 @@ const packageRoot = process.cwd()
 const packageJSON = JSON.parse(readFileSync(resolve(packageRoot, 'package.json'), 'utf8')) as PackageJSON
 
 const entryByPackageName: Record<string, TsdownInputOption> = {
-  '@master/eslint-plugin-css': ['src/**/*.{js,ts}']
+  '@stet-css/eslint-plugin': ['src/**/*.{js,ts}']
 }
 
 const externalLanguageSyntaxJSON: TsdownPlugin = {
@@ -86,7 +86,7 @@ export default defineConfig({
   plugins: [
     preserveDeclarationRelativeImports,
     externalVirtualModules,
-    ...(packageJSON.name === '@master/css-language' ? [externalLanguageSyntaxJSON] : [])
+    ...(packageJSON.name === '@stet-css/language' ? [externalLanguageSyntaxJSON] : [])
   ],
   dts: Boolean(packageJSON.types || hasExportTypes(packageJSON.exports))
 })

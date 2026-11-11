@@ -1,13 +1,13 @@
-import { MasterCSS, VariableRule, AnimationRule } from '@master/css-engine'
-import type { MasterCSSManifest, MasterCSSManifestUtilityLayerName } from '@master/css-schema/manifest'
-import type { MasterCSSEmittedGlobals } from '@master/css-engine'
+import { MasterCSS, VariableRule, AnimationRule } from '@stet-css/engine'
+import type { MasterCSSManifest, MasterCSSManifestUtilityLayerName } from '@stet-css/schema/manifest'
+import type { MasterCSSEmittedGlobals } from '@stet-css/engine'
 import {
   MASTER_CSS_HYDRATION_MANIFEST_ATTR,
   MASTER_CSS_HYDRATION_MANIFEST_SCRIPT_ID,
   type MasterCSSGeneratedRuleIR,
   type MasterCSSHydrationManifest
-} from '@master/css-schema/hydration-manifest'
-import { MASTER_CSS_RUNTIME_STYLE_ID } from '@master/css-schema/runtime-style'
+} from '@stet-css/schema/hydration-manifest'
+import { MASTER_CSS_RUNTIME_STYLE_ID } from '@stet-css/schema/runtime-style'
 import registerGlobal from './register-global'
 import { HydrateResult } from './types'
 import RuntimeUtilityLayer, { RuntimeUtilityLayerInstance } from './utility-layer'
