@@ -1,67 +1,16 @@
-# AI Notes For `@stet-css/source`
+# @stet-css/source
 
-## Responsibility
+Owns **candidate extraction**: pulling unvalidated, class-like strings out of raw source text, plus the format-aware source adapters (HTML, OXC for JS/TS, Astro, Svelte, Vue) that scanner auto extraction runs.
 
-`@stet-css/source` owns source-level class candidate extraction and source adapters shared by static rendering and framework integrations.
+## Boundaries
 
-## Owns
+- Candidate validation and rule insertion: `@stet-css/scanner` (through `@stet-css/validator`); source returns strings only.
+- Lexical primitives (source ranges, class-list tokenizing, unit constants): `@stet-css/lexer`.
 
-- Unvalidated class-like candidate extraction from raw source text.
-- Source-format-aware HTML helpers.
-- OXC-based JavaScript/TypeScript helpers.
-- Astro, Svelte, and Vue source adapters used by scanner auto extraction.
-- Source adapter matching and registration primitives.
+## Risks
 
-## Does Not Own
-
-- Class validation, scanner state, or CSS generation.
-- Engine, compiler, runtime, server, language service, build integration, framework integration, examples, or site behavior.
-- Low-level lexical ranges, directive/import scanners, class tokenization, or CSS unit constants; use `@stet-css/lexer`.
-
-## Public Surface
-
-- `SourceAdapter`
-- `SourceAdapterInput`
-- `matchesSourceAdapter`
-- `addClassString`
-- `extractClassCandidates`
-- HTML, OXC, Astro, Svelte, and Vue source constants and helpers
-- `./adapters`
-- `./adapters/astro`
-- `./adapters/svelte`
-- `./adapters/vue`
-
-## Key Files
-
-- `src/extract-class-candidates.ts`
-- `src/adapters/*`
-- `src/index.ts`
-
-## Risk Areas
-
-- False positives increasing generated CSS.
-- False negatives omitting required CSS.
-- Adapter matching by file id/source extension.
-- Optional Vue/Svelte parser peers must warn once and fall back to text extraction when missing.
-- OXC parsing differences across JS/TS syntax.
-
-## Safe Changes
-
-- Focused adapter matching fixes.
-- HTML, OXC, Astro, Svelte, or Vue extraction fixes with fixtures.
-- Candidate extraction tests that do not validate or generate CSS.
-
-## Dangerous Changes
-
-- Depending on scanner, engine, compiler, validator, runtime, server, language service, integrations, examples, or site.
-- Moving validation or generated CSS insertion here.
-- Assuming dynamic string concatenation is statically knowable.
-
-## Validation
-
-```sh
-pnpm --filter @stet-css/source test
-pnpm --filter @stet-css/source lint
-pnpm --filter @stet-css/source type-check
-pnpm --filter @stet-css/source build
-```
+- **Candidates are CSS output**: an extra candidate adds rules and a missed one drops required CSS, so treat a change in what an adapter extracts as a CSS output change.
+- **Static strings only**: OXC extraction reads string literals and expression-free template literals; treat concatenated or interpolated class names as not statically knowable.
+- **OXC parsing**: JS/TS that OXC fails to parse falls back to `extractClassCandidates` text extraction, so parser differences shift the candidate set.
+- **Adapter matching** keys on the file id and extension, including ids with a `?query` suffix; a wrong match routes the file to the wrong extractor.
+- **Optional peers**: when `vue` or `svelte` is missing, the adapter warns once per specifier and falls back to text extraction (`src/adapters/optional-peer.ts`).

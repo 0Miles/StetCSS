@@ -1,41 +1,15 @@
-# AI Notes For `@stet-css/diagnostics`
+# @stet-css/diagnostics
 
-## Responsibility
+Owns the adapter-neutral **inspection report** shared by the CLI `inspect` command and the MCP scan tool: source pattern resolution, per-file scanner class state, managed stylesheet entries, generated CSS size, and missing-CSS classification for explicit class checks.
 
-`@stet-css/diagnostics` owns adapter-neutral project inspection reports for tooling that needs scanner state, stylesheet entry metadata, generated CSS size, and missing CSS diagnostics.
+## Boundaries
 
-## Owns
+- Class lint policy, class-list edits, and source-content linting → `@stet-css/lint`.
+- Output formatting, exit codes, and watch lifecycle → `@stet-css/cli`; tool registration, workspace write safety, and preview tokens → `@stet-css/mcp`. Pulling lint policy or adapter behaviour in here risks package-boundary cycles.
+- Class semantics, scanner extraction, and stylesheet compilation belong to the packages the report reads; fix them there.
 
-- Project source pattern resolution for inspection runs.
-- Scanner state reports and per-file discovered class summaries.
-- Managed stylesheet entry diagnostics and generated CSS metadata.
-- Missing CSS classification for explicit class checks.
-- Stable inspection report version and top-level report shape shared by CLI and MCP adapters.
+## Risks
 
-## Does Not Own
-
-- Class lint policy, class-list edits, or source-content linting; use `@stet-css/lint`.
-- CLI argument parsing, stdout formatting, exit code behavior, or watch lifecycle.
-- MCP tool registration, workspace write safety, or preview token validation.
-- Engine class semantics, CSS output behavior, scanner extraction heuristics, or stylesheet compilation semantics.
-
-## Public Surface
-
-- `createMasterCSSInspectionReport`
-- Inspection report, diagnostic, stylesheet, source, and missing CSS result types.
-
-## Risk Areas
-
-- Report shape drift between CLI and MCP consumers.
-- Accidentally hiding stylesheet entry errors while scanner diagnostics still exist.
-- Broadening scanner source discovery or missing CSS classification in a way that changes CLI exit behavior.
-- Introducing package-boundary cycles by moving lint policy or adapter-specific behavior here.
-
-## Validation
-
-```sh
-pnpm --filter @stet-css/diagnostics test
-pnpm --filter @stet-css/diagnostics lint
-pnpm --filter @stet-css/diagnostics type-check
-pnpm --filter @stet-css/diagnostics build
-```
+- **Report shape**: the CLI and MCP both read the top-level shape and its `version` (`MASTER_CSS_INSPECTION_REPORT_VERSION`); keep both stable for both consumers.
+- **Stylesheet entry errors** stay in `diagnostics` alongside scanner diagnostics.
+- **CLI exit code**: source discovery and missing-CSS classification feed `summary.errors` and `summary.warnings`, which set the CLI exit code, so broadening either changes CLI behaviour.

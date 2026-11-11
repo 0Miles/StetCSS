@@ -1,56 +1,19 @@
-# AI Notes For `@stet-css/nuxt`
+# @stet-css/nuxt
 
-## Responsibility
+Owns the Nuxt module: it registers `@stet-css/vite` per mode, adds the client runtime plugin (`src/runtime/css-runtime.ts`) and the Nitro server plugin (`src/runtime/css-server.ts`), and wires the project manifest into Vite and Nitro **virtual modules**.
 
-`@stet-css/nuxt` wires Master CSS into Nuxt, Vite, Nitro, client runtime, and server pre-render workflows.
+## Boundaries
 
-## Owns
+- Mode semantics and option defaults live in `@stet-css/vite`; `ModuleOptions` is its `PluginOptions`, and Nuxt behaviour stays aligned with it.
+- Vue SFC extraction lives in `@stet-css/source`, reached through scanner auto adapters.
+- HTML rendering lives in `@stet-css/server`; the browser runtime in `@stet-css/runtime`.
 
-- Nuxt module setup.
-- Nuxt runtime aliases for client and server integration.
-- Nuxt fixture tests and module options.
+## Risks
 
-## Does Not Own
-
-- Vite mode semantics.
-- Vue SFC extraction; `@stet-css/source` handles source parsing through scanner auto adapters.
-- Core runtime, server, scanner, or CSS generation behavior.
-
-## Public Surface
-
-- Default Nuxt module export.
-
-## Key Files
-
-- `src/module.ts`
-- `src/options.ts`
-- `src/runtime/css-runtime.ts`
-- `src/runtime/css-server.ts`
-- `tests/fixtures/*`
-
-## Risk Areas
-
-- SSR and Nitro virtual manifest aliases.
-- Nuxt inline styles behavior in static mode.
-- Client/server mode differences.
-- Generated `.output` fixture content.
-
-## Safe Changes
-
-- Focused module option or runtime alias fixes.
-- Fixture-backed mode behavior fixes.
-
-## Dangerous Changes
-
-- Adding browser-only code to server runtime.
-- Altering Nuxt build options unless mode behavior requires it.
-- Changing generated `.output` fixtures casually.
-- Diverging from Vite package semantics.
+- **Client/server split**: on the server, `virtual:master-css-manifest` resolves through Nitro's `virtual` config; on the client, through the Vite plugin. Mode behaviour differs on each side.
+- **Server runtime** (`src/runtime/css-server.ts`) runs in Nitro and stays server-safe; browser code goes in `src/runtime/css-runtime.ts`.
+- **Nuxt build options** change only when mode behaviour requires it, as `static` does by turning off `features.inlineStyles` (Nuxt cannot inline generated static CSS during SSR).
 
 ## Validation
 
-```sh
-pnpm --filter @stet-css/nuxt test
-pnpm --filter @stet-css/nuxt lint
-pnpm --filter @stet-css/nuxt build
-```
+Each mode has a fixture app in `tests/fixtures/<mode>/` driven by `tests/<mode>.test.ts`; extend the matching fixture for mode behaviour changes.

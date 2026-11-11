@@ -1,101 +1,90 @@
-# StetCSS AI Instructions
+# StetCSS
 
-This is the canonical instruction file for AI agents working in this repository. Read it before editing.
+StetCSS is a fork of Master CSS `v2.0.0-rc.88`: a markup-driven CSS engine where classes such as `fg:red:hover@sm` compile to CSS rules. Packages publish under `@stet-css/*`; `@stet-css/core` (`packages/core`) is the public facade.
 
-StetCSS is forked from Master CSS `v2.0.0-rc.88`. Workspace packages are published under the `@stet-css` scope.
+## Where things live
 
-## Context Loading
+- **Direction**: pinned issue #4 (`gh issue view 4`). Read it before adding or changing class syntax, dependencies, config files, or companion tools (editor extension, MCP, skills), and before porting an upstream Master CSS change.
+- **Package notes**: `packages/<name>/AI.md` and `benchmarks/AI.md` hold each package's boundaries, risks, and any validation beyond `lint`, `test`, and `type-check`.
+- **Research**: GitHub issues labelled `research`. Publish findings there, never as committed files; see `.agents/issue-tracker.md`.
+- **`docs/`**: version-controlled project documents only.
 
-Default read order:
+## Before editing
 
-1. `AGENTS.md`
-2. The affected package `package.json`
-3. The affected package-local `AI.md`, if present
-4. Existing source and tests near the behavior being changed
+1. Name the **owning package**: the lowest package in the dependency direction below that holds the behaviour.
+2. Read its `package.json` and `AI.md`.
+3. Read the source, tests, and fixtures around the behaviour, and the downstream packages that consume it.
+4. For a feature, find what already exists first: the owning package's public API, private helpers in lower packages, and tests that lock the behaviour. When the needed behaviour exists only as private code in a lower package, plan the shared API there first.
 
-Do not modify high-risk parser, compiler, runtime, extraction, language, ESLint, package-boundary, or CSS output behavior from a partial reading; read the owning package, its tests, and its downstream consumers first.
+Done when you can name the owning package, the tests that cover the behaviour, and every downstream consumer your change reaches.
 
-## Project Invariants
+## Invariants
 
-The codebase is a markup-driven CSS language and framework. Class strings such as `fg:red:hover@sm` are parsed into CSS rules, sorted into cascade layers, and emitted by engine, runtime, server, scanner, build integrations, language tooling, and ESLint packages.
+- **CSS output** is the contract. Any change to generated CSS is a behaviour change: make it intentional, explain it, and cover it with tests or fixtures.
+- **Layer order** is declared once in `packages/preset/src/base.css` (exposed as `@stet-css/core/base.css`):
 
-The stable layer order is declared by `packages/preset/src/base.css` and exposed through `@stet-css/core/base.css`:
+  ```txt
+  @layer theme, base, defaults, components, utilities;
+  ```
 
-```txt
-@layer theme, base, defaults, components, utilities;
-```
+  Generated rules go into those layer blocks without re-emitting the statement; keyframes go outside layers.
+- **Native CSS behaviour**: a class behaves like the same declaration written in plain CSS. Bare numbers stay as written (`font:14` → `font-size:14`).
 
-Generated rules are emitted into `theme`, `base`, `defaults`, `components`, and `utilities` layer blocks without dynamically adding the layer statement. Keyframes are emitted outside layers. Any CSS output difference is a behavior change and must be intentional, explainable, and covered by tests or fixtures.
-
-## Architecture Rules
-
-Preserve dependency direction:
+## Dependency direction
 
 ```txt
 shared / external data
-  -> @stet-css/schema / @stet-css/lexer
-  -> @stet-css/source
-  -> @stet-css/engine / @stet-css/preset / @stet-css/integration
-  -> @stet-css/compiler / @stet-css/project
+  -> schema / lexer
+  -> source
+  -> engine / preset / integration
+  -> compiler / project
   -> validator / server / scanner / runtime / language / language-service / stylesheet
   -> build plugins / CLI / ESLint / language-server
-  -> framework integrations / VS Code / examples / site
+  -> framework integrations / VS Code / examples
 ```
 
-Do not make engine depend on compiler, integrations, runtime, server, scanner, language service, ESLint, examples, or site. `@stet-css/core` is a public facade over engine and preset exports; keep behavior in the owning lower package.
+Dependencies point down this chain only; engine depends on `schema` and `lexer` alone. `@stet-css/core` re-exports engine and preset, so keep behaviour in the owning lower package. Under cycle pressure, extract the shared piece downward: contracts into `schema`, lexical scanners into `lexer`, class candidate extraction into `source`, adapter-neutral protocol into `integration`.
 
-When cycle pressure appears, extract dependency-light contracts into `@stet-css/schema`, dependency-free lexical scanners into `@stet-css/lexer`, source class candidate extraction into `@stet-css/source`, or adapter-neutral integration protocol into `@stet-css/integration`.
+## Runtime surface
 
-## Before Editing
+Everything `@stet-css/runtime` imports ships to browsers. Before adding a helper to runtime, engine value exports, schema constants, or preset manifest loading, classify it as runtime core, build-time configuration, or tooling. Put tooling and build-time logic in a subpath or the owning tooling package. Third-party class observation goes through DOM `MutationObserver` or public runtime state.
 
-- Identify the affected package and read its `package.json`.
-- Read the affected package-local `AI.md`, if present.
-- Inspect existing source, tests, fixtures, and downstream consumers before designing a change.
-- For feature work, perform an existing capability discovery pass before designing the implementation: identify the owning package responsibilities, current public APIs, nearby private/internal helpers that may need to be extracted, downstream consumers, and tests that lock the behavior. Prefer existing public APIs when they fit; when the needed behavior exists only as private/internal code in a lower package, first plan an intentional shared API/refactor at that lower layer, then return to the feature-specific implementation.
-- Treat value-level code covered by `@stet-css/runtime` as browser runtime bundle surface. Before adding helpers to runtime source, engine core/root value exports, runtime-imported engine modules, schema value constants, or preset manifest loading, decide whether the behavior is runtime core, build-time-only configuration, or tooling-only logic. Do not add global event buses or tooling observer APIs to runtime; third-party class observation should use DOM `MutationObserver` or explicit public runtime state. Move tooling-only behavior to a subpath, dependency-light utility, or true owning package, and validate runtime bundle impact when feasible.
-- Prefer the smallest focused change that matches existing local patterns.
-- Do not invent a new abstraction before proving existing helpers cannot solve the task.
+## Utility ladder
 
-## Utility Definition Strategy
+Model a preset utility with the lowest rung that expresses it, and state why each lower rung fell short:
 
-Before adding or changing a default preset utility, prove simpler manifest mechanisms cannot model it:
+1. `nativeValueNamespaces` (`packages/engine/src/native-value-namespaces.ts`): full native or vendor property classes.
+2. `keyAliases` (`packages/engine/src/key-aliases.ts`): short keys pointing at native properties.
+3. `@utilities` in `packages/preset/src/utilities.css`: static and semantic utilities, including multi-declaration ones.
+4. Engine code (`packages/engine/src/`): special transforms or raw ambiguous matching that CSS directives cannot express.
 
-1. Full native or vendor property classes should use `nativeValueNamespaces`; add `keyAliases` only when the public class key differs from the emitted CSS property.
-2. Short property aliases should use `keyAliases` to point at native logical, physical, full, or vendor CSS properties.
-3. Semantic subproperty aliases that cannot be direct property fallbacks should be authored in `@utilities`.
-4. Keep `packages/preset/src/utilities.ts` for multi-declaration behavior, special transforms, raw ambiguous matching, or behavior the CSS directive compiler cannot express.
+## Changes
 
-When a change adds a utility, state why `keyAliases` plus `nativeValueNamespaces` was insufficient.
+- Keep changes package-local and matched to nearby patterns.
+- Bug fixes and narrow features preserve existing behaviour unless correctness requires otherwise. Requested refactors favour the clean design over compatibility shims; list every public API, config, class syntax, or CSS output change they make and update tests to the new contract.
+- Solve with the existing toolchain; a new dependency needs a stated reason.
+- Change package names, build or release flow, lockfiles, or package manager config only when the task asks for it.
+- Update snapshots, fixtures, and generated files only for intentional output changes, and explain each.
+- When a test fails, fix the code; change the test only when the behaviour change is intended.
 
-## Refactor Compatibility
+## Validation
 
-For requested refactors, rewrites, cleanups, migrations, or re-architecture, prefer a clean and correct design over legacy compatibility. Do not preserve old APIs, config shapes, aliases, adapters, fixtures, or shims solely for compatibility unless the user or issue explicitly requires it.
+Run the affected packages' `lint`, `test`, and `type-check` scripts (`pnpm --filter <package> lint`), then widen to `pnpm check` when a change crosses packages. Parser, compiler, runtime, scanner, language tooling, and ESLint changes need focused tests.
 
-Breaking changes in refactor work must be intentional and visible: list public API, config, class syntax, CSS output, runtime, extraction, language tooling, or ESLint behavior changes; remove obsolete compatibility paths; and update tests for the new intended contract. Routine bug fixes and narrow feature additions should preserve existing behavior unless correctness requires a change.
+## Reviews
 
-## Modification Constraints
+Lead with findings by severity: bugs, regressions, CSS output changes, public API changes, missing tests, then cascade, variable, manifest, runtime, or extraction risks, then unrelated files. With no findings, name the residual risk or the validation that did not run.
 
-- Keep changes narrow and package-local where possible.
-- Do not reformat unrelated files.
-- Do not modify generated files, snapshots, or fixtures unless the output change is intentional.
-- Do not add dependencies unless the existing toolchain cannot reasonably solve the problem.
-- Do not change package names, build flow, release flow, CI, lockfiles, or package manager config unless explicitly requested.
-- Keep public exports deliberate.
-- Do not reduce correctness just to make tests pass.
-- Do not guess when modifying parser, compiler, renderer, selector, at-rule, variable, mode, priority, cascade, runtime, extraction, language, or ESLint behavior.
+## Agent skills
 
-## Testing Policy
+### Issue tracker
 
-Use scoped validation first, then broaden based on risk. When changing a workspace package, run that package's `lint` script if it exists. For multi-package changes, run lint for every affected package that defines it. If an affected package has no package-local lint script, state that in the final response.
+Issues live in GitHub Issues for 0Miles/StetCSS (gh CLI). See `.agents/issue-tracker.md`.
 
-Core parser, compiler, renderer, runtime, scanner, language tooling, and ESLint changes require focused tests. Snapshot or fixture updates are acceptable only when the behavior change is intentional and explained.
+### Triage labels
 
-## Documentation System
+Default five-role vocabulary: needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix. See `.agents/triage-labels.md`.
 
-Use package-local `AI.md` files for package-specific constraints. Keep public user docs in `site/` unless maintainers request a root `docs/` directory.
+### Domain docs
 
-Directive syntax, semantics, lowering behavior, extraction behavior, or directive refactors must update `site/app/[locale]/guide/directives/content.mdx` in the same change.
-
-## Review Defaults
-
-When reviewing a PR, lead with findings ordered by severity: bugs, regressions, CSS output changes, public API changes, missing tests, priority/cascade/variable/manifest/runtime/extraction risks, and unrelated files. If no issues are found, say so and mention residual risk or missing validation.
+Single-context: one root `GLOSSARY.md` plus `docs/adr/`. See `.agents/domain.md`.

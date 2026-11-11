@@ -1,42 +1,15 @@
-# AI Notes For `@stet-css/mcp`
+# @stet-css/mcp
 
-## Responsibility
+A stdio MCP server that exposes Master CSS tooling to AI clients as tools, resources and prompts by orchestrating lower packages. It owns **workspace containment** and the two-step **preview → confirm** flow for every file it writes.
 
-`@stet-css/mcp` exposes high-level Master CSS tools through the Model Context Protocol for AI clients.
+## Boundaries
 
-## Owns
+- Class semantics and CSS output → `@stet-css/engine`; completion, hover and formatting → `@stet-css/language-service`; lint rules → `@stet-css/lint`.
+- Candidate extraction → `@stet-css/source`; validation → `@stet-css/validator`; CLI behaviour and output contracts → `@stet-css/cli`.
 
-- MCP server lifecycle and stdio transport wiring.
-- MCP tool, resource, and prompt registration.
-- Workspace root containment and two-step write confirmation for generated fixes.
-- Tool-oriented orchestration around existing project, scanner, stylesheet, language-service, lint, validator, server, and engine APIs.
+## Risks
 
-## Does Not Own
-
-- Engine class semantics, CSS output, priority, variables, modes, or generated rule ordering.
-- Runtime DOM observation or browser bundle behavior.
-- Scanner extraction heuristics, source adapters, or validation semantics.
-- Language service completion/hover logic.
-- CLI command behavior or output contracts.
-
-## Public Surface
-
-- Binary: `master-css-mcp`.
-- Root export for server creation helpers.
-- `./server` subpath for MCP server construction and stdio startup.
-
-## Risk Areas
-
-- Writing files from AI tool calls; require preview token validation and workspace containment.
-- Accidentally logging to stdout in stdio mode.
-- Importing private CLI implementation files instead of lower package public APIs.
-- Broad file glob inputs escaping the configured workspace root.
-
-## Validation
-
-```sh
-pnpm --filter @stet-css/mcp test
-pnpm --filter @stet-css/mcp lint
-pnpm --filter @stet-css/mcp type-check
-pnpm --filter @stet-css/mcp build
-```
+- **Writes**: `createPreview` returns a `confirmToken`; `applyPreview` checks expiry, file hashes and containment before touching disk.
+- **Containment**: every path and glob resolves inside the configured workspace roots; patterns that escape are rejected.
+- **stdout** carries the protocol in stdio mode; diagnostics go to stderr.
+- **Public APIs**: orchestrate through lower packages' exports (e.g. `@stet-css/engine/inspect`, `@stet-css/project/*`); CLI implementation files stay private.

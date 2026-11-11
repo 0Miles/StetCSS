@@ -1,73 +1,20 @@
-# AI Notes For `@stet-css/language`
+# @stet-css/language
 
-## Responsibility
+Owns the editor-neutral **language primitives** shared by the language service, language server, lint, and the VS Code extension: class-position scanning (`ClassPositionCache`), semantic token classification and encoding over class lists and CSS directives, browser and Shiki highlighting helpers, `createLanguageCSS`, and the canonical TextMate grammar in `syntaxes/`.
 
-`@stet-css/language` owns editor-neutral Master CSS language primitives.
+## Boundaries
 
-## Owns
+- Stateful features (completion, hover, colors) → `@stet-css/language-service`; LSP capabilities and workspace lifecycle → `@stet-css/language-server`.
+- Raw class-list splitting and unescaping → `@stet-css/lexer`; manifest-driven class inspection → `@stet-css/engine/inspect`; class syntax and generated CSS → `@stet-css/engine`.
 
-- Class-position scanning and `ClassPositionCache`.
-- Semantic token classification and encoding.
-- CSS directive scanning and editor source-position/provider scanning.
-- Semantic token classification over class-list and directive ranges.
-- Browser editor helpers.
-- Shiki/TextMate integration and the canonical TextMate grammar asset.
-- Language helpers such as `createLanguageCSS`, `defaultManifest`, and native declaration matching helpers.
+## Risks
 
-## Does Not Own
-
-- Stateful language service behavior.
-- LSP capabilities or workspace lifecycle.
-- VS Code extension code.
-- Runtime, server, scanner, or ESLint behavior.
-- Engine syntax or CSS output semantics.
-- Raw class-list splitting/unescape semantics owned by `@stet-css/lexer`.
-- Manifest-driven class inspection semantics owned by `@stet-css/engine/inspect`.
-
-## Public Surface
-
-- Root language primitives.
-- `./browser`
-- `./shiki`
-- `./syntaxes/master-css.tmLanguage.json`
-
-## Key Files
-
-- `src/index.ts`
-- `src/browser.ts`
-- `src/shiki.ts`
-- `src/render-semantic-tokens.ts`
-- `src/master-css.ts`
-- `syntaxes/master-css.tmLanguage.json`
-
-## Risk Areas
-
-- Class-position scanning across JSX, Vue, Svelte, Astro, strings, and function calls.
-- Semantic token classification for Master CSS class-list spans and directive class-list spans.
-- Preserve raw editor ranges while using lexer class-list token/raw parsing.
-- Do not require tooling-only semantic token helpers to live on the runtime-covered `MasterCSS` prototype.
-- TextMate grammar compatibility for CSS-family documents.
-- Browser and Shiki helper compatibility.
-
-## Safe Changes
-
-- Focused scanner or tokenizer fixes with fixtures.
-- TextMate grammar fixes that preserve language-service ownership boundaries.
-- Browser/Shiki helper fixes with tests.
-
-## Dangerous Changes
-
-- Importing language-service, language-server, VS Code, runtime, server, scanner, or ESLint packages.
-- Routing CSS directive highlighting through the compiler pipeline.
-- Changing engine syntax or generated CSS behavior here.
+- **Imports** stay at the lexer, engine, core, preset, and schema level. Language-service, language-server, VS Code, runtime, server, scanner, and ESLint packages are out of bounds, even though the dependency direction puts some of them on the same tier.
+- **Raw ranges**: tokenize class lists with the lexer, but report raw editor offsets so escaped and quoted classes map back to the source.
+- **Class-position scanning** covers JSX, Vue, Svelte, Astro, strings, and function calls; a fix for one syntax keeps the others passing.
+- **Semantic tokens** classify through `@stet-css/engine/inspect`; tooling-only helpers stay off the `MasterCSS` prototype, which is on the runtime surface.
+- **CSS directive highlighting** scans directives with the lexer (`collectCSSDirectiveRanges`) rather than the compiler pipeline. The TextMate grammar stays compatible with CSS-family documents; the VS Code extension ships it as-is.
 
 ## Validation
 
-```sh
-pnpm --filter @stet-css/language test
-pnpm --filter @stet-css/language lint
-pnpm --filter @stet-css/language type-check
-pnpm --filter @stet-css/language build
-```
-
-Use or extend browser, Shiki, class-position scanner, and semantic token tests.
+Extend the suite for the surface you touch: `tests/get-class-position/` (one file per syntax), `tests/browser.test.ts` and `tests/shiki.test.ts` (both cover semantic tokens), and `tests/format-directives.test.ts`.

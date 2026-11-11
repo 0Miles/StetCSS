@@ -1,48 +1,12 @@
-# AI Notes For `@stet-css/eslint-config`
+# @stet-css/eslint-config
 
-## Responsibility
+The shareable **flat config**: an array of `@stet-css/eslint-plugin`'s `recommended` and `stylesheet` configs, which users spread into their own (`...css`).
 
-`@stet-css/eslint-config` combines the recommended class linting config and stylesheet linting config from `@stet-css/eslint-plugin`.
+## Boundaries
 
-## Owns
+- Rules, severities, settings, and the configs themselves → `@stet-css/eslint-plugin`; this package only composes them.
 
-- Config wrapper package entrypoint.
-- Compatibility with the plugin recommended and stylesheet config shapes.
+## Risks
 
-## Does Not Own
-
-- ESLint rules.
-- Plugin settings schema.
-- Class parsing, validation, ordering, or autofix behavior.
-
-## Public Surface
-
-- Root config export.
-
-## Key Files
-
-- `src/index.ts`
-
-## Risk Areas
-
-- Public config compatibility.
-- Drift from `@stet-css/eslint-plugin` recommended config.
-
-## Safe Changes
-
-- Wrapper export fixes that stay aligned with the plugin.
-- Tests for config re-export behavior.
-
-## Dangerous Changes
-
-- Diverging from the plugin recommended config without a clear reason.
-- Adding rule behavior here instead of in `@stet-css/eslint-plugin`.
-
-## Validation
-
-```sh
-pnpm --filter @stet-css/eslint-config test
-pnpm --filter @stet-css/eslint-config lint
-pnpm --filter @stet-css/eslint-config type-check
-pnpm --filter @stet-css/eslint-config build
-```
+- **Public shape**: the default export stays a flat-config array users can spread.
+- **Plugin parity**: export the plugin's configs unchanged, so this package and the plugin's `recommended` config agree; a default change goes into the plugin config.

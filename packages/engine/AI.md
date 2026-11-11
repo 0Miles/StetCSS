@@ -1,79 +1,18 @@
-# AI Notes For `@stet-css/engine`
+# @stet-css/engine
 
-## Responsibility
+Executes `MasterCSSManifest` values: class matching, value, selector, and condition parsing, rule priority and cascade layer insertion, variables, animations, hydration manifest generation, and CSS text. It also holds the **built-in registries** (key aliases, native value namespaces, namespaces), which manifests never carry.
 
-`@stet-css/engine` executes `MasterCSSManifest` values. It owns class matching, value parsing, selector and condition parsing/generation, variable and animation insertion, cascade layers, rule priority sorting, hydration manifest generation, CSS text emission, and built-in registries.
+## Boundaries
 
-## Owns
+- CSS-first authoring: `@stet-css/compiler` lowers CSS into a manifest; engine's `src/compile-manifest.ts` only builds in-memory matcher indexes from a finished manifest.
+- Default tokens, variants, and utilities are preset CSS in `@stet-css/preset`; new utilities climb the utility ladder.
 
-- `MasterCSS` execution and rule generation.
-- Tooling-only semantic class inspection under `./inspect`, including generated rules, class base/suffix, key/value tokens, matcher type metadata, important/state metadata, and token-backed variable metadata.
-- Layer state and generated CSS text.
-- Hydration manifest generation.
-- Built-in key aliases, variable namespaces, namespace refs, and native value namespaces.
-- Compiler-only parse/generate/inspection helpers under `./compiler`.
+## Risks
 
-## Does Not Own
-
-- CSS-first authoring or manifest lowering; use `@stet-css/compiler`.
-- Default preset source or generated default manifest; use `@stet-css/preset`.
-- Project discovery, CSS import graphs, runtime DOM behavior, server rendering, scanning, language tooling, ESLint, examples, or site docs.
-- Manifest-provided key aliases or native namespace registries; those are engine built-ins.
-
-## Public Surface
-
-- `MasterCSS`
-- `MasterCSS.create({ manifest, emittedGlobals })`
-- `compareRulePriority`
-- `createHydrationManifest`
-- Built-in registry exports
-- Runtime-safe manifest and generated-rule types
-- `./inspect` tooling helpers
-- `./compiler` helpers
-
-## Key Files
-
-- `src/core.ts`
-- `src/utility.ts`
-- `src/compile-manifest.ts`
-- `src/layer.ts`
-- `src/utility-layer.ts`
-- `src/theme-layer.ts`
-- `src/hydration-manifest.ts`
-- `src/key-aliases.ts`
-- `src/native-value-namespaces.ts`
-- `src/namespaces.ts`
-
-## Risk Areas
-
-- Class matching and compiled utility order.
-- `src/core.ts` and root value exports are runtime-covered because `@stet-css/runtime` extends `MasterCSS`.
-- Value, selector, and condition parsing/generation.
-- Priority sorting and cascade layer insertion.
-- Variable, animation, emittedGlobals, and hydration behavior.
-- Any CSS output or cascade order difference.
-
-## Safe Changes
-
-- Focused parser, matching, priority, layer, variable, animation, or CSS output fixes with engine tests.
-- Built-in registry fixes that preserve manifest payload expectations.
-
-## Dangerous Changes
-
-- Moving compiler, runtime, scanner, language, or integration behavior into engine.
-- Adding lint, language, docs, or compiler-only helpers to `MasterCSS` or runtime-imported engine modules instead of an explicit tooling subpath.
-- Serializing compiled indexes or caches into `MasterCSSManifest` without browser payload measurement.
-- Changing CSS output without explicit tests and explanation.
+- **Runtime surface**: `@stet-css/runtime` extends `MasterCSS`, so `src/core.ts` and every root value export ship to browsers. Put lint, language, and compiler-only helpers in the `./inspect` or `./compiler` subpaths.
+- **Manifest payload**: keep compiled indexes and caches out of `MasterCSSManifest`; serializing one into it needs a browser payload measurement first.
+- **Order and globals**: compiled utility order, `compareRulePriority`, layer insertion, and variable and animation token counts (seeded from `emittedGlobals`) decide the output as much as each rule's text; treat a change in any of them as a CSS output change, and a change to generated hydration manifests as a wire-format change in `@stet-css/schema`.
 
 ## Validation
 
-```sh
-pnpm --filter @stet-css/engine test
-pnpm --filter @stet-css/engine lint
-pnpm --filter @stet-css/engine type-check
-pnpm --filter @stet-css/engine build
-```
-
-## Benchmark Guidance
-
-Run `pnpm --filter @stet-css/engine bench` when changing class matching, rule creation, generation, parsing, priority sorting, layer insertion, manifest loading, manifest compilation, or cache/index behavior. Correctness validation must run first. Report benchmark status, `dist/core.js` raw/gzip/brotli size risk, memory/cold-start/runtime CPU tradeoffs, and whether CSS output or cascade order changed. For runtime-covered core changes, also report likely `@stet-css/runtime` browser bundle impact.
+Once correctness checks pass, run `pnpm --filter @stet-css/engine bench` for changes to class matching, rule creation or generation, parsing, priority sorting, layer insertion, manifest loading or compilation, or caches and indexes. Report the bench result, `dist/core.js` raw/gzip/brotli size, memory, cold-start, and runtime CPU tradeoffs, and whether CSS output or cascade order changed; for runtime-covered changes, add the likely `@stet-css/runtime` browser bundle impact.

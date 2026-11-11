@@ -1,76 +1,13 @@
-# AI Notes For `@stet-css/schema`
+# @stet-css/schema
 
-## Responsibility
+Owns the **wire formats** every layer shares: the `MasterCSSManifest` ABI and its JSON codec, the hydration manifest shape and constants, CSS directive results, and syntax IR types. It holds types, serializable constants, and pure codec helpers; the behaviour that uses them lives in the consuming package.
 
-`@stet-css/schema` owns public, dependency-light Master CSS schema and wire-format contracts.
+## Boundaries
 
-## Owns
+- CSS directives: schema defines the result types; `@stet-css/lexer` scans directive ranges and `@stet-css/compiler` parses and lowers them.
+- Hydration manifest: schema defines the shape and the `MASTER_CSS_HYDRATION_MANIFEST_*` constants; `@stet-css/engine` generates it (`createHydrationManifest`), server and framework adapters write it into pages, and `@stet-css/runtime` reads it back.
 
-- Stable public contracts and serializable constants.
-- Manifest JSON codec helpers.
-- Hydration manifest contracts.
-- CSS directive schema contracts.
-- CSS syntax, utility type, runtime style, native shorthand, and CSS common contracts.
+## Risks
 
-## Does Not Own
-
-- Compiler, engine, runtime, integration, filesystem, or framework behavior.
-- Project discovery.
-- CSS import graph resolution.
-- Stylesheet compilation.
-- Class matching.
-- DOM hydration.
-- Build adapter logic.
-
-## Public Surface
-
-- `.`
-- `./manifest`
-- `./manifest-json`
-- `./hydration-manifest`
-- `./css-directives`
-- `./css-syntax`
-- `./utility-type`
-- `./runtime-style`
-- `./native-css-shorthand`
-- `./css-common`
-
-## Key Files
-
-- `src/manifest.ts`
-- `src/manifest-json.ts`
-- `src/hydration-manifest.ts`
-- `src/css-directives.ts`
-- `src/css-syntax.ts`
-- `src/utility-type.ts`
-- `src/runtime-style.ts`
-- `src/native-css-shorthand.ts`
-- `src/css-common.ts`
-
-## Risk Areas
-
-- Manifest ABI changes.
-- Hydration manifest wire-shape changes.
-- CSS directive schema changes.
-- Syntax IR type changes.
-- Keeping the package dependency-light.
-
-## Safe Changes
-
-- Pure type or codec helper fixes with tests.
-- Serializable constant updates that preserve ownership boundaries.
-
-## Dangerous Changes
-
-- Adding engine, compiler, runtime, integration, filesystem, or framework dependencies.
-- Moving behavior into schema instead of stable contracts.
-- Changing wire formats without downstream validation.
-
-## Validation
-
-```sh
-pnpm --filter @stet-css/schema test
-pnpm --filter @stet-css/schema lint
-pnpm --filter @stet-css/schema type-check
-pnpm --filter @stet-css/schema build
-```
+- **Wire formats** (manifest ABI, `manifest-json` codec, hydration manifest shape and constants, directive schema, syntax IR) change only together with their consumers, validated in the same change. A codec change also shows up as a diff in preset's generated `default-manifest.json`.
+- **Dependency-light**: schema imports only `csstype` types. It sits in the runtime surface, so it stays free of `node:*` and framework code.

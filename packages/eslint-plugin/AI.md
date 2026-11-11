@@ -1,70 +1,20 @@
-# AI Notes For `@stet-css/eslint-plugin`
+# @stet-css/eslint-plugin
 
-## Responsibility
+Adapts `@stet-css/lint` to **ESLint**: rule definitions under the `@stet-css` namespace, the `base`, `recommended`, `stylesheet`, and `legacy` configs, AST visitors that locate class lists across supported syntaxes, a stylesheet parser for CSS, SCSS, and Less, settings resolution, and a per-workspace manifest cache.
 
-`@stet-css/eslint-plugin` adapts Master CSS lint helpers to ESLint. It detects class locations, reports diagnostics, and applies autofixes through ESLint rule APIs.
+## Boundaries
 
-## Owns
+- Class lint policy and class-list replacement text → `@stet-css/lint`; class-list token and range parsing → `@stet-css/lexer`. This package orchestrates AST visits, reports, and fixers around them.
+- Workspace and manifest discovery → `@stet-css/project`.
 
-- ESLint plugin object, configs, and rule definitions.
-- AST visitor helpers for supported source syntaxes.
-- ESLint report formatting and autofix output.
-- ESLint settings resolution and manifest cache behavior.
+## Risks
 
-## Does Not Own
-
-- Engine CSS generation semantics.
-- Class lint policy owned by `@stet-css/lint`.
-- Class-list token/range parsing owned by `@stet-css/lexer`.
-- Framework-neutral class-list edit text owned by `@stet-css/lint`.
-- Source extraction adapters outside ESLint visitors.
-- Language service or LSP behavior.
-
-## Public Surface
-
-- Default plugin object.
-- Configs under `./configs/*`.
-- Rules: `sort-classes`, `no-invalid-classes`, `no-conflicting-classes`, `prefer-canonical-classes`, and `no-unapproved-raw-values`.
-
-## Key Files
-
-- `src/plugin.ts`
-- `src/index.ts`
-- `src/settings.ts`
-- `src/utils/define-visitors.ts`
-- `src/utils/resolve-class-node.ts`
-- `src/utils/resolve-context.ts`
-- `src/rules/*`
-
-## Risk Areas
-
-- AST shape differences across React, Vue, Svelte, Angular, MDX, and template syntaxes.
-- Raw versus cooked string range mapping.
-- Autofix whitespace, quote, and range preservation.
-- Keep AST/report/fixer orchestration here, but delegate token/range parsing and class-list replacement text to lower packages.
-- Manifest cache scoping by cwd/settings.
-- Adapter drift from `@stet-css/lint` policy helpers.
-
-## Safe Changes
-
-- Parser/framework visitor fixes with fixtures.
-- Autofix range fixes with input/output tests.
-- Rule option fixes with config coverage.
-
-## Dangerous Changes
-
-- Recursing into arbitrary expressions as static classes.
-- Removing collision classes without preserving user spacing and quotes.
-- Reusing stale manifests across unrelated cwd/settings.
-- Changing rule names, recommended config, or defaults casually.
+- **AST shapes** differ across React, Vue, Svelte, Angular, MDX, and template syntaxes. Treat only string literals as classes, recursing through class-bearing expressions to reach them and never into arbitrary expressions.
+- **Ranges**: map raw rather than cooked string offsets, and keep user whitespace and quotes intact in every autofix, including removal of conflicting classes.
+- **Manifest cache** is keyed by workspace directory and the `manifest` setting, so unrelated cwds or settings never share a manifest.
+- **Public contract**: rule IDs (`@stet-css/sort-classes` and the rest in `src/plugin.ts`), the recommended config, and rule defaults are what user configs depend on; change them only as an intended public change.
+- **Adapter drift**: rule behaviour follows the `@stet-css/lint` helpers; fix policy there rather than in a rule.
 
 ## Validation
 
-```sh
-pnpm --filter @stet-css/eslint-plugin test
-pnpm --filter @stet-css/eslint-plugin lint
-pnpm --filter @stet-css/eslint-plugin type-check
-pnpm --filter @stet-css/eslint-plugin build
-```
-
-Use or extend `tests/*.test.ts` and issue fixtures for rule behavior changes.
+Visitor and autofix fixes need input/output cases in the matching `tests/<rule>.test.ts` or `tests/<framework>.test.ts`. Regressions from a reported issue go in `tests/issues/<n>.test.ts` with fixtures under `tests/fixtures/issues/<n>/`.

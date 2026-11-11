@@ -1,66 +1,19 @@
-# AI Notes For `@stet-css/server`
+# @stet-css/server
 
-## Responsibility
+Renders the CSS a page needs from its HTML: parses the markup, collects `class` attribute values, generates rules, and writes them into `style#master-css`, optionally with the **hydration manifest** `@stet-css/runtime` hydrates from.
 
-`@stet-css/server` renders required CSS from HTML.
+## Boundaries
 
-## Owns
+- Rule generation, sorting and CSS text → `@stet-css/engine`; native-declaration filtering → `@stet-css/validator` (`createServerCSS` is its `createCSSWithNativeDeclarations`).
+- Hydrating the rendered style in the browser → `@stet-css/runtime`; scanning source files → `@stet-css/scanner`.
 
-- HTML parsing for server rendering.
-- Class extraction from HTML strings.
-- Server-side `MasterCSS` rendering orchestration.
-- Injection or update of `<style id="master-css">`.
+## Risks
 
-## Does Not Own
-
-- Engine CSS generation semantics.
-- Runtime hydration or DOM observation.
-- Static source scanning.
-- Framework adapter lifecycle.
-
-## Public Surface
-
-- `render`
-- `renderCSS`
-- `parseHTML`
-
-## Key Files
-
-- `src/render.ts`
-- `src/render-css.ts`
-- `src/parse-html.ts`
-- `src/decode-html.ts`
-- `src/create-server-css.ts`
-
-## Risk Areas
-
-- HTML entity decoding in class names.
-- Existing `style#master-css` replacement.
-- Injecting into documents without `<head>` or `<html>`.
-- Serialization preserving source expectations.
-- Fixture `generated.css` output changes.
-
-## Safe Changes
-
-- HTML parsing fixes.
-- Entity decoding fixes.
-- Style injection fixes with fixtures.
-
-## Dangerous Changes
-
-- Changing engine CSS generation behavior here.
-- Emitting unsorted CSS.
-- Injecting duplicate `style#master-css` tags.
-- Replacing parser/serializer without a clear reason.
-- Treating `className` as HTML class without a requirement.
+- **Entities**: frameworks encode attribute values, so `decodeHTML` restores class entities before rules are generated.
+- **One style tag**: update an existing `style#master-css` in place; when `<head>` or `<html>` is missing, create it before inserting.
+- **Round-trip**: the parser and serializer run with entity decoding and encoding off, so untouched markup serializes as written.
+- **Class source**: rendering reads the HTML `class` attribute only; `className` text, such as serialized framework props, stays data unless the task asks otherwise.
 
 ## Validation
 
-```sh
-pnpm --filter @stet-css/server test
-pnpm --filter @stet-css/server lint
-pnpm --filter @stet-css/server type-check
-pnpm --filter @stet-css/server build
-```
-
-Fixture output lives in `tests/fixtures/**/generated.css`; update it only for intentional output changes.
+Fixture parity in `tests/test.ts`: each `tests/fixtures/<name>/` holds `template.html`, an optional `manifest.css`, and the expected `generated.css`. Add a fixture for a new output case; a `generated.css` diff is a CSS output change.

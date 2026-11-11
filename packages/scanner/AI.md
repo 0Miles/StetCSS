@@ -1,68 +1,22 @@
-# AI Notes For `@stet-css/scanner`
+# @stet-css/scanner
 
-## Responsibility
+`CSSScanner` turns source files into rules for static builds: it collects **candidates** through `@stet-css/source`, keeps those `@stet-css/validator` accepts, inserts their rules, and emits `init`, `change`, `reset` and `destroy` for build integrations.
 
-`@stet-css/scanner` statically scans source files, validates possible Master CSS classes, inserts valid rules through engine layers, and maintains scanner state for build integrations.
+## Boundaries
 
-## Owns
+- Source adapters and raw candidate extraction (`extractClassCandidates`) → `@stet-css/source`.
+- File watching, output writing and build lifecycle → the CLI and build plugins.
+- Stylesheet entries, CSS-first compilation, native CSS pruning, extraction directives, generated CSS composition and emittedGlobals output → `@stet-css/stylesheet`.
+- Manifest discovery and loading → `@stet-css/project`.
 
-- `CSSScanner` state and options.
-- Valid, invalid, and latent class caches.
-- Generated CSS scanner state events.
-- Integration-facing scanner reset and insertion behavior.
+## Risks
 
-## Does Not Own
-
-- Source-format-aware adapters or raw candidate extraction; use `@stet-css/source`.
-- File watching, output writing, and build lifecycle orchestration.
-- Stylesheet entry handling, CSS-first stylesheet compilation, native CSS pruning, extraction directives, generated CSS composition, or emittedGlobals manifest output; use `@stet-css/stylesheet`.
-- Project manifest discovery, workspace detection, or manifest loading; callers should use `@stet-css/project`.
-
-## Public Surface
-
-- `CSSScanner`
-- `CSSScanner.collectCandidates()` returns a `Promise<string[]>`.
-- `scannerOptions`
-- `ScannerOptions`
-- `./options`
-
-## Key Files
-
-- `src/core.ts`
-- `src/options/index.ts`
-- `src/index.ts`
-
-## Risk Areas
-
-- Built-in source adapter behavior from `@stet-css/source`.
-- Async extraction must be awaited by all scanner consumers.
-- `extractClassCandidates()` false positives and false negatives in `@stet-css/source`.
-- `invalidClasses` and `validClasses` cache behavior.
-- Reset loops from integration-managed dependencies.
-- Module exclude matching.
-- Vite/Webpack/Next virtual-module consumers.
-
-## Safe Changes
-
-- Focused scanning heuristic fixes.
-- Manifest reset and option handling fixes with tests.
-- Scanner state behavior fixes used by Vite, Webpack, Next, stylesheet, and CLI integrations.
-
-## Dangerous Changes
-
-- Assuming dynamically concatenated classes are statically knowable.
-- Broadly loosening extraction filters without false-positive tests.
-- Scanning CSS files by default.
-- Treating every quoted string as a valid class without validator filtering.
-- Adding independent CSS import graph parsing here.
+- **Candidates** are guesses: each passes `generateValidRules` before it becomes a rule, and only literal class text is reachable (dynamically concatenated classes are not). Loosen extraction only alongside false-positive tests.
+- **Async**: `init`, `reset`, `scan`, `scanModule` and `collectCandidates` return promises; every consumer awaits them.
+- **Caches**: `reset()` and `destroy()` clear every scanner cache (class sets, content hashes, valid-rule memo).
+- **`resetDependencies`** feed the reset watchers in the CLI, webpack and Next integrations; guard changes against reset loops.
+- **Exclude** matching decides which modules reach the scanner. `**/*.css` stays in the defaults; CSS import graphs belong to `@stet-css/stylesheet`.
 
 ## Validation
 
-```sh
-pnpm --filter @stet-css/scanner test
-pnpm --filter @stet-css/scanner lint
-pnpm --filter @stet-css/scanner type-check
-pnpm --filter @stet-css/scanner build
-```
-
-Use or extend `tests/extract.test.ts`, `tests/syntax.test.ts`, and `tests/source`.
+Extend `tests/extract.test.ts` for extraction, `tests/syntax.test.ts` for class syntax, and `tests/source/` for module exclusion.

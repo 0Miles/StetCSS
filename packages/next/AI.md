@@ -1,76 +1,21 @@
-# AI Notes For `@stet-css/next`
+# @stet-css/next
 
-## Responsibility
+Owns the Next.js integration behind `withMasterCSS`: `pre-render` through the Next **Adapter API** (`createAdapter`, `./adapter`), `runtime` through the client instrumentation hook, `progressive` as both, and `static` through generated CSS and Turbopack loaders.
 
-`@stet-css/next` integrates Master CSS with Next.js.
+## Boundaries
 
-## Owns
+- Static extraction lives in `@stet-css/scanner`; `CSSScanner` stays the source of static behaviour, driven incrementally by the Turbopack loaders.
+- Webpack-specific extraction lives in `@stet-css/webpack`, which this package does not use.
 
-- `pre-render` mode through the Next.js Adapter API.
-- `runtime` mode through the Next client instrumentation hook.
-- `progressive` mode as runtime plus pre-render behavior.
-- `static` mode through generated CSS and Turbopack scanner loaders.
-- Next-specific manifest import/loaders and static CSS loaders.
-- Build output rendering helpers.
+## Risks
 
-## Does Not Own
-
-- Dynamic SSR response transformation.
-- App Router request-time class collection.
-- Static extraction semantics; `CSSScanner` remains the source of static behavior.
-- Webpack-specific extraction internals.
-- React component registry/provider APIs.
-
-## Public Surface
-
-- Default `withMasterCSS()`.
-- Named `withMasterCSS`.
-- `createAdapter`.
-- `renderNextBuildOutputs`.
-- `./adapter`.
-
-## Key Files
-
-- `src/index.ts`
-- `src/adapter.ts`
-- `src/static.ts`
-- `src/static-css-loader.ts`
-- `src/static-loader.ts`
-- `src/css-manifest-loader.ts`
-- `src/css-manifest-import-loader.ts`
-- `src/options.ts`
-- Generated `node_modules/.master-css/master-css-next-instrumentation-client.js` source from `src/index.ts`
-
-## Risk Areas
-
-- Next Adapter API type changes across Next major versions.
-- Accidentally processing non-HTML assets.
-- Duplicate writes for fallback HTML listed through multiple output groups.
-- Turbopack loader behavior as an incremental scanner.
-- Over-broad Turbopack JS loader rules breaking Next client component classification for linked workspace packages.
-- Runtime injection must preserve user `instrumentation-client` via the secondary alias before overriding Next's `private-next-instrumentation-client`.
-- Runtime, preload, mode default, and cascade-layer changes must be audited against Vite, Webpack, Nuxt, and Astro so integration behavior does not drift.
-
-## Safe Changes
-
-- Focused adapter, static loader, or manifest loader fixes with tests.
-- Turbopack loader fixes that preserve guarded `content: /master-css-manifest/` rules.
-- Playground validation for integration behavior.
-
-## Dangerous Changes
-
-- Hiding request-time limitations behind build-time behavior.
-- Making static mode rely on `nextConfig.webpack` or `@stet-css/webpack`.
-- Broadening JS loader rules beyond manifest-import handling.
-- Reintroducing React tree wrappers for automatic runtime injection.
+- **Build-time only**: `pre-render` rewrites HTML in build outputs. Dynamic SSR responses and App Router request-time class collection stay out of scope; state that limitation instead of masking it with build-time behaviour.
+- **Adapter outputs**: process HTML outputs only, and write each fallback HTML once even when several output groups list it. Adapter API types shift across Next major versions.
+- **Runtime injection** goes through the instrumentation client that `src/index.ts` generates into `node_modules/.master-css/master-css-next-instrumentation-client.js`; edit the generator. It keeps the user's `instrumentation-client` reachable through the secondary alias `private-next-master-css-user-instrumentation-client` before overriding `private-next-instrumentation-client`. Keep injection out of the React tree (no wrapper components).
+- **Turbopack JS loader rules** stay guarded by the `?master-css-manifest` content pattern and limited to manifest-import handling; broader rules break Next client component classification for linked workspace packages.
+- **Static mode** runs on Turbopack loaders alone, without `nextConfig.webpack` or `@stet-css/webpack`.
+- **Cross-integration parity**: audit runtime, preload, mode-default and cascade-layer changes against Vite, Webpack, Nuxt and Astro so integration behaviour does not drift.
 
 ## Validation
 
-```sh
-pnpm --filter @stet-css/next test
-pnpm --filter @stet-css/next lint
-pnpm --filter @stet-css/next type-check
-pnpm --filter @stet-css/next build
-```
-
-Run `pnpm --filter @stet-css/next e2e` and build `packages/next/playground` when integration behavior changes.
+When integration behaviour changes, also run `pnpm --filter @stet-css/next e2e` (the `tests/*-e2e.test.ts` files, excluded from `test`) and `pnpm --filter @stet-css/next dev:build` (builds `playground/`).

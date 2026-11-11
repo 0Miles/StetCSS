@@ -1,70 +1,19 @@
-# AI Notes For `@stet-css/language-service`
+# @stet-css/language-service
 
-## Responsibility
+Owns the stateful **editor features** over a manifest: completion, hover with generated CSS, document colors and color presentations, and directive formatting. `CSSLanguageService` builds its engine from an injectable `CSSLanguageRuntime` (the language server supplies a workspace's own), and its class-position and semantic-token methods are thin `TextDocument` wrappers over `@stet-css/language`.
 
-`@stet-css/language-service` provides the stateful editor intelligence wrapper around manifest-driven Master CSS knowledge.
+## Boundaries
 
-## Owns
+- Class-position scanning, semantic tokenization, browser and Shiki helpers, and the TextMate grammar → `@stet-css/language`; raw class-list parsing and unescaping reach this package through it from `@stet-css/lexer`.
+- LSP capabilities, workspace lifecycle, and diagnostics → `@stet-css/language-server`.
 
-- Language service settings and feature gating.
-- Completion, hover/generated CSS previews, colors, and color presentations.
-- `TextDocument` methods that delegate class-position and semantic token primitives to `@stet-css/language`.
-- Thin wrappers around editor-neutral language primitives.
+## Risks
 
-## Does Not Own
-
-- Engine syntax behavior.
-- LSP capabilities and workspace lifecycle.
-- Browser helpers, Shiki helpers, TextMate grammar ownership, semantic tokenizer ownership, or class-position scanner ownership.
-- Raw class-list parsing and unescape behavior; that flows through `@stet-css/language` from `@stet-css/lexer`.
-- Diagnostics without language-server coordination.
-
-## Public Surface
-
-- `CSSLanguageService`
-- `settings`
-- Feature functions and common constants
-- `./common`
-
-## Key Files
-
-- `src/core.ts`
-- `src/settings.ts`
-- `src/features/*`
-- `src/utils/query-syntax-completions.ts`
-- `src/utils/get-class-completion-items.ts`
-- `src/utils/get-value-completion-items.ts`
-- `src/utils/get-query-completion-items.ts`
-- `src/utils/regex.ts`
-
-## Risk Areas
-
-- `getClassPosition()` delegation across supported document syntaxes.
-- Completion trigger behavior and feature gating.
-- Variable and color completion sorting.
-- Generated CSS in hover docs.
-- Consistency with engine rule matching.
-
-## Safe Changes
-
-- Focused completion, hover, color, or wrapper-level semantic token fixes.
-- Framework-specific class-position fixtures.
-- Tests for new syntax support.
-
-## Dangerous Changes
-
-- Assuming all class strings are HTML attributes.
-- Returning completions outside accepted documents.
-- Reintroducing browser, Shiki, grammar, semantic tokenizer, or class-position scanner ownership.
-- Broad regex rewrites without framework-specific tests.
+- **Document syntaxes**: class strings live in JSX, Vue, Svelte, Astro, template literals, and function calls as well as HTML attributes. Back every class-position or regex change with a framework-specific case in `tests/get-class-position/`.
+- **Feature gating**: each feature returns nothing when its setting is off or `isDocumentAccepted` rejects the document (`exclude` globs); route new features through the same check.
+- **Completion** trigger characters and the sort order of variables and colors are user-visible; cover changes in `tests/suggest-syntax/`.
+- **Engine consistency**: hover CSS, completions, and colors come from `this.css` and `this.runtime`, so they match what the engine generates for the active runtime and manifest.
 
 ## Validation
 
-```sh
-pnpm --filter @stet-css/language-service test
-pnpm --filter @stet-css/language-service lint
-pnpm --filter @stet-css/language-service type-check
-pnpm --filter @stet-css/language-service build
-```
-
-Use or extend `tests/get-class-position`, `tests/suggest-syntax`, `tests/inspect-syntax.test.ts`, `tests/render-syntax-colors.test.ts`, and `tests/edit-syntax-colors.test.ts`.
+Hover and color changes extend `tests/inspect-syntax.test.ts`, `tests/render-syntax-colors.test.ts`, or `tests/edit-syntax-colors.test.ts`.

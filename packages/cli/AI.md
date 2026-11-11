@@ -1,61 +1,20 @@
-# AI Notes For `@stet-css/cli`
+# @stet-css/cli
 
-## Responsibility
+The command-line entry. The root command scans sources and writes extracted CSS, restarting under `--watch` when a manifest dependency changes; the `lint` and `inspect` subcommands front `@stet-css/lint` and `@stet-css/diagnostics`.
 
-`@stet-css/cli` exposes the package-name binary for command-line scan and extraction workflows.
+## Boundaries
 
-## Owns
+- Extraction and validation → `@stet-css/scanner`; CSS composition (`createExtractedCSS`) → `@stet-css/stylesheet`; manifest entries → `@stet-css/project`.
+- Lint rules → `@stet-css/lint`; inspection reports → `@stet-css/diagnostics`.
 
-- CLI argument handling.
-- Watch command lifecycle.
-- CLI logging and generated CSS stdout/file output orchestration.
+## Risks
 
-## Does Not Own
-
-- Scanner extraction semantics.
-- Server rendering behavior.
-- CSS generation, validation, or manifest compilation.
-- Additional command aliases or subcommands unless explicitly requested.
-
-## Public Surface
-
-- Binary: `@stet-css/cli`.
-- Internal command runner from `src/core.ts`.
-- No public `extract`, `scan`, `render`, `mcss`, or `mastercss` aliases.
-
-## Key Files
-
-- `src/core.ts`
-- `src/bin/index.ts`
-- `src/scan.ts`
-
-## Risk Areas
-
-- Root `--watch` event lifecycle.
-- Manifest path loading.
-- Cross-platform glob behavior.
-- Respecting `--no-export` when output paths are configured.
-
-## Safe Changes
-
-- CLI option fixes with command tests.
-- Watch behavior fixes.
-- Logging fixes that do not alter generated output.
-
-## Dangerous Changes
-
-- Duplicating scanner logic in the CLI.
-- Writing generated CSS when `--no-export` is set.
-- Changing default output paths casually.
-- Adding command aliases or subcommands without explicit request.
+- **Command surface**: one package-name binary (string `bin`), the root command, `lint` and `inspect`. `extract`, `render` and `scan` are removed and exit with an error. Add commands or aliases only when the task asks.
+- **`--no-export`** prints CSS to stdout and writes no file, even with an output path set.
+- **Default output** `master.css` (`src/constants.ts`) is user-facing; change it only on request.
+- **Watch**: a `resetDependencies` change closes every watcher, resets the scanner, rewrites output, and restarts watching.
+- **Globs**: patterns are normalised to `/` before fast-glob so Windows paths match.
 
 ## Validation
 
-```sh
-pnpm --filter @stet-css/cli test
-pnpm --filter @stet-css/cli lint
-pnpm --filter @stet-css/cli type-check
-pnpm --filter @stet-css/cli build
-```
-
-Use or extend `tests/extract` and root command tests for command behavior changes.
+Tests spawn the CLI from source: extend `tests/extract/` for scan, export and watch behaviour, and `tests/core.test.ts` for root options, `lint` and `inspect`.

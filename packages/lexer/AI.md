@@ -1,67 +1,14 @@
-# AI Notes For `@stet-css/lexer`
+# @stet-css/lexer
 
-## Responsibility
+Owns **lexical scanning** with exact source ranges: class-list parsing and tokenizing, CSS directive ranges, `@import` and `@master` statement scanning for manifest entries, CSS value and variable-reference helpers, and unit constants. It returns tokens and ranges; consumers validate and compile them.
 
-`@stet-css/lexer` owns dependency-free lexical scanning and source range contracts shared by Master CSS tooling.
+## Boundaries
 
-## Owns
+- Class lists vs candidates: lexer parses a class list it is handed (`parseMasterCSSClassList`); finding class-like strings in arbitrary source is `@stet-css/source`.
+- Directives and entries: lexer locates directive ranges and entry statements; `@stet-css/compiler` parses and lowers directives, and `@stet-css/project` decides which files are entries.
 
-- Stable source range primitives.
-- CSS directive range scanning.
-- CSS manifest entrypoint statement scanning.
-- Raw Master CSS class-list parsing, ASCII whitespace splitting, raw/token range preservation, and quote/backtick unescape.
-- Master class lexical tokenizers.
-- CSS unit constants and lexical patterns.
+## Risks
 
-## Does Not Own
-
-- Class validation.
-- CSS rule generation.
-- Manifest resolution.
-- CSS directive compilation.
-- Source-level class candidate extraction.
-- Language-service rendering behavior.
-
-## Public Surface
-
-- Source primitives from `src/source.ts`.
-- CSS directive ranges from `src/directive-ranges.ts`.
-- CSS manifest entry scanners from `src/css-manifest-entry.ts`.
-- Unit constants from `src/units.ts`.
-- Class-list parser, top-level split helper, and class lexical tokenizers from `src/class.ts`.
-
-## Key Files
-
-- `src/source.ts`
-- `src/directive-ranges.ts`
-- `src/css-manifest-entry.ts`
-- `src/class.ts`
-- `src/units.ts`
-- `src/index.ts`
-
-## Risk Areas
-
-- Source range recovery.
-- Class-list tokenization boundaries, duplicate tokens, escaped string tokens, and cursor/empty-position ranges.
-- Import and directive scanning.
-- Keeping runtime dependencies empty unless explicitly justified.
-
-## Safe Changes
-
-- Focused lexical scanner fixes with tests.
-- Range recovery improvements covered by consumer tests when behavior crosses packages.
-
-## Dangerous Changes
-
-- Depending on engine, compiler, scanner, language, language-service, integrations, or editor packages.
-- Moving source candidate extraction here from `@stet-css/source`.
-- Validating or generating CSS in this package.
-
-## Validation
-
-```sh
-pnpm --filter @stet-css/lexer test
-pnpm --filter @stet-css/lexer lint
-pnpm --filter @stet-css/lexer type-check
-pnpm --filter @stet-css/lexer build
-```
+- **Source ranges** hold across tokenization boundaries, duplicate tokens, escaped quote and backtick tokens, and cursor or empty positions (`includeEmpty`). `@stet-css/language`, `@stet-css/lint`, and `@stet-css/eslint-plugin` map diagnostics and edits through them; when a range fix changes what a consumer receives, cover it in that consumer's tests too.
+- **Import and directive scanning** feeds compiler parsing, project entry discovery, and editor tokens, so a scanning change reaches all three.
+- **Dependency-free**: `dependencies` stays empty unless the task explicitly justifies one.

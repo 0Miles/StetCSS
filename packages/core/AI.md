@@ -1,67 +1,15 @@
-# AI Notes For `@stet-css/core`
+# @stet-css/core
 
-## Responsibility
+The public **facade**: `src/index.ts` re-exports `@stet-css/engine`, and each `src/*.css` entrypoint is a one-line `@import` of `@stet-css/preset`.
 
-`@stet-css/core` is the public facade over the manifest-driven engine API and default preset CSS entrypoints.
+## Boundaries
 
-## Owns
+- Stylesheet source: tokens, variants, and utilities live in `@stet-css/preset`; the CSS entrypoints here only import them.
+- Inspection: core re-exports inspection types only; inspection value helpers stay in `@stet-css/engine/inspect`.
+- Configuration is CSS: `@stet-css/compiler` lowers it into a manifest and `@stet-css/project` loads it.
 
-- Public facade exports.
-- CSS entrypoint re-exports: `index.css`, `base.css`, `theme.css`, `variants.css`, and `utilities.css`.
-- Facade wiring tests.
+## Risks
 
-## Does Not Own
-
-- Config resolution.
-- Utility matcher construction, declarers, or transformers.
-- Preset manifest data.
-- Runtime authoring adapters.
-- CSS output parity tests; those belong in engine, compiler, or preset.
-
-## Public Surface
-
-- `MasterCSS`
-- `MasterCSS.create({ manifest, emittedGlobals })`
-- Engine inspection-related type re-exports such as `MasterCSSClassInspection` and `MasterCSSNormalizedNumericValue`; inspection value helpers stay in `@stet-css/engine/inspect`
-- `MasterCSSManifest` and runtime-safe engine types
-- CSS subpaths listed above
-
-Do not re-export `Config`, `UtilityDefinition`, `extendConfig`, old utility classes, or `@stet-css/core/config` / `@stet-css/core/utils` subpaths.
-
-## Key Files
-
-- `src/index.ts`
-- `src/index.css`
-- `src/base.css`
-- `src/theme.css`
-- `src/variants.css`
-- `src/utilities.css`
-
-## Risk Areas
-
-- Accidentally widening the public API.
-- Moving behavior from owning lower packages into the facade.
-- Treating facade smoke tests as semantic CSS output coverage.
-
-## Safe Changes
-
-- Narrow facade export fixes.
-- CSS subpath wiring fixes.
-- Smoke tests proving facade entrypoints resolve.
-
-## Dangerous Changes
-
-- Reintroducing legacy Config APIs.
-- Adding utility or runtime implementation logic here.
-- Changing CSS output through facade-only changes.
-
-## Validation
-
-```sh
-pnpm --filter @stet-css/core test
-pnpm --filter @stet-css/core lint
-pnpm --filter @stet-css/core type-check
-pnpm --filter @stet-css/core build
-```
-
-Run downstream package checks when facade exports change.
+- **Public API**: every facade export is public API, so widen it deliberately; an export change crosses packages.
+- **Legacy config API** stays retired: export manifest-driven APIs only, never `Config`, `UtilityDefinition`, `extendConfig`, old utility classes, or `./config` / `./utils` subpaths.
+- **Facade tests** prove that entrypoints resolve; CSS output coverage belongs in engine, compiler, or preset tests.

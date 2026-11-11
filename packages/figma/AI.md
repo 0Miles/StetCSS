@@ -1,59 +1,18 @@
-# AI Notes For `@stet-css/figma`
+# @stet-css/figma
 
-## Responsibility
+The Figma plugin that exports variable collections and modes as Master CSS variables and imports them back. `src/plugin.min.ts` runs in Figma's **sandbox**; the import and export UIs are Preact bundles built into `out/`, as `manifest.json` expects.
 
-`@stet-css/figma` implements the Figma plugin for importing and exporting Master CSS variables and modes.
+## Boundaries
 
-## Owns
+- Master CSS variable semantics live in `@stet-css/core`; this plugin only maps them to and from Figma collections and modes.
 
-- Figma plugin entry and UI bundles.
-- Variable collection import/export workflows.
-- Color value parsing and conversion helpers.
+## Risks
 
-## Does Not Own
-
-- Core Master CSS variable semantics.
-- Site docs or runtime behavior.
-- Unsupported Figma alias behavior beyond clear warnings.
-
-## Public Surface
-
-- Figma plugin bundle.
-- Import/export UI entrypoints.
-
-## Key Files
-
-- `src/plugin.min.ts`
-- `src/features/getCollectionVariables.ts`
-- `src/features/setCollectionVariables.ts`
-- `src/utils/parse-color-value.ts`
-- `src/utils/to-color-value.ts`
-- `src/*variables*.tsx`
-
-## Risk Areas
-
-- Figma API shape and async behavior.
-- Color conversion precision and color spaces.
-- Limited variable alias handling.
-- Preserving variable data structure across import/export.
-
-## Safe Changes
-
-- Focused Figma API or UI fixes.
-- Variable/color conversion tests.
-- Clear unsupported-alias warnings.
-
-## Dangerous Changes
-
-- Silently dropping variables.
-- Changing color conversion without tests.
-- Treating unsupported aliases as successfully round-tripped.
+- **Round trip**: import and export preserve every variable and the variable data structure (`src/types/variable-data.ts`); nothing drops silently.
+- **Aliases**: export writes aliases as `var(--…)`; import does not support them yet and warns through `notify`. Report unsupported aliases as skipped, not as round-tripped.
+- **Color conversion** goes through `colorjs.io` into sRGB with gamut mapping; precision and color-space changes come with tests.
+- **Figma API** calls are async; their shape follows `@figma/plugin-typings`.
 
 ## Validation
 
-```sh
-pnpm --filter @stet-css/figma test
-pnpm --filter @stet-css/figma lint
-pnpm --filter @stet-css/figma type-check
-pnpm --filter @stet-css/figma build
-```
+Add conversion and import/export tests in `tests/`, stubbing the `figma` global with `tests/__mocks__/figma.ts`.

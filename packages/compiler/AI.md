@@ -1,70 +1,17 @@
-# AI Notes For `@stet-css/compiler`
+# @stet-css/compiler
 
-## Responsibility
+The CSS source compiler: parses Master CSS directives and native CSS, resolves the CSS **import graph** (`compileCSSFile()`), and lowers CSS-first authoring into `MasterCSSManifest` values, returning native CSS with consumed directives removed plus dependency paths.
 
-`@stet-css/compiler` is the canonical CSS source compiler for Master CSS. It parses Master CSS stylesheet directives and native CSS, resolves CSS import graphs, detects project entry markers, parses standalone extraction directives, and lowers CSS-first authoring into `MasterCSSManifest` values.
+## Boundaries
 
-## Owns
+- Entry discovery: `@stet-css/project` decides which files are project entries; the compiler compiles the entries it is given (`compileProjectManifest()`).
+- Class usage: the compiler reads only the CSS import graph; finding used classes in source files is `@stet-css/scanner`.
 
-- CSS directive parsing and lowering for `@settings`, `@theme`, `@custom-variant`, managed `@defaults`, `@components`, and `@utilities`.
-- CSS import graph resolution through `compileCSSFile()`.
-- `compileProjectManifest()` for project entry CSS files.
-- Native CSS output with consumed Master directives removed.
-- Shared directive data and dependency reporting for lower-level consumers.
+## Risks
 
-## Does Not Own
-
-- Runtime class execution; use the manifest-driven engine.
-- Project entry discovery; use `@stet-css/project`.
-- Build or framework lifecycle behavior.
-- PostCSS reintroduction.
-- Unrelated `.css` source scanning for class usage.
-
-## Public Surface
-
-- Root compiler APIs.
-- `./browser` APIs.
-- Manifest APIs used by project loading and integrations.
-
-## Key Files
-
-- `src/core.ts`
-- `src/index.ts`
-- `src/master-css-manifest.ts`
-- `src/lower-css-directives.ts`
-- `src/css-transform.ts`
-- `src/native-declaration.ts`
-
-## Risk Areas
-
-- `@master entry;` and `@import "@stet-css/core"` are equivalent user project entry markers; package CSS files must not contain `@master entry;`.
-- Defining components, utilities, variables, variants, or animations does not emit CSS by itself; classes still need use or extraction.
-- Directive syntax changes may require language token updates and docs updates.
-- Native `@layer` blocks are not compiler-managed; use managed directives for generated definitions.
-- Top-level native `@keyframes` remain native CSS unless placed inside an appropriate `@theme` block.
-
-## Safe Changes
-
-- Focused directive parsing or lowering fixes with compiler tests.
-- CSS import dependency reporting fixes.
-- CSS-first migration coverage for former core behavior.
-
-## Dangerous Changes
-
-- Recreating old JS Config behavior in the compiler.
-- Moving engine matching or runtime behavior here.
-- Expanding directive syntax without tests and directive guide updates.
-- Scanning unrelated CSS files for class usage in this package.
-
-## Validation
-
-```sh
-pnpm --filter @stet-css/compiler test
-pnpm --filter @stet-css/compiler lint
-pnpm --filter @stet-css/compiler type-check
-pnpm --filter @stet-css/compiler build
-```
-
-## Directive Notes
-
-Managed definition directives use first-level bare names, not selectors. Put selector states and descendants in nested selectors inside the named block. `@compose` is allowed in managed class definitions and native style rules, including inside `@variant`. If directive syntax, semantics, lowering, or extraction changes, update `site/app/[locale]/guide/directives/content.mdx`.
+- **Entry markers**: `@master entry;` and `@import "@stet-css/core"` are equivalent user project entry markers. Package CSS files stay free of `@master entry;`.
+- **Definitions emit nothing alone**: components, utilities, variables, variants, and animations produce CSS only once a class uses or extracts them.
+- **Managed vs native**: generated definitions go through managed directives. Native `@layer` blocks are not compiler-managed, and top-level native `@keyframes` stay native CSS; managed animations go inside top-level `@theme`.
+- **Directive shape**: managed definition directives (`@defaults`, `@components`, `@utilities`) take bare first-level names such as `btn { }`, with selector states and descendants as nested selectors inside the named block. `@compose` works in managed class definitions and native style rules, including inside `@variant`.
+- **Directive syntax changes** carry compiler tests, plus matching updates to `@stet-css/language` tokens (`syntaxes/master-css.tmLanguage.json`, `src/semantic/css/`) and to the directive list in this package's `README.md` wherever they cover the changed syntax.
+- **Retired pipelines**: build on the CSS-first directive pipeline; old JS `Config` behaviour and PostCSS stay out.

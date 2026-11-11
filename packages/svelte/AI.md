@@ -1,54 +1,18 @@
-# AI Notes For `@stet-css/svelte`
+# @stet-css/svelte
 
-## Responsibility
+Owns the SvelteKit integration: a Vite wrapper (`./vite`) that runs `@stet-css/vite` in `progressive` mode with `@stet-css/server` kept SSR-external, and a `hooks.server` **handle** that injects CSS early into the streamed response through `transformPageChunk`.
 
-`@stet-css/svelte` provides a SvelteKit Vite wrapper and a SvelteKit server hook that injects early streamed CSS through `@stet-css/server`.
+## Boundaries
 
-## Owns
+- Class collection and server CSS rendering live in `@stet-css/server`, the runtime in `@stet-css/runtime`, and mode semantics in `@stet-css/vite`; this package wires them without duplicating their logic.
+- Svelte source extraction lives in `@stet-css/source`.
 
-- SvelteKit Vite wrapper.
-- SvelteKit `hooks.server` integration.
+## Risks
 
-## Does Not Own
-
-- Runtime core behavior.
-- Server rendering internals.
-- Vite mode semantics beyond the wrapper.
-- Generated CSS semantics.
-- Svelte source extraction implementation; `@stet-css/source` owns it.
-
-## Public Surface
-
-- `./vite`
-- `./hooks.server`
-
-## Key Files
-
-- `src/lib/server.ts`
-- `src/lib/hooks.server.ts`
-- `src/lib/vite.ts`
-
-## Risk Areas
-
-- Svelte package output behavior.
-- Server hook streaming behavior and early CSS injection.
-
-## Safe Changes
-
-- Focused adapter, Vite wrapper, or hook fixes with tests or example validation.
-- Packaging fixes that preserve public subpaths.
-
-## Dangerous Changes
-
-- Duplicating server or runtime logic here.
-- Adding a default export to the root entry.
-- Changing streaming behavior without validation.
+- **Subpath surface**: `./vite` and `./hooks.server` are the only entry points, and `@stet-css/sv` writes both specifiers into user projects. Keep the package root without an entry or default export.
+- **Streaming injection**: the chunk renderer in `src/lib/server.ts` holds back each chunk's tail until it finds `</head>`, injects once, then passes chunks through. Cover changes in `tests/server.test.ts`.
+- **Package output**: only `src/lib` ships, through `svelte-package` and `publint` in `build`; `src/routes` and `src/hooks.server.ts` are the local dev app.
 
 ## Validation
 
-```sh
-pnpm --filter @stet-css/svelte test
-pnpm --filter @stet-css/svelte lint
-pnpm --filter @stet-css/svelte check
-pnpm --filter @stet-css/svelte build
-```
+Type-check with `pnpm --filter @stet-css/svelte check` (svelte-check). The package has no `type-check` script, so root `pnpm check` skips its types.

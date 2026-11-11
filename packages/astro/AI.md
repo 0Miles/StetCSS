@@ -1,61 +1,18 @@
-# AI Notes For `@stet-css/astro`
+# @stet-css/astro
 
-## Responsibility
+Owns the Astro integration: it runs `@stet-css/vite` underneath, injects the runtime through Astro's `injectScript` for `runtime` and `progressive`, and registers `pre`-order **middleware** (`./middleware`) that renders CSS into server HTML for `pre-render` and `progressive`. After build it adds runtime manifest preloads (`src/runtime-preload.ts`) and externalizes hydration manifests.
 
-`@stet-css/astro` adapts Master CSS to Astro. It wraps `@stet-css/vite`, injects runtime code for runtime and progressive modes, and registers Astro middleware for pre-render and progressive server rendering.
+## Boundaries
 
-## Owns
+- Mode semantics and option defaults live in `@stet-css/vite`; this package overrides only the mode default (`progressive`).
+- HTML rendering lives in `@stet-css/server`; Astro source extraction in `@stet-css/source`.
 
-- Astro integration entrypoints and options.
-- Astro middleware for server-rendered HTML CSS injection.
-- Astro-specific runtime manifest preload and hydration wiring.
+## Risks
 
-## Does Not Own
-
-- Vite mode semantics; keep behavior aligned with `@stet-css/vite`.
-- Core runtime behavior, CSS generation, scanning, or server rendering.
-- Astro source extraction implementation; `@stet-css/source` owns it.
-- Duplicate Vite HTML pre-render behavior unless duplicate style injection is handled.
-
-## Public Surface
-
-- Default Astro integration export.
-- `./middleware` subpath.
-
-## Key Files
-
-- `src/core.ts`
-- `src/options.ts`
-- `src/middleware.ts`
-- `src/server.ts`
-- `src/runtime-manifest-preload.ts`
-- `src/index.ts`
-
-## Risk Areas
-
-- Runtime script injection can duplicate Vite runtime injection.
-- Progressive and pre-render modes depend on Astro middleware seeing HTML before it is sent or written.
-- Tests are sparse, so integration behavior needs focused coverage or example validation.
-
-## Safe Changes
-
-- Focused Astro option or middleware fixes.
-- Runtime/preload wiring fixes that stay aligned with Vite mode semantics.
-- Tests or example validation for Astro integration behavior.
-
-## Dangerous Changes
-
-- Re-enabling Vite HTML pre-render plugin for Astro progressive/pre-render without duplicate-style handling.
-- Changing runtime, scanner, server, or CSS generation behavior in this package.
-- Diverging mode defaults from `@stet-css/vite`.
+- **Single runtime injection**: in `runtime` mode Astro injects the runtime itself and passes `injectRuntime: false` to the Vite plugin, so only one copy loads.
+- **Single pre-render path**: `pre-render` and `progressive` pass `mode: null` to the Vite plugin and render through middleware. Re-enabling Vite's HTML pre-render plugin for them needs duplicate-style handling first.
+- **Middleware timing**: both modes depend on the middleware seeing HTML before Astro sends or writes it.
 
 ## Validation
 
-```sh
-pnpm --filter @stet-css/astro test
-pnpm --filter @stet-css/astro lint
-pnpm --filter @stet-css/astro type-check
-pnpm --filter @stet-css/astro build
-```
-
-Validate with an Astro example when Astro rendering behavior changes.
+Build `examples/astro` when Astro rendering behaviour changes.

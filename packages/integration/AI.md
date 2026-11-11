@@ -1,62 +1,15 @@
-# AI Notes For `@stet-css/integration`
+# @stet-css/integration
 
-## Responsibility
+Owns the **adapter-neutral** protocol every build and framework integration shares: virtual module ids, the `?master-css-manifest` query, generated manifest and `emittedGlobals` module source, manifest facade modules, and the ambient module types in `client.d.ts`.
 
-`@stet-css/integration` owns adapter-neutral contracts shared by official build and framework integrations.
+## Boundaries
 
-## Owns
+- Adapter lifecycle (Vite, Webpack, Next, Nuxt, Astro, Svelte): the adapter's own package.
+- Manifest discovery and CSS import graphs: `@stet-css/project` and `@stet-css/compiler`; integration only turns a loaded manifest into module source and ids.
+- Browser runtime boot: `@stet-css/runtime`; the facade modules here only load the manifest JSON.
 
-- Virtual module ids and `?master-css-manifest` request helpers.
-- Generated manifest and emittedGlobals module source helpers.
-- Ambient client module declarations.
-- Explicit Node helper subpaths.
+## Risks
 
-## Does Not Own
-
-- Vite, Next, Webpack, Nuxt, Astro, or framework lifecycle behavior.
-- Project manifest discovery or CSS import graph resolution.
-- Extraction, runtime hydration, server rendering, scanner state, or compiler lowering.
-- Browser runtime boot code.
-- Browser-safe helpers that import `node:*`, use `Buffer`, or read `process`.
-
-## Public Surface
-
-- Browser-safe: `.`, `./client`, `./module`, `./manifest-module`, `./manifest-facade`, `./style-module`, `./emitted-globals-module`.
-- Node-only: `./node`.
-
-## Key Files
-
-- `src/index.ts`
-- `src/module.ts`
-- `src/manifest-module.ts`
-- `src/manifest-facade.ts`
-- `src/style-module.ts`
-- `src/emitted-globals-module.ts`
-- `src/node.ts`
-
-## Risk Areas
-
-- Browser-safe versus Node-only subpath boundaries.
-- Virtual id and generated import specifier compatibility.
-- Keeping the package dependency-light and adapter-neutral.
-- Shared protocol changes affecting multiple integrations.
-
-## Safe Changes
-
-- Protocol helper fixes with downstream-aware tests.
-- Node-only path/hash/resolved-id fixes isolated under `./node`.
-
-## Dangerous Changes
-
-- Depending on scanner, compiler, runtime, server, build adapters, or frameworks.
-- Moving project discovery or import graph behavior here.
-- Adding Node globals to browser-safe subpaths.
-
-## Validation
-
-```sh
-pnpm --filter @stet-css/integration test
-pnpm --filter @stet-css/integration lint
-pnpm --filter @stet-css/integration type-check
-pnpm --filter @stet-css/integration build
-```
+- **Browser-safe subpaths** (all except `./node`) stay free of `node:*` imports, `Buffer`, and `process`; path, hash, resolved-id, and file-writing helpers go under `./node`. `tests/browser-safe.test.ts` enforces this for the files in `BROWSER_SAFE_SOURCES`, so add each new browser-safe source there.
+- **Virtual ids** (`virtual:master-css-manifest`, `virtual:master-utilities.css`, `virtual:master-css-emitted-globals`, `?master-css-manifest`) are imported by user code and typed in `client.d.ts`; keep them and the generated import specifiers stable.
+- **Protocol changes** reach every adapter plus `@stet-css/project` and `@stet-css/stylesheet`, so they cross packages.

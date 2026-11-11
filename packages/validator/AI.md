@@ -1,65 +1,19 @@
-# AI Notes For `@stet-css/validator`
+# @stet-css/validator
 
-## Responsibility
+Owns **CSS validity**: whether the CSS a class generates passes `css-tree` grammars for at-rules (names, preludes, descriptors) and declarations. It also owns `createCSSWithNativeDeclarations`, which plugs the `css-tree` native declaration matcher into `MasterCSS`; the scanner, server, stylesheet, CLI, MCP and ESLint plugin build their instances with it.
 
-`@stet-css/validator` validates whether generated Master CSS text is valid CSS.
+## Boundaries
 
-## Owns
+- Which rules a class generates is engine behaviour in `@stet-css/engine`; this package judges only the CSS those rules emit.
+- Lint diagnostic wording for invalid and unknown classes lives in `@stet-css/lint`.
 
-- `css-tree` validation for at-rules, rule blocks, properties, and values.
-- Class validity helpers that generate and validate rules.
-- Valid rule generation for scanner and ESLint consumers.
+## Risks
 
-## Does Not Own
-
-- Engine rule generation semantics.
-- Scanner extraction.
-- ESLint report formatting.
-- Broad CSS parser replacement.
-
-## Public Surface
-
-- `isClassValid`
-- `validate`
-- `generateValidRules`
-- Syntax error types
-- `./native-declaration`
-
-## Key Files
-
-- `src/validate-css.ts`
-- `src/validate.ts`
-- `src/is-class-valid.ts`
-- `src/generate-valid-rules.ts`
-- `src/native-declaration.ts`
-
-## Risk Areas
-
-- `css-tree` support gaps for newer CSS functions.
-- At-rule prelude validation.
-- Property value validation exceptions.
-- Scanner and ESLint consumers depending on valid rule output.
-
-## Safe Changes
-
-- Focused `css-tree` validation fixes.
-- Narrow exceptions with tests.
-- Error message improvements with tests.
-
-## Dangerous Changes
-
-- Bypassing validation broadly.
-- Treating unmatched classes as valid.
-- Hiding all `SyntaxMatchError` results.
-- Returning valid rules without checking generated CSS.
+- **`css-tree` gaps** (newer CSS functions, at-rule preludes, property values): add a narrow exception for the specific construct, with a test, and keep `css-tree` as the parser.
+- **Strict results**: keep `SyntaxError`, `SyntaxMatchError` and `SyntaxReferenceError` reported outside a deliberate exception, and keep classes that generate no rules invalid.
+- **`generateValidRules`** returns rules only after every rule's CSS passes `validateCSS`; the scanner and `@stet-css/lint` use its output as already-checked CSS.
+- **Native declaration matcher**: `cssTreeNativeDeclarationMatcher` decides whether native `property:value` classes generate rules at all, so changing it is a CSS output change for every instance built with `createCSSWithNativeDeclarations`.
 
 ## Validation
 
-```sh
-pnpm --filter @stet-css/validator test
-pnpm --filter @stet-css/validator lint
-pnpm --filter @stet-css/validator type-check
-pnpm --filter @stet-css/validator build
-```
-
-Use or extend `tests/css.test.ts`, `tests/test.ts`, and `tests/utils`.
+CSS-text cases go in `tests/css.test.ts` (calls `validateCSS` directly); class cases go in `tests/test.ts` with the `tests/utils` expect helpers.

@@ -75,3 +75,6 @@ packages/nuxt/playground/.output
 **/blob-report/
 **/playwright/.cache/
 **/.svelte-kit
+
+# research notes live as GitHub issues (label: research), not in the repo
+/docs/research/

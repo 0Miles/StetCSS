@@ -1,74 +1,15 @@
-# AI Notes For `@stet-css/lint`
+# @stet-css/lint
 
-## Responsibility
+Owns the framework-neutral **lint policy** that the ESLint plugin, CLI and MCP adapt: class sorting, conflict detection, validation diagnostics, canonical class and group suggestions, raw-value checks, whitespace-preserving class-list edits, and the default lint target settings. `lintMasterCSSContent` and `fixMasterCSSContent` take source text plus a `MasterCSS` instance and map class-list diagnostics and fixes onto source ranges.
 
-`@stet-css/lint` owns framework-neutral Master CSS class lint policy. It sorts class names, detects conflicting classes, validates class diagnostics for lint consumers, and suggests canonical class names and class groups.
+## Boundaries
 
-## Owns
+- ESLint rule objects, configs, AST visitors, and report and autofix ranges → `@stet-css/eslint-plugin`.
+- Class-list tokens, ranges, and top-level splitting → `@stet-css/lexer`; class semantic inspection and numeric normalization → `@stet-css/engine/inspect`.
 
-- Class sorting policy for lint tools.
-- Class conflict detection policy.
-- Class validation diagnostic mapping for lint tools.
-- Canonical class name suggestion policy.
-- Canonical class group suggestion policy.
-- Framework-neutral class-list edit helpers for sorting, removing, and replacing tokens while preserving source whitespace.
-- Default lint target settings shared by adapters.
-- Framework-neutral source-content lint orchestration that maps class-list diagnostics and fixes onto source ranges.
+## Risks
 
-## Does Not Own
-
-- ESLint rule objects, reports, configs, parser visitors, or autofix ranges.
-- Project manifest discovery or filesystem access.
-- Source extraction adapters.
-- Engine CSS generation semantics.
-- Class-list token/range parsing; use `@stet-css/lexer`.
-- Class semantic inspection; use tooling-only helpers from `@stet-css/engine/inspect`.
-- Language service lifecycle, scanner, runtime, framework, or site behavior.
-
-## Public Surface
-
-- `sortClassNames`
-- `findClassConflicts`
-- `findPartialClassConflicts`
-- `findUnapprovedRawValueClasses`
-- `getClassValidationIssues`
-- `suggestCanonicalClassGroups`
-- `suggestCanonicalClassName`
-- `sortClassList`
-- `removeClassNamesFromClassList`
-- `replaceClassNameInClassList`
-- `replaceClassGroupInClassList`
-- `lintMasterCSSContent`
-- `fixMasterCSSContent`
-- `resolveMasterCSSLintRules`
-- `summarizeMasterCSSLintFiles`
-- `defaultClassLintSettings`
-- `defaultCanonicalClassNameOptions`
-
-## Key Files
-
-- `src/index.ts`
-- `src/sort-class-names.ts`
-- `src/find-class-conflicts.ts`
-- `src/find-partial-class-conflicts.ts`
-- `src/find-unapproved-raw-value-classes.ts`
-- `src/get-class-validation-issues.ts`
-- `src/suggest-canonical-class-groups.ts`
-- `src/suggest-canonical-class-name.ts`
-- `src/class-list-edits.ts`
-
-## Risk Areas
-
-- Ordering, conflict, and canonical suggestion behavior must match generated engine rules.
-- Do not duplicate class parsing, value segment splitting, numeric normalization, or generated-rule private field inspection in this package. Do not add lint-only inspection helpers to `MasterCSS`; use `@stet-css/engine/inspect`.
-- Validation diagnostics must preserve scanner and ESLint expectations.
-- This package must not import ESLint, project resolution, filesystem, scanner, language service, or framework packages.
-
-## Validation
-
-```sh
-pnpm --filter @stet-css/lint test
-pnpm --filter @stet-css/lint lint
-pnpm --filter @stet-css/lint type-check
-pnpm --filter @stet-css/lint build
-```
+- **Adapter-neutral**: adapters pass in source text and a `MasterCSS` instance. Keep ESLint, `@stet-css/project`, filesystem, scanner, language-service, and framework imports out of this package.
+- **Engine parity**: ordering, conflicts, and canonical suggestions derive from the rules the engine generates. Reuse lexer parsing, value segment splitting, numeric normalization, and `@stet-css/engine/inspect` rather than duplicating them or reading generated-rule private fields.
+- **Inspection helpers** that lint needs go in `@stet-css/engine/inspect`, off the `MasterCSS` class, which is on the runtime surface.
+- **Validation diagnostics** preserve the results scanner and ESLint consumers expect.

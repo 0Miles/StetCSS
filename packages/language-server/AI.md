@@ -1,64 +1,20 @@
-# AI Notes For `@stet-css/language-server`
+# @stet-css/language-server
 
-## Responsibility
+Wraps `@stet-css/language-service` in **LSP**: server lifecycle, one language service per workspace (built from that workspace's manifest and installed StetCSS runtime, falling back to the bundled one), closest-workspace routing, restarts, the completion, hover, color, formatting, and semantic token handlers, and manifest-loading and CSS directive diagnostics.
 
-`@stet-css/language-server` wraps the language service in LSP.
+## Boundaries
 
-## Owns
+- Workspace discovery behind `workspaces: 'auto'`, manifest entry files, manifest loading, and workspace package resolution → `@stet-css/project`.
+- Feature behaviour → `@stet-css/language-service`; class scanning and semantic token primitives → `@stet-css/language`.
+- CSS directive highlighting is TextMate-first, from the grammar in `@stet-css/language`.
 
-- LSP server lifecycle.
-- Workspace folder initialization and closest-workspace selection.
-- Manifest entry loading and restart behavior.
-- Completion, hover, document color, color presentation, and semantic token request handlers.
+## Risks
 
-## Does Not Own
-
-- Editor-neutral class scanning or semantic token primitives; use `@stet-css/language`.
-- Stateful feature implementation; use `@stet-css/language-service`.
-- VS Code extension activation or packaging.
-- CSS directive lexical highlighting, which is TextMate-first.
-
-## Public Surface
-
-- `CSSLanguageServer`
-- `settings`
-- `Workspace` type
-
-## Key Files
-
-- `src/core.ts`
-- `src/settings.ts`
-- `src/utils/create-document.ts`
-- `tests/fixtures/**`
-
-## Risk Areas
-
-- `workspaces: 'auto'` discovery from manifest entry files and package dependencies.
-- Closest workspace selection for monorepos.
-- Manifest loading through `@stet-css/project`.
-- Restart behavior after manifest or settings saves.
-- Advertising LSP capabilities that are not implemented and tested.
-
-## Safe Changes
-
-- Workspace detection fixes with monorepo fixtures.
-- Manifest reload/restart fixes.
-- Request handler and semantic token mode fixes with tests.
-
-## Dangerous Changes
-
-- Treating external documents as belonging to the wrong workspace.
-- Loading a manifest from an unintended directory.
-- Adding diagnostics without client/server capability updates.
-- Depending on editor-specific extension code.
+- **Workspace routing**: each document goes to the deepest workspace that contains it, and external documents go to the global workspace; keep monorepo packages on their own workspace.
+- **Manifest source**: each workspace loads its manifest from its own directory through `@stet-css/project`.
+- **Restarts**: saving a `.css` file (manifest entries are CSS) or changing `masterCSS` settings sends `masterCSS/restart` to the client and refreshes semantic tokens; keep both triggers.
+- **Capabilities**: advertise only handlers that are implemented and tested. `onInitialize` drops semantic tokens unless `embeddedSyntaxHighlighting` is `'always'`, and formatting unless `formatDirectives` is on.
 
 ## Validation
 
-```sh
-pnpm --filter @stet-css/language-server test
-pnpm --filter @stet-css/language-server lint
-pnpm --filter @stet-css/language-server type-check
-pnpm --filter @stet-css/language-server build
-```
-
-Use or extend `tests/custom-workspace.test.ts`, `tests/monorepo.test.ts`, and `tests/fixtures`.
+Workspace and manifest changes extend `tests/monorepo.test.ts`, `tests/custom-workspace.test.ts`, or `tests/manifest.test.ts`, with a fixture under `tests/fixtures/`.

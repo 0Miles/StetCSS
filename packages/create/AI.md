@@ -1,47 +1,15 @@
-# AI Notes For `@stet-css/create`
+# @stet-css/create
 
-## Responsibility
+The **add-first** installer behind `npm create @stet-css`: it detects the framework in an existing project, then plans and applies setup edits and dependency changes, optionally adding ESLint config, the MCP package and AGENTS.md guidance. New projects come from the framework's own scaffolder.
 
-`@stet-css/create` is the add-first installer for adding Master CSS to existing projects.
+## Boundaries
 
-## Owns
+- What the setup snippets configure → the framework packages (`@stet-css/vite`, `next`, `nuxt`, `astro`, `svelte`, `webpack`).
+- SvelteKit file edits → `@stet-css/sv`; create prints the `sv add @stet-css/sv` command.
+- ESLint rule behaviour → `@stet-css/lint` and `@stet-css/eslint-plugin`.
 
-- CLI setup planning and command-line option handling.
-- Framework detection for setup routing.
-- Safe project file edits for generated setup files and config snippets.
-- Package dependency planning for Master CSS, ESLint config, MCP, and optional AI helper files.
+## Risks
 
-## Does Not Own
-
-- Runtime, server, scanner, engine, compiler, or CSS output behavior.
-- Framework integration internals owned by `@stet-css/vite`, `@stet-css/next`, `@stet-css/nuxt`, `@stet-css/astro`, `@stet-css/svelte`, or `@stet-css/webpack`.
-- SvelteKit file mutation internals owned by `@stet-css/sv`.
-- ESLint rule behavior owned by `@stet-css/lint` and `@stet-css/eslint-plugin`.
-
-## Public Surface
-
-- Binary: `create-css`.
-- Root export for setup planning and application helpers.
-- `npm create @stet-css` and equivalent package-manager create/dlx flows resolve to this package.
-
-## Key Files
-
-- `src/index.ts`
-- `src/core.ts`
-- `src/transforms.ts`
-- `src/bin/index.ts`
-
-## Risk Areas
-
-- Overwriting existing project config files.
-- Running package manager installs unexpectedly.
-- Producing stale ESLint flat config examples.
-- Treating SvelteKit setup as generic Vite setup instead of delegating to `@stet-css/sv`.
-
-## Validation
-
-```sh
-pnpm --filter @stet-css/create test
-pnpm --filter @stet-css/create lint
-pnpm --filter @stet-css/create build
-```
+- **Existing files** are edited in place through `src/transforms.ts` (planned as `create` / `update` / `skip`), never replaced wholesale.
+- **Installs** run only on `--install <package-manager>`, `-y`, or an interactive yes.
+- **ESLint config**: `CANONICAL_ESLINT_CONFIG` and `addMasterCSSEslintConfig` track the current `@stet-css/eslint-config` flat-config usage.

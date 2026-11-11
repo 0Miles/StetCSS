@@ -1,94 +1,24 @@
-# AI Notes For `@stet-css/runtime`
+# @stet-css/runtime
 
-## Responsibility
+Runs the engine in the browser. `CSSRuntime` observes DOM class changes, keeps per-class **usage counts**, and inserts or deletes native rules in `style#master-css`; when that style arrives prerendered, it **hydrates** the sheet from a hydration manifest instead of regenerating it.
 
-`@stet-css/runtime` runs Master CSS in the browser. It observes DOM class changes, creates or hydrates `style#master-css`, tracks class usage counts, registers emittedGlobals global CSS counts, and inserts/removes native CSS rules.
+## Boundaries
 
-`CSSRuntime` directly extends `MasterCSS`; any value-level logic added to runtime source, engine core, engine root value exports, schema value constants, preset manifest loading, or other runtime-imported modules can enter the browser runtime bundle.
+- Prerendering `style#master-css` and its hydration manifest → `@stet-css/server` (via engine `createHydrationManifest`); the manifest format → `@stet-css/schema/hydration-manifest`.
+- Framework provider lifecycle → the framework packages; when and how the runtime is injected → the build plugins.
 
-Runtime does not expose a global event bus or tooling observer API. Third-party class observation should use DOM `MutationObserver` or explicit public runtime state. Development debug helpers are internal and must remain development-only.
+## Risks
 
-## Owns
-
-- Browser runtime lifecycle.
-- DOM observation and class tracking.
-- Runtime layer state and native stylesheet insertion/deletion.
-- Hydration of pre-rendered CSS rules.
-- Global runtime bundle and registration behavior.
-- Internal development-only runtime debugging.
-
-## Does Not Own
-
-- Core parser or CSS generation semantics.
-- Tooling-only engine inspection, lint, language, compiler, or docs helpers.
-- Framework provider lifecycle.
-- Build integration injection policy.
-- Server rendering.
-
-## Public Surface
-
-- `CSSRuntime`
-- `CSSRuntime.create({ manifest, root, emittedGlobals, hydrationManifest })`
-- `CSSRuntime#loadHydrationManifest()`
-- `CSSRuntime#observe()`
-- `RuntimeUtilityLayer`
-- Runtime types
-- Global `MasterCSSRuntime` and `masterCSSRuntime` behavior
-
-## Key Files
-
-- `src/core.ts`
-- `src/class-tracker.ts`
-- `src/layer.ts`
-- `src/utility-layer.ts`
-- `src/css-runtime.ts`
-- `src/global.min.ts`
-- `src/register-global.ts`
-
-## Risk Areas
-
-- `MutationObserver` diff logic.
-- `classCounts` increment/decrement behavior.
-- emittedGlobals variable/keyframe counts preventing duplicate global insertion without suppressing utility insertion.
-- Hydrating `CSSLayerBlockRule` and `CSSKeyframesRule`.
-- Matching generated rule text to native `CSSRule` text.
-- ShadowRoot versus Document behavior.
-- Native `CSSStyleSheet` insertion indexes.
-- Engine core growth that is not required for runtime execution.
-- Accidental growth of runtime-covered value dependencies that are neither runtime core nor intentional observability.
-
-## Safe Changes
-
-- Focused lifecycle fixes.
-- Hydration fixes with progressive e2e coverage.
-- Runtime insertion/deletion fixes with browser tests.
-
-## Dangerous Changes
-
-- Deleting rules by guessed indexes.
-- Rehydrating without comparing generated CSS text.
-- Removing class count tracking or hydration error checks.
-- Changing FOUC behavior without integration validation.
-- Changing global names `MasterCSSRuntime` or `masterCSSRuntime` casually.
-- Accepting tooling-only methods on `CSSRuntime` via `MasterCSS` inheritance.
-- Treating build-time-only config imports or tooling helpers as browser runtime dependencies.
-- Adding global event buses or tooling observer APIs to runtime.
+- **Inheritance**: `CSSRuntime` extends engine `MasterCSS`, so every `MasterCSS` method ships to browsers. Keep tooling-only methods off `MasterCSS` (runtime surface in `AGENTS.md`).
+- **Bundle audit**: `dist/global.min.js` stays free of devtools hook globals, generic listener maps, and event emit callsites. Debug helpers in `src/debuggers` run only under `process.env.NODE_ENV === 'development'`.
+- **Usage counts**: a class keeps its rules while its `classCounts` entry lives. Pair every increment with its decrement across `MutationObserver` diffs, for Document and ShadowRoot roots alike.
+- **Emitted globals**: emittedGlobals variable and keyframe counts stop duplicate global insertion and leave utility insertion untouched.
+- **Native indexes**: locate a native rule by identity (`findNativeCSSRuleIndex`) before deleting it; a guessed index deletes the wrong rule.
+- **Hydration** adopts a prerendered sheet only when its layers (`CSSLayerBlockRule`), theme and keyframes (`CSSKeyframesRule`) match the hydration manifest; every mismatch goes through `failHydration` to a runtime rebuild. Keep each check.
+- **FOUC**: `@stet-css/vite` `avoidFOUC` adds `hidden` to `<html>`, and runtime removes it after a non-hydrating render. Validate a change on either side through the integration.
+- **Global names** `MasterCSSRuntime` (the class, holding `instances`) and `masterCSSRuntime` (the document instance) are public; rename them only on request.
 
 ## Validation
 
-```sh
-pnpm --filter @stet-css/runtime e2e
-pnpm --filter @stet-css/runtime lint
-pnpm --filter @stet-css/runtime type-check
-pnpm --filter @stet-css/runtime build
-```
-
-Use or extend `e2e/lifecycle.test.ts`, `e2e/class-usages.test.ts`, `e2e/progressive/**`, and issue-specific browser regressions.
-
-## Benchmark Guidance
-
-Run `pnpm --filter @stet-css/runtime bench` when changing DOM observation, class tracking, lifecycle behavior, hydration, runtime layer insertion/deletion, CSSOM mutation, or the global browser bundle. Correctness e2e should remain browser correctness, not timing assertions. Report benchmark status, global runtime asset impact, memory/cold-start/runtime CPU/CSSOM tradeoffs, and whether generated CSS output, progressive hydration, or fallback hydration changed.
-
-## Bundle Audit Notes
-
-When auditing `dist/global.min.js`, the removed devtools hook global, generic listener maps, and runtime event emit callsites must not be present. Build-time-only config imports in `tsdown.config.ts` are not browser runtime bundle surface.
+- `e2e` (Playwright) is the test suite and covers `e2e/**` and `tests/issues/**`. Extend `e2e/lifecycle.test.ts`, `e2e/class-usages.test.ts` or `e2e/progressive/**`, or add an issue regression under `tests/issues/`.
+- Run `bench` when changing DOM observation, class tracking, lifecycle, hydration, CSSOM insertion or deletion, or the global bundle. e2e asserts browser correctness; timing belongs to `bench`. Report bench status, global bundle impact, memory / cold-start / CPU / CSSOM trade-offs, and whether CSS output, progressive hydration or fallback hydration changed.
