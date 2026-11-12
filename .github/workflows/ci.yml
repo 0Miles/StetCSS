@@ -59,17 +59,32 @@ jobs:
         if: ${{ !cancelled() }}
         run: bun run e2e
 
-  # The only check branch protection requires; list every job in `needs`.
+  # The only check branch protection requires. It also fails when a job is
+  # missing from `needs`, because a job it does not wait for could fail
+  # without blocking the merge.
   required:
     name: required
     needs: [checks]
     if: ${{ always() }}
     runs-on: ubuntu-latest
-    permissions: {}
+    permissions:
+      contents: read
     steps:
-      - name: Require every job to succeed
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/workflows/ci.yml
+          sparse-checkout-cone-mode: false
+
+      - name: Require every job to be in needs and to succeed
         env:
           NEEDS: ${{ toJSON(needs) }}
         run: |
           jq -r 'to_entries[] | "\(.key): \(.value.result)"' <<< "$NEEDS"
+          workflow_jobs=$(yq -o=json '.jobs | keys' .github/workflows/ci.yml)
+          unlisted=$(jq -r --argjson needs "$NEEDS" '.[] | select(. != "required" and (. as $job | $needs | has($job) | not))' <<< "$workflow_jobs")
+          if [ -n "$unlisted" ]; then
+            echo "::error::required does not wait for these jobs; add them to its needs: ${unlisted//$'\n'/ }"
+            exit 1
+          fi
           jq -e 'all(.[]; .result == "success")' <<< "$NEEDS" > /dev/null
