@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { expect, test } from 'vitest'
-import { createVSCEPublishArgs } from '../scripts/package-target-core.js'
+import { NATIVE_PACKAGES_INSTALL_COMMAND, createVSCEPublishArgs } from '../scripts/package-target-core.js'
 import { parseCLIArgs } from '../scripts/package-targets.js'
 import { newStatusLines, unexpectedReleaseStatusLines } from '../scripts/release.js'
 
@@ -57,55 +57,44 @@ test('release dry run reports Azure credential authentication', () => {
   expect(result.stdout).toContain('Authentication: Microsoft Entra ID')
 })
 
-test('release stops before running any command when a target lacks its native packages', () => {
-  const hiddenPackages = ['lightningcss-win32-x64-msvc', '@oxc-parser/binding-win32-x64-msvc']
-  const result = spawnSync(process.execPath, [
-    '--import',
-    hidePackagesPreload,
-    'scripts/release.js',
-    '--no-publish',
-    '--target',
-    'win32-x64'
-  ], {
+function runWithHiddenPackages(script, args, hiddenPackages, env = {}) {
+  return spawnSync(process.execPath, ['--import', hidePackagesPreload, script, ...args], {
     cwd: packageDir,
     encoding: 'utf8',
-    // An empty PATH means a regression cannot reach bun or git and change the repo.
-    env: { ...process.env, PATH: '', HIDDEN_PACKAGES: hiddenPackages.join(',') }
+    env: { ...process.env, ...env, HIDDEN_PACKAGES: hiddenPackages.join(',') }
   })
+}
+
+test('release stops before running any command when a target lacks its native packages', () => {
+  const hiddenPackages = ['lightningcss-win32-x64-msvc', '@oxc-parser/binding-win32-x64-msvc']
+  // An empty PATH means a regression cannot reach bun or git and change the repo.
+  const result = runWithHiddenPackages(
+    'scripts/release.js',
+    ['--no-publish', '--target', 'win32-x64'],
+    hiddenPackages,
+    { PATH: '' }
+  )
 
   expect(result.status).toBe(1)
   expect(result.stdout).not.toContain('$ ')
   for (const packageName of hiddenPackages) {
     expect(result.stderr).toContain(packageName)
   }
-  expect(result.stderr).toContain(
-    'bun install --os=win32 --os=darwin --os=linux --cpu=x64 --cpu=arm64 --cpu=arm --libc=glibc --libc=musl'
-  )
+  expect(result.stderr).toContain(NATIVE_PACKAGES_INSTALL_COMMAND)
 })
 
-test('packaging a target without its native packages names the Bun install command', () => {
+test('packaging a target without its native packages stops before staging and names the Bun install command', () => {
   const outDir = mkdtempSync(join(tmpdir(), 'master-css-vscode-out-'))
   try {
-    const result = spawnSync(process.execPath, [
-      '--import',
-      hidePackagesPreload,
+    const result = runWithHiddenPackages(
       'scripts/package-targets.js',
-      'package',
-      '--target',
-      'win32-x64',
-      '--out-dir',
-      outDir
-    ], {
-      cwd: packageDir,
-      encoding: 'utf8',
-      env: { ...process.env, HIDDEN_PACKAGES: 'lightningcss-win32-x64-msvc' }
-    })
+      ['package', '--target', 'win32-x64', '--out-dir', outDir],
+      ['lightningcss-win32-x64-msvc']
+    )
 
     expect(result.status).toBe(1)
-    expect(result.stderr).toContain('Unable to resolve lightningcss-win32-x64-msvc')
-    expect(result.stderr).toContain(
-      'bun install --os=win32 --os=darwin --os=linux --cpu=x64 --cpu=arm64 --cpu=arm --libc=glibc --libc=musl'
-    )
+    expect(result.stderr).toContain('win32-x64: lightningcss-win32-x64-msvc')
+    expect(result.stderr).toContain(NATIVE_PACKAGES_INSTALL_COMMAND)
   } finally {
     rmSync(outDir, { recursive: true, force: true })
   }

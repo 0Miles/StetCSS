@@ -268,7 +268,7 @@ async function copyTextMateGrammar(stagingDir) {
 }
 
 export async function createStagedExtension(target = getCurrentTarget(), options = {}) {
-  getTargetNativePackages(target)
+  assertRuntimePackagesResolvable([target])
 
   const stagingRoot = options.stagingRoot ?? await mkdtemp(join(tmpdir(), 'master-css-vscode-'))
   const stagingDir = options.stagingDir ?? join(stagingRoot, target)
