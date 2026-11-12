@@ -4,8 +4,8 @@
   "scripts": {
     "build": "tsdown --config ../../shared/tsdown-package.config.ts",
     "dev": "tsdown --config ../../shared/tsdown-package.config.ts --watch",
-    "dev:build": "pnpm --dir playground build",
-    "e2e": "vitest run tests/*-e2e.test.ts --no-file-parallelism",
+    "dev:build": "bun run --cwd playground build",
+    "e2e": "vitest run tests/*-e2e.test.ts --no-file-parallelism --mode e2e",
     "lint": "eslint",
     "type-check": "tsc -b tsconfig.typecheck.json",
     "test": "vitest"

@@ -3,7 +3,7 @@ import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { MASTER_CSS_HYDRATION_MANIFEST_ATTR } from '@stet-css/schema/hydration-manifest'
-import execPnpmSync from './helpers/pnpm-command'
+import execBunSync from './helpers/bun-command'
 
 const packageDir = dirname(fileURLToPath(new URL('../package.json', import.meta.url)))
 const fixtureDir = join(packageDir, 'e2e/static-export')
@@ -11,8 +11,8 @@ const outDir = join(fixtureDir, 'out')
 
 function buildFixture() {
   try {
-    execPnpmSync(['--dir', fixtureDir, 'build'], {
-      cwd: packageDir,
+    execBunSync(['run', 'build'], {
+      cwd: fixtureDir,
       encoding: 'utf-8',
       env: {
         ...process.env,

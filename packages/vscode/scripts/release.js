@@ -1,8 +1,8 @@
 import { spawn } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
-import { dirname, relative, resolve } from 'node:path'
+import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { TARGETS, packageDir } from './package-target-core.js'
+import { TARGETS, assertRuntimePackagesResolvable, packageDir } from './package-target-core.js'
 
 const scriptDir = dirname(fileURLToPath(import.meta.url))
 const rootDir = resolve(scriptDir, '../../..')
@@ -10,12 +10,8 @@ const packageJsonPath = resolve(packageDir, 'package.json')
 const marketplaceUrl = 'https://marketplace.visualstudio.com/items?itemName=masterco.master-css-vscode'
 const allowedReleaseChanges = new Set([
     'packages/vscode/package.json',
-    'pnpm-lock.yaml'
+    'bun.lock'
 ])
-
-function corepackCommand() {
-    return process.platform === 'win32' ? 'corepack.cmd' : 'corepack'
-}
 
 function parseTargets(rawTargets) {
     const targets = rawTargets.flatMap((target) => target.split(',').filter(Boolean))
@@ -79,7 +75,7 @@ export function parseArgs(argv) {
 }
 
 function printHelp() {
-    console.log(`Usage: pnpm release:vscode [options]
+    console.log(`Usage: bun run release:vscode [options]
 
 Options:
   --patch                 Bump a patch version before release (default)
@@ -244,34 +240,34 @@ async function main() {
         return
     }
 
+    assertRuntimePackagesResolvable(options.targets)
+
     const initialStatusLines = await gitStatus()
 
-    await run(corepackCommand(), ['pnpm', 'build'])
+    await run('bun', ['run', 'build'])
     await assertNoNewChanges('Root build changed tracked files; review those changes before releasing.', initialStatusLines)
 
-    await run(corepackCommand(), ['pnpm', '--dir', relative(rootDir, packageDir), 'version', options.bump, '--no-git-tag-version'])
+    await run('bun', ['pm', 'version', options.bump, '--no-git-tag-version'], { cwd: packageDir })
 
     const bumpedManifest = await readPackageJson()
     validateVSCodeTypesCompatibility(bumpedManifest)
 
-    await run(corepackCommand(), ['pnpm', '--filter', 'master-css-vscode', 'build'])
-    await run(corepackCommand(), ['pnpm', '--filter', 'master-css-vscode', 'type-check'])
+    await run('bun', ['run', '--filter', 'master-css-vscode', 'build'])
+    await run('bun', ['run', '--filter', 'master-css-vscode', 'type-check'])
     await assertOnlyExpectedChanges(initialStatusLines)
 
     if (options.noPublish) {
-        await run(corepackCommand(), ['pnpm', '--filter', 'master-css-vscode', 'vscode:package', ...targetArgs(options.targets)])
+        await run('bun', ['run', '--filter', 'master-css-vscode', 'vscode:package', ...targetArgs(options.targets)])
     } else {
-        await run(corepackCommand(), [
-            'pnpm',
-            '--filter',
-            'master-css-vscode',
-            'exec',
+        await run('bun', [
+            'x',
+            '--no-install',
             'vsce',
             'verify-pat',
             ...(options.azureCredential ? ['--azure-credential'] : []),
             bumpedManifest.publisher
-        ])
-        await run(corepackCommand(), ['pnpm', '--filter', 'master-css-vscode', 'vscode:publish', ...publishArgs(options)])
+        ], { cwd: packageDir })
+        await run('bun', ['run', '--filter', 'master-css-vscode', 'vscode:publish', ...publishArgs(options)])
     }
 
     console.log('\nVS Code extension release complete')

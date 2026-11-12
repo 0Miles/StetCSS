@@ -6,7 +6,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { chromium, type Browser } from '@playwright/test'
 import { describe, expect, it } from 'vitest'
-import execPnpmSync from './helpers/pnpm-command'
+import execBunSync from './helpers/bun-command'
 
 const packageDir = dirname(fileURLToPath(new URL('../package.json', import.meta.url)))
 const nextBin = fileURLToPath(new URL('../node_modules/next/dist/bin/next', import.meta.url))
@@ -81,7 +81,7 @@ function writeFixture(fixtureDir: string, compose = 'inline-flex') {
 }
 
 function buildPackage() {
-  execPnpmSync(['--dir', packageDir, 'build'], {
+  execBunSync(['run', 'build'], {
     cwd: packageDir,
     encoding: 'utf-8',
     env: {

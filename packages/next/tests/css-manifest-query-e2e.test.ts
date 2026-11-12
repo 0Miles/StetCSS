@@ -2,15 +2,15 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { dirname, join, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import execPnpmSync from './helpers/pnpm-command'
+import execBunSync from './helpers/bun-command'
 
 const packageDir = dirname(fileURLToPath(new URL('../package.json', import.meta.url)))
 const fixtureDir = join(packageDir, 'e2e/css-manifest-query')
 
 function buildFixture() {
   try {
-    execPnpmSync(['--dir', fixtureDir, 'build'], {
-      cwd: packageDir,
+    execBunSync(['run', 'build'], {
+      cwd: fixtureDir,
       encoding: 'utf-8',
       env: {
         ...process.env,

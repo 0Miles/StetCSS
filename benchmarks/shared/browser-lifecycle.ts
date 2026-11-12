@@ -2262,7 +2262,7 @@ async function readRuntimeBundle() {
   if (!runtimeBundlePromise) {
     runtimeBundlePromise = (async () => {
       const file = resolveBenchmarkPackageFile('@stet-css/runtime', 'dist/global.min.js')
-      assertExistingFile(file, 'Run `pnpm --filter @stet-css/runtime build` before `bench:browser-lifecycle`.')
+      assertExistingFile(file, 'Run `bun run --filter @stet-css/runtime build` before `bench:browser-lifecycle`.')
       return readFile(file)
     })()
   }

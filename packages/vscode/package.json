@@ -2,7 +2,7 @@
   "name": "master-css-vscode",
   "type": "module",
   "scripts": {
-    "build": "tsdown && pnpm generate",
+    "build": "tsdown && bun run generate",
     "generate": "node --import tsx generate",
     "dev": "tsdown --watch",
     "test": "vitest",

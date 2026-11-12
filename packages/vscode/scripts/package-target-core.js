@@ -98,6 +98,9 @@ const RUNTIME_PACKAGE_OWNERS = [
 ]
 const packageResolverCache = new Map()
 
+export const NATIVE_PACKAGES_INSTALL_COMMAND =
+  'bun install --os=win32 --os=darwin --os=linux --cpu=x64 --cpu=arm64 --cpu=arm --libc=glibc --libc=musl'
+
 function toPosixPath(path) {
   return path.replaceAll('\\', '/')
 }
@@ -131,7 +134,8 @@ function resolvePackageDir(packageName, resolver, resolverName = 'master-css-vsc
       return findPackageDir(resolver.resolve(packageName))
     } catch (entryError) {
       throw new Error(
-        `Unable to resolve ${packageName} from ${resolverName}. Run pnpm install after updating supportedArchitectures.\n`
+        `Unable to resolve ${packageName} from ${resolverName}. `
+        + `Install the native packages for every platform with: ${NATIVE_PACKAGES_INSTALL_COMMAND}\n`
         + `package.json resolution: ${manifestError.message}\n`
         + `entry resolution: ${entryError.message}`
       )
@@ -179,6 +183,36 @@ export function getRuntimePackagesForTarget(target) {
   ]
 }
 
+function resolveRuntimePackageDir(packageName) {
+  const resolver = getRuntimePackageResolver(packageName)
+  return resolvePackageDir(packageName, resolver, getRuntimePackageOwner(packageName) ?? 'master-css-vscode')
+}
+
+export function findMissingRuntimePackages(target) {
+  return getRuntimePackagesForTarget(target).filter((packageName) => {
+    try {
+      resolveRuntimePackageDir(packageName)
+      return false
+    } catch {
+      return true
+    }
+  })
+}
+
+export function assertRuntimePackagesResolvable(targets) {
+  const missingByTarget = targets
+    .map((target) => [target, findMissingRuntimePackages(target)])
+    .filter(([, missing]) => missing.length)
+  if (!missingByTarget.length) return
+
+  throw new Error([
+    'Missing native runtime packages for the selected VS Code targets:',
+    ...missingByTarget.map(([target, missing]) => `  ${target}: ${missing.join(', ')}`),
+    'Install the native packages for every platform, then retry:',
+    `  ${NATIVE_PACKAGES_INSTALL_COMMAND}`
+  ].join('\n'))
+}
+
 function isCurrentLinuxMusl() {
   if (process.platform !== 'linux') return false
   try {
@@ -219,8 +253,7 @@ async function copyPath(source, destination) {
 }
 
 async function copyRuntimePackage(stagingDir, packageName) {
-  const resolver = getRuntimePackageResolver(packageName)
-  const sourceDir = resolvePackageDir(packageName, resolver, getRuntimePackageOwner(packageName) ?? 'master-css-vscode')
+  const sourceDir = resolveRuntimePackageDir(packageName)
   const destinationDir = join(stagingDir, 'dist', 'node_modules', toPackagePath(packageName))
   await copyPath(sourceDir, destinationDir)
   return toNodeModulesPath(packageName)

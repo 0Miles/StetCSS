@@ -6,7 +6,7 @@ import {
   MASTER_CSS_HYDRATION_MANIFEST_ATTR,
   MASTER_CSS_HYDRATION_MANIFEST_SCRIPT_ID
 } from '@stet-css/schema/hydration-manifest'
-import execPnpmSync from './helpers/pnpm-command'
+import execBunSync from './helpers/bun-command'
 
 const packageDir = dirname(fileURLToPath(new URL('../package.json', import.meta.url)))
 const playgroundDir = join(packageDir, 'playground')
@@ -15,8 +15,8 @@ const removedRuntimeRegistryName = ['CSSRuntime', 'Registry'].join('')
 function buildPlayground() {
   try {
     rmSync(join(playgroundDir, '.next'), { recursive: true, force: true })
-    execPnpmSync(['--dir', playgroundDir, 'build'], {
-      cwd: packageDir,
+    execBunSync(['run', 'build'], {
+      cwd: playgroundDir,
       encoding: 'utf-8',
       env: {
         ...process.env,

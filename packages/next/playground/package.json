@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "pnpm --dir .. build && next dev",
-    "build": "pnpm --dir .. build && next build",
+    "dev": "bun run --cwd .. build && next dev",
+    "build": "bun run --cwd .. build && next build",
     "start": "next start"
   },
   "dependencies": {

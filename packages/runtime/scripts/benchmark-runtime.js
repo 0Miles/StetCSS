@@ -35,7 +35,7 @@ const nativeProperties = [
 
 if (!existsSync(globalBundleFile) || !existsSync(defaultManifestFile)) {
   console.error('Runtime benchmark requires built runtime global artifacts.')
-  console.error('Run `pnpm --filter @stet-css/runtime build` first.')
+  console.error('Run `bun run --filter @stet-css/runtime build` first.')
   process.exit(1)
 }
 

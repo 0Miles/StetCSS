@@ -2,7 +2,7 @@
   "name": "@stet-css/preset",
   "type": "module",
   "scripts": {
-    "build": "pnpm generate",
+    "build": "bun run generate",
     "generate": "node --import tsx scripts/generate-default-manifest.ts",
     "lint": "eslint",
     "type-check": "tsc -b tsconfig.typecheck.json",

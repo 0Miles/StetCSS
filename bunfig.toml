@@ -1,5 +1,5 @@
 [install]
-# Each package sees only the dependencies it declares, as under pnpm (ADR-0001).
+# Each package sees only the dependencies it declares (ADR-0001).
 linker = "isolated"
 # Install only versions published at least 1 day (86400 seconds) ago.
 minimumReleaseAge = 86400

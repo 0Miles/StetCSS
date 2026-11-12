@@ -1,11 +1,9 @@
 import { defineConfig } from 'vitest/config'
 import config from '../../shared/vitest.config'
 
-const runsE2E = process.env.npm_lifecycle_event === 'e2e'
-
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   ...config,
-  test: runsE2E
+  test: mode === 'e2e'
     ? config.test
     : {
       ...config.test,
@@ -14,4 +12,4 @@ export default defineConfig({
         'tests/*-e2e.test.ts'
       ]
     }
-})
+}))

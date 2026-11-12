@@ -16,7 +16,7 @@ let built = false
 
 function buildPackage() {
   if (built) return
-  execFileSync('pnpm', ['--dir', packageDir, 'build'], {
+  execFileSync('bun', ['run', 'build'], {
     cwd: packageDir,
     env: {
       ...process.env,

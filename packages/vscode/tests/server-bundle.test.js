@@ -6,7 +6,9 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { expect, test } from 'vitest'
 import {
+  NATIVE_PACKAGES_INSTALL_COMMAND,
   createStagedExtension,
+  findMissingRuntimePackages,
   getCurrentTarget,
   getRuntimePackagesForTarget
 } from '../scripts/package-target-core.js'
@@ -217,7 +219,13 @@ test('staged extension includes runtime packages for the current target', async 
   })
 })
 
-test('staged extension includes runtime packages for win32-x64', async () => {
+test('staged extension includes runtime packages for win32-x64', async ({ skip }) => {
+  const missingPackages = findMissingRuntimePackages('win32-x64')
+  skip(
+    missingPackages.length > 0,
+    `win32-x64 native packages are not installed (${missingPackages.join(', ')}); `
+    + `install them with: ${NATIVE_PACKAGES_INSTALL_COMMAND}`
+  )
   await withStagedExtension(({ stagingDir, files }, { getRuntimePackagesForTarget }) => {
     expectStagedRuntimePackages({ stagingDir, files }, getRuntimePackagesForTarget('win32-x64'))
   }, { target: 'win32-x64' })
