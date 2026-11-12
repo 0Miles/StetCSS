@@ -59,12 +59,42 @@ jobs:
         if: ${{ !cancelled() }}
         run: bun run e2e
 
+  # A plain install only fetches this runner's native packages, so the VS Code
+  # packaging test for win32-x64 would skip. This job installs every
+  # platform's and runs only the VS Code extension's tests.
+  all-platforms:
+    name: all-platforms
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # Listed explicitly instead of `*`.
+      - uses: ./.github/actions/install
+        with:
+          install-flags: --os=win32 --os=darwin --os=linux --cpu=x64 --cpu=arm64 --cpu=arm --libc=glibc --libc=musl
+
+      # turbo builds the extension's dependencies first; --reporter=verbose
+      # reaches only the vitest run and logs each test's result.
+      - name: Test the VS Code extension
+        if: ${{ !cancelled() }}
+        run: node scripts/with-typescript-tooling-compat.mjs node_modules/.bin/turbo run test --filter=master-css-vscode -- --reporter=verbose
+
+      # The win32-x64 test skips instead of failing when that target's native
+      # packages are missing, so a green test step does not prove the install
+      # covered every target. This is the check release.js runs before
+      # packaging; it needs the build from the step above.
+      - name: Require native packages for every VS Code target
+        run: node --input-type=module -e "const core = await import('./packages/vscode/scripts/package-target-core.js'); core.assertRuntimePackagesResolvable(core.TARGETS)"
+
   # The only check branch protection requires. It also fails when a job is
   # missing from `needs`, because a job it does not wait for could fail
   # without blocking the merge.
   required:
     name: required
-    needs: [checks]
+    needs: [checks, all-platforms]
     if: ${{ always() }}
     runs-on: ubuntu-latest
     permissions:
