@@ -112,7 +112,8 @@ jobs:
         run: |
           jq -r 'to_entries[] | "\(.key): \(.value.result)"' <<< "$NEEDS"
           workflow_jobs=$(yq -o=json '.jobs | keys' .github/workflows/ci.yml)
-          unlisted=$(jq -r --argjson needs "$NEEDS" '.[] | select(. != "required" and (. as $job | $needs | has($job) | not))' <<< "$workflow_jobs")
+          echo "jobs in ci.yml: $(jq -r 'join(" ")' <<< "$workflow_jobs")"
+          unlisted=$(jq -r --arg self "$GITHUB_JOB" --argjson needs "$NEEDS" '.[] | select(. != $self and (. as $job | $needs | has($job) | not))' <<< "$workflow_jobs")
           if [ -n "$unlisted" ]; then
             echo "::error::required does not wait for these jobs; add them to its needs: ${unlisted//$'\n'/ }"
             exit 1
