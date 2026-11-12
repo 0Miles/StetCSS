@@ -11,7 +11,7 @@ The product's users are front-end developers who write StetCSS classes in their 
 Ask the maintainer before:
 
 - publishing anything outside this repo: npm packages, or the VS Code extension to the Marketplace or Open VSX (`release:vscode` without `--no-publish`);
-- bypassing `main`'s branch protection with `gh pr merge --admin`.
+- bypassing `main`'s branch protection in any way: `gh pr merge --admin`, a merge through the API, or a direct push to `main`.
 
 Merging a PR into `main` is not a stop point.
 

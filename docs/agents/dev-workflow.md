@@ -17,34 +17,32 @@
 
 **結束前的全套**
 
-開 PR 前，以下四條都要在本機跑。CI 會再跑前三條，但第 4 條只在本機跑，而且 CI 的結果要 push 之後才看得到。
+以下五條都要在本機跑：開 PR 前跑一次；PR 開了之後又有新的 commit，合併前在最後的 HEAD 上再跑一次。CI 會再跑第 1 到 4 條。
 
 1. `bun run check -- --continue`：所有套件的 `test`、`lint`，以及有 `type-check` script 的套件的型別檢查。`--continue` 讓所有 task 跑完再回報。
 2. `bun run build:examples -- --continue`：建置 `examples/` 的每個範例。
 3. `bun run e2e`：先跑建置整合的 e2e，通過後再單獨跑 runtime 的 Playwright e2e。
    - 不要加參數：參數會接到 script 最後的 runtime e2e 上。
-4. 動到的每個套件，跑它 `packages/<name>/AI.md` 的「Validation」節另外要求的檢查。這些檢查不在 `check` 裡，例如：
+4. `bun pm untrusted`：輸出要是 `Found 0 untrusted dependencies with scripts.`。它列出套件時結束碼仍是 0，所以看輸出。
+5. 動到的每個套件，跑它 `packages/<name>/AI.md` 的「Validation」節另外要求的檢查。這些檢查不在 `check` 裡，例如：
    - svelte 用 `check`（svelte-check）做型別檢查，沒有 `type-check` script。svelte-check 用舊版 TypeScript 的編譯器 API，要經過相容包裝才跑得起來：`node scripts/with-typescript-tooling-compat.mjs bun run --filter @stet-css/svelte check`。
    - next 要跑 `dev:build`。
    - engine 和 runtime 要跑 `bench`。
 
 **CI**
 
-`.github/workflows/ci.yml` 在每支 PR 開啟、重新開啟或有新的 push 時執行，每次推到 main 也執行。同一支 PR 有新的 push 時，舊的那次會被取消。每次都跑三個 job，不依改動範圍挑選：
+`.github/workflows/ci.yml` 在 PR 開啟、重新開啟、有新的 push 時，以及推到 main 時執行，每次全跑，不依改動範圍挑選。下面的 job 名稱就是 `gh pr checks` 列出的名稱：
 
-- `checks`：在 Linux 上跑全套的第 1 到 3 條。
-- `all-platforms`：裝齊 VS Code 擴充 9 個 target 的原生套件，跑 `master-css-vscode` 的測試，再確認每個 target 的原生套件都解析得到。
-- `required`：等其他 job 跑完，全部是 success 才是 success。分支保護只要求這個檢查，見〈分支、commit 與合併〉。
-
-兩個安裝相依的 job 裝完都跑 `bun pm untrusted`，輸出列出任何套件就失敗。
+- `checks`：在 Linux 上跑全套的第 1 到 4 條。
+- `all-platforms`：裝齊 VS Code 擴充每個 target 的原生套件，跑 `master-css-vscode` 的測試，再確認每個 target 的原生套件都解析得到；也跑第 4 條。本機的安裝只有本機平台的原生套件，所以這個 job 只在 CI 跑。
+- `required`：等其他 job 跑完，全部是 success 才是 success。合併只看它，見〈分支、commit 與合併〉。
 
 看結果：
 
-- PR：`gh pr checks <n>` 列出每個 job 的結果與連結；`gh pr checks <n> --required` 只列 `required`。
-- 推到 main 的那次：`gh run list --workflow ci.yml --branch main`。
-- 失敗的 log：`gh run view <run-id> --log-failed`。`required` 的 log 會印出它等的每個 job 的結果。
+- `gh pr checks <n>`：每個 job 的結果與連結。PR 剛開、還沒有任何檢查時，它會回 `no checks reported`，稍後再跑。
+- `gh run view <run-id> --log-failed`：失敗步驟的 log。`required` 的 log 會印出它等的每個 job 的結果。
 
-在 `ci.yml` 新增 job 時，同時加進 `required` 的 `needs`，否則 `required` 會失敗，並列出漏掉的 job。`required` 只比對 `ci.yml`，而且每個 job 都要是 success，所以：
+在 `ci.yml` 新增 job 時，同時加進 `required` 的 `needs`；漏了的話 `required` 會失敗，並列出漏掉的 job。`required` 只比對 `ci.yml`，而且每個 job 都要是 success，所以：
 
 - 放在其他 workflow 檔的 job 擋不住合併。
 - `ci.yml` 裡只在特定事件才跑的 job，被跳過時 `required` 也會失敗。
@@ -56,8 +54,8 @@
   - `build:examples` 的 `master-css-nuxtjs-example#build`：nitro 打包時出現 `ENAMETOOLONG`（見 #22）。
   - svelte 的 `check`：`packages/svelte/src/lib/vite.ts` 有 2 個型別錯誤，因為 vite 8.0.16 和 8.1.0 兩份型別互不相容。
 
-  前兩項只在本機失敗：CI 的 Node 是最新的 24.x，路徑也短，兩個範例都建置得起來。CI 上這兩項失敗，就照回歸處理。
-- **回歸**：新出現的失敗重跑一次仍然失敗，才算回歸。
+  前兩項只在本機失敗：CI 的 Node 24 不低於 24.15，路徑也短，兩個範例都建置得起來。CI 上這兩項失敗，照回歸處理。
+- **回歸**：新出現的失敗重跑一次仍然失敗，才算回歸。CI 上用 `gh run rerun <run-id> --failed` 重跑，`required` 會一起重跑。失敗看起來和改動無關時，先看 main 最近一次的 CI 是不是也紅，見〈合併之後〉。
 
 ## 分支、commit 與合併
 
@@ -81,14 +79,19 @@
 
 - 指令：`gh pr merge <n> --rebase --delete-branch`。
 - 代理可以自己合併，不需要人工核准。`.claude/settings.json` 已經允許 `gh pr merge`。
-- main 有分支保護，唯一的必要檢查是 CI 的 `required`。合併前 `required` 必須是 success：`gh pr checks <n> --required` 顯示 `pass`。還在跑就加 `--watch` 等它跑完；失敗就修好再 push。
-- `required` 不是 success 時，`gh pr merge` 會拒絕，並提示可以加 `--admin`。代理不用 `gh pr merge --admin`：它用管理員權限繞過分支保護。真的需要繞過時，先問維護者，見 `AGENTS.md` 的「Stop and ask」。
-- 合併前不必先跟上最新的 main。推到 main 之後，CI 會再跑一次。
+- 合併任何 PR 前，CI 的 `required` 必須是 success，開到整合分支的 PR 也一樣：
+  1. `gh pr checks <n> --watch`：等全部的檢查跑完。
+  2. `gh pr checks <n> --json name,bucket --jq '.[] | select(.name == "required") | .bucket'` 要印出 `pass`。印出空白，代表 `required` 還沒出現（它等其他 job 跑完才建立），回到第 1 步。印出 `fail`，就修好再 push。
+
+  `--required` 旗標依 base 分支的保護設定挑檢查，`required` 還沒出現、或 base 不是 main 時，會直接報 `no required checks reported`，所以用上面的 `--jq`。
+- main 有分支保護：必要檢查只有 `required`，不要求分支跟上最新的 main。進 main 的 PR，`required` 不是 success 時，`gh pr merge` 會拒絕，並提示可以加 `--admin`。
+- 分支保護不對管理員強制，而代理通常用維護者的管理員帳號登入 gh。必要檢查擋不住這個帳號：`gh pr merge --admin`、透過 API 合併、直接推到 main 都會成功。上一條的拒絕是 gh 讀到合併狀態是 BLOCKED 之後在本機擋下的，剛 push、狀態還沒算出來時不會擋，所以合併前一定先照上面的兩步確認 `required`。要用任何方式繞過分支保護，先問維護者，見 `AGENTS.md` 的「Stop and ask」。
 - 動到〈實機驗收〉列出的套件時，要先做完實機驗收才合併。
 
 **合併之後**
 
 - 沒有部署。
+- 推到 main 的那次 CI：`gh run list --workflow ci.yml --branch main --limit 1`。被下一次合併取消的，看下一次。紅了就是合併後才出現的問題，例如兩支各自綠燈的 PR 互相衝突；之後每支 PR 的 `required` 都會跟著紅，先修好 main。
 - 主 checkout：執行 `git switch main && git pull --ff-only`；`bun.lock` 有變動時，再執行 `bun install --frozen-lockfile`。
 - 來自票的 PR：接著走 `issue-tracker.md`〈Definition of Done〉。
 - 整合分支的 PR：合併進 main 之後，再逐張收它底下的票。
