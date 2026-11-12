@@ -18,4 +18,4 @@ Owns the Next.js integration behind `withMasterCSS`: `pre-render` through the Ne
 
 ## Validation
 
-When integration behaviour changes, also run `bun run --filter @stet-css/next e2e` (the `tests/*-e2e.test.ts` files, excluded from `test`) and `bun run --filter @stet-css/next dev:build` (builds `playground/`).
+When integration behaviour changes, also run `bun run --filter @stet-css/next e2e` (the `tests/*-e2e.test.ts` files, excluded from `test`; Vitest selects them only under `--mode e2e`, which the `e2e` script passes) and `bun run --filter @stet-css/next dev:build` (builds `playground/`).
