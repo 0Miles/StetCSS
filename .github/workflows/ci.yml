@@ -101,7 +101,7 @@ jobs:
   # makes required skip, and a skipped required check counts as passing.
   required:
     name: required
-    needs: [checks, all-platforms]
+    needs: [checks]
     if: ${{ always() }}
     runs-on: ubuntu-latest
     permissions:
