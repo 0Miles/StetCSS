@@ -20,7 +20,7 @@ Advisory measurement suites and report helpers: CSS output size and structure, b
 
 ## Validation
 
-- Report shape or shared report helpers: `pnpm --filter ./benchmarks bench:report-smoke`.
+- Report shape or shared report helpers: `bun run --filter benchmarks bench:report-smoke`.
 - Suite code: the smallest relevant `bench:<suite>` script.
 - Intentional baseline change: the matching `snapshot:<suite>` script, with the new baseline explained.
 - Final reports state the command run, environment limits, whether correctness validation ran first, any CSS output or runtime behaviour change, and why a benchmark or snapshot was skipped.

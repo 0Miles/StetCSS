@@ -39,24 +39,24 @@ Build integrations live in `packages/vite`, `webpack`, `next`, `nuxt`, `svelte`,
 
 ## Development
 
-Requirements: Node.js 24 and pnpm 11.9 (pinned in `package.json`; `corepack enable` picks it up).
+Requirements: Node.js 24 and Bun 1.4.4 (pinned in `package.json`). Bun installs dependencies and runs scripts; the tools they call run on Node.
 
 ```bash
-pnpm install
-pnpm build
+bun install
+bun run build
 ```
 
 | Command | What it runs |
 | --- | --- |
-| `pnpm build` | Builds every package under `packages/` |
-| `pnpm test` | Unit tests for every package |
-| `pnpm lint` | ESLint for every package |
-| `pnpm type-check` | Type checking for every package |
-| `pnpm check` | `test`, `lint` and `type-check` together |
-| `pnpm e2e` | Playwright end-to-end tests |
-| `pnpm build:examples` | Builds every example |
+| `bun run build` | Builds every package under `packages/` |
+| `bun run test` | Unit tests for every package |
+| `bun run lint` | ESLint for every package |
+| `bun run type-check` | Type checking for every package |
+| `bun run check` | `test`, `lint` and `type-check` together |
+| `bun run e2e` | Playwright end-to-end tests |
+| `bun run build:examples` | Builds every example |
 
-To work on a single package, filter by name, for example `pnpm --filter @stet-css/engine test`.
+To work on a single package, filter by name, for example `bun run --filter @stet-css/engine test`.
 
 ## License
 

@@ -9,6 +9,6 @@ Owns the default stylesheet source in `src/*.css` (tokens, utilities, keyframes,
 
 ## Risks
 
-- **Generated artifacts** change only through source: edit `src/*.css`, then run `pnpm --filter @stet-css/preset generate`. Every artifact diff is a CSS output change and needs the source change that explains it.
+- **Generated artifacts** change only through source: edit `src/*.css`, then run `bun run --filter @stet-css/preset generate`. Every artifact diff is a CSS output change and needs the source change that explains it.
 - **Token namespaces** match the engine built-ins; add a namespace to the engine first.
 - **New utilities** climb the utility ladder in `AGENTS.md`; most land as engine aliases or `@utilities` entries in `src/utilities.css`.

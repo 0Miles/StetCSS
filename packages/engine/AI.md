@@ -15,4 +15,4 @@ Executes `MasterCSSManifest` values: class matching, value, selector, and condit
 
 ## Validation
 
-Once correctness checks pass, run `pnpm --filter @stet-css/engine bench` for changes to class matching, rule creation or generation, parsing, priority sorting, layer insertion, manifest loading or compilation, or caches and indexes. Report the bench result, `dist/core.js` raw/gzip/brotli size, memory, cold-start, and runtime CPU tradeoffs, and whether CSS output or cascade order changed; for runtime-covered changes, add the likely `@stet-css/runtime` browser bundle impact.
+Once correctness checks pass, run `bun run --filter @stet-css/engine bench` for changes to class matching, rule creation or generation, parsing, priority sorting, layer insertion, manifest loading or compilation, or caches and indexes. Report the bench result, `dist/core.js` raw/gzip/brotli size, memory, cold-start, and runtime CPU tradeoffs, and whether CSS output or cascade order changed; for runtime-covered changes, add the likely `@stet-css/runtime` browser bundle impact.

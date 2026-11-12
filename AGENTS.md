@@ -69,7 +69,7 @@ Model a preset utility with the lowest rung that expresses it, and state why eac
 
 ## Validation
 
-Run the affected packages' `lint`, `test`, and `type-check` scripts (`pnpm --filter <package> lint`), then widen to `pnpm check` when a change crosses packages. Parser, compiler, runtime, scanner, language tooling, and ESLint changes need focused tests.
+Run the affected packages' `lint`, `test`, and `type-check` scripts (`bun run --filter <package> lint`), then widen to `bun run check` when a change crosses packages. Parser, compiler, runtime, scanner, language tooling, and ESLint changes need focused tests.
 
 ## Reviews
 

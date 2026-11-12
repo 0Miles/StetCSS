@@ -15,4 +15,4 @@ Owns the SvelteKit integration: a Vite wrapper (`./vite`) that runs `@stet-css/v
 
 ## Validation
 
-Type-check with `pnpm --filter @stet-css/svelte check` (svelte-check). The package has no `type-check` script, so root `pnpm check` skips its types.
+Type-check with `bun run --filter @stet-css/svelte check` (svelte-check). The package has no `type-check` script, so root `bun run check` skips its types.
