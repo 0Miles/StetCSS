@@ -13,14 +13,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-env:
-  # Bun does not enforce packageManager or devEngines, so CI pins the version.
-  BUN_VERSION: 1.4.4
-
 jobs:
   checks:
     name: checks
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
         with:
@@ -30,65 +27,70 @@ jobs:
         with:
           node-version-file: .nvmrc
 
+      # Bun does not enforce packageManager, so CI installs the version it names.
       - uses: oven-sh/setup-bun@v2
+        id: bun
         with:
-          bun-version: ${{ env.BUN_VERSION }}
+          bun-version-file: package.json
 
       - name: Show toolchain versions
         run: |
           echo "node $(node --version)"
           echo "bun $(bun --version)"
 
-      - uses: actions/cache@v6
+      - name: Cache Bun packages
+        uses: actions/cache@v6
         with:
           path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ env.BUN_VERSION }}-${{ hashFiles('bun.lock') }}
+          key: ${{ runner.os }}-bun-${{ steps.bun.outputs.bun-version }}-${{ hashFiles('bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-bun-${{ env.BUN_VERSION }}-
+            ${{ runner.os }}-bun-${{ steps.bun.outputs.bun-version }}-
 
       - name: Install dependencies
-        id: install
         run: bun install --frozen-lockfile
 
       # `bun pm untrusted` exits 0 even when it lists packages, so judge its output.
       - name: Reject dependencies with blocked lifecycle scripts
         run: |
-          output=$(bun pm untrusted 2>&1)
+          output=$(bun pm untrusted 2>&1) || { echo "$output"; exit 1; }
           echo "$output"
           if ! grep -qxF 'Found 0 untrusted dependencies with scripts.' <<< "$output"; then
             echo "::error::bun pm untrusted listed packages whose lifecycle scripts were blocked. Review them and add the trusted ones to trustedDependencies in package.json."
             exit 1
           fi
 
-      # From here on each step runs even if an earlier check failed,
+      # From here on each step runs even if an earlier one failed,
       # so one run reports every failing suite.
-      - name: Resolve Playwright version
-        id: playwright
-        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
-        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/cache@v6
-        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+      # Browser builds are per OS image, so the key carries the image as well as the version.
+      - name: Resolve Playwright cache key
+        id: playwright
+        if: ${{ !cancelled() }}
+        run: echo "key=$ImageOS-playwright-$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        if: ${{ !cancelled() }}
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ steps.playwright.outputs.version }}
+          key: ${{ steps.playwright.outputs.key }}
 
       # Runtime e2e runs in Firefox; the vite and webpack tests in check and
       # the next e2e launch Chromium.
       - name: Install Playwright browsers
-        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        if: ${{ !cancelled() }}
         run: bun x --no-install playwright install --with-deps --only-shell chromium firefox
 
       - name: Check
-        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        if: ${{ !cancelled() }}
         run: bun run check -- --continue
 
       - name: Build examples
-        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        if: ${{ !cancelled() }}
         run: bun run build:examples -- --continue
 
       - name: E2E
-        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        if: ${{ !cancelled() }}
         run: bun run e2e
 
   # The only check branch protection requires; list every job in `needs`.
