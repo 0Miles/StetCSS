@@ -57,3 +57,41 @@ Used by `/wayfinder`. The **map** is a single issue with **child** issues as tic
 - **Frontier query**: list the map's open children (`gh issue list --state open`, scoped to the map's sub-issues / task list), drop any with an open blocker (see **Count open blockers**, or an open issue in the `Blocked by` line) or an assignee; first in map order wins.
 - **Claim**: `gh issue edit <n> --add-assignee @me`, the session's first write.
 - **Resolve**: `gh issue comment <n> --body "<answer>"`, then `gh issue close <n>`, then append a context pointer (gist + link) to the map's Decisions-so-far.
+
+## 什麼該變成票
+
+審查與實作途中的發現預設不開票，照順序判斷去處：
+
+1. **當場修掉**：三條都成立就改在手上的 diff 裡，commit 訊息帶一句。不確定算不算就是不算。
+   - 不改公開契約：產生的 CSS、class 語法、`@stet-css/*` 的公開 API 與型別、設定檔格式、CLI。
+   - 不需要新增測試。
+   - 小到寫票比改還貴。
+2. **開票**：滿足任一條。
+   - 擋住一張已經決定要做的票（寫出哪一張）。
+   - 對應一個已經觀察到的使用者可見錯誤行為（寫重現步驟或實際輸出，不是推論）。
+   - 是母票驗收區明文列出的項目（寫出母票與哪一項）。
+
+   「使用者」是 `AGENTS.md` 說的前端開發者，不含維護者。測試穩定性、殘留暫存檔、覆蓋率缺口傷的是跑測試的人，不記；哪天真的擋住一次合併，改走第一款。
+
+3. **其他不記**，尤其是「X 沒有判準／讀數／守門測試／型別上擋不住」。要變成票，必須指出一個因為缺它而實際漏掉的錯誤行為。
+
+代理不自己開票：把需要開的票列給維護者，標題用 `GLOSSARY.md` 的詞，逐項標明過的是哪一條，過不了的標「不記」。
+
+已經開出來的票過不了門檻時，以 `gh issue close <n> --reason "not planned"` 關掉，不掛 `wontfix`。留言寫過不了哪一條、缺什麼、什麼條件成立該重開。拒絕一個請求時，理由寫在關票留言，不另建紀錄。
+
+標籤是 `research` 或 `direction` 的票是筆記，不是工作票，不套用這一節。
+
+## Definition of Done
+
+PR 合併之後才走；合併前只把證據補到票上，不勾驗收、不關票。PR 正文用 `Refs #<n>` 連到票，不用 `Closes`，關票只在這裡決定。
+
+1. 跑完驗收所需的檢查（`dev-workflow.md`〈指令〉），確認票的範圍全部交付。
+2. 驗收區（`## Acceptance criteria` 底下的 checkbox）每一項有直接證據，才把 `- [ ]` 改成 `- [x]`，用 `gh issue edit <n> --body-file <file>` 更新全文；不改驗收項目的文字與驗收區以外的內容。仍有未勾項時票保持開啟，回報缺什麼。
+3. 留完成摘要：commit、完成的行為、逐項驗收證據、檢查結果、沒修的審查 finding 與理由、仍需揭露的限制。
+4. 關票：`gh issue close <n> --reason completed`。接手只用 assignee 表示，不用另外拿掉標籤。
+5. 讀回內文與狀態（`gh issue view <n> --json body,state`），確認驗收全部是 `[x]`、狀態是 `CLOSED`，才回報完成。
+
+母票（標籤 `epic` 的總票、規格票）等所有子票關閉才收：
+- 總票 `## 範圍（待展開）` 的 checkbox 照第 2 步的規則勾選。
+- 有 `## 完成條件` 的，每一條都要有證據，才留言並關閉。
+- 沒有 `## 完成條件` 的（例如規格票），子票都關閉後就留言並關閉。

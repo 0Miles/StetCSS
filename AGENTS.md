@@ -2,12 +2,20 @@
 
 StetCSS is a fork of Master CSS `v2.0.0-rc.88`: a markup-driven CSS engine where classes such as `fg:red:hover@sm` compile to CSS rules. Packages publish under `@stet-css/*`; `@stet-css/core` (`packages/core`) is the public facade.
 
+## Users
+
+The product's users are front-end developers who write StetCSS classes in their markup and install `@stet-css/*` packages: build plugins, the runtime, the CLI, and editor tooling. Maintainers are not users; "user experience" always means these developers.
+
+## Stop and ask
+
+Ask the maintainer before publishing anything outside this repo: npm packages, or the VS Code extension to the Marketplace or Open VSX (`release:vscode` without `--no-publish`). Merging a PR into `main` is not a stop point.
+
 ## Where things live
 
 - **Direction**: pinned issue #4 (`gh issue view 4`). Read it before adding or changing class syntax, dependencies, config files, or companion tools (editor extension, MCP, skills), and before porting an upstream Master CSS change.
 - **Package notes**: `packages/<name>/AI.md` and `benchmarks/AI.md` hold each package's boundaries, risks, and any validation beyond `lint`, `test`, and `type-check`.
 - **Research**: GitHub issues labelled `research`. Publish findings there, never as committed files; see `docs/agents/issue-tracker.md`.
-- **`docs/`**: version-controlled project documents only.
+- **`docs/`**: version-controlled project documents only. `docs/agents/` is the contract agent roles read (issue tracker, triage labels, dev workflow, testing, domain docs); `docs/adr/` holds ADRs.
 
 ## Before editing
 
@@ -69,7 +77,7 @@ Model a preset utility with the lowest rung that expresses it, and state why eac
 
 ## Validation
 
-Run the affected packages' `lint`, `test`, and `type-check` scripts (`bun run --filter <package> lint`), then widen to `bun run check` when a change crosses packages. Parser, compiler, runtime, scanner, language tooling, and ESLint changes need focused tests.
+While working, run the affected packages' `lint`, `test`, and `type-check` scripts (`bun run --filter <package> lint`) and the extra checks in their `AI.md`. Before opening a PR, run the full suite in `docs/agents/dev-workflow.md`〈指令〉. Parser, compiler, runtime, scanner, language tooling, and ESLint changes need focused tests.
 
 ## Reviews
 
@@ -85,6 +93,10 @@ Issues live in GitHub Issues for 0Miles/StetCSS (gh CLI). See `docs/agents/issue
 
 Default five-role vocabulary: needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix. See `docs/agents/triage-labels.md`.
 
+### Dev workflow and testing
+
+Commands, branches, merging, and acceptance runs are in `docs/agents/dev-workflow.md`; read `docs/agents/testing.md` before writing or reviewing tests.
+
 ### Domain docs
 
-Single-context: one root `GLOSSARY.md` plus `docs/adr/`. See `docs/agents/domain.md`.
+Single-context: one root `GLOSSARY.md` plus `docs/adr/`. See `docs/agents/domain.md`. `GLOSSARY.md` is the file devteam roles call `CONTEXT.md`; it does not exist yet and is created only when a term is resolved.
