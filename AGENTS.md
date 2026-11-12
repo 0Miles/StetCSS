@@ -6,7 +6,7 @@ StetCSS is a fork of Master CSS `v2.0.0-rc.88`: a markup-driven CSS engine where
 
 - **Direction**: pinned issue #4 (`gh issue view 4`). Read it before adding or changing class syntax, dependencies, config files, or companion tools (editor extension, MCP, skills), and before porting an upstream Master CSS change.
 - **Package notes**: `packages/<name>/AI.md` and `benchmarks/AI.md` hold each package's boundaries, risks, and any validation beyond `lint`, `test`, and `type-check`.
-- **Research**: GitHub issues labelled `research`. Publish findings there, never as committed files; see `.agents/issue-tracker.md`.
+- **Research**: GitHub issues labelled `research`. Publish findings there, never as committed files; see `docs/agents/issue-tracker.md`.
 - **`docs/`**: version-controlled project documents only.
 
 ## Before editing
@@ -79,12 +79,12 @@ Lead with findings by severity: bugs, regressions, CSS output changes, public AP
 
 ### Issue tracker
 
-Issues live in GitHub Issues for 0Miles/StetCSS (gh CLI). See `.agents/issue-tracker.md`.
+Issues live in GitHub Issues for 0Miles/StetCSS (gh CLI). See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
-Default five-role vocabulary: needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix. See `.agents/triage-labels.md`.
+Default five-role vocabulary: needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 
-Single-context: one root `GLOSSARY.md` plus `docs/adr/`. See `.agents/domain.md`.
+Single-context: one root `GLOSSARY.md` plus `docs/adr/`. See `docs/agents/domain.md`.
