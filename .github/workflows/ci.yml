@@ -23,7 +23,8 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/install
+      - name: Set up toolchain and install dependencies
+        uses: ./.github/actions/install
 
       # From here on each step runs even if an earlier one failed,
       # so one run reports every failing suite.
@@ -71,11 +72,14 @@ jobs:
         with:
           persist-credentials: false
 
-      # Listed explicitly instead of `*`.
-      - uses: ./.github/actions/install
+      # Listed explicitly because `*` would also fetch packages for platforms
+      # the extension does not ship.
+      - name: Set up toolchain and install dependencies
+        uses: ./.github/actions/install
         with:
           install-flags: --os=win32 --os=darwin --os=linux --cpu=x64 --cpu=arm64 --cpu=arm --libc=glibc --libc=musl
 
+      # Runs even if the untrusted check failed, so one run reports both.
       # turbo builds the extension's dependencies first; --reporter=verbose
       # reaches only the vitest run and logs each test's result.
       - name: Test the VS Code extension
@@ -85,13 +89,16 @@ jobs:
       # The win32-x64 test skips instead of failing when that target's native
       # packages are missing, so a green test step does not prove the install
       # covered every target. This is the check release.js runs before
-      # packaging; it needs the build from the step above.
+      # packaging. It needs the build from the step above, so it runs only
+      # when every earlier step passed; after a failed build it would blame
+      # the install.
       - name: Require native packages for every VS Code target
         run: node --input-type=module -e "const core = await import('./packages/vscode/scripts/package-target-core.js'); core.assertRuntimePackagesResolvable(core.TARGETS)"
 
   # The only check branch protection requires. It also fails when a job is
   # missing from `needs`, because a job it does not wait for could fail
-  # without blocking the merge.
+  # without blocking the merge. Keep `if: always()`: without it a failed job
+  # makes required skip, and a skipped required check counts as passing.
   required:
     name: required
     needs: [checks, all-platforms]
