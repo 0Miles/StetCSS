@@ -23,41 +23,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-
-      # Bun does not enforce packageManager, so CI installs the version it names.
-      - uses: oven-sh/setup-bun@v2
-        id: bun
-        with:
-          bun-version-file: package.json
-
-      - name: Show toolchain versions
-        run: |
-          echo "node $(node --version)"
-          echo "bun $(bun --version)"
-
-      - name: Cache Bun packages
-        uses: actions/cache@v6
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ steps.bun.outputs.bun-version }}-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-${{ steps.bun.outputs.bun-version }}-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      # `bun pm untrusted` exits 0 even when it lists packages, so judge its output.
-      - name: Reject dependencies with blocked lifecycle scripts
-        run: |
-          output=$(bun pm untrusted 2>&1) || { echo "$output"; exit 1; }
-          echo "$output"
-          if ! grep -qxF 'Found 0 untrusted dependencies with scripts.' <<< "$output"; then
-            echo "::error::bun pm untrusted listed packages whose lifecycle scripts were blocked. Review them and add the trusted ones to trustedDependencies in package.json."
-            exit 1
-          fi
+      - uses: ./.github/actions/install
 
       # From here on each step runs even if an earlier one failed,
       # so one run reports every failing suite.
