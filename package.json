@@ -1,14 +1,28 @@
 {
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@11.9.0",
+  "packageManager": "bun@1.4.4",
   "devEngines": {
     "packageManager": {
-      "name": "pnpm",
-      "version": "11.9.0",
-      "onFail": "ignore"
+      "name": "bun",
+      "version": "1.4.4",
+      "onFail": "error"
     }
   },
+  "trustedDependencies": [
+    "@firebase/util",
+    "@parcel/watcher",
+    "@swc/core",
+    "@vscode/vsce-sign",
+    "esbuild",
+    "keytar",
+    "lmdb",
+    "msgpackr-extract",
+    "protobufjs",
+    "sharp",
+    "unrs-resolver",
+    "workerd"
+  ],
   "scripts": {
     "build": "node scripts/with-typescript-tooling-compat.mjs turbo run build --filter=\"./packages/*\"",
     "build:examples": "node scripts/with-typescript-tooling-compat.mjs turbo run build --filter=\"./examples/*\"",
@@ -100,5 +114,14 @@
     "typescript6": "npm:typescript@6.0.3",
     "vite": "^8.1.0",
     "vitest": "^4.1.9"
+  },
+  "workspaces": [
+    "packages/*",
+    "examples/*",
+    "benchmarks",
+    "shared"
+  ],
+  "overrides": {
+    "rolldown-plugin-dts": "0.27.4"
   }
 }

@@ -1,0 +1,11 @@
+[install]
+# Each package sees only the dependencies it declares, as under pnpm (ADR-0001).
+linker = "isolated"
+# Install only versions published at least 1 day (86400 seconds) ago.
+minimumReleaseAge = 86400
+# Exceptions to the release-age rule, each written as name@version.
+minimumReleaseAgeExcludes = []
+
+[run]
+# Run scripts and JS tools with Node, not the Bun runtime.
+bun = false
