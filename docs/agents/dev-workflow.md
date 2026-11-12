@@ -6,6 +6,7 @@
 
 - Node 24（`.nvmrc`）與 Bun 1.4.4（`package.json` 的 `packageManager`）。shell 先找到別的 Node 版本時，先切到 v24 再跑。
 - `bun.lock` 有變動時，或在新的 worktree 裡，先跑 `bun install --frozen-lockfile`。worktree 不共用 `node_modules`。
+- 第一次跑全套之前先裝 Playwright 的瀏覽器：`bun x --no-install playwright install --only-shell chromium firefox`。runtime 的 e2e 用 Firefox；`check` 裡 vite、webpack 的測試與 next 的 e2e 用 Chromium。
 
 **邊做邊驗**
 
@@ -22,7 +23,6 @@
 2. `bun run build:examples -- --continue`：建置 `examples/` 的每個範例。
 3. `bun run e2e`：先跑建置整合的 e2e，通過後再單獨跑 runtime 的 Playwright e2e。
    - 不要加參數：參數會接到 script 最後的 runtime e2e 上。
-   - 第一次跑之前先裝 Firefox：`bun x --no-install playwright install firefox`。
 4. 動到的每個套件，跑它 `packages/<name>/AI.md` 的「Validation」節另外要求的檢查。這些檢查不在 `check` 裡，例如：
    - svelte 用 `check`（svelte-check）做型別檢查，沒有 `type-check` script。svelte-check 用舊版 TypeScript 的編譯器 API，要經過相容包裝才跑得起來：`node scripts/with-typescript-tooling-compat.mjs bun run --filter @stet-css/svelte check`。
    - next 要跑 `dev:build`。
