@@ -14,4 +14,4 @@ Resolves a project's manifest: discovers **entry** CSS files, finds workspace ro
 - **Dependencies** come from compiler results, never from hardcoded package CSS filenames.
 - **CSS only**: manifests load from `.css` files; JavaScript/TypeScript manifest loading is intentionally unsupported.
 - **Load results**: `loadManifest()` and `loadProjectManifest()` return the compile result (`manifest` plus `dependencies`); read `.manifest` when that is all a call site needs.
-- **Manifest loading** feeds the CLI, ESLint, language server, VS Code, MCP, diagnostics, and the Vite, Webpack, Next, and Nuxt integrations, so a behaviour change here crosses packages.
+- **Manifest loading** feeds the CLI, ESLint, language server, VS Code, diagnostics, and the Vite, Webpack, Next, and Nuxt integrations, so a behaviour change here crosses packages.

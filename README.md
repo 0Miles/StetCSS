@@ -35,7 +35,7 @@ StetCSS is a fork of [Master CSS](https://github.com/master-co/css), branched fr
 | `@stet-css/runtime` | `packages/runtime` | Browser runtime |
 | `@stet-css/core` | `packages/core` | Public facade over engine and preset |
 
-Build integrations live in `packages/vite`, `webpack`, `next`, `nuxt`, `svelte`, `astro` and `cli`. Editor and lint tooling lives in `packages/language*`, `eslint-*`, `lint`, `validator`, `diagnostics`, `mcp` and `vscode`.
+Build integrations live in `packages/vite`, `webpack`, `next`, `nuxt`, `svelte`, `astro` and `cli`. Editor and lint tooling lives in `packages/language*`, `eslint-*`, `lint`, `validator`, `diagnostics` and `vscode`.
 
 ## Development
 

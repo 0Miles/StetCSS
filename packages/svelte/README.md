@@ -54,17 +54,7 @@
 
 ## Installation
 
-```bash
-npx sv add @stet-css/sv
-```
-
-The Svelte CLI add-on installs `@stet-css/svelte`, wires Vite, creates the stylesheet entry, imports it from the root layout, and composes the SvelteKit server hook.
-
 `@stet-css/svelte` provides the SvelteKit Vite integration and server hook used at dev, build, and SSR time. Source extraction for `.svelte` files is handled automatically by `@stet-css/source`.
-
-## Manual setup
-
-Use this path when `sv add` is not available for the project.
 
 ```bash
 npm install @stet-css/core @stet-css/svelte

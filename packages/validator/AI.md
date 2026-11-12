@@ -1,6 +1,6 @@
 # @stet-css/validator
 
-Owns **CSS validity**: whether the CSS a class generates passes `css-tree` grammars for at-rules (names, preludes, descriptors) and declarations. It also owns `createCSSWithNativeDeclarations`, which plugs the `css-tree` native declaration matcher into `MasterCSS`; the scanner, server, stylesheet, CLI, MCP and ESLint plugin build their instances with it.
+Owns **CSS validity**: whether the CSS a class generates passes `css-tree` grammars for at-rules (names, preludes, descriptors) and declarations. It also owns `createCSSWithNativeDeclarations`, which plugs the `css-tree` native declaration matcher into `MasterCSS`; the scanner, server, stylesheet, CLI and ESLint plugin build their instances with it.
 
 ## Boundaries
 

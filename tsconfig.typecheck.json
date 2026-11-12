@@ -26,9 +26,6 @@
       "path": "./packages/eslint-plugin/tsconfig.typecheck.json"
     },
     {
-      "path": "./packages/figma/tsconfig.typecheck.json"
-    },
-    {
       "path": "./packages/integration/tsconfig.typecheck.json"
     },
     {
@@ -45,9 +42,6 @@
     },
     {
       "path": "./packages/lint/tsconfig.typecheck.json"
-    },
-    {
-      "path": "./packages/mcp/tsconfig.typecheck.json"
     },
     {
       "path": "./packages/next/tsconfig.typecheck.json"

@@ -1,6 +1,6 @@
 # @stet-css/lint
 
-Owns the framework-neutral **lint policy** that the ESLint plugin, CLI and MCP adapt: class sorting, conflict detection, validation diagnostics, canonical class and group suggestions, raw-value checks, whitespace-preserving class-list edits, and the default lint target settings. `lintMasterCSSContent` and `fixMasterCSSContent` take source text plus a `MasterCSS` instance and map class-list diagnostics and fixes onto source ranges.
+Owns the framework-neutral **lint policy** that the ESLint plugin and CLI adapt: class sorting, conflict detection, validation diagnostics, canonical class and group suggestions, raw-value checks, whitespace-preserving class-list edits, and the default lint target settings. `lintMasterCSSContent` and `fixMasterCSSContent` take source text plus a `MasterCSS` instance and map class-list diagnostics and fixes onto source ranges.
 
 ## Boundaries
 
