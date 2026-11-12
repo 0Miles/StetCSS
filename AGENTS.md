@@ -8,7 +8,12 @@ The product's users are front-end developers who write StetCSS classes in their 
 
 ## Stop and ask
 
-Ask the maintainer before publishing anything outside this repo: npm packages, or the VS Code extension to the Marketplace or Open VSX (`release:vscode` without `--no-publish`). Merging a PR into `main` is not a stop point.
+Ask the maintainer before:
+
+- publishing anything outside this repo: npm packages, or the VS Code extension to the Marketplace or Open VSX (`release:vscode` without `--no-publish`);
+- bypassing `main`'s branch protection with `gh pr merge --admin`.
+
+Merging a PR into `main` is not a stop point.
 
 ## Where things live
 

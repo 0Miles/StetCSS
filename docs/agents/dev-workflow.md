@@ -17,7 +17,7 @@
 
 **結束前的全套**
 
-這個 repo 沒有 CI，開 PR 前以下四條都要跑。
+開 PR 前，以下四條都要在本機跑。CI 會再跑前三條，但第 4 條只在本機跑，而且 CI 的結果要 push 之後才看得到。
 
 1. `bun run check -- --continue`：所有套件的 `test`、`lint`，以及有 `type-check` script 的套件的型別檢查。`--continue` 讓所有 task 跑完再回報。
 2. `bun run build:examples -- --continue`：建置 `examples/` 的每個範例。
@@ -28,12 +28,35 @@
    - next 要跑 `dev:build`。
    - engine 和 runtime 要跑 `bench`。
 
+**CI**
+
+`.github/workflows/ci.yml` 在每支 PR 開啟、重新開啟或有新的 push 時執行，每次推到 main 也執行。同一支 PR 有新的 push 時，舊的那次會被取消。每次都跑三個 job，不依改動範圍挑選：
+
+- `checks`：在 Linux 上跑全套的第 1 到 3 條。
+- `all-platforms`：裝齊 VS Code 擴充 9 個 target 的原生套件，跑 `master-css-vscode` 的測試，再確認每個 target 的原生套件都解析得到。
+- `required`：等其他 job 跑完，全部是 success 才是 success。分支保護只要求這個檢查，見〈分支、commit 與合併〉。
+
+兩個安裝相依的 job 裝完都跑 `bun pm untrusted`，輸出列出任何套件就失敗。
+
+看結果：
+
+- PR：`gh pr checks <n>` 列出每個 job 的結果與連結；`gh pr checks <n> --required` 只列 `required`。
+- 推到 main 的那次：`gh run list --workflow ci.yml --branch main`。
+- 失敗的 log：`gh run view <run-id> --log-failed`。`required` 的 log 會印出它等的每個 job 的結果。
+
+在 `ci.yml` 新增 job 時，同時加進 `required` 的 `needs`，否則 `required` 會失敗，並列出漏掉的 job。`required` 只比對 `ci.yml`，而且每個 job 都要是 success，所以：
+
+- 放在其他 workflow 檔的 job 擋不住合併。
+- `ci.yml` 裡只在特定事件才跑的 job，被跳過時 `required` 也會失敗。
+
 **判讀結果**
 
 - **已知失敗**：除了下面三項，其餘都要通過。
   - `build:examples` 的 `master-css-angular-example#build`：Angular CLI 要求 Node 24.15 以上（見 #22）。
   - `build:examples` 的 `master-css-nuxtjs-example#build`：nitro 打包時出現 `ENAMETOOLONG`（見 #22）。
   - svelte 的 `check`：`packages/svelte/src/lib/vite.ts` 有 2 個型別錯誤，因為 vite 8.0.16 和 8.1.0 兩份型別互不相容。
+
+  前兩項只在本機失敗：CI 的 Node 是最新的 24.x，路徑也短，兩個範例都建置得起來。CI 上這兩項失敗，就照回歸處理。
 - **回歸**：新出現的失敗重跑一次仍然失敗，才算回歸。
 
 ## 分支、commit 與合併
@@ -58,7 +81,9 @@
 
 - 指令：`gh pr merge <n> --rebase --delete-branch`。
 - 代理可以自己合併，不需要人工核准。`.claude/settings.json` 已經允許 `gh pr merge`。
-- main 沒有分支保護，也沒有必要檢查。合併前，自己確認〈指令〉的全套已經通過。
+- main 有分支保護，唯一的必要檢查是 CI 的 `required`。合併前 `required` 必須是 success：`gh pr checks <n> --required` 顯示 `pass`。還在跑就加 `--watch` 等它跑完；失敗就修好再 push。
+- `required` 不是 success 時，`gh pr merge` 會拒絕，並提示可以加 `--admin`。代理不用 `gh pr merge --admin`：它用管理員權限繞過分支保護。真的需要繞過時，先問維護者，見 `AGENTS.md` 的「Stop and ask」。
+- 合併前不必先跟上最新的 main。推到 main 之後，CI 會再跑一次。
 - 動到〈實機驗收〉列出的套件時，要先做完實機驗收才合併。
 
 **合併之後**
