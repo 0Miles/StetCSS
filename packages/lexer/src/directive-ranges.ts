@@ -11,6 +11,12 @@ import { MASTER_CSS_ENTRY_DIRECTIVE_NAME } from './css-manifest-entry'
 
 export type { CSSStatementEnd, SourceLocation, SourceRange } from './source'
 
+/**
+ * At-rule names that StetCSS tooling locates, reported as written. Whether a directive is valid
+ * where it appears is decided by its consumer. `dark` and `light` are not directives any more:
+ * they are located so local CSS that still uses them is sent to the compiler, which rejects them
+ * in favour of `@variant dark` and `@variant light`.
+ */
 export type CSSDirectiveRangeName =
   | 'master'
   | 'settings'
@@ -27,6 +33,8 @@ export type CSSDirectiveRangeName =
   | 'compose'
   | 'variant'
   | 'slot'
+  | 'dark'
+  | 'light'
 
 export interface CSSQuotedStringRange extends SourceRange {
   quote: '"' | '\''
@@ -68,14 +76,12 @@ export const CSS_DIRECTIVE_RANGE_NAMES = [
   'custom-variant',
   'compose',
   'variant',
-  'slot'
+  'slot',
+  'dark',
+  'light'
 ] as const
 
-const CSS_DIRECTIVE_VARIANT_SHORTHAND_NAME_SET = new Set<string>(['dark', 'light'])
-const CSS_DIRECTIVE_SOURCE_NAME_SET = new Set<string>([
-  ...CSS_DIRECTIVE_RANGE_NAMES,
-  ...CSS_DIRECTIVE_VARIANT_SHORTHAND_NAME_SET
-])
+const CSS_DIRECTIVE_SOURCE_NAME_SET = new Set<string>(CSS_DIRECTIVE_RANGE_NAMES)
 
 export function collectCSSQuotedStringRanges(source: string, start = 0, end = source.length) {
   const ranges: CSSQuotedStringRange[] = []
@@ -289,7 +295,7 @@ export function collectCSSDirectiveRanges(source: string) {
     ranges.push({
       start: index,
       end,
-      name: (CSS_DIRECTIVE_VARIANT_SHORTHAND_NAME_SET.has(name.value) ? 'variant' : name.value) as CSSDirectiveRangeName,
+      name: name.value as CSSDirectiveRangeName,
       keywordRange: {
         start: index,
         end: name.end

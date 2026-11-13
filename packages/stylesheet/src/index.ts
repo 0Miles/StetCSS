@@ -437,9 +437,15 @@ export function removeMasterStyleDirectives(source: string) {
   return removeStylesheetDirectiveStatements(source)
 }
 
+// Local styles go through the compiler when it has something to lower, or something to reject:
+// `@dark` and `@light` were folded into `@variant`, and passing them through would let the
+// browser drop them without an error.
+const LOCAL_STYLE_LOWERED_DIRECTIVE_NAMES = new Set(['compose', 'variant', 'reference'])
+const LOCAL_STYLE_REJECTED_DIRECTIVE_NAMES = new Set(['dark', 'light'])
+
 export function hasLocalStyleDirectives(source: string) {
   return collectCSSDirectiveRanges(source)
-    .some((directive) => directive.name === 'compose' || directive.name === 'variant' || directive.name === 'reference')
+    .some((directive) => LOCAL_STYLE_LOWERED_DIRECTIVE_NAMES.has(directive.name) || LOCAL_STYLE_REJECTED_DIRECTIVE_NAMES.has(directive.name))
 }
 
 function isStyleCSSHostImport(importSource: string, masterImport: string) {
