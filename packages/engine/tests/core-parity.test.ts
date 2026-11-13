@@ -109,11 +109,13 @@ describe.concurrent('default manifest utility parity', () => {
 
     expect(css.createRule('background:red')).toBeUndefined()
     expect(css.createRule('background:sm')).toBeUndefined()
-    expect(css.createRule('container:sm')?.text).not.toContain('var(--container-sm)')
-    expect(css.createRule('flex:sm')?.text).not.toContain('flex-basis')
-    expect(css.createRule('flex:md')?.text).not.toContain('flex-basis')
+    expect(css.generate('container:sm')).toEqual([])
+    expect(css.generate('flex:sm')).toEqual([])
+    expect(css.generate('flex:md')).toEqual([])
     expect(nativeCSS.createRule('background:red')?.text).toBe('.background\\:red{background:red}')
     expect(nativeCSS.createRule('container:inline-size')?.text).toBe('.container\\:inline-size{container:inline-size}')
+    expect(nativeCSS.createRule('container:sm')?.text).toBe('.container\\:sm{container:sm}')
+    expect(nativeCSS.createRule('flex:sm')?.text).toBe('.flex\\:sm{flex:sm}')
     expect(nativeCSS.createRule('flex:0|0|auto')?.text).toBe('.flex\\:0\\|0\\|auto{flex:0 0 auto}')
   })
 
@@ -652,10 +654,10 @@ describe.concurrent('manifest-driven layer and lifecycle parity', () => {
       .toMatchObject({ name: 'hidden_button[disabled]' })
     expect(css.createRulesFromSelectorText('.ml\\:-50px\\_\\:where\\(\\.code\\,\\.codeTabs\\,\\.demo\\)\\@\\<md')?.[0])
       .toMatchObject({ name: 'ml:-50px_:where(.code,.codeTabs,.demo)@<md' })
-    expect(css.createRulesFromSelectorText('.active .hidden\\:within\\(\\.active\\)')?.[0])
-      .toMatchObject({ name: 'hidden:within(.active)' })
-    expect(css.createRulesFromSelectorText('.dark .active .hidden\\:within\\(\\.active\\)\\@dark')?.[0])
-      .toMatchObject({ name: 'hidden:within(.active)@dark' })
+    expect(css.createRulesFromSelectorText('.active .hidden\\:of\\(\\.active\\)')?.[0])
+      .toMatchObject({ name: 'hidden:of(.active)' })
+    expect(css.createRulesFromSelectorText('.dark .active .hidden\\:of\\(\\.active\\)\\@dark')?.[0])
+      .toMatchObject({ name: 'hidden:of(.active)@dark' })
 
     const scopedManifest = cloneManifest()
     scopedManifest.settings = {

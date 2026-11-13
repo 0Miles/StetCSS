@@ -19,6 +19,7 @@ import collectVariableNames from './utils/collect-variable-names'
 import wrapConditions from './utils/wrap-conditions'
 import { createAlphaColorValue, createCSSVariableReference, createNegativeNumberVariableReference, createNumberVariableReference, normalizeEngineVariableValue } from './utils/css-variables'
 import collectAnimationNames from './utils/collect-animation-names'
+import { isKnownPseudoClass } from './pseudo-classes'
 
 type UtilityStateBranch = {
   selectorTemplate?: string
@@ -38,6 +39,31 @@ type ResolvedVariableAlias = {
 
 function isVariantToken(value: string): value is MasterCSSManifestVariantToken {
   return /^:{1,2}[-_a-zA-Z][-_a-zA-Z0-9]*$/.test(value) || /^@[-_a-zA-Z][-_a-zA-Z0-9]*$/.test(value)
+}
+
+/**
+ * A value cut off after `:` (`flex:col`, `top:48`) parses as a top-level
+ * single-colon pseudo-class ahead of any pseudo-element, so only those are
+ * checked. Pseudo-elements, the pseudo-classes that qualify one
+ * (`::scrollbar:horizontal`), and selectors inside `:is()` and similar
+ * parentheses are left to the browser.
+ */
+function hasUnknownPseudoClass(nodes: SelectorNode[], css: MasterCSS) {
+  let qualifiesPseudoElement = false
+  for (const node of nodes) {
+    if (node.type === 'pseudo-element') {
+      qualifiesPseudoElement = true
+    } else if (node.type === 'combinator' || node.type === 'separator') {
+      qualifiesPseudoElement = false
+    } else if (
+      node.type === 'pseudo-class'
+      && !qualifiesPseudoElement
+      && !isKnownPseudoClass(node.raw || ':' + node.value, css.selectors)
+    ) {
+      return true
+    }
+  }
+  return false
 }
 
 function matchesPatternUtilityName(className: string, name: string) {
@@ -711,9 +737,12 @@ export class Utility {
     let raw = ''
     const flushRaw = () => {
       if (!raw) return
-      const rawSelector = generateSelector(parseSelector(raw, this.css), '&')
+      const rawNodes = parseSelector(raw, this.css)
+      const rawSelector = generateSelector(rawNodes, '&')
+      const unknownPseudoClass = hasUnknownPseudoClass(rawNodes, this.css)
       branches = branches.map((branch) => ({
         ...branch,
+        ...(unknownPseudoClass ? { valid: false } : {}),
         key: branch.key + raw,
         selectorTemplate: composeSelectorTemplate(branch.selectorTemplate, rawSelector),
         selectorNodes: parseSelector((branch.selectorTemplate

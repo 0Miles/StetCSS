@@ -50,7 +50,7 @@ function expectToken(tokens: { text: string, type: string, modifiers: string[] }
 
 test.concurrent('renders semantic tokens for class attributes', () => {
   const { tokens } = renderTokens(
-    '<div className="fg:brand:hover@sm block block:hover block:state-name hidden_div::before:of(.active) m:4x bg:rgb(0|0|0) w:0.625rem::scrollbar btn btn:hover@sm btn_div::before"></div>',
+    '<div className="fg:brand:hover@sm block block:hover block:focus-visible block:state-name hidden_div::before:of(.active) m:4x bg:rgb(0|0|0) w:0.625rem::scrollbar btn btn:hover@sm btn_div::before"></div>',
     'tsx',
     {
       manifest: createPresetManifest({
@@ -75,7 +75,9 @@ test.concurrent('renders semantic tokens for class attributes', () => {
   expectToken(tokens, 'hover', 'modifier', ['pseudoClass'])
   expectToken(tokens, '@sm', 'keyword', ['query'])
   expectToken(tokens, 'block', 'enumMember')
-  expectToken(tokens, 'state-name', 'modifier', ['pseudoClass'])
+  expectToken(tokens, 'focus-visible', 'modifier', ['pseudoClass'])
+  // `state-name` is no pseudo-class, so `block:state-name` generates no rule and is not highlighted.
+  expect(tokens.some(({ text }) => text === 'state-name')).toBe(false)
   expectToken(tokens, 'hidden', 'enumMember')
   expectToken(tokens, '_', 'operator', ['selector', 'selectorCombinator'])
   expectToken(tokens, 'div', 'type', ['selector'])
@@ -125,7 +127,8 @@ test.concurrent('renders semantic tokens for CSS-like values', () => {
   expectToken(tokens, 'code', 'type', ['selector'])
   expectToken(tokens, ',', 'operator', ['selector', 'selectorPunctuation'])
   expectToken(tokens, 'pre', 'type', ['selector'])
-  expectToken(tokens, 'headings', 'modifier', ['pseudoClass'])
+  // `:headings` is no pseudo-class, so `font:semibold_:headings` generates no rule and is not highlighted.
+  expect(tokens.some(({ text }) => text === 'headings')).toBe(false)
   expectToken(tokens, 'h1', 'type', ['selector'])
   expectToken(tokens, 'h2', 'type', ['selector'])
   expectToken(tokens, 'h3', 'type', ['selector'])

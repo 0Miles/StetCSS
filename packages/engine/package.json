@@ -78,6 +78,7 @@
     "@stet-css/schema": "workspace:^"
   },
   "devDependencies": {
-    "@stet-css/preset": "workspace:^"
+    "@stet-css/preset": "workspace:^",
+    "mdn-data": "^2.28.1"
   }
 }
