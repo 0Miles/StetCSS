@@ -89,7 +89,6 @@
         "@stet-css/project": "workspace:^",
         "@stet-css/runtime": "workspace:^",
         "@stet-css/scanner": "workspace:^",
-        "@stet-css/server": "workspace:^",
         "@stet-css/stylesheet": "workspace:^",
         "@stet-css/vite": "workspace:^",
         "@tailwindcss/cli": "^4.3.1",
