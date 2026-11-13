@@ -12,15 +12,7 @@ import {
   normalizeMasterCSSModuleIds
 } from '@stet-css/lexer'
 import { stripResourceQuery } from '@stet-css/integration/manifest-module'
-
-const CSS_MANIFEST_ENTRY_IGNORED_DIRECTORIES = new Set([
-  'node_modules',
-  'dist',
-  'out',
-  '.next',
-  '.nuxt',
-  '.svelte-kit'
-])
+import { isIgnoredProjectDirectory } from './sources'
 
 const MASTER_CSS_PACKAGE_NAME_PATTERN = /^@stet-css\/(?!eslint-|create$)/
 
@@ -56,13 +48,13 @@ export function hasMasterCSSManifestEntrypoint(source: string) {
   }
 }
 
-async function collectCSSManifestEntryFiles(directory: string, entries: string[]) {
+async function collectCSSManifestEntryFiles(root: string, directory: string, entries: string[]) {
   try {
     for (const dirent of await readdir(directory, { withFileTypes: true })) {
       const file = join(directory, dirent.name)
       if (dirent.isDirectory()) {
-        if (CSS_MANIFEST_ENTRY_IGNORED_DIRECTORIES.has(dirent.name)) continue
-        await collectCSSManifestEntryFiles(file, entries)
+        if (isIgnoredProjectDirectory(relative(root, file))) continue
+        await collectCSSManifestEntryFiles(root, file, entries)
         continue
       }
       if (!dirent.isFile() || extname(dirent.name) !== '.css') continue
@@ -79,13 +71,13 @@ async function collectCSSManifestEntryFiles(directory: string, entries: string[]
   }
 }
 
-function collectCSSManifestEntryFilesSync(directory: string, entries: string[]) {
+function collectCSSManifestEntryFilesSync(root: string, directory: string, entries: string[]) {
   try {
     for (const dirent of readdirSync(directory, { withFileTypes: true })) {
       const file = join(directory, dirent.name)
       if (dirent.isDirectory()) {
-        if (CSS_MANIFEST_ENTRY_IGNORED_DIRECTORIES.has(dirent.name)) continue
-        collectCSSManifestEntryFilesSync(file, entries)
+        if (isIgnoredProjectDirectory(relative(root, file))) continue
+        collectCSSManifestEntryFilesSync(root, file, entries)
         continue
       }
       if (!dirent.isFile() || extname(dirent.name) !== '.css') continue
@@ -104,13 +96,15 @@ function collectCSSManifestEntryFilesSync(directory: string, entries: string[]) 
 
 export async function findCSSManifestEntryFiles(projectDir = process.cwd()) {
   const entries: string[] = []
-  await collectCSSManifestEntryFiles(resolve(projectDir), entries)
+  const root = resolve(projectDir)
+  await collectCSSManifestEntryFiles(root, root, entries)
   return entries.sort()
 }
 
 export function findCSSManifestEntryFilesSync(projectDir = process.cwd()) {
   const entries: string[] = []
-  collectCSSManifestEntryFilesSync(resolve(projectDir), entries)
+  const root = resolve(projectDir)
+  collectCSSManifestEntryFilesSync(root, root, entries)
   return entries.sort()
 }
 
@@ -134,13 +128,13 @@ function hasMasterCSSDependency(packageJSON: PackageJSON) {
   })
 }
 
-async function collectMasterCSSPackageWorkspaceDirectories(directory: string, directories: Set<string>) {
+async function collectMasterCSSPackageWorkspaceDirectories(root: string, directory: string, directories: Set<string>) {
   try {
     for (const dirent of await readdir(directory, { withFileTypes: true })) {
       const file = join(directory, dirent.name)
       if (dirent.isDirectory()) {
-        if (CSS_MANIFEST_ENTRY_IGNORED_DIRECTORIES.has(dirent.name)) continue
-        await collectMasterCSSPackageWorkspaceDirectories(file, directories)
+        if (isIgnoredProjectDirectory(relative(root, file))) continue
+        await collectMasterCSSPackageWorkspaceDirectories(root, file, directories)
         continue
       }
       if (!dirent.isFile() || dirent.name !== 'package.json') continue
@@ -157,13 +151,13 @@ async function collectMasterCSSPackageWorkspaceDirectories(directory: string, di
   }
 }
 
-function collectMasterCSSPackageWorkspaceDirectoriesSync(directory: string, directories: Set<string>) {
+function collectMasterCSSPackageWorkspaceDirectoriesSync(root: string, directory: string, directories: Set<string>) {
   try {
     for (const dirent of readdirSync(directory, { withFileTypes: true })) {
       const file = join(directory, dirent.name)
       if (dirent.isDirectory()) {
-        if (CSS_MANIFEST_ENTRY_IGNORED_DIRECTORIES.has(dirent.name)) continue
-        collectMasterCSSPackageWorkspaceDirectoriesSync(file, directories)
+        if (isIgnoredProjectDirectory(relative(root, file))) continue
+        collectMasterCSSPackageWorkspaceDirectoriesSync(root, file, directories)
         continue
       }
       if (!dirent.isFile() || dirent.name !== 'package.json') continue
@@ -210,7 +204,7 @@ export async function findMasterCSSWorkspaceDirectories(rootDir = process.cwd())
   const root = resolve(rootDir)
   const directories = new Set<string>([root])
   const packageDirectories = new Set<string>()
-  await collectMasterCSSPackageWorkspaceDirectories(root, packageDirectories)
+  await collectMasterCSSPackageWorkspaceDirectories(root, root, packageDirectories)
   for (const directory of packageDirectories) {
     directories.add(directory)
   }
@@ -224,7 +218,7 @@ export function findMasterCSSWorkspaceDirectoriesSync(rootDir = process.cwd()) {
   const root = resolve(rootDir)
   const directories = new Set<string>([root])
   const packageDirectories = new Set<string>()
-  collectMasterCSSPackageWorkspaceDirectoriesSync(root, packageDirectories)
+  collectMasterCSSPackageWorkspaceDirectoriesSync(root, root, packageDirectories)
   for (const directory of packageDirectories) {
     directories.add(directory)
   }

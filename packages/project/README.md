@@ -118,6 +118,19 @@ import {
 
 `findCSSManifestEntryFiles(projectDir)` searches CSS files for entry markers. `findMasterCSSWorkspaceDirectories(rootDir)` creates workspace roots from discovered CSS entries and `package.json` files that declare Master CSS package dependencies.
 
+## Discover project source files
+
+Use `@stet-css/project/sources` for the project's own source files, the base of the static class set.
+
+```ts
+import {
+  findProjectSourceFiles,
+  isProjectSourceFile,
+} from '@stet-css/project/sources'
+```
+
+`findProjectSourceFiles(projectDir)` lists files with a source extension (`PROJECT_SOURCE_EXTENSIONS`) outside the ignored directories (`PROJECT_IGNORED_DIRECTORIES`: dependencies such as `node_modules` and `vendor`, version control, build output and tool caches, matched by name at any depth), skipping `*.d.ts`, `*.test.*` and `README.md` files. Symlinked files and directories are followed, except a link back to a directory it is already inside. `isProjectSourceFile(file, projectDir)` answers the same rule for one path. Entry and workspace discovery skip the same directories. `.gitignore` is not read.
+
 ## Manifest modules
 
 The module utilities define the manifest import contract used by official integrations. They live in `@stet-css/integration`; `@stet-css/project` owns loading and discovery.
