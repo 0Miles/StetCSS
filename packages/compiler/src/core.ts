@@ -148,14 +148,6 @@ const MASTER_CUSTOM_AT_RULES = {
     prelude: '*',
     body: 'style-block'
   },
-  dark: {
-    prelude: null,
-    body: 'style-block'
-  },
-  light: {
-    prelude: null,
-    body: 'style-block'
-  },
   slot: {
     prelude: null,
     body: null
@@ -178,10 +170,6 @@ const MANAGED_DEFINITION_DIRECTIVE_LAYERS = {
   components: 'components',
   utilities: 'utilities'
 } as const satisfies Record<ManagedDefinitionDirectiveName, CSSDirectiveLayerName>
-const MASTER_VARIANT_SHORTHAND_TOKENS = {
-  dark: '@dark',
-  light: '@light'
-} as const
 
 export interface CSSReferenceStatement extends CSSDirectiveReference {
   start: number
@@ -1364,39 +1352,37 @@ function createComposePlacementError(parsed: ParsedDirectives) {
   )
 }
 
-function getMasterVariantShorthandToken(name: string | undefined) {
-  return name && MASTER_VARIANT_SHORTHAND_TOKENS[name as keyof typeof MASTER_VARIANT_SHORTHAND_TOKENS]
+function assertNotRemovedVariantShorthand(rule: any) {
+  if (rule.type !== 'custom' && rule.type !== 'unknown') return
+  const name = rule.value?.name
+  if (name === 'dark' || name === 'light') {
+    throw new Error(`@${name} was removed; use @variant ${name} {} instead`)
+  }
 }
 
 function parseMasterVariantBlock(rule: any) {
+  assertNotRemovedVariantShorthand(rule)
   if (rule.type !== 'custom' && rule.type !== 'unknown') return
-  const shorthandToken = getMasterVariantShorthandToken(rule.value?.name)
-  if (!shorthandToken && rule.value?.name !== 'variant') return
-  const prelude = formatPrelude(rule.value.prelude)
-  if (shorthandToken && prelude) {
-    throw new Error(`@${rule.value.name} does not accept a prelude`)
-  }
-  const token = shorthandToken || prelude
+  if (rule.value?.name !== 'variant') return
+  const token = formatPrelude(rule.value.prelude)
   if (!token) {
     throw new Error('@variant requires a Master CSS variant')
   }
-  if (!shorthandToken) {
-    if (token.startsWith('@')) {
-      throw new Error(`@variant uses bare condition variant names: write "@variant ${token.slice(1)}"`)
-    }
-    if (token.startsWith('::') || token.startsWith(':')) {
-      throw new Error('@variant only applies condition variants. Use nested selectors directly for selector behavior.')
-    }
-    if (!/^\S+$/.test(token)) {
-      throw new Error('@variant requires a full condition variant token')
-    }
+  if (token.startsWith('@')) {
+    throw new Error(`@variant uses bare condition variant names: write "@variant ${token.slice(1)}"`)
+  }
+  if (token.startsWith('::') || token.startsWith(':')) {
+    throw new Error('@variant only applies condition variants. Use nested selectors directly for selector behavior.')
+  }
+  if (!/^\S+$/.test(token)) {
+    throw new Error('@variant requires a full condition variant token')
   }
   const rules = rule.value.body?.value
   if (!Array.isArray(rules)) {
     throw new Error('@variant requires a style block')
   }
   return {
-    token: shorthandToken || (token.startsWith(':') ? token : `@${token}`),
+    token: `@${token}`,
     rules: rules as Rule[]
   }
 }
@@ -2231,7 +2217,7 @@ function parseManagedPatternDefinitionRule(
 }
 
 function containsNativeStyleDirective(rule: Rule): boolean {
-  if ((rule.type === 'unknown' || rule.type === 'custom') && (rule.value?.name === 'compose' || rule.value?.name === 'variant' || rule.value?.name === 'slot' || getMasterVariantShorthandToken(rule.value?.name))) {
+  if ((rule.type === 'unknown' || rule.type === 'custom') && (rule.value?.name === 'compose' || rule.value?.name === 'variant' || rule.value?.name === 'slot')) {
     return true
   }
   if (rule.type === 'style') {
@@ -2452,6 +2438,7 @@ export function compileCSS(source: string, options: CompileCSSOptions = {}): Com
     customAtRules: MASTER_CUSTOM_AT_RULES,
     visitor: {
       Rule(rule: any) {
+        assertNotRemovedVariantShorthand(rule)
         if (ruleDepth === 0) {
           if (isCustomVariantDefinition(rule)) {
             parseVariantDefinition(rule, parsed)
