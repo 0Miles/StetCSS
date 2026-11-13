@@ -3,13 +3,8 @@ import { MasterCSS } from '@stet-css/core'
 import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 import { createRequire } from 'node:module'
 import {
-  extractClassCandidates,
-  astroAdapter,
-  htmlAdapter,
-  matchesSourceAdapter,
-  oxcAdapter,
-  svelteAdapter,
-  vueAdapter,
+  extractSourceClassCandidates,
+  resolveSourceAdapter,
   type SourceAdapter
 } from '@stet-css/source'
 import { Minimatch } from 'minimatch'
@@ -25,14 +20,6 @@ import {
   isClassExcludedByMatcher,
   type ClassExclusionMatcher
 } from './utils/class-exclusion'
-
-const builtInAdapters = [
-  vueAdapter(),
-  svelteAdapter(),
-  astroAdapter(),
-  htmlAdapter(),
-  oxcAdapter()
-]
 
 const sourceLikeExtensions = new Set([
   '.html',
@@ -151,9 +138,6 @@ export default class CSSScanner extends EventEmitter {
   /** Precompiled minimatch patterns for per-module allow/exclude checks. */
   private sourceMatchers?: SourceMatchers
   private sourceMatcherOptions?: Pick<ScannerOptions, 'exclude'>
-  /** Memoized adapter list so per-file extraction does not rebuild it. */
-  private sourceAdapters?: SourceAdapter[]
-  private sourceAdapterOptions?: ScannerOptions['adapters']
   /** Pre-split class exclusion matchers for `scan()` hot path. */
   private classExclusionMatcher?: ClassExclusionMatcher
   private classExclusionOptions?: ScannerOptions['blocklist']
@@ -187,8 +171,6 @@ export default class CSSScanner extends EventEmitter {
     this.resetDependencies = []
     this.sourceMatchers = undefined
     this.sourceMatcherOptions = undefined
-    this.sourceAdapters = undefined
-    this.sourceAdapterOptions = undefined
     this.classExclusionMatcher = undefined
     this.classExclusionOptions = undefined
     this.nativeClassNames = new Set()
@@ -213,8 +195,6 @@ export default class CSSScanner extends EventEmitter {
     this.resetDependencies = []
     this.sourceMatchers = undefined
     this.sourceMatcherOptions = undefined
-    this.sourceAdapters = undefined
-    this.sourceAdapterOptions = undefined
     this.classExclusionMatcher = undefined
     this.classExclusionOptions = undefined
     this.initialized = false
@@ -237,8 +217,6 @@ export default class CSSScanner extends EventEmitter {
     this.resetDependencies = []
     this.sourceMatchers = undefined
     this.sourceMatcherOptions = undefined
-    this.sourceAdapters = undefined
-    this.sourceAdapterOptions = undefined
     this.classExclusionMatcher = undefined
     this.classExclusionOptions = undefined
     this.removeAllListeners()
@@ -267,10 +245,7 @@ export default class CSSScanner extends EventEmitter {
     if (!source || !content) {
       return []
     }
-    const adapter = this.resolveSourceAdapter(source)
-    const extractedClasses = adapter
-      ? await adapter.extract({ source, content })
-      : extractClassCandidates(content)
+    const extractedClasses = await extractSourceClassCandidates({ source, content }, this.options.adapters)
     const latentClasses: string[] = []
     for (const eachLatentClasses of extractedClasses) {
       if (this.latentClasses.has(eachLatentClasses)) {
@@ -371,15 +346,7 @@ export default class CSSScanner extends EventEmitter {
   }
 
   resolveSourceAdapter(source: string): SourceAdapter | undefined {
-    if (!this.sourceAdapters || this.sourceAdapterOptions !== this.options.adapters) {
-      this.sourceAdapterOptions = this.options.adapters
-      this.sourceAdapters = [
-        ...(this.options.adapters || []),
-        ...builtInAdapters
-      ]
-    }
-    const adapters = this.sourceAdapters
-    return adapters.find((adapter) => matchesSourceAdapter(adapter, source))
+    return resolveSourceAdapter(source, this.options.adapters)
   }
 
   private getSourceMatchers(): SourceMatchers {
