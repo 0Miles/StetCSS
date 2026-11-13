@@ -109,8 +109,8 @@ describe('static class set', () => {
    * Guards that `@source not` removes a project file from the class set, so a fixture or
    * legacy template the user opted out of does not add rules.
    * Reverse check: skipping the `@source not` filter on listed files turns every `@source not`
-   * test red: this one, two in `directives.test.ts`, the native CSS test, the per-path test,
-   * and the CLI and `inspect` tests.
+   * test red: this one, two in `directives.test.ts`, the native CSS test, the multi-entry
+   * test, the per-path test, and the CLI and `inspect` tests.
    */
   it('drops classes from files excluded with @source not', async () => {
     const root = createProject({
@@ -134,8 +134,8 @@ describe('static class set', () => {
    * Guards that `@blocklist` wins over every way a class is detected, including the module
    * scan a build integration still runs, and that `@safelist` classes are generated with no
    * file using them.
-   * Reverse check: returning the scope's classes without the `@blocklist` filter turns this test
-   * and the imported-directives test in `directives.test.ts` red.
+   * Reverse check: returning the scope's classes without the `@blocklist` filter turns this test,
+   * the multi-entry test and the imported-directives test in `directives.test.ts` red.
    */
   it('blocks @blocklist classes from every detection path and always generates @safelist', async () => {
     const root = createProject({
@@ -158,6 +158,39 @@ describe('static class set', () => {
     expect(css).toContain(rule('block'))
     expect(css).toContain(rule('m:4x'))
     expect(css).toContain(rule('p:2x'))
+  })
+
+  /**
+   * Guards that `@blocklist` and `@source not` hold for the whole output when a project has
+   * several CSS entries: every entry shares one generated CSS, so an entry that does not
+   * repeat the directive must not bring the blocked class or the excluded file's classes
+   * back, in generated rules or in its own native CSS.
+   * Reverse check: merging only the last entry's directives turns only this test red.
+   */
+  it('applies one entry\'s @blocklist and @source not to every entry', async () => {
+    const root = createProject({
+      'src/app.tsx': 'export const App = () => <main class="fg:red block"></main>',
+      'src/legacy/page.html': '<div class="m:4x legacy-card"></div>'
+    })
+    const scanner = new CSSScanner({ verbose: 0 }, root)
+    await scanner.init()
+    const styleCSSSources: StyleCSSSources = new Map()
+    await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'src/a.css'), `
+      @import "@stet-css/core";
+      @blocklist 'fg:red';
+      @source not './legacy';
+    `, { projectDir: root })
+    await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'src/b.css'), `
+      @import "@stet-css/core";
+      .legacy-card { color: blue; }
+    `, { projectDir: root })
+
+    const css = await createExtractedCSS({ scanner, styleCSSSources, projectDir: root })
+
+    expect(css).toContain(rule('block'))
+    expect(css).not.toContain(rule('fg:red'))
+    expect(css).not.toContain(rule('m:4x'))
+    expect(css).not.toContain('.legacy-card')
   })
 
   /**
