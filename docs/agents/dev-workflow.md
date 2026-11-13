@@ -121,7 +121,7 @@
    | svelte | `examples/svelte` |
    | integration | `examples/blank` |
 
-3. 在瀏覽器打開頁面，加上或修改受影響的 class，核對產生的 CSS 規則和計算後的樣式符合改動的宣稱。runtime 的改動還要確認：動態加進 DOM 的 class 也會產生規則。
+3. 在瀏覽器打開頁面，加上或修改受影響的 class，核對產生的 CSS 規則和計算後的樣式符合改動的宣稱。runtime 的改動還要確認：動態加進 DOM 的 class 也會產生規則。`examples/lit` 的 runtime 只掛在 `<my-element>` 上，動態 class 要加在它的 shadow DOM 裡；頁面其他地方的 class 由 build 時的 static CSS 提供。
 4. 停掉服務，確認 `git status` 沒有多出追蹤中的改動。
 
 **範圍**
