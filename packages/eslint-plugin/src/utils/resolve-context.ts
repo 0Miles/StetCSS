@@ -57,9 +57,21 @@ function resolveWorkspaceDirectory(context: RuleContext<any, any[]>, filename: s
   return closestDirectory || cwd
 }
 
-function resolvePlan(workspaceDir: string) {
-  const result = loadProjectManifestSync(workspaceDir)
-  return result.entries.length ? result.manifest : undefined
+function getWorkspaceCSS(workspaceDir: string) {
+  let css = cssByWorkspaceDirectory.get(workspaceDir)
+  if (!css) {
+    const result = loadProjectManifestSync(workspaceDir)
+    css = createCSSWithNativeDeclarations(result.entries.length ? result.manifest : defaultManifest)
+    cssByWorkspaceDirectory.set(workspaceDir, css)
+  }
+  return css
+}
+
+// Text without a file on disk has no workspace, so it never shares the per-workspace cache.
+let defaultCSS: MasterCSS | undefined
+function getDefaultCSS() {
+  defaultCSS ??= createCSSWithNativeDeclarations(defaultManifest)
+  return defaultCSS
 }
 
 export default function resolveContext(context: RuleContext<any, any[]>) {
@@ -69,14 +81,9 @@ export default function resolveContext(context: RuleContext<any, any[]>) {
   }
   const resolvedSettings = Object.assign({}, settings, userSettings)
   const filename = getContextFilename(context)
-  const workspaceDir = filename ? resolveWorkspaceDirectory(context, filename) : context.cwd || process.cwd()
-  let css = cssByWorkspaceDirectory.get(workspaceDir)
-
-  if (!css) {
-    const manifest = filename ? resolvePlan(workspaceDir) : undefined
-    css = createCSSWithNativeDeclarations(manifest || defaultManifest)
-    cssByWorkspaceDirectory.set(workspaceDir, css)
-  }
+  const css = filename
+    ? getWorkspaceCSS(resolveWorkspaceDirectory(context, filename))
+    : getDefaultCSS()
 
   return {
     settings: resolvedSettings,
