@@ -4,7 +4,7 @@ The command-line entry. The root command scans sources and writes extracted CSS,
 
 ## Boundaries
 
-- Extraction and validation → `@stet-css/scanner`; CSS composition (`createExtractedCSS`) → `@stet-css/stylesheet`; manifest entries → `@stet-css/project`.
+- Which files and classes the root command reads, and CSS composition (`createExtractedCSS`, `resolveStylesheetSourceFiles`) → `@stet-css/stylesheet`; the root command does not glob or scan sources itself, and passes source path arguments as `sources`. Manifest entries → `@stet-css/project`.
 - Lint rules → `@stet-css/lint`; inspection reports → `@stet-css/diagnostics`.
 
 ## Risks
@@ -12,8 +12,8 @@ The command-line entry. The root command scans sources and writes extracted CSS,
 - **Command surface**: one package-name binary (string `bin`), the root command, `lint` and `inspect`. `extract`, `render` and `scan` are removed and exit with an error. Add commands or aliases only when the task asks.
 - **`--no-export`** prints CSS to stdout and writes no file, even with an output path set.
 - **Default output** `master.css` (`src/constants.ts`) is user-facing; change it only on request.
-- **Watch**: a `resetDependencies` change closes every watcher, resets the scanner, rewrites output, and restarts watching.
-- **Globs**: patterns are normalised to `/` before fast-glob so Windows paths match.
+- **Watch**: a `resetDependencies` change closes every watcher, resets the scanner, rewrites output, and restarts watching. Source files are watched as the list `resolveStylesheetSourceFiles` returned at start; a new file is picked up after the next restart.
+- **Globs**: source path arguments are normalised to `/` so Windows paths match.
 
 ## Validation
 
