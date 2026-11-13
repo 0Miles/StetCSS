@@ -462,7 +462,6 @@
         "@stet-css/project": "workspace:^",
         "@stet-css/scanner": "workspace:^",
         "@stet-css/stylesheet": "workspace:^",
-        "fast-glob": "^3.3.3",
       },
     },
     "packages/engine": {

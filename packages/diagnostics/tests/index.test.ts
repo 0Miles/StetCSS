@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -102,6 +102,37 @@ describe('@stet-css/diagnostics', () => {
         filePath: resolve(cwd, 'index.css'),
         message: expect.stringContaining('default-mode')
       }))
+    } finally {
+      rmSync(cwd, { recursive: true, force: true })
+    }
+  })
+
+  /**
+   * Guards that `inspect` answers for the files the root command reads: a class only used in
+   * `build/` or in a file the entry excludes with `@source not` is not generated, so the
+   * report must call it missing instead of telling the user it is present.
+   * Reverse check: inspecting the old `**` glob without the entry's directives turns only
+   * this test red.
+   */
+  it('inspects the same source files the root command reads', async () => {
+    const cwd = createTempDir('master-css-diagnostics-sources-')
+    try {
+      mkdirSync(join(cwd, 'src/legacy'), { recursive: true })
+      mkdirSync(join(cwd, 'build'), { recursive: true })
+      writeFileSync(join(cwd, 'src/index.css'), '@import "@stet-css/core";\n@source not \'./legacy\';')
+      writeFileSync(join(cwd, 'src/page.html'), '<div class="block"></div>')
+      writeFileSync(join(cwd, 'src/legacy/page.html'), '<div class="m:4x"></div>')
+      writeFileSync(join(cwd, 'build/index.html'), '<div class="p:2x"></div>')
+      const report = await createMasterCSSInspectionReport({
+        cwd,
+        classes: 'block m:4x p:2x',
+        includeCss: true
+      })
+
+      expect(report.inputs.files).toStrictEqual([resolve(cwd, 'src/page.html')])
+      expect(report.css.text).not.toContain('m\\:4x')
+      expect(report.missingCSS.present.map((result) => result.className)).toStrictEqual(['block'])
+      expect(report.missingCSS.missing.map((result) => result.className)).toStrictEqual(['m:4x', 'p:2x'])
     } finally {
       rmSync(cwd, { recursive: true, force: true })
     }

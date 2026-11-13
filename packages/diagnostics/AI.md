@@ -1,6 +1,6 @@
 # @stet-css/diagnostics
 
-Owns the adapter-neutral **inspection report** behind the CLI `inspect` command: source pattern resolution, per-file scanner class state, managed stylesheet entries, generated CSS size, and missing-CSS classification for explicit class checks.
+Owns the adapter-neutral **inspection report** behind the CLI `inspect` command: per-file scanner class state for the files `@stet-css/stylesheet` resolves (the same files the root command reads), managed stylesheet entries, generated CSS size, and missing-CSS classification for explicit class checks.
 
 ## Boundaries
 
