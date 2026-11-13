@@ -10,7 +10,7 @@ npm install @stet-css/lexer
 
 ## Responsibility
 
-`@stet-css/lexer` identifies source ranges, directive boundaries, quoted strings, class lexical tokens, CSS manifest entry statements, and unit constants shared by Master CSS packages.
+`@stet-css/lexer` identifies source ranges, directive boundaries, quoted strings, class lexical tokens, CSS manifest entry statements, JS/TS nesting depth, and unit constants shared by Master CSS packages.
 
 It does not validate classes, generate CSS, resolve manifests, compile directives, or extract source-level class candidates.
 
@@ -32,6 +32,7 @@ Common uses:
 | Directive ranges | Locate CSS directives and quoted arguments without compiling them. |
 | Manifest entry scanners | Detect `@master entry;` and `@import '@stet-css/core'` entry markers. |
 | Class tokenizers | Split Master CSS class strings into lexical token ranges. |
+| Script nesting | `exceedsScriptNestingLimit` flags JS/TS nested too deep to hand to a native parser. |
 | Unit constants | Shared lexical constants for CSS units. |
 
 Use `@stet-css/source` for source-format-aware class candidate extraction.

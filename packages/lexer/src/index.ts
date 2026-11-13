@@ -19,4 +19,5 @@ export {
   type SourceLocation,
   type SourceRange
 } from './source'
+export { exceedsScriptNestingLimit } from './script-nesting'
 export * from './units'
