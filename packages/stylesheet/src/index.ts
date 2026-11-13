@@ -5,8 +5,10 @@ import {
   type CompileCSSResult
 } from '@stet-css/compiler'
 import {
+  createCSSImportGraphReader,
   isMasterCSSPackageStyleFile as isMasterCSSCompilerPackageStyleFile,
-  resolveMasterCSSPackageImportGraph
+  resolveMasterCSSPackageImportGraph,
+  type CSSImportGraphReader
 } from '@stet-css/compiler'
 import type { MasterCSSEmittedGlobals } from '@stet-css/core'
 import type { createCSSWithNativeDeclarations } from '@stet-css/validator/native-declaration'
@@ -237,6 +239,7 @@ function findImportStatements(source: string) {
 function resolveStyleCSSImportGraphFile(
   file: string,
   source: string,
+  readCSSImport: CSSImportGraphReader,
   dependencies: string[],
   dependencySet: Set<string>,
   stack: string[],
@@ -263,14 +266,14 @@ function resolveStyleCSSImportGraphFile(
     const packageGraph = options.expandMasterCSSPackage !== false && importSource && isMasterCSSManifestModuleId(importSource)
       ? resolveMasterCSSPackageImportGraph(projectDir)
       : undefined
-    if (packageGraph) {
+    if (packageGraph && importSource) {
       for (const dependency of packageGraph.dependencies) {
         if (!dependencySet.has(dependency)) {
           dependencySet.add(dependency)
           dependencies.push(dependency)
         }
       }
-      output += packageGraph.source
+      output += readCSSImport(importSource, packageGraph.source)
     } else if (importSource && isExpandableStyleImportSource(importSource)) {
       const importedFile = resolve(dirname(absoluteFile), importSource)
       if (!existsSync(importedFile)) {
@@ -278,7 +281,8 @@ function resolveStyleCSSImportGraphFile(
       }
       output += resolveStyleCSSImportGraphFile(
         importedFile,
-        readFileSync(importedFile, 'utf-8'),
+        readCSSImport(importedFile),
+        readCSSImport,
         dependencies,
         dependencySet,
         [...stack, absoluteFile],
@@ -306,8 +310,10 @@ export function resolveStyleCSSImportGraph(
       dependencies: [cleanStyleRequest(file)]
     }
   }
+  const filename = cleanStyleRequest(file)
+  const readCSSImport = createCSSImportGraphReader()
   return {
-    source: resolveStyleCSSImportGraphFile(cleanStyleRequest(file), source, dependencies, new Set(), [], projectDir, options),
+    source: resolveStyleCSSImportGraphFile(filename, readCSSImport(filename, source), readCSSImport, dependencies, new Set(), [], projectDir, options),
     dependencies
   }
 }

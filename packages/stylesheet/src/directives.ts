@@ -1,12 +1,14 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync } from 'node:fs'
 import { dirname, extname, isAbsolute, relative, resolve } from 'node:path'
 import fg from 'fast-glob'
 import {
   collectStandaloneCSSDirectiveExtractionPolicy,
   createCSSDirectiveExtractionPolicy,
+  createCSSImportGraphReader,
   findStandaloneCSSDirectiveStatements,
   mergeCSSDirectiveExtractionPolicy,
   removeStandaloneCSSDirectives,
+  type CSSImportGraphReader,
   type StandaloneCSSDirectiveStatement
 } from '@stet-css/compiler'
 import type { CSSDirectiveExtractionPolicy } from '@stet-css/schema/css-directives'
@@ -207,6 +209,7 @@ function findImportStatements(source: string) {
 function collectCSSGraphDirectivesFile(
   file: string,
   source: string,
+  readCSSImport: CSSImportGraphReader,
   cwd: string,
   dependencies: string[],
   dependencySet: Set<string>,
@@ -233,7 +236,8 @@ function collectCSSGraphDirectivesFile(
       directives,
       collectCSSGraphDirectivesFile(
         importedFile,
-        readFileSync(importedFile, 'utf-8'),
+        readCSSImport(importedFile),
+        readCSSImport,
         cwd,
         dependencies,
         dependencySet,
@@ -247,10 +251,12 @@ function collectCSSGraphDirectivesFile(
 export function collectStylesheetDirectivesFromCSSGraph(file: string, source?: string, cwd = process.cwd()): CollectedStylesheetDirectives {
   const dependencies: string[] = []
   const filename = resolve(file)
+  const readCSSImport = createCSSImportGraphReader()
   return {
     directives: collectCSSGraphDirectivesFile(
       filename,
-      source ?? readFileSync(filename, 'utf-8'),
+      readCSSImport(filename, source),
+      readCSSImport,
       cwd,
       dependencies,
       new Set(),
