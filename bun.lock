@@ -474,6 +474,7 @@
       },
       "devDependencies": {
         "@stet-css/preset": "workspace:^",
+        "mdn-data": "^2.28.1",
       },
     },
     "packages/eslint-config": {

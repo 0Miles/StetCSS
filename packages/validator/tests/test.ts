@@ -42,6 +42,8 @@ it('validates native CSS declarations through css-tree fallback', () => {
   expect(generateValidRules('color:oklch(63.7%|0.237|25.331)')[0]?.text)
     .toBe('.color\\:oklch\\(63\\.7\\%\\|0\\.237\\|25\\.331\\){color:oklch(63.7% 0.237 25.331)}')
   expect(generateValidRules('--foo:123')[0]?.text).toContain('{--foo:123}')
+  expect(generateValidRules('flex-wrap:nowrap')[0]?.text).toBe('.flex-wrap\\:nowrap{flex-wrap:nowrap}')
+  expect(generateValidRules('text-wrap:pretty')[0]?.text).toBe('.text-wrap\\:pretty{text-wrap:pretty}')
 
   expect(generateValidRules('$foo:123')).toHaveLength(0)
   expect(generateValidRules('mt:$(top)')).toHaveLength(0)
@@ -49,6 +51,19 @@ it('validates native CSS declarations through css-tree fallback', () => {
   expect(generateValidRules('float:banana')).toHaveLength(0)
   expect(generateValidRules('display:banana')).toHaveLength(0)
   expect(generateValidRules('d:banana')).toHaveLength(0)
+})
+
+/**
+ * Guards: lint and builds counted `flex:col` as valid because its value parsed
+ * as the pseudo-class `:col`. This runs the real css-tree matcher the build
+ * plugins and lint use, which the engine tests only imitate.
+ *
+ * Reverse check: removing the `valid: false` spread from `flushRaw` in
+ * `packages/engine/src/utility.ts` and rebuilding reddens all five rows and
+ * the `flex-wrap:nowrap` row of the css-tree fallback test.
+ */
+it.each(['flex:col', 'top:48', 'block:foo', 'fg:red:col', 'flex:col@sm'])('rejects %s, whose value parses as an unknown pseudo-class', (className) => {
+  expectClassInvalid(className)
 })
 
 it('fairly irregular classes can be ignored very well', () => {

@@ -1,6 +1,6 @@
 # @stet-css/engine
 
-Executes `MasterCSSManifest` values: class matching, value, selector, and condition parsing, rule priority and cascade layer insertion, variables, animations, hydration manifest generation, and CSS text. It also holds the **built-in registries** (key aliases, native value namespaces, namespaces), which manifests never carry.
+Executes `MasterCSSManifest` values: class matching, value, selector, and condition parsing, rule priority and cascade layer insertion, variables, animations, hydration manifest generation, and CSS text. It also holds the **built-in registries** (key aliases, native value namespaces, namespaces, selector aliases, pseudo-classes), which manifests never carry.
 
 ## Boundaries
 
