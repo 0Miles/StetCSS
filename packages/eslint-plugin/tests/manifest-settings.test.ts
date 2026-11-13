@@ -104,6 +104,67 @@ test('uses project-level CSS manifest entries from the ESLint workspace', async 
   }
 })
 
+function createWorkspaceESLint(cwd: string) {
+  return new ESLint({
+    cwd,
+    overrideConfigFile: true,
+    overrideConfig: [
+      {
+        files: ['**/*.jsx'],
+        plugins: {
+          '@stet-css': plugin
+        },
+        languageOptions: {
+          parserOptions: {
+            ecmaVersion: 2022,
+            sourceType: 'module',
+            ecmaFeatures: {
+              jsx: true
+            }
+          }
+        },
+        rules: {
+          '@stet-css/no-invalid-classes': ['error', { disallowUnknownClass: true }]
+        }
+      }
+    ]
+  })
+}
+
+/**
+ * Guards: in a long-running ESLint (an editor integration, eslint_d), checking text that has no
+ * file on disk yet, such as a new unsaved file, must not pin its workspace to the default preset.
+ * Otherwise every saved file of that workspace keeps reporting the CSS entry's own classes as
+ * unknown until the process restarts.
+ *
+ * Reverse check: caching the default preset under `context.cwd` again when there is no file on
+ * disk (`src/utils/resolve-context.ts`) fails only this test.
+ */
+test('keeps the CSS entry manifest for saved files after linting text without a file', async () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'master-css-eslint-'))
+
+  try {
+    writeFileSync(join(cwd, 'index.css'), `
+      @master entry;
+
+      @components {
+        fixture-button {
+          display: inline-flex;
+        }
+      }
+    `)
+    writeFileSync(join(cwd, 'index.jsx'), `<div className="fixture-button"></div>`)
+
+    const eslint = createWorkspaceESLint(cwd)
+    await eslint.lintText(`<div className="fixture-button"></div>`, { filePath: 'Unsaved.jsx' })
+    const [result] = await eslint.lintFiles('index.jsx')
+
+    expect(result.messages).toStrictEqual([])
+  } finally {
+    rmSync(cwd, { force: true, recursive: true })
+  }
+})
+
 test('does not match sibling workspace path prefixes', () => {
   const cwd = mkdtempSync(join(tmpdir(), 'master-css-eslint-'))
 
