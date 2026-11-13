@@ -75,7 +75,8 @@ function getClassTokensOnWorkerInChild(ext: string, content: string) {
  * Guards: an open JS/TS document nested deeper than oxc-parser's native stack
  * allows kills the language server with a signal no try/catch can catch, so
  * the editor loses every StetCSS feature until it restarts. Class positions
- * must still come back through the regex scan.
+ * must still come back through the regex scan. Reverse check: disabling the
+ * prescan in `createOxcClassPositions` turns only these six cases red.
  */
 describe.concurrent('documents nested 20,000 deep', () => {
   test.each(shapes)('%s survive class position scanning and keep their classes', async (_, ext, nest) => {
@@ -90,7 +91,10 @@ describe.concurrent('documents nested 20,000 deep', () => {
  * Guards: the nesting limit stays below the depth oxc survives on the smallest
  * stack. Each shape goes in at the deepest level the prescan still hands to
  * oxc, so an oxc upgrade that needs more stack per level, or a raised limit,
- * crashes here instead of in a user's editor or lint run.
+ * crashes here instead of in a user's editor or lint run. Reverse check:
+ * raising the limit to 2048 turns the arrays, type-arguments and
+ * template-literals cases red; arrows, conditionals and JSX still parse at
+ * 2048 on a worker stack.
  */
 describe.concurrent('documents at the deepest nesting oxc still parses', () => {
   test.each(shapes)('%s parse without crashing', async (_, ext, nest) => {
