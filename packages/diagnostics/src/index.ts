@@ -2,17 +2,14 @@ import CSSScanner, { type ScannerOptions } from '@stet-css/scanner'
 import {
   createExtractedCSSResult,
   registerStyleCSSSource,
+  resolveStylesheetSourceFiles,
   type StyleCSSSources
 } from '@stet-css/stylesheet'
 import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
-import fg from 'fast-glob'
 import fs from 'node:fs'
 import path from 'node:path'
 
 export const MASTER_CSS_INSPECTION_REPORT_VERSION = 1
-
-const DEFAULT_SOURCE_PATTERNS = ['**/*.{html,htm,js,jsx,cjs,ts,tsx,mts,cts,svelte,astro,vue,md,mdx,pug,php}']
-const DEFAULT_IGNORE_PATTERNS = ['**/node_modules/**', 'node_modules']
 
 export type MasterCSSInspectionDiagnosticSeverity = 'error' | 'warning'
 export type MasterCSSInspectionDiagnosticCode =
@@ -131,28 +128,34 @@ export interface MasterCSSInspectionReport {
 
 export interface CreateMasterCSSInspectionReportOptions {
   cwd?: string
+  /** Glob patterns that replace the project's own source files, as the root command's arguments do. */
   patterns?: string[]
   classes?: string[] | string
   includeCss?: boolean
+  /** Glob patterns, relative to `cwd`, removed from the inspected files. */
   ignore?: string[]
   resolveExistingFile?: (filePath: string) => string | Promise<string>
   validatePatterns?: (patterns: string[]) => void
-}
-
-function normalizeSourcePatterns(specifiedSourcePaths?: string[]) {
-  return specifiedSourcePaths?.length ? specifiedSourcePaths : DEFAULT_SOURCE_PATTERNS
 }
 
 function normalizeGlobPatterns(patterns: string[]) {
   return patterns.map((pattern) => pattern.replace(/\\/g, '/'))
 }
 
-function resolveSourcePaths(cwd: string, sourcePatterns: string[], ignore: string[] = []) {
-  return fg.sync(normalizeGlobPatterns(sourcePatterns), {
-    cwd,
-    ignore: normalizeGlobPatterns(ignore),
-    onlyFiles: true
-  }).filter(Boolean)
+/**
+ * The files the root command reads for the same patterns, as `cwd`-relative paths, minus
+ * any `ignore` patterns.
+ */
+async function resolveSourcePaths(
+  scanner: CSSScanner,
+  styleCSSSources: StyleCSSSources,
+  sources: string[] | undefined,
+  ignore: string[] = []
+) {
+  const ignorePatterns = normalizeGlobPatterns(ignore)
+  return (await resolveStylesheetSourceFiles({ scanner, styleCSSSources, projectDir: scanner.cwd, sources }))
+    .map((file) => path.relative(scanner.cwd, file).replace(/\\/g, '/'))
+    .filter((source) => !ignorePatterns.some((pattern) => path.matchesGlob(source, pattern)))
 }
 
 function sortedValues(values: Iterable<string>) {
@@ -392,8 +395,8 @@ function createEmptyReport(cwd: string, sourcePatterns: string[], classChecks: s
 export async function createMasterCSSInspectionReport(options: CreateMasterCSSInspectionReportOptions = {}): Promise<MasterCSSInspectionReport> {
   const cwd = path.resolve(options.cwd || process.cwd())
   const classChecks = parseClassChecks(options.classes)
-  const specifiedPatterns = options.patterns
-  const sourcePatterns = normalizeSourcePatterns(specifiedPatterns)
+  const sources = options.patterns?.length ? normalizeGlobPatterns(options.patterns) : undefined
+  const sourcePatterns = sources ?? []
   options.validatePatterns?.(sourcePatterns)
   const scanner = new CSSScanner({}, cwd)
   const styleCSSSources: StyleCSSSources = new Map()
@@ -401,12 +404,6 @@ export async function createMasterCSSInspectionReport(options: CreateMasterCSSIn
   const diagnostics: MasterCSSInspectionDiagnostic[] = []
 
   scanner.on('init', (scannerOptions: ScannerOptions) => {
-    if (!specifiedPatterns?.length) {
-      scannerOptions.exclude ??= []
-      for (const pattern of DEFAULT_IGNORE_PATTERNS) {
-        if (!scannerOptions.exclude.includes(pattern)) scannerOptions.exclude.push(pattern)
-      }
-    }
     scannerOptions.verbose = 0
   })
 
@@ -429,17 +426,14 @@ export async function createMasterCSSInspectionReport(options: CreateMasterCSSIn
       sourceKind: 'stylesheet' as const,
       filePath: error.filePath
     })))
-    const sourcePaths = resolveSourcePaths(
-      cwd,
-      sourcePatterns,
-      options.ignore ?? (specifiedPatterns?.length ? [] : scanner.options.exclude)
-    )
+    const sourcePaths = await resolveSourcePaths(scanner, styleCSSSources, sources, options.ignore)
     const resolvedSourcePaths = await Promise.all(sourcePaths.map((source) => resolveFilePath(cwd, source, options.resolveExistingFile)))
     const files = await Promise.all(sourcePaths.map((source, index) => scanSourceFile(scanner, source, resolvedSourcePaths[index], firstSourceByClass)))
     const cssResult = await createExtractedCSSResult({
       scanner,
       styleCSSSources,
-      projectDir: scanner.cwd
+      projectDir: scanner.cwd,
+      sources
     })
     const missingResults = classChecks.map((className) => classifyMissingCSS(scanner, className))
     diagnostics.push(...createScannerClassDiagnostics(scanner, firstSourceByClass))
