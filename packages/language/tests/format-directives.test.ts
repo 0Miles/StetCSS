@@ -45,6 +45,17 @@ test.concurrent('normalizes directive spacing without changing block contents', 
     .toBe('@theme dark { .x { color: red; } @slot; }')
 })
 
+/**
+ * Prevents: formatting breaking image paths that contain `@dark` / `@light`. The lexer still
+ * locates those names so local CSS using the removed blocks reaches the compiler, but they are
+ * not directives: an unquoted `url(moon@light.png)` must not become `url(moon@light .png)`.
+ */
+test.concurrent('does not split url() paths that contain @dark or @light', () => {
+  const source = '.a { background: url(icons/moon@light.png); }\n.logo { background: url(logo@dark.svg); }'
+
+  expect(format(source)).toBe(source)
+})
+
 test.concurrent('ignores directives inside comments and strings', () => {
   expect(format('/* @compose bg:red !; */\n.x::before { content: "@compose bg:red !;"; @compose bg:blue !; }'))
     .toBe('/* @compose bg:red !; */\n.x::before { content: "@compose bg:red !;"; @compose bg:blue!; }')

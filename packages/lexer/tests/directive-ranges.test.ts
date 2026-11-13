@@ -46,13 +46,18 @@ test.concurrent('collects nested Master directive ranges without treating host a
   expect(source.slice(ranges[2].preludeRange.start, ranges[2].preludeRange.end).trim()).toBe('hidden')
 })
 
-test.concurrent('collects dark and light shorthand ranges as variant directives', () => {
+/**
+ * Prevents: the range names `@stet-css/lexer` publishes for the removed `@dark` / `@light` blocks
+ * drifting. Reported as `variant`, directive formatting treats them as directives and rewrites
+ * `url(moon@light.png)` to `url(moon@light .png)`; not reported at all, a local CSS file whose
+ * only directive is `@dark {}` skips the compiler and its removal error.
+ */
+test.concurrent('collects dark and light ranges under their own names', () => {
   const source = '.card { @dark { @compose fg:white; } @light { color: black; } }'
   const ranges = collectCSSDirectiveRanges(source)
 
-  expect(ranges.map((range) => range.name)).toEqual(['variant', 'compose', 'variant'])
+  expect(ranges.map((range) => range.name)).toEqual(['dark', 'compose', 'light'])
   expect(source.slice(ranges[0].keywordRange.start, ranges[0].keywordRange.end)).toBe('@dark')
-  expect(source.slice(ranges[0].preludeRange.start, ranges[0].preludeRange.end).trim()).toBe('')
   expect(source.slice(ranges[2].keywordRange.start, ranges[2].keywordRange.end)).toBe('@light')
 })
 

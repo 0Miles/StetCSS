@@ -90,6 +90,10 @@ function formatDirectivePrelude(source: string, directive: CSSDirectiveRuleRange
       return formatComposePrelude(source, directive)
     case 'safelist':
       return formatSafelistPrelude(source, directive)
+    case 'dark':
+    case 'light':
+      // Removed in favour of `@variant dark` / `@variant light`; the compiler rejects them.
+      return
     default:
       return normalizePreludeText(source, directive)
   }
