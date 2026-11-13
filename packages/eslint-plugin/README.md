@@ -164,7 +164,7 @@ export default defineConfig([
 
 For example, this rule can fix `text-align:center` to `text-center`, `font:16px` to `font:md`, `margin:md` to `m:md`, `m:1rem|1.5rem` to `m:md|lg`, `fg:var(--color-red-60)` to `fg:red-60`, `w:md h:md` to `size:md`, `mt:md mb:md` to `my:md`, and `block@dark@sm` to `block@sm@dark`.
 
-The same canonicalization applies to unquoted `@compose` class lists. In CSS, declaration-like classes are moved to native declarations and suffixes are moved to `@variant`, `@dark`, or `@light` blocks when the rewrite is safe.
+The same canonicalization applies to unquoted `@compose` class lists. In CSS, declaration-like classes are moved to native declarations and suffixes are moved to `@variant` blocks, such as `@variant dark {}`, when the rewrite is safe.
 
 Standalone CSS files are included by default when using `@stet-css/eslint-config`:
 

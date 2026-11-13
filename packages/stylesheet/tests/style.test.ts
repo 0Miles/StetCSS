@@ -415,6 +415,18 @@ describe('style CSS extraction helpers', () => {
     expect(result.dependencies).toContain(tokenPath)
   })
 
+  /**
+   * Prevents: a component CSS file whose only directive is the removed `@dark {}` or `@light {}`
+   * skipping the compiler, so it reaches the browser unchanged and the dark or light styles
+   * silently disappear instead of failing the build with the `@variant` rewrite.
+   * Reverse-checked: dropping `LOCAL_STYLE_REJECTED_DIRECTIVE_NAMES` from `hasLocalStyleDirectives`
+   * reds both cases plus the routing assertion in `detects local compose styles…`.
+   */
+  it.each(['dark', 'light'])('rejects a local style whose only directive is @%s', async (name) => {
+    await expect(transformLocalStyleCSS('/project/src/Button.module.css', `.button { @${name} { color: red; } }`))
+      .rejects.toThrow(`@variant ${name} {}`)
+  })
+
   it('leaves ordinary local CSS unchanged', async () => {
     const source = '.button { color: red; }'
     const result = await transformLocalStyleCSS('/project/src/Button.module.css', source)

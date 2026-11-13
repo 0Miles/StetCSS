@@ -585,18 +585,40 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     expect(result.manifestInput.utilities).toBeUndefined()
   })
 
-  test('lowers dark and light shorthand variant blocks like explicit variant blocks', () => {
-    const settings = `
+  /**
+   * Prevents: `@variant dark {}` / `@variant light {}` drifting from what the removed `@dark {}` /
+   * `@light {}` blocks generated, so a developer who follows the removal error and rewrites
+   * `@dark` as `@variant dark` gets different CSS. The expected strings are the output of the
+   * same source written with `@dark` / `@light` on main before the removal (3fcc78db5), under
+   * every mode trigger, in native rules, nested selectors, top-level blocks, and `@components`.
+   * Reverse-checked: `` `@${token}` `` changed to `` `${token}` `` in `parseMasterVariantBlock` reds
+   * all three rows plus the other `@variant` tests in compiler, project, vite and webpack; nothing
+   * reds this test alone, since no code is specific to dark or light any more.
+   */
+  test.each([
+    [
+      'class',
+      '.dark .card{display:block;color:#fff}.light .card:hover{color:red}.light .banner{display:none}',
+      '@layer components{.dark .panel{color:#fff}.light .panel{color:#000}}'
+    ],
+    [
+      'media',
+      '@media (prefers-color-scheme:dark){.card{display:block;color:#fff}}@media (prefers-color-scheme:light){.card:hover{color:red}}@media (prefers-color-scheme:light){.banner{display:none}}',
+      '@layer components{@media (prefers-color-scheme:dark){.panel{color:#fff}}@media (prefers-color-scheme:light){.panel{color:#000}}}'
+    ],
+    [
+      'host',
+      ':host(.dark) .card{display:block;color:#fff}:host(.light) .card:hover{color:red}:host(.light) .banner{display:none}',
+      '@layer components{:host(.dark) .panel{color:#fff}:host(.light) .panel{color:#000}}'
+    ]
+  ])('generates the removed @dark and @light output from @variant dark and light: %s trigger', (trigger, css, componentsLayer) => {
+    const result = compileCSSManifest(`
       @settings {
-        mode-trigger: class;
+        mode-trigger: ${trigger};
       }
 
       @theme light {}
       @theme dark {}
-      @theme chrisma {}
-    `
-    const explicit = compileCSSManifest(`
-      ${settings}
 
       @components {
         panel {
@@ -615,6 +637,12 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
           @compose block;
           color: white;
         }
+
+        &:hover {
+          @variant light {
+            color: red;
+          }
+        }
       }
 
       @variant light {
@@ -623,44 +651,39 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
         }
       }
     `, { baseManifest: defaultManifest })
-    const shorthand = compileCSSManifest(`
-      ${settings}
 
-      @components {
-        panel {
-          @dark {
-            color: white;
-          }
+    expect(result.css).toBe(css)
+    expect(createTestCSS(result.manifest).ensureClassRules('panel').componentsLayer.text).toBe(componentsLayer)
+  })
 
-          @light {
-            color: black;
-          }
-        }
-      }
-
-      .card {
-        @dark {
-          @compose block;
-          color: white;
-        }
-      }
-
-      @light {
-        .banner {
-          @compose hidden;
-        }
-      }
-    `, { baseManifest: defaultManifest })
-
-    const explicitCSS = createTestCSS(explicit.manifest).ensureClassRules('panel')
-    const shorthandCSS = createTestCSS(shorthand.manifest).ensureClassRules('panel')
-
-    expect(shorthand.css).toBe(explicit.css)
-    expect(shorthandCSS.componentsLayer.text).toBe(explicitCSS.componentsLayer.text)
-    expect(shorthand.css).toContain('.dark .card{display:block;color:#fff}')
-    expect(shorthand.css).toContain('.light .banner{display:none}')
-    expect(shorthandCSS.componentsLayer.text).toContain('.dark .panel{color:#fff}')
-    expect(shorthandCSS.componentsLayer.text).toContain('.light .panel{color:#000}')
+  /**
+   * Prevents: `@dark {}` / `@light {}` still compiling after they were folded into `@variant`,
+   * or being passed through as an unknown native at-rule that the browser drops, so the
+   * developer's dark or light styles silently disappear. The compiler checks in two places: the
+   * lightningcss visitor, which reaches rules it walks into (top level, a plain style rule,
+   * `@media`), and `parseMasterVariantBlock`, which every hand-written traversal of a body the
+   * compiler consumes goes through (beside `@compose`, inside `@variant`, `@components`, and a
+   * dynamic utility). The error is matched on the suggested rewrite only, so rewording the rest
+   * of the sentence does not turn this red.
+   * Reverse-checked in `core.ts`: deleting the visitor's `assertNotRemovedVariantShorthand(rule)`
+   * reds the style rule and `@media` rows plus the stylesheet local-style test; deleting the call in
+   * `parseMasterVariantBlock` reds the `@compose`, `@variant`, `@components` and dynamic utility
+   * rows; checking only `name === 'dark'` reds every row plus the stylesheet `@light` case. The
+   * top-level row stays green under either deletion alone, because both checks reach it.
+   */
+  test.each([
+    ['top level', (name: string) => `@${name} { .banner { color: red; } }`],
+    ['a style rule', (name: string) => `.card { @${name} { color: white; } }`],
+    ['a style rule with @compose', (name: string) => `.card { @compose block; @${name} { color: white; } }`],
+    ['@media', (name: string) => `@media (width >= 40rem) { .card { @${name} { color: white; } } }`],
+    ['@variant', (name: string) => `.card { @variant print { @${name} { color: white; } } }`],
+    ['@components', (name: string) => `@components { panel { @${name} { color: white; } } }`],
+    ['a dynamic utility', (name: string) => `@utilities { text-<left|right> { text-align: --value(); @${name} { color: red; } } }`]
+  ])('rejects @dark and @light in %s and points to @variant', (_, source) => {
+    for (const name of ['dark', 'light']) {
+      expect(() => compileCSSManifest(source(name), { baseManifest: defaultManifest }))
+        .toThrow(`@variant ${name} {}`)
+    }
   })
 
   test('keeps compose canonicalization rewrites output-equivalent', () => {
@@ -695,7 +718,7 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
             }
           }
 
-          @dark {
+          @variant dark {
             @compose block;
           }
         }
@@ -711,7 +734,7 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
           }
         }
 
-        @dark {
+        @variant dark {
           @compose block;
         }
       }
