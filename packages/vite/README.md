@@ -79,6 +79,8 @@ Import the default stylesheet from the CSS entry your app already loads:
 @import '@stet-css/core';
 ```
 
+With no options the plugin runs in `static` mode: the build writes the rules for the classes in your source into that stylesheet, and the HTML gets no runtime script and no `hidden` attribute.
+
 ## Client types
 Add the client type reference when TypeScript source files import Master CSS virtual manifest, emittedGlobals, or generated CSS modules:
 
@@ -120,9 +122,9 @@ The `options` object is passed to `masterCSS(options)`.
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `mode` | `'runtime' \| 'static' \| 'progressive' \| 'pre-render' \| null` | `'runtime'` | Integration mode. Use `null` to disable automatic integration. |
+| `mode` | `'runtime' \| 'static' \| 'progressive' \| 'pre-render' \| null` | `'static'` | Integration mode. Use `null` to disable automatic integration. |
 | `scanner` | `ScannerOptions` | `undefined` | `safelist`, `blocklist` and `adapters` apply to the class set, and `manifest` replaces the manifest used for rendering; `exclude` no longer applies, use `@source not`. |
-| `injectRuntime` | `boolean` | `true` | Includes the runtime through Vite's HTML transform. |
-| `avoidFOUC` | `boolean` | `true` | Prevents flash of unstyled content during runtime rendering. |
+| `injectRuntime` | `boolean` | `true` | Includes the runtime through Vite's HTML transform. Applies to `runtime` and `progressive` modes. |
+| `avoidFOUC` | `boolean` | `true` | Prevents flash of unstyled content during runtime rendering. Applies to `runtime` mode. |
 
 See the [Vite installation guide](https://rc.css.master.co/guide/installation/vite) for a full project setup.
