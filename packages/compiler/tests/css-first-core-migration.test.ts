@@ -960,6 +960,28 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     expect(css.utilitiesLayer.text).toContain('.sepia .fg\\:red\\@sepia{color:')
   })
 
+  /**
+   * Prevents: a developer setting `default-mode` under the media trigger (written or left as the
+   * default) without being told it does nothing, since the system color scheme picks the mode;
+   * and the opposite, a spurious warning under the class or host trigger, or for every project
+   * that never wrote `default-mode`, which would fail `stet-css inspect --max-warnings 0`.
+   */
+  test.each([
+    ['default media trigger', 'default-mode: dark;', true],
+    ['explicit media trigger', 'mode-trigger: media; default-mode: dark;', true],
+    ['class trigger', 'mode-trigger: class; default-mode: dark;', false],
+    ['host trigger', 'mode-trigger: host; default-mode: dark;', false],
+    ['media trigger without default-mode', 'mode-trigger: media;', false]
+  ])('warns about default-mode only under the media trigger: %s', (_, declarations, warns) => {
+    const { warnings } = compileCSSManifest(`
+      @settings {
+        ${declarations}
+      }
+    `, { baseManifest: defaultManifest })
+
+    expect(warnings).toEqual(warns ? [expect.stringContaining('default-mode')] : [])
+  })
+
   test('lowers color variables, mode values, aliases, and alpha references', () => {
     const { manifest } = compileCSSManifest(`
       @settings {

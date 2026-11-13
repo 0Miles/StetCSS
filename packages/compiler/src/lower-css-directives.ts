@@ -306,6 +306,12 @@ function warnUnsupportedMediaModes(input: CSSDirectiveManifestInput, options: Lo
   warn(warnings, options, `Custom ${subject} ${modeList} will not work with mode-trigger: media. Browsers only support light and dark prefers-color-scheme values; use mode-trigger: class or host for custom modes.`)
 }
 
+function warnMediaDefaultMode(input: CSSDirectiveManifestInput, css: MasterCSS, options: LowerCSSDirectivesOptions, warnings: string[]) {
+  if (input.defaultMode === undefined || css.settings.modeTrigger !== 'media') return
+
+  warn(warnings, options, 'default-mode has no effect with mode-trigger: media, the default, because the system color scheme preference picks the mode. Use mode-trigger: class or host to set a default mode.')
+}
+
 function createDirectiveCSS(input: CSSDirectiveManifestInput, options: LowerCSSDirectivesOptions) {
   const manifest = timeCompilerDiagnostic(options.diagnostics, 'lower-directive-css-manifest-creation-ms', () => createMasterCSSManifest(input, {
     baseManifest: getResolutionManifest(options),
@@ -1094,6 +1100,7 @@ export default function lowerCSSDirectives(input: CSSDirectiveManifestInputSourc
   timeCompilerDiagnostic(diagnostics, 'lower-warn-media-modes-ms', () => warnUnsupportedMediaModes(directiveInput, options, warnings))
 
   const css = timeCompilerDiagnostic(diagnostics, 'lower-create-directive-css-total-ms', () => createDirectiveCSS(directiveInput, options))
+  warnMediaDefaultMode(directiveInput, css, options, warnings)
   timeCompilerDiagnostic(diagnostics, 'lower-finalize-utility-definitions-ms', () => finalizeUtilityDefinitions(directiveInput, css, options))
   const initialRefreshManifest = timeCompilerDiagnostic(diagnostics, 'lower-initial-refresh-manifest-creation-ms', () => createMasterCSSManifest(directiveInput, {
     baseManifest: getResolutionManifest(options),

@@ -78,6 +78,33 @@ describe('@stet-css/diagnostics', () => {
     }
   })
 
+  /**
+   * Prevents: `stet-css inspect` staying silent when an entry sets `default-mode` under the
+   * media trigger. Build plugins do not print compiler warnings, so the inspection report is
+   * where a developer finds out the setting is ignored.
+   */
+  it('reports the entry compiler warning for default-mode under the media trigger', async () => {
+    const cwd = createTempDir('master-css-diagnostics-entry-warning-')
+    try {
+      writeFileSync(join(cwd, 'index.css'), '@master entry;\n@settings { default-mode: dark; }')
+      writeFileSync(join(cwd, 'index.html'), '<div class="block"></div>')
+      const report = await createMasterCSSInspectionReport({
+        cwd,
+        patterns: ['index.html']
+      })
+
+      expect(report.diagnostics).toContainEqual(expect.objectContaining({
+        code: 'stylesheet-warning',
+        severity: 'warning',
+        sourceKind: 'stylesheet',
+        filePath: resolve(cwd, 'index.css'),
+        message: expect.stringContaining('default-mode')
+      }))
+    } finally {
+      rmSync(cwd, { recursive: true, force: true })
+    }
+  })
+
   it('reports stylesheet entry errors without hiding scanner diagnostics', async () => {
     const cwd = createTempDir('master-css-diagnostics-entry-error-')
     try {
