@@ -3,7 +3,7 @@ import type { Position } from 'vscode-languageserver-protocol'
 import findMatchingPairs from './find-matching-brackets'
 import escapeRegexp from 'lodash.escaperegexp'
 import { parseSync, visitorKeys } from 'oxc-parser'
-import { collectCSSDirectiveRanges, parseMasterCSSClassList } from '@stet-css/lexer'
+import { collectCSSDirectiveRanges, exceedsScriptNestingLimit, parseMasterCSSClassList } from '@stet-css/lexer'
 
 export interface ClassPosition {
   range: { start: number, end: number }
@@ -499,6 +499,16 @@ function createOxcClassPositions(
   settings: ClassPositionSettings
 ): CachedOxcClassPositions {
   const source = textDocument.getText()
+  // oxc-parser overflows its native stack on deep nesting, killing the host process.
+  if (exceedsScriptNestingLimit(source)) {
+    return {
+      version: textDocument.version,
+      languageId: textDocument.languageId,
+      parseFailed: true,
+      positions: []
+    }
+  }
+
   let parseResult: ReturnType<typeof parseSync>
   try {
     parseResult = parseSync(getOxcSource(textDocument), source, {
