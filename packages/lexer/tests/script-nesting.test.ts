@@ -30,8 +30,9 @@ describe('script nesting limit', () => {
  * Guards: long ordinary files stay within the limit. A file flagged by mistake
  * loses oxc extraction for text extraction, which finds different classes.
  * Such files chain thousands of unrelated arrows, conditionals and angle
- * brackets one after another, so a chain must stop counting where its
- * expression ends.
+ * brackets one after another, so a chain must stop counting at each kind of
+ * place an expression ends (a newline, a semicolon, a comma, a closing
+ * bracket), and a closing tag must take back its opening tag.
  */
 describe('ordinary files within the script nesting limit', () => {
   test('one statement per line without semicolons', () => {
@@ -42,17 +43,35 @@ describe('ordinary files within the script nesting limit', () => {
     expect(exceedsScriptNestingLimit(content)).toBe(false)
   })
 
-  test('a minified bundle on one line', () => {
+  test('a minified bundle of statements on one line', () => {
     const content = Array.from({ length: 2000 }, (_, index) =>
-      `var a${index}=function(b){return b?c:d<e},f${index}=g=>g?.h??i;`
+      `var a${index}=function(b){return b?c:d<e};f${index}=g=>g?.h??i;`
     ).join('')
 
     expect(exceedsScriptNestingLimit(content)).toBe(false)
   })
 
-  test('a minified conditional chain 1000 deep whose conditions compare', () => {
-    const content = `x=${Array.from({ length: 1000 }, (_, index) => `c<${index}?${index}:`).join('')}0`
+  test('a long line of sibling JSX elements', () => {
+    const content = `x=<ul>${'<li>a</li>'.repeat(2000)}</ul>`
 
     expect(exceedsScriptNestingLimit(content)).toBe(false)
   })
+
+  test('a long argument list of arrows on one line', () => {
+    const content = `register(${Array.from({ length: 2000 }, () => 'a=>a?b:c<d').join(',')})`
+
+    expect(exceedsScriptNestingLimit(content)).toBe(false)
+  })
+})
+
+/**
+ * Guards: a minifier turns an `if`/`else if` chain into a conditional chain
+ * whose conditions compare (`c<1?a:c<2?b:…`). Counting each `<` as a level on
+ * top of its `?` doubles the depth, and flagged prettier's own Flow parser
+ * plugin (about 800 deep, which oxc parses fine).
+ */
+test('a minified conditional chain 1000 deep whose conditions compare stays within the limit', () => {
+  const content = `x=${Array.from({ length: 1000 }, (_, index) => `c<${index}?${index}:`).join('')}0`
+
+  expect(exceedsScriptNestingLimit(content)).toBe(false)
 })
