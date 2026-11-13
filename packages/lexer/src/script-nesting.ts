@@ -1,5 +1,6 @@
-// oxc-parser 0.137 overflows its native stack between 3,000 and 20,000 levels
-// depending on the construct; this stays well below the shallowest.
+// oxc-parser 0.137 overflows from 1,400-1,600 levels of brackets or template
+// literals on a default 4 MB worker-thread stack (the smallest it runs on, e.g.
+// under `eslint --concurrency`), and from 3,000 on an 8 MB main thread.
 const SCRIPT_NESTING_LIMIT = 1024
 
 const LINE_FEED = 0x0A
@@ -18,17 +19,26 @@ const OPEN_BRACE = 0x7B
 const CLOSE_BRACE = 0x7D
 
 /**
- * Whether JS/TS source may nest deeper than 1024 levels, the point past which
- * callers must not hand it to a native parser: a native stack overflow kills
- * the host process and cannot be caught.
+ * Whether JS/TS source may nest deeper than 1024 levels. Callers skip native
+ * parsing past it: oxc-parser recurses once per level, and overflowing the
+ * native stack kills the host process, which no try/catch can stop.
  *
- * A single lexical pass that ignores strings and comments. Each open `(`, `[`,
- * `{` (including `${`) is a level. Arrows (`=>`), conditionals (`?`) and angle
- * brackets (`<`, for JSX and type arguments) nest without a closing token, so
- * they count as a chain on the current bracket level: `</` takes one off, a `?`
- * replaces the `<` counted since the previous `?` (they are its condition's
- * comparisons), and the chain ends at the next newline, `,`, `;` or closing
- * bracket.
+ * One lexical pass that does not recognize strings, comments or regular
+ * expressions, so brackets inside them count too. Each open `(`, `[` or `{`
+ * (including `${`) is a level. Arrows (`=>`), conditionals (`?`) and angle
+ * brackets (`<`, opening JSX elements and type arguments) nest without a
+ * closing token, so they count as a chain on the current bracket level: `</`
+ * takes one off, a `?` replaces the `<` counted since the previous `?` (they
+ * are its condition's comparisons), and the chain ends at the next newline,
+ * `,`, `;` or closing bracket.
+ *
+ * It counts short, letting deep input through to the parser, when a chain is
+ * written one level per line, when closing brackets sit inside strings,
+ * comments or regular expressions, and for nesting it does not count at all,
+ * such as `else if` or `a = b = c` chains. Ending chains at a newline is
+ * deliberate: without a parser, a newline that ends a statement looks like one
+ * inside a formatted expression, and counting across it would flag ordinary
+ * files that chain many statements without semicolons.
  */
 export function exceedsScriptNestingLimit(content: string): boolean {
   // Per open bracket level: the chain length, and the `<` counted since its last `?`.
