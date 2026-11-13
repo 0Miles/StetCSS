@@ -751,6 +751,7 @@
         "@stet-css/engine": "workspace:^",
         "@stet-css/integration": "workspace:^",
         "@stet-css/lexer": "workspace:^",
+        "@stet-css/project": "workspace:^",
         "@stet-css/schema": "workspace:^",
         "@stet-css/source": "workspace:^",
         "@stet-css/validator": "workspace:^",

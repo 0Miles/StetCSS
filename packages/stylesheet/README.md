@@ -12,7 +12,7 @@ npm install @stet-css/stylesheet
 
 `@stet-css/stylesheet` detects Master CSS stylesheet entries, resolves stylesheet import graphs, compiles CSS-first directives, registers stylesheet sources, prunes native CSS using scanner state, and composes final CSS with emittedGlobals metadata.
 
-It accepts structural scanner state from callers; it does not depend on `@stet-css/scanner` or scan source files directly except when resolving stylesheet `@source` directives through supplied options.
+It accepts structural scanner state from callers and does not depend on `@stet-css/scanner`. It decides the static class set itself: the project's own source files (from `@stet-css/project/sources`), plus each entry's `@source` files, minus its `@source not` files, read through `@stet-css/source` adapters, plus `@safelist`, minus `@blocklist`. `resolveStylesheetSourceFiles()` lists those files and `isStylesheetSourceFile()` answers the same rule for one changed path.
 
 ## API
 

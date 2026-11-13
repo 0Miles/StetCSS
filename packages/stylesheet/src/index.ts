@@ -25,7 +25,7 @@ import {
   normalizeMasterCSSModuleIds,
   parseCSSImportSource
 } from '@stet-css/lexer'
-import { extractClassCandidates } from '@stet-css/source'
+import type { SourceAdapter } from '@stet-css/source'
 import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
 import { createRequire } from 'node:module'
 import { dirname, extname, join, resolve } from 'node:path'
@@ -35,15 +35,18 @@ import {
   collectStylesheetDirectivesFromCSSGraph,
   createStylesheetDirectives,
   findStylesheetDirectiveStatements,
-  hasStylesheetDirectives,
-  hasStylesheetSourceDirectives,
-  mergeStylesheetSourceOptions,
   removeStylesheetDirectiveStatements,
-  resolveStylesheetSourcePaths,
   type StylesheetDirectives,
   type StylesheetSourceOptions
 } from './directives'
 import { filterExcludedClasses } from './class-exclusion'
+import {
+  collectStylesheetScopeClasses,
+  isStylesheetScopeFile,
+  resolveStylesheetIncludedFiles,
+  resolveStylesheetScopeFiles,
+  type StylesheetSourceScope
+} from './sources'
 
 export * from './directives'
 export { collectCSSVariableReferences } from '@stet-css/lexer'
@@ -93,9 +96,30 @@ export interface CreateStyleEntryEmittedGlobalsResult {
   dependencies: string[]
 }
 
-export interface CreateExtractedCSSOptions extends CompileStyleCSSOptions {
+/**
+ * What decides a static build's class set: the scanner's options, the registered
+ * stylesheet entries and their directives, and the project root.
+ */
+export interface StylesheetSourceContext {
   scanner: ScannerState
   styleCSSSources?: StyleCSSSources
+  /** Project root; defaults to `scanner.cwd`. */
+  projectDir?: string
+  /**
+   * Glob patterns, relative to the project root, that replace the project's own source
+   * files; `@source` and `@source not` still apply on top.
+   */
+  sources?: string[]
+}
+
+export interface CreateExtractedCSSOptions extends CompileStyleCSSOptions, StylesheetSourceContext {
+  /**
+   * Classes the caller collected from its own module scan; defaults to the scanner's
+   * classes. The project's class set is added on top. A caller that scans no modules
+   * passes `[]`: without a stylesheet entry, manifest or `classes`, the result is the
+   * scanner's own CSS.
+   */
+  classes?: string[]
   manifest?: MasterCSSManifest
   includeGeneratedCSS?: boolean
   includeNativeCSS?: boolean
@@ -111,7 +135,9 @@ export type StylesheetCSS = ReturnType<typeof createCSSWithNativeDeclarations>
 
 export interface ScannerState {
   cwd: string
-  options: StylesheetSourceOptions
+  options: StylesheetSourceOptions & {
+    adapters?: SourceAdapter[]
+  }
   customOptions?: {
     manifest?: MasterCSSManifest
   }
@@ -763,33 +789,55 @@ export function getScannerClasses(scanner: ScannerState) {
   ])], scanner.options.blocklist)
 }
 
-function getStylesheetOptionClasses(options: StylesheetSourceOptions, projectDir = process.cwd()) {
-  const classes = new Set<string>(options.safelist || [])
-  for (const sourcePath of resolveStylesheetSourcePaths(options, projectDir)) {
-    const absolutePath = resolve(projectDir, sourcePath)
-    if (!existsSync(absolutePath)) continue
-    for (const className of extractClassCandidates(readFileSync(absolutePath, 'utf-8'))) {
-      classes.add(className)
-    }
+/**
+ * The scope one stylesheet entry reads classes from; without an entry, the project's own
+ * source files with the scanner's safelist and blocklist. The scanner's module `exclude`
+ * option does not apply: it filters bundler modules, not project files.
+ */
+function createStylesheetSourceScope(
+  context: StylesheetSourceContext,
+  directives?: StylesheetDirectives
+): StylesheetSourceScope {
+  const { scanner } = context
+  return {
+    projectDir: context.projectDir ?? scanner.cwd,
+    sources: context.sources,
+    include: directives?.include,
+    exclude: directives?.exclude,
+    safelist: [...(scanner.options.safelist || []), ...(directives?.safelist || [])],
+    blocklist: [...(scanner.options.blocklist || []), ...(directives?.blocklist || [])],
+    adapters: scanner.options.adapters
   }
-  return filterExcludedClasses([...classes], options.blocklist)
 }
 
-function getStyleSourceClasses(
-  scanner: ScannerState,
-  styleSource: StyleCSSSource,
-  baseClasses: string[],
-  projectDir?: string
-) {
-  if (!hasStylesheetDirectives(styleSource.directives)) return baseClasses
-  const scopedOptions = mergeStylesheetSourceOptions(scanner.options, styleSource.directives)
-  const classes = hasStylesheetSourceDirectives(styleSource.directives)
-    ? getStylesheetOptionClasses(scopedOptions, projectDir)
-    : [
-      ...baseClasses,
-      ...(styleSource.directives.safelist || [])
-    ]
-  return filterExcludedClasses([...new Set(classes)], scopedOptions.blocklist)
+/** One scope per registered entry, keyed by the entry's id, or one entry-less scope. */
+function createStylesheetSourceScopes(context: StylesheetSourceContext): [string | undefined, StylesheetSourceScope][] {
+  const styleSources = Array.from(context.styleCSSSources || [])
+  return styleSources.length
+    ? styleSources.map(([id, styleSource]) => [id, createStylesheetSourceScope(context, styleSource.directives)])
+    : [[undefined, createStylesheetSourceScope(context)]]
+}
+
+/**
+ * Lists every file the static class set reads: the project's own source files (or the
+ * `sources` patterns), plus each entry's `@source` files, minus its `@source not` files.
+ */
+export async function resolveStylesheetSourceFiles(context: StylesheetSourceContext) {
+  const files = new Set<string>()
+  for (const [, scope] of createStylesheetSourceScopes(context)) {
+    for (const file of await resolveStylesheetScopeFiles(scope)) {
+      files.add(file)
+    }
+  }
+  return [...files].sort()
+}
+
+/**
+ * Whether a changed path feeds the static class set, by the same rule as
+ * `resolveStylesheetSourceFiles`; for dev watchers.
+ */
+export function isStylesheetSourceFile(file: string, context: StylesheetSourceContext) {
+  return createStylesheetSourceScopes(context).some(([, scope]) => isStylesheetScopeFile(file, scope))
 }
 
 export function refreshScannerNativeClasses(scanner: ScannerState, nativeClassNames: string[]) {
@@ -836,10 +884,11 @@ export async function registerStyleCSSSource(
   const defaultArtifact = masterCSS
     ? readDefaultMasterCSSPackageArtifact(options.projectDir ?? scanner.cwd, options)
     : undefined
-  const scopedOptions = mergeStylesheetSourceOptions(scanner.options, collectedDirectives.directives)
-  const sourceDependencies = hasStylesheetSourceDirectives(collectedDirectives.directives)
-    ? resolveStylesheetSourcePaths(scopedOptions, scanner.cwd).map((sourcePath) => resolve(scanner.cwd, sourcePath))
-    : []
+  const sourceDependencies = resolveStylesheetIncludedFiles({
+    projectDir: scanner.cwd,
+    include: collectedDirectives.directives.include,
+    exclude: collectedDirectives.directives.exclude
+  })
   result.dependencies = [...new Set([
     ...resolvedSource.dependencies,
     ...detectionSource.dependencies,
@@ -935,13 +984,31 @@ export async function createExtractedCSSResult(options: CreateExtractedCSSOption
     includeGeneratedCSS = true,
     includeNativeCSS = true,
     includeMasterBaseCSS = true,
+    sources,
     ...compileOptions
   } = options
-  const classes = compileOptions.classes ?? getScannerClasses(scanner)
+  const sourceContext: StylesheetSourceContext = {
+    scanner,
+    styleCSSSources,
+    projectDir: compileOptions.projectDir,
+    sources
+  }
+  // Classes a build integration collected from its own module graph; the project's class
+  // set is added on top until every integration reads only the project's files.
+  const moduleClasses = compileOptions.classes ?? getScannerClasses(scanner)
 
+  // No stylesheet entry, manifest or caller classes: the integration serves the scanner's
+  // own CSS from its module scan. A caller that scans no modules passes `classes: []`.
   if (!planOption && !compileOptions.classes && !styleCSSSources?.size) {
     return createEmptyExtractedCSSResult(includeGeneratedCSS ? scanner.css.text : '')
   }
+
+  // Each entry prunes its native CSS with its own class set; generated rules cover them all.
+  const entryClasses = new Map<string | undefined, string[]>()
+  for (const [id, scope] of createStylesheetSourceScopes(sourceContext)) {
+    entryClasses.set(id, await collectStylesheetScopeClasses(scope, moduleClasses))
+  }
+  const classes = [...new Set([...entryClasses.values()].flat())]
 
   const hasMasterCSS = hasMasterCSSPackageSource(styleCSSSources)
   const explicitPlan = planOption ?? scanner.customOptions?.manifest
@@ -956,7 +1023,7 @@ export async function createExtractedCSSResult(options: CreateExtractedCSSOption
       .map(([id, styleSource]) => compileStyleCSS(id, styleSource.source, {
         ...compileOptions,
         classes: styleSource.pruneNativeCSS
-          ? getStyleSourceClasses(scanner, styleSource, classes, compileOptions.projectDir ?? scanner.cwd)
+          ? entryClasses.get(id)
           : undefined
       }))
   )
@@ -988,19 +1055,10 @@ export async function createExtractedCSSResult(options: CreateExtractedCSSOption
         .filter(Boolean)
       : [])
   ]
-  const generatedClasses = new Set(classes)
-  if (includeGeneratedCSS) {
-    for (const styleSource of styleCSSSources?.values() || []) {
-      if (!hasStylesheetDirectives(styleSource.directives)) continue
-      for (const className of getStyleSourceClasses(scanner, styleSource, classes, compileOptions.projectDir ?? scanner.cwd)) {
-        generatedClasses.add(className)
-      }
-    }
-  }
   const renderedCSS = renderCompiledManifestCSS({
     manifest: mergedPlan,
     nativeCSS,
-    classNames: generatedClasses,
+    classNames: classes,
     includeGeneratedCSS
   })
   return {

@@ -143,17 +143,24 @@ describe('stylesheet CSS directives', () => {
     expect(css).not.toContain('.text\\:center')
   })
 
-  it('uses stylesheet-local source directives for a pruned CSS root', async () => {
+  /**
+   * Guards that files added with `@source` feed native CSS pruning and are reported as
+   * dependencies to watch: a rule used only by a prebuilt file the entry names must survive,
+   * and editing that file must rerun the build.
+   * Reverse check: dropping the `@source` files from a scope's file list turns this test and
+   * the other three `@source` tests red.
+   */
+  it('prunes a CSS root against the project files plus its source directives', async () => {
     const root = createFixture()
-    writeFileSync(join(root, 'app/a/page.tsx'), '<div class="card"></div>')
-    writeFileSync(join(root, 'app/b/page.tsx'), '<div class="unused"></div>')
+    mkdirSync(join(root, 'dist'), { recursive: true })
+    writeFileSync(join(root, 'dist/page.tsx'), '<div class="card"></div>')
     const scanner = new CSSScanner({}, root)
     await scanner.init()
 
     const styleCSSSources = new Map()
     const result = await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'app/a/a.css'), `
       @import "@stet-css/core";
-      @source './*.tsx';
+      @source '../../dist/*.tsx';
 
       .card {
         color: red;
@@ -171,7 +178,7 @@ describe('stylesheet CSS directives', () => {
       projectDir: root
     })
 
-    expect(result.dependencies).toContain(join(root, 'app/a/page.tsx'))
+    expect(result.dependencies).toContain(join(root, 'dist/page.tsx'))
     expect(css).toContain('.card')
     expect(css).not.toContain('.unused')
   })
