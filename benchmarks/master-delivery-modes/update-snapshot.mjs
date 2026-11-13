@@ -15,17 +15,12 @@ const modes = [
     family: 'master-css'
   },
   {
-    id: 'master-progressive',
-    label: 'Master CSS progressive',
-    family: 'master-css'
-  },
-  {
     id: 'tailwind-static',
     label: 'Tailwind CSS static',
     family: 'tailwind-css'
   }
 ]
-const byteGroups = ['html', 'external-css', 'inline-css', 'runtime-js', 'manifest-json', 'hydration-manifest']
+const byteGroups = ['html', 'external-css', 'runtime-js', 'manifest-json']
 const byteMetricIds = byteGroups.flatMap((group) => [
   `${group}-raw-bytes`,
   `${group}-gzip-bytes`,
@@ -48,7 +43,6 @@ const timingMetricIds = [
   'runtime-bootstrap-ms',
   'manifest-load-ms',
   'runtime-observe-ms',
-  'progressive-adopted',
   'runtime-generated-rule-count',
   'runtime-style-raw-bytes'
 ]
@@ -145,10 +139,8 @@ function createModeResult(fixtureId, modeId) {
     payload: {
       html: createByteSummary(variantId, 'html'),
       externalCSS: createByteSummary(variantId, 'external-css'),
-      inlineCSS: createByteSummary(variantId, 'inline-css'),
       runtimeJS: createByteSummary(variantId, 'runtime-js'),
-      manifestJSON: createByteSummary(variantId, 'manifest-json'),
-      hydrationManifest: createByteSummary(variantId, 'hydration-manifest')
+      manifestJSON: createByteSummary(variantId, 'manifest-json')
     },
     structure: {
       styleRules: findSummary(variantId, 'delivered-style-rule-count').median,
@@ -167,7 +159,6 @@ function createModeResult(fixtureId, modeId) {
       runtimeBootstrapMs: createMetricSummary(variantId, 'runtime-bootstrap-ms'),
       manifestLoadMs: createMetricSummary(variantId, 'manifest-load-ms'),
       runtimeObserveMs: createMetricSummary(variantId, 'runtime-observe-ms'),
-      progressiveAdopted: createMetricSummary(variantId, 'progressive-adopted'),
       runtimeGeneratedRuleCount: createMetricSummary(variantId, 'runtime-generated-rule-count'),
       runtimeStyleRawBytes: createMetricSummary(variantId, 'runtime-style-raw-bytes')
     }

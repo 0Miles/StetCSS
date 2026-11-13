@@ -14,7 +14,6 @@
     "bench:extraction-diagnostics": "vitest bench extraction-diagnostics",
     "bench:interaction-cost": "vitest bench interaction-cost",
     "bench:master-delivery-modes": "vitest bench master-delivery-modes",
-    "bench:progressive-hydration-diagnostics": "vitest bench progressive-hydration-diagnostics",
     "bench:report-smoke": "vitest bench report-smoke",
     "bench:runtime-mutation-diagnostics": "vitest bench runtime-mutation-diagnostics",
     "bench:runtime-style-invalidation-diagnostics": "vitest bench runtime-style-invalidation-diagnostics",

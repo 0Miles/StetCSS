@@ -35,7 +35,6 @@ import type {
 export type InteractionModeId =
   | 'master-static'
   | 'master-runtime'
-  | 'master-progressive'
   | 'tailwind-static'
 
 export type InteractionScenarioId =
@@ -59,7 +58,7 @@ interface ChromeTraceEvent {
 
 interface InteractionModeDescriptor {
   id: InteractionModeId
-  adapterId: 'master-static' | 'master-runtime' | 'master-progressive' | 'tailwind-cli'
+  adapterId: 'master-static' | 'master-runtime' | 'tailwind-cli'
   label: string
 }
 
@@ -93,7 +92,6 @@ export interface InteractionResult {
   affectedElementCount: number
   computedStyleValid: number
   cleanupValid: number
-  progressiveAdopted: number
   runtimeStyleText: string
   details: Record<string, unknown>
 }
@@ -106,7 +104,6 @@ export interface RetainedRuleState {
 
 export interface RuntimeState {
   runtimeAvailable: boolean
-  progressiveAdopted: number
   runtimeGeneratedRuleCount: number
   runtimeStyleRawBytes: number
   runtimeStyleText: string
@@ -161,11 +158,6 @@ export const interactionModes = [
     label: 'Master CSS runtime'
   },
   {
-    id: 'master-progressive',
-    adapterId: 'master-progressive',
-    label: 'Master CSS progressive'
-  },
-  {
     id: 'tailwind-static',
     adapterId: 'tailwind-cli',
     label: 'Tailwind CSS static'
@@ -176,12 +168,12 @@ export const interactionScenarios = [
   {
     id: 'existing-class-toggle',
     label: 'Existing class toggle',
-    description: 'Toggle state classes that already exist in the delivered or hydrated CSS.'
+    description: 'Toggle state classes that already exist in the delivered or runtime-generated CSS.'
   },
   {
     id: 'new-class-toggle',
     label: 'New class toggle',
-    description: 'Toggle a class absent from initial CSS so Master runtime/progressive has to generate a rule.'
+    description: 'Toggle a class absent from initial CSS so Master runtime has to generate a rule.'
   },
   {
     id: 'dom-append-remove',
@@ -277,12 +269,6 @@ export const interactionCostMetrics = [
     label: 'Cleanup valid',
     unit: 'count',
     description: '1 when temporary DOM nodes are removed and temporary classes are absent from runtime classCounts after scenarios that remove nodes.'
-  },
-  {
-    id: 'progressive-adopted',
-    label: 'Progressive adopted',
-    unit: 'count',
-    description: '1 when the Master progressive variant adopted server-rendered style#master-css before interaction.'
   }
 ] satisfies BenchmarkMetric[]
 
@@ -422,7 +408,6 @@ async function createInteractionCostReport(): Promise<BenchmarkReport> {
       '@stet-css/core',
       '@stet-css/cli',
       '@stet-css/runtime',
-      '@stet-css/server',
       '@stet-css/preset',
       '@playwright/test',
       'tailwindcss',
@@ -437,10 +422,9 @@ async function createInteractionCostReport(): Promise<BenchmarkReport> {
     limits: [
       'This suite measures local Chromium post-load interaction cost only; it does not publish public result tables yet.',
       'The default command is a fast internal pass with one measured round and no warmup; use INTERACTION_COST_ROUNDS and INTERACTION_COST_WARMUP_ROUNDS for review-grade repeated samples.',
-      'Master runtime and progressive variants use the built global runtime bundle and default manifest JSON.',
-      'Master progressive samples fail if the page falls back to runtime rendering before the measured interaction.',
+      'Master runtime variants use the built global runtime bundle and default manifest JSON.',
       'Master static and Tailwind static variants are static-CSS browser controls; Tailwind CSS has no runtime rule-generation equivalent.',
-      'The new-class scenario is limited to Master runtime and progressive variants because it measures client-side rule generation.',
+      'The new-class scenario is limited to Master runtime variants because it measures client-side rule generation.',
       'Trace-derived event names can change across Chromium versions, so raw trace artifacts are kept for review before publishing public conclusions.',
       'Browser scheduling, hardware, memory pressure, and unrelated local load can affect interaction timing.'
     ],
@@ -533,38 +517,13 @@ export async function createInteractionPage(options: {
     })
   }
 
-  if (options.modeId === 'master-runtime') {
-    return writeInteractionPage({
-      pageSuite: options.pageSuite,
-      variantId: options.variantId,
-      html: addRuntimeHarness(sourceHtml, {
-        hideUntilRuntime: true,
-        runtimeDiagnostics: options.runtimeDiagnostics,
-        runtimeMutationStrategy: options.runtimeMutationStrategy
-      }),
-      runtimeJS: await readRuntimeBundle(),
-      manifestJSON: await readDefaultManifestJSON()
-    })
-  }
-
-  const result = render(sourceHtml, await readDefaultManifest(), {
-    hydrationManifest: 'inject'
-  })
-  const inlineCSS = result.css?.text || ''
-  const hydrationManifestJSON = result.hydrationManifest
-    ? JSON.stringify(result.hydrationManifest)
-    : ''
-
   return writeInteractionPage({
     pageSuite: options.pageSuite,
     variantId: options.variantId,
-    html: addRuntimeHarness(result.html, {
-      hideUntilRuntime: false,
+    html: addRuntimeHarness(sourceHtml, {
       runtimeDiagnostics: options.runtimeDiagnostics,
       runtimeMutationStrategy: options.runtimeMutationStrategy
     }),
-    inlineCSS,
-    hydrationManifestJSON,
     runtimeJS: await readRuntimeBundle(),
     manifestJSON: await readDefaultManifestJSON()
   })
@@ -920,7 +879,6 @@ function renderInteractionScript(options: {
     '                affectedElementCount: details.affectedElementCount || countAffectedItems(),',
     '                computedStyleValid: details.computedStyleValid ? 1 : 0,',
     '                cleanupValid: details.cleanupValid ? 1 : 0,',
-    '                progressiveAdopted: after.progressiveAdopted,',
     '                runtimeStyleText: after.runtimeStyleText,',
     '                details',
     '            };',
@@ -972,7 +930,6 @@ function renderInteractionScript(options: {
     '            const retainedRuleState = readRetainedRuleState(runtime, retainedClassNames);',
     '            return {',
     '                runtimeAvailable: Boolean(runtime),',
-    '                progressiveAdopted: runtime?.progressive ? 1 : 0,',
     '                runtimeGeneratedRuleCount: runtime?.classUtilities?.size || countCSSRules(runtime?.style?.sheet?.cssRules),',
     '                runtimeStyleRawBytes: new TextEncoder().encode(runtimeStyleText).length,',
     '                runtimeStyleText,',
@@ -1142,10 +1099,8 @@ async function writeInteractionPage(options: {
   variantId: string
   html: string
   externalCSS?: string
-  inlineCSS?: string
   runtimeJS?: Buffer
   manifestJSON?: Buffer
-  hydrationManifestJSON?: string
 }): Promise<InteractionPage> {
   const root = resolve(benchmarkRoot, '.results', options.pageSuite || 'interaction-cost', 'pages', options.variantId)
   await resetDirectory(root)
@@ -1154,8 +1109,6 @@ async function writeInteractionPage(options: {
     'index.html': options.html
   }
   if (options.externalCSS !== undefined) files['style.css'] = options.externalCSS
-  if (options.inlineCSS !== undefined) files['inline-master-css.css'] = options.inlineCSS
-  if (options.hydrationManifestJSON !== undefined) files['hydration-manifest.json'] = options.hydrationManifestJSON
   if (options.runtimeJS) files['global.min.js'] = options.runtimeJS.toString('utf8')
   if (options.manifestJSON) files['default-manifest.json'] = options.manifestJSON.toString('utf8')
 
@@ -1245,12 +1198,6 @@ function createInteractionSamples(variantId: string, round: number, metrics: Int
       variantId,
       round,
       value: metrics.cleanupValid
-    },
-    {
-      metricId: 'progressive-adopted',
-      variantId,
-      round,
-      value: metrics.progressiveAdopted
     }
   ]
 }
@@ -1356,14 +1303,12 @@ function addStaticHarness(html: string) {
 }
 
 function addRuntimeHarness(html: string, options: {
-  hideUntilRuntime: boolean
   runtimeDiagnostics?: boolean
   runtimeMutationStrategy?: RuntimeMutationStrategyId
 }) {
-  const withVisibility = options.hideUntilRuntime ? addHiddenAttribute(html) : html
   const runtimeMutationStrategy = options.runtimeMutationStrategy || 'baseline'
 
-  return insertBeforeHeadEnd(withVisibility, [
+  return insertBeforeHeadEnd(addHiddenAttribute(html), [
     '    <script>',
     '        window.__benchmarkReady = false;',
     `        window.__interactionMetrics = createInteractionMetrics(${options.runtimeDiagnostics ? 'true' : 'false'}, ${JSON.stringify(runtimeMutationStrategy)});`,
@@ -1594,16 +1539,13 @@ async function waitForBenchmarkReady(page: Page) {
 async function assertInteractionPageReady(page: Page, modeId: InteractionModeId) {
   const state = await page.evaluate(() => {
     const runtime = (globalThis as typeof globalThis & {
-      masterCSSRuntime?: {
-        progressive?: boolean
-      }
+      masterCSSRuntime?: object
     }).masterCSSRuntime
 
     return {
       ready: document.documentElement.dataset.benchmarkReady,
       textAlign: getComputedStyle(document.getElementById('interaction-style-probe')!).textAlign,
       runtimeAvailable: Boolean(runtime),
-      progressive: Boolean(runtime?.progressive),
       htmlHidden: document.documentElement.hasAttribute('hidden')
     }
   })
@@ -1616,12 +1558,8 @@ async function assertInteractionPageReady(page: Page, modeId: InteractionModeId)
     throw new Error(`Expected interaction style probe text-align:center, received ${state.textAlign}.`)
   }
 
-  if ((modeId === 'master-runtime' || modeId === 'master-progressive') && !state.runtimeAvailable) {
+  if (modeId === 'master-runtime' && !state.runtimeAvailable) {
     throw new Error(`${modeId} did not expose globalThis.masterCSSRuntime.`)
-  }
-
-  if (modeId === 'master-progressive' && !state.progressive) {
-    throw new Error('Master progressive interaction page fell back to runtime rendering before measurement.')
   }
 
   if (modeId === 'master-runtime' && state.htmlHidden) {
@@ -1786,7 +1724,7 @@ function getInteractionFixtureShape(fixtureId: BenchmarkFixtureId) {
 
 function isScenarioSupported(fixtureId: BenchmarkFixtureId, modeId: InteractionModeId, scenarioId: InteractionScenarioId) {
   if (scenarioId === 'new-class-toggle') {
-    return fixtureId === 'dynamic' && (modeId === 'master-runtime' || modeId === 'master-progressive')
+    return fixtureId === 'dynamic' && modeId === 'master-runtime'
   }
 
   if (fixtureId === 'dashboard') {

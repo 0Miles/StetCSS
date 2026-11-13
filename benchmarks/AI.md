@@ -1,6 +1,6 @@
 # benchmarks
 
-Advisory measurement suites and report helpers: CSS output size and structure, build performance, delivery modes, browser CSS cost, build, runtime and hydration diagnostics, Tailwind CSS comparison snapshots, and CI helpers in `ci/` that normalize engine/runtime reports and compare GitHub Actions artifact history. Results are **evidence** for an investigation; correctness lives in the product packages' tests.
+Advisory measurement suites and report helpers: CSS output size and structure, build performance, delivery modes, browser CSS cost, build and runtime diagnostics, Tailwind CSS comparison snapshots, and CI helpers in `ci/` that normalize engine/runtime reports and compare GitHub Actions artifact history. Results are **evidence** for an investigation; correctness lives in the product packages' tests.
 
 ## Boundaries
 
