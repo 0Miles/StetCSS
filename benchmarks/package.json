@@ -38,7 +38,6 @@
     "@stet-css/preset": "workspace:^",
     "@stet-css/runtime": "workspace:^",
     "@stet-css/scanner": "workspace:^",
-    "@stet-css/server": "workspace:^",
     "@stet-css/stylesheet": "workspace:^",
     "@stet-css/vite": "workspace:^",
     "@playwright/test": "1.61.0",
