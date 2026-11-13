@@ -139,7 +139,7 @@ test.concurrent('does not collect browser semantic tokens for managed syntax wit
       font:<~font-size|number> {
         font-size: --value();
 
-        @light {
+        @variant light {
           color: var(--brand);
         }
       }

@@ -298,14 +298,14 @@ test.concurrent('renders semantic tokens only for CSS directive class-list spans
     @components {
       btn {
         @compose inline-flex fg:primary:hover@md;
-        @dark {
+        @variant dark {
           @compose bg:blue;
         }
         @variant <sm {
           @compose block;
         }
         ::scrollbar-thumb:hover {
-          @dark {
+          @variant dark {
             @compose fg:primary;
           }
         }
@@ -421,7 +421,7 @@ test.concurrent('renders semantic tokens only for compose class lists inside man
   const { tokens } = renderTokens(`
     @defaults {
       reset {
-        @light {
+        @variant light {
           color: var(--text, black);
         }
       }
@@ -430,7 +430,7 @@ test.concurrent('renders semantic tokens only for compose class lists inside man
     @components {
       btn {
         @compose inline-flex;
-        @dark {
+        @variant dark {
           background-color: oklch(20% 0.03 250);
         }
         @media (width >= 42rem) {
@@ -463,11 +463,10 @@ test.concurrent('renders semantic tokens only for compose class lists inside man
   expectToken(tokens, 'block', 'enumMember')
   expect(tokens).not.toContainEqual({ text: '@defaults', type: 'keyword', modifiers: ['directive'] })
   expect(tokens).not.toContainEqual({ text: 'reset', type: 'class', modifiers: ['selector'] })
-  expect(tokens).not.toContainEqual({ text: '@light', type: 'keyword', modifiers: ['directive'] })
+  expect(tokens).not.toContainEqual({ text: '@variant', type: 'keyword', modifiers: ['directive'] })
   expect(tokens).not.toContainEqual({ text: '@components', type: 'keyword', modifiers: ['directive'] })
   expect(tokens).not.toContainEqual({ text: 'btn', type: 'class', modifiers: ['selector'] })
   expect(tokens).not.toContainEqual({ text: '@compose', type: 'keyword', modifiers: ['directive'] })
-  expect(tokens).not.toContainEqual({ text: '@dark', type: 'keyword', modifiers: ['directive'] })
   expect(tokens).not.toContainEqual({ text: '@utilities', type: 'keyword', modifiers: ['directive'] })
   expect(tokens).not.toContainEqual({ text: 'font', type: 'property', modifiers: [] })
   expect(tokens).not.toContainEqual({ text: 'font-size', type: 'variable', modifiers: ['directive'] })
@@ -819,7 +818,7 @@ test.concurrent('renders detailed CSS directive semantic tokens only for class-l
         }
 
         ::scrollbar-thumb:hover {
-          @dark {
+          @variant dark {
             @compose fg:primary;
           }
         }
@@ -885,7 +884,7 @@ test.concurrent('renders CSS directives in LESS-like sources', () => {
       font:<~font-size|number> {
         font-size: --value();
 
-        @light {
+        @variant light {
           color: var(--color-primary);
         }
       }

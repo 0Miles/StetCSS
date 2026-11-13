@@ -291,8 +291,6 @@ test('highlights every Master CSS directive keyword', () => {
     @compose block;
     @variant sm {}
     @slot;
-    @dark {}
-    @light {}
   `)
 
   for (const directive of [
@@ -310,13 +308,31 @@ test('highlights every Master CSS directive keyword', () => {
     'custom-variant',
     'compose',
     'variant',
-    'slot',
-    'dark',
-    'light'
+    'slot'
   ]) {
     expectScope(tokens, directive, 'keyword.control.at-rule.master-css')
   }
   expectScope(tokens, 'entry', 'support.constant.property-value.master-css')
+})
+
+/**
+ * Prevents: the editor still highlighting the removed `@dark {}` / `@light {}` blocks as
+ * directives, which tells a developer that syntax the compiler now rejects is valid.
+ * `@variant dark {}` keeps its directive highlighting.
+ */
+test('does not highlight @dark or @light as directives', () => {
+  const tokens = tokenizeWith(injectedCSSGrammar, `
+    @dark {}
+    .card {
+      @light { color: red; }
+      @variant dark { color: white; }
+    }
+  `)
+  const directiveTokens = tokens.filter((token) => token.scopes.includes('keyword.control.at-rule.master-css'))
+
+  expect(directiveTokens).toEqual([
+    expect.objectContaining({ text: 'variant' })
+  ])
 })
 
 test('highlights directive preludes, strings, class lists, and dynamic patterns', () => {
@@ -374,7 +390,7 @@ test('highlights custom variants, nested selectors, queries, and values', () => 
         ::scrollbar:is(.active, #thumb) { @compose block; }
       }
     }
-    @dark {
+    @variant dark {
       color: oklch(99% 0.0033 72);
       background-color: var(--color-gray-100);
     }
@@ -417,7 +433,7 @@ test('highlights detailed Master directive syntax without misclassifying native 
           @compose block;
         }
         ::scrollbar-thumb:hover {
-          @dark {
+          @variant dark {
             @compose fg:primary;
           }
         }
