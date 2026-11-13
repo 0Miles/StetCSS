@@ -12,10 +12,7 @@ export const masterCSSSettingsSchema: JSONSchema4 = {
     classAttributes: sourceMatcherSchema,
     classFunctions: sourceMatcherSchema,
     classDeclarations: sourceMatcherSchema,
-    ignoredKeys: sourceMatcherSchema,
-    manifest: {
-      type: 'object',
-    }
+    ignoredKeys: sourceMatcherSchema
   },
   additionalProperties: false
 }

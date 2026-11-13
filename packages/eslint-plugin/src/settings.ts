@@ -1,9 +1,7 @@
 import { defaultClassLintSettings } from '@stet-css/lint'
-import type { MasterCSSManifest } from './utils/master-css'
 
 const settings = {
-  ...defaultClassLintSettings,
-  manifest: undefined
+  ...defaultClassLintSettings
 }
 
 export default settings
@@ -13,5 +11,4 @@ export interface Settings {
   classFunctions?: string[]
   classDeclarations?: string[]
   ignoredKeys: string[]
-  manifest?: MasterCSSManifest
 }

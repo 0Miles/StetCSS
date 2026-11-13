@@ -37,8 +37,7 @@ test('keeps Master CSS settings schema separate from rule option schemas', () =>
       classAttributes: expect.any(Object),
       classFunctions: expect.any(Object),
       classDeclarations: expect.any(Object),
-      ignoredKeys: expect.any(Object),
-      manifest: expect.any(Object)
+      ignoredKeys: expect.any(Object)
     }
   })
 })

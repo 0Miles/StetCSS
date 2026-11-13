@@ -256,8 +256,7 @@ export default defineConfig([
         classAttributes: ['class', 'className'],
         classFunctions: ['clsx', 'classList.add'],
         classDeclarations: ['classes'],
-        ignoredKeys: ['compoundVariants', 'defaultVariants'],
-        manifest
+        ignoredKeys: ['compoundVariants', 'defaultVariants']
       }
     }
   }
@@ -270,7 +269,8 @@ export default defineConfig([
 | `classFunctions` | `string[]` | Function names whose arguments should be checked. |
 | `classDeclarations` | `string[]` | Variable/member names whose declarations should be checked. |
 | `ignoredKeys` | `string[]` | Object keys ignored during checking. Defaults include variant metadata keys. |
-| `manifest` | `MasterCSSManifest` | Explicit compiled manifest. By default, ESLint loads the project CSS entry discovered from the current working directory. |
+
+Utilities, tokens, and variants come from the project's CSS entry, the CSS file that imports `@stet-css/core`, the same source your build uses. ESLint finds it in the workspace of each linted file; without one, it checks against the default preset.
 
 ## Related docs
 
