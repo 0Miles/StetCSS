@@ -1,0 +1,29 @@
+@import '@stet-css/core';
+
+@theme {
+  --breakpoint-tablet: 48rem;
+  --spacing-card: 1.25rem;
+}
+
+@theme midnight {}
+
+@custom-variant wide {
+  @media (min-width: 80rem) {
+    @slot;
+  }
+}
+
+@utilities {
+  content-auto {
+    content-visibility: auto;
+  }
+}
+
+@components {
+  btn {
+    display: block;
+  }
+  zDialog {
+    z-index: 10000;
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "eslint-plugin-custom-manifest-fixture",
+  "private": true,
+  "devDependencies": {
+    "@stet-css/core": "workspace:^"
+  }
+}

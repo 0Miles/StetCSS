@@ -2,19 +2,9 @@ import { ESLint } from 'eslint'
 import { expect, test } from 'vitest'
 import * as mdx from 'eslint-mdx'
 import plugin from '../src'
-import { createPresetManifest } from './helpers/create-preset-manifest'
 
 test('recommended config autofixes cross-rule class lists to a stable result', async () => {
-  const overrideConfig = [
-    plugin.configs.recommended,
-    {
-      settings: {
-        '@stet-css': {
-          manifest: createPresetManifest()
-        }
-      }
-    }
-  ]
+  const overrideConfig = [plugin.configs.recommended]
   const preferCanonicalOnly = new ESLint({
     fix: (message) => message.ruleId === '@stet-css/prefer-canonical-classes',
     overrideConfigFile: true,
@@ -56,13 +46,6 @@ test('recommended config autofixes mdx fenced examples', async () => {
       files: ['**/*.mdx'],
       languageOptions: {
         parser: mdx
-      }
-    },
-    {
-      settings: {
-        '@stet-css': {
-          manifest: createPresetManifest()
-        }
       }
     }
   ]

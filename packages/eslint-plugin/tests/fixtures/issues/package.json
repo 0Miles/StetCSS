@@ -1,0 +1,5 @@
+{
+  "name": "eslint-plugin-issue-fixtures",
+  "private": true,
+  "description": "Makes the issue fixtures a project without a CSS entry, so they lint against the default manifest instead of the CSS entries of other fixture projects under tests/fixtures."
+}

@@ -1,8 +1,6 @@
 import { RuleTester, RuleTesterConfig } from '@typescript-eslint/rule-tester'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { createPresetManifest } from './helpers/create-preset-manifest'
-import type { MasterCSSManifest } from '@stet-css/core'
 
 const configs = {
   jsx: {
@@ -18,29 +16,26 @@ const configs = {
   }
 } satisfies Record<string, RuleTesterConfig>
 
-function withPresetManifest(config: RuleTesterConfig): RuleTesterConfig {
-  const settings = config.settings as Record<string, any> | undefined
-  const masterCSSSettings = settings?.['@stet-css'] || {}
-  const planOption = masterCSSSettings.manifest as Partial<MasterCSSManifest> | undefined
-  return {
-    ...config,
-    settings: {
-      ...settings,
-      '@stet-css': {
-        ...masterCSSSettings,
-        manifest: createPresetManifest(planOption)
-      }
-    }
-  }
-}
-
-export const jsxTester = new RuleTester(withPresetManifest(configs.jsx))
+export const jsxTester = new RuleTester(configs.jsx)
 
 export const createTester = (config: RuleTesterConfig, lang: keyof typeof configs = 'jsx') => {
-  return new RuleTester(withPresetManifest({
+  return new RuleTester({
     ...configs[lang],
     ...config
-  }))
+  })
+}
+
+const customManifestFilename = fileURLToPath(new URL('./fixtures/custom-manifest/index.tsx', import.meta.url))
+
+/**
+ * Lints each case's inline code as a file of the `fixtures/custom-manifest` project, so rules read
+ * that project's CSS entry the way they do in a front-end developer's workspace.
+ */
+export const createCustomManifestTester = (config: RuleTesterConfig = {}) => {
+  return createTester({
+    ...config,
+    defaultFilenames: { ts: customManifestFilename, tsx: customManifestFilename }
+  })
 }
 
 export const source = (name: string, base: string) => {
