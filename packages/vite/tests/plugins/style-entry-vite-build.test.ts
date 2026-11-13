@@ -138,9 +138,9 @@ describe('StyleEntryPlugin Vite build integration', () => {
   })
 
   test.each([
-    ['default', undefined],
-    ['runtime', { mode: 'runtime' }]
-  ] as const)('%s mode lets Vite expand the explicit base.css subpath import', async (_label, options) => {
+    ['masterCSS()', undefined],
+    ["masterCSS({ mode: 'runtime' })", { mode: 'runtime' }]
+  ] as const)('%s lets Vite expand the explicit base.css subpath import', async (_label, options) => {
     const css = await buildCSSFixture({
       plugins: [
         masterCSS(options)
