@@ -40,6 +40,8 @@ const projectResult = await compileProjectManifest(['/project/src/index.css'])
 
 Compiler results include the compiled manifest, dependency paths, warnings, native CSS, and directive metadata used by build integrations.
 
+Relative `@import`s of `.css` files are inlined only when the target is a regular file of at most 16 MiB. One import graph inlines at most 10,000 stylesheets and 64 MiB, counting each repeated import of the same file; past these limits compilation fails with an error naming the file.
+
 ### Browser entry
 
 Use `@stet-css/compiler/browser` when CSS import resolution is not needed.

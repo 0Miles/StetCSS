@@ -6,6 +6,7 @@ import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 import { stringifyMasterCSSManifestJSON } from '@stet-css/schema/manifest-json'
 import type { CSSDirectiveReference } from '@stet-css/schema/css-directives'
 import { MASTER_CSS_ENTRY_DIRECTIVE_NAME } from '@stet-css/lexer'
+import { createCSSImportGraphReader, type CSSImportGraphReader } from './css-import-graph-reader'
 import { createMasterCSSManifest } from './master-css-manifest'
 import lowerCSSDirectives from './lower-css-directives'
 import type { CompilerDiagnosticRecorder } from './diagnostics'
@@ -31,6 +32,7 @@ import {
 } from './lexer/imports'
 
 export * from './core'
+export { createCSSImportGraphReader, type CSSImportGraphReader } from './css-import-graph-reader'
 export type {
   CompileCSSFileOptions,
   CompileCSSOptions,
@@ -220,6 +222,7 @@ export function inspectCSS(source: string): InspectCSSResult {
 
 function resolveCSSImportGraphFile(
   file: string,
+  readCSSImport: CSSImportGraphReader,
   dependencies: string[],
   dependencySet: Set<string>,
   stack: string[],
@@ -237,7 +240,7 @@ function resolveCSSImportGraphFile(
     dependencies.push(absoluteFile)
   }
 
-  const source = readFileSync(absoluteFile, 'utf-8')
+  const source = readCSSImport(absoluteFile)
   const references = findCSSReferenceStatements(source, absoluteFile)
   for (const reference of references) {
     options.onReference?.(reference, absoluteFile)
@@ -254,7 +257,7 @@ function resolveCSSImportGraphFile(
       : undefined
     if (packageFile || isExpandableImportSource(importSource)) {
       const importedFile = packageFile || resolve(dirname(absoluteFile), importSource)
-      return resolveCSSImportGraphFile(importedFile, dependencies, dependencySet, [...stack, absoluteFile], options)
+      return resolveCSSImportGraphFile(importedFile, readCSSImport, dependencies, dependencySet, [...stack, absoluteFile], options)
     }
     preservedImports.push(importStatement.statement.trim())
     return ''
@@ -272,7 +275,7 @@ function resolveCSSImportGraphFile(
 export function resolveCSSImportGraph(file: string, options: ResolveCSSImportGraphOptions = {}): ResolvedCSSImportGraph {
   const dependencies: string[] = []
   const references: CSSReferenceStatement[] = []
-  const source = resolveCSSImportGraphFile(file, dependencies, new Set(), [], {
+  const source = resolveCSSImportGraphFile(file, createCSSImportGraphReader(), dependencies, new Set(), [], {
     ...options,
     onReference(reference, fromFile) {
       references.push(reference)
