@@ -35,6 +35,7 @@ import {
   collectStylesheetDirectivesFromCSSGraph,
   createStylesheetDirectives,
   findStylesheetDirectiveStatements,
+  mergeStylesheetDirectives,
   removeStylesheetDirectiveStatements,
   type StylesheetDirectives,
   type StylesheetSourceOptions
@@ -790,46 +791,34 @@ export function getScannerClasses(scanner: ScannerState) {
 }
 
 /**
- * The scope one stylesheet entry reads classes from; without an entry, the project's own
- * source files with the scanner's safelist and blocklist. The scanner's module `exclude`
- * option does not apply: it filters bundler modules, not project files.
+ * The one scope the static class set reads: the project's own source files plus the
+ * directives of every registered entry, because all entries share one generated CSS. The
+ * scanner's module `exclude` option does not apply: it filters bundler modules, not
+ * project files.
  */
-function createStylesheetSourceScope(
-  context: StylesheetSourceContext,
-  directives?: StylesheetDirectives
-): StylesheetSourceScope {
+function createStylesheetSourceScope(context: StylesheetSourceContext): StylesheetSourceScope {
   const { scanner } = context
+  const directives = mergeStylesheetDirectives(
+    ...Array.from(context.styleCSSSources?.values() || [], (styleSource) => styleSource.directives)
+  )
   return {
     projectDir: context.projectDir ?? scanner.cwd,
     sources: context.sources,
-    include: directives?.include,
-    exclude: directives?.exclude,
-    safelist: [...(scanner.options.safelist || []), ...(directives?.safelist || [])],
-    blocklist: [...(scanner.options.blocklist || []), ...(directives?.blocklist || [])],
+    include: directives.include,
+    exclude: directives.exclude,
+    safelist: [...(scanner.options.safelist || []), ...directives.safelist],
+    blocklist: [...(scanner.options.blocklist || []), ...directives.blocklist],
     adapters: scanner.options.adapters
   }
 }
 
-/** One scope per registered entry, keyed by the entry's id, or one entry-less scope. */
-function createStylesheetSourceScopes(context: StylesheetSourceContext): [string | undefined, StylesheetSourceScope][] {
-  const styleSources = Array.from(context.styleCSSSources || [])
-  return styleSources.length
-    ? styleSources.map(([id, styleSource]) => [id, createStylesheetSourceScope(context, styleSource.directives)])
-    : [[undefined, createStylesheetSourceScope(context)]]
-}
-
 /**
  * Lists every file the static class set reads: the project's own source files (or the
- * `sources` patterns), plus each entry's `@source` files, minus its `@source not` files.
+ * `sources` patterns), plus every entry's `@source` files, minus every entry's
+ * `@source not` files.
  */
 export async function resolveStylesheetSourceFiles(context: StylesheetSourceContext) {
-  const files = new Set<string>()
-  for (const [, scope] of createStylesheetSourceScopes(context)) {
-    for (const file of await resolveStylesheetScopeFiles(scope)) {
-      files.add(file)
-    }
-  }
-  return [...files].sort()
+  return resolveStylesheetScopeFiles(createStylesheetSourceScope(context))
 }
 
 /**
@@ -837,7 +826,7 @@ export async function resolveStylesheetSourceFiles(context: StylesheetSourceCont
  * `resolveStylesheetSourceFiles`; for dev watchers.
  */
 export function isStylesheetSourceFile(file: string, context: StylesheetSourceContext) {
-  return createStylesheetSourceScopes(context).some(([, scope]) => isStylesheetScopeFile(file, scope))
+  return isStylesheetScopeFile(file, createStylesheetSourceScope(context))
 }
 
 export function refreshScannerNativeClasses(scanner: ScannerState, nativeClassNames: string[]) {
@@ -1003,12 +992,8 @@ export async function createExtractedCSSResult(options: CreateExtractedCSSOption
     return createEmptyExtractedCSSResult(includeGeneratedCSS ? scanner.css.text : '')
   }
 
-  // Each entry prunes its native CSS with its own class set; generated rules cover them all.
-  const entryClasses = new Map<string | undefined, string[]>()
-  for (const [id, scope] of createStylesheetSourceScopes(sourceContext)) {
-    entryClasses.set(id, await collectStylesheetScopeClasses(scope, moduleClasses))
-  }
-  const classes = [...new Set([...entryClasses.values()].flat())]
+  // One class set for generated rules and every entry's native CSS pruning.
+  const classes = await collectStylesheetScopeClasses(createStylesheetSourceScope(sourceContext), moduleClasses)
 
   const hasMasterCSS = hasMasterCSSPackageSource(styleCSSSources)
   const explicitPlan = planOption ?? scanner.customOptions?.manifest
@@ -1023,7 +1008,7 @@ export async function createExtractedCSSResult(options: CreateExtractedCSSOption
       .map(([id, styleSource]) => compileStyleCSS(id, styleSource.source, {
         ...compileOptions,
         classes: styleSource.pruneNativeCSS
-          ? entryClasses.get(id)
+          ? classes
           : undefined
       }))
   )
