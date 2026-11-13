@@ -1,5 +1,5 @@
 import { ESLint } from 'eslint'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, test } from 'vitest'
@@ -160,6 +160,40 @@ test('keeps the CSS entry manifest for saved files after linting text without a 
     const [result] = await eslint.lintFiles('index.jsx')
 
     expect(result.messages).toStrictEqual([])
+  } finally {
+    rmSync(cwd, { force: true, recursive: true })
+  }
+})
+
+/**
+ * Guards: running ESLint once from a monorepo root, each app's files are checked against that
+ * app's own CSS entry. If the manifest cache keyed apps together, the second app would get the
+ * first app's manifest and report its own components as unknown, depending on file order.
+ *
+ * Reverse check: keying the cache in `src/utils/resolve-context.ts` by the parent of the
+ * workspace directory, so both apps share one entry, fails only this test.
+ */
+test('gives each workspace the manifest of its own CSS entry', async () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'master-css-eslint-'))
+
+  try {
+    for (const app of ['web', 'admin']) {
+      mkdirSync(join(cwd, 'apps', app), { recursive: true })
+      writeFileSync(join(cwd, 'apps', app, 'index.css'), `
+        @master entry;
+
+        @components {
+          ${app}-button {
+            display: inline-flex;
+          }
+        }
+      `)
+      writeFileSync(join(cwd, 'apps', app, 'index.jsx'), `<div className="${app}-button"></div>`)
+    }
+
+    const results = await createWorkspaceESLint(cwd).lintFiles(['apps/web/index.jsx', 'apps/admin/index.jsx'])
+
+    expect(results.map((result) => result.messages)).toStrictEqual([[], []])
   } finally {
     rmSync(cwd, { force: true, recursive: true })
   }
