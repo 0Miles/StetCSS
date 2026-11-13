@@ -14,7 +14,9 @@ const shapes: [name: string, nest: (depth: number) => string][] = [
  * Guards: the limit is 1024 levels and every level of each shape counts once.
  * Counting a shape short lets a file oxc cannot survive through to the parser
  * and crash the host; counting it twice sends files of half that depth to text
- * extraction and changes their classes.
+ * extraction and changes their classes. Reverse check: raising the limit to
+ * 2048 turns the six 1025-level cases red, and so does dropping the `=>` count
+ * for the arrow case alone.
  */
 describe('script nesting limit', () => {
   test.each(shapes)('%s are within the limit at 1024 levels', (_, nest) => {
@@ -32,7 +34,10 @@ describe('script nesting limit', () => {
  * Such files chain thousands of unrelated arrows, conditionals and angle
  * brackets one after another, so a chain must stop counting at each kind of
  * place an expression ends (a newline, a semicolon, a comma, a closing
- * bracket), and a closing tag must take back its opening tag.
+ * bracket), and a closing tag must take back its opening tag. Reverse check:
+ * dropping the newline, `;` or `,` case or the `</` decrement turns only its
+ * own case red; keeping a closed bracket's chain turns the two statement
+ * cases red.
  */
 describe('ordinary files within the script nesting limit', () => {
   test('one statement per line without semicolons', () => {
@@ -68,7 +73,8 @@ describe('ordinary files within the script nesting limit', () => {
  * Guards: a minifier turns an `if`/`else if` chain into a conditional chain
  * whose conditions compare (`c<1?a:c<2?b:…`). Counting each `<` as a level on
  * top of its `?` doubles the depth, and flagged prettier's own Flow parser
- * plugin (about 800 deep, which oxc parses fine).
+ * plugin (about 800 deep, which oxc parses fine). Reverse check: counting `?`
+ * as a plain level turns only this test red.
  */
 test('a minified conditional chain 1000 deep whose conditions compare stays within the limit', () => {
   const content = `x=${Array.from({ length: 1000 }, (_, index) => `c<${index}?${index}:`).join('')}0`

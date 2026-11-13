@@ -69,7 +69,9 @@ function extractOnWorkerInChild(file: string, content: string) {
  * Guards: a JS/TS file nested deeper than oxc-parser's native stack allows
  * (generated data, minified bundles) kills the whole build or dev server with
  * a signal no try/catch can catch, so the file must never reach oxc. The class
- * must still come back through the text-extraction fallback.
+ * must still come back through the text-extraction fallback. Reverse check:
+ * removing the prescan from `extractOxcClasses` turns only these six cases
+ * red, each child killed by SIGILL.
  */
 describe.concurrent('JavaScript and TypeScript nested 20,000 deep', () => {
   test.each(shapes)('%s survive extraction and keep their classes', async (_, file, nest) => {
@@ -84,7 +86,9 @@ describe.concurrent('JavaScript and TypeScript nested 20,000 deep', () => {
  * Guards: the nesting limit stays below the depth oxc survives on the smallest
  * stack. Each shape goes in at the deepest level the prescan still hands to
  * oxc, so an oxc upgrade that needs more stack per level, or a raised limit,
- * crashes here instead of in a user's build.
+ * crashes here instead of in a user's build. Reverse check: raising the limit
+ * to 2048 turns the arrays, type-arguments and template-literals cases red;
+ * arrows, conditionals and JSX still parse at 2048 on a worker stack.
  */
 describe.concurrent('JavaScript and TypeScript at the deepest nesting oxc still parses', () => {
   test.each(shapes)('%s parse without crashing', async (_, file, nest) => {
