@@ -9,7 +9,6 @@ export type BenchmarkFixtureId =
 export type BenchmarkAdapterId =
   | 'master-runtime'
   | 'master-static'
-  | 'master-progressive'
   | 'tailwind-cli'
   | 'tailwind-vite'
   | 'browser-css'
@@ -26,7 +25,6 @@ export type BenchmarkSuiteId =
   | 'css-structure'
   | 'build-performance'
   | 'master-delivery-modes'
-  | 'progressive-hydration-diagnostics'
   | 'browser-css-cost'
   | 'browser-lifecycle'
   | 'interaction-cost'

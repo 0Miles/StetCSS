@@ -150,8 +150,7 @@ const runtimeStyleInvalidationFixtureIds = [
 ] satisfies BenchmarkFixtureId[]
 
 const runtimeStyleInvalidationRuntimeModeIds = [
-  'master-runtime',
-  'master-progressive'
+  'master-runtime'
 ] satisfies InteractionModeId[]
 
 const runtimeStyleInvalidationStaticModeIds = [
@@ -371,12 +370,6 @@ export const runtimeStyleInvalidationMetrics = [
     label: 'Cleanup valid',
     unit: 'count',
     description: '1 when temporary DOM nodes are removed and temporary classes are absent from runtime classCounts after product settle.'
-  },
-  {
-    id: 'progressive-adopted',
-    label: 'Progressive adopted',
-    unit: 'count',
-    description: '1 when progressive mode adopted server-rendered style#master-css before interaction.'
   }
 ] satisfies BenchmarkMetric[]
 
@@ -538,7 +531,7 @@ async function createRuntimeStyleInvalidationDiagnosticsReport(): Promise<Benchm
       scenarioId: 'mutation-cleanup-cycle',
       variantId: variant.id,
       pageSuite: 'runtime-style-invalidation-diagnostics',
-      runtimeDiagnostics: variant.modeId === 'master-runtime' || variant.modeId === 'master-progressive',
+      runtimeDiagnostics: variant.modeId === 'master-runtime',
       postInteractionSettleFrames: 3
     })
 
@@ -598,7 +591,6 @@ async function createRuntimeStyleInvalidationDiagnosticsReport(): Promise<Benchm
     packages: await collectPackageVersions([
       '@stet-css/core',
       '@stet-css/runtime',
-      '@stet-css/server',
       '@stet-css/preset',
       '@tailwindcss/cli',
       '@playwright/test'
@@ -612,7 +604,7 @@ async function createRuntimeStyleInvalidationDiagnosticsReport(): Promise<Benchm
     limits: [
       'This suite is diagnostic-only and does not publish public benchmark claims.',
       'The dynamic and stress-dom fixtures use the interaction-cost mutation-cleanup-cycle page harness.',
-      'Runtime/progressive variants are measured with benchmark-injected instrumentation; @stet-css/runtime source behavior is not changed by this suite.',
+      'Runtime variants are measured with benchmark-injected instrumentation; @stet-css/runtime source behavior is not changed by this suite.',
       'Observer-paused variants intentionally disconnect the runtime MutationObserver inside the benchmark page only.',
       'Retained-volume variants seed inactive generated rules into runtime state to isolate retained stylesheet volume cost.',
       'Trace-derived event names can change across Chromium versions; raw trace artifacts are kept for review before optimization work.'
@@ -694,7 +686,7 @@ async function measureRuntimeStyleInvalidationDiagnostic(options: {
 }
 
 async function prepareRuntimeDiagnosticPage(page: Page, variant: RuntimeStyleDiagnosticDescriptor): Promise<RuntimeStyleInvalidationPreparation> {
-  if (variant.modeId !== 'master-runtime' && variant.modeId !== 'master-progressive') {
+  if (variant.modeId !== 'master-runtime') {
     return {
       preseededRuntimeRuleCount: 0,
       seededRetainedClassCount: 0,
@@ -930,7 +922,6 @@ async function traceRuntimeStyleInvalidationDiagnostic(page: Page, action: Runti
         affectedElementCount: 0,
         computedStyleValid: probe && getComputedStyle(probe).textAlign === 'center' ? 1 : 0,
         cleanupValid: 1,
-        progressiveAdopted: after.progressiveAdopted,
         runtimeStyleText: after.runtimeStyleText,
         details: {
           action: 'idle-window'
@@ -1075,8 +1066,7 @@ function createRuntimeStyleInvalidationSamples(
     sample('retained-cleanup-removed-class-count', variantId, round, result.forcedRetainedCleanup.removedClassCount),
     sample('retained-cleanup-duration-ms', variantId, round, result.forcedRetainedCleanup.durationMs),
     sample('computed-style-valid', variantId, round, result.interaction.computedStyleValid),
-    sample('cleanup-valid', variantId, round, result.interaction.cleanupValid),
-    sample('progressive-adopted', variantId, round, result.interaction.progressiveAdopted)
+    sample('cleanup-valid', variantId, round, result.interaction.cleanupValid)
   ]
 }
 
@@ -1136,14 +1126,6 @@ function assertRuntimeStyleInvalidationResult(
     throw new Error(`${variant.id} failed cleanup validation.`)
   }
 
-  if (variant.modeId === 'master-progressive' && result.interaction.progressiveAdopted !== 1) {
-    throw new Error(`${variant.id} fell back from progressive hydration before diagnostics.`)
-  }
-
-  if (variant.modeId === 'master-runtime' && result.interaction.progressiveAdopted !== 0) {
-    throw new Error(`${variant.id} unexpectedly reported progressive adoption.`)
-  }
-
   const tempClassNames = getTemporaryClassNames()
   const retainedTemporaryClassNames = tempClassNames.filter((className) => result.afterForcedCleanupState.retainedClassNames.includes(className))
   if (retainedTemporaryClassNames.length) {
@@ -1160,7 +1142,6 @@ async function assertDiagnosticPageReady(page: Page, modeId: InteractionModeId) 
     ready: document.documentElement.dataset.benchmarkReady,
     textAlign: getComputedStyle(document.getElementById('interaction-style-probe')!).textAlign,
     runtimeAvailable: Boolean(globalThis.masterCSSRuntime),
-    progressive: Boolean(globalThis.masterCSSRuntime?.progressive),
     htmlHidden: document.documentElement.hasAttribute('hidden')
   }))
 
@@ -1172,12 +1153,8 @@ async function assertDiagnosticPageReady(page: Page, modeId: InteractionModeId) 
     throw new Error(`Expected interaction style probe text-align:center, received ${state.textAlign}.`)
   }
 
-  if ((modeId === 'master-runtime' || modeId === 'master-progressive') && !state.runtimeAvailable) {
+  if (modeId === 'master-runtime' && !state.runtimeAvailable) {
     throw new Error(`${modeId} did not expose globalThis.masterCSSRuntime.`)
-  }
-
-  if (modeId === 'master-progressive' && !state.progressive) {
-    throw new Error('Master progressive diagnostic page fell back before measurement.')
   }
 
   if (modeId === 'master-runtime' && state.htmlHidden) {
@@ -1329,8 +1306,6 @@ function formatModeLabel(modeId: InteractionModeId) {
       return 'Master CSS static'
     case 'master-runtime':
       return 'Master CSS runtime'
-    case 'master-progressive':
-      return 'Master CSS progressive'
     case 'tailwind-static':
       return 'Tailwind CSS static'
   }

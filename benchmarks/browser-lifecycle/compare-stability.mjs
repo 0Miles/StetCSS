@@ -19,7 +19,6 @@ const expectedScenarioIds = [
 const expectedModeIds = [
   'master-static',
   'master-runtime',
-  'master-progressive',
   'tailwind-static'
 ]
 
@@ -52,7 +51,6 @@ const measuredMetricIds = [
   'mutation-observer-callback-count',
   'mutation-observer-callback-duration-ms',
   'route-count',
-  'progressive-adopted',
   'computed-style-valid'
 ]
 
@@ -374,11 +372,6 @@ function validateCorrectness(variants, label, errors) {
     const computedStyle = variant.metrics?.['computed-style-valid']
     if (computedStyle && computedStyle.median !== 1) {
       errors.push(`${label} variant ${variant.variantId} has computed-style-valid median ${computedStyle.median}; expected 1.`)
-    }
-
-    const progressiveAdopted = variant.metrics?.['progressive-adopted']
-    if (variant.modeId === 'master-progressive' && progressiveAdopted && progressiveAdopted.median !== 1) {
-      errors.push(`${label} progressive variant ${variant.variantId} has progressive-adopted median ${progressiveAdopted.median}; expected 1.`)
     }
   }
 }

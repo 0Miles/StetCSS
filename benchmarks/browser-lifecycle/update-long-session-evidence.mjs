@@ -5,7 +5,6 @@ import { fileURLToPath } from 'node:url'
 const expectedModeIds = [
   'master-static',
   'master-runtime',
-  'master-progressive',
   'tailwind-static'
 ]
 
@@ -152,8 +151,7 @@ function createVariantSummary(report) {
     scenarioId: variant.scenarioId,
     detailId: variant.detailId,
     correctness: {
-      computedStyleValid: createMetricSummary(report, variant.id, 'computed-style-valid'),
-      progressiveAdopted: createMetricSummary(report, variant.id, 'progressive-adopted')
+      computedStyleValid: createMetricSummary(report, variant.id, 'computed-style-valid')
     },
     metrics: Object.fromEntries(report.metrics.map((metric) => [
       metric.id,
@@ -190,8 +188,7 @@ function createVariantResult(report) {
       mutationObserverCallbackDurationMs: createMetricSummary(report, variant.id, 'mutation-observer-callback-duration-ms')
     },
     correctness: {
-      computedStyleValid: createMetricSummary(report, variant.id, 'computed-style-valid'),
-      progressiveAdopted: createMetricSummary(report, variant.id, 'progressive-adopted')
+      computedStyleValid: createMetricSummary(report, variant.id, 'computed-style-valid')
     }
   }
 }
@@ -242,7 +239,6 @@ function createSourceCommand(modeId) {
 function formatModeLabel(modeId) {
   if (modeId === 'master-static') return 'Master CSS static'
   if (modeId === 'master-runtime') return 'Master CSS runtime'
-  if (modeId === 'master-progressive') return 'Master CSS progressive'
   if (modeId === 'tailwind-static') return 'Tailwind CSS static'
   return modeId
 }
