@@ -1,3 +1,4 @@
+import { exceedsScriptNestingLimit } from '@stet-css/lexer'
 import { parseSync, visitorKeys } from 'oxc-parser'
 import { addClassString } from './class-string'
 import { extractClassCandidates } from '../extract-class-candidates'
@@ -64,6 +65,10 @@ function getTemplateLiteralValue(node: OxcNode) {
 }
 
 export function extractOxcClasses(source: string, content: string): string[] {
+  // oxc-parser overflows its native stack on deep nesting, killing the host process.
+  if (exceedsScriptNestingLimit(content)) {
+    return extractClassCandidates(content)
+  }
   let parseResult: ReturnType<typeof parseSync>
   try {
     parseResult = parseSync(normalizeSource(source), content, {
