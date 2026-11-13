@@ -12,6 +12,7 @@ Owns the editor-neutral **language primitives** shared by the language service, 
 - **Imports** stay at the lexer, engine, core, preset, and schema level. Language-service, language-server, VS Code, runtime, server, scanner, and ESLint packages are out of bounds, even though the dependency direction puts some of them on the same tier.
 - **Raw ranges**: tokenize class lists with the lexer, but report raw editor offsets so escaped and quoted classes map back to the source.
 - **Class-position scanning** covers JSX, Vue, Svelte, Astro, strings, and function calls; a fix for one syntax keeps the others passing.
+- **Deep nesting**: JS/TS documents nested past `exceedsScriptNestingLimit` from `@stet-css/lexer` skip oxc, which would crash the host process, and fall back to the regex scan, which only finds class functions after whitespace or `.`.
 - **Semantic tokens** classify through `@stet-css/engine/inspect`; tooling-only helpers stay off the `MasterCSS` prototype, which is on the runtime surface.
 - **CSS directive highlighting** scans directives with the lexer (`collectCSSDirectiveRanges`) rather than the compiler pipeline. The TextMate grammar stays compatible with CSS-family documents; the VS Code extension ships it as-is.
 
