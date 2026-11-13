@@ -277,10 +277,6 @@ function parseNumber(value: string) {
   if (!Number.isNaN(numberValue) && String(numberValue) === value) return numberValue
 }
 
-function parseList(value: string) {
-  return value.split(',').flatMap((part) => part.trim().split(/\s+/)).filter(Boolean)
-}
-
 function parseVariableValue(value: string): CSSDirectiveVariableValue {
   const trimmed = value.trim()
   const numberValue = parseNumber(trimmed)
@@ -357,10 +353,7 @@ function parseMasterOption(manifestInput: CSSDirectiveManifestInput, property: s
       return true
     }
     case 'modes':
-      for (const mode of parseList(value)) {
-        addThemeMode(manifestInput, mode)
-      }
-      return true
+      throw new Error('@settings modes was removed. Declare each mode with @theme <mode> {}.')
     case 'scope':
       manifestInput.scope = value
       return true
