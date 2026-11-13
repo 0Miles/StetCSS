@@ -17,38 +17,44 @@ const CHILD_DEADLINE_MS = 30_000
 const CHILD_MEMORY_CAP_BYTES = 1024 * 1024 * 1024
 
 type IsolatedCall =
-  | { outcome: 'returned', ms: number }
-  | { outcome: 'threw', message: string, ms: number }
+  | { outcome: 'returned', cpuMs: number }
+  | { outcome: 'threw', message: string, cpuMs: number }
   | { outcome: 'did not finish', detail: string }
 
 /**
- * Calls `resolveCSSImportGraph(entry)` in a child Node process. An input that makes the call block
- * or allocate without end then fails the test instead of hanging or exhausting the runner.
+ * Calls one export of a source module in a child Node process. An input that makes the call block
+ * or allocate without end then fails the test instead of hanging the runner or exhausting the
+ * machine; the child also kills itself at the deadline in case the runner dies first.
+ * `cpuMs` is the CPU time of the call alone, which stays steady when the machine is busy.
  */
-function resolveCSSImportGraphIsolated(entry: string): Promise<IsolatedCall> {
+function callIsolated(moduleFile: string, exportName: string, args: string[]): Promise<IsolatedCall> {
   const script = `
     import { writeSync } from 'node:fs'
     import { Worker } from 'node:worker_threads'
     const watchdog = new Worker(\`
       import { writeSync } from 'node:fs'
-      setInterval(() => {
-        if (process.memoryUsage.rss() <= ${CHILD_MEMORY_CAP_BYTES}) return
-        writeSync(2, 'killed past ${CHILD_MEMORY_CAP_BYTES} bytes of resident memory')
+      const kill = (reason) => {
+        writeSync(2, reason)
         process.kill(process.pid, 'SIGKILL')
+      }
+      setTimeout(() => kill('killed after ${CHILD_DEADLINE_MS} ms'), ${CHILD_DEADLINE_MS})
+      setInterval(() => {
+        if (process.memoryUsage.rss() > ${CHILD_MEMORY_CAP_BYTES}) kill('killed past ${CHILD_MEMORY_CAP_BYTES} bytes of resident memory')
       }, 10)
     \`, { eval: true })
     await new Promise((resolve) => watchdog.once('online', resolve))
     watchdog.unref()
-    const { resolveCSSImportGraph } = await import(${JSON.stringify(pathToFileURL(compilerSource).href)})
-    const started = performance.now()
+    const target = (await import(${JSON.stringify(pathToFileURL(moduleFile).href)}))[${JSON.stringify(exportName)}]
+    const started = process.cpuUsage()
     let result
     try {
-      resolveCSSImportGraph(${JSON.stringify(entry)})
+      target(...${JSON.stringify(args)})
       result = { outcome: 'returned' }
     } catch (error) {
       result = { outcome: 'threw', message: error instanceof Error ? error.message : String(error) }
     }
-    writeSync(1, JSON.stringify({ ...result, ms: performance.now() - started }))
+    const { user, system } = process.cpuUsage(started)
+    writeSync(1, JSON.stringify({ ...result, cpuMs: (user + system) / 1000 }))
     process.exit(0)
   `
   return new Promise((resolveCall) => {
@@ -94,20 +100,34 @@ test.skipIf(process.platform === 'win32').concurrent.each(notRegularFiles)('an @
   create(imported)
   writeFileSync(entry, "@import './imported.css';\n.example { color: red; }")
 
-  expect(await resolveCSSImportGraphIsolated(entry)).toEqual({
+  expect(await callIsolated(compilerSource, 'resolveCSSImportGraph', [entry])).toEqual({
     outcome: 'threw',
     message: `CSS file is not a regular file: ${imported}`,
-    ms: expect.any(Number)
+    cpuMs: expect.any(Number)
   })
 }))
 
 /**
+ * Guards: a stylesheet reached through a symlink, such as a token file linked into several
+ * packages, must still be inlined; checking the link itself instead of its target would reject it
+ * as not a regular file.
+ */
+test.skipIf(process.platform === 'win32')('an @import of a symlink to a regular stylesheet still inlines it', () => withRoot((root) => {
+  const entry = join(root, 'entry.css')
+  writeFileSync(join(root, 'tokens.css'), '.example { color: red; }')
+  symlinkSync(join(root, 'tokens.css'), join(root, 'linked.css'))
+  writeFileSync(entry, "@import './linked.css';")
+
+  expect(resolveCSSImportGraph(entry).source).toBe('.example { color: red; }')
+}))
+
+/**
  * Guards: an `@import` of a stylesheet over 16 MiB, such as a mistyped path to a generated dump,
- * must fail with its path instead of being read whole into memory and inlined.
+ * must fail with its path instead of being inlined.
  * Runs in process: without the check the file is read and the call returns, so the test fails
  * rather than hangs.
  */
-test('an @import of a stylesheet over 16 MiB fails with its path instead of reading it', () => withRoot((root) => {
+test('an @import of a stylesheet over 16 MiB fails with its path', () => withRoot((root) => {
   const entry = join(root, 'entry.css')
   const imported = join(root, 'imported.css')
   writeFileSync(imported, ' '.repeat(16 * 1024 * 1024 + 1))
@@ -119,8 +139,10 @@ test('an @import of a stylesheet over 16 MiB fails with its path instead of read
 /**
  * Guards: every `@import` inlines its file again, so 30 levels that each import the next level twice
  * used to inline 2^31 stylesheets and never finish. The graph must stop with an error once it has
- * inlined 10,000 stylesheets, well within 5 seconds.
+ * inlined 10,000 stylesheets, within 5 seconds.
  * Runs in a child process with a deadline, so the old behaviour fails the test instead of hanging it.
+ * The 5 seconds are the call's CPU time rather than wall-clock time, so a busy machine does not
+ * fail a bounded call.
  */
 test.concurrent('a diamond @import graph stops at 10,000 inlined stylesheets instead of growing exponentially', () => withRoot(async (root) => {
   for (let level = 0; level < 30; level++) {
@@ -128,13 +150,13 @@ test.concurrent('a diamond @import graph stops at 10,000 inlined stylesheets ins
   }
   writeFileSync(join(root, 'level-30.css'), '.example { color: red; }')
 
-  const result = await resolveCSSImportGraphIsolated(join(root, 'level-0.css'))
+  const result = await callIsolated(compilerSource, 'resolveCSSImportGraph', [join(root, 'level-0.css')])
 
   expect(result).toMatchObject({
     outcome: 'threw',
     message: expect.stringMatching(/^CSS imports inline more than 10000 stylesheets, counting repeated imports of the same file: .+level-\d+\.css$/)
   })
-  expect('ms' in result && result.ms).toBeLessThan(5_000)
+  expect('cpuMs' in result && result.cpuMs).toBeLessThan(5_000)
 }))
 
 /**
@@ -150,4 +172,20 @@ test('an @import graph stops once it has inlined more than 64 MiB', () => withRo
   writeFileSync(entry, "@import './part.css';\n".repeat(5))
 
   expect(() => resolveCSSImportGraph(entry)).toThrow(`CSS imports inline more than 64 MiB: ${join(root, 'part.css')}`)
+}))
+
+/**
+ * Guards: a graph reads each imported file once and reuses it; that reuse must end with the graph,
+ * or a dev server rebuilding after an edit would keep inlining the old imported stylesheet.
+ */
+test('an imported stylesheet edited between two resolutions is read again', () => withRoot((root) => {
+  const entry = join(root, 'entry.css')
+  const imported = join(root, 'imported.css')
+  writeFileSync(imported, '.example { color: red; }')
+  writeFileSync(entry, "@import './imported.css';")
+  expect(resolveCSSImportGraph(entry).source).toBe('.example { color: red; }')
+
+  writeFileSync(imported, '.example { color: blue; }')
+
+  expect(resolveCSSImportGraph(entry).source).toBe('.example { color: blue; }')
 }))
