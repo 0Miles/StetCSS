@@ -46,7 +46,7 @@ test('rejects the removed manifest setting and points to the CSS entry', async (
   })
 
   await expect(eslint.lintText(`<div className="block"></div>`, { filePath: 'index.jsx' }))
-    .rejects.toThrow('The "manifest" setting of @stet-css is no longer supported; ESLint reads the manifest from the project\'s CSS entry (the CSS file that imports "@stet-css/core"), so define utilities, tokens, and variants there.')
+    .rejects.toThrow(/"manifest" setting[\s\S]*remove it[\s\S]*CSS entry/)
 })
 
 test('uses project-level CSS manifest entries from the ESLint workspace', async () => {

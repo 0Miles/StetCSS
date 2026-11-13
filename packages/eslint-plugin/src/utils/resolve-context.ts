@@ -65,7 +65,7 @@ function resolvePlan(workspaceDir: string) {
 export default function resolveContext(context: RuleContext<any, any[]>) {
   const userSettings = context.settings?.['@stet-css']
   if ((userSettings as { manifest?: unknown } | undefined)?.manifest !== undefined) {
-    throw new Error('The "manifest" setting of @stet-css is no longer supported; ESLint reads the manifest from the project\'s CSS entry (the CSS file that imports "@stet-css/core"), so define utilities, tokens, and variants there.')
+    throw new Error('The @stet-css "manifest" setting is no longer supported: remove it and define utilities, tokens, and variants in the project\'s CSS entry (the CSS file that imports "@stet-css/core"), which is where ESLint reads the manifest from.')
   }
   const resolvedSettings = Object.assign({}, settings, userSettings)
   const filename = getContextFilename(context)
