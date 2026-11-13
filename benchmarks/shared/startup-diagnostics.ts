@@ -82,7 +82,6 @@ export const startupDiagnosticMetricIds = [
   'master-vite-common-module-import-ms',
   'master-vite-mode-runtime-import-ms',
   'master-vite-mode-static-import-ms',
-  'master-vite-mode-progressive-import-ms',
   'master-vite-mode-pre-render-import-ms',
   'master-vite-plugin-context-import-ms',
   'master-vite-plugin-manifest-loader-import-ms',
@@ -106,7 +105,6 @@ export const startupDiagnosticMetricIds = [
   'vite-css-project-manifest-import-ms',
   'vite-css-project-entries-import-ms',
   'vite-css-integration-node-import-ms',
-  'vite-css-server-import-ms',
   'vite-css-runtime-import-ms',
   'vite-magic-string-import-ms',
   'master-vite-plugin-factory-ms',
@@ -337,7 +335,6 @@ async function runViteImportProbes(workspace: string, recorder: DiagnosticRecord
     ['master-vite-common-module-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/common.js'))],
     ['master-vite-mode-runtime-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/modes/runtime.js'))],
     ['master-vite-mode-static-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/modes/static.js'))],
-    ['master-vite-mode-progressive-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/modes/progressive.js'))],
     ['master-vite-mode-pre-render-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/modes/pre-render.js'))],
     ['master-vite-plugin-context-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/context.js'))],
     ['master-vite-plugin-manifest-loader-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/manifest-loader.js'))],
@@ -361,7 +358,6 @@ async function runViteImportProbes(workspace: string, recorder: DiagnosticRecord
     ['vite-css-project-manifest-import-ms', '@stet-css/project/manifest', vitePackageFile],
     ['vite-css-project-entries-import-ms', '@stet-css/project/entries', vitePackageFile],
     ['vite-css-integration-node-import-ms', '@stet-css/integration/node', vitePackageFile],
-    ['vite-css-server-import-ms', '@stet-css/server', vitePackageFile],
     ['vite-css-runtime-import-ms', '@stet-css/runtime', vitePackageFile],
     ['vite-magic-string-import-ms', 'magic-string', vitePackageFile]
   ])
