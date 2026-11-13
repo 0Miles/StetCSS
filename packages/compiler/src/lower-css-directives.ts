@@ -309,7 +309,7 @@ function warnUnsupportedMediaModes(input: CSSDirectiveManifestInput, options: Lo
 function warnMediaDefaultMode(input: CSSDirectiveManifestInput, css: MasterCSS, options: LowerCSSDirectivesOptions, warnings: string[]) {
   if (input.defaultMode === undefined || css.settings.modeTrigger !== 'media') return
 
-  warn(warnings, options, 'default-mode has no effect with mode-trigger: media, the default, because the system color scheme preference picks the mode. Use mode-trigger: class or host to set a default mode.')
+  warn(warnings, options, 'default-mode has no effect with mode-trigger: media, the default, because the system color scheme preference picks the mode; use mode-trigger: class or host to set a default mode.')
 }
 
 function createDirectiveCSS(input: CSSDirectiveManifestInput, options: LowerCSSDirectivesOptions) {

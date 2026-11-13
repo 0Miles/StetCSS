@@ -353,7 +353,7 @@ function parseMasterOption(manifestInput: CSSDirectiveManifestInput, property: s
       return true
     }
     case 'modes':
-      throw new Error('@settings modes was removed. Declare each mode with @theme <mode> {}.')
+      throw new Error('@settings modes was removed; declare each mode, including light and dark, with @theme <mode> {}')
     case 'scope':
       manifestInput.scope = value
       return true

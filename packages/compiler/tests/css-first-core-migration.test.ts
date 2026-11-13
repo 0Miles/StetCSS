@@ -963,21 +963,28 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
   /**
    * Prevents: a developer setting `default-mode` under the media trigger (written or left as the
    * default) without being told it does nothing, since the system color scheme picks the mode;
-   * and the opposite, a spurious warning under the class or host trigger, or for every project
-   * that never wrote `default-mode`, which would fail `stet-css inspect --max-warnings 0`.
+   * and the opposite, a spurious warning under the class or host trigger (including one set in
+   * the base manifest rather than this stylesheet), or for every project that never wrote
+   * `default-mode`, which would fail `stet-css inspect --max-warnings 0`. `default-mode: none`
+   * warns too: the ticket asks for a warning whenever `default-mode` is set under media.
    */
   test.each([
-    ['default media trigger', 'default-mode: dark;', true],
-    ['explicit media trigger', 'mode-trigger: media; default-mode: dark;', true],
-    ['class trigger', 'mode-trigger: class; default-mode: dark;', false],
-    ['host trigger', 'mode-trigger: host; default-mode: dark;', false],
-    ['media trigger without default-mode', 'mode-trigger: media;', false]
-  ])('warns about default-mode only under the media trigger: %s', (_, declarations, warns) => {
+    ['default media trigger', 'default-mode: dark;', undefined, true],
+    ['explicit media trigger', 'mode-trigger: media; default-mode: dark;', undefined, true],
+    ['default media trigger with default-mode: none', 'default-mode: none;', undefined, true],
+    ['class trigger', 'mode-trigger: class; default-mode: dark;', undefined, false],
+    ['host trigger', 'mode-trigger: host; default-mode: dark;', undefined, false],
+    ['class trigger from the base manifest', 'default-mode: dark;', 'class', false],
+    ['media trigger without default-mode', 'mode-trigger: media;', undefined, false]
+  ] as const)('warns about default-mode only under the media trigger: %s', (_, declarations, baseModeTrigger, warns) => {
+    const baseManifest = baseModeTrigger
+      ? { ...defaultManifest, settings: { ...defaultManifest.settings, modeTrigger: baseModeTrigger } }
+      : defaultManifest
     const { warnings } = compileCSSManifest(`
       @settings {
         ${declarations}
       }
-    `, { baseManifest: defaultManifest })
+    `, { baseManifest })
 
     expect(warnings).toEqual(warns ? [expect.stringContaining('default-mode')] : [])
   })
