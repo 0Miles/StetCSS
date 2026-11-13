@@ -4,8 +4,6 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { extname, isAbsolute, relative, resolve } from 'node:path'
 import { performance } from 'node:perf_hooks'
 import { chromium, type Browser, type Page } from '@playwright/test'
-import { render } from '@stet-css/server'
-import type { MasterCSSManifest } from '@stet-css/core'
 import { benchmarkAdapters, benchmarkFixtures } from '../fixtures/manifest'
 import { summarizeBytes } from './bytes'
 import { collectEnvironment, collectPackageVersions } from './environment'
@@ -316,7 +314,6 @@ const masterStaticCSSCache = new Map<BenchmarkFixtureId, Promise<string>>()
 const tailwindStaticCSSCache = new Map<BenchmarkFixtureId, Promise<string>>()
 let runtimeBundlePromise: Promise<Buffer> | undefined
 let defaultManifestJSONPromise: Promise<Buffer> | undefined
-let defaultManifestPromise: Promise<MasterCSSManifest> | undefined
 
 export async function writeInteractionCostReport() {
   const report = await createInteractionCostReport()
@@ -1228,17 +1225,36 @@ async function readMasterStaticCSS(fixtureId: BenchmarkFixtureId) {
   let promise = masterStaticCSSCache.get(fixtureId)
   if (!promise) {
     promise = (async () => {
-      const sourceHtml = renderInteractionDocument({
+      const workspace = resolve(benchmarkRoot, '.results', 'interaction-cost', 'workspaces', `${fixtureId}-master-static`)
+      await resetDirectory(workspace)
+      const html = renderInteractionDocument({
         fixtureId,
         modeId: 'master-static',
         scenarioId: 'existing-class-toggle',
         classes: masterClasses,
         includeStaticClassSource: true
       })
-      const result = render(sourceHtml, await readDefaultManifest(), {
-        hydrationManifest: false
+      await writeWorkspaceFiles(workspace, {
+        'package.json': JSON.stringify({
+          private: true,
+          type: 'module'
+        }, null, 2) + '\n',
+        'index.html': html
       })
-      return result.css?.text || ''
+      await resetDirectory(resolve(workspace, 'dist'))
+      await runCommand(
+        process.execPath,
+        [
+          resolveBenchmarkPackageFile('@stet-css/cli', 'dist/bin/index.js'),
+          'index.html',
+          '-o',
+          'dist/output.css',
+          '-v',
+          '0'
+        ],
+        workspace
+      )
+      return (await readFile(resolve(workspace, 'dist/output.css'))).toString('utf8')
     })()
     masterStaticCSSCache.set(fixtureId, promise)
   }
@@ -1816,14 +1832,6 @@ async function readDefaultManifestJSON() {
     })()
   }
   return defaultManifestJSONPromise
-}
-
-async function readDefaultManifest() {
-  if (!defaultManifestPromise) {
-    defaultManifestPromise = readDefaultManifestJSON()
-      .then((buffer) => JSON.parse(buffer.toString('utf8')) as MasterCSSManifest)
-  }
-  return defaultManifestPromise
 }
 
 function assertExistingFile(file: string, message: string) {
