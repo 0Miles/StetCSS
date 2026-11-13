@@ -1,8 +1,6 @@
 import rule from '../src/rules/no-invalid-classes'
 import { RuleTester } from '@typescript-eslint/rule-tester'
-import { createTester, jsxTester } from './testers'
-import { createPresetManifest } from './helpers/create-preset-manifest'
-import UtilityType from '@stet-css/schema/utility-type'
+import { createCustomManifestTester, jsxTester } from './testers'
 
 jsxTester.run('invalid', rule, {
   valid: [
@@ -69,24 +67,7 @@ jsxTester.run('invalid', rule, {
   ]
 })
 
-createTester({
-  settings: {
-    '@stet-css': {
-      manifest: createPresetManifest({
-        utilities: [
-          {
-            name: 'btn',
-            type: UtilityType.Semantic,
-            layer: 'components',
-            rules: [
-              { selector: '&', declarations: { display: 'block' } }
-            ]
-          }
-        ]
-      })
-    }
-  }
-}).run('invalid', rule, {
+createCustomManifestTester().run('invalid', rule, {
   valid: [],
   invalid: [
     {

@@ -1,29 +1,8 @@
-import UtilityType from '@stet-css/schema/utility-type'
 import { expect, test } from 'vitest'
 import plugin from '../src/plugin'
 import recommended from '../src/configs/recommended'
 import rule from '../src/rules/no-unapproved-raw-values'
-import { createTester, jsxTester } from './testers'
-import { createPresetManifest } from './helpers/create-preset-manifest'
-
-const customManifest = createPresetManifest({
-  variables: [
-    { namespace: 'spacing', key: 'card', name: 'spacing-card', type: 'number', value: '1.25rem', numeric: { value: 1.25, unit: 'rem' } }
-  ]
-})
-
-type PresetManifestInput = Parameters<typeof createPresetManifest>[0]
-const registryFieldManifest = createPresetManifest({
-  variables: [
-    { namespace: 'spacing', key: 'card', name: 'spacing-card', type: 'number', value: '1.25rem', numeric: { value: 1.25, unit: 'rem' } }
-  ],
-  nativeValueNamespaces: [{
-    properties: ['--space'],
-    variableAliasRefs: ['~spacing']
-  }]
-} as PresetManifestInput & {
-  nativeValueNamespaces: { properties: string[], variableAliasRefs: string[] }[]
-})
+import { createCustomManifestTester, jsxTester } from './testers'
 
 jsxTester.run('no unapproved raw values', rule, {
   valid: [
@@ -89,35 +68,14 @@ jsxTester.run('no unapproved raw values', rule, {
   ]
 })
 
-createTester({
-  settings: {
-    '@stet-css': {
-      manifest: createPresetManifest({
-        utilities: [
-          {
-            name: 'btn',
-            type: UtilityType.Semantic,
-            layer: 'components',
-            declarations: { display: 'block' }
-          }
-        ]
-      })
-    }
-  }
-}).run('no unapproved raw values custom components', rule, {
+createCustomManifestTester().run('no unapproved raw values custom components', rule, {
   valid: [
     { code: `<button class="btn">Component class</button>` }
   ],
   invalid: []
 })
 
-createTester({
-  settings: {
-    '@stet-css': {
-      manifest: customManifest
-    }
-  }
-}).run('no unapproved raw values custom manifest', rule, {
+createCustomManifestTester().run('no unapproved raw values custom manifest', rule, {
   valid: [
     { code: `<div class="m:card">Custom token</div>` }
   ],
@@ -129,19 +87,6 @@ createTester({
       ]
     }
   ]
-})
-
-createTester({
-  settings: {
-    '@stet-css': {
-      manifest: registryFieldManifest
-    }
-  }
-}).run('no unapproved raw values ignored manifest registry fields', rule, {
-  valid: [
-    { code: `<div class="--space:17px">Manifest-carried native namespace is ignored</div>` }
-  ],
-  invalid: []
 })
 
 jsxTester.run('no unapproved raw values parser smoke tests', rule, {

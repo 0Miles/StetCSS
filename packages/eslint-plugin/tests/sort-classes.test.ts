@@ -1,24 +1,10 @@
 import rule from '../src/rules/sort-classes'
-import { createTester } from './testers'
-import { createPresetManifest } from './helpers/create-preset-manifest'
-import UtilityType from '@stet-css/schema/utility-type'
+import { createCustomManifestTester } from './testers'
 
-createTester({
+createCustomManifestTester({
   settings: {
     '@stet-css': {
       classAttributes: ['test', 'className', 'class'],
-      manifest: createPresetManifest({
-        utilities: [
-          {
-            name: 'zDialog',
-            type: UtilityType.Semantic,
-            layer: 'components',
-            rules: [
-              { selector: '&', declarations: { 'z-index': 10000 } }
-            ]
-          }
-        ],
-      }),
     },
   },
 }).run('sort classes', rule, {
