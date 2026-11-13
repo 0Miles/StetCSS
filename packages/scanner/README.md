@@ -101,7 +101,7 @@ CLI and framework/build integrations handle ordinary project source discovery. U
 @blocklist 'debug-*';
 ```
 
-Stylesheet `@source` directives are resolved by the stylesheet pipeline as `(source union) - (source not union)`. Use them for extra content, shared source, or scoped roots rather than restating the default app scan. `@safelist` maps to `safelist`, and `@blocklist` maps to `blocklist`.
+The stylesheet pipeline resolves the files a static build reads as `(project source files + @source) - @source not`. Project source files are the files under the project root with a source extension, outside dependency (`node_modules`, `vendor`), version control, build output and cache directories. Use `@source` for files outside that set, such as a component library in `node_modules` (`@source '../node_modules/ui-kit';`) or a package outside the project root, rather than restating the default app scan. A path without glob characters that names a directory covers everything under it. `@safelist` maps to `safelist`, and `@blocklist` maps to `blocklist`; `@blocklist` also removes classes found by an integration's module scan.
 
 Bare source globs are resolved from `cwd`. Globs that start with `./` or `../` are resolved relative to the CSS file that declares the directive. `@blocklist` accepts exact strings and `*` / `?` wildcard patterns.
 
