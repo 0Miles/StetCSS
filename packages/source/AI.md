@@ -1,10 +1,10 @@
 # @stet-css/source
 
-Owns **candidate extraction**: pulling unvalidated, class-like strings out of raw source text, plus the format-aware source adapters (HTML, OXC for JS/TS, Astro, Svelte, Vue) that scanner auto extraction runs.
+Owns **candidate extraction**: pulling unvalidated, class-like strings out of raw source text, plus the format-aware source adapters (HTML, OXC for JS/TS, Astro, Svelte, Vue) and the order they are tried in (`resolveSourceAdapter`, `extractSourceClassCandidates`), shared by the scanner's module scan and the stylesheet's project class set.
 
 ## Boundaries
 
-- Candidate validation and rule insertion: `@stet-css/scanner` (through `@stet-css/validator`); source returns strings only.
+- Candidate validation and rule insertion: `@stet-css/scanner` (through `@stet-css/validator`) for module scans, rendering in `@stet-css/stylesheet` for project files; source returns strings only.
 - Lexical primitives (source ranges, class-list tokenizing, unit constants): `@stet-css/lexer`.
 
 ## Risks
