@@ -54,13 +54,14 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     const { manifest, warnings } = compileCSSManifest(`
       @settings {
         mode-trigger: class;
-        modes: light dark;
       }
 
       @theme {
         --color-primary: #000;
         --spacing-card: 1rem;
       }
+
+      @theme light {}
 
       @theme dark {
         --color-primary: #fff;
@@ -588,8 +589,11 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     const settings = `
       @settings {
         mode-trigger: class;
-        modes: light dark chrisma;
       }
+
+      @theme light {}
+      @theme dark {}
+      @theme chrisma {}
     `
     const explicit = compileCSSManifest(`
       ${settings}
@@ -722,8 +726,11 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     const customMode = compileCSSManifest(`
       @settings {
         mode-trigger: class;
-        modes: light dark chrisma;
       }
+
+      @theme light {}
+      @theme dark {}
+      @theme chrisma {}
 
       .card {
         @variant chrisma {
@@ -736,8 +743,11 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     const bareCondition = compileCSSManifest(`
       @settings {
         mode-trigger: class;
-        modes: light dark chrisma;
       }
+
+      @theme light {}
+      @theme dark {}
+      @theme chrisma {}
 
       .card {
         @chrisma {
@@ -886,7 +896,6 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     const base = `
       @settings {
         mode-trigger: class;
-        modes: light dark;
       }
 
       @theme light {
@@ -919,11 +928,42 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     expect(noDefault.themeLayer.text).not.toContain('.light,:root{--color-emphasis')
   })
 
+  /**
+   * Prevents: `@settings { modes: … }` still being accepted after its removal, so a developer
+   * keeps a setting that no longer drives anything, or gets a bare "unsupported option" error
+   * that does not say how to declare a mode now.
+   */
+  test('rejects @settings modes and points to @theme <mode> {}', () => {
+    expect(() => compileCSSManifest(`
+      @settings {
+        mode-trigger: class;
+        modes: light dark sepia;
+      }
+    `, { baseManifest: defaultManifest })).toThrow('@theme <mode> {}')
+  })
+
+  /**
+   * Prevents: an empty `@theme sepia {}` no longer registering "sepia" as a mode. With
+   * `@settings modes` removed, it is the only way to declare a mode that has no tokens yet,
+   * so `fg:red@sepia` would stop generating a rule.
+   */
+  test('registers a mode from an empty @theme <mode> {} block', () => {
+    const { manifest } = compileCSSManifest(`
+      @settings {
+        mode-trigger: class;
+      }
+
+      @theme sepia {}
+    `, { baseManifest: defaultManifest })
+    const css = createTestCSS(manifest).ensureClassRules('fg:red@sepia')
+
+    expect(css.utilitiesLayer.text).toContain('.sepia .fg\\:red\\@sepia{color:')
+  })
+
   test('lowers color variables, mode values, aliases, and alpha references', () => {
     const { manifest } = compileCSSManifest(`
       @settings {
         mode-trigger: class;
-        modes: light dark chrisma;
       }
 
       @theme {
@@ -1232,7 +1272,6 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     const { manifest } = compileCSSManifest(`
       @settings {
         mode-trigger: class;
-        modes: light dark;
       }
 
       @theme {
@@ -1335,7 +1374,6 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     const { manifest } = compileCSSManifest(`
       @settings {
         mode-trigger: class;
-        modes: light dark;
       }
 
       @theme static {
