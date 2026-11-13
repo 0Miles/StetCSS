@@ -941,6 +941,8 @@ describe('canonical compose directive suggestions', () => {
    * Prevents: the canonical `@compose` rewrite turning `block@dark` or `hidden@light` into the
    * removed `@dark {}` / `@light {}` blocks, which the compiler rejects, so applying the
    * suggestion breaks the build.
+   * Reverse-checked: `if (token === 'dark') return '@dark'` in `variantKeyword` reds this test plus
+   * the matching ESLint `prefer-canonical-classes` autofix case.
    */
   test('extracts variant suffixes into variant blocks', () => {
     expect(suggestCanonicalComposeDirective('bg:blue-60:hover@sm block@dark hidden@light', css)).toEqual({

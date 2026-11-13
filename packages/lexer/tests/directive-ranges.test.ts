@@ -51,6 +51,9 @@ test.concurrent('collects nested Master directive ranges without treating host a
  * drifting. Reported as `variant`, directive formatting treats them as directives and rewrites
  * `url(moon@light.png)` to `url(moon@light .png)`; not reported at all, a local CSS file whose
  * only directive is `@dark {}` skips the compiler and its removal error.
+ * Reverse-checked in `collectCSSDirectiveRanges`: mapping dark and light back to `variant` reds this
+ * test plus the language url formatting test; dropping them from `CSS_DIRECTIVE_RANGE_NAMES` reds
+ * this test plus the three stylesheet local-style tests.
  */
 test.concurrent('collects dark and light ranges under their own names', () => {
   const source = '.card { @dark { @compose fg:white; } @light { color: black; } }'

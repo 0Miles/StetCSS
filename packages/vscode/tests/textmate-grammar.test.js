@@ -319,6 +319,7 @@ test('highlights every Master CSS directive keyword', () => {
  * Prevents: the editor still highlighting the removed `@dark {}` / `@light {}` blocks as
  * directives, which tells a developer that syntax the compiler now rejects is valid.
  * `@variant dark {}` keeps its directive highlighting.
+ * Reverse-checked: `(@)(variant|dark|light)\\b` back in the grammar reds only this test.
  */
 test('does not highlight @dark or @light as directives', () => {
   const tokens = tokenizeWith(injectedCSSGrammar, `

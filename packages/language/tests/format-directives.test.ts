@@ -49,6 +49,7 @@ test.concurrent('normalizes directive spacing without changing block contents', 
  * Prevents: formatting breaking image paths that contain `@dark` / `@light`. The lexer still
  * locates those names so local CSS using the removed blocks reaches the compiler, but they are
  * not directives: an unquoted `url(moon@light.png)` must not become `url(moon@light .png)`.
+ * Reverse-checked: deleting the `dark` / `light` case in `formatDirectivePrelude` reds only this test.
  */
 test.concurrent('does not split url() paths that contain @dark or @light', () => {
   const source = '.a { background: url(icons/moon@light.png); }\n.logo { background: url(logo@dark.svg); }'
