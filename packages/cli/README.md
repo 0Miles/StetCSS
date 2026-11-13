@@ -70,7 +70,7 @@ Scan source files, detect Master CSS classes, generate CSS rules, and write the 
 npx @stet-css/cli index.html main.js
 ```
 
-When no source paths are passed, the CLI scans the current project with the default scanner `include` and `exclude` options.
+When no source paths are passed, the CLI reads the project's own source files: files under the current directory with a source extension (`.html`, `.js`, `.ts`, `.tsx`, `.vue`, `.svelte`, `.astro`, `.md`, and similar), outside dependency (`node_modules`, `vendor`), version control, build output (`build`, `dist`, `out`, `.next`, `.nuxt`, `.output`, `.svelte-kit`, `.astro`, ...) and cache directories at any depth, and excluding `*.d.ts`, `*.test.*` and `README.md` files. Symlinked files and directories are followed. A CSS entry's `@source` adds files, including files in those directories, and `@source not` removes them; a path without glob characters that names a directory covers everything under it. Source path arguments replace the project's own source files; `@source` and `@source not` still apply.
 
 ```bash
 npx @stet-css/cli

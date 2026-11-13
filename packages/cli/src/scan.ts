@@ -6,8 +6,6 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { DEFAULT_SCAN_OUTPUT } from './constants'
 
-const DEFAULT_SOURCE_PATTERNS = ['**/*.{html,htm,js,jsx,cjs,ts,tsx,mts,cts,svelte,astro,vue,md,mdx,pug,php}']
-type FastGlob = Pick<typeof import('fast-glob'), 'sync'>
 type Chokidar = typeof import('chokidar').default
 type Logger = ReturnType<typeof import('consola').createConsola>
 type Bytes = (value: number) => string
@@ -18,7 +16,6 @@ type ProjectEntriesModule = typeof import('@stet-css/project/entries')
 let scannerModulePromise: Promise<CSSScannerConstructor> | undefined
 let stylesheetModulePromise: Promise<StylesheetModule> | undefined
 let projectEntriesModulePromise: Promise<ProjectEntriesModule> | undefined
-let fastGlobModulePromise: Promise<FastGlob> | undefined
 let chokidarModulePromise: Promise<Chokidar> | undefined
 let loggerPromise: Promise<Logger> | undefined
 let bytesPromise: Promise<Bytes> | undefined
@@ -50,34 +47,11 @@ async function registerManagedCSSEntries(scanner: CSSScanner, styleCSSSources: S
   )]
 }
 
-function normalizeSourcePatterns(specifiedSourcePaths?: string[]) {
-  return specifiedSourcePaths?.length ? specifiedSourcePaths : DEFAULT_SOURCE_PATTERNS
-}
-
-function normalizeGlobPatterns(patterns: string[]) {
-  return patterns.map((pattern) => pattern.replace(/\\/g, '/'))
-}
-
-function resolveSourcePaths(scanner: CSSScanner, fg: FastGlob, sourcePatterns: string[], ignore: string[] = []) {
-  return fg.sync(normalizeGlobPatterns(sourcePatterns), {
-    cwd: scanner.cwd,
-    ignore: normalizeGlobPatterns(ignore)
-  })
-    .filter(Boolean)
-}
-
-async function scanSourceFile(scanner: CSSScanner, source: string) {
-  const filepath = path.resolve(scanner.cwd, source)
-  await scanner.scan(source, fs.readFileSync(filepath, 'utf8'))
-}
-
-async function scanSourceFiles(scanner: CSSScanner, sourcePaths: string[]) {
-  await Promise.all(sourcePaths.map((source) => scanSourceFile(scanner, source)))
-}
-
-async function prepareScanner(scanner: CSSScanner, styleCSSSources: StyleCSSSources, sourcePaths: string[]) {
-  await registerManagedCSSEntries(scanner, styleCSSSources)
-  await scanSourceFiles(scanner, sourcePaths)
+/** Source path arguments replace the project's own source files; globs use `/` on every platform. */
+function normalizeSourcePatterns(specifiedSourcePaths: string[]) {
+  return specifiedSourcePaths.length
+    ? specifiedSourcePaths.map((pattern) => pattern.replace(/\\/g, '/'))
+    : undefined
 }
 
 async function exportCSS(scanner: CSSScanner, css: string, filename = DEFAULT_SCAN_OUTPUT) {
@@ -112,23 +86,20 @@ export default async function runScan(specifiedSourcePaths: string[] = [], optio
     loadStylesheetModule(),
     loadProjectEntriesModule()
   ])
-  const [
-    CSSScanner,
-    fg
-  ] = await Promise.all([
-    loadCSSScanner(),
-    loadFastGlob()
-  ])
+  const CSSScanner = await loadCSSScanner()
   const { watch, output, verbose, cwd } = options
   const scanner = new CSSScanner({}, cwd)
   const styleCSSSources: StyleCSSSources = new Map()
-  const sourcePatterns = normalizeSourcePatterns(specifiedSourcePaths)
+  const sources = normalizeSourcePatterns(specifiedSourcePaths)
   const writeOutput = async () => {
     const { createExtractedCSS } = await loadStylesheetModule()
     const css = await createExtractedCSS({
       scanner,
       styleCSSSources,
-      projectDir: scanner.cwd
+      projectDir: scanner.cwd,
+      sources,
+      // The CLI scans no modules: every class comes from the stylesheet's class set.
+      classes: []
     })
     if (options.export) {
       await exportCSS(scanner, css, output)
@@ -137,23 +108,18 @@ export default async function runScan(specifiedSourcePaths: string[] = [], optio
     }
   }
   scanner.on('init', (options: ScannerOptions) => {
-    if (!specifiedSourcePaths.length) {
-      if (!options.exclude?.includes('**/node_modules/**')) {
-        options.exclude?.push('**/node_modules/**')
-      }
-      if (!options.exclude?.includes('node_modules')) {
-        options.exclude?.push('node_modules')
-      }
-    }
     options.verbose = verbose ? +verbose : options.verbose
   })
   await scanner.init()
-  const scanPaths = () => resolveSourcePaths(
-    scanner,
-    fg,
-    sourcePatterns,
-    specifiedSourcePaths.length ? [] : scanner.options.exclude
-  )
+  const resolveSourceFiles = async () => {
+    const { resolveStylesheetSourceFiles } = await loadStylesheetModule()
+    return resolveStylesheetSourceFiles({
+      scanner,
+      styleCSSSources,
+      projectDir: scanner.cwd,
+      sources
+    })
+  }
   if (watch) {
     const chokidar = await loadChokidar()
     const watchers: FSWatcher[] = []
@@ -167,17 +133,16 @@ export default async function runScan(specifiedSourcePaths: string[] = [], optio
       await Promise.all(watchers.splice(0).map((watcher) => watcher.close()))
     }
     const startWatchers = async () => {
-      const sourcePaths = scanPaths()
+      const sourcePaths = await resolveSourceFiles()
       if (sourcePaths.length) {
         const sourceWatcher = chokidar.watch(sourcePaths, {
-          cwd: scanner.cwd,
           ignoreInitial: true
         })
-        sourceWatcher.on('add', (source) => {
-          void scanSourceFile(scanner, source).then(queueWrite)
+        sourceWatcher.on('add', () => {
+          void queueWrite()
         })
-        sourceWatcher.on('change', (source) => {
-          void scanSourceFile(scanner, source).then(queueWrite)
+        sourceWatcher.on('change', () => {
+          void queueWrite()
         })
         watchers.push(sourceWatcher)
         await waitForWatcherReady(sourceWatcher)
@@ -197,7 +162,7 @@ export default async function runScan(specifiedSourcePaths: string[] = [], optio
             }
             await closeWatchers()
             await scanner.reset(scanner.customOptions, { emit: false })
-            await prepareScanner(scanner, styleCSSSources, scanPaths())
+            await registerManagedCSSEntries(scanner, styleCSSSources)
             await queueWrite()
             await startWatchers()
             const logger = await loadLogger()
@@ -228,7 +193,7 @@ export default async function runScan(specifiedSourcePaths: string[] = [], optio
       void closeWatchers().finally(() => process.exit(0))
     })
     await pipelineModules
-    await prepareScanner(scanner, styleCSSSources, scanPaths())
+    await registerManagedCSSEntries(scanner, styleCSSSources)
     await queueWrite()
     await startWatchers()
     const logger = await loadLogger()
@@ -236,7 +201,7 @@ export default async function runScan(specifiedSourcePaths: string[] = [], optio
     logger.info('Start watching source changes')
   } else {
     await pipelineModules
-    await prepareScanner(scanner, styleCSSSources, scanPaths())
+    await registerManagedCSSEntries(scanner, styleCSSSources)
     await writeOutput()
   }
 }
@@ -254,11 +219,6 @@ function loadStylesheetModule() {
 function loadProjectEntriesModule() {
   projectEntriesModulePromise ||= import('@stet-css/project/entries')
   return projectEntriesModulePromise
-}
-
-function loadFastGlob() {
-  fastGlobModulePromise ||= import('fast-glob').then((mod) => mod.default || mod)
-  return fastGlobModulePromise
 }
 
 function loadChokidar() {
