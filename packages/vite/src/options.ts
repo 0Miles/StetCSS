@@ -30,12 +30,17 @@ export interface PluginOptions {
 
   /**
    * Whether to include Master CSS’s runtime engine through Vite's HTML transform.
+   * Applies to `'runtime'` and `'progressive'` modes only.
+   *
+   * @default true
    */
   injectRuntime?: boolean
 
   /**
    * Prevents Flash of Unstyled Content (FOUC) during the initial render.
-   * Useful in Runtime
+   * Applies to `'runtime'` mode only.
+   *
+   * @default true
    */
   avoidFOUC?: boolean
 }
