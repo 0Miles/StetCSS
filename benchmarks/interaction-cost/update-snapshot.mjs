@@ -15,11 +15,6 @@ const modes = [
     family: 'master-css'
   },
   {
-    id: 'master-progressive',
-    label: 'Master CSS progressive',
-    family: 'master-css'
-  },
-  {
     id: 'tailwind-static',
     label: 'Tailwind CSS static',
     family: 'tailwind-css'
@@ -63,8 +58,7 @@ const metricIds = [
   'dom-node-count',
   'affected-element-count',
   'computed-style-valid',
-  'cleanup-valid',
-  'progressive-adopted'
+  'cleanup-valid'
 ]
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -179,8 +173,7 @@ function createVariantResult(variantId) {
     },
     correctness: {
       computedStyleValid: createMetricSummary(variantId, 'computed-style-valid'),
-      cleanupValid: createMetricSummary(variantId, 'cleanup-valid'),
-      progressiveAdopted: createMetricSummary(variantId, 'progressive-adopted')
+      cleanupValid: createMetricSummary(variantId, 'cleanup-valid')
     }
   }
 }
