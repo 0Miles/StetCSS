@@ -1,11 +1,11 @@
 import { execFile, execFileSync } from 'node:child_process'
-import { mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { expect, test } from 'vitest'
-import { resolveCSSImportGraph } from '../src'
+import { compileCSSManifestFile, resolveCSSImportGraph } from '../src'
 
 const testDirectory = dirname(fileURLToPath(import.meta.url))
 const compilerSource = resolve(testDirectory, '../src/index.ts')
@@ -27,7 +27,7 @@ type IsolatedCall =
  * machine; the child also kills itself at the deadline in case the runner dies first.
  * `cpuMs` is the CPU time of the call alone, which stays steady when the machine is busy.
  */
-function callIsolated(moduleFile: string, exportName: string, args: string[]): Promise<IsolatedCall> {
+function callIsolated(moduleFile: string, exportName: string, args: unknown[]): Promise<IsolatedCall> {
   const script = `
     import { writeSync } from 'node:fs'
     import { Worker } from 'node:worker_threads'
@@ -200,4 +200,76 @@ test('an imported stylesheet edited between two resolutions is read again', () =
   writeFileSync(imported, '.example { color: blue; }')
 
   expect(resolveCSSImportGraph(entry).source).toBe('.example { color: blue; }')
+}))
+
+/** Writes 12 levels that each define a component and reference the next level twice. */
+function writeReferenceDiamond(root: string) {
+  for (let level = 0; level < 12; level++) {
+    writeFileSync(join(root, `level-${level}.css`), [
+      `@reference './level-${level + 1}.css';`,
+      `@reference './level-${level + 1}.css';`,
+      `@components { level-${level} { color: red; } }`
+    ].join('\n'))
+  }
+  writeFileSync(join(root, 'level-12.css'), '@components { level-12 { color: red; } }')
+  return join(root, 'level-0.css')
+}
+
+const referenceDiamondCalls = [
+  { api: 'compileCSSManifestFile', args: (entry: string) => [entry] },
+  { api: 'compileProjectManifest', args: (entry: string) => [[entry]] },
+  { api: 'compileCSSManifest', args: (entry: string) => [readFileSync(entry, 'utf8'), { from: entry }] }
+]
+
+/**
+ * Guards: every `@reference` is a full compile of its file, so 12 levels that each reference the
+ * next level twice compiled 8,191 stylesheets: over 4 seconds without a base manifest and close to
+ * a minute in a real build, with no error. The compile must stop with an error naming a file once
+ * the reference tree passes 256 expansions, within 5 seconds, through every compile entry point.
+ * Each level defines a component, so a shortcut that skips empty stylesheets cannot pass it.
+ * Runs in a child process, so the old behaviour fails the test instead of slowing the runner.
+ */
+test.concurrent.each(referenceDiamondCalls)('$api stops a diamond @reference graph after 256 expansions instead of compiling 8,191 stylesheets', ({ api, args }) => withRoot(async (root) => {
+  const entry = writeReferenceDiamond(root)
+
+  const result = await callIsolated(compilerSource, api, args(entry))
+
+  expect(result).toMatchObject({
+    outcome: 'threw',
+    message: expect.stringMatching(/^CSS references compile more than 256 stylesheets, counting repeated references of the same file: .+level-\d+\.css$/)
+  })
+  expect('cpuMs' in result && result.cpuMs).toBeLessThan(5_000)
+}))
+
+/**
+ * Guards: the limit is 256 expansions across the reference tree. A project that references the
+ * same stylesheet 256 times must keep compiling, and the 257th reference must fail with the path of
+ * the referenced file.
+ */
+test('a compile expands up to 256 @reference directives and fails on the 257th', () => withRoot((root) => {
+  const entry = join(root, 'entry.css')
+  const tokens = join(root, 'tokens.css')
+  writeFileSync(tokens, '@components { brand { color: red; } }')
+  const composeBrand = '.button { @compose brand; }'
+
+  writeFileSync(entry, "@reference './tokens.css';\n".repeat(256) + composeBrand)
+  expect(compileCSSManifestFile(entry).css).toContain('.button{color:red}')
+
+  writeFileSync(entry, "@reference './tokens.css';\n".repeat(257) + composeBrand)
+  expect(() => compileCSSManifestFile(entry)).toThrow(`CSS references compile more than 256 stylesheets, counting repeated references of the same file: ${tokens}`)
+}))
+
+/**
+ * Guards: the stylesheets a compile's references import count toward the same 10,000-stylesheet
+ * limit as the entry's own imports. Otherwise each of up to 256 references would get a limit of its
+ * own, and 200 references of a stylesheet with 50 imports would inline 10,200 stylesheets unchecked.
+ */
+test('stylesheets imported by referenced files count toward the compile\'s 10,000-stylesheet limit', () => withRoot((root) => {
+  const entry = join(root, 'entry.css')
+  const part = join(root, 'part.css')
+  writeFileSync(part, '@components { brand { color: red; } }')
+  writeFileSync(join(root, 'hub.css'), "@import './part.css';\n".repeat(50))
+  writeFileSync(entry, "@reference './hub.css';\n".repeat(200))
+
+  expect(() => compileCSSManifestFile(entry)).toThrow(`CSS imports inline more than 10000 stylesheets, counting repeated imports of the same file: ${part}`)
 }))

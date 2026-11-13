@@ -76,7 +76,6 @@ export type CompileCSSManifestSourceOptions = CompileCSSOptions & {
 }
 
 type CompileCSSManifestInternalOptions = CompileCSSManifestSourceOptions & {
-  referenceStack?: string[]
   diagnostics?: CompilerDiagnosticRecorder
 }
 
@@ -273,9 +272,17 @@ function resolveCSSImportGraphFile(
 }
 
 export function resolveCSSImportGraph(file: string, options: ResolveCSSImportGraphOptions = {}): ResolvedCSSImportGraph {
+  return resolveCSSImportGraphWithReader(file, createCSSImportGraphReader(), options)
+}
+
+function resolveCSSImportGraphWithReader(
+  file: string,
+  readCSSImport: CSSImportGraphReader,
+  options: ResolveCSSImportGraphOptions = {}
+): ResolvedCSSImportGraph {
   const dependencies: string[] = []
   const references: CSSReferenceStatement[] = []
-  const source = resolveCSSImportGraphFile(file, createCSSImportGraphReader(), dependencies, new Set(), [], {
+  const source = resolveCSSImportGraphFile(file, readCSSImport, dependencies, new Set(), [], {
     ...options,
     onReference(reference, fromFile) {
       references.push(reference)
@@ -325,17 +332,32 @@ export function isMasterCSSPackageStyleFile(id: string, projectDir?: string) {
 }
 
 export function compileCSSFile(file: string, options: CompileCSSFileOptions = {}): CompileCSSResult {
-  const { root, ...compileOptions } = options
-  const absoluteFile = isAbsolute(file) ? file : resolve(root || '', file)
-  const graph = resolveCSSImportGraph(absoluteFile, {
-    projectDir: root
-  })
+  return compileCSSFileWithReader(file, createCSSImportGraphReader(), options)
+}
+
+function compileCSSFileWithReader(
+  file: string,
+  readCSSImport: CSSImportGraphReader,
+  options: CompileCSSFileOptions = {}
+): CompileCSSResult {
+  const absoluteFile = isAbsolute(file) ? file : resolve(options.root || '', file)
+  const graph = resolveCSSImportGraphWithReader(absoluteFile, readCSSImport, { projectDir: options.root })
+  return compileCSSImportGraph(absoluteFile, graph, options)
+}
+
+/** Compiles the resolved import graph of `file`, an absolute path. */
+function compileCSSImportGraph(
+  file: string,
+  graph: ResolvedCSSImportGraph,
+  options: CompileCSSFileOptions = {}
+): CompileCSSResult {
+  const { root: _root, ...compileOptions } = options
   const source = compileOptions.preserveNativeCSS === false
-    ? removeCSSImportStatements(graph.source, absoluteFile)
+    ? removeCSSImportStatements(graph.source, file)
     : graph.source
   const result = compileCSS(source, {
     ...compileOptions,
-    from: absoluteFile
+    from: file
   })
   return {
     ...result,
@@ -363,33 +385,78 @@ function resolveCSSReferenceFile(reference: CSSDirectiveReference, options: Comp
   throw new Error(`@reference only supports relative CSS files or Master CSS package entries: ${reference.source}`)
 }
 
-function normalizeReferenceStack(stack: string[] | undefined) {
-  return (stack || []).map((file) => resolveComparablePath(file))
+function normalizeReferenceStack(stack: string[]) {
+  return stack.map((file) => resolveComparablePath(file))
 }
 
-function resolveCSSReferenceContext(
+/**
+ * The most stylesheets one compile's `@reference` directives expand, counting every expansion in
+ * the reference tree. Each expansion is a full compile of the referenced stylesheet, so a few files
+ * that each reference the next one twice would otherwise grow exponentially.
+ */
+const MAX_CSS_REFERENCE_EXPANSIONS = 256
+
+/** One `@reference` a compile expands: the referenced stylesheet's import graph and its own references. */
+interface CSSReferenceExpansion {
+  file: string
+  graph: ResolvedCSSImportGraph
+  references: CSSReferenceExpansion[]
+}
+
+/**
+ * Resolves the whole reference tree of one compile before any referenced stylesheet is compiled,
+ * so an oversized tree fails after reading at most 256 import graphs. Every graph reads through the
+ * compile's `readCSSImport`, so referenced stylesheets' imports count toward the compile's import
+ * limits. `stack` lists the stylesheets being compiled around `references`.
+ */
+function resolveCSSReferenceTree(
   references: CSSDirectiveReference[] | undefined,
+  readCSSImport: CSSImportGraphReader,
+  stack: string[],
+  options: CompileCSSManifestSourceOptions
+): CSSReferenceExpansion[] {
+  let expansions = 0
+  const expand = (references: CSSDirectiveReference[] | undefined, stack: string[]): CSSReferenceExpansion[] => {
+    return (references || []).map((reference) => {
+      const file = resolveCSSReferenceFile(reference, options)
+      if (normalizeReferenceStack(stack).includes(resolveComparablePath(file))) {
+        throw new Error(`Circular CSS reference: ${[...stack, file].join(' -> ')}`)
+      }
+      expansions++
+      if (expansions > MAX_CSS_REFERENCE_EXPANSIONS) {
+        throw new Error(`CSS references compile more than ${MAX_CSS_REFERENCE_EXPANSIONS} stylesheets, counting repeated references of the same file: ${file}`)
+      }
+      const graph = resolveCSSImportGraphWithReader(file, readCSSImport, { projectDir: options.root })
+      return {
+        file,
+        graph,
+        references: expand(graph.references, [...stack, file])
+      }
+    })
+  }
+  return expand(references, stack)
+}
+
+/** Compiles resolved references in order; each one sees the definitions of the references before it. */
+function compileCSSReferences(
+  references: CSSReferenceExpansion[],
   options: CompileCSSManifestInternalOptions = {}
 ) {
   const dependencies: string[] = []
   const warnings: string[] = []
   let manifest = options.baseManifest
-  let hasReferences = false
 
-  for (const reference of references || []) {
-    const referenceFile = resolveCSSReferenceFile(reference, options)
-    const comparableReferenceFile = resolveComparablePath(referenceFile)
-    const stack = normalizeReferenceStack(options.referenceStack)
-    if (stack.includes(comparableReferenceFile)) {
-      throw new Error(`Circular CSS reference: ${[...(options.referenceStack || []), referenceFile].join(' -> ')}`)
-    }
-    const result = compileCSSManifestFileInternal(referenceFile, {
+  for (const reference of references) {
+    const referenceOptions = {
       ...options,
       baseManifest: manifest,
-      preserveNativeCSS: false,
-      referenceStack: options.referenceStack
-    })
-    hasReferences = true
+      preserveNativeCSS: false
+    }
+    const result = toCompileCSSManifestResult(
+      compileCSSImportGraph(reference.file, reference.graph, referenceOptions),
+      { ...referenceOptions, from: reference.file },
+      reference.references
+    )
     manifest = result.manifest
     addUnique(dependencies, result.dependencies)
     addUnique(warnings, result.warnings)
@@ -398,16 +465,17 @@ function resolveCSSReferenceContext(
   return {
     dependencies,
     warnings,
-    ...(hasReferences ? { manifest } : {})
+    ...(references.length ? { manifest } : {})
   }
 }
 
 function toCompileCSSManifestResult(
   result: CompileCSSResult,
-  options: CompileCSSManifestInternalOptions = {}
+  options: CompileCSSManifestInternalOptions,
+  references: CSSReferenceExpansion[]
 ): CompileCSSManifestResult {
   const { manifestInput: _directiveManifestInput, ...directiveData } = result
-  const referenceContext = resolveCSSReferenceContext(result.references, options)
+  const referenceContext = compileCSSReferences(references, options)
   const lowerResult = lowerCSSDirectives(result, {
     baseManifest: options.baseManifest,
     resolutionManifest: referenceContext.manifest,
@@ -437,11 +505,25 @@ function toCompileCSSManifestResult(
   }
 }
 
+/**
+ * Lowers one compile's result into a manifest. The compile's whole reference tree is resolved
+ * through `readCSSImport`, the reader of the compile's own import graph, before anything is lowered.
+ * `stack` lists the stylesheet being compiled, if it is a file, for the circular reference check.
+ */
+function toCompileCSSManifestEntryResult(
+  result: CompileCSSResult,
+  options: CompileCSSManifestInternalOptions,
+  stack: string[],
+  readCSSImport: CSSImportGraphReader = createCSSImportGraphReader()
+) {
+  return toCompileCSSManifestResult(result, options, resolveCSSReferenceTree(result.references, readCSSImport, stack, options))
+}
+
 export function createManifestFromCSSResult(
   result: CompileCSSResult,
   options: CompileCSSManifestSourceOptions = {}
 ) {
-  return toCompileCSSManifestResult(result, options)
+  return toCompileCSSManifestEntryResult(result, options, [])
 }
 
 export function compileCSSManifest(source: string, options: CompileCSSManifestSourceOptions = {}): CompileCSSManifestResult {
@@ -451,32 +533,23 @@ export function compileCSSManifest(source: string, options: CompileCSSManifestSo
     ...options,
     ...(fromFile ? { from: fromFile } : {})
   })
-  return toCompileCSSManifestResult(result, {
+  return toCompileCSSManifestEntryResult(result, {
     ...options,
-    ...(fromFile
-      ? {
-        from: fromFile,
-        referenceStack: [...((options as CompileCSSManifestInternalOptions).referenceStack || []), fromFile]
-      }
-      : {})
-  })
-}
-
-function compileCSSManifestFileInternal(file: string, options: CompileCSSManifestInternalOptions = {}): CompileCSSManifestResult {
-  const absoluteFile = isAbsolute(file) ? file : resolve(options.root || '', file)
-  const result = compileCSSFile(file, {
-    ...options,
-    preserveNativeCSS: options.preserveNativeCSS ?? false
-  })
-  return toCompileCSSManifestResult(result, {
-    ...options,
-    from: absoluteFile,
-    referenceStack: [...(options.referenceStack || []), absoluteFile]
-  })
+    ...(fromFile ? { from: fromFile } : {})
+  }, fromFile ? [fromFile] : [])
 }
 
 export function compileCSSManifestFile(file: string, options: CompileCSSManifestOptions = {}): CompileCSSManifestResult {
-  return compileCSSManifestFileInternal(file, options)
+  const absoluteFile = isAbsolute(file) ? file : resolve(options.root || '', file)
+  const readCSSImport = createCSSImportGraphReader()
+  const result = compileCSSFileWithReader(absoluteFile, readCSSImport, {
+    ...options,
+    preserveNativeCSS: options.preserveNativeCSS ?? false
+  })
+  return toCompileCSSManifestEntryResult(result, {
+    ...options,
+    from: absoluteFile
+  }, [absoluteFile], readCSSImport)
 }
 
 export function compileProjectManifest(entries: string[], options: CompileCSSManifestOptions = {}): CompileProjectManifestResult {
@@ -501,7 +574,9 @@ export function compileProjectManifest(entries: string[], options: CompileCSSMan
   }
   let manifest: MasterCSSManifest | undefined = options.baseManifest
   for (const entry of entries) {
-    const result = compileCSSFile(entry, {
+    const absoluteEntry = isAbsolute(entry) ? entry : resolve(options.root || '', entry)
+    const readCSSImport = createCSSImportGraphReader()
+    const result = compileCSSFileWithReader(absoluteEntry, readCSSImport, {
       ...options,
       preserveNativeCSS: options.preserveNativeCSS ?? false
     })
@@ -511,12 +586,11 @@ export function compileProjectManifest(entries: string[], options: CompileCSSMan
     addUnique(classNames, result.classNames)
     addUnique(nativeClassNames, result.nativeClassNames)
     addUnique(warnings, result.warnings)
-    const manifestResult = toCompileCSSManifestResult(result, {
+    const manifestResult = toCompileCSSManifestEntryResult(result, {
       ...options,
       baseManifest: manifest,
-      from: entry,
-      referenceStack: [isAbsolute(entry) ? entry : resolve(options.root || '', entry)]
-    })
+      from: entry
+    }, [absoluteEntry], readCSSImport)
     manifest = manifestResult.manifest
     addUnique(dependencies, manifestResult.dependencies)
     addUnique(warnings, manifestResult.warnings)
