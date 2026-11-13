@@ -93,6 +93,8 @@ async function withRoot(run: (root: string) => Promise<void> | void) {
  * the dev server until a writer opened it. It must fail with the FIFO's path, through the same
  * file check the compiler's import graph uses.
  * Runs in a child process with a deadline, so the old behaviour fails the test instead of hanging it.
+ * Reverse check: either expansion handing the reader a `readFileSync` of the import (`index.ts`,
+ * `directives.ts`) fails only that expansion's row.
  */
 test.skipIf(process.platform === 'win32').concurrent.each(expansions)('$name fails on an @import of a FIFO with its path', ({ name }) => withRoot(async (root) => {
   const entry = join(root, 'entry.css')
@@ -115,6 +117,7 @@ test.skipIf(process.platform === 'win32').concurrent.each(expansions)('$name fai
  * Runs in a child process with a deadline, so the old behaviour fails the test instead of hanging it.
  * The 5 seconds are the call's CPU time rather than wall-clock time, so a busy machine does not
  * fail a bounded call.
+ * Reverse check: either expansion giving each recursion a fresh reader fails only that expansion's row.
  */
 test.concurrent.each(expansions)('$name stops a diamond @import graph at 10,000 inlined stylesheets', ({ name }) => withRoot(async (root) => {
   const source = "@import './level-1.css';\n@import './level-1.css';\n"
@@ -140,6 +143,7 @@ test.concurrent.each(expansions)('$name stops a diamond @import graph at 10,000 
  * Uses a stand-in package with a 13 MiB style entry, so the test does not depend on the size of the
  * real package. Runs in process: without the count the call returns a 65 MiB source, so the test
  * fails rather than hangs.
+ * Reverse check: appending `packageGraph.source` past the reader in `index.ts` fails only this test.
  */
 test('an inlined @stet-css/core package graph counts toward the 64 MiB limit', () => withRoot((root) => {
   const packageRoot = join(root, 'node_modules/@stet-css/core')
