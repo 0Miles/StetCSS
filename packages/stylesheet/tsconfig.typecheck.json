@@ -31,6 +31,9 @@
       "path": "../preset/tsconfig.typecheck.json"
     },
     {
+      "path": "../project/tsconfig.typecheck.json"
+    },
+    {
       "path": "../scanner/tsconfig.typecheck.json"
     },
     {
