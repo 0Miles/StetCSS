@@ -93,6 +93,8 @@ const notRegularFiles = [
  * Both must fail with the imported path instead.
  * Runs in a child process with a deadline and a memory cap, so the old behaviour fails the test
  * rather than hanging the runner or exhausting the machine.
+ * Reverse check: `!stats.isFile()` in `css-import-graph-reader.ts` turned into `stats.isDirectory()`
+ * fails both rows and the stylesheet FIFO tests; turned into `stats.isFIFO()`, only the `/dev/zero` row.
  */
 test.skipIf(process.platform === 'win32').concurrent.each(notRegularFiles)('an @import of $kind fails with its path instead of reading it', ({ create }) => withRoot(async (root) => {
   const entry = join(root, 'entry.css')
@@ -111,6 +113,7 @@ test.skipIf(process.platform === 'win32').concurrent.each(notRegularFiles)('an @
  * Guards: a stylesheet reached through a symlink, such as a token file linked into several
  * packages, must still be inlined; checking the link itself instead of its target would reject it
  * as not a regular file.
+ * Reverse check: `statSync` swapped for `lstatSync` in `css-import-graph-reader.ts` fails only this test.
  */
 test.skipIf(process.platform === 'win32')('an @import of a symlink to a regular stylesheet still inlines it', () => withRoot((root) => {
   const entry = join(root, 'entry.css')
@@ -126,6 +129,8 @@ test.skipIf(process.platform === 'win32')('an @import of a symlink to a regular 
  * must fail with its path instead of being inlined.
  * Runs in process: without the check the file is read and the call returns, so the test fails
  * rather than hangs.
+ * Reverse check: the size check in `css-import-graph-reader.ts` loosened to `> MAX_CSS_FILE_BYTES + 1`
+ * fails only this test.
  */
 test('an @import of a stylesheet over 16 MiB fails with its path', () => withRoot((root) => {
   const entry = join(root, 'entry.css')
@@ -143,6 +148,9 @@ test('an @import of a stylesheet over 16 MiB fails with its path', () => withRoo
  * Runs in a child process with a deadline, so the old behaviour fails the test instead of hanging it.
  * The 5 seconds are the call's CPU time rather than wall-clock time, so a busy machine does not
  * fail a bounded call.
+ * Reverse check: the inclusion limit in `css-import-graph-reader.ts` raised a thousandfold fails this
+ * test and both stylesheet diamond tests; a fresh reader for each recursion in `index.ts` fails this
+ * test and the 64 MiB test.
  */
 test.concurrent('a diamond @import graph stops at 10,000 inlined stylesheets instead of growing exponentially', () => withRoot(async (root) => {
   for (let level = 0; level < 30; level++) {
@@ -165,6 +173,8 @@ test.concurrent('a diamond @import graph stops at 10,000 inlined stylesheets ins
  * building an ever larger string.
  * Runs in process: without the limit the call returns a 65 MiB source, so the test fails rather
  * than hangs.
+ * Reverse check: counting a file's bytes only on its first read in `css-import-graph-reader.ts`
+ * fails this test and the stylesheet package-graph test.
  */
 test('an @import graph stops once it has inlined more than 64 MiB', () => withRoot((root) => {
   const entry = join(root, 'entry.css')
@@ -177,6 +187,8 @@ test('an @import graph stops once it has inlined more than 64 MiB', () => withRo
 /**
  * Guards: a graph reads each imported file once and reuses it; that reuse must end with the graph,
  * or a dev server rebuilding after an edit would keep inlining the old imported stylesheet.
+ * Reverse check: the reader's `sources` map moved to module scope fails this test and the
+ * `@reference` test that rewrites `b.css` between two compiles.
  */
 test('an imported stylesheet edited between two resolutions is read again', () => withRoot((root) => {
   const entry = join(root, 'entry.css')
