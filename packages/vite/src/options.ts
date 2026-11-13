@@ -2,7 +2,7 @@ import type { ScannerOptions } from '@stet-css/scanner'
 
 /* The default options */
 const options: PluginOptions = {
-  mode: 'runtime',
+  mode: 'static',
   injectRuntime: true,
   avoidFOUC: true,
 }
@@ -18,6 +18,8 @@ export interface PluginOptions {
    * - `'pre-render'`: Renders all `*.html` dependencies and injects CSS internally. This mode may be integrated with other SSR capabilities.
    * - `'progressive'`: Combines `'runtime'` and `'pre-render'` modes.
    * - `null`: Disables automatic integration
+   *
+   * @default 'static'
    */
   mode?: 'runtime' | 'static' | 'progressive' | 'pre-render' | null
 
