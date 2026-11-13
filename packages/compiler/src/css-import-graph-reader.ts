@@ -21,15 +21,22 @@ const MAX_CSS_IMPORT_INCLUSIONS = 10_000
 const MAX_CSS_IMPORT_GRAPH_BYTES = 64 * MiB
 
 /**
- * Creates the reader one CSS import graph inlines every stylesheet through, so every `@import`
- * expansion applies the same file checks and limits. Pass `source` when the caller already holds
- * the text; it still counts toward the graph's limits. Each file is read from disk once per graph.
+ * Returns the source of one stylesheet the import graph inlines and counts it toward the graph's
+ * limits. `file` names the stylesheet in errors and is read from disk when `source` is omitted;
+ * pass `source` when the caller already holds the text, such as an entry or a package graph.
  */
-export function createCSSImportGraphReader() {
+export type CSSImportGraphReader = (file: string, source?: string) => string
+
+/**
+ * Creates the reader one CSS import graph inlines every stylesheet through, so every `@import`
+ * expansion applies the same file checks and limits. Create one per graph: each file is read from
+ * disk once per reader.
+ */
+export function createCSSImportGraphReader(): CSSImportGraphReader {
   const sources = new Map<string, string>()
   let inclusions = 0
   let bytes = 0
-  return (file: string, source?: string) => {
+  return (file, source) => {
     inclusions++
     if (inclusions > MAX_CSS_IMPORT_INCLUSIONS) {
       throw new Error(`CSS imports inline more than ${MAX_CSS_IMPORT_INCLUSIONS} stylesheets, counting repeated imports of the same file: ${file}`)
@@ -46,5 +53,3 @@ export function createCSSImportGraphReader() {
     return text
   }
 }
-
-export type CSSImportGraphReader = ReturnType<typeof createCSSImportGraphReader>
