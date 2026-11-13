@@ -433,7 +433,7 @@ createTester({
         },
         {
             code: `@components {\n    btn {\n        @compose bg:blue-60:hover@sm block@dark;\n    }\n}`,
-            output: `@components {\n    btn {\n        &:hover { @variant sm { @compose bg:blue-60; } }\n        @dark { @compose block; }\n    }\n}`,
+            output: `@components {\n    btn {\n        &:hover { @variant sm { @compose bg:blue-60; } }\n        @variant dark { @compose block; }\n    }\n}`,
             filename: 'test.css',
             errors: [
                 { messageId: 'preferClass' },

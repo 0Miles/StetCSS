@@ -130,8 +130,6 @@ function isSafeVariantToken(token: string) {
 
 function variantKeyword(condition: string) {
   const token = condition.startsWith('@') ? condition.slice(1) : condition
-  if (token === 'dark') return '@dark'
-  if (token === 'light') return '@light'
   return `@variant ${token}`
 }
 
