@@ -9,18 +9,12 @@ const metricIds = [
   'external-css-raw-bytes',
   'external-css-gzip-bytes',
   'external-css-brotli-bytes',
-  'inline-css-raw-bytes',
-  'inline-css-gzip-bytes',
-  'inline-css-brotli-bytes',
   'runtime-js-raw-bytes',
   'runtime-js-gzip-bytes',
   'runtime-js-brotli-bytes',
   'manifest-json-raw-bytes',
   'manifest-json-gzip-bytes',
   'manifest-json-brotli-bytes',
-  'hydration-manifest-raw-bytes',
-  'hydration-manifest-gzip-bytes',
-  'hydration-manifest-brotli-bytes',
   'delivered-style-rule-count',
   'delivered-selector-count',
   'delivered-declaration-count',
@@ -52,17 +46,14 @@ const metricIds = [
   'mutation-observer-callback-count',
   'mutation-observer-callback-duration-ms',
   'route-count',
-  'progressive-adopted',
   'computed-style-valid'
 ]
 
 const byteGroups = [
   'html',
   'external-css',
-  'inline-css',
   'runtime-js',
-  'manifest-json',
-  'hydration-manifest'
+  'manifest-json'
 ]
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -214,7 +205,6 @@ function createVariantResult(variantId) {
     },
     correctness: {
       routeCount: createMetricSummary(variantId, 'route-count'),
-      progressiveAdopted: createMetricSummary(variantId, 'progressive-adopted'),
       computedStyleValid: createMetricSummary(variantId, 'computed-style-valid')
     }
   }
@@ -295,7 +285,6 @@ function formatLabel(id) {
 function formatModeLabel(modeId) {
   if (modeId === 'master-static') return 'Master CSS static'
   if (modeId === 'master-runtime') return 'Master CSS runtime'
-  if (modeId === 'master-progressive') return 'Master CSS progressive'
   if (modeId === 'tailwind-static') return 'Tailwind CSS static'
   return modeId
 }

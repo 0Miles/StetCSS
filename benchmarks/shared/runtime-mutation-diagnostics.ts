@@ -140,8 +140,7 @@ const runtimeMutationDiagnosticFixtureIds = [
 ] satisfies BenchmarkFixtureId[]
 
 const runtimeMutationDiagnosticModeIds = [
-  'master-runtime',
-  'master-progressive'
+  'master-runtime'
 ] satisfies InteractionModeId[]
 
 const runtimeMutationDiagnosticTraceWindows = [
@@ -500,12 +499,6 @@ export const runtimeMutationDiagnosticMetrics = [
     label: 'Cleanup valid after flush',
     unit: 'count',
     description: '1 when temporary DOM nodes are removed and temporary classes are absent from runtime classCounts after the product cleanup wait.'
-  },
-  {
-    id: 'progressive-adopted',
-    label: 'Progressive adopted',
-    unit: 'count',
-    description: '1 when progressive mode adopted server-rendered style#master-css before interaction.'
   }
 ] satisfies BenchmarkMetric[]
 
@@ -520,7 +513,7 @@ function createRuntimeMutationDiagnosticVariants(): BenchmarkVariant[] {
       id: createRuntimeMutationDiagnosticVariantId(fixtureId, modeId, traceWindow.id, ruleState.id),
       fixtureId,
       adapterId: modeId,
-      label: `${fixtureId} / ${formatModeLabel(modeId)} / ${traceWindow.label} / ${ruleState.label}`
+      label: `${fixtureId} / Master CSS runtime / ${traceWindow.label} / ${ruleState.label}`
     })))
   )))
 }
@@ -601,7 +594,6 @@ async function createRuntimeMutationDiagnosticsReport(): Promise<BenchmarkReport
     packages: await collectPackageVersions([
       '@stet-css/core',
       '@stet-css/runtime',
-      '@stet-css/server',
       '@stet-css/preset',
       '@playwright/test'
     ]),
@@ -612,13 +604,12 @@ async function createRuntimeMutationDiagnosticsReport(): Promise<BenchmarkReport
     samples,
     summary: summarizeReportSamples(samples, metricUnits),
     limits: [
-      'This suite is diagnostic-only and measures Master CSS runtime/progressive mutation cleanup internals.',
+      'This suite is diagnostic-only and measures Master CSS runtime mutation cleanup internals.',
       'Only the dynamic and stress-dom fixtures are measured, using the interaction-cost mutation-cleanup-cycle scenario.',
       'The trace-window axis compares ending trace collection before the deferred product cleanup flush with keeping the current post-interaction settle window.',
       'The rule-state axis compares first-time temporary rule generation with preseeded temporary runtime rules.',
       'Instrumentation is injected into the benchmark page harness; @stet-css/runtime source and public behavior are not changed.',
       'MutationObserver and CSSRuntime.ensureClassRules/deleteClassRules wrappers add measurement overhead, so use these numbers to localize costs, not as public performance claims.',
-      'Progressive variants fail if they fall back to runtime rendering before the cleanup scenario.',
       'Trace-derived event names can change across Chromium versions, so raw trace artifacts are kept for review before optimization work.'
     ],
     artifacts
@@ -667,7 +658,7 @@ async function measureRuntimeMutationDiagnostic(options: {
         consoleWarnings
       }
 
-      assertRuntimeMutationDiagnosticResult(options.variantId, options.modeId, options.traceWindow.id, fullResult)
+      assertRuntimeMutationDiagnosticResult(options.variantId, options.traceWindow.id, fullResult)
       await writeFile(traceFile, `${JSON.stringify({ traceEvents: result.events }, null, 2)}\n`)
       await writeRuntimeMutationDiagnosticArtifacts({
         file: diagnosticsFile,
@@ -1156,12 +1147,6 @@ function createRuntimeMutationDiagnosticSamples(
       variantId,
       round,
       value: result.cleanupAfterFlush.cleanupValid
-    },
-    {
-      metricId: 'progressive-adopted',
-      variantId,
-      round,
-      value: result.interaction.progressiveAdopted
     }
   ]
 }
@@ -1194,7 +1179,6 @@ async function writeRuntimeMutationDiagnosticArtifacts(options: {
 
 function assertRuntimeMutationDiagnosticResult(
   variantId: string,
-  modeId: InteractionModeId,
   traceWindowId: RuntimeMutationTraceWindowId,
   result: RuntimeMutationDiagnosticResult
 ) {
@@ -1224,10 +1208,6 @@ function assertRuntimeMutationDiagnosticResult(
   if (generatedTemporaryClassNames.length) {
     throw new Error(`${variantId} left generated temporary classes after forced cleanup: ${generatedTemporaryClassNames.join(', ')}.`)
   }
-
-  if (modeId === 'master-progressive' && result.interaction.progressiveAdopted !== 1) {
-    throw new Error(`${variantId} fell back from progressive hydration before diagnostics.`)
-  }
 }
 
 async function waitForBenchmarkReady(page: Page) {
@@ -1239,7 +1219,6 @@ async function assertRuntimeModeReady(page: Page, modeId: InteractionModeId) {
     ready: document.documentElement.dataset.benchmarkReady,
     textAlign: getComputedStyle(document.getElementById('interaction-style-probe')!).textAlign,
     runtimeAvailable: Boolean(globalThis.masterCSSRuntime),
-    progressive: Boolean(globalThis.masterCSSRuntime?.progressive),
     htmlHidden: document.documentElement.hasAttribute('hidden')
   }))
 
@@ -1253,10 +1232,6 @@ async function assertRuntimeModeReady(page: Page, modeId: InteractionModeId) {
 
   if (!state.runtimeAvailable) {
     throw new Error(`${modeId} did not expose globalThis.masterCSSRuntime.`)
-  }
-
-  if (modeId === 'master-progressive' && !state.progressive) {
-    throw new Error('Master progressive diagnostic page fell back before measurement.')
   }
 
   if (modeId === 'master-runtime' && state.htmlHidden) {
@@ -1408,12 +1383,6 @@ function numberDetail(value: unknown) {
 function omitRuntimeStyleText(state: RuntimeState) {
   const { runtimeStyleText: _runtimeStyleText, ...rest } = state
   return rest
-}
-
-function formatModeLabel(modeId: InteractionModeId) {
-  return modeId === 'master-progressive'
-    ? 'Master CSS progressive'
-    : 'Master CSS runtime'
 }
 
 function getRuntimeMutationDiagnosticRounds() {

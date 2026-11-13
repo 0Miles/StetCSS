@@ -4,8 +4,6 @@ import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { extname, isAbsolute, relative, resolve } from 'node:path'
 import { performance } from 'node:perf_hooks'
 import { chromium, type Browser, type BrowserContext, type CDPSession, type Page } from '@playwright/test'
-import { render } from '@stet-css/server'
-import type { MasterCSSManifest } from '@stet-css/core'
 import { benchmarkAdapters, benchmarkFixtures } from '../fixtures/manifest'
 import { summarizeBytes } from './bytes'
 import { analyzeCSSStructure } from './css-structure'
@@ -38,7 +36,6 @@ import type {
 export type BrowserLifecycleModeId =
   | 'master-static'
   | 'master-runtime'
-  | 'master-progressive'
   | 'tailwind-static'
 
 export type BrowserLifecycleScenarioId =
@@ -74,7 +71,7 @@ interface BrowserLifecycleTraceArtifact {
 
 interface BrowserLifecycleModeDescriptor {
   id: BrowserLifecycleModeId
-  adapterId: 'master-static' | 'master-runtime' | 'master-progressive' | 'tailwind-cli'
+  adapterId: 'master-static' | 'master-runtime' | 'tailwind-cli'
   label: string
 }
 
@@ -171,7 +168,6 @@ interface LifecycleState {
   runtimeStyleRawBytes: number
   retainedClassCount: number
   retainedRuleCount: number
-  progressiveAdopted: number
   fcpMs: number
   lcpMs: number
 }
@@ -209,7 +205,6 @@ interface LifecycleMeasurementValues {
   mutationObserverCallbackCount: number
   mutationObserverCallbackDurationMs: number
   routeCount: number
-  progressiveAdopted: number
   computedStyleValid: number
 }
 
@@ -255,11 +250,6 @@ const lifecycleModes = [
     id: 'master-runtime',
     adapterId: 'master-runtime',
     label: 'Master CSS runtime'
-  },
-  {
-    id: 'master-progressive',
-    adapterId: 'master-progressive',
-    label: 'Master CSS progressive'
   },
   {
     id: 'tailwind-static',
@@ -383,24 +373,6 @@ export const browserLifecycleMetrics = [
     description: 'Brotli bytes for externally linked CSS.'
   },
   {
-    id: 'inline-css-raw-bytes',
-    label: 'Inline CSS raw bytes',
-    unit: 'B',
-    description: 'Raw bytes for inline style#master-css.'
-  },
-  {
-    id: 'inline-css-gzip-bytes',
-    label: 'Inline CSS gzip bytes',
-    unit: 'B',
-    description: 'Gzip bytes for inline style#master-css.'
-  },
-  {
-    id: 'inline-css-brotli-bytes',
-    label: 'Inline CSS brotli bytes',
-    unit: 'B',
-    description: 'Brotli bytes for inline style#master-css.'
-  },
-  {
     id: 'runtime-js-raw-bytes',
     label: 'Runtime JS raw bytes',
     unit: 'B',
@@ -435,24 +407,6 @@ export const browserLifecycleMetrics = [
     label: 'Manifest JSON brotli bytes',
     unit: 'B',
     description: 'Brotli bytes for the runtime default manifest JSON payload.'
-  },
-  {
-    id: 'hydration-manifest-raw-bytes',
-    label: 'Hydration manifest raw bytes',
-    unit: 'B',
-    description: 'Raw bytes for inline progressive hydration manifest JSON.'
-  },
-  {
-    id: 'hydration-manifest-gzip-bytes',
-    label: 'Hydration manifest gzip bytes',
-    unit: 'B',
-    description: 'Gzip bytes for inline progressive hydration manifest JSON.'
-  },
-  {
-    id: 'hydration-manifest-brotli-bytes',
-    label: 'Hydration manifest brotli bytes',
-    unit: 'B',
-    description: 'Brotli bytes for inline progressive hydration manifest JSON.'
   },
   {
     id: 'delivered-style-rule-count',
@@ -566,19 +520,19 @@ export const browserLifecycleMetrics = [
     id: 'runtime-ready-ms',
     label: 'Runtime ready',
     unit: 'ms',
-    description: 'Browser performance timestamp when Master CSS runtime finished observe/hydration.'
+    description: 'Browser performance timestamp when Master CSS runtime finished observe.'
   },
   {
     id: 'runtime-bootstrap-ms',
     label: 'Runtime bootstrap',
     unit: 'ms',
-    description: 'Time from runtime script execution to runtime observe/hydration completion.'
+    description: 'Time from runtime script execution to runtime observe completion.'
   },
   {
     id: 'runtime-observe-ms',
-    label: 'Runtime observe/hydrate',
+    label: 'Runtime observe',
     unit: 'ms',
-    description: 'Synchronous duration of CSSRuntime.observe(), including progressive hydration when applicable.'
+    description: 'Synchronous duration of CSSRuntime.observe().'
   },
   {
     id: 'runtime-mutation-ms',
@@ -641,12 +595,6 @@ export const browserLifecycleMetrics = [
     description: 'Number of route states visited by the scenario.'
   },
   {
-    id: 'progressive-adopted',
-    label: 'Progressive adopted',
-    unit: 'count',
-    description: '1 when the Master progressive variant adopted server-rendered CSS before the scenario.'
-  },
-  {
     id: 'computed-style-valid',
     label: 'Computed style valid',
     unit: 'count',
@@ -656,7 +604,6 @@ export const browserLifecycleMetrics = [
 
 let runtimeBundlePromise: Promise<Buffer> | undefined
 let defaultManifestJSONPromise: Promise<Buffer> | undefined
-let defaultManifestPromise: Promise<MasterCSSManifest> | undefined
 
 export async function writeBrowserLifecycleReport() {
   const report = await createBrowserLifecycleReport()
@@ -757,7 +704,6 @@ async function createBrowserLifecycleReport(): Promise<BenchmarkReport> {
       '@stet-css/core',
       '@stet-css/cli',
       '@stet-css/runtime',
-      '@stet-css/server',
       '@stet-css/preset',
       '@playwright/test',
       'tailwindcss',
@@ -852,36 +798,12 @@ async function createBrowserLifecyclePage(variant: BrowserLifecycleVariant): Pro
     })
   }
 
-  if (mode.id === 'master-runtime') {
-    return writeBrowserLifecyclePage({
-      variantId: variant.id,
-      html: addRuntimeHarness(sourceHtml, {
-        hideUntilRuntime: true
-      }),
-      runtimeJS: await readRuntimeBundle(),
-      manifestJSON: await readDefaultManifestJSON(),
-      deliveredCSS: ''
-    })
-  }
-
-  const result = render(sourceHtml, await readDefaultManifest(), {
-    hydrationManifest: 'inject'
-  })
-  const inlineCSS = result.css?.text || ''
-  const hydrationManifestJSON = result.hydrationManifest
-    ? JSON.stringify(result.hydrationManifest)
-    : ''
-
   return writeBrowserLifecyclePage({
     variantId: variant.id,
-    html: addRuntimeHarness(result.html, {
-      hideUntilRuntime: false
-    }),
-    inlineCSS,
-    hydrationManifestJSON,
+    html: addRuntimeHarness(sourceHtml),
     runtimeJS: await readRuntimeBundle(),
     manifestJSON: await readDefaultManifestJSON(),
-    deliveredCSS: inlineCSS
+    deliveredCSS: ''
   })
 }
 
@@ -946,10 +868,8 @@ async function writeBrowserLifecyclePage(options: {
   html: string
   deliveredCSS: string
   externalCSS?: string
-  inlineCSS?: string
   runtimeJS?: Buffer
   manifestJSON?: Buffer
-  hydrationManifestJSON?: string
   buildArtifacts?: BenchmarkArtifact[]
 }): Promise<BrowserLifecyclePage> {
   const root = resolve(benchmarkRoot, '.results', 'browser-lifecycle', 'pages', options.variantId)
@@ -960,10 +880,8 @@ async function writeBrowserLifecyclePage(options: {
   }
 
   if (options.externalCSS !== undefined) files['style.css'] = options.externalCSS
-  if (options.inlineCSS !== undefined) files['inline-master-css.css'] = options.inlineCSS
   if (options.runtimeJS) files['global.min.js'] = options.runtimeJS.toString('utf8')
   if (options.manifestJSON) files['default-manifest.json'] = options.manifestJSON.toString('utf8')
-  if (options.hydrationManifestJSON !== undefined) files['hydration-manifest.json'] = options.hydrationManifestJSON
 
   await writeWorkspaceFiles(root, files)
 
@@ -975,10 +893,8 @@ async function writeBrowserLifecyclePage(options: {
       ...createPayloadSamples(options.variantId, {
         html: Buffer.from(options.html),
         externalCSS: Buffer.from(options.externalCSS || ''),
-        inlineCSS: Buffer.from(options.inlineCSS || ''),
         runtimeJS: options.runtimeJS || Buffer.alloc(0),
-        manifestJSON: options.manifestJSON || Buffer.alloc(0),
-        hydrationManifestJSON: Buffer.from(options.hydrationManifestJSON || '')
+        manifestJSON: options.manifestJSON || Buffer.alloc(0)
       }),
       ...createDeliveredCSSStructureSamples(options.variantId, options.deliveredCSS)
     ],
@@ -1229,7 +1145,6 @@ function createMeasuredResult(result: {
     mutationObserverCallbackCount: result.action.mutationObserverCallbackCount,
     mutationObserverCallbackDurationMs: result.action.mutationObserverCallbackDurationMs,
     routeCount: result.action.routeCount,
-    progressiveAdopted: result.state.progressiveAdopted,
     computedStyleValid: result.action.computedStyleValid
   }
 
@@ -1316,7 +1231,6 @@ function renderLifecycleMetricsScript(options: { autoReady: boolean }) {
     '            runtimeReadyMs: 0,',
     '            runtimeBootstrapMs: 0,',
     '            runtimeObserveMs: 0,',
-    '            progressiveAdopted: 0,',
     '            runtimeMutationMs: 0,',
     '            collectMutations: false,',
     '            mutationObserverCallbackCount: 0,',
@@ -1504,7 +1418,6 @@ function renderLifecycleScenarioScript(options: {
     '                runtimeStyleText,',
     '                retainedClassCount: retainedClassNames.length,',
     '                retainedRuleCount,',
-    '                progressiveAdopted: runtime?.progressive ? 1 : 0,',
     '                fcpMs: fcp?.startTime || 0,',
     '                lcpMs: window.__lifecycleMetrics?.lcpMs || 0',
     '            };',
@@ -1552,9 +1465,8 @@ function addStaticHarness(html: string) {
   return insertBeforeHeadEnd(html, '    <link rel="stylesheet" href="/style.css">')
 }
 
-function addRuntimeHarness(html: string, options: { hideUntilRuntime: boolean }) {
-  const withVisibility = options.hideUntilRuntime ? addHiddenAttribute(html) : html
-  return insertBeforeHeadEnd(withVisibility, [
+function addRuntimeHarness(html: string) {
+  return insertBeforeHeadEnd(addHiddenAttribute(html), [
     '    <script>',
     '        (() => {',
     '            const NativeMutationObserver = window.MutationObserver;',
@@ -1593,7 +1505,6 @@ function addRuntimeHarness(html: string, options: { hideUntilRuntime: boolean })
     '                metrics.runtimeObserveMs = finishedAt - startedAt;',
     '                metrics.runtimeReadyMs = finishedAt;',
     '                metrics.runtimeBootstrapMs = finishedAt - metrics.runtimeScriptLoadedMs;',
-    '                metrics.progressiveAdopted = this.progressive ? 1 : 0;',
     '                window.__markLifecycleReady();',
     '                return result;',
     '            };',
@@ -1731,7 +1642,7 @@ function createVariantLimits(spec: BrowserLifecycleVariantSpec, modeId: BrowserL
     limits.push('10,000-node target is a stress fixture and may be noisy on local machines.')
   }
   if (spec.scenarioId === 'large-append' && spec.appendRuleState === 'new-rule') {
-    limits.push('Static variants include the new classes up front and are browser controls, while Master runtime/progressive generate them during interaction.')
+    limits.push('Static variants include the new classes up front and are browser controls, while Master runtime generates them during interaction.')
   }
   if (spec.scenarioId === 'long-session') {
     limits.push('Default long-session duration is short unless BROWSER_LIFECYCLE_LONG_SESSION_MS is set.')
@@ -1880,18 +1791,14 @@ function formatDuration(ms: number) {
 function createPayloadSamples(variantId: string, payload: {
   html: Buffer
   externalCSS: Buffer
-  inlineCSS: Buffer
   runtimeJS: Buffer
   manifestJSON: Buffer
-  hydrationManifestJSON: Buffer
 }): BenchmarkSample[] {
   return [
     ...createByteSamples(variantId, 'html', payload.html),
     ...createByteSamples(variantId, 'external-css', payload.externalCSS),
-    ...createByteSamples(variantId, 'inline-css', payload.inlineCSS),
     ...createByteSamples(variantId, 'runtime-js', payload.runtimeJS),
-    ...createByteSamples(variantId, 'manifest-json', payload.manifestJSON),
-    ...createByteSamples(variantId, 'hydration-manifest', payload.hydrationManifestJSON)
+    ...createByteSamples(variantId, 'manifest-json', payload.manifestJSON)
   ]
 }
 
@@ -1980,7 +1887,6 @@ function createLifecycleMetricSamples(variantId: string, round: number, values: 
     sample('mutation-observer-callback-count', values.mutationObserverCallbackCount),
     sample('mutation-observer-callback-duration-ms', values.mutationObserverCallbackDurationMs),
     sample('route-count', values.routeCount),
-    sample('progressive-adopted', values.progressiveAdopted),
     sample('computed-style-valid', values.computedStyleValid)
   ]
 
@@ -2280,13 +2186,6 @@ async function readDefaultManifestJSON() {
   return defaultManifestJSONPromise
 }
 
-async function readDefaultManifest() {
-  if (!defaultManifestPromise) {
-    defaultManifestPromise = readDefaultManifestJSON().then((buffer) => JSON.parse(buffer.toString('utf8')) as MasterCSSManifest)
-  }
-  return defaultManifestPromise
-}
-
 function assertExistingFile(file: string, message: string) {
   if (!existsSync(file)) {
     throw new Error(`Missing file: ${file}\n${message}`)
@@ -2327,7 +2226,6 @@ declare global {
     runtimeReadyMs?: number
     runtimeBootstrapMs?: number
     runtimeObserveMs?: number
-    progressiveAdopted?: number
     runtimeMutationMs?: number
     collectMutations?: boolean
     mutationObserverCallbackCount?: number
