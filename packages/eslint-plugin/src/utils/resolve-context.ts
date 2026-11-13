@@ -1,19 +1,13 @@
 import type { RuleContext } from '@typescript-eslint/utils/ts-eslint'
 import settings, { Settings } from '../settings'
-import { MasterCSS, MasterCSSManifest, createCSSWithNativeDeclarations, defaultManifest } from './master-css'
+import { MasterCSS, createCSSWithNativeDeclarations, defaultManifest } from './master-css'
 import { findMasterCSSWorkspaceDirectoriesSync } from '@stet-css/project/entries'
 import { loadProjectManifestSync } from '@stet-css/project/manifest-sync'
 import path from 'node:path'
 import { existsSync } from 'node:fs'
 import isSameOrChildPath from './is-same-or-child-path'
 
-declare interface CSSCache {
-  cwd: string
-  manifest?: MasterCSSManifest,
-  css: MasterCSS,
-}
-
-const cssCaches: CSSCache[] = []
+const cssByWorkspaceDirectory = new Map<string, MasterCSS>()
 const workspaceDirectoriesByCwd = new Map<string, string[]>()
 
 function getContextFilename(context: RuleContext<any, any[]>) {
@@ -63,24 +57,25 @@ function resolveWorkspaceDirectory(context: RuleContext<any, any[]>, filename: s
   return closestDirectory || cwd
 }
 
-function resolvePlan(workspaceDir: string, manifest?: MasterCSSManifest) {
+function resolvePlan(workspaceDir: string) {
   const result = loadProjectManifestSync(workspaceDir)
-  return result.entries.length ? result.manifest : manifest
+  return result.entries.length ? result.manifest : undefined
 }
 
 export default function resolveContext(context: RuleContext<any, any[]>) {
-  const resolvedSettings = Object.assign({}, settings, context.settings?.['@stet-css'])
+  const userSettings = context.settings?.['@stet-css']
+  if ((userSettings as { manifest?: unknown } | undefined)?.manifest !== undefined) {
+    throw new Error('The "manifest" setting of @stet-css is no longer supported; ESLint reads the manifest from the project\'s CSS entry (the CSS file that imports "@stet-css/core"), so define utilities, tokens, and variants there.')
+  }
+  const resolvedSettings = Object.assign({}, settings, userSettings)
   const filename = getContextFilename(context)
   const workspaceDir = filename ? resolveWorkspaceDirectory(context, filename) : context.cwd || process.cwd()
-  let css = cssCaches.find(cache => cache.manifest === resolvedSettings.manifest &&
-    cache.cwd === workspaceDir)?.css
+  let css = cssByWorkspaceDirectory.get(workspaceDir)
 
   if (!css) {
-    const manifest = filename
-      ? resolvePlan(workspaceDir, resolvedSettings.manifest)
-      : resolvedSettings.manifest
+    const manifest = filename ? resolvePlan(workspaceDir) : undefined
     css = createCSSWithNativeDeclarations(manifest || defaultManifest)
-    cssCaches.push({ cwd: workspaceDir, manifest: resolvedSettings.manifest, css })
+    cssByWorkspaceDirectory.set(workspaceDir, css)
   }
 
   return {
