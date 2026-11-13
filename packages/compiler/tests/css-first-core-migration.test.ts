@@ -932,6 +932,8 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
    * Prevents: `@settings { modes: … }` still being accepted after its removal, so a developer
    * keeps a setting that no longer drives anything, or gets a bare "unsupported option" error
    * that does not say how to declare a mode now.
+   * Reverse-checked: in `core.ts`, `case 'modes'` returning true, or the case deleted so it falls
+   * through to "Unsupported @settings option", turns only this test red.
    */
   test('rejects @settings modes and points to @theme <mode> {}', () => {
     expect(() => compileCSSManifest(`
@@ -946,6 +948,8 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
    * Prevents: an empty `@theme sepia {}` no longer registering "sepia" as a mode. With
    * `@settings modes` removed, it is the only way to declare a mode that has no tokens yet,
    * so `fg:red@sepia` would stop generating a rule.
+   * Reverse-checked: deleting `if (mode) addThemeMode(...)` in `parseThemeRule` turns this test
+   * red, plus the two tests that declare modes with empty `@theme light {}` / `@theme chrisma {}`.
    */
   test('registers a mode from an empty @theme <mode> {} block', () => {
     const { manifest } = compileCSSManifest(`
@@ -967,6 +971,12 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
    * the base manifest rather than this stylesheet), or for every project that never wrote
    * `default-mode`, which would fail `stet-css inspect --max-warnings 0`. `default-mode: none`
    * warns too: the ticket asks for a warning whenever `default-mode` is set under media.
+   * Reverse-checked in `warnMediaDefaultMode`: reading `input.modeTrigger` instead of the resolved
+   * trigger reds the two default-trigger rows and the diagnostics inspect test;
+   * `(input.modeTrigger ?? 'media')` reds only the base-manifest row; `=== 'class'` or
+   * `=== 'host'` in place of `!== 'media'` reds only the host row or the two class rows; dropping
+   * the `defaultMode === undefined` check reds the no-default-mode row plus the compiler and
+   * stylesheet browser tests that assert exact warning lists.
    */
   test.each([
     ['default media trigger', 'default-mode: dark;', undefined, true],

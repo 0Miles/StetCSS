@@ -82,6 +82,8 @@ describe('@stet-css/diagnostics', () => {
    * Prevents: `stet-css inspect` staying silent when an entry sets `default-mode` under the
    * media trigger. Build plugins do not print compiler warnings, so the inspection report is
    * where a developer finds out the setting is ignored.
+   * Reverse-checked: `warnings: []` in place of `result.warnings` in `registerManagedCSSEntries`
+   * turns only this test red.
    */
   it('reports the entry compiler warning for default-mode under the media trigger', async () => {
     const cwd = createTempDir('master-css-diagnostics-entry-warning-')
