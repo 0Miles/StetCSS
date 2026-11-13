@@ -244,7 +244,7 @@ For example, this rule reports `font:15px`, `m:17px`, and `fg:#123456` when thos
 
 ## Settings
 
-Settings live under the `@stet-css/core` settings key:
+Settings live under the `@stet-css` settings key:
 
 ```js
 import { defineConfig } from 'eslint/config'
@@ -270,7 +270,7 @@ export default defineConfig([
 | `classDeclarations` | `string[]` | Variable/member names whose declarations should be checked. |
 | `ignoredKeys` | `string[]` | Object keys ignored during checking. Defaults include variant metadata keys. |
 
-Utilities, tokens, and variants come from the project's CSS entry, the CSS file that imports `@stet-css/core`, the same source your build uses. ESLint finds it in the workspace of each linted file; without one, it checks against the default preset.
+The rules check classes against the manifest: the utilities, tokens, and variants your project defines. ESLint reads it from the project's CSS entry, the CSS file that imports `@stet-css/core`, which is the same source your build uses; in a monorepo, each package uses its own CSS entry. A file is checked against the default preset when its project has no CSS entry, or when the file is not saved to disk yet. To change what the rules accept, edit the CSS entry; there is no ESLint setting for it.
 
 ## Related docs
 
