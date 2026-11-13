@@ -240,7 +240,7 @@
           ]
         },
         {
-          "begin": "(@)(variant|dark|light)\\b",
+          "begin": "(@)(variant)\\b",
           "beginCaptures": {
             "1": {
               "name": "punctuation.definition.keyword.master-css"
