@@ -27,18 +27,18 @@ type TurbopackConfig = NonNullable<NextConfig['turbopack']>
 type TurbopackRules = NonNullable<TurbopackConfig['rules']>
 type TurbopackRuleConfigCollection = TurbopackRules[string]
 
-const MASTER_CSS_MANIFEST_RESOURCE_QUERY = new RegExp(STET_CSS_MANIFEST_QUERY.slice(1))
-const MASTER_CSS_MANIFEST_IMPORT_CONTENT_PATTERN = new RegExp(`\\${STET_CSS_MANIFEST_QUERY}`)
-const MASTER_CSS_VIRTUAL_MANIFEST_PATH_PATTERN = createVirtualDefaultManifestModulePathPattern()
+const STET_CSS_MANIFEST_RESOURCE_QUERY = new RegExp(STET_CSS_MANIFEST_QUERY.slice(1))
+const STET_CSS_MANIFEST_IMPORT_CONTENT_PATTERN = new RegExp(`\\${STET_CSS_MANIFEST_QUERY}`)
+const STET_CSS_VIRTUAL_MANIFEST_PATH_PATTERN = createVirtualDefaultManifestModulePathPattern()
 /**
  * Stylesheet entries, and local stylesheets with directives the style loader lowers or
  * rejects (`@dark` and `@light` were folded into `@variant`; `@master` at-rules were removed in
  * favour of `@import '@stet-css/core'` and `@settings`).
  */
-const MASTER_CSS_STYLE_CONTENT_PATTERN = new RegExp(`${createStetCSSManifestEntryPattern().source}|@(compose|variant|reference|dark|light|master)\\b`)
+const STET_CSS_STYLE_CONTENT_PATTERN = new RegExp(`${createStetCSSManifestEntryPattern().source}|@(compose|variant|reference|dark|light|master)\\b`)
 const STYLE_FILE_PATTERN = /\.(css|scss|sass)$/
 
-interface MasterCSSNextSetup {
+interface StetCSSNextSetup {
   projectDir: string
   /** Custom source adapters, given to the webpack loaders only. */
   adapters: NonNullable<Options['adapters']>
@@ -74,7 +74,7 @@ function toTurbopackLoader(loader: { loader: string, options: object }) {
 }
 
 /** A loader for the webpack rules, whose options may carry the adapters' functions. */
-function withAdapters<T extends { loader: string, options: object }>(loader: T, adapters: MasterCSSNextSetup['adapters'], options: object = {}) {
+function withAdapters<T extends { loader: string, options: object }>(loader: T, adapters: StetCSSNextSetup['adapters'], options: object = {}) {
   return { ...loader, options: { ...loader.options, adapters, ...options } }
 }
 
@@ -91,19 +91,19 @@ function createGeneratedCSSPathPattern(outputPath: string, projectDir: string) {
   return new RegExp(String.raw`(?:^|[/\\])${projectPath}$`)
 }
 
-function applyMasterCSSWebpackConfig(config: WebpackConfig, setup: MasterCSSNextSetup) {
+function applyStetCSSWebpackConfig(config: WebpackConfig, setup: StetCSSNextSetup) {
   config.module ??= {}
   config.module.rules ??= []
   config.module.rules.push(
     {
-      test: MASTER_CSS_VIRTUAL_MANIFEST_PATH_PATTERN,
+      test: STET_CSS_VIRTUAL_MANIFEST_PATH_PATTERN,
       use: [{
         loader: setup.cssManifestLoaderPath,
         options: { virtual: true, module: true, external: true }
       }]
     },
     {
-      resourceQuery: MASTER_CSS_MANIFEST_RESOURCE_QUERY,
+      resourceQuery: STET_CSS_MANIFEST_RESOURCE_QUERY,
       use: [{
         loader: setup.cssManifestLoaderPath,
         options: { module: true, external: true }
@@ -120,7 +120,7 @@ function applyMasterCSSWebpackConfig(config: WebpackConfig, setup: MasterCSSNext
         and: [STYLE_FILE_PATTERN],
         not: [createExactPathPattern(setup.outputPath)]
       },
-      resourceQuery: { not: [MASTER_CSS_MANIFEST_RESOURCE_QUERY] },
+      resourceQuery: { not: [STET_CSS_MANIFEST_RESOURCE_QUERY] },
       use: [withAdapters(setup.styleCSSLoader, setup.adapters, { writeOutput: true })]
     }
   )
@@ -134,7 +134,7 @@ function applyMasterCSSWebpackConfig(config: WebpackConfig, setup: MasterCSSNext
   return config
 }
 
-function createCSSManifestImportSourceRules(setup: MasterCSSNextSetup) {
+function createCSSManifestImportSourceRules(setup: StetCSSNextSetup) {
   const loader = {
     loader: setup.cssManifestImportLoaderPath,
     options: { projectDir: setup.projectDir }
@@ -148,7 +148,7 @@ function createCSSManifestImportSourceRules(setup: MasterCSSNextSetup) {
     condition: {
       all: [
         { not: 'foreign' as const },
-        { content: MASTER_CSS_MANIFEST_IMPORT_CONTENT_PATTERN }
+        { content: STET_CSS_MANIFEST_IMPORT_CONTENT_PATTERN }
       ]
     },
     type,
@@ -156,7 +156,7 @@ function createCSSManifestImportSourceRules(setup: MasterCSSNextSetup) {
   }] as const)
 }
 
-function applyMasterCSSTurbopackConfig(turbopack: TurbopackConfig = {}, setup: MasterCSSNextSetup): TurbopackConfig {
+function applyStetCSSTurbopackConfig(turbopack: TurbopackConfig = {}, setup: StetCSSNextSetup): TurbopackConfig {
   const rules = turbopack.rules || {}
   const resolveAlias = turbopack.resolveAlias || {}
   const generatedCSSPathPattern = createGeneratedCSSPathPattern(setup.outputPath, setup.projectDir)
@@ -171,8 +171,8 @@ function applyMasterCSSTurbopackConfig(turbopack: TurbopackConfig = {}, setup: M
       all: [
         { path: STYLE_FILE_PATTERN },
         { not: { path: generatedCSSPathPattern } },
-        { content: MASTER_CSS_STYLE_CONTENT_PATTERN },
-        { not: { query: MASTER_CSS_MANIFEST_RESOURCE_QUERY } }
+        { content: STET_CSS_STYLE_CONTENT_PATTERN },
+        { not: { query: STET_CSS_MANIFEST_RESOURCE_QUERY } }
       ]
     },
     loaders: [toTurbopackLoader(setup.styleCSSLoader)],
@@ -180,7 +180,7 @@ function applyMasterCSSTurbopackConfig(turbopack: TurbopackConfig = {}, setup: M
     as: '*.css'
   }
   const virtualManifestRule = {
-    condition: { path: MASTER_CSS_VIRTUAL_MANIFEST_PATH_PATTERN },
+    condition: { path: STET_CSS_VIRTUAL_MANIFEST_PATH_PATTERN },
     loaders: [{
       loader: setup.cssManifestLoaderPath,
       options: { virtual: true, module: true, external: true }
@@ -191,7 +191,7 @@ function applyMasterCSSTurbopackConfig(turbopack: TurbopackConfig = {}, setup: M
     condition: {
       all: [
         { path: /\.css$/ },
-        { query: MASTER_CSS_MANIFEST_RESOURCE_QUERY }
+        { query: STET_CSS_MANIFEST_RESOURCE_QUERY }
       ]
     },
     loaders: [{
@@ -234,7 +234,7 @@ function applyMasterCSSTurbopackConfig(turbopack: TurbopackConfig = {}, setup: M
  * @param options - Only `adapters`; a removed or unknown key throws. Custom adapters need
  * webpack (`next dev --webpack`, `next build --webpack`).
  */
-export function withMasterCSS<T extends NextConfig>(nextConfig: T = {} as T, options: Options = {}): T {
+export function withStetCSS<T extends NextConfig>(nextConfig: T = {} as T, options: Options = {}): T {
   validatePluginOptions(options, '@stet-css/next')
   const adapters = options.adapters ?? []
   // `next dev` and `next build` set TURBOPACK before loading the config when Turbopack runs.
@@ -243,7 +243,7 @@ export function withMasterCSS<T extends NextConfig>(nextConfig: T = {} as T, opt
   }
   const projectDir = process.cwd()
   const outputPath = ensureStaticOutputFile(projectDir)
-  const setup: MasterCSSNextSetup = {
+  const setup: StetCSSNextSetup = {
     projectDir,
     adapters,
     outputPath,
@@ -263,14 +263,14 @@ export function withMasterCSS<T extends NextConfig>(nextConfig: T = {} as T, opt
   const userWebpack = nextConfig.webpack
   return {
     ...nextConfig,
-    turbopack: applyMasterCSSTurbopackConfig(nextConfig.turbopack, setup),
+    turbopack: applyStetCSSTurbopackConfig(nextConfig.turbopack, setup),
     webpack(config: WebpackConfig, context: WebpackContext) {
       const resolvedConfig = userWebpack ? userWebpack(config, context) || config : config
-      return applyMasterCSSWebpackConfig(resolvedConfig, setup)
+      return applyStetCSSWebpackConfig(resolvedConfig, setup)
     }
   }
 }
 
 export type { Options } from './options'
 
-export default withMasterCSS
+export default withStetCSS

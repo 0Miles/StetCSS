@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSyn
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import masterCSSManifestImportLoader from '../src/css-manifest-import-loader'
+import stetCSSManifestImportLoader from '../src/css-manifest-import-loader'
 
 let fixtureDir: string | undefined
 
@@ -33,7 +33,7 @@ function runManifestImportLoader(context: {
   addDependency?: (dependency: string) => void
 }) {
   return new Promise<string>((resolve, reject) => {
-    masterCSSManifestImportLoader.call({
+    stetCSSManifestImportLoader.call({
       resourcePath: context.resourcePath,
       getOptions: () => ({
         projectDir: context.projectDir

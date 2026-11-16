@@ -15,10 +15,10 @@ interface LoaderContext {
   rootContext?: string
   addDependency?: (file: string) => void
   async?: () => (error: Error | null, result?: string) => void
-  getOptions?: () => MasterCSSManifestLoaderOptions
+  getOptions?: () => StetCSSManifestLoaderOptions
 }
 
-interface MasterCSSManifestLoaderOptions {
+interface StetCSSManifestLoaderOptions {
   virtual?: boolean
   module?: boolean
   external?: boolean
@@ -37,7 +37,7 @@ function writeExternalManifestAssets(projectDir: string, json: string) {
   return assetFileName
 }
 
-function toLoaderResult(context: LoaderContext, json: string, options: MasterCSSManifestLoaderOptions) {
+function toLoaderResult(context: LoaderContext, json: string, options: StetCSSManifestLoaderOptions) {
   if (!options.module) return json
   if (process.env.NODE_ENV === 'development') return toInlineManifestModule(json)
   if (!options.external) return toInlineManifestModule(json)
@@ -85,7 +85,7 @@ function loadCSSManifestJSON(context: LoaderContext) {
   return result.json
 }
 
-export default function masterCSSManifestLoader(this: LoaderContext) {
+export default function stetCSSManifestLoader(this: LoaderContext) {
   const callback = this.async?.()
   if (!callback) {
     throw new Error('[@stet-css/next] CSS manifest loader requires an async loader context.')

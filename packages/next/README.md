@@ -11,10 +11,10 @@ npm install @stet-css/next
 ## Usage
 
 ```js
-import { withMasterCSS } from '@stet-css/next'
+import { withStetCSS } from '@stet-css/next'
 
 /** @type {import('next').NextConfig} */
-const nextConfig = withMasterCSS({
+const nextConfig = withStetCSS({
   /* your Next.js config */
 })
 
@@ -23,7 +23,7 @@ export default nextConfig
 
 ## How it works
 
-`withMasterCSS` takes no mode: every build gets static CSS.
+`withStetCSS` takes no mode: every build gets static CSS.
 
 - Stylesheet entries (CSS files that `@import '@stet-css/core'`) are rewritten to import one generated module, `.stet/next.css`. The `.stet` directory ignores itself in git.
 - The generated module is computed from the project's files in one pass when Next compiles it: the project's own source files plus `@source`, minus `@source not`, plus `@safelist`, minus `@blocklist`. Classes used only in Server Components, and pages built with `output: 'export'`, are covered.
@@ -32,10 +32,10 @@ export default nextConfig
 - Local stylesheets such as CSS Modules can use `@compose`, `@variant` and `@reference`; they are lowered in place.
 - `node_modules` and workspace packages outside the project root are not read. List them with `@source` in the entry.
 
-`withMasterCSS` returns a plain config object synchronously, so it composes with other wrappers on either side:
+`withStetCSS` returns a plain config object synchronously, so it composes with other wrappers on either side:
 
 ```js
-export default withBundleAnalyzer(withMasterCSS(nextConfig))
+export default withBundleAnalyzer(withStetCSS(nextConfig))
 ```
 
 ## Client types
@@ -60,7 +60,7 @@ Use these virtual modules when application code should receive the same manifest
 ## Options
 
 ```js
-export default withMasterCSS(nextConfig, {
+export default withStetCSS(nextConfig, {
   adapters: [{
     name: 'markdown-attributes',
     test: /\.md$/,
@@ -78,6 +78,6 @@ export default withMasterCSS(nextConfig, {
 
 `adapters` is the only option. Any other key throws and names `adapters`; a removed key such as `mode`, `injectRuntime` or `scanner` names its replacement, and class rules (`@safelist`, `@blocklist`, `@source`, `@source not`) go in the CSS entry. An adapter sees the files the class set reads: the project's source files and the entry's `@source` files.
 
-Custom adapters need webpack: run `next dev --webpack` and `next build --webpack`. Turbopack passes loader options to its workers as JSON, which drops the adapter functions, so `withMasterCSS` throws when Turbopack runs with custom adapters.
+Custom adapters need webpack: run `next dev --webpack` and `next build --webpack`. Turbopack passes loader options to its workers as JSON, which drops the adapter functions, so `withStetCSS` throws when Turbopack runs with custom adapters.
 
 See the [Next.js installation guide](https://rc.css.master.co/guide/installation/nextjs) for a full setup.

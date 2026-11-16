@@ -17,7 +17,7 @@ interface LoaderContext {
  * once a dependency changes, usually the module that starts importing it. Under webpack the
  * loader is also uncacheable, so a build never reuses CSS computed before a file was added.
  */
-export default function masterCSSNextGeneratedCSSLoader(this: LoaderContext) {
+export default function stetCSSNextGeneratedCSSLoader(this: LoaderContext) {
   this.cacheable?.(false)
   const callback = this.async?.()
   if (!callback) {

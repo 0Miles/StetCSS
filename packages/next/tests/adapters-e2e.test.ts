@@ -8,7 +8,7 @@ const fixtureDir = join(packageDir, 'e2e/adapters')
 
 describe('custom adapters e2e', () => {
   /**
-   * Guards that `withMasterCSS(config, { adapters })` reaches the CSS of a webpack build: Next
+   * Guards that `withStetCSS(config, { adapters })` reaches the CSS of a webpack build: Next
    * evaluates the config again in its build worker, and the loaders must get the adapters from
    * there, or every class only the adapters find is left out.
    * Reverse check: leaving `adapters` out of the webpack style loader options in

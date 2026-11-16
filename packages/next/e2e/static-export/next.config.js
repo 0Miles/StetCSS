@@ -1,7 +1,7 @@
-import { withMasterCSS } from '../../dist/index.js'
+import { withStetCSS } from '../../dist/index.js'
 
 /** @type {import('next').NextConfig} */
-const nextConfig = withMasterCSS({
+const nextConfig = withStetCSS({
   output: 'export'
 })
 

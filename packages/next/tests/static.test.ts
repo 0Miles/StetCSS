@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { ensureStaticOutputFile, resolveStaticOutputPath } from '../src/static'
-import masterCSSNextGeneratedCSSLoader from '../src/generated-css-loader'
-import masterCSSStyleCSSLoader from '../src/style-css-loader'
+import stetCSSNextGeneratedCSSLoader from '../src/generated-css-loader'
+import stetCSSStyleCSSLoader from '../src/style-css-loader'
 
 function createFixture(globals = '@import "@stet-css/core";') {
   const root = mkdtempSync(join(tmpdir(), 'master-css-next-static-'))
@@ -16,7 +16,7 @@ function createFixture(globals = '@import "@stet-css/core";') {
 function runGeneratedCSSLoader(root: string) {
   const dependencies: string[] = []
   return new Promise<string>((resolve, reject) => {
-    const context: ThisParameterType<typeof masterCSSNextGeneratedCSSLoader> = {
+    const context: ThisParameterType<typeof stetCSSNextGeneratedCSSLoader> = {
       addDependency: (dependency) => dependencies.push(dependency),
       cacheable: () => undefined,
       getOptions: () => ({ projectDir: root }),
@@ -28,13 +28,13 @@ function runGeneratedCSSLoader(root: string) {
         }
       }
     }
-    masterCSSNextGeneratedCSSLoader.call(context)
+    stetCSSNextGeneratedCSSLoader.call(context)
   }).then((css) => ({ css, dependencies }))
 }
 
 function runStyleCSSLoader(root: string, resourcePath: string, source: string) {
   return new Promise<string>((resolve, reject) => {
-    const context: ThisParameterType<typeof masterCSSStyleCSSLoader> = {
+    const context: ThisParameterType<typeof stetCSSStyleCSSLoader> = {
       resourcePath,
       getOptions: () => ({ outputPath: resolveStaticOutputPath(root), projectDir: root }),
       async: () => (error, content) => {
@@ -45,7 +45,7 @@ function runStyleCSSLoader(root: string, resourcePath: string, source: string) {
         }
       }
     }
-    masterCSSStyleCSSLoader.call(context, source)
+    stetCSSStyleCSSLoader.call(context, source)
   })
 }
 

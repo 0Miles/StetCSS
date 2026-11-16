@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import masterCSSStyleCSSLoader from '../src/style-css-loader'
+import stetCSSStyleCSSLoader from '../src/style-css-loader'
 
 function createFixture() {
   const root = mkdtempSync(join(tmpdir(), 'master-css-next-style-'))
@@ -13,7 +13,7 @@ function createFixture() {
 function runStyleCSSLoader(root: string, resourcePath: string, source: string) {
   const dependencies: string[] = []
   return new Promise<string>((resolve, reject) => {
-    const context: ThisParameterType<typeof masterCSSStyleCSSLoader> = {
+    const context: ThisParameterType<typeof stetCSSStyleCSSLoader> = {
       resourcePath,
       getOptions: () => ({ outputPath: join(root, '.stet/next.css'), projectDir: root }),
       addDependency: (dependency) => dependencies.push(dependency),
@@ -28,7 +28,7 @@ function runStyleCSSLoader(root: string, resourcePath: string, source: string) {
       }
     }
 
-    masterCSSStyleCSSLoader.call(context, source)
+    stetCSSStyleCSSLoader.call(context, source)
   }).then((content) => ({ content, dependencies }))
 }
 
