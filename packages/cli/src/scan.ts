@@ -209,10 +209,12 @@ export default async function runScan(specifiedSourcePaths: string[] = [], optio
               await queueWrite()
             } catch (error) {
               if (!(error instanceof StylesheetEntryError)) throw error
-              // Keep watching the broken entry, so saving the fix restarts.
+              // Keep watching the broken entry, so saving the fix restarts. Report it only once
+              // the watchers are ready: a fix saved right after the message would otherwise land
+              // before anything watches the file and be lost.
+              await startWatchers()
               const logger = await loadLogger(logStream)
               logger.error(error.message)
-              await startWatchers()
               return
             }
             await startWatchers()
