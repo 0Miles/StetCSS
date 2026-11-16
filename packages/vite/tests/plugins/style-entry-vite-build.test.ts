@@ -165,8 +165,10 @@ describe('StyleEntryPlugin Vite build integration', () => {
    * The warning check reads only warnings a `stet-css:*` plugin raised: the bundler's
    * `PLUGIN_TIMINGS` report lists our plugin names whenever a build is slow, which turned a
    * search of the logged text red on slow CI runners.
-   * Reverse check: returning a constant from `createBuildDigest` turns this test and the
-   * asset name test red; dropping the `!` from the stale-digest check in
+   * Reverse check: putting the digest of the CSS generated at transform time back in the
+   * placeholder (reverting the source side of the fix that added `createBuildDigest`) leaves
+   * the main asset's name unchanged and turns this test red; returning a constant from
+   * `createBuildDigest` turns this test and the asset name test red; dropping the `!` from the stale-digest check in
    * `style-entry-build.ts`, so the plugin warns about correctly named assets, turns only this
    * test red in this file.
    */
