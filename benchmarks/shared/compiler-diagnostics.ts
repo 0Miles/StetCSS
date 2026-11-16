@@ -216,7 +216,7 @@ export async function runCompilerDiagnostic(options: {
   variantId: string
   round: number
 }): Promise<CompilerDiagnosticResult> {
-  const result = await runMasterCompilerDiagnostic(options.workspace, options.fixtureId)
+  const result = await runStetCompilerDiagnostic(options.workspace, options.fixtureId)
 
   return {
     samples: createDiagnosticSamples(options.variantId, options.round, result),
@@ -284,7 +284,7 @@ class DiagnosticRecorder implements CompilerDiagnosticRecorder {
   }
 }
 
-async function runMasterCompilerDiagnostic(workspace: string, fixtureId: BenchmarkFixtureId): Promise<DiagnosticRunResult> {
+async function runStetCompilerDiagnostic(workspace: string, fixtureId: BenchmarkFixtureId): Promise<DiagnosticRunResult> {
   const tool = staticBuildTools.find((candidate) => candidate.id === 'master-static-cli')
   if (!tool) throw new Error('Missing Master CSS static CLI tool.')
 

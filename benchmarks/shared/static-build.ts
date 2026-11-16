@@ -201,7 +201,7 @@ export function createByteSamples(variantId: string, result: StaticBuildResult):
 
 export async function writeStaticWorkspace(workspace: string, fixtureId: BenchmarkFixtureId, tool: StaticBuildTool) {
   const fixture = getStaticFixtureSource(fixtureId)
-  const sourceHtml = tool.family === 'master' ? fixture.masterHtml : fixture.tailwindHtml
+  const sourceHtml = tool.family === 'master' ? fixture.stetHtml : fixture.tailwindHtml
   const html = isViteTool(tool) ? addViteEntryScript(sourceHtml) : sourceHtml
   const css = tool.family === 'master'
     ? '@import "@stet-css/core";\n@source "./index.html";\n.benchmark-root{box-sizing:border-box}\n'

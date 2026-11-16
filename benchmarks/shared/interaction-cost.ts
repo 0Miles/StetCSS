@@ -280,7 +280,7 @@ export const interactionCostMetrics = [
   }
 ] satisfies BenchmarkMetric[]
 
-const masterClasses = {
+const stetClasses = {
   family: 'master',
   body: ['m:0', 'min-h:100vh', 'bg:gray-5', 'fg:slate-90', 'font:14px', 'font:system'],
   shell: ['max-w:1180px', 'mx:auto', 'p:6x', 'grid', 'gap:5x'],
@@ -507,7 +507,7 @@ export async function createInteractionPage(options: {
     fixtureId: options.fixtureId,
     modeId: options.modeId,
     scenarioId: options.scenarioId,
-    classes: masterClasses,
+    classes: stetClasses,
     includeStaticClassSource: options.modeId === 'master-static',
     runtimeMutationStrategy: options.runtimeMutationStrategy,
     postInteractionSettleFrames: options.postInteractionSettleFrames
@@ -1237,8 +1237,8 @@ function readStaticCSS(fixtureId: BenchmarkFixtureId, modeId: StaticInteractionM
 }
 
 async function buildStaticCSS(fixtureId: BenchmarkFixtureId, modeId: StaticInteractionModeId) {
-  const isMaster = modeId === 'master-static'
-  const toolId = isMaster ? 'master-static-cli' : 'tailwind-cli'
+  const isStet = modeId === 'master-static'
+  const toolId = isStet ? 'master-static-cli' : 'tailwind-cli'
   const tool = staticBuildTools.find((candidate) => candidate.id === toolId)
   if (!tool) throw new Error(`Unknown static build tool: ${toolId}`)
 
@@ -1253,11 +1253,11 @@ async function buildStaticCSS(fixtureId: BenchmarkFixtureId, modeId: StaticInter
       fixtureId,
       modeId,
       scenarioId: 'existing-class-toggle',
-      classes: isMaster ? masterClasses : tailwindClasses,
+      classes: isStet ? stetClasses : tailwindClasses,
       includeStaticClassSource: true
     })
   }
-  if (!isMaster) files['input.css'] = '@import "tailwindcss";\n@source "./index.html";\n'
+  if (!isStet) files['input.css'] = '@import "tailwindcss";\n@source "./index.html";\n'
   await writeWorkspaceFiles(workspace, files)
   await resetDirectory(resolve(workspace, 'dist'))
   await runCommand(process.execPath, resolveBuildArgs(tool), workspace)

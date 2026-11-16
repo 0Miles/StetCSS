@@ -77,7 +77,7 @@ const fixedViewport = {
   height: 720
 }
 
-export const masterDeliveryModeFixtureIds = staticFixtureIds
+export const stetDeliveryModeFixtureIds = staticFixtureIds
 
 export const deliveryModeDescriptors = [
   {
@@ -97,7 +97,7 @@ export const deliveryModeDescriptors = [
   }
 ] satisfies DeliveryModeDescriptor[]
 
-export const masterDeliveryModeMetrics = [
+export const stetDeliveryModeMetrics = [
   {
     id: 'html-raw-bytes',
     label: 'HTML raw bytes',
@@ -244,25 +244,25 @@ export const masterDeliveryModeMetrics = [
   }
 ] satisfies BenchmarkMetric[]
 
-export function getMasterDeliveryModeAdapters(): BenchmarkAdapter[] {
+export function getStetDeliveryModeAdapters(): BenchmarkAdapter[] {
   const ids = new Set<string>(deliveryModeDescriptors.map((mode) => mode.adapterId))
   return benchmarkAdapters.filter((adapter) => ids.has(adapter.id))
 }
 
-export function createMasterDeliveryModeVariants(): BenchmarkVariant[] {
-  return masterDeliveryModeFixtureIds.flatMap((fixtureId) => deliveryModeDescriptors.map((mode) => ({
-    id: createMasterDeliveryModeVariantId(fixtureId, mode.id),
+export function createStetDeliveryModeVariants(): BenchmarkVariant[] {
+  return stetDeliveryModeFixtureIds.flatMap((fixtureId) => deliveryModeDescriptors.map((mode) => ({
+    id: createStetDeliveryModeVariantId(fixtureId, mode.id),
     fixtureId,
     adapterId: mode.adapterId,
     label: `${fixtureId} / ${mode.label}`
   })))
 }
 
-export function createMasterDeliveryModeVariantId(fixtureId: BenchmarkFixtureId, modeId: DeliveryModeId) {
+export function createStetDeliveryModeVariantId(fixtureId: BenchmarkFixtureId, modeId: DeliveryModeId) {
   return `${fixtureId}-${modeId}`
 }
 
-export async function createMasterDeliveryModePage(options: {
+export async function createStetDeliveryModePage(options: {
   fixtureId: BenchmarkFixtureId
   modeId: DeliveryModeId
   variantId: string
@@ -284,7 +284,7 @@ export async function createMasterDeliveryModePage(options: {
   return createRuntimeDeliveryModePage(options)
 }
 
-export async function measureMasterDeliveryMode(options: {
+export async function measureStetDeliveryMode(options: {
   browser: Browser
   pageRoot: string
   variantId: string
@@ -358,7 +358,7 @@ async function createStaticDeliveryModePage(options: {
   })
   const css = (await readFiles(buildResult.cssFiles)).toString('utf8')
   const fixture = getStaticFixtureSource(options.fixtureId)
-  const sourceHtml = tool.family === 'master' ? fixture.masterHtml : fixture.tailwindHtml
+  const sourceHtml = tool.family === 'master' ? fixture.stetHtml : fixture.tailwindHtml
   const html = addStaticHarness(sourceHtml)
 
   return writeDeliveryModePage({
@@ -374,7 +374,7 @@ async function createRuntimeDeliveryModePage(options: {
   variantId: string
 }): Promise<DeliveryModePage> {
   const fixture = getStaticFixtureSource(options.fixtureId)
-  const html = addRuntimeHarness(fixture.masterHtml)
+  const html = addRuntimeHarness(fixture.stetHtml)
 
   return writeDeliveryModePage({
     variantId: options.variantId,

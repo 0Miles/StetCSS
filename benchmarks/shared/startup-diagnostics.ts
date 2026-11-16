@@ -42,7 +42,7 @@ interface DiagnosticRunResult {
   cssBytes: ByteSummary
 }
 
-const probeMarker = '__MASTER_CSS_STARTUP_DIAGNOSTICS__'
+const probeMarker = '__STET_CSS_STARTUP_DIAGNOSTICS__'
 
 export const startupDiagnosticMetricIds = [
   'total-diagnostic-ms',
@@ -168,8 +168,8 @@ export async function runStartupDiagnostic(options: {
   round: number
 }): Promise<StartupDiagnosticResult> {
   const result = options.toolId === 'master-cli-startup-diagnostic'
-    ? await runMasterCLIStartupDiagnostic(options.workspace, options.fixtureId)
-    : await runMasterViteStartupDiagnostic(options.workspace, options.fixtureId)
+    ? await runStetCLIStartupDiagnostic(options.workspace, options.fixtureId)
+    : await runStetViteStartupDiagnostic(options.workspace, options.fixtureId)
 
   return {
     samples: createDiagnosticSamples(options.variantId, options.round, result),
@@ -177,7 +177,7 @@ export async function runStartupDiagnostic(options: {
   }
 }
 
-async function runMasterCLIStartupDiagnostic(workspace: string, fixtureId: BenchmarkFixtureId): Promise<DiagnosticRunResult> {
+async function runStetCLIStartupDiagnostic(workspace: string, fixtureId: BenchmarkFixtureId): Promise<DiagnosticRunResult> {
   const tool = staticBuildTools.find((candidate) => candidate.id === 'master-static-cli')
   if (!tool) throw new Error('Missing Master CSS static CLI tool.')
 
@@ -226,7 +226,7 @@ async function runMasterCLIStartupDiagnostic(workspace: string, fixtureId: Bench
   return collectDiagnosticOutput(workspace, fixtureId, recorder)
 }
 
-async function runMasterViteStartupDiagnostic(workspace: string, fixtureId: BenchmarkFixtureId): Promise<DiagnosticRunResult> {
+async function runStetViteStartupDiagnostic(workspace: string, fixtureId: BenchmarkFixtureId): Promise<DiagnosticRunResult> {
   const tool = staticBuildTools.find((candidate) => candidate.id === 'master-static-vite')
   if (!tool) throw new Error('Missing Master CSS static Vite tool.')
 
@@ -236,12 +236,12 @@ async function runMasterViteStartupDiagnostic(workspace: string, fixtureId: Benc
   const totalStartedAt = performance.now()
   recorder.setCount('css-entry-count', 1)
 
-  const masterCommand = await runCommand(process.execPath, resolveViteBuildArgs(), workspace)
-  recorder.addTiming('vite-master-command-elapsed-ms', masterCommand.elapsedMs)
+  const stetCommand = await runCommand(process.execPath, resolveViteBuildArgs(), workspace)
+  recorder.addTiming('vite-master-command-elapsed-ms', stetCommand.elapsedMs)
 
   const baselineCommandMs = await runViteBaselineCommand(`${workspace}-baseline-command`, fixtureId)
   recorder.addTiming('vite-baseline-command-elapsed-ms', baselineCommandMs)
-  recorder.addTiming('vite-master-command-overhead-ms', masterCommand.elapsedMs - baselineCommandMs)
+  recorder.addTiming('vite-master-command-overhead-ms', stetCommand.elapsedMs - baselineCommandMs)
 
   await runViteImportProbes(workspace, recorder)
 
@@ -261,7 +261,7 @@ async function runViteBaselineCommand(workspace: string, fixtureId: BenchmarkFix
       private: true,
       type: 'module'
     }, null, 2) + '\n',
-    'index.html': addViteEntryScript(fixture.masterHtml),
+    'index.html': addViteEntryScript(fixture.stetHtml),
     'input.css': '.benchmark-root{box-sizing:border-box}\n',
     'src/main.js': 'import "../input.css"\n',
     'vite.config.mjs': [
@@ -431,11 +431,11 @@ function renderViteStartupProbe() {
     'const viteImportStartedAt = performance.now()',
     'const vite = await import("vite")',
     'metrics["vite-import-ms"] = performance.now() - viteImportStartedAt',
-    'const masterViteImportStartedAt = performance.now()',
-    'const masterCSSModule = await import("@stet-css/vite")',
-    'metrics["master-vite-import-ms"] = performance.now() - masterViteImportStartedAt',
+    'const stetViteImportStartedAt = performance.now()',
+    'const stetCSSModule = await import("@stet-css/vite")',
+    'metrics["master-vite-import-ms"] = performance.now() - stetViteImportStartedAt',
     'const pluginFactoryStartedAt = performance.now()',
-    'const plugins = instrumentMasterVitePlugins(masterCSSModule.default())',
+    'const plugins = instrumentStetVitePlugins(stetCSSModule.default())',
     'metrics["master-vite-plugin-factory-ms"] = performance.now() - pluginFactoryStartedAt',
     'const buildStartedAt = performance.now()',
     'await vite.build({',
@@ -455,7 +455,7 @@ function renderViteStartupProbe() {
     'metrics["vite-child-process-uptime-ms"] = performance.now()',
     `console.log(${JSON.stringify(probeMarker)} + JSON.stringify(metrics))`,
     '',
-    'function instrumentMasterVitePlugins(plugins) {',
+    'function instrumentStetVitePlugins(plugins) {',
     '    return plugins.map((plugin) => {',
     '        const next = { ...plugin }',
     '        if (plugin.name === "stet-css:scanner") {',
