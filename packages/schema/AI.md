@@ -5,7 +5,7 @@ Owns the **wire formats** every layer shares: the `MasterCSSManifest` ABI and it
 ## Boundaries
 
 - CSS directives: schema defines the result types; `@stet-css/lexer` scans directive ranges and `@stet-css/compiler` parses and lowers them.
-- Hydration manifest: schema defines the shape and the `MASTER_CSS_HYDRATION_MANIFEST_*` constants; `@stet-css/engine` generates it (`createHydrationManifest`), server and framework adapters write it into pages, and `@stet-css/runtime` reads it back.
+- Hydration manifest: schema defines the shape and the `MASTER_CSS_HYDRATION_MANIFEST_*` constants; `@stet-css/engine` generates it (`createHydrationManifest`), framework adapters write it into pages, and `@stet-css/runtime` reads it back.
 
 ## Risks
 

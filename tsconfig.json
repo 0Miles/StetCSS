@@ -39,7 +39,6 @@
       "@stet-css/nuxt": [ "./node_modules/@stet-css/nuxt/src/module.ts" ],
       "@stet-css/next": [ "./node_modules/@stet-css/next/src" ],
       "@stet-css/runtime": [ "./node_modules/@stet-css/runtime/src" ],
-      "@stet-css/server": [ "./node_modules/@stet-css/server/src" ],
       "@stet-css/svelte/*": [ "./node_modules/@stet-css/svelte/src/lib/*" ],
       "@stet-css/validator": [ "./node_modules/@stet-css/validator/src" ],
       "@stet-css/validator/*": [ "./node_modules/@stet-css/validator/src/*" ],
