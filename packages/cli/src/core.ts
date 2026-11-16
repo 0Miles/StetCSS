@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Command } from 'commander'
-import { DEFAULT_SCAN_OUTPUT } from './constants'
+import { CLI_COMMAND, DEFAULT_SCAN_OUTPUT } from './constants'
 import type { ScanOptions } from './scan'
 import type { LintOptions } from './lint'
 import type { InspectOptions } from './inspect'
@@ -13,13 +13,13 @@ const pkg = JSON.parse(readFileSync(resolve(__dirname, '../package.json'), 'utf8
 const removedCommands = new Set(['extract', 'render', 'scan'])
 
 function errorRemovedCommand(program: Command, command: string) {
-  program.error(`The "${command}" command was removed. Use "${pkg.name}" directly, for example "${pkg.name} -w".`)
+  program.error(`The "${command}" command was removed. Use "${CLI_COMMAND}" directly, for example "${CLI_COMMAND} -w".`)
 }
 
 export default async function runProgram(argv: string[] = process.argv) {
   const program = new Command()
   program
-    .name(pkg.name)
+    .name(CLI_COMMAND)
     .description(pkg.description)
     .version(pkg.version || '0.0.0')
     .argument('[source paths...]', 'The glob pattern paths to scan sources')
