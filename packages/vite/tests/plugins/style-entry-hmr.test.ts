@@ -138,7 +138,7 @@ describe('StyleEntryHMRPlugin source file changes', () => {
   /**
    * Guards the queue's error handling: one failed reload must not stop every later CSS
    * update for the rest of the dev session.
-   * Reverse check: dropping `.catch(onError(label))` in `queueUpdate` turns only this test red.
+   * Reverse check: dropping the `.catch` in `queueUpdate` turns only this test red.
    */
   test('an error in one update does not poison the queue', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})

@@ -1,4 +1,4 @@
-import type { ModuleNode, Plugin, ViteDevServer } from 'vite'
+import type { Plugin } from 'vite'
 import { loadProjectManifest } from '@stet-css/project/manifest'
 import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
 import {
@@ -13,12 +13,6 @@ import type { PluginContext } from '../core'
 import type { PluginOptions } from '../options'
 import { includesFile } from '../utils/path'
 import { getProjectDir } from '../utils/project-dir'
-
-function invalidateModule(module: ModuleNode | undefined, server: ViteDevServer): boolean {
-  if (!module) return false
-  server.moduleGraph.invalidateModule(module)
-  return true
-}
 
 export default function LocalComposePlugin(options: PluginOptions, context: PluginContext): Plugin {
   let projectManifest: Awaited<ReturnType<typeof loadProjectManifest>> | undefined
@@ -116,21 +110,20 @@ export default function LocalComposePlugin(options: PluginOptions, context: Plug
         map: null
       }
     },
-    async handleHotUpdate({ file, modules, server }) {
+    async handleHotUpdate({ file, server }) {
       if (!includesFile(projectManifestDependencies, file)) return
       projectManifest = undefined
       projectManifestEntries = []
       projectManifestDependencies = []
       styleEntryEmittedGlobals = undefined
-      let handled = false
+      // Reload the compose modules and return nothing, so the changed file keeps its own update:
+      // a returned list would replace Vite's.
       for (const moduleId of localComposeModules) {
         const module = server.moduleGraph.getModuleById(moduleId)
-        handled ||= Boolean(module)
-        invalidateModule(module, server)
-        if (module) await server.reloadModule(module)
+        if (!module) continue
+        server.moduleGraph.invalidateModule(module)
+        await server.reloadModule(module)
       }
-      // The compose modules were reloaded above; the changed file still takes its own update.
-      if (handled) return modules
     }
   }
 }

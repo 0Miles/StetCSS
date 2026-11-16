@@ -7,11 +7,7 @@ import getExtractedCSS, { getStylesheetSourceContext } from '../utils/extracted-
 /** HMR when the project's source files change */
 export default function StyleEntryHMRPlugin(_options: PluginOptions, context: PluginContext): Plugin {
   let updateChain: Promise<unknown> = Promise.resolve()
-  const onError = (label: string) => (err: unknown) => {
-    console.error(`[master-css.vite] ${label} failed:`, err)
-  }
-  const updateStyleCSSImporters = async ({ server }: { server: ViteDevServer }) => {
-    if (!server) return
+  const updateStyleCSSImporters = async (server: ViteDevServer) => {
     const virtualCSSImporters = Array.from(context.virtualCSSImporters || [])
     await Promise.all(virtualCSSImporters.map(async (eachModuleId) => {
       // `server.moduleGraph` returns the client module when several environments hold the
@@ -31,8 +27,10 @@ export default function StyleEntryHMRPlugin(_options: PluginOptions, context: Pl
       }
     }))
   }
-  const queueUpdate = (update: () => Promise<unknown>, label: string) => {
-    updateChain = updateChain.then(update).catch(onError(label))
+  const queueUpdate = (update: () => Promise<unknown>) => {
+    updateChain = updateChain.then(update).catch((err: unknown) => {
+      console.error('[master-css.vite] source update failed:', err)
+    })
   }
   const serversWithPendingSourceUpdate = new Set<ViteDevServer>()
   /**
@@ -54,8 +52,8 @@ export default function StyleEntryHMRPlugin(_options: PluginOptions, context: Pl
     queueUpdate(async () => {
       serversWithPendingSourceUpdate.delete(server)
       if (await getExtractedCSS(context) === previousCSS) return
-      await updateStyleCSSImporters({ server })
-    }, 'source update')
+      await updateStyleCSSImporters(server)
+    })
   }
   return {
     name: 'master-css:style-entry:hmr',

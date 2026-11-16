@@ -11,7 +11,7 @@ const builds = {
 const outputs: Record<string, { css: string, html: string }> = {}
 
 beforeAll(async () => {
-  for (const [label, plugins] of Object.entries(builds)) {
+  await Promise.all(Object.entries(builds).map(async ([label, plugins]) => {
     outputs[label] = await buildProject({
       plugins: [plugins()],
       prefix: 'master-css-vite-default-options-',
@@ -24,7 +24,7 @@ beforeAll(async () => {
       ].join('\n'),
       styleCSS: '@import "@stet-css/core";\n'
     })
-  }
+  }))
 }, 60000)
 
 describe.each(Object.keys(builds))('%s', (label) => {
