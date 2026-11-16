@@ -277,7 +277,7 @@ function renderViteConfig(tool: StaticBuildTool) {
     ? 'import masterCSS from "@stet-css/vite"'
     : 'import tailwindcss from "@tailwindcss/vite"'
   const plugin = tool.command === 'master-vite'
-    ? "masterCSS({ mode: 'static' })"
+    ? 'masterCSS()'
     : 'tailwindcss()'
 
   return [
