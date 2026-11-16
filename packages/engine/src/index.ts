@@ -12,7 +12,7 @@ export type {
   MasterCSSNormalizedNumericValue
 } from './inspect'
 export { Rule } from './rule'
-export { default as Layer } from './layer'
+export { default as Layer, layerOrder } from './layer'
 export { default as ThemeLayer } from './theme-layer'
 export { default as UtilityLayer } from './utility-layer'
 export { default as NonLayer } from './non-layer'
