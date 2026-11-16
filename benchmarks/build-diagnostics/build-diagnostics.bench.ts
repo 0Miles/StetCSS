@@ -102,16 +102,6 @@ const metricMetadata: Record<typeof buildDiagnosticMetricIds[number], Omit<Bench
     unit: 'ms',
     description: 'Time spent initializing the Master CSS scanner during Vite config resolution.'
   },
-  'vite-master-html-scan-ms': {
-    label: 'Vite HTML scan',
-    unit: 'ms',
-    description: 'Time spent scanning transformed HTML.'
-  },
-  'vite-master-module-scan-ms': {
-    label: 'Vite module scan',
-    unit: 'ms',
-    description: 'Time spent scanning transformed Vite modules.'
-  },
   'vite-master-style-entry-ms': {
     label: 'Vite style entry',
     unit: 'ms',
