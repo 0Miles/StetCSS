@@ -11,6 +11,8 @@ import type { MasterCSSManifest } from '@stet-css/schema/manifest'
  * Each fixture is a documented manifest example: `manifest.css` (optional, compiled over the
  * default manifest), `template.html` (the markup using it) and `generated.css` (the rules its
  * `class` attributes must produce).
+ *
+ * Guards: CSS generated for the documented manifest examples drifts from the published output.
  */
 const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
 const fixturesDirectory = join(dirname(fileURLToPath(import.meta.url)), 'fixtures/manifest-examples')
