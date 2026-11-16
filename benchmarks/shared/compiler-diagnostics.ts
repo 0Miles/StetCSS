@@ -5,7 +5,7 @@ import { performance } from 'node:perf_hooks'
 import {
   compileCSS,
   createManifestFromCSSResult,
-  resolveMasterCSSPackageImportGraph,
+  resolveStetCSSPackageImportGraph,
   type CompileCSSManifestSourceOptions,
   type CompileCSSOptions,
   type CompileCSSResult
@@ -490,7 +490,7 @@ async function compileDiagnosticStyleCSS(
 }
 
 function resolveMasterCSSPackageCompileSource(projectDir: string) {
-  const graph = resolveMasterCSSPackageImportGraph(projectDir)
+  const graph = resolveStetCSSPackageImportGraph(projectDir)
   return {
     source: removeMasterStyleDirectives(removeStyleCSSImports(graph.source).code).code,
     dependencies: graph.dependencies
@@ -498,7 +498,7 @@ function resolveMasterCSSPackageCompileSource(projectDir: string) {
 }
 
 function readDefaultMasterCSSPackageArtifact(projectDir: string, recorder: DiagnosticRecorder): DefaultMasterCSSPackageArtifact | undefined {
-  const graph = recorder.time('master-import-graph-resolution-ms', () => resolveMasterCSSPackageImportGraph(projectDir))
+  const graph = recorder.time('master-import-graph-resolution-ms', () => resolveStetCSSPackageImportGraph(projectDir))
   const artifactFiles = findDefaultPresetArtifactFiles(graph.dependencies)
   if (!artifactFiles) {
     recorder.setCount('master-package-shortcut-hit-count', 0)

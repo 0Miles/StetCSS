@@ -8,7 +8,7 @@ import { stringifyStetCSSManifestJSON } from '@stet-css/schema/manifest-json'
 import type { CSSDirectiveReference } from '@stet-css/schema/css-directives'
 import { collectCSSDirectiveRanges } from '@stet-css/lexer'
 import { createCSSImportGraphReader, type CSSImportGraphReader } from './css-import-graph-reader'
-import { createMasterCSSManifest } from './master-css-manifest'
+import { createStetCSSManifest } from './stet-css-manifest'
 import lowerCSSDirectives from './lower-css-directives'
 import type { CompilerDiagnosticRecorder } from './diagnostics'
 import {
@@ -45,8 +45,8 @@ export type {
 setCSSTransform(transform)
 
 const require = createRequire(import.meta.url)
-const MASTER_CSS_PACKAGE_ID = '@stet-css/core'
-const MASTER_CSS_PACKAGE_IDS = new Set([MASTER_CSS_PACKAGE_ID, '@stet-css/preset'])
+const STET_CSS_PACKAGE_ID = '@stet-css/core'
+const STET_CSS_PACKAGE_IDS = new Set([STET_CSS_PACKAGE_ID, '@stet-css/preset'])
 
 interface CSSPackageJSON {
   name?: unknown
@@ -56,7 +56,7 @@ interface CSSPackageJSON {
 
 export interface InspectCSSResult {
   hasStetCSSImport: boolean
-  hasMasterEntry: boolean
+  hasStetEntry: boolean
 }
 
 export interface ResolveCSSImportGraphOptions {
@@ -206,8 +206,8 @@ function createProjectRequire(fromFile: string, projectDir?: string) {
   return createRequire(resolve(projectDir || dirname(fromFile), 'package.json'))
 }
 
-export function resolveMasterCSSPackageEntryFile(importSource: string, fromFile = process.cwd(), projectDir?: string) {
-  if (!MASTER_CSS_PACKAGE_IDS.has(importSource)) return
+export function resolveStetCSSPackageEntryFile(importSource: string, fromFile = process.cwd(), projectDir?: string) {
+  if (!STET_CSS_PACKAGE_IDS.has(importSource)) return
   const packageRoot = resolvePackageRoot(importSource, fromFile, projectDir)
   if (!packageRoot) return
   const styleEntry = getPackageStyleEntry(packageRoot.packageJSON)
@@ -222,10 +222,10 @@ export function resolveMasterCSSPackageEntryFile(importSource: string, fromFile 
 /** A stylesheet entry is recognised by its `@stet-css/core` import alone. */
 export function inspectCSS(source: string): InspectCSSResult {
   const hasStetCSSImport = findCSSImportStatements(source)
-    .some((statement) => statement.source === MASTER_CSS_PACKAGE_ID)
+    .some((statement) => statement.source === STET_CSS_PACKAGE_ID)
   return {
     hasStetCSSImport,
-    hasMasterEntry: hasStetCSSImport
+    hasStetEntry: hasStetCSSImport
   }
 }
 
@@ -263,7 +263,7 @@ function resolveCSSImportGraphFile(
   const resolvedSource = replaceCSSImportStatements(sourceWithoutReferences, absoluteFile, (importStatement: CSSImportStatement): string | undefined => {
     const importSource = importStatement.source
     const packageFile = options.expandPackageImports !== false
-      ? resolveMasterCSSPackageEntryFile(importSource, absoluteFile, options.projectDir)
+      ? resolveStetCSSPackageEntryFile(importSource, absoluteFile, options.projectDir)
       : undefined
     if (packageFile || isExpandableImportSource(importSource)) {
       const importedFile = packageFile || resolve(dirname(absoluteFile), importSource)
@@ -314,10 +314,10 @@ function resolveCSSImportGraphWithReader(
   }
 }
 
-export function resolveMasterCSSPackageImportGraph(projectDir?: string) {
-  const entry = resolveMasterCSSPackageEntryFile(MASTER_CSS_PACKAGE_ID, projectDir || process.cwd(), projectDir)
+export function resolveStetCSSPackageImportGraph(projectDir?: string) {
+  const entry = resolveStetCSSPackageEntryFile(STET_CSS_PACKAGE_ID, projectDir || process.cwd(), projectDir)
   if (!entry) {
-    throw new Error(`Cannot resolve ${MASTER_CSS_PACKAGE_ID} CSS entry.`)
+    throw new Error(`Cannot resolve ${STET_CSS_PACKAGE_ID} CSS entry.`)
   }
   return resolveCSSImportGraph(entry, {
     projectDir
@@ -337,11 +337,11 @@ function resolveComparablePath(file: string) {
   }
 }
 
-export function isMasterCSSPackageStyleFile(id: string, projectDir?: string) {
+export function isStetCSSPackageStyleFile(id: string, projectDir?: string) {
   const filename = resolveComparablePath(stripRequest(id))
   if (extname(filename) !== '.css') return false
   try {
-    return resolveMasterCSSPackageImportGraph(projectDir).dependencies.some((dependency) => {
+    return resolveStetCSSPackageImportGraph(projectDir).dependencies.some((dependency) => {
       return resolveComparablePath(dependency) === filename
     })
   } catch {
@@ -398,7 +398,7 @@ function resolveCSSReferenceFile(reference: CSSDirectiveReference, options: Comp
       ? reference.file
       : resolve(options.root || '', reference.file)
     : resolve(options.root || process.cwd(), 'stet.css')
-  const packageFile = resolveMasterCSSPackageEntryFile(reference.source, fromFile, options.root)
+  const packageFile = resolveStetCSSPackageEntryFile(reference.source, fromFile, options.root)
   if (packageFile) return packageFile
   if (isExpandableImportSource(reference.source)) return resolve(dirname(fromFile), reference.source)
   throw new Error(`@reference only supports relative CSS files or Master CSS package entries: ${reference.source}`)
@@ -608,7 +608,7 @@ export function compileProjectManifest(entries: string[], options: CompileCSSMan
     if (entryGeneratedCSS) generatedCSS.push(entryGeneratedCSS)
     if (manifestResult.css) css.push(manifestResult.css)
   }
-  const resolvedManifest = manifest || createMasterCSSManifest()
+  const resolvedManifest = manifest || createStetCSSManifest()
   return {
     entries,
     manifest: resolvedManifest,

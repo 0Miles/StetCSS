@@ -7,8 +7,8 @@ import {
 } from '@stet-css/compiler'
 import {
   createCSSImportGraphReader,
-  isMasterCSSPackageStyleFile as isMasterCSSCompilerPackageStyleFile,
-  resolveMasterCSSPackageImportGraph,
+  isStetCSSPackageStyleFile as isMasterCSSCompilerPackageStyleFile,
+  resolveStetCSSPackageImportGraph,
   type CSSImportGraphReader
 } from '@stet-css/compiler'
 import type { StetCSSEmittedGlobals } from '@stet-css/core'
@@ -289,7 +289,7 @@ function resolveStyleCSSImportGraphFile(
     output += source.slice(index, importStatement.start)
     const importSource = parseCSSImportSource(importStatement.statement)
     const packageGraph = options.expandMasterCSSPackage !== false && importSource && isMasterCSSManifestModuleId(importSource)
-      ? resolveMasterCSSPackageImportGraph(projectDir)
+      ? resolveStetCSSPackageImportGraph(projectDir)
       : undefined
     if (packageGraph && importSource) {
       for (const dependency of packageGraph.dependencies) {
@@ -434,7 +434,7 @@ export function isStetCSSModuleId(id: string) {
   return isMasterCSSManifestModuleId(id)
 }
 
-export function isMasterCSSPackageStyleFile(id: string, projectDir?: string) {
+export function isStetCSSPackageStyleFile(id: string, projectDir?: string) {
   return isMasterCSSCompilerPackageStyleFile(id, projectDir)
 }
 
@@ -523,7 +523,7 @@ function findDefaultPresetArtifactFiles(dependencies: string[]) {
 function readDefaultMasterCSSPackageArtifact(projectDir: string | undefined, options: CompileStyleCSSOptions = {}): DefaultMasterCSSPackageArtifact | undefined {
   if (!canUseDefaultMasterCSSPackageArtifact(options)) return
 
-  const graph = resolveMasterCSSPackageImportGraph(projectDir)
+  const graph = resolveStetCSSPackageImportGraph(projectDir)
   const artifactFiles = findDefaultPresetArtifactFiles(graph.dependencies)
   if (!artifactFiles) return
 
@@ -539,7 +539,7 @@ function readDefaultMasterCSSPackageArtifact(projectDir: string | undefined, opt
 }
 
 function resolveMasterCSSPackageCompileSource(projectDir?: string) {
-  const graph = resolveMasterCSSPackageImportGraph(projectDir)
+  const graph = resolveStetCSSPackageImportGraph(projectDir)
   return {
     source: removeMasterStyleDirectives(removeStyleCSSImports(graph.source).code).code,
     dependencies: graph.dependencies

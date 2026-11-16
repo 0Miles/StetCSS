@@ -3,7 +3,7 @@ import {
   createStyleEntryEmittedGlobals,
   createStyleCSSHostSource,
   hasLocalStyleDirectives,
-  isMasterCSSPackageStyleFile,
+  isStetCSSPackageStyleFile,
   isStyleCSSRequest,
   removeMasterStyleDirectives,
   resolveMasterStyleSource,
@@ -54,7 +54,7 @@ export async function transformStyleSource(
   if (!isStyleCSSRequest(resourcePath)) {
     return { code: source, dependencies }
   }
-  if (isMasterCSSPackageStyleFile(resourcePath, projectDir)) {
+  if (isStetCSSPackageStyleFile(resourcePath, projectDir)) {
     const cleanSource = removeMasterStyleDirectives(source).code
     if (!hasMasterStyleManifestDirective(cleanSource)) {
       return {

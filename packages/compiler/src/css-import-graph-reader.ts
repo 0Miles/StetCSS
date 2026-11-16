@@ -1,5 +1,5 @@
 import { readFileSync, statSync } from 'node:fs'
-import { assertNoMasterAtRules } from './lexer/standalone-master'
+import { assertNoMasterAtRules } from './lexer/standalone-directives'
 
 const MiB = 1024 * 1024
 /** The largest stylesheet an import graph reads. */

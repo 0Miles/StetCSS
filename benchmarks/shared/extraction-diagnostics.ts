@@ -9,7 +9,7 @@ import {
 } from '@stet-css/core'
 import {
   createManifestFromCSSResult,
-  resolveMasterCSSPackageImportGraph,
+  resolveStetCSSPackageImportGraph,
   type CompileCSSResult
 } from '@stet-css/compiler'
 import { collectAnimationNamesFromDeclaration } from '@stet-css/engine'
@@ -363,7 +363,7 @@ async function compileMasterCSSPackage(projectDir: string, recorder: DiagnosticR
 }
 
 function resolveMasterCSSPackageCompileSource(projectDir: string) {
-  const graph = resolveMasterCSSPackageImportGraph(projectDir)
+  const graph = resolveStetCSSPackageImportGraph(projectDir)
   return {
     source: removeMasterStyleDirectives(removeStyleCSSImports(graph.source).code).code,
     dependencies: graph.dependencies
@@ -371,7 +371,7 @@ function resolveMasterCSSPackageCompileSource(projectDir: string) {
 }
 
 function readDefaultMasterCSSPackageArtifact(projectDir: string, recorder: DiagnosticRecorder): DefaultMasterCSSPackageArtifact | undefined {
-  const graph = recorder.timeSync('master-import-graph-resolution-ms', () => resolveMasterCSSPackageImportGraph(projectDir))
+  const graph = recorder.timeSync('master-import-graph-resolution-ms', () => resolveStetCSSPackageImportGraph(projectDir))
   const artifactFiles = findDefaultPresetArtifactFiles(graph.dependencies)
   if (!artifactFiles) {
     recorder.setCount('master-package-shortcut-hit-count', 0)
