@@ -1,2 +1,2 @@
-/* The preset's base.css declares the cascade layer order the runtime's rules rely on. */
-@import '@stet-css/preset/base.css';
+/* base.css declares the cascade layer order the runtime's rules rely on. */
+@import '@stet-css/core/base.css';
