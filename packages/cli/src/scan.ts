@@ -63,7 +63,7 @@ async function exportCSS(scanner: CSSScanner, css: string, verbose: number, file
   fs.writeFileSync(filepath, css)
   if (verbose) {
     const [logger, bytes] = await Promise.all([
-      loadLogger(),
+      loadLogger(process.stdout),
       loadBytes()
     ])
     logger.success(`${filename} exported ${bytes(css.length)}`)
@@ -230,7 +230,7 @@ function loadChokidar() {
 }
 
 /** A logger writing to `stream`; `--no-export` logs to stderr so stdout stays pure CSS. */
-function loadLogger(stream: NodeJS.WriteStream = process.stdout) {
+function loadLogger(stream: NodeJS.WriteStream) {
   let loggerPromise = loggerPromises.get(stream)
   if (!loggerPromise) {
     loggerPromise = import('consola').then(({ createConsola }) => createConsola({ level: 3, stdout: stream }))
