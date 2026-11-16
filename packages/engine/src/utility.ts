@@ -167,7 +167,7 @@ function cloneConditions(conditions?: Partial<Record<MasterCSSManifestConditionI
 /** `undefined` when the condition cannot join the same at-rule's query (see `joinConditionNodes`). */
 function mergeConditionNodeMap(
   current: Partial<Record<MasterCSSManifestConditionIdentifier, ConditionNode[]>> | undefined,
-  condition: { id: MasterCSSManifestConditionIdentifier, nodes: ConditionNode[] }
+  condition: Condition
 ) {
   const nodes = joinConditionNodes(condition.id, current?.[condition.id], condition.nodes)
   if (!nodes) return
@@ -192,24 +192,25 @@ function mergeBranch(base: UtilityStateBranch, branch: MasterCSSManifestVariantB
       merge(parseCondition(condition, css))
     }
   }
+  const layer = branch.layer || base.layer
+  const valid = base.valid !== false && joinable && !(base.layer && branch.layer && base.layer !== branch.layer)
   if (branch.selectorNodes?.length && !branch.selector) {
     return {
       ...base,
       key: base.key + key,
       selectorNodes: branch.selectorNodes as SelectorNode[],
       ...(conditions ? { conditions } : {}),
-      ...(branch.layer || base.layer ? { layer: branch.layer || base.layer } : {}),
-      valid: base.valid !== false && joinable && !(base.layer && branch.layer && base.layer !== branch.layer)
+      ...(layer ? { layer } : {}),
+      valid
     }
   }
-  const layer = branch.layer || base.layer
   return {
     ...base,
     key: base.key + key,
     selectorTemplate: composeSelectorTemplate(base.selectorTemplate, branch.selector),
     ...(conditions ? { conditions } : {}),
     ...(layer ? { layer } : {}),
-    valid: base.valid !== false && joinable && !(base.layer && branch.layer && base.layer !== branch.layer)
+    valid
   }
 }
 
@@ -391,7 +392,7 @@ export class Utility {
     this.stateToken = stateToken
     if (stateToken.includes('@')) {
       for (const stackToken of stateToken.split('@').slice(1)) {
-        for (const conditionToken of splitModeConjuncts(stackToken, css).tokens) {
+        for (const conditionToken of splitModeConjuncts(stackToken, css, `Class "${this.name}"`).tokens) {
           if (!css.modes.includes(conditionToken)) this.conditionToken = (this.conditionToken || '') + '@' + conditionToken
         }
       }
@@ -729,13 +730,8 @@ export class Utility {
     const conditionTokens: string[] = []
     let expressible = true
     for (const stackToken of stackTokens) {
-      const { tokens, inexpressibleMode } = splitModeConjuncts(stackToken, this.css)
-      if (inexpressibleMode !== undefined) {
-        if (!this.css.modes.includes(inexpressibleMode)) {
-          throw new UndeclaredModeError(`Class "${this.name}"`, inexpressibleMode, this.css.modes)
-        }
-        expressible = false
-      }
+      const { tokens, inexpressibleMode } = splitModeConjuncts(stackToken, this.css, `Class "${this.name}"`)
+      if (inexpressibleMode !== undefined) expressible = false
       conditionTokens.push(...tokens)
     }
     const conditionBranchCounts: number[] = []

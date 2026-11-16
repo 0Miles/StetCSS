@@ -1073,13 +1073,14 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
    * Reverse-checked: removing the `isUndeclaredPresetMode` branch in `resolveConditionVariantReference`
    * reds the `@variant` row only; removing the engine throw reds the `@compose` row only.
    * The `@variant &` and `@variant ,` rows (#72) cover a mode inside a condition list: dropping the
-   * `UndeclaredModeError` throw in `resolveMasterVariantReference` reds the `,` row only; dropping
+   * `UndeclaredModeError` throw in `splitModeConjuncts` reds the `,` row here (plus the engine's
+   * `,` and `!` undeclared rows); dropping
    * `splitModeConjuncts` there reds the `&` row (and the #72 tests below).
    */
   test.each([
     ['@variant', '.a { color: red; @variant dark { color: blue; } }', '@variant dark uses mode "dark", which is not declared (declared modes: "sepia")'],
     ['@variant &', '.a { color: red; @variant sm&dark { color: blue; } }', '@variant dark uses mode "dark", which is not declared (declared modes: "sepia")'],
-    ['@variant ,', '.a { color: red; @variant sm,dark { color: blue; } }', '@variant dark uses mode "dark", which is not declared (declared modes: "sepia")'],
+    ['@variant ,', '.a { color: red; @variant sm,dark { color: blue; } }', '@variant sm,dark uses mode "dark", which is not declared (declared modes: "sepia")'],
     ['@compose', '.b { @compose fg:red@dark; }', 'Class "fg:red@dark" uses mode "dark", which is not declared (declared modes: "sepia")']
   ])('rejects an undeclared mode in entry CSS: %s', (_, body, message) => {
     expect(() => compileCSSManifest(`@theme sepia {}\n${body}`, { baseManifest: defaultManifest })).toThrow(message)
