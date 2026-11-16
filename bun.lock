@@ -399,6 +399,9 @@
         "@stet-css/core": "workspace:^",
         "@stet-css/vite": "workspace:^",
       },
+      "devDependencies": {
+        "astro": "^6.4.8",
+      },
       "peerDependencies": {
         "astro": ">=5",
         "vite": ">=6",
