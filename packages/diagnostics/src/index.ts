@@ -219,12 +219,12 @@ function collectNativeCSSClassNames(css: string, classNames: Set<string>) {
   return classNames
 }
 
-function classifyMissingCSS(scanner: CSSScanner, nativeClassNames: Set<string>, className: string): MasterCSSMissingCSSResult {
+function classifyMissingCSS(scanner: CSSScanner, nativeRuleClasses: Set<string>, className: string): MasterCSSMissingCSSResult {
   const safelist = scanner.options.safelist ?? []
   if (scanner.validClasses.has(className)) {
     return { className, status: 'present', reason: 'generated' }
   }
-  if (nativeClassNames.has(className)) {
+  if (nativeRuleClasses.has(className)) {
     return { className, status: 'present', reason: 'native-css' }
   }
   if (safelist.includes(className)) {
@@ -266,7 +266,7 @@ async function registerManagedCSSEntries(
   const entries: MasterCSSStylesheetInspection[] = []
   const warnings: string[] = []
   const errors: MasterCSSStylesheetError[] = []
-  const nativeClassNames = new Set<string>()
+  const nativeRuleClasses = new Set<string>()
   styleCSSSources.clear()
   for (const entry of await findCSSManifestEntryFiles(scanner.cwd)) {
     const filePath = await resolveFilePath(scanner.cwd, entry, resolveExistingFile)
@@ -284,7 +284,7 @@ async function registerManagedCSSEntries(
         errors: []
       })
       warnings.push(...(result.warnings ?? []))
-      collectNativeCSSClassNames(result.nativeCSS, nativeClassNames)
+      collectNativeCSSClassNames(result.nativeCSS, nativeRuleClasses)
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       entries.push({
@@ -308,7 +308,7 @@ async function registerManagedCSSEntries(
     entries,
     warnings: sortedValues(warnings),
     errors,
-    nativeClassNames
+    nativeRuleClasses
   }
 }
 
@@ -452,7 +452,7 @@ export async function createMasterCSSInspectionReport(options: CreateMasterCSSIn
       projectDir: scanner.cwd,
       sources
     })
-    const missingResults = classChecks.map((className) => classifyMissingCSS(scanner, stylesheetInspection.nativeClassNames, className))
+    const missingResults = classChecks.map((className) => classifyMissingCSS(scanner, stylesheetInspection.nativeRuleClasses, className))
     diagnostics.push(...createScannerClassDiagnostics(scanner, firstSourceByClass))
     diagnostics.push(...createMissingCSSDiagnostics(missingResults))
 
