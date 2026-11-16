@@ -822,12 +822,10 @@
         "vitest": "^4.1.9",
       },
       "peerDependencies": {
-        "@sveltejs/kit": ">=2",
         "svelte": ">=4",
         "vite": ">=6",
       },
       "optionalPeers": [
-        "@sveltejs/kit",
         "vite",
       ],
     },
