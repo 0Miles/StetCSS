@@ -1,6 +1,7 @@
 import type { Compiler, Module } from 'webpack'
 import type { MasterCSSWebpackContext, WebpackSubPlugin } from '../plugin'
 import { normalizePath } from '../utils/path'
+import { addFileDependency } from '../utils/file-dependencies'
 
 /**
  * Hands webpack the files the static CSS reads, so editing one, even a file no module
@@ -19,7 +20,7 @@ export default function StaticCSSDependenciesPlugin(context: MasterCSSWebpackCon
 
       compiler.hooks.thisCompilation.tap(context.name, (compilation) => {
         for (const dependency of context.getStaticCSSDependencyPaths()) {
-          compilation.fileDependencies.add(dependency)
+          addFileDependency(compilation.fileDependencies, dependency)
         }
         const error = context.getStaticCSSError()
         if (error !== undefined) {
