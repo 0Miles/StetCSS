@@ -1,19 +1,11 @@
 import { test, expect, type Page } from '@playwright/test'
-import { readFileSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { getRuntimeLoaderURL } from './init'
+import { RUNTIME_SCRIPT_URL, getRuntimeLoaderURL, routeRuntimeAssets } from './init'
 
 /**
  * Browsers expose elements with an `id` as same-named globals (named access on `window`),
  * so page content such as CMS output can occupy the runtime's global names before it loads.
  */
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const RUNTIME_ASSET_BASE_URL = 'http://master-css-runtime.test'
-const RUNTIME_SCRIPT_URL = `${RUNTIME_ASSET_BASE_URL}/css-runtime@rc`
-const DEFAULT_MANIFEST_URL = `${RUNTIME_ASSET_BASE_URL}/css-runtime@rc/default-manifest.json`
 const CLOBBERING_CASES = [
   { label: 'an element with id="MasterCSSRuntime"', markup: '<div id="MasterCSSRuntime"></div>', selector: 'div[id="MasterCSSRuntime"]' },
   { label: 'an element with id="masterCSSRuntime"', markup: '<div id="masterCSSRuntime"></div>', selector: 'div[id="masterCSSRuntime"]' },
@@ -30,18 +22,6 @@ function collectErrors(page: Page) {
   })
   page.on('pageerror', (error) => errors.push(error.message))
   return errors
-}
-
-async function routeRuntimeAssets(page: Page) {
-  await page.route(RUNTIME_SCRIPT_URL, route => route.fulfill({
-    contentType: 'text/javascript',
-    body: readFileSync(resolve(__dirname, '../dist/global.min.js'), 'utf8')
-  }))
-  await page.route(DEFAULT_MANIFEST_URL, route => route.fulfill({
-    contentType: 'application/json',
-    headers: { 'access-control-allow-origin': '*' },
-    body: readFileSync(resolve(__dirname, '../dist/default-manifest.json'), 'utf8')
-  }))
 }
 
 async function waitForRuntime(page: Page) {
