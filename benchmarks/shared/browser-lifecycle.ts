@@ -801,8 +801,7 @@ async function createBrowserLifecyclePage(variant: BrowserLifecycleVariant): Pro
   return writeBrowserLifecyclePage({
     variantId: variant.id,
     html: addRuntimeHarness(sourceHtml),
-    runtimeJS: await readRuntimeBundle(),
-    manifestJSON: await readDefaultManifestJSON()
+    runtimeJS: await readRuntimeBundle()
   })
 }
 
@@ -1486,13 +1485,20 @@ function addRuntimeHarness(html: string) {
     '            };',
     '        })();',
     '    </script>',
-    '    <script src="/global.min.js"></script>',
     '    <script>',
-    '        (() => {',
+    // The bundle observes while it runs, so instrument the class when it registers, before observe().
+    '        (function hookRuntimeRegistration(instrument) {',
+    '            Object.defineProperty(window, "MasterCSSRuntime", {',
+    '                configurable: true,',
+    '                get() { return undefined; },',
+    '                set(Runtime) {',
+    '                    Object.defineProperty(window, "MasterCSSRuntime", { value: Runtime, writable: true, configurable: true, enumerable: true });',
+    '                    instrument(Runtime);',
+    '                }',
+    '            });',
+    '        })((Runtime) => {',
     '            const metrics = window.__lifecycleMetrics;',
     '            metrics.runtimeScriptLoadedMs = performance.now();',
-    '            const Runtime = window.MasterCSSRuntime;',
-    '            if (!Runtime) { metrics.error = "missing-runtime"; return; }',
     '            const originalObserve = Runtime.prototype.observe;',
     '            const originalEnsureClassRules = Runtime.prototype.ensureClassRules;',
     '            const originalDeleteClassRules = Runtime.prototype.deleteClassRules;',
@@ -1520,8 +1526,10 @@ function addRuntimeHarness(html: string) {
     '                if (metrics.collectMutations) metrics.runtimeMutationMs += elapsed;',
     '                return result;',
     '            };',
-    '        })();',
-    '    </script>'
+    '        });',
+    '    </script>',
+    '    <script src="/global.min.js"></script>',
+    '    <script>if (!window.MasterCSSRuntime) window.__lifecycleMetrics.error = "missing-runtime";</script>'
   ].join('\n'))
 }
 
