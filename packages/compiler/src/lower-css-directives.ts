@@ -14,8 +14,10 @@ import {
   ROOT_FONT_SIZE,
   compareRulePriority,
   createCompilerCSS,
+  formatUndeclaredModeMessage,
   generateCondition,
   generateSelector,
+  isUndeclaredPresetMode,
   parseCondition,
   parseSelector,
   type GeneratedRule,
@@ -514,6 +516,10 @@ function resolveConditionVariantReference(token: string, css: MasterCSS): Resolv
     return modeSelector
       ? [{ selector: `${modeSelector} &` }]
       : [{ conditions: [`@media (prefers-color-scheme:${conditionToken})`] }]
+  }
+
+  if (isUndeclaredPresetMode(conditionToken, css.conditions)) {
+    throw new Error(formatUndeclaredModeMessage(`@variant ${conditionToken}`, conditionToken, css.modes))
   }
 
   if (/^-?[_a-zA-Z][-_a-zA-Z0-9]*$/.test(conditionToken) && !css.conditions.has(conditionToken)) {
