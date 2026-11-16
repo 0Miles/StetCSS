@@ -54,7 +54,7 @@
 
 ## Installation
 
-`@stet-css/svelte` provides the SvelteKit Vite integration and server hook used at dev, build, and SSR time. Source extraction for `.svelte` files is handled automatically by `@stet-css/source`.
+`@stet-css/svelte` provides the SvelteKit Vite integration. With no options it builds static CSS for the classes in your project's files, `.svelte` files included, in both `vite dev` and `vite build`; no server hook is needed.
 
 ```bash
 npm install @stet-css/core @stet-css/svelte
@@ -74,16 +74,6 @@ export default defineConfig({
   ]
 })
 ```
-
-### Server hook
-
-Export the server handle to inject streamed CSS before `</head>`.
-
-```ts
-export { default as handle } from '@stet-css/svelte/hooks.server'
-```
-
-If the project already has a server `handle`, compose it with SvelteKit's `sequence()`.
 
 ### Stylesheet
 
