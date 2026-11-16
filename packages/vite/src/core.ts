@@ -1,4 +1,4 @@
-import type CSSScanner from '@stet-css/scanner'
+import { validatePluginOptions, type CSSScanner } from '@stet-css/scanner'
 import type { MasterCSSEmittedGlobals } from '@stet-css/core'
 import type { StyleCSSSources } from '@stet-css/stylesheet'
 import type { Plugin, ResolvedConfig } from 'vite'
@@ -11,7 +11,7 @@ import LocalComposePlugin from './plugins/local-compose'
 import StyleEntryPlugin from './plugins/style-entry'
 import StyleEntryHMRPlugin from './plugins/style-entry-hmr'
 import StyleEntryBuildPlugin from './plugins/style-entry-build'
-import defaultPluginOptions, { type PluginOptions } from './options'
+import type { PluginOptions } from './options'
 
 /**
  * What a first-party framework integration tells the plugin about its project. Not a user
@@ -19,6 +19,8 @@ import defaultPluginOptions, { type PluginOptions } from './options'
  * @internal
  */
 export interface PluginHost {
+  /** The integration's package name, named in option errors; defaults to `@stet-css/vite`. */
+  name?: string
   /** The project root; defaults to Vite's `root`. Nuxt passes its root, since Vite's is `srcDir`. */
   projectDir?: string
   /** More project directories read by the project rules, such as Nuxt layers. */
@@ -41,10 +43,11 @@ export interface PluginContext {
 }
 
 /**
+ * @param options - Only `adapters`; a removed or unknown key throws.
  * @param host - Internal: set by first-party framework integrations only.
  */
-export default function masterCSS(options?: PluginOptions, host?: PluginHost): Plugin[] {
-  options = { ...defaultPluginOptions, ...options }
+export default function masterCSS(options: PluginOptions = {}, host?: PluginHost): Plugin[] {
+  validatePluginOptions(options, host?.name ?? '@stet-css/vite')
   const context: PluginContext = { host }
   return [
     ContextPlugin(context),
