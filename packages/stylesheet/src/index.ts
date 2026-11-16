@@ -1,4 +1,5 @@
 import {
+  assertNoMasterAtRules,
   compileCSS,
   createManifestFromCSSResult,
   type CompileCSSOptions,
@@ -21,7 +22,6 @@ import {
   hasMasterCSSImport,
   hasMasterCSSManifestEntrypoint,
   isMasterCSSModuleId as isMasterCSSManifestModuleId,
-  MASTER_CSS_ENTRY_DIRECTIVE_NAME,
   normalizeMasterCSSModuleIds,
   parseCSSImportSource
 } from '@stet-css/lexer'
@@ -34,7 +34,6 @@ import { existsSync, readFileSync } from 'node:fs'
 import {
   collectStylesheetDirectivesFromCSSGraph,
   createStylesheetDirectives,
-  findStylesheetDirectiveStatements,
   mergeStylesheetDirectives,
   removeStylesheetDirectiveStatements,
   type StylesheetDirectives
@@ -410,6 +409,9 @@ export function resolveMasterStyleSource(
   projectDir?: string
 ) {
   if (!isStyleCSSRequest(file)) return
+  // Removed `@master` at-rules fail here, before the catch below can hand the file back to the
+  // bundler: `@master entry;` no longer makes an entry, so nothing else would compile the file.
+  assertNoMasterAtRules(source, file)
   const sourceHasMasterEntry = hasMasterStyleEntrypoint(source)
   let unresolvedPackageSource: ResolvedStyleCSSSource
   try {
@@ -420,6 +422,7 @@ export function resolveMasterStyleSource(
     if (!sourceHasMasterEntry) return
     throw error
   }
+  assertNoMasterAtRules(unresolvedPackageSource.source, file)
   if (!isMasterStyleSource(unresolvedPackageSource.source)) return
   return resolveStyleCSSImportGraph(file, source, projectDir)
 }
@@ -437,10 +440,11 @@ export function removeMasterStyleDirectives(source: string) {
 }
 
 // Local styles go through the compiler when it has something to lower, or something to reject:
-// `@dark` and `@light` were folded into `@variant`, and passing them through would let the
-// browser drop them without an error.
+// `@dark` and `@light` were folded into `@variant`, and `@master` at-rules were removed in favour
+// of `@import '@stet-css/core'` and `@settings`; passing them through would let the browser drop
+// them without an error.
 const LOCAL_STYLE_LOWERED_DIRECTIVE_NAMES = new Set(['compose', 'variant', 'reference'])
-const LOCAL_STYLE_REJECTED_DIRECTIVE_NAMES = new Set(['dark', 'light'])
+const LOCAL_STYLE_REJECTED_DIRECTIVE_NAMES = new Set(['dark', 'light', 'master'])
 
 export function hasLocalStyleDirectives(source: string) {
   return collectCSSDirectiveRanges(source)
@@ -569,10 +573,6 @@ export async function createMasterCSSPackageHostSource(
     }).css,
     dependencies: graph.dependencies
   }
-}
-
-export function hasMasterEntryDirective(source: string) {
-  return findStylesheetDirectiveStatements(source).some((statement) => statement.name === MASTER_CSS_ENTRY_DIRECTIVE_NAME)
 }
 
 export function isMasterStyleSource(source: string) {

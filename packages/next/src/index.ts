@@ -32,9 +32,10 @@ const MASTER_CSS_MANIFEST_IMPORT_CONTENT_PATTERN = new RegExp(`\\${MASTER_CSS_MA
 const MASTER_CSS_VIRTUAL_MANIFEST_PATH_PATTERN = createVirtualDefaultManifestModulePathPattern()
 /**
  * Stylesheet entries, and local stylesheets with directives the style loader lowers or
- * rejects (`@dark` and `@light` were folded into `@variant`).
+ * rejects (`@dark` and `@light` were folded into `@variant`; `@master` at-rules were removed in
+ * favour of `@import '@stet-css/core'` and `@settings`).
  */
-const MASTER_CSS_STYLE_CONTENT_PATTERN = new RegExp(`${createMasterCSSManifestEntryPattern().source}|@(compose|variant|reference|dark|light)\\b`)
+const MASTER_CSS_STYLE_CONTENT_PATTERN = new RegExp(`${createMasterCSSManifestEntryPattern().source}|@(compose|variant|reference|dark|light|master)\\b`)
 const STYLE_FILE_PATTERN = /\.(css|scss|sass)$/
 
 interface MasterCSSNextSetup {
