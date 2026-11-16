@@ -91,4 +91,25 @@ The plugin builds static CSS with no options: before each compilation it reads t
 - Files in `node_modules` and in common build output directories are not read; name them with `@source` to include them. Webpack's own `output.path` is never read, not even through `@source`, so emitted bundles cannot feed classes back.
 - In watch mode, editing any file the CSS reads rebuilds once. A newly created file that nothing imports is picked up on the next rebuild.
 
+## Options
+
+```js
+new MasterCSSPlugin({
+  adapters: [{
+    name: 'markdown-attributes',
+    test: /\.md$/,
+    async extract({ content }) {
+      // `{.fg:red .bold}` attribute lists
+      return [...content.matchAll(/\{\.([^}]*)\}/g)].flatMap((match) => match[1].split(/\s+\.?/))
+    }
+  }]
+})
+```
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `adapters` | `SourceAdapter[]` | `[]` | Custom source adapters. For each file the class set reads, the first adapter whose `test` matches extracts its classes, custom ones before the built-in ones. |
+
+`adapters` is the only option. Any other key throws and names `adapters`; a removed key such as `mode`, `injectRuntime` or `scanner` names its replacement, and class rules (`@safelist`, `@blocklist`, `@source`, `@source not`) go in the CSS entry. An adapter sees the files the class set reads: the project's source files and the entry's `@source` files. Scanner options passed straight to the plugin (`new MasterCSSPlugin({ safelist })`) throw the same way.
+
 See the [Webpack installation guide](https://rc.css.master.co/guide/installation/webpack) for a complete project setup.
