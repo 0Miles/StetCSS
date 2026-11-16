@@ -12,13 +12,16 @@ setupNuxtTest({ rootDir })
 
 /**
  * Guards `nuxt build` with no module options: the CSS holds the classes of a server
- * component and of a `layers/` component, which sit outside Vite's root (`app/`).
- * Reverse check: scanning from Vite's root instead of the Nuxt root drops the layer class.
+ * component, of `layers/` and `extends` layers (Nuxt lists both in `_layers`), and of
+ * `server/`, which sits beside Vite's root (`app/`) in no layer.
+ * Reverse check: without the host's `projectDir` the `server/` class is missing; without
+ * its `extraProjectDirs` the extended layer's class is.
  */
 it('builds static CSS that covers server components and layers', async () => {
   const html = await $fetch<string>('/')
   expect(html).toContain('server component')
   expect(html).toContain('layer component')
+  expect(html).toContain('extended base card')
   expect(html).not.toContain('_master-css')
   const hrefs = findStylesheetHrefs(html)
   expect(hrefs.length).toBeGreaterThan(0)
