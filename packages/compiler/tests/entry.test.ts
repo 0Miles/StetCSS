@@ -16,6 +16,8 @@ const repoRoot = resolve(__dirname, '../../..')
  * Prevents: a stylesheet still marked with the removed `@master entry;` compiling as if the marker
  * did something. Only `@import '@stet-css/core'` makes an entry now, so the build must fail and
  * name that import, and say which entry graph holds the marker.
+ * Reverse check: returning early from `assertNoMasterAtRules` turns only this test, the next one
+ * and the located-error test red.
  */
 test.concurrent('rejects @master entry and names the @stet-css/core import that replaces it', () => {
   expect(() => compileCSS('@master entry;\n.card { color: red; }'))
@@ -27,6 +29,7 @@ test.concurrent('rejects @master entry and names the @stet-css/core import that 
 /**
  * Prevents: `@master { … }` blocks and other `@master` at-rules reaching the output unchanged,
  * where they do nothing. Settings such as `mode-trigger` belong in `@settings`.
+ * Reverse check: as above, returning early from `assertNoMasterAtRules`.
  */
 test.concurrent('rejects every other @master at-rule and points settings at @settings', () => {
   expect(() => compileCSS('@import "@stet-css/core";\n@master { mode-trigger: media; }'))
@@ -35,9 +38,46 @@ test.concurrent('rejects every other @master at-rule and points settings at @set
   expect(() => compileCSS('@master;')).toThrow('so delete "@master;"')
 })
 
+function catchError(run: () => unknown) {
+  try {
+    run()
+  } catch (error) {
+    return error as { name?: string, code?: string, source?: { file?: string, range: { start: number, end: number } } }
+  }
+  throw new Error('expected an error')
+}
+
+/**
+ * Prevents: the editor dropping the removed-directive errors of an open stylesheet. The language
+ * server shows only `CSSDirectiveError`s, underlining their source range, so `@master` and
+ * `@preserve` must fail as located directive errors on the source as given, even after an
+ * `@reference` statement that compiling cuts out.
+ * Reverse check: building these errors as plain `Error`s, or without a source reference, turns
+ * only this test red in this package (and the language-server `@master` diagnostic test).
+ */
+test.concurrent('locates removed @master and @preserve at-rules for the editor', () => {
+  const masterSource = '@reference "./tokens.css";\n.card { color: red; }\n@master entry;'
+  const masterError = catchError(() => compileCSS(masterSource, { from: '/app/entry.css' }))
+  const preserveSource = '.card { color: red; }\n@preserve native;'
+  const preserveError = catchError(() => compileCSS(preserveSource, { from: '/app/entry.css' }))
+
+  expect(masterError).toMatchObject({
+    name: 'CSSDirectiveError',
+    code: 'removed-master-at-rule',
+    source: { file: '/app/entry.css', range: { start: masterSource.indexOf('@master'), end: masterSource.length } }
+  })
+  expect(preserveError).toMatchObject({
+    name: 'CSSDirectiveError',
+    code: 'removed-preserve-directive',
+    source: { file: '/app/entry.css', range: { start: preserveSource.indexOf('@preserve'), end: preserveSource.length } }
+  })
+})
+
 /**
  * Prevents: native CSS that merely contains the text `@master` failing the build, such as an
  * image named `logo@master.png` or a comment. Only an at-rule that starts a statement is rejected.
+ * Reverse check: dropping the lexer's statement-start check for `@master` (`startsCSSStatement`)
+ * turns this test red, plus the lexer range test.
  */
 test.concurrent('keeps @master text that is not an at-rule', () => {
   const result = compileCSS('/* @master entry; */\n.logo { background: url(logo@master.png); }')
