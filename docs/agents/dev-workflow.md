@@ -106,7 +106,7 @@
 - 推到 main 時，`.github/workflows/release-please.yml` 開出或更新 release PR：新版號、各套件的 `CHANGELOG.md`，再把 `bun.lock` 同步後 commit 回 PR 分支。release PR 合併後，下一次執行會替每個套件建立 GitHub release 與 tag（`<套件名>-v<版號>`，例如 `core-v0.1.0`），接著發佈到 npm，見〈發佈到 npm〉。
 - 目前的版號是 `0.0.0`，代表還沒發佈過。release-please 把 manifest 裡的 `0.0.0` 當成沒有前一版，第一張 release PR 不看 commit 類型，直接用 config 的 `initial-version`（`0.1.0`）；changelog 從 config 的 `bootstrap-sha` 之後算起。發佈過之後 `initial-version` 不再作用，不必拿掉。
 - 之後的版號由 commit 類型決定。1.0 之前：`fix` 升 patch（`0.1.0` → `0.1.1`），`feat` 升 minor（→ `0.2.0`），帶 `!` 的破壞性變更也只升 minor（→ `0.2.0`）。
-- workflow 只在 repo 變數 `RELEASE_PLEASE_ENABLED` 是 `true` 時執行。workflow 全程用 `GITHUB_TOKEN`，不存個人 token。用 `GITHUB_TOKEN` 開的 PR 不會觸發 CI，所以 release-please job 開好或更新 release PR 後，會用 `workflow_dispatch` 在 PR 分支上跑 CI，讓 PR 拿到 `required`。變數由維護者設定。
+- workflow 只在 repo 變數 `RELEASE_PLEASE_ENABLED` 是 `true` 時執行。workflow 全程用 `GITHUB_TOKEN`，不存個人 token。release PR 由 `github-actions[bot]` 開，它的 CI 每次更新後都停在等待核准，維護者要在 PR 上按 "Approve and run workflows"，PR 才會有 `required`。變數由維護者設定。
 - 不要手改版號，版號只由 release PR 改。新增或移除套件時，在 manifest、config 的 `packages` 與 `linked-versions` 各加或刪一筆，版號照目前的共用版號。
 
 **發佈到 npm**
@@ -129,7 +129,7 @@
 維護者首次發佈的步驟（#84 完成、改名 #18 合併之後）：
 
 1. 確認 npm 上的 `@stet-css` organization 屬於自己，建立 granular token（`@stet-css` scope 讀寫、有效期最短），存成 repo secret `NPM_TOKEN`。CI 沒辦法輸入 2FA 驗證碼，token 可能要勾選「Bypass two-factor authentication」，否則第一個套件就會以 `EOTP` 失敗；這一點沒有實測過，以 npm 建立 token 頁面的選項為準。
-2. 確認 `RELEASE_PLEASE_ENABLED` 是 `true`，release PR 已經開出來，而且 PR 上有 `required`。
+2. 確認 `RELEASE_PLEASE_ENABLED` 是 `true`，release PR 已經開出來，核准它的 CI run 後 PR 上有 `required`。
 3. 檢查 release PR：版號是 `0.1.0`，每個套件有 `CHANGELOG.md`，`bun.lock` 的 workspace 版號已同步，`required` 是 success。
 4. 把 repo 變數 `NPM_PUBLISH_ENABLED` 設成 `true`，再合併 release PR。
 5. 看那次 `Release Please` 執行：`release-please` 建立 28 個 release，`pack`、`publish` 成功，npm 上 28 個套件都是 `0.1.0` 並帶 provenance。`publish` 中途失敗就照上面補發。
