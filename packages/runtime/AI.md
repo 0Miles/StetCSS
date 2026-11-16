@@ -15,7 +15,7 @@ Runs the engine in the browser. `CSSRuntime` observes DOM class changes, keeps p
 - **Emitted globals**: emittedGlobals variable and keyframe counts stop duplicate global insertion and leave utility insertion untouched.
 - **Native indexes**: locate a native rule by identity (`findNativeCSSRuleIndex`) before deleting it; a guessed index deletes the wrong rule.
 - **Hydration** adopts a prerendered sheet only when its layers (`CSSLayerBlockRule`), theme and keyframes (`CSSKeyframesRule`) match the hydration manifest; every mismatch goes through `failHydration` to a runtime rebuild. Keep each check.
-- **FOUC**: `@stet-css/vite` `avoidFOUC` adds `hidden` to `<html>`, and runtime removes it after a non-hydrating render. Validate a change on either side through the integration.
+- **FOUC**: runtime removes `hidden` from `<html>` after a non-hydrating render, for pages that hide the root until it runs; no build integration adds `hidden` any more.
 - **Global names** `MasterCSSRuntime` (the class, holding `instances`) and `masterCSSRuntime` (the document instance) are public; rename them only on request.
 - **Named access**: page elements with an `id` or `name` occupy same-named `window` globals, and `name`d `img`/`form`/`embed`/`object`/`iframe` elements shadow `document` members. Read the runtime's own class directly, accept a `MasterCSSRuntime` global only when `isRuntimeClass` passes, and read `document` members through `src/document.ts`.
 
