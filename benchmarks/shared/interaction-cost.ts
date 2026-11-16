@@ -529,8 +529,7 @@ export async function createInteractionPage(options: {
       runtimeDiagnostics: options.runtimeDiagnostics,
       runtimeMutationStrategy: options.runtimeMutationStrategy
     }),
-    runtimeJS: await readRuntimeBundle(),
-    manifestJSON: await readDefaultManifestJSON()
+    runtimeJS: await readRuntimeBundle()
   })
 }
 
@@ -1374,12 +1373,19 @@ function addRuntimeHarness(html: string, options: {
     '            };',
     '        }',
     '    </script>',
-    '    <script src="/global.min.js"></script>',
     '    <script>',
-    '        (() => {',
+    // The bundle observes while it runs, so instrument the class when it registers, before observe().
+    '        (function hookRuntimeRegistration(instrument) {',
+    '            Object.defineProperty(window, "MasterCSSRuntime", {',
+    '                configurable: true,',
+    '                get() { return undefined; },',
+    '                set(Runtime) {',
+    '                    Object.defineProperty(window, "MasterCSSRuntime", { value: Runtime, writable: true, configurable: true, enumerable: true });',
+    '                    instrument(Runtime);',
+    '                }',
+    '            });',
+    '        })((Runtime) => {',
     '            const metrics = window.__interactionMetrics;',
-    '            const Runtime = window.MasterCSSRuntime;',
-    '            if (!Runtime) { metrics.error = "missing-runtime"; return; }',
     '            const originalObserve = Runtime.prototype.observe;',
     '            const originalEnsureClassRules = Runtime.prototype.ensureClassRules;',
     '            const originalDeleteClassRules = Runtime.prototype.deleteClassRules;',
@@ -1509,8 +1515,10 @@ function addRuntimeHarness(html: string, options: {
     '                }));',
     '                return result;',
     '            };',
-    '        })();',
-    '    </script>'
+    '        });',
+    '    </script>',
+    '    <script src="/global.min.js"></script>',
+    '    <script>if (!window.MasterCSSRuntime) window.__interactionMetrics.error = "missing-runtime";</script>'
   ].join('\n'))
 }
 
