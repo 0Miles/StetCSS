@@ -1,10 +1,11 @@
 # @stet-css/scanner
 
-`CSSScanner` turns source files into rules for static builds: it collects **candidates** through `@stet-css/source`, keeps those `@stet-css/validator` accepts, inserts their rules, and emits `init`, `change`, `reset` and `destroy` for build integrations.
+`CSSScanner` validates and caches: it collects **candidates** from supplied source text through `@stet-css/source`, keeps those `@stet-css/validator` accepts against the default manifest, inserts their rules, remembers valid, invalid and already-read sources, and emits `init`, `change`, `reset` and `destroy`. Its only option is `adapters`.
 
 ## Boundaries
 
 - Source adapters and raw candidate extraction (`extractClassCandidates`) → `@stet-css/source`.
+- Which files a static build reads and which classes it forces in or out (`@source`, `@source not`, `@safelist`, `@blocklist`) → the class set in `@stet-css/stylesheet`.
 - File watching, output writing and build lifecycle → the CLI and build plugins.
 - Stylesheet entries, CSS-first compilation, extraction directives, generated CSS composition and emittedGlobals output → `@stet-css/stylesheet`.
 - Manifest discovery and loading → `@stet-css/project`.
@@ -12,11 +13,11 @@
 ## Risks
 
 - **Candidates** are guesses: each passes `generateValidRules` before it becomes a rule, and only literal class text is reachable (dynamically concatenated classes are not). Loosen extraction only alongside false-positive tests.
-- **Async**: `init`, `reset`, `scan`, `scanModule` and `collectCandidates` return promises; every consumer awaits them.
+- **Async**: `init`, `reset`, `scan` and `collectCandidates` return promises; every consumer awaits them.
+- **Options**: `src/options/index.ts` is the one place that lists the allowed keys and maps each removed key to its replacement; `validateScannerOptions` throws on a removed or unknown key during `init` and `reset`.
 - **Caches**: `reset()` and `destroy()` clear every scanner cache (class sets, content hashes, valid-rule memo).
 - **`resetDependencies`** feed the reset watchers in the CLI, webpack and Next integrations; guard changes against reset loops.
-- **Exclude** matching decides which modules reach the scanner. `**/*.css` stays in the defaults; CSS import graphs belong to `@stet-css/stylesheet`.
 
 ## Validation
 
-Extend `tests/extract.test.ts` for extraction, `tests/syntax.test.ts` for class syntax, and `tests/source/` for module exclusion.
+Extend `tests/extract.test.ts` for extraction, `tests/syntax.test.ts` for class syntax, and `tests/options.test.ts` for option keys.

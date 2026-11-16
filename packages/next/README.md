@@ -63,6 +63,6 @@ The `options` object is passed to `withMasterCSS(nextConfig, options)`.
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `scannerOptions` | `ScannerOptions` | `{}` | Scanner options; `safelist` and `blocklist` shape the class set. Turbopack passes them to its loaders as JSON, so they must be plain data. |
+| `scannerOptions` | `ScannerOptions` | `{}` | Scanner options; the only key is `adapters`, and any other key throws. Use `@safelist`, `@blocklist` and `@source not` in the CSS entry. |
 
 See the [Next.js installation guide](https://rc.css.master.co/guide/installation/nextjs) for a full setup.

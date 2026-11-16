@@ -118,6 +118,6 @@ The `options` object is passed to `masterCSS(options)`.
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `scanner` | `ScannerOptions` | `undefined` | `safelist`, `blocklist` and `adapters` apply to the class set, and `manifest` replaces the manifest used for rendering; `exclude` no longer applies, use `@source not`. |
+| `scanner` | `ScannerOptions` | `undefined` | Only `adapters`: custom source adapters for the class set. Any other key throws; use `@safelist`, `@blocklist` and `@source not` in the CSS entry. |
 
 See the [Vite installation guide](https://rc.css.master.co/guide/installation/vite) for a full project setup.
