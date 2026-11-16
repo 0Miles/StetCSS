@@ -18,6 +18,7 @@ Owns the Vite plugin chain behind the `runtime`, `static`, `pre-render` and `pro
 - **Dev HMR across environments**: on a class change the CSS entry is invalidated in every non-client `server.environments[*].moduleGraph`, because frameworks inline the server environment's copy into dev HTML; `server.moduleGraph` alone returns the client module.
 - **Style entry pipeline** runs in every mode; `static` differs only by `includeGeneratedCSS` on the plugin context.
 - **`virtual:master-css-manifest`** is the project-level manifest API; keep stylesheet output and scanner usage out of it. **`virtual:master-css-emitted-globals`** describes only the generated variables and keyframes the runtime treats as already present.
+- **`handleHotUpdate` results replace Vite's update list**: a hook that adds modules (the manifest modules, the local compose modules) returns the changed file's own `modules` too, or the edited stylesheet never reaches the page.
 - **Virtual module IDs** are defined in `@stet-css/integration` and imported across integrations; keep them stable.
 - **Option defaults** in `src/options.ts` are spread by every wrapper; change them only as a stated behaviour change.
 - **Injected runtime code** (`src/runtime.ts`, published as `@stet-css/vite/runtime`) changes together with runtime and integration validation.
