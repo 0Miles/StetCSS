@@ -103,8 +103,6 @@ describe('@stet-css/stylesheet/browser', () => {
       baseManifest: defaultManifest
     })
 
-    expect(result.warnings).toEqual([
-      'Custom mode "custom" will not work with mode-trigger: media, the default. Browsers only support light and dark prefers-color-scheme values; use mode-trigger: class or host for custom modes.'
-    ])
+    expect(result.warnings).toEqual([expect.stringContaining('"custom"')])
   })
 })

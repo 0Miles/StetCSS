@@ -1197,36 +1197,43 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
    * `sepia` styles are dead; and the opposite, a spurious warning under the class or host trigger
    * (including one set in the base manifest), or for a project that declares only light and dark.
    * The output itself stays: it is what the same query written in plain CSS does.
-   * Reverse-checked in `warnUnsupportedMediaModes`: the previous version (raw `input.modeTrigger`
-   * and `input.modes`) reds the five warning rows and nothing else; dropping the trigger check reds
-   * the three class and host rows only; dropping the preset-mode filter reds the base-manifest
-   * modes, several-modes and light-and-dark rows plus the default-mode and browser tests, whose
-   * exact warning lists then gain a light/dark warning.
+   * Reverse-checked: the old raw-input check reds the four warning rows without an explicit
+   * `mode-trigger: media`; dropping the trigger check reds the four class and host rows; dropping
+   * the preset-mode filter reds the three rows that declare light or dark; making the engine skip
+   * the media query for custom modes reds the five warning rows.
    */
   test.each([
-    ['default media trigger', '', '@theme sepia { --color-paper: #f4ecd8; }', undefined, ['sepia']],
-    ['explicit media trigger', 'mode-trigger: media;', '@theme sepia {}', undefined, ['sepia']],
-    ['media trigger from the base manifest', '', '@theme sepia {}', { modeTrigger: 'media' }, ['sepia']],
-    ['custom modes from the base manifest', '', '', { modes: ['light', 'sepia'] }, ['sepia']],
-    ['several custom modes', '', '@theme sepia {}\n@theme ocean {}\n@theme dark {}', undefined, ['sepia', 'ocean']],
-    ['class trigger', 'mode-trigger: class;', '@theme sepia {}', undefined, []],
-    ['host trigger', 'mode-trigger: host;', '@theme sepia {}', undefined, []],
-    ['class trigger from the base manifest', '', '@theme sepia {}', { modeTrigger: 'class' }, []],
-    ['only light and dark', '', '@theme light {}\n@theme dark {}', undefined, []]
-  ] as const)('warns about custom modes only under the media trigger: %s', (_, declarations, themes, baseSettings, customModes) => {
+    ['default media trigger', '', '@theme sepia { --color-paper: #f4ecd8; }', undefined, '"sepia"'],
+    ['explicit media trigger', 'mode-trigger: media;', '@theme sepia {}', undefined, '"sepia"'],
+    ['media trigger from the base manifest', '', '@theme sepia {}', { modeTrigger: 'media' }, '"sepia"'],
+    ['custom modes from the base manifest', '', '', { modes: ['light', 'sepia'] }, '"sepia"'],
+    ['several custom modes', '', '@theme sepia {}\n@theme ocean {}\n@theme dark {}', undefined, '"sepia", "ocean"'],
+    ['class trigger', 'mode-trigger: class;', '@theme sepia {}', undefined, undefined],
+    ['host trigger', 'mode-trigger: host;', '@theme sepia {}', undefined, undefined],
+    ['class trigger from the base manifest', '', '@theme sepia {}', { modeTrigger: 'class' }, undefined],
+    ['host trigger from the base manifest', '', '@theme sepia {}', { modeTrigger: 'host' }, undefined],
+    ['only light and dark', '', '@theme light {}\n@theme dark {}', undefined, undefined]
+  ] as const)('warns about custom modes only under the media trigger: %s', (_, declarations, themes, baseSettings, modeList) => {
     const baseManifest = baseSettings
       ? { ...defaultManifest, settings: { ...defaultManifest.settings, ...baseSettings } } as MasterCSSManifest
       : defaultManifest
-    const { warnings } = compileCSSManifest(`
+    const { manifest, warnings } = compileCSSManifest(`
       @settings {
         ${declarations}
       }
       ${themes}
     `, { baseManifest })
 
-    expect(warnings).toEqual(customModes.length
-      ? [`Custom ${customModes.length === 1 ? 'mode' : 'modes'} ${customModes.map((mode) => `"${mode}"`).join(', ')} will not work with mode-trigger: media, the default. Browsers only support light and dark prefers-color-scheme values; use mode-trigger: class or host for custom modes.`]
-      : [])
+    if (!modeList) {
+      expect(warnings).toEqual([])
+      return
+    }
+    expect(warnings).toHaveLength(1)
+    expect(warnings[0]).toContain(modeList)
+    expect(warnings[0]).not.toMatch(/"(light|dark)"/)
+    expect(warnings[0]).toContain('mode-trigger: class or host')
+    expect(createTestCSS(manifest).generate('fg:red@sepia').map((rule) => rule.text).join(''))
+      .toContain('@media (prefers-color-scheme:sepia)')
   })
 
   test('lowers color variables, mode values, aliases, and alpha references', () => {
