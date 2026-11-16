@@ -62,7 +62,7 @@ This indicates the trace-window delta is mostly the extra settle window, not evi
 
 Preseeding removes the runtime-generated rule delta for the temporary cleanup classes (`2 -> 0` generated rules). The isolated style-invalidation suite then reduces stress-dom style recalculation from about `7.3-7.6ms` to about `2.1-2.2ms`.
 
-The optimization question should therefore focus on avoiding first-time rule insertion on cleanup-sensitive paths, or making those insertions less invalidating, without changing CSS output or hydration behavior.
+The optimization question should therefore focus on avoiding first-time rule insertion on cleanup-sensitive paths, or making those insertions less invalidating, without changing CSS output.
 
 ### Observer Paused vs Runtime Baseline
 
@@ -135,5 +135,4 @@ These results indicate the remaining cold-insertion gap is not a narrow CSSOM ch
 
 - Generated CSS output and cascade behavior.
 - Runtime public API shape.
-- Progressive hydration correctness and adoption behavior.
 - Cleanup correctness: temporary DOM nodes must be removed and temporary classes must not remain counted after product settle.
