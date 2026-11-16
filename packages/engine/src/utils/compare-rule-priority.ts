@@ -9,9 +9,7 @@ export type RulePriority = {
   selector: number
 }
 
-type ComparableRule = Pick<Utility, 'priority' | 'type' | 'key'> & Partial<Pick<Utility, 'conditions' | 'mode' | 'selectorNodes'>> & {
-  sortTier?: number
-}
+type ComparableRule = Pick<Utility, 'priority' | 'type' | 'key'> & Partial<Pick<Utility, 'conditions' | 'mode' | 'selectorNodes'>>
 
 // ✅ Pseudo-class priority (lower = weaker)
 const selectorPriority: Record<string, number> = {
@@ -123,8 +121,7 @@ function compareFeatureTuples(
   return 0
 }
 
-export function getRuleSortTier(rule: Partial<Pick<Utility, 'conditions' | 'mode' | 'selectorNodes'>> & { sortTier?: number }): number {
-  if (typeof rule.sortTier === 'number') return rule.sortTier
+function getRuleSortTier(rule: Partial<Pick<Utility, 'conditions' | 'mode' | 'selectorNodes'>>): number {
   const hasSelector = rule.selectorNodes?.length
   const hasConditions = !!rule.conditions
   const hasMode = !!rule.mode

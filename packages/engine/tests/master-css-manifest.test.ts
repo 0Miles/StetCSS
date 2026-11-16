@@ -3,7 +3,6 @@ import UtilityType from '@stet-css/schema/utility-type'
 import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 import { groupMasterCSSManifestVariables } from '@stet-css/schema/manifest'
 import { MasterCSS } from '../src'
-import createHydrationManifest from '../src/hydration-manifest'
 
 const variables = groupMasterCSSManifestVariables
 
@@ -458,7 +457,12 @@ describe.concurrent('MasterCSSManifest execution', () => {
       .toBe('@media (width>=48rem){.m\\:1rem\\@card{margin:1rem}}')
   })
 
-  it('serializes generated hydration manifest rules in layer order', () => {
+  /**
+   * Guards: utilities with a selector or a condition landing before plain ones in the layer,
+   * which lets the plain rule win the cascade. Reversing the tier comparison in
+   * `compare-rule-priority.ts` turns this test and one other engine test red.
+   */
+  it('orders generated utilities by rule priority within the layer', () => {
     const manifest: MasterCSSManifest = {
       version: 1,
       settings: {
@@ -535,28 +539,11 @@ describe.concurrent('MasterCSSManifest execution', () => {
     const css = MasterCSS.create({ manifest: manifest })
     css.ensureClassRules('block:hover@card', 'fg:brand', 'animation:fade|1s', 'multi')
 
-    const hydrationManifest = createHydrationManifest(css)
-
-    expect(hydrationManifest.version).toBe(1)
-    expect(hydrationManifest.rules.map((rule) => rule.className)).toEqual([
+    expect(css.utilitiesLayer.rules.map((rule) => rule.name)).toEqual([
       'multi',
       'animation:fade|1s',
       'fg:brand',
       'block:hover@card'
-    ])
-    expect(hydrationManifest.rules.find((rule) => rule.className === 'block:hover@card')).toMatchObject({
-      layer: 'utilities',
-      sortTier: 3,
-      priority: {
-        features: [['width', 48, Number.MAX_SAFE_INTEGER]],
-        selector: 1
-      }
-    })
-    expect(hydrationManifest.rules.find((rule) => rule.className === 'fg:brand')?.variableNames).toEqual(['color-brand'])
-    expect(hydrationManifest.rules.find((rule) => rule.className === 'animation:fade|1s')?.animationNames).toEqual(['fade'])
-    expect(hydrationManifest.rules.find((rule) => rule.className === 'multi')?.nodes?.map((node) => node.text)).toEqual([
-      '.multi{display:grid}',
-      '.multi:hover{color:red}'
     ])
   })
 })

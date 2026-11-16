@@ -19,7 +19,6 @@ export { default as NonLayer } from './non-layer'
 export { default as VariableRule } from './variable-rule'
 export { default as AnimationRule } from './animation-rule'
 export { default as compareRulePriority } from './utils/compare-rule-priority'
-export { default as createHydrationManifest } from './hydration-manifest'
 export { collectAnimationNamesFromDeclaration } from './utils/collect-animation-names'
 export { builtinKeyAliases } from './key-aliases'
 export type { MasterCSSBuiltinKeyAliases } from './key-aliases'
@@ -42,7 +41,3 @@ export type { MasterCSSBuiltinSelectorAliases } from './selector-aliases'
 export * from '@stet-css/schema/manifest'
 export type * from './emitted-globals'
 export type { Utility as GeneratedRule } from './utility'
-export type {
-  MasterCSSGeneratedRuleIR,
-  MasterCSSHydrationManifest
-} from '@stet-css/schema/hydration-manifest'

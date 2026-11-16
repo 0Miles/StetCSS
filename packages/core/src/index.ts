@@ -8,13 +8,11 @@ export {
   Rule,
   VariableRule,
   AnimationRule,
-  compareRulePriority,
-  createHydrationManifest
+  compareRulePriority
 } from '@stet-css/engine'
 export type {
   CompiledUtility,
   GeneratedRule,
-  MasterCSSGeneratedRuleIR,
   MasterCSSClassInspection,
   MasterCSSCreateOptions,
   MasterCSSInspectedClassVariable,
@@ -28,7 +26,6 @@ export type {
   MasterCSSManifestVariable,
   MasterCSSManifestVariableNumericValue,
   MasterCSSEmittedGlobals,
-  MasterCSSHydrationManifest,
   NativeCSSDeclaration,
   NativeCSSDeclarationMatcher
 } from '@stet-css/engine'
