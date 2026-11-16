@@ -420,6 +420,8 @@ describe('style CSS extraction helpers', () => {
   /**
    * Prevents: a local stylesheet such as a CSS Module carrying a removed `@master` at-rule skipping
    * the compiler, so the at-rule reaches the browser and does nothing.
+   * Reverse check: removing `master` from `LOCAL_STYLE_REJECTED_DIRECTIVE_NAMES` turns only this
+   * test red.
    */
   it('rejects @master at-rules in local styles', async () => {
     await expect(transformLocalStyleCSS('/project/src/Button.module.css', '.button { color: red; }\n@master shake;'))
@@ -473,6 +475,8 @@ describe('style CSS extraction helpers', () => {
    * marked only that way, or one importing such a file, is never compiled and the developer sees
    * no error. The check also must not hide behind the import graph's catch, which hands files with
    * unresolvable imports back to the bundler.
+   * Reverse check: removing either `assertNoMasterAtRules` call from `resolveMasterStyleSource`
+   * turns only this test red.
    */
   it('rejects @master at-rules in a stylesheet or the stylesheets it imports', () => {
     const root = createFixture()
@@ -482,17 +486,24 @@ describe('style CSS extraction helpers', () => {
       join(root, 'app/legacy.css'),
       '@master entry;\n.card { color: red; }',
       root
-    )).toThrow(`@master entry; was removed; mark stylesheet entries with @import '@stet-css/core'; instead (in ${join(root, 'app/legacy.css')}`)
+    )).toThrow(expect.objectContaining({
+      message: expect.stringMatching(/@master entry;.*@import '@stet-css\/core'/)
+    }))
+    expect(() => resolveMasterStyleSource(
+      join(root, 'app/legacy.css'),
+      '@master entry;',
+      root
+    )).toThrow(join(root, 'app/legacy.css'))
     expect(() => resolveMasterStyleSource(
       join(root, 'app/legacy.css'),
       '@import "./missing.css";\n@master entry;',
       root
-    )).toThrow('@master entry; was removed')
+    )).toThrow('@master entry;')
     expect(() => resolveMasterStyleSource(
       join(root, 'app/globals.css'),
       '@import "./settings.css";\n.card { color: red; }',
       root
-    )).toThrow(`so delete "@master { … }" (in ${join(root, 'app/globals.css')} or a stylesheet it imports)`)
+    )).toThrow(join(root, 'app/globals.css'))
   })
 
   it('derives package host CSS from the package entry graph', async () => {

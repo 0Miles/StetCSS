@@ -67,7 +67,10 @@ test.concurrent('collects dark and light ranges under their own names', () => {
 /**
  * Prevents: a stylesheet whose only StetCSS syntax is a removed `@master` at-rule skipping the
  * compiler and its removal error. Every `@master` statement and block is located, whatever its
- * prelude, so local-style routing sends the file to the compiler.
+ * prelude, so local-style routing sends the file to the compiler; text such as
+ * `url(logo@master.png)` is not an at-rule and is not located.
+ * Reverse check: dropping `startsCSSStatement`, or skipping non-entry `@master` again, turns only
+ * this test red.
  */
 test.concurrent('collects every @master at-rule, statement or block', () => {
   const source = '@master entry;\n@master shake;\n@master { mode-trigger: media; }\n.a { color: red; }'
