@@ -8,14 +8,14 @@ const RESOLVED_VIRTUAL_CSS_ID = '\0' + VIRTUAL_CSS_ID
 afterEach(removeProjects)
 
 /** A project whose only source file uses `fg:red`. */
-function makeContext(command: 'serve' | 'build', includeGeneratedCSS = true) {
-  return createProjectContext({ command, html: '<div class="fg:red"></div>', includeGeneratedCSS })
+function makeContext(command: 'serve' | 'build') {
+  return createProjectContext({ command, html: '<div class="fg:red"></div>' })
 }
 
 describe('StyleEntryPlugin', () => {
   test('build load emits the slot placeholder for bundle-time replacement', async () => {
     const context = makeContext('build')
-    const plugin = StyleEntryPlugin({ mode: 'static' } as any, context)
+    const plugin = StyleEntryPlugin({}, context)
 
     expect((plugin as any).resolveId(VIRTUAL_CSS_ID)).toBe(RESOLVED_VIRTUAL_CSS_ID)
     const result = await (plugin as any).load.call({}, RESOLVED_VIRTUAL_CSS_ID)
@@ -27,7 +27,7 @@ describe('StyleEntryPlugin', () => {
 
   test('serve load inlines current extracted CSS and tracks the virtual CSS module for HMR', async () => {
     const context = makeContext('serve')
-    const plugin = StyleEntryPlugin({ mode: 'static' } as any, context)
+    const plugin = StyleEntryPlugin({}, context)
 
     const result = await (plugin as any).load.call({}, RESOLVED_VIRTUAL_CSS_ID)
 
@@ -38,7 +38,7 @@ describe('StyleEntryPlugin', () => {
 
   test('treats @stet-css/core import stylesheets as managed entries', async () => {
     const context = makeContext('build')
-    const plugin = StyleEntryPlugin({ mode: 'static' } as any, context)
+    const plugin = StyleEntryPlugin({}, context)
 
     const result = await (plugin as any).transform.call(
       {},
@@ -57,7 +57,7 @@ describe('StyleEntryPlugin', () => {
 
   test('build transform keeps native imports before the slot when @stet-css/core comes first', async () => {
     const context = makeContext('build')
-    const plugin = StyleEntryPlugin({ mode: 'static' } as any, context)
+    const plugin = StyleEntryPlugin({}, context)
 
     const result = await (plugin as any).transform.call(
       {},
@@ -75,7 +75,7 @@ describe('StyleEntryPlugin', () => {
 
   test('serve transform emits current CSS and reloads the managed stylesheet for HMR', async () => {
     const context = makeContext('serve')
-    const plugin = StyleEntryPlugin({ mode: 'static' } as any, context)
+    const plugin = StyleEntryPlugin({}, context)
 
     const result = await (plugin as any).transform.call(
       {},
@@ -91,7 +91,7 @@ describe('StyleEntryPlugin', () => {
 
   test('keeps managed style dependencies registered after invalid CSS', async () => {
     const context = makeContext('serve')
-    const plugin = StyleEntryPlugin({ mode: 'static' } as any, context)
+    const plugin = StyleEntryPlugin({}, context)
     const addWatchFile = vi.fn()
 
     await expect((plugin as any).transform.call(
@@ -110,7 +110,7 @@ describe('StyleEntryPlugin', () => {
 
   test('serve transform keeps native imports before generated CSS when @stet-css/core comes first', async () => {
     const context = makeContext('serve')
-    const plugin = StyleEntryPlugin({ mode: 'static' } as any, context)
+    const plugin = StyleEntryPlugin({}, context)
 
     const result = await (plugin as any).transform.call(
       {},
@@ -126,45 +126,9 @@ describe('StyleEntryPlugin', () => {
     expect(context.virtualCSSPlaceholderEnvironments).toBeUndefined()
   })
 
-  test('non-generated modes emit package base CSS for Master imports without generated utilities', async () => {
-    const context = makeContext('serve', false)
-    const plugin = StyleEntryPlugin({ mode: 'runtime' } as any, context)
-
-    const result = await (plugin as any).transform.call(
-      {},
-      '@import "@stet-css/core";',
-      '/project/src/style.css'
-    )
-
-    expect(result.code).toContain('@layer base')
-    expect(result.code).toContain('text-rendering: geometricprecision')
-    expect(result.code).not.toContain('@stet-css/core')
-    expect(result.code).not.toContain(SLOT)
-    expect(result.code).not.toContain('.fg\\:red')
-    expect(context.styleCSSSources.has('/project/src/style.css')).toBe(true)
-    expect(context.virtualCSSImporters).toEqual(new Set(['/project/src/style.css']))
-  })
-
-  test('non-generated modes preserve native imports when consuming empty Master entries', async () => {
-    const context = makeContext('serve', false)
-    const plugin = StyleEntryPlugin({ mode: 'progressive' } as any, context)
-
-    const result = await (plugin as any).transform.call(
-      {},
-      '@import "@stet-css/core";\n@import "@fontsource/fira-mono";',
-      '/project/src/style.css'
-    )
-
-    expect(result.code.indexOf('@import "@fontsource/fira-mono";')).toBe(0)
-    expect(result.code).toContain('@layer base')
-    expect(result.code).not.toContain('@stet-css/core')
-    expect(result.code).not.toContain(SLOT)
-    expect(context.virtualCSSImporters).toEqual(new Set(['/project/src/style.css']))
-  })
-
   test('treats @master stylesheets as managed entries', async () => {
     const context = makeContext('build')
-    const plugin = StyleEntryPlugin({ mode: 'static' } as any, context)
+    const plugin = StyleEntryPlugin({}, context)
 
     const result = await (plugin as any).transform.call(
       {},
@@ -182,7 +146,7 @@ describe('StyleEntryPlugin', () => {
 
   test('ignores standalone @master stylesheets without @stet-css/core imports', async () => {
     const context = makeContext('build')
-    const plugin = StyleEntryPlugin({ mode: 'static' } as any, context)
+    const plugin = StyleEntryPlugin({}, context)
 
     const result = await (plugin as any).transform.call(
       {},
@@ -197,7 +161,7 @@ describe('StyleEntryPlugin', () => {
 
   test('ignores non-CSS modules and unrelated CSS imports', async () => {
     const context = makeContext('build')
-    const plugin = StyleEntryPlugin({ mode: 'static' } as any, context)
+    const plugin = StyleEntryPlugin({}, context)
 
     expect(await (plugin as any).transform.call({}, '@import "@stet-css/core";', '/project/src/main.ts')).toBeUndefined()
     expect(await (plugin as any).transform.call({}, '@import "virtual:master-utilities.css";', '/project/src/style.css')).toBeUndefined()

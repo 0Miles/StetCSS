@@ -12,7 +12,7 @@ const fixtureRoot = path.resolve(__dirname, '../tmp')
 
 function writeStyle(root: string, displayClass: string) {
   writeFileSync(path.join(root, 'app.css'), [
-    '@master entry;',
+    '@import "@stet-css/core";',
     '@components {',
     '    probe {',
     `        @compose ${displayClass};`,
@@ -24,7 +24,7 @@ function writeStyle(root: string, displayClass: string) {
 }
 
 /**
- * A static-mode dev server whose CSS entry is imported from `src/main.ts` and whose only
+ * A dev server whose CSS entry is imported from `src/main.ts` and whose only
  * template, `src/pages/index.astro`, no module imports.
  */
 async function startStaticTemplateServer(prefix: string) {
@@ -44,7 +44,7 @@ async function startStaticTemplateServer(prefix: string) {
       host: '127.0.0.1',
       port: 0
     },
-    plugins: masterCSS({ mode: 'static' })
+    plugins: masterCSS()
   })
   await server.listen()
   const url = server.resolvedUrls?.local[0]
@@ -64,91 +64,15 @@ afterEach(async () => {
 })
 
 describe('Vite dev HMR', () => {
-  it('loads global CSS before the runtime stylesheet in runtime mode', async () => {
-    mkdirSync(fixtureRoot, { recursive: true })
-    fixtureDir = mkdtempSync(path.join(fixtureRoot, 'runtime-layer-order-'))
-    mkdirSync(path.join(fixtureDir, 'src'), { recursive: true })
-    writeFileSync(path.join(fixtureDir, 'index.html'), [
-      '<!doctype html>',
-      '<html>',
-      '<head><title>Master CSS Vite runtime layer order</title></head>',
-      '<body>',
-      '<main id="probe" class="box block"></main>',
-      '<script type="module" src="/src/main.ts"></script>',
-      '</body>',
-      '</html>'
-    ].join(''))
-    writeFileSync(path.join(fixtureDir, 'src/main.ts'), 'import "./app.css"')
-    writeFileSync(path.join(fixtureDir, 'src/app.css'), [
-      '@import "@stet-css/core";',
-      '@source "../index.html";',
-      '',
-      '@layer components {',
-      '    .box {',
-      '        display: flex;',
-      '        color: red;',
-      '    }',
-      '}'
-    ].join('\n'))
-
-    server = await createServer({
-      root: fixtureDir,
-      logLevel: 'silent',
-      server: {
-        host: '127.0.0.1',
-        port: 0
-      },
-      resolve: {
-        alias: {
-          '@stet-css/vite/runtime': path.resolve(__dirname, '../src/runtime.ts')
-        }
-      },
-      plugins: masterCSS({ mode: 'runtime' })
-    })
-    await server.listen()
-    const url = server.resolvedUrls?.local[0]
-    if (!url) throw new Error('Expected Vite dev server URL.')
-
-    browser = await chromium.launch()
-    const page = await browser.newPage()
-    await page.goto(url)
-    await page.waitForFunction(() => {
-      const probe = document.querySelector('#probe')
-      return !!document.getElementById('master-css')
-        && !!probe
-        && getComputedStyle(probe).display === 'block'
-    })
-
-    const state = await page.evaluate(() => {
-      const runtimeScript = document.querySelector('script[src="/@id/@stet-css/vite/runtime"]')
-      const sheetOwners = Array.from(document.styleSheets).map((sheet) => {
-        const owner = sheet.ownerNode as Element | null
-        return owner?.id
-          || owner?.getAttribute('data-vite-dev-id')
-          || owner?.getAttribute('href')
-          || owner?.tagName
-          || ''
-      })
-      return {
-        display: getComputedStyle(document.querySelector('#probe')!).display,
-        hasRuntimePreload: !!document.head.querySelector('link[rel="modulepreload"][href="/@id/@stet-css/vite/runtime"]'),
-        runtimeScriptParent: runtimeScript?.parentElement?.tagName,
-        runtimeScriptIsLastBodyElement: document.body.lastElementChild === runtimeScript,
-        sheetOwners
-      }
-    })
-    const appCSSIndex = state.sheetOwners.findIndex((owner) => owner.includes('/src/app.css'))
-    const runtimeCSSIndex = state.sheetOwners.indexOf('master-css')
-
-    expect(state.display).toBe('block')
-    expect(state.hasRuntimePreload).toBe(true)
-    expect(state.runtimeScriptParent).toBe('BODY')
-    expect(state.runtimeScriptIsLastBodyElement).toBe(true)
-    expect(appCSSIndex).toBeGreaterThanOrEqual(0)
-    expect(runtimeCSSIndex).toBeGreaterThan(appCSSIndex)
-  })
-
-  it('updates runtime CSS without full reload and recovers after invalid CSS', async () => {
+  /**
+   * Guards editing the stylesheet entry in dev: the page must pick up the new rules through
+   * HMR, keep its state, and keep updating after an edit that fails to compile. The entry also
+   * feeds `virtual:master-css-manifest`, whose hot update used to return only the manifest
+   * module, so the page kept the old CSS until a reload.
+   * Reverse check: starting `modules` empty in `manifest-virtual-module.ts` turns this test and
+   * its unit test red.
+   */
+  it('updates entry CSS without full reload and recovers after invalid CSS', async () => {
     mkdirSync(fixtureRoot, { recursive: true })
     fixtureDir = mkdtempSync(path.join(fixtureRoot, 'dev-hmr-'))
     mkdirSync(fixtureDir, { recursive: true })
@@ -156,9 +80,10 @@ describe('Vite dev HMR', () => {
       '<!doctype html>',
       '<html>',
       '<head><title>Master CSS Vite HMR</title></head>',
-      '<body><div id="probe" class="probe"></div></body>',
+      '<body><div id="probe" class="probe"></div><script type="module" src="/main.ts"></script></body>',
       '</html>'
     ].join(''))
+    writeFileSync(path.join(fixtureDir, 'main.ts'), 'import "./app.css"')
     writeStyle(fixtureDir, 'inline-flex')
 
     server = await createServer({
@@ -168,12 +93,7 @@ describe('Vite dev HMR', () => {
         host: '127.0.0.1',
         port: 0
       },
-      resolve: {
-        alias: {
-          '@stet-css/vite/runtime': path.resolve(__dirname, '../src/runtime.ts')
-        }
-      },
-      plugins: masterCSS({ mode: 'runtime' })
+      plugins: masterCSS()
     })
     await server.listen()
     const wsEvents: unknown[] = []
@@ -216,7 +136,7 @@ describe('Vite dev HMR', () => {
    * Reverse check: returning early from the watcher handler in `style-entry-hmr.ts` turns
    * only this test red.
    */
-  it('styles and updates classes from a template no module imports in static mode', async () => {
+  it('styles and updates classes from a template no module imports', async () => {
     const { page, url } = await startStaticTemplateServer('static-template-')
     const fetchCSS = async () => (await fetch(new URL('src/style.css?direct', url))).text()
 

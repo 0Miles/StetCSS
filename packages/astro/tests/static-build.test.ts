@@ -61,8 +61,7 @@ afterAll(() => {
  * #54 the default was progressive: classes reached the page only through the middleware and
  * the browser runtime, so a build without them shipped unstyled pages. Replaces tests that
  * only inspected the hook's arguments (testing.md rules 2 and 4).
- * Reverse check: passing `mode: 'runtime'` instead of `'static'` to the Vite plugin in
- * `src/core.ts` turns the CSS test red here, plus the untyped-mode test in `core.test.ts`.
+ * Reverse check: registering no Vite plugin in `src/core.ts` turns the CSS test red here.
  */
 describe('Astro build with masterCSS()', () => {
   it('puts the classes of every page kind into the built CSS', () => {

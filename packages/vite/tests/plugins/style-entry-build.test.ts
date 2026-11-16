@@ -214,7 +214,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
   test('warns only for the environment that emitted the placeholder', async () => {
     const ctx = makeContext()
     const plugin = StyleEntryBuildPlugin({} as any, ctx)
-    const styleEntryPlugin = StyleEntryPlugin({ mode: 'static' } as any, ctx)
+    const styleEntryPlugin = StyleEntryPlugin({}, ctx)
     await (styleEntryPlugin as any).load.call({ environment: { name: 'prerender' } }, '\0' + VIRTUAL_CSS_ID)
 
     const clientWarn = vi.fn()
@@ -268,7 +268,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
         }
       }
       writeFileSync(path.join(root, 'index.html'), '<button class="btn native-card"></button>')
-      const styleEntryPlugin = StyleEntryPlugin({ mode: 'static' } as any, ctx)
+      const styleEntryPlugin = StyleEntryPlugin({}, ctx)
       const plugin = StyleEntryBuildPlugin({} as any, ctx)
       const warn = vi.fn()
 
@@ -325,7 +325,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
       }
       writeFileSync(path.join(root, 'index.html'), '<button class="btn native-used"></button>')
 
-      const styleEntryPlugin = StyleEntryPlugin({ mode: 'static' } as any, ctx)
+      const styleEntryPlugin = StyleEntryPlugin({}, ctx)
       const plugin = StyleEntryBuildPlugin({} as any, ctx)
       const warn = vi.fn()
 
