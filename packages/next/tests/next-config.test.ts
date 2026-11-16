@@ -122,4 +122,38 @@ describe('withMasterCSS', () => {
     expect(Object.keys(nextConfig.turbopack!.resolveAlias!).filter((id) => id.includes('instrumentation'))).toEqual([])
     expect(Object.keys(webpackConfig.resolve.alias).filter((id) => id.includes('instrumentation'))).toEqual([])
   })
+
+  /**
+   * Guards that a removed or misspelled option fails when Next loads the config and names the
+   * one allowed key, instead of building without what the developer asked for.
+   * Reverse check: dropping the `validatePluginOptions` call in `src/index.ts` turns only this
+   * test red.
+   */
+  it('rejects removed and unknown options', () => {
+    expect(() => withMasterCSS({}, { scannerOptions: { adapters: [] } } as never))
+      .toThrow('@stet-css/next option "scannerOptions" was removed; pass "adapters" directly.')
+    expect(() => withMasterCSS({}, { mode: 'progressive' } as never))
+      .toThrow('@stet-css/next option "mode" was removed; static CSS is the only output')
+    expect(() => withMasterCSS({}, { adapter: [] } as never))
+      .toThrow('Unknown @stet-css/next option "adapter"; the only option is "adapters".')
+  })
+
+  /**
+   * Guards that custom adapters under Turbopack fail loudly: Turbopack hands loader options to
+   * its workers as JSON, which drops the adapter functions, so the build would silently leave
+   * out every class only the adapters find.
+   * Reverse check: dropping the `process.env.TURBOPACK` check in `src/index.ts` turns this
+   * test and the Turbopack case in `adapters-e2e.test.ts` red.
+   */
+  it('rejects custom adapters under Turbopack', () => {
+    vi.stubEnv('TURBOPACK', 'auto')
+    try {
+      const adapters = [{ name: 'probe', test: /\.md$/, extract: async () => [] }]
+      expect(() => withMasterCSS({}, { adapters }))
+        .toThrow('[@stet-css/next] Custom adapters need webpack')
+      expect(() => withMasterCSS({}, { adapters: [] })).not.toThrow()
+    } finally {
+      vi.unstubAllEnvs()
+    }
+  })
 })
