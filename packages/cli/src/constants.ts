@@ -1,1 +1,1 @@
-export const DEFAULT_SCAN_OUTPUT = 'master.css'
+export const DEFAULT_SCAN_OUTPUT = 'stet.css'

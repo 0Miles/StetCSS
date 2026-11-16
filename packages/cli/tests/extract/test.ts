@@ -21,7 +21,7 @@ it('basic extract', async () => {
       }
     `, { flag: 'w' })
     execFileSync(process.execPath, ['--import', tsxLoaderURL, cliFilepath], { cwd })
-    expect(readFileSync(join(cwd, 'master.css')).toString()).toMatch(/(fg\\:primary|m\\:12x|text-center|font\\:sans|font\\:heavy|font\\:48px)/)
+    expect(readFileSync(join(cwd, 'stet.css')).toString()).toMatch(/(fg\\:primary|m\\:12x|text-center|font\\:sans|font\\:heavy|font\\:48px)/)
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true })
   }
@@ -47,7 +47,7 @@ it('writes the class set of the project files and the entry directives', async (
       @source not './legacy';
     `)
     execFileSync(process.execPath, ['--import', tsxLoaderURL, cliFilepath], { cwd })
-    const css = readFileSync(join(cwd, 'master.css')).toString()
+    const css = readFileSync(join(cwd, 'stet.css')).toString()
     expect(css).toContain('.font\\:heavy{')
     expect(css).not.toContain('.m\\:4x{')
     expect(css).not.toContain('.p\\:2x{')
@@ -86,7 +86,7 @@ it('prints CSS without exporting', async () => {
       encoding: 'utf8'
     })
     expect(output).toContain('text-center')
-    expect(fs.existsSync(join(cwd, 'master.css'))).toBe(false)
+    expect(fs.existsSync(join(cwd, 'stet.css'))).toBe(false)
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true })
   }
@@ -112,10 +112,10 @@ it('logs by its own -v level', async () => {
   try {
     fs.writeFileSync(join(cwd, 'page.html'), '<h1 class="text-center">Hello World</h1>')
     const defaultLog = runCLI(cwd).stdout
-    expect(defaultLog).toContain('master.css exported')
+    expect(defaultLog).toContain('stet.css exported')
     expect(defaultLog).not.toContain('page.html')
     const detailedLog = runCLI(cwd, ['-v', '2']).stdout
-    expect(detailedLog).toContain('master.css exported')
+    expect(detailedLog).toContain('stet.css exported')
     expect(detailedLog).toContain('page.html')
     const silent = runCLI(cwd, ['-v', '0'])
     expect(silent.stdout + silent.stderr).not.toContain('exported')
