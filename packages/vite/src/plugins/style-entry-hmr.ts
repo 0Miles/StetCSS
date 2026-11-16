@@ -24,8 +24,8 @@ export default function StyleEntryHMRPlugin(_options: PluginOptions, context: Pl
   }
   const queueUpdate = (update: () => Promise<unknown>, label: string) => {
     updateChain = updateChain.then(update).catch(onError(label))
-    return updateChain
   }
+  const serversWithPendingSourceUpdate = new Set<ViteDevServer>()
   /**
    * A source file was added, changed or removed: classes come from the project's files, so
    * reload the managed CSS when its output changed. Templates that no client module imports,
@@ -34,11 +34,16 @@ export default function StyleEntryHMRPlugin(_options: PluginOptions, context: Pl
   const handleSourceFileChange = (server: ViteDevServer, file: string) => {
     if (!context.virtualCSSImporters?.size) return
     if (!isStylesheetSourceFile(file, getStylesheetSourceContext(context))) return
+    // A burst of changes (a checkout, save-all) shares one pending update, which extracts
+    // after the changes before it started have landed.
+    if (serversWithPendingSourceUpdate.has(server)) return
+    serversWithPendingSourceUpdate.add(server)
     // The baseline is taken when the file changes, not when the queued update runs: another
     // extraction in between (the emittedGlobals module, an SSR transform) would already see
     // the new classes and make the update look like a no-op.
     const previousCSS = context.extractedCSS
-    return queueUpdate(async () => {
+    queueUpdate(async () => {
+      serversWithPendingSourceUpdate.delete(server)
       if (await getExtractedCSS(context) === previousCSS) return
       await updateStyleCSSImporters({ server })
     }, 'source update')
@@ -49,14 +54,14 @@ export default function StyleEntryHMRPlugin(_options: PluginOptions, context: Pl
     apply: 'serve',
     buildStart() {
       getScanner(context).on('change', () => {
-        void queueUpdate(() => Promise.all(servers.map((eachServer) => updateStyleCSSImporters({ server: eachServer }))), 'hmr update')
+        queueUpdate(() => Promise.all(servers.map((eachServer) => updateStyleCSSImporters({ server: eachServer }))), 'hmr update')
       })
     },
     configureServer(server) {
       servers.push(server)
       for (const event of ['add', 'change', 'unlink'] as const) {
         server.watcher.on(event, (file: string) => {
-          void handleSourceFileChange(server, file)
+          handleSourceFileChange(server, file)
         })
       }
     }
