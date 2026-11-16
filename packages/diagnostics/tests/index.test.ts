@@ -78,6 +78,40 @@ describe('@stet-css/diagnostics', () => {
   })
 
   /**
+   * Prevents: `stet-css inspect --classes card` calling a class missing, and exiting non-zero,
+   * when an entry styles it with a native rule. Entries keep every native rule, so the class is
+   * styled whether or not markup uses it; a class with no rule anywhere stays missing, and a
+   * `.png` inside a declaration value is not a class.
+   * Reverse-checked: dropping the native-class branch from `classifyMissingCSS` turns only
+   * this test red.
+   */
+  it('reports classes styled by an entry native rule as present', async () => {
+    const cwd = createTempDir('master-css-diagnostics-native-')
+    try {
+      writeFileSync(join(cwd, 'index.css'), [
+        '@import "@stet-css/core";',
+        '.card { color: red; background: url(a.png); }',
+        '@media (min-width: 768px) { .unused\\:wide:hover { color: blue; } }'
+      ].join('\n'))
+      writeFileSync(join(cwd, 'index.html'), '<div class="card"></div>')
+      const report = await createMasterCSSInspectionReport({
+        cwd,
+        patterns: ['index.html'],
+        classes: ['card', 'unused:wide', 'png', 'ghost']
+      })
+
+      expect(report.missingCSS.present).toEqual([
+        { className: 'card', status: 'present', reason: 'native-css' },
+        { className: 'unused:wide', status: 'present', reason: 'native-css' }
+      ])
+      expect(report.missingCSS.missing.map((result) => result.className)).toEqual(['png', 'ghost'])
+      expect(report.summary.errors).toBe(2)
+    } finally {
+      rmSync(cwd, { recursive: true, force: true })
+    }
+  })
+
+  /**
    * Prevents: `stet-css inspect` staying silent when an entry sets `default-mode` under the
    * media trigger. Build plugins do not print compiler warnings, so the inspection report is
    * where a developer finds out the setting is ignored.
