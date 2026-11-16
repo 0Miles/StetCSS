@@ -506,17 +506,11 @@ function createOxcClassPositions(
     parseFailed: true,
     positions: []
   }
-  let parseResult: ReturnType<typeof parseOxcOnSourceStack>
-  try {
-    parseResult = parseOxcOnSourceStack(getOxcSource(textDocument), source, {
-      range: true,
-      sourceType: 'unambiguous'
-    })
-  } catch {
-    return failedResult
-  }
-
-  if (!parseResult || parseResult.errors.length) return failedResult
+  const program = parseOxcOnSourceStack(getOxcSource(textDocument), source, {
+    range: true,
+    sourceType: 'unambiguous'
+  })
+  if (!program) return failedResult
 
   const classPositions: ClassPosition[] = []
   const classAttributes = new Set(settings.classAttributes ?? [])
@@ -579,18 +573,13 @@ function createOxcClassPositions(
   }
 
   try {
-    visit(parseResult.program)
+    visit(program)
   } catch (error) {
     // A tree nested deeper than the JS stack can walk: fall back to the regex scan.
     if (error instanceof RangeError && error.message.includes('call stack')) return failedResult
     throw error
   }
-  return {
-    version: textDocument.version,
-    languageId: textDocument.languageId,
-    parseFailed: false,
-    positions: sortAndDeduplicate(classPositions)
-  }
+  return { ...failedResult, parseFailed: false, positions: sortAndDeduplicate(classPositions) }
 }
 
 function getOxcClassPositions(
