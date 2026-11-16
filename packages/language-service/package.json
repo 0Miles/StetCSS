@@ -12,9 +12,13 @@
   "description": "Master CSS Language Service",
   "author": "Aoyue Design LLC.",
   "license": "MIT",
+  "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/language-service#readme",
+  "bugs": {
+    "url": "https://github.com/0Miles/StetCSS/issues"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/master-co/css.git",
+    "url": "git+https://github.com/0Miles/StetCSS.git",
     "directory": "packages/language-service"
   },
   "dependencies": {
