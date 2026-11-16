@@ -116,7 +116,7 @@ export default function LocalComposePlugin(options: PluginOptions, context: Plug
         map: null
       }
     },
-    async handleHotUpdate({ file, server }) {
+    async handleHotUpdate({ file, modules, server }) {
       if (!includesFile(projectManifestDependencies, file)) return
       projectManifest = undefined
       projectManifestEntries = []
@@ -129,7 +129,8 @@ export default function LocalComposePlugin(options: PluginOptions, context: Plug
         invalidateModule(module, server)
         if (module) await server.reloadModule(module)
       }
-      if (handled) return []
+      // The compose modules were reloaded above; the changed file still takes its own update.
+      if (handled) return modules
     }
   }
 }
