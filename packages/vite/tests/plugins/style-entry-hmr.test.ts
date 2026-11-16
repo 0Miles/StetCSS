@@ -33,11 +33,11 @@ afterEach(removeProjects)
 async function serveProject(html: string) {
   const context = createProjectContext({ command: 'serve', html })
   const page = join(context.config.root, 'index.html')
-  await (StyleEntryPlugin({} as any, context) as any).load.call({}, '\0' + VIRTUAL_CSS_ID)
+  await (StyleEntryPlugin(context) as any).load.call({}, '\0' + VIRTUAL_CSS_ID)
   const server = makeServer()
   const cssModule = { id: '\0' + VIRTUAL_CSS_ID }
   ;(server.moduleGraph as any).getModuleById = (id: string) => id === cssModule.id ? cssModule : null
-  const plugin = StyleEntryHMRPlugin({} as any, context)
+  const plugin = StyleEntryHMRPlugin(context)
   ;(plugin as any).configureServer.call({}, server as any)
   return { context, page, server, cssModule }
 }

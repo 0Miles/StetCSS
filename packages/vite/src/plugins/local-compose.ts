@@ -10,24 +10,17 @@ import {
   transformLocalStyleCSS
 } from '@stet-css/stylesheet'
 import type { PluginContext } from '../core'
-import type { PluginOptions } from '../options'
 import { includesFile } from '../utils/path'
 import { getProjectDir } from '../utils/project-dir'
+import { addServerAllow } from '../utils/manifest-module'
 
-export default function LocalComposePlugin(options: PluginOptions, context: PluginContext): Plugin {
+export default function LocalComposePlugin(context: PluginContext): Plugin {
   let projectManifest: Awaited<ReturnType<typeof loadProjectManifest>> | undefined
   let projectManifestEntries: string[] = []
   let projectManifestDependencies: string[] = []
   let styleEntryEmittedGlobals: Awaited<ReturnType<typeof createStyleEntryEmittedGlobals>> | undefined
   const localComposeModules = new Set<string>()
 
-  const addServerAllow = (paths: string[]) => {
-    const allow = context.config?.server.fs.allow
-    if (!allow) return
-    for (const path of paths) {
-      if (!allow.includes(path)) allow.push(path)
-    }
-  }
 
   const loadComposeContext = async (pluginContext: { addWatchFile?: (id: string) => void }) => {
     if (projectManifest) return projectManifest
@@ -41,7 +34,7 @@ export default function LocalComposePlugin(options: PluginOptions, context: Plug
       }
     }
     projectManifestDependencies = [...dependencies]
-    addServerAllow(projectManifestDependencies)
+    addServerAllow(context, projectManifestDependencies)
     for (const dependency of projectManifestDependencies) {
       pluginContext.addWatchFile?.(dependency)
     }
@@ -52,7 +45,7 @@ export default function LocalComposePlugin(options: PluginOptions, context: Plug
       pluginContext.addWatchFile?.(dependency)
     }
     projectManifestDependencies = [...dependencies]
-    addServerAllow(projectManifestDependencies)
+    addServerAllow(context, projectManifestDependencies)
     return projectManifest
   }
 
@@ -69,7 +62,7 @@ export default function LocalComposePlugin(options: PluginOptions, context: Plug
       pluginContext.addWatchFile?.(dependency)
     }
     projectManifestDependencies = [...dependencies]
-    addServerAllow(projectManifestDependencies)
+    addServerAllow(context, projectManifestDependencies)
     return styleEntryEmittedGlobals
   }
 
