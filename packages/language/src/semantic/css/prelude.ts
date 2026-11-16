@@ -10,7 +10,6 @@ import {
 } from '@stet-css/lexer'
 
 const SOURCE_MODIFIERS = new Set(['not'])
-const PRESERVE_PARAMETERS = new Set(['native'])
 const THEME_MODIFIERS = new Set(['inline', 'static'])
 
 export function tokenizeSourcePrelude(source: string, start: number, end: number, tokens: HighlightTokenItem[]) {
@@ -38,21 +37,6 @@ export function tokenizeSourcePrelude(source: string, start: number, end: number
 export function tokenizeClassListPrelude(source: string, start: number, end: number, tokens: HighlightTokenItem[], css: MasterCSS) {
   for (const stringRange of collectCSSQuotedStringRanges(source, start, end)) {
     tokens.push(...collectClassListHighlightTokenItems(css, source.slice(stringRange.start + 1, stringRange.end - 1), stringRange.start + 1))
-  }
-}
-
-export function tokenizePreservePrelude(source: string, start: number, end: number, tokens: HighlightTokenItem[]) {
-  let cursor = skipCSSWhitespace(source, start)
-  while (cursor < end) {
-    const ident = readCSSIdent(source, cursor)
-    if (ident.value) {
-      if (PRESERVE_PARAMETERS.has(ident.value)) {
-        pushHighlightToken(tokens, ident.start, ident.value.length, 'enumMember', 'directive.parameter', ['directive'])
-      }
-      cursor = skipCSSWhitespace(source, ident.end)
-      continue
-    }
-    cursor++
   }
 }
 
