@@ -617,7 +617,7 @@ describe('style CSS extraction helpers', () => {
         color: var(--color-primary);
       }
     `)
-    await scanner.scan(join(root, 'app/page.tsx'), '<main class="btn block main fg:red"></main>')
+    writeFileSync(join(root, 'app/page.tsx'), '<main class="btn block main fg:red"></main>')
 
     const css = await createExtractedCSS({
       scanner,
@@ -691,7 +691,7 @@ describe('style CSS extraction helpers', () => {
       '    color: red;',
       '}'
     ].join('\n'))
-    await scanner.scan(join(root, 'app/page.html'), '<div class="card"></div>')
+    writeFileSync(join(root, 'app/page.html'), '<div class="card"></div>')
 
     const css = await createExtractedCSS({
       scanner,
@@ -747,7 +747,7 @@ describe('style CSS extraction helpers', () => {
         animation: var(--animation-main);
       }
     `)
-    await scanner.scan(join(root, 'app/page.tsx'), '<main class="main main-animated"></main>')
+    writeFileSync(join(root, 'app/page.tsx'), '<main class="main main-animated"></main>')
 
     const result = await createExtractedCSSResult({
       scanner,
@@ -783,7 +783,7 @@ describe('style CSS extraction helpers', () => {
         --color-primary: #ff0000;
       }
     `)
-    await scanner.scan(join(root, 'app/page.tsx'), '<main class="fg:primary"></main>')
+    writeFileSync(join(root, 'app/page.tsx'), '<main class="fg:primary"></main>')
 
     const result = await createExtractedCSSResult({
       scanner,
@@ -862,7 +862,7 @@ describe('style CSS extraction helpers', () => {
         display: block;
       }
     `)
-    await scanner.scan(join(root, 'app/page.html'), '<div class="card btn-native"></div>')
+    writeFileSync(join(root, 'app/page.html'), '<div class="card btn-native"></div>')
 
     const css = await createExtractedCSS({
       scanner,
@@ -910,7 +910,7 @@ describe('style CSS extraction helpers', () => {
         display: grid;
       }
     `)
-    await scanner.scan(join(root, 'app/page.html'), '<div class="card block"></div>')
+    writeFileSync(join(root, 'app/page.html'), '<div class="card block"></div>')
 
     const css = await createExtractedCSS({
       scanner,
@@ -932,7 +932,7 @@ describe('style CSS extraction helpers', () => {
 
     const styleCSSSources = new Map()
     await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'app/globals.css'), '@import "@stet-css/core";')
-    await scanner.scan(join(root, 'app/page.html'), '<div class="block"></div>')
+    writeFileSync(join(root, 'app/page.html'), '<div class="block"></div>')
 
     const css = await createExtractedCSS({
       scanner,
@@ -952,7 +952,7 @@ describe('style CSS extraction helpers', () => {
     const root = createFixture()
     const scanner = new CSSScanner({}, root)
     await scanner.init()
-    await scanner.scan(join(root, 'app/page.html'), '<div class="block"></div>')
+    writeFileSync(join(root, 'app/page.html'), '<div class="block"></div>')
 
     const css = await createExtractedCSS({
       scanner,

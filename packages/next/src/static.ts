@@ -87,11 +87,8 @@ export async function createStaticCSS({ projectDir, scannerOptions = {} }: Stati
   }
   const context = { scanner, styleCSSSources, projectDir }
   const [css, sourceFiles] = await Promise.all([
-    createExtractedCSS({
-      ...context,
-      // Nothing is scanned module by module: every class comes from the project's class set.
-      classes: []
-    }),
+    // Nothing is scanned module by module: every class comes from the project's class set.
+    createExtractedCSS(context),
     resolveStylesheetSourceFiles(context)
   ])
   return {
