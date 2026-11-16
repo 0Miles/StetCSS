@@ -9,6 +9,7 @@ import {
 } from '@stet-css/schema/hydration-manifest'
 import { MASTER_CSS_RUNTIME_STYLE_ID } from '@stet-css/schema/runtime-style'
 import registerGlobal, { isRuntimeClass } from './register-global'
+import { isDocumentRoot, readDocument } from './document'
 import { HydrateResult } from './types'
 import RuntimeUtilityLayer, { RuntimeUtilityLayerInstance } from './utility-layer'
 import RuntimeThemeLayer from './theme-layer'
@@ -53,14 +54,9 @@ export interface CSSRuntimeCreateOptions {
   hydrationManifest?: MasterCSSHydrationManifest
 }
 
-function isDocumentRoot(root: Document | ShadowRoot): root is Document {
-  const rootConstructorName = root?.constructor.name
-  return rootConstructorName === 'HTMLDocument' || rootConstructorName === 'Document'
-}
-
 function findElementById(root: Document | ShadowRoot, id: string) {
   return isDocumentRoot(root)
-    ? root.getElementById(id)
+    ? readDocument(root, 'getElementById').call(root, id)
     : 'querySelector' in root
       ? root.querySelector(`#${id}`)
       : undefined
@@ -108,8 +104,8 @@ function readExternalHydrationManifestSource(root: Document | ShadowRoot) {
 }
 
 function resolveExternalHydrationManifestURL(root: Document | ShadowRoot, source: string) {
-  const ownerDocument = isDocumentRoot(root) ? root : root.ownerDocument
-  return new URL(source, ownerDocument.baseURI).href
+  const baseURI = isDocumentRoot(root) ? readDocument(root, 'baseURI') : root.ownerDocument.baseURI
+  return new URL(source, baseURI).href
 }
 
 async function importHydrationManifest(url: string): Promise<MasterCSSHydrationManifest | undefined> {
@@ -175,8 +171,8 @@ export default class CSSRuntime extends MasterCSS {
       nativeDeclarationMatcher: browserNativeDeclarationMatcher
     })
     if (isDocumentRoot(root)) {
-      this.container = root.head
-      this.host = root.documentElement
+      this.container = readDocument(root, 'head')
+      this.host = readDocument(root, 'documentElement')
     } else {
       this.container = this.root as CSSRuntime['container']
       this.host = (this.root as ShadowRoot).host
@@ -191,7 +187,7 @@ export default class CSSRuntime extends MasterCSS {
     CSSRuntime.instances.set(this.root, this)
     getRegisteredRuntimeInstances()?.set(this.root, this)
     if (isDocumentRoot(this.root)) {
-      this.root.defaultView!.globalThis.masterCSSRuntime = this
+      readDocument(this.root, 'defaultView')!.globalThis.masterCSSRuntime = this
     }
     if (!registered && process.env.NODE_ENV === 'development') {
       debugRuntimeCreated(this)
@@ -203,8 +199,9 @@ export default class CSSRuntime extends MasterCSS {
     CSSRuntime.instances.delete(this.root)
     const registeredInstances = getRegisteredRuntimeInstances()
     if (registeredInstances?.get(this.root) === this) registeredInstances.delete(this.root)
-    if (isDocumentRoot(this.root) && this.root.defaultView!.globalThis.masterCSSRuntime === this) {
-      this.root.defaultView!.globalThis.masterCSSRuntime = undefined as unknown as CSSRuntime
+    if (isDocumentRoot(this.root)) {
+      const scope = readDocument(this.root, 'defaultView')!.globalThis
+      if (scope.masterCSSRuntime === this) scope.masterCSSRuntime = undefined as unknown as CSSRuntime
     }
     return this
   }
@@ -240,11 +237,13 @@ export default class CSSRuntime extends MasterCSS {
   }
 
   private createRuntimeStyle() {
-    const ownerDocument = 'createElement' in this.root ? this.root : this.root.ownerDocument
-    this.style = ownerDocument.createElement('style')
-    this.style.id = MASTER_CSS_RUNTIME_STYLE_ID
-    this.style.setAttribute('blocking', 'render')
-    this.container.append(this.style)
+    const ownerDocument = isDocumentRoot(this.root) ? this.root : this.root.ownerDocument
+    // `.call` drops the tag-name overload, so restate the element type.
+    const style = readDocument(ownerDocument, 'createElement').call(ownerDocument, 'style') as HTMLStyleElement
+    style.id = MASTER_CSS_RUNTIME_STYLE_ID
+    style.setAttribute('blocking', 'render')
+    this.style = style
+    this.container.append(style)
   }
 
   private warnHydrationFallback(reason: string) {
@@ -262,8 +261,9 @@ export default class CSSRuntime extends MasterCSS {
   }
 
   private detectRuntimeStyle() {
-    if (this.root.styleSheets) {
-      for (const sheet of this.root.styleSheets) {
+    const styleSheets = isDocumentRoot(this.root) ? readDocument(this.root, 'styleSheets') : this.root.styleSheets
+    if (styleSheets) {
+      for (const sheet of styleSheets) {
         const { ownerNode } = sheet
         if (ownerNode instanceof HTMLStyleElement && ownerNode.id === MASTER_CSS_RUNTIME_STYLE_ID) {
           this.style = ownerNode
@@ -305,7 +305,7 @@ export default class CSSRuntime extends MasterCSS {
     const ownerDocument = isDocumentRoot(this.root)
       ? this.root
       : this.root.ownerDocument
-    return ownerDocument?.defaultView || globalThis
+    return (ownerDocument && readDocument(ownerDocument, 'defaultView')) || globalThis
   }
 
   private cancelPendingRemovalFrames() {
