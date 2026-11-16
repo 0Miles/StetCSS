@@ -1,5 +1,6 @@
 import { dirname, relative } from 'node:path'
 import { transformStyleSource } from './utils/transform-style-source'
+import { getHost } from './utils/hosts'
 import {
   collectStyleCSSDependencies,
   hasLocalStyleDirectives,
@@ -9,6 +10,7 @@ import {
 
 interface StyleCSSLoaderOptions {
   virtualCSSImportModuleId?: string
+  hostId?: string
 }
 
 interface LoaderContext {
@@ -54,10 +56,15 @@ export default function masterCSSStyleCSSLoader(this: LoaderContext, source: str
     projectDir: this.rootContext,
     masterImport: toCSSImportPath(this.resourcePath, options.virtualCSSImportModuleId)
   })
-    .then((result) => {
+    .then(async (result) => {
       for (const dependency of new Set(result.dependencies)) {
         if (dependencies.has(dependency)) continue
         this.addDependency?.(dependency)
+      }
+      // An entry discovery cannot see, such as one outside the project root, joins the CSS
+      // before webpack builds the virtual CSS module this entry imports.
+      if (result.entry) {
+        await getHost(options.hostId)?.addStyleEntry(this.resourcePath)
       }
       callback(null, result.code)
     })

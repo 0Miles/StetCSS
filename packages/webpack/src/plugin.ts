@@ -12,12 +12,13 @@ import {
   toVirtualEmittedGlobalsModulePath
 } from '@stet-css/integration/node'
 import { loadProjectManifest } from '@stet-css/project/manifest'
-import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
+import { findCSSManifestEntryFiles, STYLE_ENTRY_EXTENSIONS } from '@stet-css/project/entries'
 import {
   collectStyleCSSDependencies,
   createExtractedCSSResult,
   isStylesheetSourceFile,
   registerStyleCSSSource,
+  resolveMasterStyleSource,
   resolveStylesheetSourceFiles,
   type StyleCSSSources,
   type StylesheetSourceContext
@@ -28,6 +29,7 @@ import type VirtualModulesPlugin from 'webpack-virtual-modules'
 import { existsSync, mkdirSync, readFileSync, utimesSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { isInsidePath, normalizePath } from './utils/path'
+import { registerHost } from './utils/hosts'
 import ScannerLifecyclePlugin from './plugins/scanner-lifecycle'
 import VirtualModuleRegistryPlugin from './plugins/virtual-modules'
 import ManifestVirtualModulePlugin from './plugins/manifest-virtual-module'
@@ -44,6 +46,7 @@ import {
 
 const NAME = 'MasterCSSPlugin'
 const SEED_FILE_TIME = new Date('2000-01-01T00:00:00Z')
+let hostCount = 0
 
 /** The static CSS of one generation and every file whose change can alter it. */
 export interface StaticCSSResult {
@@ -59,6 +62,8 @@ export interface WebpackSubPlugin {
 
 export interface MasterCSSWebpackContext {
   name: string
+  /** Lets the style loader report entries to this plugin instance. */
+  hostId: string
   cwd: string
   compilerContext: string
   virtualCSSImportModuleId: string
@@ -83,6 +88,10 @@ export interface MasterCSSWebpackContext {
   writeGeneratedCSSModule(changedFiles?: Iterable<string>): Promise<void>
   getStaticCSSDependencyPaths(): string[]
   getStaticCSSError(): unknown
+  /** Bumped on every write of the generated CSS module. */
+  getStaticCSSVersion(): number
+  /** Resolves once generations the style loader started have written their CSS. */
+  waitForGeneratedCSSModule(): Promise<void>
 }
 
 /**
@@ -95,17 +104,24 @@ export class MasterCSSPlugin {
 
   readonly scanner: CSSScanner
   readonly pluginOptions: ResolvedPluginOptions
+  readonly hostId = `${NAME}:${hostCount++}`
   pluginInitialized = false
   manifestJSONAssets = new Map<string, string>()
   defaultManifestDependencies: string[] = []
   emittedGlobals: MasterCSSEmittedGlobals = {}
   styleCSSSources: StyleCSSSources = new Map()
+  /** Entries the style loader reported that discovery may miss, e.g. outside the root. */
+  loadedStyleEntries = new Set<string>()
+  /** Serializes generations: the style loader can ask for one during a compilation. */
+  generation: Promise<void> = Promise.resolve()
+  private context?: MasterCSSWebpackContext
   /** The last generation: written CSS, its dependencies and its error, if any. */
   staticCSS?: string
   staticCSSDependencies: string[] = []
   staticCSSError?: unknown
-  /** The compiler's output directory when it sits inside the project root. */
-  ignorePaths: string[] = []
+  staticCSSVersion = 0
+  /** Reads the compiler's output directory; set on `apply`, read once options defaults apply. */
+  private getOutputPath: () => string | undefined = () => undefined
   development = false
 
   constructor(
@@ -114,6 +130,9 @@ export class MasterCSSPlugin {
   ) {
     this.pluginOptions = resolvePluginOptions(customOptions)
     this.scanner = new CSSScanner(this.pluginOptions.scanner, cwd)
+    registerHost(this.hostId, {
+      addStyleEntry: (file) => this.addStyleEntry(file)
+    })
   }
 
   get customOptions() {
@@ -192,21 +211,30 @@ export class MasterCSSPlugin {
   }
 
   /**
-   * Registers every stylesheet entry entry discovery finds, as the CLI does, and records the
-   * files they read. A failed entry still reports its import graph, so fixing it regenerates
-   * the CSS.
+   * Registers every stylesheet entry, `.css`, `.scss` and `.sass` ones discovery finds plus
+   * the ones the style loader reported, and records the files they read. A failed entry still
+   * reports its import graph, so fixing it regenerates the CSS.
    */
   private async registerStyleEntries(dependencies: Set<string>) {
     const styleCSSSources: StyleCSSSources = new Map()
-    for (const entry of await findCSSManifestEntryFiles(this.cwd)) {
+    const entries = new Set([
+      ...await findCSSManifestEntryFiles(this.cwd, { extensions: STYLE_ENTRY_EXTENSIONS }),
+      ...this.loadedStyleEntries
+    ])
+    for (const entry of entries) {
       let source: string
       try {
         source = readFileSync(entry, 'utf-8')
       } catch {
+        this.loadedStyleEntries.delete(entry)
         continue
       }
       dependencies.add(entry)
       try {
+        if (this.loadedStyleEntries.has(entry) && !resolveMasterStyleSource(entry, source, this.cwd)) {
+          this.loadedStyleEntries.delete(entry)
+          continue
+        }
         await registerStyleCSSSource(this.scanner, styleCSSSources, entry, source, {
           projectDir: this.cwd
         })
@@ -225,12 +253,20 @@ export class MasterCSSPlugin {
     }
   }
 
+  /** The compiler's output directory when it sits inside the project root. */
+  private getIgnorePaths() {
+    const outputPath = this.getOutputPath()
+    return outputPath && isInsidePath(resolve(outputPath), resolve(this.cwd))
+      ? [resolve(outputPath)]
+      : []
+  }
+
   private createSourceContext(): StylesheetSourceContext {
     return {
       scanner: this.scanner,
       styleCSSSources: this.styleCSSSources,
       projectDir: this.cwd,
-      ignorePaths: this.ignorePaths
+      ignorePaths: this.getIgnorePaths()
     }
   }
 
@@ -279,15 +315,29 @@ export class MasterCSSPlugin {
     return false
   }
 
-  private async writeGeneratedCSSModule(context: MasterCSSWebpackContext, changedFiles?: Iterable<string>) {
+  private writeGeneratedCSSModule(context: MasterCSSWebpackContext, changedFiles?: Iterable<string>) {
+    this.generation = this.generation
+      .catch(() => undefined)
+      .then(() => this.generateAndWriteCSSModule(context, changedFiles))
+    return this.generation
+  }
+
+  private async generateAndWriteCSSModule(context: MasterCSSWebpackContext, changedFiles?: Iterable<string>) {
     if (!this.affectsStaticCSS(changedFiles)) return
     const result = await this.generateCSS()
     this.staticCSSDependencies = [...new Set(result.dependencies)]
     this.staticCSSError = result.error
     if (result.css === undefined || result.css === this.staticCSS) return
     this.staticCSS = result.css
+    this.staticCSSVersion++
     context.writeVirtualModule(context.virtualCSSImportModuleId, result.css)
     context.writeVirtualModule(context.virtualEmittedGlobalsModuleId, toEmittedGlobalsModule(this.emittedGlobals))
+  }
+
+  private async addStyleEntry(file: string) {
+    if (this.styleCSSSources.has(file) || this.loadedStyleEntries.has(file)) return
+    this.loadedStyleEntries.add(file)
+    if (this.context) await this.writeGeneratedCSSModule(this.context)
   }
 
   private async createEmittedGlobalsModule() {
@@ -302,12 +352,11 @@ export class MasterCSSPlugin {
     const compilerContext = compiler.context || this.cwd || process.cwd()
     const isRspack = Boolean((compiler.webpack as { rspackVersion?: string } | undefined)?.rspackVersion)
     this.development = compiler.options.mode === 'development'
-    const outputPath = compiler.options.output?.path
-    this.ignorePaths = outputPath && isInsidePath(resolve(outputPath), resolve(this.cwd))
-      ? [resolve(outputPath)]
-      : []
+    // Plugins apply before webpack fills option defaults, so `output.path` is read later.
+    this.getOutputPath = () => compiler.options.output?.path
     const context: MasterCSSWebpackContext = {
       name: NAME,
+      hostId: this.hostId,
       cwd: this.cwd,
       compilerContext,
       virtualCSSImportModuleId: toVirtualCSSModulePath(compilerContext),
@@ -361,9 +410,12 @@ export class MasterCSSPlugin {
       },
       writeGeneratedCSSModule: (changedFiles) => this.writeGeneratedCSSModule(context, changedFiles),
       getStaticCSSDependencyPaths: () => this.staticCSSDependencies,
-      getStaticCSSError: () => this.staticCSSError
+      getStaticCSSError: () => this.staticCSSError,
+      getStaticCSSVersion: () => this.staticCSSVersion,
+      waitForGeneratedCSSModule: () => this.generation.catch(() => undefined)
     }
 
+    this.context = context
     return context
   }
 
