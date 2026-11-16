@@ -85,6 +85,10 @@ Import the default stylesheet from your application CSS so the plugin can replac
 @import '@stet-css/core';
 ```
 
-The plugin builds static CSS with no options: before each compilation it reads the classes from the project's own source files, following the entry's `@source`, `@source not`, `@safelist` and `@blocklist`, and writes the CSS through a virtual module. It works with `style-loader` and with CSS extraction. Files in `node_modules` and build output directories are not read; name them with `@source` to include them.
+The plugin builds static CSS with no options: before each compilation it reads the classes from the project's own source files, following the entry's `@source`, `@source not`, `@safelist` and `@blocklist`, and writes the CSS through a virtual module. It works with `style-loader` and with CSS extraction.
+
+- Entries can be `.css`, `.scss` or `.sass` files (Sass entries compile with your project's `sass`), including entries your app imports from outside the project root.
+- Files in `node_modules` and in common build output directories are not read; name them with `@source` to include them. Webpack's own `output.path` is never read, not even through `@source`, so emitted bundles cannot feed classes back.
+- In watch mode, editing any file the CSS reads rebuilds once. A newly created file that nothing imports is picked up on the next rebuild.
 
 See the [Webpack installation guide](https://rc.css.master.co/guide/installation/webpack) for a complete project setup.
