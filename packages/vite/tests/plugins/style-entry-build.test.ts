@@ -53,7 +53,7 @@ beforeAll(async () => {
 describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
   test('replaces placeholder when present and does NOT warn', async () => {
     const ctx = makeContext()
-    const plugin = StyleEntryBuildPlugin({} as any, ctx)
+    const plugin = StyleEntryBuildPlugin(ctx)
     const warn = vi.fn()
 
     ctx.virtualCSSPlaceholderEnvironments = new Set(['client'])
@@ -70,7 +70,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
 
   test('deduplicates duplicate placeholder occurrences in the same CSS asset', async () => {
     const ctx = makeContext()
-    const plugin = StyleEntryBuildPlugin({} as any, ctx)
+    const plugin = StyleEntryBuildPlugin(ctx)
     const warn = vi.fn()
 
     ctx.virtualCSSPlaceholderEnvironments = new Set(['client'])
@@ -89,7 +89,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
 
   test('keeps one extracted CSS copy per CSS asset', async () => {
     const ctx = makeContext()
-    const plugin = StyleEntryBuildPlugin({} as any, ctx)
+    const plugin = StyleEntryBuildPlugin(ctx)
     const warn = vi.fn()
 
     ctx.virtualCSSPlaceholderEnvironments = new Set(['client'])
@@ -107,7 +107,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
 
   test('warns when placeholder was emitted but no CSS asset still contains it', async () => {
     const ctx = makeContext()
-    const plugin = StyleEntryBuildPlugin({} as any, ctx)
+    const plugin = StyleEntryBuildPlugin(ctx)
     const warn = vi.fn()
 
     ctx.virtualCSSPlaceholderEnvironments = new Set(['client'])
@@ -135,7 +135,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
    */
   test('warns once when no managed CSS import was registered in the build', async () => {
     const ctx = makeContext()
-    const plugin = StyleEntryBuildPlugin({} as any, ctx)
+    const plugin = StyleEntryBuildPlugin(ctx)
     const warn = vi.fn()
 
     const bundle = makeBundle({
@@ -158,7 +158,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
    */
   test('does NOT warn about a missing entry once any environment registered one', async () => {
     const ctx = makeContext()
-    const plugin = StyleEntryBuildPlugin({} as any, ctx)
+    const plugin = StyleEntryBuildPlugin(ctx)
     const warn = vi.fn()
 
     ctx.virtualCSSPlaceholderEnvironments = new Set(['ssr'])
@@ -173,7 +173,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
     // was extracted (e.g. config-only project). Warning here would be
     // noise — there's nothing to splice anyway.
     const ctx = makeContext('<div></div>')
-    const plugin = StyleEntryBuildPlugin({} as any, ctx)
+    const plugin = StyleEntryBuildPlugin(ctx)
     const warn = vi.fn()
 
     ctx.virtualCSSPlaceholderEnvironments = new Set(['client'])
@@ -188,7 +188,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
 
   test('only treats `type: asset` chunks (skips `chunk` entries)', async () => {
     const ctx = makeContext()
-    const plugin = StyleEntryBuildPlugin({} as any, ctx)
+    const plugin = StyleEntryBuildPlugin(ctx)
     const warn = vi.fn()
     ctx.virtualCSSPlaceholderEnvironments = new Set(['client'])
 
@@ -213,8 +213,8 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
    */
   test('warns only for the environment that emitted the placeholder', async () => {
     const ctx = makeContext()
-    const plugin = StyleEntryBuildPlugin({} as any, ctx)
-    const styleEntryPlugin = StyleEntryPlugin({}, ctx)
+    const plugin = StyleEntryBuildPlugin(ctx)
+    const styleEntryPlugin = StyleEntryPlugin(ctx)
     await (styleEntryPlugin as any).load.call({ environment: { name: 'prerender' } }, '\0' + VIRTUAL_CSS_ID)
 
     const clientWarn = vi.fn()
@@ -268,8 +268,8 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
         }
       }
       writeFileSync(path.join(root, 'index.html'), '<button class="btn native-card"></button>')
-      const styleEntryPlugin = StyleEntryPlugin({}, ctx)
-      const plugin = StyleEntryBuildPlugin({} as any, ctx)
+      const styleEntryPlugin = StyleEntryPlugin(ctx)
+      const plugin = StyleEntryBuildPlugin(ctx)
       const warn = vi.fn()
 
       await (styleEntryPlugin as any).transform.call({ addWatchFile: vi.fn() }, source, entryPath)
@@ -325,8 +325,8 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
       }
       writeFileSync(path.join(root, 'index.html'), '<button class="btn native-used"></button>')
 
-      const styleEntryPlugin = StyleEntryPlugin({}, ctx)
-      const plugin = StyleEntryBuildPlugin({} as any, ctx)
+      const styleEntryPlugin = StyleEntryPlugin(ctx)
+      const plugin = StyleEntryBuildPlugin(ctx)
       const warn = vi.fn()
 
       await (styleEntryPlugin as any).transform.call({ addWatchFile: vi.fn() }, source, entryPath)

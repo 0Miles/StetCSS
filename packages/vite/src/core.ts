@@ -51,13 +51,13 @@ export default function masterCSS(options: PluginOptions = {}, host?: PluginHost
   const context: PluginContext = { host }
   return [
     ContextPlugin(context),
-    ManifestVirtualModulePlugin(options, context),
+    ManifestVirtualModulePlugin(context),
     EmittedGlobalsVirtualModulePlugin(context),
     ManifestLoaderPlugin(context),
     ScannerPlugin(options, context),
-    LocalComposePlugin(options, context),
-    StyleEntryPlugin(options, context),
-    StyleEntryHMRPlugin(options, context),
-    StyleEntryBuildPlugin(options, context)
+    LocalComposePlugin(context),
+    StyleEntryPlugin(context),
+    StyleEntryHMRPlugin(context),
+    StyleEntryBuildPlugin(context)
   ]
 }

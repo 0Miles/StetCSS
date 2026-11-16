@@ -1,11 +1,10 @@
 import type { Plugin, ViteDevServer } from 'vite'
 import { isStylesheetSourceFile } from '@stet-css/stylesheet'
 import type { PluginContext } from '../core'
-import type { PluginOptions } from '../options'
 import getExtractedCSS, { getStylesheetSourceContext } from '../utils/extracted-css'
 
 /** HMR when the project's source files change */
-export default function StyleEntryHMRPlugin(_options: PluginOptions, context: PluginContext): Plugin {
+export default function StyleEntryHMRPlugin(context: PluginContext): Plugin {
   let updateChain: Promise<unknown> = Promise.resolve()
   const updateStyleCSSImporters = async (server: ViteDevServer) => {
     const virtualCSSImporters = Array.from(context.virtualCSSImporters || [])
