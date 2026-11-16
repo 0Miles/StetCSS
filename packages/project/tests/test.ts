@@ -36,8 +36,8 @@ function isSameOrChildPath(parentPath: string, childPath: string) {
 
 /**
  * Writes a stylesheet with its own theme and components. Loading it by path needs no entry
- * marker; pass `entry` when the test relies on entry discovery, which only finds stylesheets
- * that import `@stet-css/core`.
+ * marker; pass `entry` when the test relies on entry discovery, which needs one, to mark it
+ * with `@import "@stet-css/core"`.
  */
 function writeCSSFixture(cwd: string, { entry: markEntry = false } = {}) {
   mkdirSync(join(cwd, 'styles'), { recursive: true })
