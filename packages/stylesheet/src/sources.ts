@@ -1,7 +1,7 @@
 import { readFileSync, statSync } from 'node:fs'
 import { dirname, isAbsolute, matchesGlob, relative, resolve } from 'node:path'
 import fg from 'fast-glob'
-import { findProjectSourceFiles, isProjectSourceFile } from '@stet-css/project/sources'
+import { findProjectSourceFiles, isIgnoredProjectDirectory, isProjectSourceFile } from '@stet-css/project/sources'
 import { extractSourceClassCandidates, type SourceAdapter } from '@stet-css/source'
 import { filterExcludedClasses, type ClassExcludePattern } from './class-exclusion'
 
@@ -132,10 +132,26 @@ export function resolveStylesheetIncludedFiles(scope: Pick<StylesheetSourceScope
   return withoutExcludedFiles(globIncludedFiles(toProjectPatterns(scope.include, projectDir), projectDir), projectDir, scope.exclude)
 }
 
+/** Whether `parentDir`'s project walk already reaches `dir`: inside it, under no ignored directory. */
+function isWalkedFrom(dir: string, parentDir: string) {
+  const relativePath = relative(parentDir, dir)
+  if (!relativePath || relativePath.startsWith('..') || isAbsolute(relativePath)) return false
+  const segments = toPosixPath(relativePath).split('/')
+  return !segments.some((_, index) => isIgnoredProjectDirectory(segments.slice(0, index + 1).join('/')))
+}
+
+/**
+ * The directories a scope's project files come from: `projectDir` and every extra project
+ * directory that no other one's walk already reaches.
+ */
+function resolveScopeProjectDirs(scope: StylesheetSourceScope, projectDir: string) {
+  const dirs = [...new Set([projectDir, ...(scope.extraProjectDirs || []).map((dir) => resolve(dir))])]
+  return dirs.filter((dir) => dir === projectDir || !dirs.some((other) => other !== dir && isWalkedFrom(dir, other)))
+}
+
 /** The project's own source files: those of `projectDir` and of every extra project directory. */
 async function findScopeProjectSourceFiles(scope: StylesheetSourceScope, projectDir: string) {
-  const projectDirs = [projectDir, ...(scope.extraProjectDirs || []).map((dir) => resolve(dir))]
-  return (await Promise.all(projectDirs.map((dir) => findProjectSourceFiles(dir)))).flat()
+  return (await Promise.all(resolveScopeProjectDirs(scope, projectDir).map((dir) => findProjectSourceFiles(dir)))).flat()
 }
 
 /**
@@ -162,8 +178,7 @@ export function isStylesheetScopeFile(file: string, scope: StylesheetSourceScope
   if (isIgnoredPath(absoluteFile, scope.ignorePaths)) return false
   const isBaseFile = scope.sources
     ? isIncludedPath(relativePath, toProjectPatterns(scope.sources, projectDir))
-    : isProjectSourceFile(absoluteFile, projectDir)
-      || Boolean(scope.extraProjectDirs?.some((dir) => isProjectSourceFile(absoluteFile, dir)))
+    : resolveScopeProjectDirs(scope, projectDir).some((dir) => isProjectSourceFile(absoluteFile, dir))
   return isBaseFile || isIncludedPath(relativePath, toProjectPatterns(scope.include, projectDir))
 }
 
