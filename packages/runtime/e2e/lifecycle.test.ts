@@ -31,7 +31,13 @@ test('does not install the removed devtools hook global', async ({ page }) => {
   await expect(page.evaluate(() => ['__MASTER', 'CSS', 'DEVTOOLS', 'HOOK__'].join('_') in globalThis)).resolves.toBe(false)
 })
 
-test('destroy clears the rules and a registered runtime observes again', async ({ page }) => {
+/**
+ * Guards: `destroy()` leaving the runtime's `style#master-css` in the page, so its rules keep
+ * applying after the runtime is gone, or a second `destroy()` throwing. Dropping
+ * `this.style?.remove()` from `disconnect()` in `core.ts` turns this test and two disconnect
+ * tests in `edge-cases.test.ts` red.
+ */
+test('destroy removes its style, is safe to repeat, and a registered runtime observes again', async ({ page }) => {
   await init(page)
   await page.evaluate(() => {
     document.body.classList.add('text-center')
@@ -49,7 +55,15 @@ test('destroy clears the rules and a registered runtime observes again', async (
     ;(globalThis as any).destroyedRuntime = runtime
   })
   expect(await page.evaluate(() => (globalThis as any).destroyedRuntime.utilitiesLayer.rules.length)).toBe(0)
-  expect(await page.evaluate(() => Array.from((globalThis as any).destroyedRuntime.style?.sheet?.cssRules || []).length)).toBe(0)
+  const readDestroyedState = () => page.evaluate(() => ({
+    style: (globalThis as any).destroyedRuntime.style,
+    runtimeStyles: document.querySelectorAll('style#master-css').length,
+    registered: globalThis.MasterCSSRuntime.instances.has(document) || globalThis.masterCSSRuntime !== undefined
+  }))
+  const destroyedState = { style: null, runtimeStyles: 0, registered: false }
+  expect(await readDestroyedState()).toEqual(destroyedState)
+  await page.evaluate(() => (globalThis as any).destroyedRuntime.destroy())
+  expect(await readDestroyedState()).toEqual(destroyedState)
   await page.evaluate(() => {
     const runtime = (globalThis as any).destroyedRuntime as typeof globalThis.masterCSSRuntime
     runtime.register().observe()
