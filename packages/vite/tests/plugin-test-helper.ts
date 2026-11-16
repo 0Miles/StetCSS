@@ -1,8 +1,8 @@
 import { EventEmitter } from 'node:events'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { Plugin } from 'vite'
+import { build, type BuildOptions, type Plugin, type PluginOption } from 'vite'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 
 export const SLOT_CSS_RULE = '#master-css-slot{--slot:0}'
@@ -64,4 +64,72 @@ export function createProjectContext({
       usedNativeClasses: new Set()
     })
   } as any
+}
+
+export interface BuildProjectOptions {
+  appClass?: string
+  build?: BuildOptions
+  /** Replaces the default `index.html`, which renders `appClass` and loads `src/main.ts`. */
+  html?: string
+  mainTS?: string
+  plugins: PluginOption[]
+  prefix?: string
+  setup?: (root: string) => void
+  styleCSS?: string
+}
+
+/**
+ * Runs a real Vite build of a temp project and returns its built `index.html` (empty when the
+ * build emits none, such as an SSR build) and the concatenated CSS assets. Fails when the build
+ * emits no CSS asset.
+ */
+export async function buildProject({
+  appClass = '',
+  build: buildOptions,
+  html,
+  mainTS = 'import "./style.css"\n',
+  plugins,
+  prefix = 'master-css-vite-style-entry-',
+  setup,
+  styleCSS
+}: BuildProjectOptions) {
+  const tmpRoot = join(process.cwd(), 'tmp')
+  mkdirSync(tmpRoot, { recursive: true })
+  const root = mkdtempSync(join(tmpRoot, prefix))
+
+  try {
+    mkdirSync(join(root, 'src'), { recursive: true })
+    writeFileSync(join(root, 'index.html'), html ?? [
+      `<main${appClass ? ` class="${appClass}"` : ''}></main>`,
+      '<script type="module" src="/src/main.ts"></script>'
+    ].join('\n'))
+    writeFileSync(join(root, 'src/main.ts'), mainTS)
+    if (styleCSS !== undefined) writeFileSync(join(root, 'src/style.css'), styleCSS)
+    setup?.(root)
+
+    await build({
+      root,
+      logLevel: 'silent',
+      plugins,
+      build: {
+        outDir: 'dist',
+        emptyOutDir: true,
+        ...buildOptions
+      }
+    })
+
+    const assetsDir = join(root, 'dist/assets')
+    const cssFiles = readdirSync(assetsDir).filter((file) => file.endsWith('.css'))
+    if (!cssFiles.length) throw new Error('Expected Vite build to emit a CSS asset.')
+
+    const builtHTMLPath = join(root, 'dist/index.html')
+    return {
+      css: cssFiles
+        .map((file) => readFileSync(join(assetsDir, file), 'utf8'))
+        .join('\n'),
+      html: existsSync(builtHTMLPath) ? readFileSync(builtHTMLPath, 'utf8') : ''
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
 }
