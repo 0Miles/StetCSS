@@ -170,7 +170,7 @@ export function resolveStetCSSLintRules(option: string | undefined): Record<Stet
       continue
     }
     if (!stetCSSLintRuleIds.includes(rule as StetCSSLintRuleId)) {
-      throw new Error(`Unknown Master CSS lint rule "${rule}".`)
+      throw new Error(`Unknown StetCSS lint rule "${rule}".`)
     }
     resolved[rule as StetCSSLintRuleId] = true
   }

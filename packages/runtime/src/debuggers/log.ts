@@ -19,7 +19,7 @@ const createLogger = (
     if (!type) return console.log(message, ...args)
     if (console[type]) {
       console[type](
-        `%c[Master CSS]%c ${message}`,
+        `%c[StetCSS]%c ${message}`,
         'color: gray;',
         'color: inherit;',
         ...args

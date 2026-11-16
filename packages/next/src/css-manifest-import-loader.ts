@@ -66,7 +66,7 @@ function resolveRequest(context: LoaderContext, request: string) {
 
 function writeCSSManifestModule(context: LoaderContext, manifestPath: string) {
   if (!isCSSManifestRequest(manifestPath)) {
-    throw new TypeError('Master CSS manifest queries only support CSS entry files.')
+    throw new TypeError('StetCSS manifest queries only support CSS entry files.')
   }
 
   const projectDir = context.getOptions?.().projectDir || context.rootContext || process.cwd()

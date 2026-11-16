@@ -106,7 +106,7 @@ export interface ResolvedCSSImportGraph {
   source: string
   dependencies: string[]
   references?: CSSDirectiveReference[]
-  /** `@theme <mode>` names found only in inlined Master CSS package files. */
+  /** `@theme <mode>` names found only in inlined StetCSS package files. */
   implicitModes?: string[]
 }
 
@@ -1061,7 +1061,7 @@ function collectVariantTemplateBranches(
     if (child.type === 'layer-block') {
       const layer = formatNestedAtRule(child)?.replace(/^@layer\s+/, '').trim() as CSSDirectiveLayerName | undefined
       if (layer !== 'base' && layer !== 'defaults' && layer !== 'components' && layer !== 'utilities') {
-        throw new Error(`@custom-variant ${token} only accepts Master CSS layers`)
+        throw new Error(`@custom-variant ${token} only accepts StetCSS layers`)
       }
       if (path.layer && path.layer !== layer) {
         throw new Error(`@custom-variant ${token} cannot assign multiple layers`)
@@ -1271,7 +1271,7 @@ function parseStetVariantBlock(rule: any) {
   if (rule.value?.name !== 'variant') return
   const token = formatPrelude(rule.value.prelude)
   if (!token) {
-    throw new Error('@variant requires a Master CSS variant')
+    throw new Error('@variant requires a StetCSS variant')
   }
   if (token.startsWith('@')) {
     throw new Error(`@variant uses bare condition variant names: write "@variant ${token.slice(1)}"`)

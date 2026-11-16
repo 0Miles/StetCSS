@@ -219,7 +219,7 @@ function formatMs(value) {
 }
 
 function printResults(results) {
-  console.log('Master CSS runtime browser benchmark')
+  console.log('StetCSS runtime browser benchmark')
   console.log(`Browser: ${browserName} via Playwright`)
   console.log(`CPU throttle: ${cpuThrottleRate}x`)
   console.log(`Rounds: ${rounds} measured, ${warmupRounds} warmup`)

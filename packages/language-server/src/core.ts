@@ -512,7 +512,7 @@ export default class CSSLanguageServer {
       const enginePackage = resolution.engine
       const presetManifestPackage = resolution.presetManifest
       if (!cssPackage || !enginePackage || !presetManifestPackage) {
-        throw new Error('Missing required workspace Master CSS runtime packages.')
+        throw new Error('Missing required workspace StetCSS runtime packages.')
       }
 
       const [cssModule, engineModule, utilityTypeModule] = await Promise.all([
@@ -529,9 +529,9 @@ export default class CSSLanguageServer {
 
       const manifest = JSON.parse(await readFile(presetManifestPackage.entry, 'utf8')) as StetCSSManifest
       workspace.languageRuntimeSource = 'workspace'
-      this.console.info(`Using workspace Master CSS runtime ${cssPackage.version ?? '(unknown version)'} from ${cssPackage.directory}`)
+      this.console.info(`Using workspace StetCSS runtime ${cssPackage.version ?? '(unknown version)'} from ${cssPackage.directory}`)
       if (resolution.errors.length) {
-        this.console.info(`Workspace Master CSS runtime optional resolution warnings: ${resolution.errors.map(({ name, message }) => `${name}: ${message}`).join('; ')}`)
+        this.console.info(`Workspace StetCSS runtime optional resolution warnings: ${resolution.errors.map(({ name, message }) => `${name}: ${message}`).join('; ')}`)
       }
       return {
         StetCSS,
@@ -543,9 +543,9 @@ export default class CSSLanguageServer {
       }
     } catch (error) {
       workspace.languageRuntimeSource = 'bundled'
-      this.console.info(`Using bundled Master CSS runtime for ${workspace.uri}`)
+      this.console.info(`Using bundled StetCSS runtime for ${workspace.uri}`)
       if (resolution?.errors.length) {
-        this.console.info(`Workspace Master CSS package resolution errors: ${resolution.errors.map(({ name, message }) => `${name}: ${message}`).join('; ')}`)
+        this.console.info(`Workspace StetCSS package resolution errors: ${resolution.errors.map(({ name, message }) => `${name}: ${message}`).join('; ')}`)
       }
       this.console.error(error instanceof Error ? error.stack || error.message : String(error))
       return bundledLanguageRuntime
@@ -629,7 +629,7 @@ export default class CSSLanguageServer {
         severity: DiagnosticSeverity.Error,
         code: 'manifest-loading-error',
         source: 'StetCSS',
-        message: `Failed to load Master CSS manifest: ${error instanceof Error ? error.message : String(error)}`,
+        message: `Failed to load StetCSS manifest: ${error instanceof Error ? error.message : String(error)}`,
         relatedInformation: directiveError
           ? this.createCSSDirectiveRelatedInformation(directiveError.related, textDocument, documentFile, 0)
           : undefined

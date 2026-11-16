@@ -47,7 +47,7 @@ export default function ManifestLoaderPlugin(context: StetCSSWebpackContext): We
               }
               try {
                 if (!isCSSManifestRequest(resolvedPath)) {
-                  callback(new TypeError('Master CSS manifest queries only support CSS entry files.'))
+                  callback(new TypeError('StetCSS manifest queries only support CSS entry files.'))
                   return
                 }
                 const dependencies = new Set(collectStyleCSSDependencies(resolvedPath, undefined, context.cwd))

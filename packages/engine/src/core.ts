@@ -367,7 +367,7 @@ export default class StetCSS {
   }
 
   /**
-   * Match check if Master CSS utility
+   * Match check if StetCSS utility
    * @param className
    * @returns css text
    */

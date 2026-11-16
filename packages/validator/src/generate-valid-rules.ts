@@ -31,8 +31,8 @@ function getValidGroupDeclarations(
  * Generates the rules of a class whose CSS passes validation. A group with
  * invalid declarations keeps its valid ones; any other rule that fails
  * validation drops the whole class.
- * @argument syntax A potential Master CSS syntactic class
- * @argument css a Master CSS instance
+ * @argument syntax A potential StetCSS syntactic class
+ * @argument css a StetCSS instance
  */
 export default function generateValidRules(
   syntax: string,

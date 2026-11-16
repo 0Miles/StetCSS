@@ -401,7 +401,7 @@ function resolveCSSReferenceFile(reference: CSSDirectiveReference, options: Comp
   const packageFile = resolveStetCSSPackageEntryFile(reference.source, fromFile, options.root)
   if (packageFile) return packageFile
   if (isExpandableImportSource(reference.source)) return resolve(dirname(fromFile), reference.source)
-  throw new Error(`@reference only supports relative CSS files or Master CSS package entries: ${reference.source}`)
+  throw new Error(`@reference only supports relative CSS files or StetCSS package entries: ${reference.source}`)
 }
 
 /**

@@ -71,7 +71,7 @@ async function loadVirtualManifestJSON(context: LoaderContext) {
 function loadCSSManifestJSON(context: LoaderContext) {
   const resourcePath = context.resourcePath
   if (!isCSSManifestRequest(resourcePath)) {
-    throw new TypeError('Master CSS manifest queries only support CSS entry files.')
+    throw new TypeError('StetCSS manifest queries only support CSS entry files.')
   }
   const dependencies = new Set(collectStyleCSSDependencies(resourcePath, undefined, context.rootContext))
   for (const dependency of dependencies) {

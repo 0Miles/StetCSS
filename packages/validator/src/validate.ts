@@ -7,8 +7,8 @@ import { tryGenerate } from '@stet-css/core'
 
 /**
  * @description Report errors for a given class. For pure validity, use the more performant `isClassValid()`.
- * @argument syntax A potential Master CSS syntactic class
- * @argument css a Master CSS instance
+ * @argument syntax A potential StetCSS syntactic class
+ * @argument css a StetCSS instance
  */
 export default function validate(
   syntax: string,
@@ -42,7 +42,7 @@ export default function validate(
       matched: false,
       errors: [{
         class: syntax,
-        message: `'${syntax}' is not a valid Master CSS class`,
+        message: `'${syntax}' is not a valid StetCSS class`,
         rawMessage: 'Mismatch'
       }]
     }
