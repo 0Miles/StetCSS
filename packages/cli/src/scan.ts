@@ -1,4 +1,3 @@
-import type { ScannerOptions } from '@stet-css/scanner'
 import type CSSScanner from '@stet-css/scanner'
 import type { StyleCSSSources } from '@stet-css/stylesheet'
 import type { FSWatcher } from 'chokidar'
@@ -23,6 +22,7 @@ let bytesPromise: Promise<Bytes> | undefined
 export interface ScanOptions {
   watch?: boolean
   output?: string
+  /** Log level: 0 is silent, 1 (the default) reports the written file, 2 also lists the files read. */
   verbose?: string | number
   export?: boolean
   cwd?: string
@@ -54,14 +54,14 @@ function normalizeSourcePatterns(specifiedSourcePaths: string[]) {
     : undefined
 }
 
-async function exportCSS(scanner: CSSScanner, css: string, filename = DEFAULT_SCAN_OUTPUT) {
+async function exportCSS(scanner: CSSScanner, css: string, verbose: number, filename = DEFAULT_SCAN_OUTPUT) {
   const filepath = path.resolve(scanner.cwd, filename)
   const dir = path.dirname(filepath)
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true })
   }
   fs.writeFileSync(filepath, css)
-  if (scanner.options.verbose) {
+  if (verbose) {
     const [logger, bytes] = await Promise.all([
       loadLogger(),
       loadBytes()
@@ -87,28 +87,11 @@ export default async function runScan(specifiedSourcePaths: string[] = [], optio
     loadProjectEntriesModule()
   ])
   const CSSScanner = await loadCSSScanner()
-  const { watch, output, verbose, cwd } = options
+  const { watch, output, cwd } = options
+  const verbose = options.verbose === undefined ? 1 : Number(options.verbose) || 0
   const scanner = new CSSScanner({}, cwd)
   const styleCSSSources: StyleCSSSources = new Map()
   const sources = normalizeSourcePatterns(specifiedSourcePaths)
-  const writeOutput = async () => {
-    const { createExtractedCSS } = await loadStylesheetModule()
-    const css = await createExtractedCSS({
-      scanner,
-      styleCSSSources,
-      projectDir: scanner.cwd,
-      sources
-    })
-    if (options.export) {
-      await exportCSS(scanner, css, output)
-    } else {
-      console.log(css)
-    }
-  }
-  scanner.on('init', (options: ScannerOptions) => {
-    options.verbose = verbose ? +verbose : options.verbose
-  })
-  await scanner.init()
   const resolveSourceFiles = async () => {
     const { resolveStylesheetSourceFiles } = await loadStylesheetModule()
     return resolveStylesheetSourceFiles({
@@ -118,6 +101,27 @@ export default async function runScan(specifiedSourcePaths: string[] = [], optio
       sources
     })
   }
+  const writeOutput = async () => {
+    const { createExtractedCSS } = await loadStylesheetModule()
+    const css = await createExtractedCSS({
+      scanner,
+      styleCSSSources,
+      projectDir: scanner.cwd,
+      sources
+    })
+    if (verbose > 1) {
+      const logger = await loadLogger()
+      for (const file of await resolveSourceFiles()) {
+        logger.info(`read ${formatWatchedPath(scanner.cwd, file)}`)
+      }
+    }
+    if (options.export) {
+      await exportCSS(scanner, css, verbose, output)
+    } else {
+      console.log(css)
+    }
+  }
+  await scanner.init()
   if (watch) {
     const chokidar = await loadChokidar()
     const watchers: FSWatcher[] = []
@@ -153,7 +157,7 @@ export default async function runScan(specifiedSourcePaths: string[] = [], optio
           if (restarting) return
           restarting = true
           try {
-            if (scanner.options.verbose) {
+            if (verbose) {
               const logger = await loadLogger()
               logger.log('')
               logger.info(`[change] ${formatWatchedPath(scanner.cwd, resetDependency)}`)
