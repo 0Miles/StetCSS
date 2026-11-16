@@ -11,7 +11,8 @@ export {
   compareRulePriority,
   createHydrationManifest,
   UndeclaredModeError,
-  isUndeclaredModeError
+  isUndeclaredModeError,
+  tryGenerate
 } from '@stet-css/engine'
 export type {
   CompiledUtility,

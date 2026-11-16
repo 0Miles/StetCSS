@@ -1,4 +1,4 @@
-import { MasterCSS, type CompiledUtility, type GeneratedRule, type NativeCSSDeclarationMatcher } from '@stet-css/core'
+import { MasterCSS, tryGenerate, type CompiledUtility, type GeneratedRule, type NativeCSSDeclarationMatcher } from '@stet-css/core'
 import { builtinKeyAliases, builtinNativeValueNamespaces } from '@stet-css/engine'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 import UtilityType from '@stet-css/schema/utility-type'
@@ -75,14 +75,21 @@ export function createLanguageCSS(manifest: MasterCSSManifest = defaultManifest,
 
 /** Whether the runtime's generator emits rules for a class the engine accepts; true when `css` has no generator. */
 export function isLanguageClassEmitted(css: MasterCSS, className: string) {
-  const generateRules = ruleGenerators.get(css)
-  return !generateRules || generateRules(css, className).length > 0
+  return !ruleGenerators.has(css) || generateLanguageRules(css, className).length > 0
 }
 
-/** The rules editor features show for a class: the runtime's generator when `css` has one, else the engine's. */
-export function generateLanguageRules(css: MasterCSS, className: string): GeneratedRule[] {
+/**
+ * The rules editor features show for a class (the runtime's generator when `css` has one, else the
+ * engine's), plus the error when the class names a mode the project does not declare: such a class
+ * yields no rules instead of throwing out of the editor request.
+ */
+export function tryGenerateLanguageRules(css: MasterCSS, className: string): { rules: GeneratedRule[], error?: Error } {
   const generateRules = ruleGenerators.get(css)
-  return generateRules ? generateRules(css, className) : css.generate(className)
+  return tryGenerate(generateRules ? { generate: (name: string) => generateRules(css, name) } : css, className)
+}
+
+export function generateLanguageRules(css: MasterCSS, className: string): GeneratedRule[] {
+  return tryGenerateLanguageRules(css, className).rules
 }
 
 export function generateCSS(

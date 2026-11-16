@@ -24,13 +24,9 @@ export default function getClassValidationIssues(
   const issues: ClassValidationIssue[] = []
   const displayClassName = options.displayClassName || className
   for (const error of errors) {
-    if (error.rawMessage === 'UndeclaredMode') {
+    if (error.code === 'undeclared-mode') {
       // A misconfigured mode, not an unknown class: always report it, with the engine's fix.
-      issues.push({
-        kind: 'invalid',
-        className,
-        message: error.message || `Class ${formatClassName(displayClassName)} uses an undeclared mode.`
-      })
+      issues.push({ kind: 'invalid', className, message: error.message as string })
     } else if (matched) {
       const reason = formatReason(error.message || error.rawMessage || 'CSS validation failed')
       issues.push({

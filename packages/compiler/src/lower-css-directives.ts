@@ -244,10 +244,9 @@ function normalizeDirectiveInput(input: CSSDirectiveManifestInputSource = {}, op
   for (const variable of source.variables || []) {
     addVariable(normalized, variable, resolveVariableName)
   }
-  const implicitModes = source.implicitModes
-  if (implicitModes?.length && normalized.modes?.some((mode) => !implicitModes.includes(mode))) {
-    normalized.modes = normalized.modes.filter((mode) => !implicitModes.includes(mode))
-  }
+  // Package-declared (preset) modes give way once the project declares a mode of its own.
+  const ownModes = normalized.modes?.filter((mode) => !source.implicitModes?.includes(mode))
+  if (ownModes?.length) normalized.modes = ownModes
   return normalized
 }
 

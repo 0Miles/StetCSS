@@ -14,4 +14,6 @@ export interface SyntaxError {
   loc?: { source?: string, start: any, end: any }
   property?: string
   details?: string
+  /** Set when the class names a mode the project does not declare (#69). */
+  code?: 'undeclared-mode'
 }

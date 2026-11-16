@@ -1,4 +1,4 @@
-import generateRules from './generate-rules'
+import { tryGenerate } from '@stet-css/engine'
 import { compareRulePriority, type GeneratedRule, type MasterCSS } from '@stet-css/engine'
 import UtilityType from '@stet-css/schema/utility-type'
 
@@ -167,7 +167,7 @@ function getReadablePropertyOrder(rule: GeneratedRule): ReadablePropertyOrder {
 }
 
 function createClassSortDescriptor(className: string, css: MasterCSS): ClassSortDescriptor {
-  const rule = generateRules(css, className)[0]
+  const rule = tryGenerate(css, className).rules[0]
   if (!rule) {
     return {
       className,
