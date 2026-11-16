@@ -1,0 +1,130 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "9f3b6a8ef638b4c0f1b6f571e75fdb39b9381b94",
+  "release-type": "node",
+  "bump-minor-pre-major": true,
+  "bump-patch-for-minor-pre-major": false,
+  "include-component-in-tag": true,
+  "packages": {
+    "packages/astro": {
+      "component": "astro"
+    },
+    "packages/cli": {
+      "component": "cli"
+    },
+    "packages/compiler": {
+      "component": "compiler"
+    },
+    "packages/core": {
+      "component": "core"
+    },
+    "packages/diagnostics": {
+      "component": "diagnostics"
+    },
+    "packages/engine": {
+      "component": "engine"
+    },
+    "packages/eslint-config": {
+      "component": "eslint-config"
+    },
+    "packages/eslint-plugin": {
+      "component": "eslint-plugin"
+    },
+    "packages/integration": {
+      "component": "integration"
+    },
+    "packages/language": {
+      "component": "language"
+    },
+    "packages/language-server": {
+      "component": "language-server"
+    },
+    "packages/language-service": {
+      "component": "language-service"
+    },
+    "packages/lexer": {
+      "component": "lexer"
+    },
+    "packages/lint": {
+      "component": "lint"
+    },
+    "packages/next": {
+      "component": "next"
+    },
+    "packages/nuxt": {
+      "component": "nuxt"
+    },
+    "packages/preset": {
+      "component": "preset"
+    },
+    "packages/project": {
+      "component": "project"
+    },
+    "packages/runtime": {
+      "component": "runtime"
+    },
+    "packages/scanner": {
+      "component": "scanner"
+    },
+    "packages/schema": {
+      "component": "schema"
+    },
+    "packages/server": {
+      "component": "server"
+    },
+    "packages/source": {
+      "component": "source"
+    },
+    "packages/stylesheet": {
+      "component": "stylesheet"
+    },
+    "packages/svelte": {
+      "component": "svelte"
+    },
+    "packages/validator": {
+      "component": "validator"
+    },
+    "packages/vite": {
+      "component": "vite"
+    },
+    "packages/webpack": {
+      "component": "webpack"
+    }
+  },
+  "plugins": [
+    {
+      "type": "linked-versions",
+      "groupName": "stet-css",
+      "components": [
+        "astro",
+        "cli",
+        "compiler",
+        "core",
+        "diagnostics",
+        "engine",
+        "eslint-config",
+        "eslint-plugin",
+        "integration",
+        "language",
+        "language-server",
+        "language-service",
+        "lexer",
+        "lint",
+        "next",
+        "nuxt",
+        "preset",
+        "project",
+        "runtime",
+        "scanner",
+        "schema",
+        "server",
+        "source",
+        "stylesheet",
+        "svelte",
+        "validator",
+        "vite",
+        "webpack"
+      ]
+    }
+  ]
+}
