@@ -832,7 +832,7 @@ describe('MasterCSSPlugin', () => {
         '}'
       ].join('\n'))
 
-      const { css } = await new MasterCSSPlugin({ verbose: 0 }, root).generateCSS()
+      const { css } = await new MasterCSSPlugin({}, root).generateCSS()
 
       expect(css).toContain('.native-used')
       expect(css).toContain('.root-native')
@@ -848,7 +848,7 @@ describe('MasterCSSPlugin', () => {
     try {
       writeFileSync(path.join(root, 'app.css'), '@import "@stet-css/core";')
 
-      const { css } = await new MasterCSSPlugin({ verbose: 0 }, root).generateCSS()
+      const { css } = await new MasterCSSPlugin({}, root).generateCSS()
 
       expect(css).toContain('@layer base')
       expect(css).toContain('text-rendering: geometricprecision')
@@ -867,7 +867,7 @@ describe('MasterCSSPlugin', () => {
         '  card { @compose bg:neutral-120; }',
         '}'
       ].join('\n'))
-      const plugin = new MasterCSSPlugin({ verbose: 0 }, root)
+      const plugin = new MasterCSSPlugin({}, root)
 
       const failed = await plugin.generateCSS()
 
@@ -965,7 +965,7 @@ describe('MasterCSSPlugin', () => {
       writeFileSync(entryPath, '@import "@stet-css/core";\n@import "./theme.css";')
       writeFileSync(templatePath, '<main class="card"></main>')
       writeFileSync(outputPath, 'document.body.className = "block"')
-      const plugin = makePlugin({ verbose: 0 }, root)
+      const plugin = makePlugin({}, root)
       const { compiler, compilation } = makeFakeCompiler({ context: root })
       ;(compiler as any).options.output.path = path.join(root, 'www')
       ;(compiler as any).webpack = { sources: { RawSource: function NoopSource(this: object) { /* stub */ } } }
