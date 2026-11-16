@@ -1,4 +1,4 @@
-import { AnimationRule, VariableRule, type MasterCSSEmittedGlobals } from '@stet-css/core'
+import { AnimationRule, VariableRule, type StetCSSEmittedGlobals } from '@stet-css/core'
 import { collectAnimationNamesFromDeclaration } from '@stet-css/engine'
 import { collectCSSVariableReferences } from '@stet-css/lexer'
 import { createCSSWithNativeDeclarations } from '@stet-css/validator/native-declaration'
@@ -11,14 +11,14 @@ export interface RenderCompiledManifestCSSOptions {
   classNames?: Iterable<string>
   nativeCSS?: string | string[]
   includeGeneratedCSS?: boolean
-  emittedGlobals?: MasterCSSEmittedGlobals
+  emittedGlobals?: StetCSSEmittedGlobals
 }
 
 export interface RenderCompiledManifestCSSResult {
   css: string
   nativeCSS: string
   generatedCSS: string
-  emittedGlobals: Required<MasterCSSEmittedGlobals>
+  emittedGlobals: Required<StetCSSEmittedGlobals>
 }
 
 function normalizeNativeCSS(nativeCSS: string | string[] | undefined) {
@@ -120,15 +120,15 @@ function insertAnimationReferences(css: StylesheetCSS, references: Set<string>) 
   }
 }
 
-function createEmptyEmittedGlobals(): Required<MasterCSSEmittedGlobals> {
+function createEmptyEmittedGlobals(): Required<StetCSSEmittedGlobals> {
   return {
     variables: {},
     animations: {}
   }
 }
 
-function createEmittedGlobals(css: StylesheetCSS): Required<MasterCSSEmittedGlobals> {
-  const emittedGlobals: Required<MasterCSSEmittedGlobals> = {
+function createEmittedGlobals(css: StylesheetCSS): Required<StetCSSEmittedGlobals> {
+  const emittedGlobals: Required<StetCSSEmittedGlobals> = {
     variables: { ...css.emittedGlobals.variables },
     animations: { ...css.emittedGlobals.animations }
   }

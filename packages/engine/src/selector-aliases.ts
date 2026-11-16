@@ -18,4 +18,4 @@ const selectorAliases = {
 
 export default selectorAliases
 export { selectorAliases as builtinSelectorAliases }
-export type MasterCSSBuiltinSelectorAliases = typeof selectorAliases
+export type StetCSSBuiltinSelectorAliases = typeof selectorAliases

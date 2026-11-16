@@ -13,7 +13,7 @@ import type { Condition } from './utils/parse-condition'
 import parseValue from './utils/parse-value'
 import exceedsClassNesting from './utils/exceeds-class-nesting'
 import type { SelectorNode } from './utils/parse-selector'
-import type { MasterCSSEmittedGlobals } from './emitted-globals'
+import type { StetCSSEmittedGlobals } from './emitted-globals'
 import { isNativeCSSShorthandProperty } from '@stet-css/schema/native-css-shorthand'
 import type {
   StetCSSManifest,
@@ -41,13 +41,13 @@ export interface NativeCSSDeclaration {
 
 export type NativeCSSDeclarationMatcher = (declaration: NativeCSSDeclaration) => boolean
 
-export interface MasterCSSOptions {
+export interface StetCSSOptions {
   nativeDeclarationMatcher?: NativeCSSDeclarationMatcher
 }
 
-export interface MasterCSSCreateOptions extends MasterCSSOptions {
+export interface StetCSSCreateOptions extends StetCSSOptions {
   manifest: StetCSSManifest
-  emittedGlobals?: MasterCSSEmittedGlobals
+  emittedGlobals?: StetCSSEmittedGlobals
 }
 
 const builtinGroupUtility = {
@@ -162,7 +162,7 @@ function getMatchName(className: string) {
   return className
 }
 
-export default class MasterCSS {
+export default class StetCSS {
   definedUtilities: CompiledUtility[] = []
   protected variableMatcherUtilities: CompiledUtility[] = []
   protected valueMatcherUtilities: CompiledUtility[] = []
@@ -193,7 +193,7 @@ export default class MasterCSS {
   animations = new Map<string, StetCSSManifestAnimations[string]>()
   protected readonly staticVariableTokens = new Set<string>()
   protected readonly staticAnimationTokens = new Set<string>()
-  readonly emittedGlobals: Required<MasterCSSEmittedGlobals> = {
+  readonly emittedGlobals: Required<StetCSSEmittedGlobals> = {
     variables: {},
     animations: {}
   }
@@ -205,19 +205,19 @@ export default class MasterCSS {
 
   manifest!: StetCSSManifest
 
-  static create(options: MasterCSSCreateOptions) {
+  static create(options: StetCSSCreateOptions) {
     const { manifest, emittedGlobals, ...engineOptions } = options
     return new this(manifest, emittedGlobals, engineOptions)
   }
 
   protected constructor(
     manifest: StetCSSManifest,
-    emittedGlobals?: MasterCSSEmittedGlobals,
-    protected readonly options: MasterCSSOptions = {}
+    emittedGlobals?: StetCSSEmittedGlobals,
+    protected readonly options: StetCSSOptions = {}
   ) {
     this.loadManifest(manifest)
     this.registerEmittedGlobals(emittedGlobals)
-    if (new.target === MasterCSS) {
+    if (new.target === StetCSS) {
       this.insertStaticResources()
     }
   }
@@ -275,7 +275,7 @@ export default class MasterCSS {
     this.keyAliases = compiledManifest.keyAliases
   }
 
-  protected applyEmittedGlobalsCounts(emittedGlobals: MasterCSSEmittedGlobals) {
+  protected applyEmittedGlobalsCounts(emittedGlobals: StetCSSEmittedGlobals) {
     for (const [name, count] of Object.entries(emittedGlobals.variables || {})) {
       if (!count) continue
       this.themeLayer.tokenCounts.set(name, (this.themeLayer.tokenCounts.get(name) || 0) + count)
@@ -286,7 +286,7 @@ export default class MasterCSS {
     }
   }
 
-  registerEmittedGlobals(emittedGlobals?: MasterCSSEmittedGlobals) {
+  registerEmittedGlobals(emittedGlobals?: StetCSSEmittedGlobals) {
     if (!emittedGlobals) return
     for (const [name, count] of Object.entries(emittedGlobals.variables || {})) {
       if (!count) continue
@@ -1025,7 +1025,7 @@ export default class MasterCSS {
   }
 }
 
-export default interface MasterCSS {
+export default interface StetCSS {
   style: HTMLStyleElement | null
   Native: typeof CSS
 }

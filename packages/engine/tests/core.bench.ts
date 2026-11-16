@@ -2,7 +2,7 @@ import { bench, describe } from 'vitest'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import UtilityType from '@stet-css/schema/utility-type'
-import { MasterCSS } from '../src'
+import { StetCSS } from '../src'
 import { compileManifest } from '../src/compile-manifest'
 
 const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
@@ -75,10 +75,10 @@ const fallbackPatternManifest = createPatternBenchmarkManifest('_')
 const indexedPatternClassNames = Array.from({ length: 100 }, (_, index) => `icon-${index}-left`)
 const fallbackPatternClassNames = Array.from({ length: 100 }, (_, index) => `icon-${index}_left`)
 
-describe('MasterCSS engine hot paths', () => {
-  const hotCSS = MasterCSS.create({ manifest: defaultManifest, ...options })
-  const indexedPatternCSS = MasterCSS.create({ manifest: indexedPatternManifest, ...options })
-  const fallbackPatternCSS = MasterCSS.create({ manifest: fallbackPatternManifest, ...options })
+describe('StetCSS engine hot paths', () => {
+  const hotCSS = StetCSS.create({ manifest: defaultManifest, ...options })
+  const indexedPatternCSS = StetCSS.create({ manifest: indexedPatternManifest, ...options })
+  const fallbackPatternCSS = StetCSS.create({ manifest: fallbackPatternManifest, ...options })
 
   for (let index = 0; index < 10_000; index++) {
     hotCSS.createRule(runtimeClassNames[index % runtimeClassNames.length])
@@ -109,7 +109,7 @@ describe('MasterCSS engine hot paths', () => {
   bench('create css with cached default manifest', () => {
     let total = 0
     for (let index = 0; index < 1_000; index++) {
-      total += MasterCSS.create({ manifest: defaultManifest, ...options }).definedUtilities.length
+      total += StetCSS.create({ manifest: defaultManifest, ...options }).definedUtilities.length
     }
     sink = total
   }, benchOptions)
@@ -135,7 +135,7 @@ describe('MasterCSS engine hot paths', () => {
   bench('create fresh css and add representative runtime classes', () => {
     let total = 0
     for (let index = 0; index < 100; index++) {
-      const css = MasterCSS.create({ manifest: defaultManifest, ...options })
+      const css = StetCSS.create({ manifest: defaultManifest, ...options })
       css.ensureClassRules(...runtimeClassNames)
       total += css.text.length
     }

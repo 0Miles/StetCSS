@@ -1,4 +1,4 @@
-import MasterCSS from './core'
+import StetCSS from './core'
 import Layer from './layer'
 import VariableRule, { VariableRuleNode } from './variable-rule'
 
@@ -24,7 +24,7 @@ export default class ThemeLayer extends Layer {
 
   constructor(
     public name: string,
-    public css: MasterCSS
+    public css: StetCSS
   ) {
     super(name, css)
   }

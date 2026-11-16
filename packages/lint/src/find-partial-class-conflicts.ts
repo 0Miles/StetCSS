@@ -1,8 +1,8 @@
 import { generateValidRules } from '@stet-css/validator'
-import type { GeneratedRule, MasterCSS } from '@stet-css/engine'
+import type { GeneratedRule, StetCSS } from '@stet-css/engine'
 import {
-  inspectMasterCSSClass,
-  type MasterCSSClassInspection
+  inspectStetCSSClass,
+  type StetCSSClassInspection
 } from '@stet-css/engine/inspect'
 import { splitStetCSSTopLevel } from '@stet-css/lexer'
 import { equalVariants } from './rule-signatures'
@@ -293,7 +293,7 @@ function getReplacementClassNames(family: PartialConflictFamily, parts: Conflict
 }
 
 function getFamilyEntry(
-  inspection: MasterCSSClassInspection,
+  inspection: StetCSSClassInspection,
   rule: GeneratedRule
 ): Omit<PartialClassConflictEntry, 'className' | 'rule'> | undefined {
   const declarationEntry = getDeclarationEntry(rule)
@@ -326,8 +326,8 @@ function getFamilyEntry(
 
 function getCandidateEntry(
   className: string,
-  css: MasterCSS,
-  inspection = inspectMasterCSSClass(css, className)
+  css: StetCSS,
+  inspection = inspectStetCSSClass(css, className)
 ): PartialClassConflictEntry | undefined {
   const rules = generateValidRules(className, css)
   if (rules.length !== 1) return
@@ -349,8 +349,8 @@ function isPreferredFamilyKey(family: PartialConflictFamily, key?: string) {
   return Boolean(key && Object.values(family.replacementKeys).includes(key))
 }
 
-function getClassEntry(className: string, css: MasterCSS): PartialClassConflictEntry | undefined {
-  const directInspection = inspectMasterCSSClass(css, className)
+function getClassEntry(className: string, css: StetCSS): PartialClassConflictEntry | undefined {
+  const directInspection = inspectStetCSSClass(css, className)
   const directEntry = getCandidateEntry(className, css, directInspection)
   if (directEntry && isPreferredFamilyKey(directEntry.family, directInspection.key)) return directEntry
 
@@ -369,7 +369,7 @@ function getRemainingParts(parts: ConflictPart[], coveredParts: ConflictPart[]) 
   return parts.filter((part) => !coveredParts.includes(part))
 }
 
-function validateReplacement(classNames: string[], source: PartialClassConflictEntry, css: MasterCSS) {
+function validateReplacement(classNames: string[], source: PartialClassConflictEntry, css: StetCSS) {
   for (const className of classNames) {
     const rules = generateValidRules(className, css)
     if (rules.length !== 1 || rules[0].layerName !== 'utilities' || !equalVariants(rules[0], source.rule)) return
@@ -377,7 +377,7 @@ function validateReplacement(classNames: string[], source: PartialClassConflictE
   return classNames.join(' ')
 }
 
-function getPartialConflictReplacement(source: PartialClassConflictEntry, conflict: PartialClassConflictEntry, css: MasterCSS) {
+function getPartialConflictReplacement(source: PartialClassConflictEntry, conflict: PartialClassConflictEntry, css: StetCSS) {
   if (source.family.name !== conflict.family.name) return
   if (source.suffix !== conflict.suffix) return
   if (!equalVariants(source.rule, conflict.rule)) return
@@ -394,7 +394,7 @@ function getPartialConflictReplacement(source: PartialClassConflictEntry, confli
   return validateReplacement(replacementClassNames, source, css)
 }
 
-export default function findPartialClassConflicts(classNames: string[], css: MasterCSS): PartialClassConflict[] {
+export default function findPartialClassConflicts(classNames: string[], css: StetCSS): PartialClassConflict[] {
   const entries = classNames
     .map((className) => getClassEntry(className, css))
     .filter((entry): entry is PartialClassConflictEntry => Boolean(entry))

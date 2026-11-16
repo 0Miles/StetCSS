@@ -1,4 +1,4 @@
-import MasterCSS from './core'
+import StetCSS from './core'
 import type { ResolvedVariableValue, Variable } from '@stet-css/schema/css-syntax'
 import { replaceCSSVariableReferences } from '@stet-css/lexer'
 import { normalizeEngineVariableValue } from './utils/css-variables'
@@ -9,7 +9,7 @@ export default class VariableRule {
   constructor(
     public readonly name: string,
     public readonly variable: Variable,
-    public readonly css: MasterCSS,
+    public readonly css: StetCSS,
   ) {
     const hasDefaultValue = variable.value !== undefined
     if (hasDefaultValue) {
@@ -48,7 +48,7 @@ export class VariableRuleNode {
   constructor(
     public readonly rule: VariableRule,
     public readonly variable: ResolvedVariableValue,
-    public readonly css: MasterCSS,
+    public readonly css: StetCSS,
     public readonly mode?: string,
   ) { }
 

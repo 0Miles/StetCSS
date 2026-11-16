@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { MasterCSS } from '../src'
+import { StetCSS } from '../src'
 import { cloneManifest } from './helpers/css-tester'
 import { flattenStetCSSManifestVariables, groupStetCSSManifestVariables } from '@stet-css/schema/manifest'
 
@@ -46,7 +46,7 @@ describe.concurrent('ThemeLayer', () => {
       }
     ])
 
-    const css = MasterCSS.create({ manifest: manifest })
+    const css = StetCSS.create({ manifest: manifest })
     css.ensureClassRules('fg:blue')
     css.ensureClassRules('fg:accent')
 
@@ -59,7 +59,7 @@ describe.concurrent('ThemeLayer', () => {
 
   test('emits color-scheme for built-in class mode buckets', () => {
     const manifest = createModeVariableManifest('class')
-    const css = MasterCSS.create({ manifest })
+    const css = StetCSS.create({ manifest })
 
     css.ensureClassRules('fg:primary')
 
@@ -68,7 +68,7 @@ describe.concurrent('ThemeLayer', () => {
 
   test('emits color-scheme for built-in host mode buckets', () => {
     const manifest = createModeVariableManifest('host')
-    const css = MasterCSS.create({ manifest })
+    const css = StetCSS.create({ manifest })
 
     css.ensureClassRules('fg:primary')
 
@@ -77,7 +77,7 @@ describe.concurrent('ThemeLayer', () => {
 
   test('does not merge the default mode selector when default-mode is none', () => {
     const manifest = createModeVariableManifest('class', 'none')
-    const css = MasterCSS.create({ manifest })
+    const css = StetCSS.create({ manifest })
 
     css.ensureClassRules('fg:primary')
 
@@ -86,7 +86,7 @@ describe.concurrent('ThemeLayer', () => {
 
   test('does not emit color-scheme for media mode buckets', () => {
     const manifest = createModeVariableManifest('media')
-    const css = MasterCSS.create({ manifest })
+    const css = StetCSS.create({ manifest })
 
     css.ensureClassRules('fg:primary')
 
@@ -105,7 +105,7 @@ describe.concurrent('ThemeLayer', () => {
         sepia: { type: 'string', value: '#753' }
       }
     }])
-    const css = MasterCSS.create({ manifest })
+    const css = StetCSS.create({ manifest })
 
     css.ensureClassRules('fg:primary')
 

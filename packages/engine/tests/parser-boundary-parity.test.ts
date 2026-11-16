@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { MasterCSS } from '../src'
+import { StetCSS } from '../src'
 import { cloneManifest, createDefaultCSS, createManifestWithSemanticUtilities } from './helpers/css-tester'
 
 describe.concurrent('migrated parser boundary parity', () => {
@@ -25,7 +25,7 @@ describe.concurrent('migrated parser boundary parity', () => {
         ]
       }
     ]
-    const css = MasterCSS.create({ manifest: manifest })
+    const css = StetCSS.create({ manifest: manifest })
 
     expect(css.createRule('hidden:hover')?.text).toBe('.hidden\\:hover:hover{display:none}')
     expect(css.createRule('hidden>:custom')?.text).toBe('.hidden\\>\\:custom>div>:first-child+button{display:none}')
@@ -58,7 +58,7 @@ describe.concurrent('migrated parser boundary parity', () => {
       modes: ['light', 'dark']
     }
 
-    const css = MasterCSS.create({ manifest: modeManifest })
+    const css = StetCSS.create({ manifest: modeManifest })
     expect(css.createRulesFromSelectorText('.font\\:heavy')?.[0]).toMatchObject({ name: 'font:heavy' })
     expect(css.createRulesFromSelectorText('.hidden\\_button\\[disabled\\] button[disabled]')?.[0])
       .toMatchObject({ name: 'hidden_button[disabled]' })
@@ -90,7 +90,7 @@ describe.concurrent('migrated parser boundary parity', () => {
         rules: [{ selector: '&:disabled>span', declarations: { display: 'block' } }]
       }
     ], classModePlan)
-    const componentCSS = MasterCSS.create({ manifest: componentManifest })
+    const componentCSS = StetCSS.create({ manifest: componentManifest })
     const lightRules = componentCSS.createRulesFromSelectorText('.light .light\\@light')
     expect(lightRules?.[0]).toMatchObject({ name: 'light' })
     expect(lightRules?.[0]?.text).toBe('.light{display:block}.light{font-weight:700}')
@@ -104,7 +104,7 @@ describe.concurrent('migrated parser boundary parity', () => {
       ...(groupedPlan.variants || []),
       { token: '::both', branches: [{ selector: '&::before,&::after' }] }
     ]
-    const groupedCSS = MasterCSS.create({
+    const groupedCSS = StetCSS.create({
       manifest: createManifestWithSemanticUtilities([
       {
         name: 'btn',

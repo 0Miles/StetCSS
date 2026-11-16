@@ -4,7 +4,7 @@ import {
   tokenizeComposePrelude
 } from './css/prelude'
 import { containsPosition, type ScanOptions } from './css/shared'
-import type { MasterCSS } from '../master-css'
+import type { StetCSS } from '../master-css'
 import {
   collectCSSDirectiveRanges,
   type CSSDirectiveRuleRange
@@ -12,7 +12,7 @@ import {
 
 const CSS_LANGUAGE_IDS = new Set(['css', 'scss', 'less'])
 
-function tokenizeDirectiveClassList(source: string, directive: CSSDirectiveRuleRange, tokens: HighlightTokenItem[], css: MasterCSS, options: ScanOptions) {
+function tokenizeDirectiveClassList(source: string, directive: CSSDirectiveRuleRange, tokens: HighlightTokenItem[], css: StetCSS, options: ScanOptions) {
   const preludeStart = directive.preludeRange.start
   const preludeEnd = directive.preludeRange.end
 
@@ -32,7 +32,7 @@ function tokenizeDirectiveClassList(source: string, directive: CSSDirectiveRuleR
   }
 }
 
-function tokenizeDirectiveRule(source: string, directive: CSSDirectiveRuleRange, tokens: HighlightTokenItem[], css: MasterCSS, options: ScanOptions) {
+function tokenizeDirectiveRule(source: string, directive: CSSDirectiveRuleRange, tokens: HighlightTokenItem[], css: StetCSS, options: ScanOptions) {
   if (!containsPosition(directive, options)) return
   tokenizeDirectiveClassList(source, directive, tokens, css, options)
 }
@@ -41,7 +41,7 @@ export function isCSSSemanticTokenDocument(languageId: string) {
   return CSS_LANGUAGE_IDS.has(languageId)
 }
 
-export function collectCSSHighlightTokenItems(source: string, css: MasterCSS, languageId: string, options: ScanOptions = {}): HighlightTokenItem[] {
+export function collectCSSHighlightTokenItems(source: string, css: StetCSS, languageId: string, options: ScanOptions = {}): HighlightTokenItem[] {
   if (!isCSSSemanticTokenDocument(languageId)) return []
 
   const tokens: HighlightTokenItem[] = []
@@ -52,6 +52,6 @@ export function collectCSSHighlightTokenItems(source: string, css: MasterCSS, la
   return tokens
 }
 
-export function collectCSSSemanticTokenItems(source: string, css: MasterCSS, languageId: string, options: ScanOptions = {}) {
+export function collectCSSSemanticTokenItems(source: string, css: StetCSS, languageId: string, options: ScanOptions = {}) {
   return toSemanticTokenItems(collectCSSHighlightTokenItems(source, css, languageId, options))
 }

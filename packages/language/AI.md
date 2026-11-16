@@ -13,7 +13,7 @@ Owns the editor-neutral **language primitives** shared by the language service, 
 - **Raw ranges**: tokenize class lists with the lexer, but report raw editor offsets so escaped and quoted classes map back to the source.
 - **Class-position scanning** covers JSX, Vue, Svelte, Astro, strings, and function calls; a fix for one syntax keeps the others passing.
 - **Deep nesting**: JS/TS documents nested past `exceedsScriptNestingLimit` from `@stet-css/lexer` skip oxc, which would crash the host process, and fall back to the regex scan, which only finds class functions after whitespace or `.`. Documents over 1 KiB parse on a worker thread whose stack grows with the source (`src/utils/oxc-stack.ts`, which also runs the prescan; a copy of `@stet-css/source`'s that differs only in `PACKAGE_NAME`, kept because the import rule above keeps language off source and the dependency would change `bun.lock`; `tests/oxc-stack-copy.test.ts` fails when they drift). Documents over 1 MiB, and trees too deep for the JS stack to walk, fall back to the regex scan too. Without worker threads (browsers, through `./shiki`) oxc parses inline.
-- **Semantic tokens** classify through `@stet-css/engine/inspect`; tooling-only helpers stay off the `MasterCSS` prototype, which is on the runtime surface.
+- **Semantic tokens** classify through `@stet-css/engine/inspect`; tooling-only helpers stay off the `StetCSS` prototype, which is on the runtime surface.
 - **CSS directive highlighting** scans directives with the lexer (`collectCSSDirectiveRanges`) rather than the compiler pipeline. The TextMate grammar stays compatible with CSS-family documents; the VS Code extension ships it as-is.
 
 ## Validation

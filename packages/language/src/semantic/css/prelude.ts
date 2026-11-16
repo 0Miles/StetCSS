@@ -1,6 +1,6 @@
 import { pushHighlightToken, type HighlightTokenItem } from '../highlight'
 import { collectClassListHighlightTokenItems, tokenizeState } from '../tokenize-class'
-import type { MasterCSS } from '../../master-css'
+import type { StetCSS } from '../../master-css'
 import {
   collectCSSQuotedStringRanges,
   findCSSClosingQuote,
@@ -34,7 +34,7 @@ export function tokenizeSourcePrelude(source: string, start: number, end: number
   }
 }
 
-export function tokenizeClassListPrelude(source: string, start: number, end: number, tokens: HighlightTokenItem[], css: MasterCSS) {
+export function tokenizeClassListPrelude(source: string, start: number, end: number, tokens: HighlightTokenItem[], css: StetCSS) {
   for (const stringRange of collectCSSQuotedStringRanges(source, start, end)) {
     tokens.push(...collectClassListHighlightTokenItems(css, source.slice(stringRange.start + 1, stringRange.end - 1), stringRange.start + 1))
   }
@@ -85,7 +85,7 @@ export function tokenizeCustomVariantPrelude(source: string, start: number, end:
   }
 }
 
-export function tokenizeComposePrelude(source: string, start: number, end: number, tokens: HighlightTokenItem[], css: MasterCSS) {
+export function tokenizeComposePrelude(source: string, start: number, end: number, tokens: HighlightTokenItem[], css: StetCSS) {
   if (collectCSSQuotedStringRanges(source, start, end).length) {
     return
   }

@@ -5,7 +5,7 @@ import { performance } from 'node:perf_hooks'
 import {
   AnimationRule,
   VariableRule,
-  type MasterCSSEmittedGlobals
+  type StetCSSEmittedGlobals
 } from '@stet-css/core'
 import {
   createManifestFromCSSResult,
@@ -69,7 +69,7 @@ interface RenderDiagnosticResult {
   css: string
   nativeCSS: string
   generatedCSS: string
-  emittedGlobals: Required<MasterCSSEmittedGlobals>
+  emittedGlobals: Required<StetCSSEmittedGlobals>
 }
 
 export interface ExtractionDiagnosticResult {
@@ -530,8 +530,8 @@ function insertAnimationReferences(css: StylesheetCSS, references: Set<string>) 
   }
 }
 
-function createEmittedGlobals(css: StylesheetCSS): Required<MasterCSSEmittedGlobals> {
-  const emittedGlobals: Required<MasterCSSEmittedGlobals> = {
+function createEmittedGlobals(css: StylesheetCSS): Required<StetCSSEmittedGlobals> {
+  const emittedGlobals: Required<StetCSSEmittedGlobals> = {
     variables: { ...css.emittedGlobals.variables },
     animations: { ...css.emittedGlobals.animations }
   }

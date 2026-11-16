@@ -1,5 +1,5 @@
-import { isLanguageClassEmitted, UtilityType, type MasterCSS } from '../master-css'
-import { inspectMasterCSSClass } from '@stet-css/engine/inspect'
+import { isLanguageClassEmitted, UtilityType, type StetCSS } from '../master-css'
+import { inspectStetCSSClass } from '@stet-css/engine/inspect'
 import {
   collectStetCSSClassListTokenRanges,
   tokenizeStetCSSAtQuery,
@@ -14,7 +14,7 @@ function toHighlightTokenItems(tokens: StetCSSLexicalTokenItem[]): HighlightToke
   return tokens as HighlightTokenItem[]
 }
 
-export function tokenizeUtilityValue(valueText: string, valueStart: number, css?: MasterCSS): HighlightTokenItem[] {
+export function tokenizeUtilityValue(valueText: string, valueStart: number, css?: StetCSS): HighlightTokenItem[] {
   return toHighlightTokenItems(tokenizeStetCSSValue(valueText, valueStart, {
     isKnownVariable: (name) => css?.variables.has(name) ?? false
   }))
@@ -37,7 +37,7 @@ function tokenizeKey(tokens: HighlightTokenItem[], token: string, offset: number
   }
 }
 
-function tokenizeGroupedClassToken(css: MasterCSS, token: string, offset: number): HighlightTokenItem[] | undefined {
+function tokenizeGroupedClassToken(css: StetCSS, token: string, offset: number): HighlightTokenItem[] | undefined {
   const tokens = tokenizeStetCSSGroupedClassToken(
     token,
     offset,
@@ -46,7 +46,7 @@ function tokenizeGroupedClassToken(css: MasterCSS, token: string, offset: number
   return tokens && toHighlightTokenItems(tokens)
 }
 
-export function tokenizeClassToken(css: MasterCSS, token: string, offset: number): HighlightTokenItem[] {
+export function tokenizeClassToken(css: StetCSS, token: string, offset: number): HighlightTokenItem[] {
   const groupedTokens = tokenizeGroupedClassToken(css, token, offset)
   if (groupedTokens) return groupedTokens
 
@@ -55,7 +55,7 @@ export function tokenizeClassToken(css: MasterCSS, token: string, offset: number
   }
 
   const tokens: HighlightTokenItem[] = []
-  const inspection = inspectMasterCSSClass(css, token)
+  const inspection = inspectStetCSSClass(css, token)
   const rules = inspection.rules
   // A runtime with its own rule generator decides which classes count; one it rejects gets no tokens.
   if (!rules.length || !isLanguageClassEmitted(css, token)) return tokens
@@ -99,7 +99,7 @@ export function tokenizeClassToken(css: MasterCSS, token: string, offset: number
   return tokens
 }
 
-export function collectClassListHighlightTokenItems(css: MasterCSS, classList: string, offset = 0): HighlightTokenItem[] {
+export function collectClassListHighlightTokenItems(css: StetCSS, classList: string, offset = 0): HighlightTokenItem[] {
   const tokens: HighlightTokenItem[] = []
   for (const range of collectStetCSSClassListTokenRanges(classList)) {
     tokens.push(...tokenizeClassToken(css, range.token, offset + range.start))
@@ -107,6 +107,6 @@ export function collectClassListHighlightTokenItems(css: MasterCSS, classList: s
   return tokens
 }
 
-export function collectClassListSemanticTokenItems(css: MasterCSS, classList: string, offset = 0) {
+export function collectClassListSemanticTokenItems(css: StetCSS, classList: string, offset = 0) {
   return toSemanticTokenItems(collectClassListHighlightTokenItems(css, classList, offset))
 }

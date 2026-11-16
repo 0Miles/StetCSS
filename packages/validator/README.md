@@ -79,7 +79,7 @@ isClassValid('love:css')
 Signature:
 
 ```ts
-isClassValid(syntax: string, css?: MasterCSS): boolean
+isClassValid(syntax: string, css?: StetCSS): boolean
 ```
 
 ### `generateValidRules()`
@@ -99,7 +99,7 @@ generateValidRules('love:css')
 Signature:
 
 ```ts
-generateValidRules(syntax: string, css?: MasterCSS): Rule[]
+generateValidRules(syntax: string, css?: StetCSS): Rule[]
 ```
 
 ### `validate()`
@@ -119,5 +119,5 @@ validate('love:css')
 Signature:
 
 ```ts
-validate(syntax: string, css?: MasterCSS): SyntaxError[]
+validate(syntax: string, css?: StetCSS): SyntaxError[]
 ```

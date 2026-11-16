@@ -1,4 +1,4 @@
-import type { MasterCSS } from '@stet-css/engine'
+import type { StetCSS } from '@stet-css/engine'
 import {
   collectCSSDirectiveRanges,
   type CSSDirectiveRuleRange,
@@ -102,7 +102,7 @@ export interface MasterCSSLintSummary {
 export interface MasterCSSLintContentOptions {
   content: string
   filePath: string
-  css: MasterCSS
+  css: StetCSS
   rules?: Partial<Record<MasterCSSLintRuleId, boolean>>
   ruleOptions?: MasterCSSLintContentRuleOptions
   severities?: Partial<Record<MasterCSSLintRuleId, MasterCSSLintDiagnosticSeverity>>
@@ -266,7 +266,7 @@ function toLocationRange(content: string, range: SourceRange): MasterCSSLintSour
 
 function createComposeDirectiveLintDiagnostics(
   context: ClassListContext,
-  css: MasterCSS,
+  css: StetCSS,
   rules: Record<MasterCSSLintRuleId, boolean>,
   options: MasterCSSLintContentOptions
 ) {
@@ -282,7 +282,7 @@ function createComposeDirectiveLintDiagnostics(
 
 function createContextLintDiagnostics(
   context: ClassListContext,
-  css: MasterCSS,
+  css: StetCSS,
   rules: Record<MasterCSSLintRuleId, boolean>,
   options: MasterCSSLintContentOptions
 ) {
@@ -435,7 +435,7 @@ function applyFixes(content: string, fixes: MasterCSSLintSourceFix[]) {
   return fixed
 }
 
-function fixClassListText(context: ClassListContext, css: MasterCSS, rules: Record<MasterCSSLintRuleId, boolean>, options: MasterCSSLintContentOptions) {
+function fixClassListText(context: ClassListContext, css: StetCSS, rules: Record<MasterCSSLintRuleId, boolean>, options: MasterCSSLintContentOptions) {
   let fixed = context.text
   for (let pass = 0; pass < MAX_FIX_PASSES; pass++) {
     const nextContext: ClassListContext = {
@@ -454,7 +454,7 @@ function fixClassListText(context: ClassListContext, css: MasterCSS, rules: Reco
   return fixed
 }
 
-function fixSafeClassLists(content: string, filePath: string, css: MasterCSS, rules: Record<MasterCSSLintRuleId, boolean>, options: MasterCSSLintContentOptions) {
+function fixSafeClassLists(content: string, filePath: string, css: StetCSS, rules: Record<MasterCSSLintRuleId, boolean>, options: MasterCSSLintContentOptions) {
   const replacements = collectClassListContexts(content, filePath)
     .map((context) => ({
       range: context.range,

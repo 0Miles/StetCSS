@@ -1,6 +1,6 @@
 export {
   default,
-  MasterCSS,
+  StetCSS,
   Layer,
   ThemeLayer,
   UtilityLayer,
@@ -16,11 +16,11 @@ export {
 export type {
   CompiledUtility,
   GeneratedRule,
-  MasterCSSClassInspection,
-  MasterCSSCreateOptions,
-  MasterCSSInspectedClassVariable,
-  MasterCSSOptions,
-  MasterCSSNormalizedNumericValue,
+  StetCSSClassInspection,
+  StetCSSCreateOptions,
+  StetCSSInspectedClassVariable,
+  StetCSSOptions,
+  StetCSSNormalizedNumericValue,
   StetCSSManifest,
   StetCSSManifestSettings,
   StetCSSManifestUtility,
@@ -28,7 +28,7 @@ export type {
   StetCSSManifestVariant,
   StetCSSManifestVariable,
   StetCSSManifestVariableNumericValue,
-  MasterCSSEmittedGlobals,
+  StetCSSEmittedGlobals,
   NativeCSSDeclaration,
   NativeCSSDeclarationMatcher
 } from '@stet-css/engine'

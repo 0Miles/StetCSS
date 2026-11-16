@@ -1,7 +1,7 @@
 import { writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { MasterCSS } from '@stet-css/engine'
+import { StetCSS } from '@stet-css/engine'
 import { normalizeStetCSSManifestForJSON, stringifyStetCSSManifestJSON } from '@stet-css/schema/manifest-json'
 import type { StetCSSManifest } from '@stet-css/schema/manifest'
 
@@ -10,7 +10,7 @@ const packageRoot = resolve(__dirname, '..')
 const sourceFile = resolve(packageRoot, 'src/index.css')
 const manifestOutputFile = resolve(packageRoot, 'src/default-manifest.json')
 const nativeCSSOutputFile = resolve(packageRoot, 'src/default-native.css')
-const defaultEngineSettings = MasterCSS.create({ manifest: { version: 1 } }).settings
+const defaultEngineSettings = StetCSS.create({ manifest: { version: 1 } }).settings
 const { compileCSSManifestFile } = await import(new URL('../../compiler/src/index.ts', import.meta.url).href) as typeof import('@stet-css/compiler')
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T

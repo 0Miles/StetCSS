@@ -1,15 +1,15 @@
-export { default as MasterCSS, default } from './core'
+export { default as StetCSS, default } from './core'
 export type {
   CompiledUtility,
-  MasterCSSCreateOptions,
-  MasterCSSOptions,
+  StetCSSCreateOptions,
+  StetCSSOptions,
   NativeCSSDeclaration,
   NativeCSSDeclarationMatcher
 } from './core'
 export type {
-  MasterCSSClassInspection,
-  MasterCSSInspectedClassVariable,
-  MasterCSSNormalizedNumericValue
+  StetCSSClassInspection,
+  StetCSSInspectedClassVariable,
+  StetCSSNormalizedNumericValue
 } from './inspect'
 export { Rule } from './rule'
 export { default as Layer, getLayerRank, layerOrder } from './layer'
@@ -22,23 +22,23 @@ export { default as compareRulePriority } from './utils/compare-rule-priority'
 export { UndeclaredModeError, isUndeclaredModeError, tryGenerate } from './utils/undeclared-mode'
 export { collectAnimationNamesFromDeclaration } from './utils/collect-animation-names'
 export { builtinKeyAliases } from './key-aliases'
-export type { MasterCSSBuiltinKeyAliases } from './key-aliases'
+export type { StetCSSBuiltinKeyAliases } from './key-aliases'
 export {
   builtinNamespaces,
   builtinNamespaceRef,
   builtinNamespaceSet
 } from './namespaces'
 export type {
-  MasterCSSBuiltinNamespace,
-  MasterCSSBuiltinNamespaceRef
+  StetCSSBuiltinNamespace,
+  StetCSSBuiltinNamespaceRef
 } from './namespaces'
 export { builtinNativeValueNamespaces } from './native-value-namespaces'
 export type {
-  MasterCSSBuiltinNativeValueNamespace,
-  MasterCSSBuiltinNativeValueNamespaces
+  StetCSSBuiltinNativeValueNamespace,
+  StetCSSBuiltinNativeValueNamespaces
 } from './native-value-namespaces'
 export { builtinSelectorAliases } from './selector-aliases'
-export type { MasterCSSBuiltinSelectorAliases } from './selector-aliases'
+export type { StetCSSBuiltinSelectorAliases } from './selector-aliases'
 export * from '@stet-css/schema/manifest'
 export type * from './emitted-globals'
 export type { Utility as GeneratedRule } from './utility'

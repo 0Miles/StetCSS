@@ -520,10 +520,10 @@ export default class CSSLanguageServer {
         this.importWorkspaceModule(enginePackage.entry),
         resolution.utilityType ? this.importWorkspaceModule(resolution.utilityType.entry) : undefined
       ])
-      const MasterCSS = (cssModule.MasterCSS || cssModule.default) as CSSLanguageRuntime['MasterCSS'] | undefined
+      const StetCSS = (cssModule.StetCSS || cssModule.default) as CSSLanguageRuntime['StetCSS'] | undefined
       const builtinKeyAliases = engineModule.builtinKeyAliases as CSSLanguageRuntime['builtinKeyAliases'] | undefined
       const builtinNativeValueNamespaces = engineModule.builtinNativeValueNamespaces as CSSLanguageRuntime['builtinNativeValueNamespaces'] | undefined
-      if (!MasterCSS) throw new Error(`Missing MasterCSS export from ${cssPackage.entry}`)
+      if (!StetCSS) throw new Error(`Missing StetCSS export from ${cssPackage.entry}`)
       if (!builtinKeyAliases) throw new Error(`Missing builtinKeyAliases export from ${enginePackage.entry}`)
       if (!builtinNativeValueNamespaces) throw new Error(`Missing builtinNativeValueNamespaces export from ${enginePackage.entry}`)
 
@@ -534,7 +534,7 @@ export default class CSSLanguageServer {
         this.console.info(`Workspace Master CSS runtime optional resolution warnings: ${resolution.errors.map(({ name, message }) => `${name}: ${message}`).join('; ')}`)
       }
       return {
-        MasterCSS,
+        StetCSS,
         UtilityType: (utilityTypeModule?.UtilityType || utilityTypeModule?.default || defaultCSSLanguageRuntime.UtilityType) as CSSLanguageRuntime['UtilityType'],
         defaultManifest: manifest,
         builtinKeyAliases,

@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
-import { MasterCSS } from '@stet-css/core'
+import { StetCSS } from '@stet-css/core'
 import init, { createRuntimeProjectManifest, getRuntimeLoaderURL } from './init'
 
 /**
@@ -26,7 +26,7 @@ const GREEN = 'rgb(0, 128, 0)'
 
 /** The rules a build emits for these classes; static rendering writes the same engine output. */
 function renderStaticCSS(...classNames: string[]) {
-  return MasterCSS.create({ manifest: createRuntimeProjectManifest(manifestInput) })
+  return StetCSS.create({ manifest: createRuntimeProjectManifest(manifestInput) })
     .ensureClassRules(...classNames)
     .text
 }

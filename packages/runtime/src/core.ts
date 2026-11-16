@@ -1,6 +1,6 @@
-import { MasterCSS, isUndeclaredModeError } from '@stet-css/engine'
+import { StetCSS, isUndeclaredModeError } from '@stet-css/engine'
 import type { StetCSSManifest } from '@stet-css/schema/manifest'
-import type { MasterCSSEmittedGlobals } from '@stet-css/engine'
+import type { StetCSSEmittedGlobals } from '@stet-css/engine'
 import { STET_CSS_RUNTIME_STYLE_ID } from '@stet-css/schema/runtime-style'
 import registerGlobal, { isRuntimeClass } from './register-global'
 import { hostOf, isDocumentRoot, ownerDocumentOf, readDocument } from './document'
@@ -40,10 +40,10 @@ interface RuntimeCleanupWindow {
 export interface CSSRuntimeCreateOptions {
   manifest: StetCSSManifest
   root?: Document | ShadowRoot
-  emittedGlobals?: MasterCSSEmittedGlobals
+  emittedGlobals?: StetCSSEmittedGlobals
 }
 
-export default class CSSRuntime extends MasterCSS {
+export default class CSSRuntime extends StetCSS {
   /**
    * Another copy of the runtime on the page (a CDN script beside a bundled import) may already
    * hold the `StetCSSRuntime` global. Share its instances so each root keeps a single runtime.
@@ -91,7 +91,7 @@ export default class CSSRuntime extends MasterCSS {
   constructor(
     public root: Document | ShadowRoot = document,
     manifest: StetCSSManifest,
-    emittedGlobals?: MasterCSSEmittedGlobals
+    emittedGlobals?: StetCSSEmittedGlobals
   ) {
     super(manifest, emittedGlobals, {
       nativeDeclarationMatcher: browserNativeDeclarationMatcher

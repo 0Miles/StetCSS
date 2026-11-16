@@ -1,13 +1,13 @@
 import { describe, expect, test } from 'vitest'
 import type { StetCSSManifest, StetCSSManifestModeTrigger } from '@stet-css/schema/manifest'
-import { MasterCSS, isUndeclaredModeError } from '../src'
+import { StetCSS, isUndeclaredModeError } from '../src'
 import { cloneManifest } from './helpers/css-tester'
 
 function createCSSWithModes(modes: string[] | undefined, modeTrigger?: StetCSSManifestModeTrigger, extend: (manifest: StetCSSManifest) => void = () => {}) {
   const manifest = cloneManifest()
   manifest.settings = { ...manifest.settings, ...(modes ? { modes } : {}), ...(modeTrigger ? { modeTrigger } : {}) }
   extend(manifest)
-  return MasterCSS.create({ manifest })
+  return StetCSS.create({ manifest })
 }
 
 function catchError(callback: () => unknown) {

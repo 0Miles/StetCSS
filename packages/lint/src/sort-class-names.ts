@@ -1,4 +1,4 @@
-import { compareRulePriority, getLayerRank, layerOrder, tryGenerate, type GeneratedRule, type MasterCSS } from '@stet-css/engine'
+import { compareRulePriority, getLayerRank, layerOrder, tryGenerate, type GeneratedRule, type StetCSS } from '@stet-css/engine'
 import UtilityType from '@stet-css/schema/utility-type'
 
 const UNKNOWN_PROPERTY_GROUP_ORDER = 99
@@ -163,7 +163,7 @@ function getReadablePropertyOrder(rule: GeneratedRule): ReadablePropertyOrder {
   return best
 }
 
-function createClassSortDescriptor(className: string, css: MasterCSS): ClassSortDescriptor {
+function createClassSortDescriptor(className: string, css: StetCSS): ClassSortDescriptor {
   const rule = tryGenerate(css, className).rules[0]
   if (!rule) {
     return {
@@ -188,7 +188,7 @@ function createClassSortDescriptor(className: string, css: MasterCSS): ClassSort
   }
 }
 
-export default function sortClassNames(classNames: string[], css: MasterCSS) {
+export default function sortClassNames(classNames: string[], css: StetCSS) {
   const descriptors = [...new Set(classNames)].map((className) => createClassSortDescriptor(className, css))
   return descriptors.sort((a, b) => {
     if (!a.rule && !b.rule) return a.className.localeCompare(b.className)

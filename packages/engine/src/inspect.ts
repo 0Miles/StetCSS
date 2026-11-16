@@ -1,21 +1,21 @@
-import type MasterCSS from './core'
+import type StetCSS from './core'
 import type { Utility } from './utility'
 import type { Variable } from '@stet-css/schema/css-syntax'
 import type { StetCSSManifestUtilityMatcher } from '@stet-css/schema/manifest'
 import { ROOT_FONT_SIZE } from './common'
 import { assertBaseUnit } from './utils/base-unit'
 
-export interface MasterCSSNormalizedNumericValue {
+export interface StetCSSNormalizedNumericValue {
   kind: 'number' | 'rem'
   value: number
 }
 
-export interface MasterCSSInspectedClassVariable {
+export interface StetCSSInspectedClassVariable {
   key: string
   variable: Variable
 }
 
-export interface MasterCSSClassInspection {
+export interface StetCSSClassInspection {
   className: string
   rules: Utility[]
   base: string
@@ -28,7 +28,7 @@ export interface MasterCSSClassInspection {
   important?: boolean
   matcherTypes: StetCSSManifestUtilityMatcher['type'][]
   variables: Map<string, Variable>
-  variableEntries: MasterCSSInspectedClassVariable[]
+  variableEntries: StetCSSInspectedClassVariable[]
 }
 
 const CLASS_MODIFIER_SIGNS = new Set(['!', '*', '>', '+', '~', ':', '[', '@', '_'])
@@ -82,7 +82,7 @@ function inspectClassNameParts(className: string) {
   }
 }
 
-export function normalizeMasterCSSNumericValue(css: MasterCSS, value: string | number): MasterCSSNormalizedNumericValue | undefined {
+export function normalizeStetCSSNumericValue(css: StetCSS, value: string | number): StetCSSNormalizedNumericValue | undefined {
   if (typeof value === 'number') return { kind: 'number', value }
   const matches = /^([+-]?(?:\d+(?:\.\d+)?|\.\d+))([a-z%]*)$/i.exec(value)
   if (!matches) return
@@ -110,7 +110,7 @@ export function normalizeMasterCSSNumericValue(css: MasterCSS, value: string | n
   }
 }
 
-export function inspectMasterCSSClass(css: MasterCSS, className: string, mode?: string): MasterCSSClassInspection {
+export function inspectStetCSSClass(css: StetCSS, className: string, mode?: string): StetCSSClassInspection {
   const rules = css.generate(className, mode)
   const rule = rules[0]
   const variables = new Map<string, Variable>()

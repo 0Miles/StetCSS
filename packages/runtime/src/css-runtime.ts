@@ -1,11 +1,11 @@
 import type { StetCSSManifest } from '@stet-css/schema/manifest'
-import type { MasterCSSEmittedGlobals } from '@stet-css/engine'
+import type { StetCSSEmittedGlobals } from '@stet-css/engine'
 import CSSRuntime from './core'
 
 type CSSRuntimeHostConstructor = new (...args: any[]) => HTMLElement
 type CSSRuntimeManifest = StetCSSManifest | ((host: HTMLElement) => StetCSSManifest)
 type CSSRuntimeRoot = ShadowRoot | ((host: HTMLElement) => ShadowRoot | null | undefined)
-type CSSRuntimeEmittedGlobals = MasterCSSEmittedGlobals | ((host: HTMLElement) => MasterCSSEmittedGlobals | undefined)
+type CSSRuntimeEmittedGlobals = StetCSSEmittedGlobals | ((host: HTMLElement) => StetCSSEmittedGlobals | undefined)
 
 export interface CSSRuntimeOptions {
   manifest: CSSRuntimeManifest
@@ -25,7 +25,7 @@ function resolveRoot(host: HTMLElement, root: CSSRuntimeRoot | undefined): Shado
     : root || host.shadowRoot
 }
 
-function resolveEmittedGlobals(host: HTMLElement, emittedGlobals: CSSRuntimeEmittedGlobals | undefined): MasterCSSEmittedGlobals | undefined {
+function resolveEmittedGlobals(host: HTMLElement, emittedGlobals: CSSRuntimeEmittedGlobals | undefined): StetCSSEmittedGlobals | undefined {
   return typeof emittedGlobals === 'function' ? emittedGlobals(host) : emittedGlobals
 }
 

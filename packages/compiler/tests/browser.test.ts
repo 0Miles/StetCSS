@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { MasterCSS } from '@stet-css/engine'
+import { StetCSS } from '@stet-css/engine'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 import { compileCSSManifest } from '../src/browser'
 import type { StetCSSManifest } from '@stet-css/schema/manifest'
@@ -7,7 +7,7 @@ import type { StetCSSManifest } from '@stet-css/schema/manifest'
 const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
 
 function createTestCSS(manifest: StetCSSManifest) {
-  return MasterCSS.create({ manifest })
+  return StetCSS.create({ manifest })
 }
 
 test.concurrent('browser compileCSSManifest lowers directives with a base manifest', async () => {

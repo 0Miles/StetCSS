@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
-import MasterCSS from './core'
+import StetCSS from './core'
 import { cssEscape, replaceCSSVariableReferences } from '@stet-css/lexer'
 import UtilityType, { type UtilityType as UtilityTypeValue } from '@stet-css/schema/utility-type'
 import { type PropertiesHyphen } from 'csstype'
@@ -58,7 +58,7 @@ function isVariantToken(value: string): value is StetCSSManifestVariantToken {
  * (`::scrollbar:horizontal`), and selectors inside `:is()` and similar
  * parentheses are left to the browser.
  */
-function hasUnknownPseudoClass(nodes: SelectorNode[], css: MasterCSS) {
+function hasUnknownPseudoClass(nodes: SelectorNode[], css: StetCSS) {
   let qualifiesPseudoElement = false
   for (const node of nodes) {
     if (node.type === 'pseudo-element') {
@@ -176,7 +176,7 @@ function mergeConditionNodeMap(
   return merged
 }
 
-function mergeBranch(base: UtilityStateBranch, branch: StetCSSManifestVariantBranch, css: MasterCSS, key: string): UtilityStateBranch {
+function mergeBranch(base: UtilityStateBranch, branch: StetCSSManifestVariantBranch, css: StetCSS, key: string): UtilityStateBranch {
   let conditions = cloneConditions(base.conditions)
   let joinable = true
   const merge = (condition: Condition) => {
@@ -324,7 +324,7 @@ export class Utility {
   invalidValueSyntax = false
   constructor(
     public readonly name: string,
-    public css: MasterCSS,
+    public css: StetCSS,
     public readonly registeredUtility: CompiledUtility,
     public fixedClass?: string,
     mode?: string,

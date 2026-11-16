@@ -1,5 +1,5 @@
 import { type SyntaxError } from './types/syntax-error'
-import type { MasterCSS } from '@stet-css/core'
+import type { StetCSS } from '@stet-css/core'
 import defaultManifest from './default-manifest'
 import validateCSS from './validate-css'
 import { createCSSWithNativeDeclarations } from './native-declaration'
@@ -12,7 +12,7 @@ import { tryGenerate } from '@stet-css/core'
  */
 export default function validate(
   syntax: string,
-  css: MasterCSS = createCSSWithNativeDeclarations(defaultManifest)
+  css: StetCSS = createCSSWithNativeDeclarations(defaultManifest)
 ): {
   matched: boolean,
   errors: SyntaxError[]

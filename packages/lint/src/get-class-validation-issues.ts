@@ -1,5 +1,5 @@
 import { validate } from '@stet-css/validator'
-import type { MasterCSS } from '@stet-css/engine'
+import type { StetCSS } from '@stet-css/engine'
 import { formatClassName, formatReason } from './diagnostic-format'
 
 export interface ClassValidationOptions {
@@ -17,7 +17,7 @@ export interface ClassValidationIssue {
 
 export default function getClassValidationIssues(
   className: string,
-  css: MasterCSS,
+  css: StetCSS,
   options: ClassValidationOptions = {}
 ): ClassValidationIssue[] {
   const { matched, errors } = validate(className, css)

@@ -1,8 +1,8 @@
-import { MasterCSS, createDefaultCSS } from '@stet-css/language'
+import { StetCSS, createDefaultCSS } from '@stet-css/language'
 import { type CompletionItem, CompletionItemKind } from 'vscode-languageserver-protocol'
 import sortCompletionItems from './sort-completion-items'
 
-export default function getColorCompletionItems(css: MasterCSS = createDefaultCSS()): CompletionItem[] {
+export default function getColorCompletionItems(css: StetCSS = createDefaultCSS()): CompletionItem[] {
   const completionItems: CompletionItem[] = []
   css.variables.forEach((eachVariable, eachVariableName) => {
     if (eachVariable.namespace?.startsWith('color')) {

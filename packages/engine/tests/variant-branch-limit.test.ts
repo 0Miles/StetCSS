@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { StetCSSManifest } from '@stet-css/schema/manifest'
-import { MasterCSS } from '../src'
+import { StetCSS } from '../src'
 import { cloneManifest } from './helpers/css-tester'
 
 /**
@@ -20,7 +20,7 @@ describe('variant branch limit', () => {
       { token: '@touch', branches: [{ conditions: ['media(hover:none)'] }, { conditions: ['media(pointer:coarse)'] }] },
       { token: ':hocus', branches: [{ selector: '&:hover' }, { selector: '&:focus-visible' }] }
     ]
-    return MasterCSS.create({ manifest })
+    return StetCSS.create({ manifest })
   }
 
   /**

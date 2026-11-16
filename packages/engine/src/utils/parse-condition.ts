@@ -1,5 +1,5 @@
 import { CONDITION_COMPARABLE_FEATURES, CONDITION_COMPARISON_OPERATORS, CONDITION_FEATURE_ALIASES, CONDITION_IDENTIFIERS, CONDITION_LOGICAL_OPERATORS } from '../common'
-import type MasterCSS from '../core'
+import type StetCSS from '../core'
 import type { StetCSSManifestConditionIdentifier } from '@stet-css/schema/manifest'
 import parsePair from './parse-pair'
 import parseValue from './parse-value'
@@ -32,7 +32,7 @@ function isConditionIdentifier(value: string): value is StetCSSManifestCondition
   return (CONDITION_IDENTIFIERS as string[]).includes(value)
 }
 
-export default function parseCondition(token: string, css: MasterCSS, isRaw = true) {
+export default function parseCondition(token: string, css: StetCSS, isRaw = true) {
   let id: StetCSSManifestConditionIdentifier | undefined
   let firstToken: string | undefined
   const resolve = (token: string) => {

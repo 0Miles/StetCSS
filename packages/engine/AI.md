@@ -9,7 +9,7 @@ Executes `StetCSSManifest` values: class matching, value, selector, and conditio
 
 ## Risks
 
-- **Runtime surface**: `@stet-css/runtime` extends `MasterCSS`, so `src/core.ts` and every root value export ship to browsers. Put lint, language, and compiler-only helpers in the `./inspect` or `./compiler` subpaths.
+- **Runtime surface**: `@stet-css/runtime` extends `StetCSS`, so `src/core.ts` and every root value export ship to browsers. Put lint, language, and compiler-only helpers in the `./inspect` or `./compiler` subpaths.
 - **Manifest payload**: keep compiled indexes and caches out of `StetCSSManifest`; serializing one into it needs a browser payload measurement first.
 - **Order and globals**: compiled utility order, `compareRulePriority`, layer insertion, and variable and animation token counts (seeded from `emittedGlobals`) decide the output as much as each rule's text; treat a change in any of them as a CSS output change.
 

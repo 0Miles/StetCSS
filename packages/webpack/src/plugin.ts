@@ -1,5 +1,5 @@
 import { CSSScanner, validatePluginOptions, type ScannerOptions } from '@stet-css/scanner'
-import type { MasterCSS, MasterCSSEmittedGlobals, StetCSSManifest } from '@stet-css/core'
+import type { StetCSS, StetCSSEmittedGlobals, StetCSSManifest } from '@stet-css/core'
 import { toManifestJSON } from '@stet-css/integration/manifest-module'
 import {
   toBrowserManifestFacadeModule,
@@ -103,7 +103,7 @@ export class MasterCSSPlugin {
   pluginInitialized = false
   manifestJSONAssets = new Map<string, string>()
   defaultManifestDependencies: string[] = []
-  emittedGlobals: MasterCSSEmittedGlobals = {}
+  emittedGlobals: StetCSSEmittedGlobals = {}
   /** The project manifest the manifest module last loaded; static CSS renders with it. */
   private projectManifest?: StetCSSManifest
   styleCSSSources: StyleCSSSources = new Map()
@@ -149,7 +149,7 @@ export class MasterCSSPlugin {
     return this.scanner.options
   }
 
-  get css(): MasterCSS {
+  get css(): StetCSS {
     return this.scanner.css
   }
 

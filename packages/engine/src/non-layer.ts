@@ -1,5 +1,5 @@
 import findNativeCSSRuleIndex from './utils/find-native-css-rule-index'
-import MasterCSS from './core'
+import StetCSS from './core'
 import { Rule } from './rule'
 
 export default class NonLayer {
@@ -7,7 +7,7 @@ export default class NonLayer {
   readonly tokenCounts = new Map<string, number>()
 
   constructor(
-    public css: MasterCSS
+    public css: StetCSS
   ) { }
 
   insert(rule: Rule) {

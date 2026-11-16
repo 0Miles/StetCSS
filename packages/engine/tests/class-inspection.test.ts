@@ -1,15 +1,15 @@
 import { describe, expect, test } from 'vitest'
 import {
-  inspectMasterCSSClass,
-  normalizeMasterCSSNumericValue
+  inspectStetCSSClass,
+  normalizeStetCSSNumericValue
 } from '../src/inspect'
-import { MasterCSS } from '../src'
+import { StetCSS } from '../src'
 import { cloneManifest, createDefaultCSS } from './helpers/css-tester'
 
 describe('class inspection', () => {
   test('inspects key/value utilities with variants and token metadata', () => {
     const css = createDefaultCSS()
-    const inspection = inspectMasterCSSClass(css, 'fg:red-60:hover@sm')
+    const inspection = inspectStetCSSClass(css, 'fg:red-60:hover@sm')
 
     expect(inspection).toMatchObject({
       className: 'fg:red-60:hover@sm',
@@ -30,12 +30,12 @@ describe('class inspection', () => {
   test('inspects static utilities and important suffixes', () => {
     const css = createDefaultCSS()
 
-    expect(inspectMasterCSSClass(css, 'block:hover')).toMatchObject({
+    expect(inspectStetCSSClass(css, 'block:hover')).toMatchObject({
       base: 'block',
       suffix: ':hover',
       stateToken: ':hover'
     })
-    expect(inspectMasterCSSClass(css, 'm:16px!@sm')).toMatchObject({
+    expect(inspectStetCSSClass(css, 'm:16px!@sm')).toMatchObject({
       base: 'm:16px',
       suffix: '!@sm',
       key: 'm',
@@ -50,7 +50,7 @@ describe('class inspection', () => {
   test('falls back to lexical class parts for unknown classes', () => {
     const css = createDefaultCSS()
 
-    expect(inspectMasterCSSClass(css, 'unknown:1.5:hover')).toMatchObject({
+    expect(inspectStetCSSClass(css, 'unknown:1.5:hover')).toMatchObject({
       rules: [],
       base: 'unknown:1.5',
       suffix: ':hover',
@@ -63,11 +63,11 @@ describe('class inspection', () => {
   test('normalizes number, rem, px, and base-unit numeric values', () => {
     const css = createDefaultCSS()
 
-    expect(normalizeMasterCSSNumericValue(css, 1)).toEqual({ kind: 'number', value: 1 })
-    expect(normalizeMasterCSSNumericValue(css, '1rem')).toEqual({ kind: 'rem', value: 1 })
-    expect(normalizeMasterCSSNumericValue(css, '16px')).toEqual({ kind: 'rem', value: 1 })
-    expect(normalizeMasterCSSNumericValue(css, '4x')).toEqual({ kind: 'rem', value: 1 })
-    expect(normalizeMasterCSSNumericValue(css, '50%')).toBeUndefined()
+    expect(normalizeStetCSSNumericValue(css, 1)).toEqual({ kind: 'number', value: 1 })
+    expect(normalizeStetCSSNumericValue(css, '1rem')).toEqual({ kind: 'rem', value: 1 })
+    expect(normalizeStetCSSNumericValue(css, '16px')).toEqual({ kind: 'rem', value: 1 })
+    expect(normalizeStetCSSNumericValue(css, '4x')).toEqual({ kind: 'rem', value: 1 })
+    expect(normalizeStetCSSNumericValue(css, '50%')).toBeUndefined()
   })
 
   /**
@@ -85,6 +85,6 @@ describe('class inspection', () => {
     const manifest = cloneManifest()
     manifest.settings = { ...manifest.settings, baseUnit }
 
-    expect(normalizeMasterCSSNumericValue(MasterCSS.create({ manifest }), '4x')).toEqual(expected)
+    expect(normalizeStetCSSNumericValue(StetCSS.create({ manifest }), '4x')).toEqual(expected)
   })
 })

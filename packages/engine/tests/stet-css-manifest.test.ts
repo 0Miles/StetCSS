@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import UtilityType from '@stet-css/schema/utility-type'
 import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import { groupStetCSSManifestVariables } from '@stet-css/schema/manifest'
-import { MasterCSS } from '../src'
+import { StetCSS } from '../src'
 
 const variables = groupStetCSSManifestVariables
 
@@ -53,7 +53,7 @@ describe.concurrent('StetCSSManifest execution', () => {
         }
       ]
     }
-    const css = MasterCSS.create({ manifest: manifest })
+    const css = StetCSS.create({ manifest: manifest })
 
     expect(css.createRule('text-left')?.text).toBe('.text-left{text-align:left}')
     expect(css.createRule('text-left')?.type).toBe(UtilityType.Semantic)
@@ -92,7 +92,7 @@ describe.concurrent('StetCSSManifest execution', () => {
       ]
     }
 
-    expect(MasterCSS.create({ manifest: manifest }).createRules('btn').map(({ text }) => text)).toEqual([
+    expect(StetCSS.create({ manifest: manifest }).createRules('btn').map(({ text }) => text)).toEqual([
       '.btn{display:inline-flex}',
       '.btn{gap:0.5rem}'
     ])
@@ -123,7 +123,7 @@ describe.concurrent('StetCSSManifest execution', () => {
       ]
     }
 
-    expect(MasterCSS.create({ manifest: manifest }).createRule('icon_left')?.text)
+    expect(StetCSS.create({ manifest: manifest }).createRule('icon_left')?.text)
       .toBe('.icon_left{grid-area:left}')
   })
 
@@ -184,7 +184,7 @@ describe.concurrent('StetCSSManifest execution', () => {
         }
       ]
     }
-    const css = MasterCSS.create({ manifest: manifest })
+    const css = StetCSS.create({ manifest: manifest })
 
     expect(css.createRule('b:1px')?.text).toBe('.b\\:1px{border-width:1px}')
     expect(css.createRule('b:line')?.text).toBe('.b\\:line{border-color:var(--color-line)}')
@@ -224,7 +224,7 @@ describe.concurrent('StetCSSManifest execution', () => {
       ]
     }
 
-    expect(MasterCSS.create({ manifest: manifest }).createRule('m:card')?.text)
+    expect(StetCSS.create({ manifest: manifest }).createRule('m:card')?.text)
       .toBe('.m\\:card{margin:var(--spacing-card)}')
   })
 
@@ -288,7 +288,7 @@ describe.concurrent('StetCSSManifest execution', () => {
         }
       ]
     }
-    const css = MasterCSS.create({ manifest: manifest })
+    const css = StetCSS.create({ manifest: manifest })
 
     expect(css.createRule('m:card')?.text)
       .toBe('.m\\:card{margin:var(--spacing-card)}')
@@ -323,7 +323,7 @@ describe.concurrent('StetCSSManifest execution', () => {
         }
       ]
     }
-    const emittedGlobalsCSS = MasterCSS.create({
+    const emittedGlobalsCSS = StetCSS.create({
       manifest,
       emittedGlobals: {
         variables: {
@@ -331,7 +331,7 @@ describe.concurrent('StetCSSManifest execution', () => {
         }
       }
     })
-    const css = MasterCSS.create({ manifest: manifest })
+    const css = StetCSS.create({ manifest: manifest })
 
     emittedGlobalsCSS.ensureClassRules('m:card')
     expect(emittedGlobalsCSS.text).toBe('@layer utilities{.m\\:card{margin:var(--spacing-card)}}')
@@ -355,11 +355,11 @@ describe.concurrent('StetCSSManifest execution', () => {
         modes: []
       }
     }
-    const acceptingCSS = MasterCSS.create({
+    const acceptingCSS = StetCSS.create({
       manifest,
       nativeDeclarationMatcher: ({ property }) => property === 'test-property'
     })
-    const rejectingCSS = MasterCSS.create({
+    const rejectingCSS = StetCSS.create({
       manifest,
       nativeDeclarationMatcher: () => false
     })
@@ -379,7 +379,7 @@ describe.concurrent('StetCSSManifest execution', () => {
   it('rejects a manifest whose baseUnit is not a CSS length', () => {
     const manifest = { version: 1, settings: { baseUnit: 4 } } as unknown as StetCSSManifest
 
-    expect(() => MasterCSS.create({ manifest })).toThrow('Expected a CSS length')
+    expect(() => StetCSS.create({ manifest })).toThrow('Expected a CSS length')
   })
 
   it('ignores manifest-carried registry fields', () => {
@@ -399,7 +399,7 @@ describe.concurrent('StetCSSManifest execution', () => {
         variableAliasRefs: ['~spacing']
       }]
     } as unknown as StetCSSManifest
-    const css = MasterCSS.create({ manifest: manifest })
+    const css = StetCSS.create({ manifest: manifest })
 
     expect(css.createRule('fakeAlias:#fff')).toBeUndefined()
     expect(css.createRule('fake-property:card')).toBeUndefined()
@@ -407,12 +407,12 @@ describe.concurrent('StetCSSManifest execution', () => {
   })
 
   it('rejects v2 manifests instead of compatibility-loading them', () => {
-    expect(() => MasterCSS.create({ manifest: { version: 2 } as unknown as StetCSSManifest }))
+    expect(() => StetCSS.create({ manifest: { version: 2 } as unknown as StetCSSManifest }))
       .toThrow('Unsupported StetCSSManifest version. Expected version 1.')
   })
 
   it('rejects stale flat v1 variable manifests instead of compatibility-loading them', () => {
-    expect(() => MasterCSS.create({
+    expect(() => StetCSS.create({
       manifest: {
         version: 1,
         variables: [
@@ -423,7 +423,7 @@ describe.concurrent('StetCSSManifest execution', () => {
   })
 
   it('rejects stale v1 utility bucket manifests instead of compatibility-loading them', () => {
-    expect(() => MasterCSS.create({
+    expect(() => StetCSS.create({
       manifest: {
         version: 1,
         utilityBuckets: {}
@@ -461,7 +461,7 @@ describe.concurrent('StetCSSManifest execution', () => {
       ]
     }
 
-    expect(MasterCSS.create({ manifest: manifest }).createRule('m:1rem@card')?.text)
+    expect(StetCSS.create({ manifest: manifest }).createRule('m:1rem@card')?.text)
       .toBe('@media (width>=48rem){.m\\:1rem\\@card{margin:1rem}}')
   })
 
@@ -543,7 +543,7 @@ describe.concurrent('StetCSSManifest execution', () => {
         }
       ]
     }
-    const css = MasterCSS.create({ manifest: manifest })
+    const css = StetCSS.create({ manifest: manifest })
     css.ensureClassRules('block:hover@card', 'fg:brand', 'animation:fade|1s', 'multi')
 
     expect(css.utilitiesLayer.rules.map((rule) => rule.name)).toEqual([

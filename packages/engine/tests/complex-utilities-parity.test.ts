@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'vitest'
 import UtilityType from '@stet-css/schema/utility-type'
-import { MasterCSS } from '../src'
+import { StetCSS } from '../src'
 import { cloneManifest, createCSSWithVariables, createDefaultCSS } from './helpers/css-tester'
 
 describe.concurrent('migrated complex utility parity', () => {
   test('keeps group syntax independent from preset utilities', () => {
-    expect(MasterCSS.create({ manifest: { version: 1 } }).createRule('{display:block}')?.text)
+    expect(StetCSS.create({ manifest: { version: 1 } }).createRule('{display:block}')?.text)
       .toBe('.\\{display\\:block\\}{display:block}')
   })
 
@@ -31,7 +31,7 @@ describe.concurrent('migrated complex utility parity', () => {
       important: true
     }
 
-    expect(MasterCSS.create({ manifest: manifest }).createRule('{color:black!;bb:2px|solid}')?.text)
+    expect(StetCSS.create({ manifest: manifest }).createRule('{color:black!;bb:2px|solid}')?.text)
       .toBe('.\\{color\\:black\\!\\;bb\\:2px\\|solid\\}{color:oklch(0% 0 none)!important;border-bottom:2px solid!important}')
   })
 
@@ -62,7 +62,7 @@ describe.concurrent('migrated complex utility parity', () => {
   })
 
   test('resolves mapped enum pattern values from manifest valueMap', () => {
-    const css = MasterCSS.create({
+    const css = StetCSS.create({
       manifest: {
         version: 1,
         utilities: [{

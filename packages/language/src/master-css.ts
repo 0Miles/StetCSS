@@ -1,4 +1,4 @@
-import { MasterCSS, tryGenerate, type CompiledUtility, type GeneratedRule, type NativeCSSDeclarationMatcher } from '@stet-css/core'
+import { StetCSS, tryGenerate, type CompiledUtility, type GeneratedRule, type NativeCSSDeclarationMatcher } from '@stet-css/core'
 import { builtinKeyAliases, builtinNativeValueNamespaces } from '@stet-css/engine'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 import UtilityType from '@stet-css/schema/utility-type'
@@ -8,7 +8,7 @@ import { getMdnPropertySyntax } from './utils/mdn-css-data'
 
 export type { CompiledUtility, ValueComponent, Variable }
 const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
-export { builtinKeyAliases, builtinNativeValueNamespaces, defaultManifest, MasterCSS, UtilityType }
+export { builtinKeyAliases, builtinNativeValueNamespaces, defaultManifest, StetCSS, UtilityType }
 
 export function matchesLanguageServiceNativeDeclaration({ property }: { property: string }) {
   return property.startsWith('--') || Boolean(getMdnPropertySyntax(property))
@@ -19,10 +19,10 @@ export function matchesLanguageServiceNativeDeclaration({ property }: { property
  * what the build emits (the language server) supplies one; without it the
  * engine's own `generate` decides.
  */
-export type LanguageRuleGenerator = (css: MasterCSS, className: string) => GeneratedRule[]
+export type LanguageRuleGenerator = (css: StetCSS, className: string) => GeneratedRule[]
 
 export interface CSSLanguageRuntime {
-  MasterCSS: typeof MasterCSS
+  StetCSS: typeof StetCSS
   UtilityType: typeof UtilityType
   defaultManifest: StetCSSManifest
   builtinKeyAliases: typeof builtinKeyAliases
@@ -32,7 +32,7 @@ export interface CSSLanguageRuntime {
 }
 
 export const defaultCSSLanguageRuntime: CSSLanguageRuntime = {
-  MasterCSS,
+  StetCSS,
   UtilityType,
   defaultManifest,
   builtinKeyAliases,
@@ -56,16 +56,16 @@ export interface Condition {
 }
 
 export function createDefaultCSS(runtime: CSSLanguageRuntime = defaultCSSLanguageRuntime) {
-  return runtime.MasterCSS.create({
+  return runtime.StetCSS.create({
     manifest: runtime.defaultManifest,
     nativeDeclarationMatcher: runtime.nativeDeclarationMatcher
   })
 }
 
-const ruleGenerators = new WeakMap<MasterCSS, LanguageRuleGenerator>()
+const ruleGenerators = new WeakMap<StetCSS, LanguageRuleGenerator>()
 
 export function createLanguageCSS(manifest: StetCSSManifest = defaultManifest, runtime: CSSLanguageRuntime = defaultCSSLanguageRuntime) {
-  const css = runtime.MasterCSS.create({
+  const css = runtime.StetCSS.create({
     manifest,
     nativeDeclarationMatcher: runtime.nativeDeclarationMatcher
   })
@@ -74,7 +74,7 @@ export function createLanguageCSS(manifest: StetCSSManifest = defaultManifest, r
 }
 
 /** Whether the runtime's generator emits rules for a class the engine accepts; true when `css` has no generator. */
-export function isLanguageClassEmitted(css: MasterCSS, className: string) {
+export function isLanguageClassEmitted(css: StetCSS, className: string) {
   return !ruleGenerators.has(css) || generateLanguageRules(css, className).length > 0
 }
 
@@ -83,21 +83,21 @@ export function isLanguageClassEmitted(css: MasterCSS, className: string) {
  * engine's), plus the error when the class names a mode the project does not declare: such a class
  * yields no rules instead of throwing out of the editor request.
  */
-export function tryGenerateLanguageRules(css: MasterCSS, className: string): { rules: GeneratedRule[], error?: Error } {
+export function tryGenerateLanguageRules(css: StetCSS, className: string): { rules: GeneratedRule[], error?: Error } {
   const generateRules = ruleGenerators.get(css)
   return tryGenerate(generateRules ? { generate: (name: string) => generateRules(css, name) } : css, className)
 }
 
-export function generateLanguageRules(css: MasterCSS, className: string): GeneratedRule[] {
+export function generateLanguageRules(css: StetCSS, className: string): GeneratedRule[] {
   return tryGenerateLanguageRules(css, className).rules
 }
 
 export function generateCSS(
   classNames: string[],
-  css: MasterCSS = createDefaultCSS(),
+  css: StetCSS = createDefaultCSS(),
   runtime: CSSLanguageRuntime = defaultCSSLanguageRuntime
 ) {
-  const MasterCSSConstructor = css.constructor as typeof MasterCSS
+  const MasterCSSConstructor = css.constructor as typeof StetCSS
   const generatedCSS = MasterCSSConstructor.create({
     manifest: css.manifest,
     nativeDeclarationMatcher: runtime.nativeDeclarationMatcher
@@ -137,7 +137,7 @@ export function getSingleConditionNumberNode(nodes: StetCSSManifestConditionNode
   return findNumberNode(nodes)
 }
 
-export function parseCondition(token: string, css: MasterCSS = createDefaultCSS()): Condition {
+export function parseCondition(token: string, css: StetCSS = createDefaultCSS()): Condition {
   const alias = token.replace(/^[<>=&@]+/, '')
   return css.conditions.get(alias) || { id: 'media', nodes: [] }
 }

@@ -1,4 +1,4 @@
-import type { MasterCSS } from '@stet-css/engine'
+import type { StetCSS } from '@stet-css/engine'
 import { parseStetCSSClassList, type StetCSSClassListItem } from '@stet-css/lexer'
 import type { ClassValidationOptions } from './get-class-validation-issues'
 import getClassValidationIssues from './get-class-validation-issues'
@@ -174,7 +174,7 @@ function formatCanonicalComposeMessage(actual: string, recommended: string, kind
 
 export function createSortClassesReport(
   classList: string,
-  css: MasterCSS,
+  css: StetCSS,
   options: MasterCSSLintReportOptions = {}
 ): MasterCSSLintReport {
   const items = parseClassList(classList, options)
@@ -202,7 +202,7 @@ export function createSortClassesReport(
 
 export function createInvalidClassesReport(
   classList: string,
-  css: MasterCSS,
+  css: StetCSS,
   options: MasterCSSInvalidClassesReportOptions = {}
 ): MasterCSSLintReport {
   const items = parseClassList(classList, options)
@@ -233,7 +233,7 @@ export function createInvalidClassesReport(
 
 export function createConflictingClassesReport(
   classList: string,
-  css: MasterCSS,
+  css: StetCSS,
   options: MasterCSSConflictingClassesReportOptions = {}
 ): MasterCSSLintReport {
   const items = parseClassList(classList, options)
@@ -297,7 +297,7 @@ export function createConflictingClassesReport(
 
 export function createCanonicalClassesReport(
   classList: string,
-  css: MasterCSS,
+  css: StetCSS,
   options: MasterCSSCanonicalClassesReportOptions = {}
 ): MasterCSSLintReport {
   const resolvedOptions = {
@@ -356,7 +356,7 @@ export function createCanonicalClassesReport(
 
 export function createCanonicalComposeDirectiveReport(
   classList: string,
-  css: MasterCSS,
+  css: StetCSS,
   options: MasterCSSCanonicalClassesReportOptions = {}
 ): MasterCSSLintReport {
   const result = suggestCanonicalComposeDirective(classList, css, {
@@ -398,7 +398,7 @@ export function createCanonicalComposeDirectiveReport(
 
 export function createUnapprovedRawValueClassesReport(
   classList: string,
-  css: MasterCSS,
+  css: StetCSS,
   options: MasterCSSUnapprovedRawValueClassesReportOptions = {}
 ): MasterCSSLintReport {
   const items = parseClassList(classList, options)
@@ -430,7 +430,7 @@ export function createUnapprovedRawValueClassesReport(
 
 export function createClassListLintReport(
   classList: string,
-  css: MasterCSS,
+  css: StetCSS,
   options: MasterCSSClassListLintReportOptions = {}
 ): MasterCSSLintReport {
   const rules: Record<MasterCSSLintRuleId, boolean> = {

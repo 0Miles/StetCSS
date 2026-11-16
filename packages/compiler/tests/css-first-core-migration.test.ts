@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { MasterCSS } from '@stet-css/engine'
+import { StetCSS } from '@stet-css/engine'
 import { compileCSS, compileCSSManifest } from '../src'
 import type { CompilerDiagnosticRecorder } from '../src/diagnostics'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
@@ -13,7 +13,7 @@ function variablesOf(manifest: StetCSSManifest) {
 }
 
 function createTestCSS(manifest: StetCSSManifest) {
-  return MasterCSS.create({ manifest })
+  return StetCSS.create({ manifest })
 }
 
 /** The preset manifest with some settings replaced, as a project's base manifest. */

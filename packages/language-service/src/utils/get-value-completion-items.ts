@@ -1,5 +1,5 @@
 import { type CompletionItem, CompletionItemKind } from 'vscode-languageserver-protocol'
-import { MasterCSS, createDefaultCSS, type Variable, generateCSS } from '@stet-css/language'
+import { StetCSS, createDefaultCSS, type Variable, generateCSS } from '@stet-css/language'
 import createCSSMarkdownDocumentation from './create-css-markdown-documentation'
 import sortCompletionItems from './sort-completion-items'
 import { getMdnPropertySyntax, getMdnPropertyValueNames } from '@stet-css/language'
@@ -44,7 +44,7 @@ function uniqueKeys(...keys: string[]) {
   return [...new Set(keys)]
 }
 
-export default function getValueCompletionItems(css: MasterCSS = createDefaultCSS(), ruleKey: string, valuePrefix = '', completionIndex: CompletionIndex = createCompletionIndex(css)): CompletionItem[] {
+export default function getValueCompletionItems(css: StetCSS = createDefaultCSS(), ruleKey: string, valuePrefix = '', completionIndex: CompletionIndex = createCompletionIndex(css)): CompletionItem[] {
   const completionItems: CompletionItem[] = []
   const addedLabels = new Set<string>()
   const canonicalRuleKey = completionIndex.keyAliases[ruleKey] || ruleKey

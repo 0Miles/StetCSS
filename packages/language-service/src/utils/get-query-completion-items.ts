@@ -1,10 +1,10 @@
-import { AT_SIGN, MasterCSS, createDefaultCSS, QUERY_COMPARISON_OPERATORS, QUERY_LOGICAL_OPERATORS, type Condition, generateCondition, generateCSS, getSingleConditionNumberNode, parseCondition } from '@stet-css/language'
+import { AT_SIGN, StetCSS, createDefaultCSS, QUERY_COMPARISON_OPERATORS, QUERY_LOGICAL_OPERATORS, type Condition, generateCondition, generateCSS, getSingleConditionNumberNode, parseCondition } from '@stet-css/language'
 import { CompletionItem, CompletionItemKind } from 'vscode-languageserver-protocol'
 import sortCompletionItems from './sort-completion-items'
 import createCSSMarkdownDocumentation from './create-css-markdown-documentation'
 import { createCompletionIndex, type CompletionIndex } from './completion-index'
 
-export default function getQueryCompletionItems(css: MasterCSS = createDefaultCSS(), triggerCharacter = AT_SIGN, syntax: string, completionIndex: CompletionIndex = createCompletionIndex(css)): CompletionItem[] {
+export default function getQueryCompletionItems(css: StetCSS = createDefaultCSS(), triggerCharacter = AT_SIGN, syntax: string, completionIndex: CompletionIndex = createCompletionIndex(css)): CompletionItem[] {
   const completionItems: CompletionItem[] = []
   if (!QUERY_COMPARISON_OPERATORS.includes(triggerCharacter)) {
     ['media', 'container', 'supports']

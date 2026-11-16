@@ -1,5 +1,5 @@
 import { SELECTOR_COMBINATORS } from '../common'
-import type MasterCSS from '../core'
+import type StetCSS from '../core'
 import parsePair from './parse-pair'
 
 export declare type SelectorLiteralNode = {
@@ -26,7 +26,7 @@ export declare type SelectorNode = SelectorLiteralNode | SelectorCombinatorNode 
 const SELECTOR_REGEX = new RegExp(`(?:[a-zA-Z0-9-]+)|([${SELECTOR_COMBINATORS.join('')}#.:,*])|(a-zA-Z0-9-)`, 'g')
 const LEGACY_PSEUDO_ELEMENTS = new Set(['before', 'after', 'first-letter', 'first-line'])
 
-export default function parseSelector(token: string, css: MasterCSS, isRaw = true) {
+export default function parseSelector(token: string, css: StetCSS, isRaw = true) {
   const resolve = (eachToken: string): SelectorNode[] => {
     const nodes: SelectorNode[] = []
     let currentPrefix = ''

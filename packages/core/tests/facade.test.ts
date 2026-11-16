@@ -2,11 +2,11 @@ import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { layerOrder } from '@stet-css/engine'
 import { expect, it } from 'vitest'
-import { MasterCSS } from '../src'
+import { StetCSS } from '../src'
 
 it('@stet-css/core re-exports the manifest-driven engine facade', () => {
   const manifest = { version: 1 } as const
-  const css = MasterCSS.create({ manifest })
+  const css = StetCSS.create({ manifest })
   expect(css.manifest).toBe(manifest)
   expect(css.text).toBe('')
 })
