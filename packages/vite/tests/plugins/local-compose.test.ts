@@ -210,8 +210,10 @@ describe('LocalComposePlugin', () => {
         '.button { @compose brand; }',
         modulePath
       )
+      const changedModule = { id: path.join(root, 'app.css') }
       const result = await (plugin as any).handleHotUpdate({
         file: path.join(root, 'app.css'),
+        modules: [changedModule],
         server: {
           moduleGraph: {
             getModuleById: vi.fn((id) => id === modulePath ? module : undefined),
@@ -225,7 +227,9 @@ describe('LocalComposePlugin', () => {
       expect(invalidateModule).toHaveBeenCalledWith(module)
       expect(reloadModule).toHaveBeenCalledWith(module)
       expect(send).not.toHaveBeenCalled()
-      expect(result).toEqual([])
+      // The edited entry keeps its own update. Reverse check: returning `[]` once the compose
+      // modules reloaded in `local-compose.ts` turns only this test red.
+      expect(result).toEqual([changedModule])
     } finally {
       rmSync(root, { recursive: true, force: true })
     }

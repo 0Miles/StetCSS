@@ -150,6 +150,7 @@ describe('ManifestVirtualModulePlugin', () => {
     await (plugin.buildStart as any).call({})
     const result = await (plugin.handleHotUpdate as any)({
       file: buttonManifestPath,
+      modules: [],
       server: {
         moduleGraph: {
           getModuleById: vi.fn((id) => id === RESOLVED_VIRTUAL_MANIFEST_ID ? module : undefined),
@@ -175,8 +176,10 @@ describe('ManifestVirtualModulePlugin', () => {
     const manifestEntryPath = path.join(root, 'app.css')
 
     await (plugin.buildStart as any).call({})
+    const entryModule = { id: manifestEntryPath }
     const result = await (plugin.handleHotUpdate as any)({
       file: manifestEntryPath,
+      modules: [entryModule],
       server: {
         moduleGraph: {
           getModuleById: vi.fn((id) => id === RESOLVED_VIRTUAL_MANIFEST_ID ? module : undefined),
@@ -188,7 +191,10 @@ describe('ManifestVirtualModulePlugin', () => {
 
     expect(invalidateModule).toHaveBeenCalledWith(module)
     expect(send).not.toHaveBeenCalled()
-    expect(result).toEqual([module])
+    // The edited entry keeps its own CSS update: returning only the manifest module left the
+    // page on the old CSS. Reverse check: starting `modules` empty in
+    // `manifest-virtual-module.ts` turns only this test red.
+    expect(result).toEqual([entryModule, module])
   })
 
 })
