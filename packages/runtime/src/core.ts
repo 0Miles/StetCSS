@@ -62,15 +62,6 @@ function findElementById(root: Document | ShadowRoot, id: string) {
       : undefined
 }
 
-/**
- * Another copy of the runtime on the page (a CDN script beside a bundled import) holds the
- * `MasterCSSRuntime` global. Share its instances so each root keeps a single runtime.
- */
-function getRegisteredRuntimeInstances() {
-  const registered: unknown = globalThis.MasterCSSRuntime
-  return registered !== CSSRuntime && isRuntimeClass(registered) ? registered.instances : undefined
-}
-
 function validateHydrationManifest(hydrationManifest: unknown): MasterCSSHydrationManifest | undefined {
   return (hydrationManifest as MasterCSSHydrationManifest | undefined)?.version === 1
     && Array.isArray((hydrationManifest as MasterCSSHydrationManifest | undefined)?.rules)
@@ -118,7 +109,13 @@ async function importHydrationManifest(url: string): Promise<MasterCSSHydrationM
 }
 
 export default class CSSRuntime extends MasterCSS {
-  static instances = new WeakMap<Document | ShadowRoot, CSSRuntime>()
+  /**
+   * Another copy of the runtime on the page (a CDN script beside a bundled import) may already
+   * hold the `MasterCSSRuntime` global. Share its instances so each root keeps a single runtime.
+   */
+  static instances: WeakMap<Document | ShadowRoot, CSSRuntime> = isRuntimeClass(globalThis.MasterCSSRuntime)
+    ? globalThis.MasterCSSRuntime.instances
+    : new WeakMap()
   readonly host: Element
   readonly container: HTMLElement | ShadowRoot
   readonly baseLayer = new RuntimeUtilityLayer('base', this)
@@ -152,7 +149,7 @@ export default class CSSRuntime extends MasterCSS {
     const resolvedHydrationManifest = hydrationManifest === undefined
       ? readInlineHydrationManifest(root)
       : hydrationManifest
-    const current = CSSRuntime.instances.get(root) ?? getRegisteredRuntimeInstances()?.get(root)
+    const current = CSSRuntime.instances.get(root)
     if (current) {
       current.registerEmittedGlobals(emittedGlobals)
       if (resolvedHydrationManifest !== undefined) current.setHydrationManifest(resolvedHydrationManifest)
@@ -185,7 +182,6 @@ export default class CSSRuntime extends MasterCSS {
   register(): this {
     const registered = CSSRuntime.instances.get(this.root) === this
     CSSRuntime.instances.set(this.root, this)
-    getRegisteredRuntimeInstances()?.set(this.root, this)
     if (isDocumentRoot(this.root)) {
       readDocument(this.root, 'defaultView')!.globalThis.masterCSSRuntime = this
     }
@@ -197,8 +193,6 @@ export default class CSSRuntime extends MasterCSS {
 
   unregister(): this {
     CSSRuntime.instances.delete(this.root)
-    const registeredInstances = getRegisteredRuntimeInstances()
-    if (registeredInstances?.get(this.root) === this) registeredInstances.delete(this.root)
     if (isDocumentRoot(this.root)) {
       const scope = readDocument(this.root, 'defaultView')!.globalThis
       if (scope.masterCSSRuntime === this) scope.masterCSSRuntime = undefined as unknown as CSSRuntime

@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test'
 import { MASTER_CSS_RUNTIME_STYLE_ID } from '@stet-css/schema/runtime-style'
-import { DEFAULT_MANIFEST_URL, RUNTIME_SCRIPT_URL, getRuntimeLoaderURL, routeRuntimeAssets } from './init'
+import init, { DEFAULT_MANIFEST_URL, RUNTIME_SCRIPT_URL, getRuntimeLoaderURL, routeRuntimeAssets } from './init'
 
 /**
  * Browsers expose elements with an `id` or `name` as same-named globals (named access on
@@ -9,7 +9,7 @@ import { DEFAULT_MANIFEST_URL, RUNTIME_SCRIPT_URL, getRuntimeLoaderURL, routeRun
  * can therefore occupy the names the runtime reads before it loads.
  */
 
-type ClobberingCase = { label: string, markup: string, selector: string }
+type ClobberingCase = { label: string, markup: string, selector: string, globalOnly?: boolean }
 
 /**
  * Guards: `create` reading `instances` from a page element held in the `MasterCSSRuntime`
@@ -56,6 +56,15 @@ const DOCUMENT_GUARD_CASES: ClobberingCase[] = [
   selector: `img[name="${name}"]`
 }))
 
+/**
+ * Guards: the CDN script's `document.currentScript` read, shadowed by a `name`d `<img>`, which
+ * stops the CDN bundle before it creates a runtime. Reading `document.currentScript` directly
+ * in `global.min.ts` turns this test red. Only the CDN bundle reads it.
+ */
+const CDN_GUARD_CASES: ClobberingCase[] = [
+  { label: 'an image with name="currentScript"', markup: '<img name="currentScript" alt="">', selector: 'img[name="currentScript"]', globalOnly: true }
+]
+
 function collectMessages(page: Page) {
   const messages: string[] = []
   page.on('console', (message) => {
@@ -67,13 +76,6 @@ function collectMessages(page: Page) {
 
 async function waitForRuntime(page: Page) {
   await page.waitForFunction(() => globalThis.masterCSSRuntime?.observing === true, undefined, { timeout: 5000 })
-}
-
-async function startModuleRuntime(page: Page) {
-  await page.evaluate(async ({ loaderURL }) => {
-    const { startCSSRuntime } = await import(loaderURL)
-    startCSSRuntime()
-  }, { loaderURL: await getRuntimeLoaderURL() })
 }
 
 async function readRuntimeState(page: Page, selector: string) {
@@ -104,7 +106,7 @@ const expectedState = {
   clobberingElementKept: true
 }
 
-for (const { label, markup, selector } of [...WINDOW_GUARD_CASES, ...WINDOW_CONFIRMATION_CASES, ...DOCUMENT_GUARD_CASES]) {
+for (const { label, markup, selector, globalOnly } of [...WINDOW_GUARD_CASES, ...WINDOW_CONFIRMATION_CASES, ...DOCUMENT_GUARD_CASES, ...CDN_GUARD_CASES]) {
   test(`global runtime starts when ${label} precedes it`, async ({ page }) => {
     const messages = collectMessages(page)
     await routeRuntimeAssets(page)
@@ -125,6 +127,8 @@ for (const { label, markup, selector } of [...WINDOW_GUARD_CASES, ...WINDOW_CONF
     expect(messages).toEqual([])
   })
 
+  if (globalOnly) continue
+
   test(`module runtime starts when ${label} exists before it loads`, async ({ page }) => {
     const messages = collectMessages(page)
     await page.setContent(`
@@ -137,7 +141,7 @@ for (const { label, markup, selector } of [...WINDOW_GUARD_CASES, ...WINDOW_CONF
       </body>
       </html>
     `)
-    await startModuleRuntime(page)
+    await init(page)
     await waitForRuntime(page)
 
     expect(await readRuntimeState(page, selector)).toEqual(expectedState)
@@ -146,43 +150,10 @@ for (const { label, markup, selector } of [...WINDOW_GUARD_CASES, ...WINDOW_CONF
 }
 
 /**
- * Guards: the CDN script's `document.currentScript` read, shadowed by a `name`d `<img>`, which
- * stops the CDN bundle before it creates a runtime. Reading `document.currentScript` directly
- * in `global.min.ts` turns this test red.
- */
-test('global runtime starts when an image with name="currentScript" precedes it', async ({ page }) => {
-  const messages = collectMessages(page)
-  await routeRuntimeAssets(page)
-  await page.setContent(`
-    <!doctype html>
-    <html hidden>
-    <head></head>
-    <body>
-      <img name="currentScript" alt="">
-      <p class="display:flex"></p>
-      <script src="${RUNTIME_SCRIPT_URL}"></script>
-    </body>
-    </html>
-  `)
-  await waitForRuntime(page)
-
-  expect(await readRuntimeState(page, 'img[name="currentScript"]')).toEqual(expectedState)
-  expect(messages).toEqual([])
-})
-
-async function readCopyState(page: Page) {
-  return page.evaluate(({ styleId }) => ({
-    registered: globalThis.MasterCSSRuntime.instances.get(document) === globalThis.masterCSSRuntime,
-    runtimeStyles: document.querySelectorAll(`style#${styleId}`).length,
-    display: getComputedStyle(document.querySelector('p')!).display
-  }), { styleId: MASTER_CSS_RUNTIME_STYLE_ID })
-}
-
-/**
  * Guards: a bundled import beside the CDN script starting a second runtime on the document,
  * which logs a hydration fallback warning, replaces the first copy's `style#master-css` and
- * leaves the first runtime writing into a detached sheet. Dropping the registered-copy fallback
- * from `create` in `core.ts` turns this test red.
+ * leaves the first runtime writing into a detached sheet. Giving `CSSRuntime.instances` its own
+ * map when another runtime class holds the global (`core.ts`) turns this test red.
  */
 test('a module copy loaded after the CDN script reuses the CDN runtime', async ({ page }) => {
   const messages = collectMessages(page)
@@ -209,15 +180,14 @@ test('a module copy loaded after the CDN script reuses the CDN runtime', async (
   }, { loaderURL: await getRuntimeLoaderURL(), cdnRuntime })
 
   expect(reused).toEqual({ separateCopy: true, sameInstance: true })
-  expect(await readCopyState(page)).toEqual({ registered: true, runtimeStyles: 1, display: 'flex' })
+  expect(await readRuntimeState(page, 'p')).toEqual(expectedState)
   expect(messages).toEqual([])
 })
 
 /**
  * Guards: the CDN script, loaded after a bundled import, replacing the module's
  * `MasterCSSRuntime` class and starting a second runtime. Making `registerGlobal` always
- * overwrite the global, or dropping the registered-copy fallback from `create`, turns this
- * test red.
+ * overwrite the global, or giving `CSSRuntime.instances` its own map, turns this test red.
  */
 test('the CDN script loaded after a module copy keeps the module runtime', async ({ page }) => {
   const messages = collectMessages(page)
@@ -228,7 +198,7 @@ test('the CDN script loaded after a module copy keeps the module runtime', async
     <body><p class="display:flex"></p></body>
     </html>
   `)
-  await startModuleRuntime(page)
+  await init(page)
   await waitForRuntime(page)
   const moduleState = await page.evaluateHandle(() => ({
     Runtime: globalThis.MasterCSSRuntime,
@@ -246,6 +216,6 @@ test('the CDN script loaded after a module copy keeps the module runtime', async
     keptClass: globalThis.MasterCSSRuntime === moduleState.Runtime,
     keptInstance: globalThis.masterCSSRuntime === moduleState.runtime
   }), moduleState)).toEqual({ keptClass: true, keptInstance: true })
-  expect(await readCopyState(page)).toEqual({ registered: true, runtimeStyles: 1, display: 'flex' })
+  expect(await readRuntimeState(page, 'p')).toEqual(expectedState)
   expect(messages).toEqual([])
 })
