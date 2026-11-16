@@ -1,3 +1,5 @@
+import { findMasterCSSClosingQuote } from '@stet-css/lexer'
+
 /**
  * The deepest bracket nesting a class may carry. Classes can come from untrusted markup, and parsing
  * nested values recurses with quadratic cost, so deeper classes are invalid.
@@ -14,18 +16,12 @@ const CLOSERS: Record<string, string> = { '(': ')', '[': ']', '{': '}' }
  * brackets outside quotes still count.
  */
 export default function exceedsClassNesting(className: string) {
-  let quote = ''
+  if (className.length <= MAX_CLASS_NESTING) return false
   const expectedClosers: string[] = []
   for (let index = 0; index < className.length; index++) {
     const char = className[index]
-    if (quote) {
-      if (char === '\\') {
-        index++
-      } else if (char === quote) {
-        quote = ''
-      }
-    } else if (char === '"' || char === '\'') {
-      quote = char
+    if (char === '"' || char === '\'') {
+      index = findMasterCSSClosingQuote(className, index, char)
     } else if (char in CLOSERS) {
       if (expectedClosers.push(CLOSERS[char]) > MAX_CLASS_NESTING) return true
     } else if (char === expectedClosers[expectedClosers.length - 1]) {
