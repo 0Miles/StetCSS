@@ -1,63 +1,16 @@
-import type { ModuleNode, Plugin, ViteDevServer } from 'vite'
-import { PluginContext } from '../core'
+import type { Plugin } from 'vite'
+import type { PluginContext } from '../core'
 import { loadProjectManifest } from '@stet-css/project/manifest'
 import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
 import { toManifestJSON } from '@stet-css/integration/manifest-module'
-import {
-  MANIFEST_ASSET_FILE,
-  toBrowserManifestFacadeModule,
-  toInlineManifestModule,
-  toUniversalManifestFacadeModule
-} from '@stet-css/integration/manifest-facade'
 import { RESOLVED_VIRTUAL_MANIFEST_ID, VIRTUAL_MANIFEST_ID } from '../common'
-import { PluginOptions } from '../options'
 import { collectStyleCSSDependencies } from '@stet-css/stylesheet'
 import { includesFile } from '../utils/path'
 import { getProjectDir } from '../utils/project-dir'
+import { addServerAllow, createManifestModule, invalidateManifestModule, isProductionBuild } from '../utils/manifest-module'
 
-function invalidateManifestModule(module: ModuleNode | undefined, server: ViteDevServer): ModuleNode[] {
-  if (!module) return []
-  server.moduleGraph.invalidateModule(module)
-  return [module]
-}
-
-function isProductionBuild(context: PluginContext) {
-  return context.config?.command === 'build'
-}
-
-function isServerBuild(context: PluginContext) {
-  return Boolean(context.config?.build.ssr)
-}
-
-function createManifestModule(
-  context: PluginContext,
-  pluginContext: { emitFile?: (asset: { type: 'asset', name: string, source: string }) => string },
-  json: string
-) {
-  if (!isProductionBuild(context) || !pluginContext.emitFile) return toInlineManifestModule(json)
-  const referenceId = pluginContext.emitFile({
-    type: 'asset',
-    name: MANIFEST_ASSET_FILE,
-    source: json
-  })
-  const urlExpression = `import.meta.ROLLUP_FILE_URL_${referenceId}`
-  return isServerBuild(context)
-    ? toUniversalManifestFacadeModule(urlExpression)
-    : toBrowserManifestFacadeModule(urlExpression)
-}
-
-export default function ManifestVirtualModulePlugin(
-  options: PluginOptions,
-  context: PluginContext
-): Plugin {
+export default function ManifestVirtualModulePlugin(context: PluginContext): Plugin {
   let cssManifestDependencies: string[] = []
-  const addServerAllow = (paths: string[]) => {
-    const allow = context.config?.server.fs.allow
-    if (!allow) return
-    for (const path of paths) {
-      if (!allow.includes(path)) allow.push(path)
-    }
-  }
   const loadDefaultManifest = async (pluginContext: { addWatchFile?: (id: string) => void }) => {
     const root = getProjectDir(context)
     const entries = await findCSSManifestEntryFiles(root)
@@ -68,7 +21,7 @@ export default function ManifestVirtualModulePlugin(
       }
     }
     cssManifestDependencies = [...dependencies]
-    addServerAllow(cssManifestDependencies)
+    addServerAllow(context, cssManifestDependencies)
     for (const dependency of cssManifestDependencies) {
       pluginContext.addWatchFile?.(dependency)
     }
@@ -78,7 +31,7 @@ export default function ManifestVirtualModulePlugin(
       pluginContext.addWatchFile?.(dependency)
     }
     cssManifestDependencies = [...dependencies]
-    addServerAllow(cssManifestDependencies)
+    addServerAllow(context, cssManifestDependencies)
     return result
   }
   return {

@@ -1,4 +1,4 @@
-import type { ModuleNode, Plugin, ViteDevServer } from 'vite'
+import type { ModuleNode, Plugin } from 'vite'
 import type { PluginContext } from '../core'
 import {
   fromResolvedMasterCSSManifestId,
@@ -10,59 +10,16 @@ import {
   isMasterCSSManifestRequest,
   stripMasterCSSManifestQuery
 } from '@stet-css/integration/manifest-module'
-import {
-  MANIFEST_ASSET_FILE,
-  toBrowserManifestFacadeModule,
-  toInlineManifestModule,
-  toUniversalManifestFacadeModule
-} from '@stet-css/integration/manifest-facade'
 import { collectStyleCSSDependencies } from '@stet-css/stylesheet'
 import { includesFile } from '../utils/path'
 import { getProjectDir } from '../utils/project-dir'
-
-function invalidateManifestModule(module: ModuleNode | undefined, server: ViteDevServer): ModuleNode[] {
-  if (!module) return []
-  server.moduleGraph.invalidateModule(module)
-  return [module]
-}
-
-function isProductionBuild(context: PluginContext) {
-  return context.config?.command === 'build'
-}
-
-function isServerBuild(context: PluginContext) {
-  return Boolean(context.config?.build.ssr)
-}
-
-function createManifestModule(
-  context: PluginContext,
-  pluginContext: { emitFile?: (asset: { type: 'asset', name: string, source: string }) => string },
-  json: string
-) {
-  if (!isProductionBuild(context) || !pluginContext.emitFile) return toInlineManifestModule(json)
-  const referenceId = pluginContext.emitFile({
-    type: 'asset',
-    name: MANIFEST_ASSET_FILE,
-    source: json
-  })
-  const urlExpression = `import.meta.ROLLUP_FILE_URL_${referenceId}`
-  return isServerBuild(context)
-    ? toUniversalManifestFacadeModule(urlExpression)
-    : toBrowserManifestFacadeModule(urlExpression)
-}
+import { addServerAllow, createManifestModule, invalidateManifestModule } from '../utils/manifest-module'
 
 export default function ManifestLoaderPlugin(context: PluginContext): Plugin {
   const cssManifestDependencies = new Map<string, string[]>()
-  const addServerAllow = (paths: string[]) => {
-    const allow = context.config?.server.fs.allow
-    if (!allow) return
-    for (const path of paths) {
-      if (!allow.includes(path)) allow.push(path)
-    }
-  }
   const watchManifestDependencies = (manifestPath: string, dependencies: string[] = []) => {
     cssManifestDependencies.set(manifestPath, dependencies)
-    addServerAllow(dependencies)
+    addServerAllow(context, dependencies)
   }
   return {
     name: 'master-css:manifest-loader',
