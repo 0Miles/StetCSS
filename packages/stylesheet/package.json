@@ -84,6 +84,14 @@
     "fast-glob": "^3.3.3",
     "@stet-css/schema": "workspace:^"
   },
+  "peerDependencies": {
+    "sass": ">=1.70.0"
+  },
+  "peerDependenciesMeta": {
+    "sass": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@stet-css/scanner": "workspace:^",
     "@stet-css/preset": "workspace:^"
