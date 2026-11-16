@@ -1,13 +1,16 @@
 import { createExtractedCSSResult, type StylesheetSourceContext } from '@stet-css/stylesheet'
 import type { PluginContext } from '../core'
 import { getScanner } from './scanner-context'
+import { getProjectDir } from './project-dir'
 
 /** What decides the class set; shared by extraction and the dev watcher's file filter. */
 export function getStylesheetSourceContext(context: PluginContext): StylesheetSourceContext {
   return {
     scanner: getScanner(context),
     styleCSSSources: context.styleCSSSources,
-    projectDir: context.config?.root
+    projectDir: getProjectDir(context),
+    extraProjectDirs: context.host?.extraProjectDirs,
+    ignorePaths: context.host?.ignorePaths
   }
 }
 
