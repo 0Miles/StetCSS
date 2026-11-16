@@ -222,6 +222,50 @@ describe('Webpack static CSS', () => {
   }, 180000)
 
   /**
+   * Guards entries other than a `.css` file in the project root: a Sass entry and an entry
+   * the app imports from outside the root must keep their `@theme` and `@safelist`, or users
+   * silently get the default theme and lose forced classes. Sass is stubbed in the fixture:
+   * it is the project's own dependency.
+   * Reverse check: registering only discovered `.css` entries (no `extensions`, no entries
+   * the style loader reports) turns only this test red; so does skipping the rebuild of a
+   * generated CSS module built before the outside entry was reported.
+   */
+  it('keeps the directives of Sass entries and of entries outside the project root', async () => {
+    const MasterCSSPlugin = await importPlugin()
+    const { default: webpackModule } = await import('webpack')
+    const workspace = createFixture('entries', {
+      'app/package.json': '{ "private": true }',
+      'app/node_modules/sass/package.json': '{ "name": "sass", "main": "index.js" }',
+      // Stands in for Sass on this one file: drops the variable declaration, inlines its value.
+      'app/node_modules/sass/index.js': 'exports.compileStringAsync = async (source) => ({ css: source.split("$brand: #123456;").join("").split("$brand").join("#123456") })\n',
+      'app/src/index.js': 'import "./app.scss"\nimport "../../shared/extra.css"\n',
+      'app/src/app.scss': '$brand: #123456;\n@import "@stet-css/core";\n@theme { --color-brand: $brand; }\n',
+      'app/src/template.html': '<main class="fg:brand"></main>\n',
+      'shared/extra.css': '@master entry;\n@safelist \'p:2x\';\n'
+    })
+    const root = join(workspace, 'app')
+
+    try {
+      await runWebpack(webpackModule, {
+        mode: 'production',
+        context: root,
+        entry: './src/index.js',
+        experiments: { css: true },
+        module: { rules: [{ test: /\.(css|scss)$/, type: 'css', sideEffects: true }] },
+        output: { path: join(root, 'dist'), filename: '[name].js', cssFilename: '[name].css' },
+        plugins: [new MasterCSSPlugin({}, root)]
+      })
+
+      const css = readOutput(join(root, 'dist'), '.css')
+      expect(css).toMatch(/--color-brand:\s*#123456/)
+      expect(css).toMatch(/\.fg\\:brand\s*\{/)
+      expect(css).toMatch(/\.p\\:2x\s*\{/)
+    } finally {
+      rmSync(workspace, { recursive: true, force: true })
+    }
+  }, 180000)
+
+  /**
    * Guards watch mode: an edit must rebuild exactly once and carry the new class of a file no
    * module imports, and the emitted bundle, written under the project root under a directory
    * name the built-in exclusions do not know, must not start another rebuild. The second

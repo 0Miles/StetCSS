@@ -13,6 +13,13 @@ import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
 import { loadProjectManifest } from '@stet-css/project/manifest'
 import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
 
+interface TransformStyleSourceResult {
+  code: string
+  dependencies: string[]
+  /** The file is a stylesheet entry rewritten to import the generated CSS. */
+  entry?: boolean
+}
+
 interface TransformStyleSourceOptions {
   projectDir?: string
   masterImport?: string
@@ -41,7 +48,7 @@ export async function transformStyleSource(
   resourcePath: string,
   source: string,
   options: TransformStyleSourceOptions = {}
-) {
+): Promise<TransformStyleSourceResult> {
   const { projectDir, masterImport = VIRTUAL_CSS_ID } = options
   const dependencies: string[] = []
   if (!isStyleCSSRequest(resourcePath)) {
@@ -97,6 +104,7 @@ export async function transformStyleSource(
     code: createStyleCSSHostSource(source, {
       masterImport
     }),
-    dependencies
+    dependencies,
+    entry: true
   }
 }
