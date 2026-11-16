@@ -26,7 +26,9 @@
     "css",
     "stetcss"
   ],
-  "bin": "./dist/bin/index.js",
+  "bin": {
+    "stet-css": "./dist/bin/index.js"
+  },
   "files": [
     "dist"
   ],

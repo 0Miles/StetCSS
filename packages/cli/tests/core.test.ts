@@ -42,7 +42,7 @@ function runFailedCLI(args: string[], options: { cwd?: string, input?: string } 
 describe('root command', () => {
   it('shows scan options and the lint subcommand', () => {
     const output = runCLI(['--help'])
-    expect(output).toContain('Usage: @stet-css/cli [options] [command] [source paths...]')
+    expect(output).toContain('Usage: stet-css [options] [command] [source paths...]')
     expect(output).toContain('-w, --watch')
     expect(output).toContain('--no-export')
     expect(output).toContain('Commands:')
@@ -50,6 +50,19 @@ describe('root command', () => {
     expect(output).toContain('inspect')
     expect(output).not.toContain('extract [options]')
     expect(output).not.toContain('render [options]')
+  })
+
+  /**
+   * Prevents: npm installing the CLI under the command `cli` (what a string `bin` in a scoped
+   * package becomes), so `stet-css` from the README and help text is not found after
+   * `npm install -D @stet-css/cli`, and help naming a command that does not exist.
+   * Gate 2 trade-off: part of this reads package.json, which is wiring; in exchange it locks the
+   * installed command name, which no test that spawns the CLI from source can see.
+   * Reverse check: `bin` written back as the string `"./dist/bin/index.js"` turns only this test red.
+   */
+  it('installs one command, stet-css, and names it in help', () => {
+    expect(pkg.bin).toEqual({ 'stet-css': './dist/bin/index.js' })
+    expect(runCLI(['--help'])).toMatch(/^Usage: stet-css /)
   })
 
   it.each(['extract', 'render', 'scan'])('rejects removed %s command', (command) => {
@@ -84,10 +97,6 @@ describe('root command', () => {
     } finally {
       fs.rmSync(cwd, { recursive: true, force: true })
     }
-  })
-
-  it('publishes only the package-name binary', () => {
-    expect(pkg.bin).toBe('./dist/bin/index.js')
   })
 })
 

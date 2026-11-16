@@ -8,7 +8,7 @@ StetCSS CLI.
 npm install -D @stet-css/cli
 ```
 
-Run the package binary directly with `npx @stet-css/cli`. The package does not expose alias binaries such as `mcss`.
+The package installs one command, `stet-css`: run `npx stet-css` in a project that has it installed, or `npx @stet-css/cli` without installing. There are no alias commands such as `mcss`.
 
 ## Commands
 

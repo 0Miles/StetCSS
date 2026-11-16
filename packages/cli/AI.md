@@ -9,7 +9,7 @@ The command-line entry. The root command scans sources and writes extracted CSS,
 
 ## Risks
 
-- **Command surface**: one package-name binary (string `bin`), the root command, `lint` and `inspect`. `extract`, `render` and `scan` are removed and exit with an error. Add commands or aliases only when the task asks.
+- **Command surface**: one installed command, `stet-css` (`bin` object; `CLI_COMMAND` in `src/constants.ts` names it in help and errors), the root command, `lint` and `inspect`. `extract`, `render` and `scan` are removed and exit with an error. Add commands or aliases only when the task asks.
 - **`--no-export`** prints CSS to stdout and writes no file, even with an output path set.
 - **Default output** `stet.css` (`src/constants.ts`) is user-facing; change it only on request.
 - **Watch**: a `resetDependencies` change closes every watcher, resets the scanner, rewrites output, and restarts watching. Source files are watched as the list `resolveStylesheetSourceFiles` returned at start; a new file is picked up after the next restart.
