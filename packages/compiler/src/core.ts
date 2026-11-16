@@ -42,11 +42,13 @@ import {
 } from '@stet-css/lexer'
 import {
   assertNoMasterAtRules,
+  assertNoRemovedDirectives,
   collectStandaloneCSSDirectiveExtractionPolicy,
   createCSSDirectiveExtractionPolicy,
   findStandaloneCSSDirectiveStatements,
   mergeCSSDirectiveExtractionPolicy,
   removeStandaloneCSSDirectives,
+  type RemovedDirectiveCheckOptions,
   type StandaloneCSSDirectiveStatement
 } from './lexer/standalone-master'
 import { combineSelectorLists } from './utils/selectors'
@@ -79,6 +81,7 @@ function createConditionPathProperties(conditionPath: CSSDirectiveConditionPath 
 
 export {
   assertNoMasterAtRules,
+  assertNoRemovedDirectives,
   collectStandaloneCSSDirectiveExtractionPolicy,
   createCSSDirectiveExtractionPolicy,
   findStandaloneCSSDirectiveStatements,
@@ -86,7 +89,7 @@ export {
   removeStandaloneCSSDirectives,
   setCSSTransform
 }
-export type { CSSTransform, StandaloneCSSDirectiveStatement }
+export type { CSSTransform, RemovedDirectiveCheckOptions, StandaloneCSSDirectiveStatement }
 
 export interface CompileCSSOptions {
   from?: string
@@ -2283,6 +2286,9 @@ export function maskManagedPatternEntryNames(source: string) {
 export function compileCSS(source: string, options: CompileCSSOptions = {}): CompileCSSResult {
   const filename = options.from || 'master.css'
   assertCSSNestingDepth(source, filename)
+  // Checked on the source as given, before `@reference` statements are cut out, so the error's
+  // source reference lines up with what the caller passed.
+  assertNoRemovedDirectives(source, options.from)
   const references = findCSSReferenceStatements(source, filename)
   const sourceWithoutReferences = removeSourceRanges(source, references)
   const parsed: ParsedDirectives = {

@@ -12,6 +12,7 @@ import { createMasterCSSManifest } from './master-css-manifest'
 import lowerCSSDirectives from './lower-css-directives'
 import type { CompilerDiagnosticRecorder } from './diagnostics'
 import {
+  assertNoMasterAtRules,
   compileCSS,
   createCSSDirectiveExtractionPolicy,
   findCSSReferenceStatements,
@@ -250,6 +251,9 @@ function resolveCSSImportGraphFile(
   }
 
   const source = readCSSImport(absoluteFile)
+  // Each file is checked on its own, so the error points into the file that holds the at-rule
+  // rather than into the expanded graph.
+  assertNoMasterAtRules(source, absoluteFile, { locate: true })
   const references = findCSSReferenceStatements(source, absoluteFile)
   for (const reference of references) {
     options.onReference?.(reference, absoluteFile)

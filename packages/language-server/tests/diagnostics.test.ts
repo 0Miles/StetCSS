@@ -56,6 +56,28 @@ withFixture('basic', async (context) => {
     sendDiagnostics.mockRestore()
   })
 
+  /**
+   * Prevents: an open stylesheet with the removed `@master entry;` showing no error in the editor.
+   * The compiler's error must reach the document as one diagnostic on the at-rule.
+   * Reverse check: building the compiler's `@master` error as a plain `Error` turns this test red.
+   */
+  test('publishes removed @master at-rule diagnostics on the at-rule', async ({ expect }) => {
+    const text = '.btn { color: red; }\n@master entry;'
+    const document = context.createDocument(text, { lang: 'css' })
+    const sendDiagnostics = vi.spyOn(context.server.connection, 'sendDiagnostics').mockImplementation(() => undefined as any)
+
+    await context.server.onDidOpen({ document })
+
+    const diagnostics = sendDiagnostics.mock.calls.at(-1)?.[0].diagnostics || []
+    const diagnostic = diagnostics.find((item: { code?: unknown }) => item.code === 'removed-master-at-rule')
+    expect(diagnostic?.message).toContain("@import '@stet-css/core'")
+    expect(document.offsetAt(diagnostic!.range.start)).toBe(text.indexOf('@master'))
+    expect(document.offsetAt(diagnostic!.range.end)).toBe(text.length)
+
+    await context.server.onDidClose({ document })
+    sendDiagnostics.mockRestore()
+  })
+
   test('publishes grouped @compose syntax diagnostics', async ({ expect }) => {
     const text = '.btn { @compose {block}; }'
     const document = context.createDocument(text, { lang: 'css' })
