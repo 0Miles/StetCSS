@@ -1,84 +1,17 @@
-import { AstroIntegration } from 'astro'
+import type { AstroIntegration } from 'astro'
 import vitePlugin from '@stet-css/vite'
-import defaultOptions, { type IntegrationOptions } from './options'
-import { externalizeAstroHydrationManifests } from './external-hydration-manifest'
-import { preloadAstroRuntimeAssets } from './runtime-preload'
+import type { IntegrationOptions } from './options'
 
-export const ASTRO_MIDDLEWARE_ENTRYPOINT = '@stet-css/astro/middleware'
-export const ASTRO_SSR_EXTERNAL = ['@stet-css/server']
-export const ASTRO_RUNTIME_INJECTION = 'import "@stet-css/vite/runtime";'
-
-function getViteOptions(options: IntegrationOptions): IntegrationOptions {
-  switch (options.mode) {
-    case 'pre-render':
-    case 'progressive':
-      return {
-        ...options,
-        mode: null
-      }
-    case 'runtime':
-      return {
-        ...options,
-        injectRuntime: false
-      }
-    default:
-      return options
-  }
-}
-
-export default function masterCSS(options?: IntegrationOptions): AstroIntegration {
-  options = { ...defaultOptions, ...options }
-  let astroBase: string | undefined
-  let buildOutput: 'static' | 'server' | undefined
+export default function masterCSS(options: IntegrationOptions = {}): AstroIntegration {
   return {
     name: '@stet-css/astro',
     hooks: {
-      'astro:config:setup': async ({ addMiddleware, injectScript, updateConfig }) => {
-        switch (options.mode) {
-          case 'progressive':
-          case 'runtime':
-            if (options.injectRuntime) {
-              injectScript('page', ASTRO_RUNTIME_INJECTION)
-            }
-            break
-        }
-        switch (options.mode) {
-          case 'pre-render':
-          case 'progressive':
-            addMiddleware({
-              order: 'pre',
-              entrypoint: ASTRO_MIDDLEWARE_ENTRYPOINT
-            })
-            break
-        }
+      'astro:config:setup': ({ updateConfig }) => {
         updateConfig({
           vite: {
-            plugins: [vitePlugin(getViteOptions(options)) as never],
-            ssr: {
-              external: ASTRO_SSR_EXTERNAL
-            },
-            build: {
-              rollupOptions: {
-                external: ASTRO_SSR_EXTERNAL
-              }
-            }
+            plugins: [vitePlugin({ ...options, mode: 'static' }) as never]
           }
         })
-      },
-      'astro:config:done': async ({ config, buildOutput: output }) => {
-        astroBase = config.base
-        buildOutput = output
-      },
-      'astro:build:done': async ({ dir }) => {
-        if (options.mode === 'runtime' && options.injectRuntime && buildOutput !== 'server') {
-          await preloadAstroRuntimeAssets(dir, astroBase)
-        }
-        switch (options.mode) {
-          case 'pre-render':
-          case 'progressive':
-            await externalizeAstroHydrationManifests(dir)
-            break
-        }
       }
     },
   }

@@ -1,18 +1,17 @@
 # @stet-css/astro
 
-Owns the Astro integration: it runs `@stet-css/vite` underneath, injects the runtime through Astro's `injectScript` for `runtime` and `progressive`, and registers `pre`-order **middleware** (`./middleware`) that renders CSS into server HTML for `pre-render` and `progressive`. After build it adds runtime manifest preloads (`src/runtime-preload.ts`) and externalizes hydration manifests.
+Owns the Astro integration: it registers `@stet-css/vite` in static mode through `astro:config:setup` and nothing else. It injects no runtime, registers no middleware and rewrites no built HTML.
 
 ## Boundaries
 
-- Mode semantics and option defaults live in `@stet-css/vite`; this package overrides only the mode default (`progressive`).
-- HTML rendering lives in `@stet-css/server`; Astro source extraction in `@stet-css/source`.
+- Static CSS generation, dev updates and the project class set live in `@stet-css/vite`; this package only forces `mode: 'static'` and drops `mode`, `injectRuntime` and `avoidFOUC` from its options type.
+- Astro source extraction lives in `@stet-css/source`.
 
 ## Risks
 
-- **Single runtime injection**: in `runtime` mode Astro injects the runtime itself and passes `injectRuntime: false` to the Vite plugin, so only one copy loads.
-- **Single pre-render path**: `pre-render` and `progressive` pass `mode: null` to the Vite plugin and render through middleware. Re-enabling Vite's HTML pre-render plugin for them needs duplicate-style handling first.
-- **Middleware timing**: both modes depend on the middleware seeing HTML before Astro sends or writes it.
+- **Split builds**: Astro builds the prerender, server and client environments separately; classes reach the CSS from the project's files, not from the modules a given environment compiles.
+- **Inline `@import`**: Astro inlines `@import` in `.astro` `<style>` blocks before Vite plugins run, so `@import '@stet-css/core'` there ships raw preset source. The supported pattern imports a `.css` file.
 
 ## Validation
 
-Build `examples/astro` when Astro rendering behaviour changes.
+Build `examples/astro` when Astro behaviour changes, and check that every class in its `.astro` files that generates a rule appears in `dist/_astro/*.css`.
