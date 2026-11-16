@@ -5,7 +5,7 @@ Runs the engine in the browser. `CSSRuntime` observes DOM class changes, keeps p
 ## Boundaries
 
 - Prerendering `style#master-css` and its hydration manifest → `@stet-css/server` (via engine `createHydrationManifest`); the manifest format → `@stet-css/schema/hydration-manifest`.
-- Framework provider lifecycle → the framework packages; when and how the runtime is injected → the build plugins.
+- Framework provider lifecycle → the framework packages. No build plugin injects the runtime: a project imports it itself with the two Vite virtual modules, `virtual:master-css-manifest` and `virtual:master-css-emitted-globals` (`examples/lit`).
 
 ## Risks
 
