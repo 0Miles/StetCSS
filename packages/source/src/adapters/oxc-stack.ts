@@ -1,10 +1,12 @@
+import { exceedsScriptNestingLimit } from '@stet-css/lexer'
 import { parseSync, type ParserOptions } from 'oxc-parser'
 import type { MessagePort, Worker } from 'node:worker_threads'
 
 // `@stet-css/source` (`src/adapters/oxc-stack.ts`) and `@stet-css/language`
-// (`src/utils/oxc-stack.ts`) each keep a copy of this file, because language
-// may not import source. They differ only in `PACKAGE_NAME`; a language test
-// fails when they drift apart.
+// (`src/utils/oxc-stack.ts`) each keep a copy of this file: language's AI.md
+// keeps its imports off source, and depending on source would change the
+// lockfile. They differ only in `PACKAGE_NAME`; a language test fails when
+// they drift apart.
 const PACKAGE_NAME = '@stet-css/source'
 
 type OxcParseResult = Pick<ReturnType<typeof parseSync>, 'program' | 'errors'>
@@ -23,10 +25,11 @@ interface StackWorker {
  * `exceedsScriptNestingLimit` has capped bracket nesting at 1024 levels.
  */
 export const INLINE_LENGTH = 1024
-// oxc-parser 0.137 spends at most about 320 bytes of native stack per source
-// character on the chains the prescan lets through (`a:` labels, `new`, `a=`),
-// so 1 KiB per character keeps 3x headroom; 16 MiB covers the 1024 levels of
-// brackets the prescan allows.
+// oxc-parser spends at most about 320 bytes (0.137) or 390 bytes (0.129, which
+// the VS Code extension ships) of native stack per source character on the
+// chains the prescan lets through (`a:` labels, `new`, `a=`), so 1 KiB per
+// character keeps 2.6x headroom; 16 MiB covers the 1024 levels of brackets the
+// prescan allows.
 const MIN_STACK_MB = 16
 const MAX_STACK_MB = 1024
 /**
@@ -76,11 +79,11 @@ let workerThreads: WorkerThreads | undefined
 let stackWorker: StackWorker | undefined
 let stackWorkerUnavailable = false
 let idleTimer: ReturnType<typeof setTimeout> | undefined
-let warned = false
+const warnedMessages = new Set<string>()
 
 function warnOnce(message: string) {
-  if (warned) return
-  warned = true
+  if (warnedMessages.has(message)) return
+  warnedMessages.add(message)
   console.warn(`[${PACKAGE_NAME}] ${message}`)
 }
 
@@ -158,24 +161,11 @@ function getStackWorker(stackSizeMb: number) {
   return started
 }
 
-// Mirrors oxc-parser's `jsonParseAst`: JSON cannot carry BigInt or RegExp
-// literal values, so the binding lists the paths to fill in.
+// The binding's JSON cannot carry BigInt or RegExp literal values, which
+// oxc's own wrapper fills in afterwards; they stay `null` here, since only
+// string literals are read.
 function parseProgramJSON(json: string): OxcParseResult['program'] {
-  const { node, fixes } = JSON.parse(json) as { node: OxcParseResult['program'], fixes: (string | number)[][] }
-  for (const path of fixes) {
-    let literal: any = node
-    for (const key of path) literal = literal[key]
-    if (literal.bigint) {
-      literal.value = BigInt(literal.bigint)
-    } else {
-      try {
-        literal.value = new RegExp(literal.regex.pattern, literal.regex.flags)
-      } catch {
-        // Invalid, or syntax this Node.js version lacks; oxc leaves it unset too.
-      }
-    }
-  }
-  return node
+  return (JSON.parse(json) as { node: OxcParseResult['program'] }).node
 }
 
 function parseOnStackWorker(
@@ -210,21 +200,22 @@ function parseOnStackWorker(
  * `parseSync` from oxc-parser, run on a thread whose stack grows with the
  * source. oxc recurses once per nesting level, and overflowing the native stack
  * kills the host process, which no try/catch can stop. Returns `undefined`,
- * which callers treat as a parse failure, for sources past `MAX_PARSE_LENGTH`
- * and when a parse thread fails, times out, or cannot get the stack it needs.
- * Where no parse thread can start at all (browsers, hosts without worker
- * threads) it parses inline.
+ * which callers treat as a parse failure, for sources nested past
+ * `exceedsScriptNestingLimit` or longer than `MAX_PARSE_LENGTH`, and when a
+ * parse thread fails, times out, or cannot get the stack it needs. Where no
+ * parse thread can start at all (browsers, hosts without worker threads) it
+ * parses inline.
  *
- * Callers still gate on `exceedsScriptNestingLimit` first: brackets cost oxc
- * up to ten times more stack per character than the chains the prescan lets
- * through, and the stack sizing here assumes the prescan has capped them.
+ * The prescan runs first because brackets cost oxc up to ten times more stack
+ * per character than the chains it lets through, and the stack sizing here
+ * assumes it has capped them.
  */
 export function parseOxcOnSourceStack(
   filename: string,
   sourceText: string,
   options: ParserOptions
 ): OxcParseResult | undefined {
-  if (sourceText.length > MAX_PARSE_LENGTH) return
+  if (sourceText.length > MAX_PARSE_LENGTH || exceedsScriptNestingLimit(sourceText)) return
   if (sourceText.length <= INLINE_LENGTH || stackWorkerUnavailable) {
     return parseSync(filename, sourceText, options)
   }
