@@ -71,40 +71,33 @@ export default defineConfig({
 })
 ```
 
-`masterCSS()` uses `progressive` mode by default. It registers Astro middleware to pre-render initial CSS into `<style id="master-css">` and injects the runtime script for browser hydration. Source extraction for `.astro` files is handled automatically by `@stet-css/source`.
+`masterCSS()` builds static CSS. It reads classes from the project's files, `.astro` templates included, and writes their rules into the CSS that imports Master CSS. Nothing ships to the browser besides that CSS: no runtime script, no `<style id="master-css">`, no hydration manifest. `astro dev` updates the CSS when a class changes.
 
-In static builds with `mode: 'runtime'`, the integration modulepreloads the emitted manifest JSON module when it also injects the runtime script. `injectRuntime: false` disables both automatic runtime injection and the manifest JSON modulepreload. SSR-only Astro output does not receive this preload because the integration cannot reliably resolve the final client manifest asset URL at build time.
+Import Master CSS from a CSS file:
 
 ```css
+/* src/styles/global.css */
 @import '@stet-css/core';
 ```
 
-## Options
+and import that file from a layout or page:
 
-The `options` object extends `@stet-css/vite` plugin options and is passed to the Astro integration.
-
-```js
-import { defineConfig } from 'astro/config'
-import masterCSS from '@stet-css/astro'
-
-export default defineConfig({
-  integrations: [
-    masterCSS({
-      mode: 'static'
-    })
-  ]
-})
+```astro
+---
+import '../styles/global.css'
+---
 ```
 
-For `pre-render` and `progressive` modes, Astro owns the HTML rendering step through `@stet-css/astro/middleware`, so you do not need to add `@stet-css/server` manually.
+Do not write `@import '@stet-css/core'` inside an `.astro` `<style>` block, `is:global` or not. Astro inlines `@import` in `<style>` blocks before Vite plugins see them, so the page ships the raw preset source instead of generated CSS.
 
-Default options:
+## Options
+
+The options are the `@stet-css/vite` plugin options without `mode`, `injectRuntime` and `avoidFOUC`; the integration always builds static CSS.
 
 | Option | Default | Description |
 | --- | --- | --- |
-| `mode` | `'progressive'` | Astro defaults to progressive rendering. |
 | `scanner` | `undefined` | Scanner options passed through to the shared Vite pipeline. |
-| `injectRuntime` | `true` | Injects the browser runtime when the selected mode needs it. |
-| `avoidFOUC` | `true` | Adds runtime-mode FOUC protection. |
+
+To use the browser runtime instead, import `@stet-css/runtime` from your own client script.
 
 See the [Astro installation guide](https://rc.css.master.co/guide/installation/astro) for a full project setup.
