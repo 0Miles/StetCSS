@@ -67,7 +67,7 @@ describe('stylesheet CSS directives', () => {
     await scanner.init()
     const styleCSSSources = new Map()
     await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'app/entry.css'), `
-      @master entry;
+      @import "@stet-css/core";
       @source './**/*.tsx';
       @source not './**/*.test.tsx';
       @safelist 'font:semibold legacy-token';
@@ -97,7 +97,7 @@ describe('stylesheet CSS directives', () => {
     await scanner.init()
     const styleCSSSources = new Map()
     await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'app/entry.css'), `
-      @master entry;
+      @import "@stet-css/core";
       @source './templates/**/*.{liquid,cshtml,erb}';
     `)
     const css = await createExtractedCSS({
@@ -141,7 +141,7 @@ describe('stylesheet CSS directives', () => {
     await scanner.init()
     const styleCSSSources = new Map()
     await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'app/entry.css'), `
-      @master entry;
+      @import "@stet-css/core";
       @source './a/*.tsx';
       @source './b/*.tsx';
       @source not './a/skip.tsx';
