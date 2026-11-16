@@ -1,7 +1,7 @@
 import { join } from 'node:path'
 import { expect, test } from 'vitest'
 import masterCSS, { type PluginHost } from '../src'
-import writeFile from '../src/utils/write-file'
+import writeFile from './write-file-helper'
 import { buildProject } from './plugin-test-helper'
 
 function write(root: string, file: string, content: string) {
