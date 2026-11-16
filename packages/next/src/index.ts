@@ -114,11 +114,7 @@ function applyMasterCSSWebpackConfig(config: WebpackConfig, setup: MasterCSSNext
       resourceQuery: { not: [MASTER_CSS_MANIFEST_RESOURCE_QUERY] },
       use: [{
         ...setup.styleCSSLoader,
-        options: {
-          ...setup.styleCSSLoader.options,
-          writeOutput: true,
-          scannerOptions: setup.generatedCSSLoader.options.scannerOptions
-        }
+        options: { ...setup.styleCSSLoader.options, writeOutput: true }
       }]
     }
   )
@@ -233,6 +229,7 @@ function applyMasterCSSTurbopackConfig(turbopack: TurbopackConfig = {}, setup: M
 export function withMasterCSS<T extends NextConfig>(nextConfig: T = {} as T, options: Options = {}): T {
   const projectDir = process.cwd()
   const outputPath = ensureStaticOutputFile(projectDir)
+  const scannerOptions = options.scannerOptions ?? {}
   const setup: MasterCSSNextSetup = {
     projectDir,
     outputPath,
@@ -240,14 +237,12 @@ export function withMasterCSS<T extends NextConfig>(nextConfig: T = {} as T, opt
     virtualEmittedGlobalsPath: ensureVirtualEmittedGlobalsModulePath(projectDir),
     generatedCSSLoader: {
       loader: resolveLoaderPath('generated-css-loader.js'),
-      options: {
-        projectDir,
-        scannerOptions: options.scannerOptions ?? {}
-      }
+      options: { projectDir, scannerOptions }
     },
     styleCSSLoader: {
       loader: resolveLoaderPath('style-css-loader.js'),
-      options: { outputPath, projectDir }
+      // `scannerOptions` is read only when the entry writes the CSS itself (webpack).
+      options: { outputPath, projectDir, scannerOptions }
     },
     cssManifestLoaderPath: resolveLoaderPath('css-manifest-loader.js'),
     cssManifestImportLoaderPath: resolveLoaderPath('css-manifest-import-loader.js')
