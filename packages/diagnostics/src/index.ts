@@ -1,9 +1,11 @@
-import CSSScanner, { type ScannerOptions } from '@stet-css/scanner'
+import CSSScanner from '@stet-css/scanner'
 import {
   createExtractedCSSResult,
+  mergeStylesheetDirectives,
   registerStyleCSSSource,
   resolveStylesheetSourceFiles,
-  type StyleCSSSources
+  type StyleCSSSources,
+  type StylesheetDirectives
 } from '@stet-css/stylesheet'
 import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
 import fs from 'node:fs'
@@ -166,14 +168,14 @@ function parseClassChecks(value: string[] | string | undefined) {
     : value?.split(/\s+/).map((item) => item.trim()).filter(Boolean) ?? []
 }
 
-function isBlocklisted(className: string, blocklist: ScannerOptions['blocklist']) {
-  return blocklist?.some((pattern) => {
+function isBlocklisted(className: string, blocklist: StylesheetDirectives['blocklist']) {
+  return blocklist.some((pattern) => {
     if (typeof pattern === 'string') return pattern === className
     pattern.lastIndex = 0
     const matched = pattern.test(className)
     pattern.lastIndex = 0
     return matched
-  }) ?? false
+  })
 }
 
 function createScannerClassDiagnostics(scanner: CSSScanner, firstSourceByClass: Map<string, string>): MasterCSSInspectionDiagnostic[] {
@@ -219,22 +221,30 @@ function collectNativeCSSClassNames(css: string, classNames: Set<string>) {
   return classNames
 }
 
-function classifyMissingCSS(scanner: CSSScanner, nativeRuleClasses: Set<string>, className: string): MasterCSSMissingCSSResult {
-  const safelist = scanner.options.safelist ?? []
-  if (scanner.validClasses.has(className)) {
-    return { className, status: 'present', reason: 'generated' }
-  }
+/**
+ * Classifies a checked class by the class set's rule: `@blocklist` removes a class whatever
+ * detected it, and `@safelist` adds one no file uses.
+ */
+function classifyMissingCSS(
+  scanner: CSSScanner,
+  directives: StylesheetDirectives,
+  nativeRuleClasses: Set<string>,
+  className: string
+): MasterCSSMissingCSSResult {
   if (nativeRuleClasses.has(className)) {
     return { className, status: 'present', reason: 'native-css' }
   }
-  if (safelist.includes(className)) {
+  if (isBlocklisted(className, directives.blocklist)) {
+    return { className, status: 'missing', reason: 'blocklisted' }
+  }
+  if (scanner.validClasses.has(className)) {
+    return { className, status: 'present', reason: 'generated' }
+  }
+  if (directives.safelist.includes(className)) {
     return { className, status: 'present', reason: 'safelist' }
   }
   if (scanner.invalidClasses.has(className)) {
     return { className, status: 'missing', reason: 'invalid' }
-  }
-  if (isBlocklisted(className, scanner.options.blocklist)) {
-    return { className, status: 'missing', reason: 'blocklisted' }
   }
   return { className, status: 'missing', reason: 'not-detected' }
 }
@@ -420,10 +430,6 @@ export async function createMasterCSSInspectionReport(options: CreateMasterCSSIn
   const firstSourceByClass = new Map<string, string>()
   const diagnostics: MasterCSSInspectionDiagnostic[] = []
 
-  scanner.on('init', (scannerOptions: ScannerOptions) => {
-    scannerOptions.verbose = 0
-  })
-
   try {
     await scanner.init()
     const stylesheetInspection = await registerManagedCSSEntries(scanner, styleCSSSources, options.resolveExistingFile)
@@ -452,7 +458,10 @@ export async function createMasterCSSInspectionReport(options: CreateMasterCSSIn
       projectDir: scanner.cwd,
       sources
     })
-    const missingResults = classChecks.map((className) => classifyMissingCSS(scanner, stylesheetInspection.nativeRuleClasses, className))
+    const directives = mergeStylesheetDirectives(
+      ...Array.from(styleCSSSources.values(), (styleSource) => styleSource.directives)
+    )
+    const missingResults = classChecks.map((className) => classifyMissingCSS(scanner, directives, stylesheetInspection.nativeRuleClasses, className))
     diagnostics.push(...createScannerClassDiagnostics(scanner, firstSourceByClass))
     diagnostics.push(...createMissingCSSDiagnostics(missingResults))
 
@@ -469,15 +478,15 @@ export async function createMasterCSSInspectionReport(options: CreateMasterCSSIn
           latent: scanner.latentClasses.size,
           valid: scanner.validClasses.size,
           invalid: scanner.invalidClasses.size,
-          safelist: scanner.options.safelist?.length ?? 0,
-          blocklist: scanner.options.blocklist?.length ?? 0
+          safelist: directives.safelist.length,
+          blocklist: directives.blocklist.length
         },
         classes: {
           latent: sortedValues(scanner.latentClasses),
           valid: sortedValues(scanner.validClasses),
           invalid: sortedValues(scanner.invalidClasses),
-          safelist: sortedValues(scanner.options.safelist ?? []),
-          blocklist: (scanner.options.blocklist ?? []).map(String).sort()
+          safelist: sortedValues(directives.safelist),
+          blocklist: directives.blocklist.map(String).sort()
         },
         resetDependencies: sortedValues(scanner.resetDependencies)
       },
