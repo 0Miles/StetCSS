@@ -3,14 +3,17 @@
 // fall out of (or linger in) the shared-version release.
 //
 // A published package is any workspace package named `@stet-css/*` that is
-// not `private`. The VS Code extension, examples, benchmarks, and shared fall
-// outside that set by name or by `private`.
+// not `private`. Examples, benchmarks, and shared fall outside that set by
+// name or by `private`. The VS Code extension ships to the Marketplace through
+// `release:vscode`, so it stays out even if a rename puts it in the scope.
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const root = join(import.meta.dirname, '..')
 const SCOPE = '@stet-css/'
+const FIRST_VERSION = '0.1.0'
+const NOT_RELEASED_BY_RELEASE_PLEASE = new Set(['packages/vscode'])
 const readJson = (path) => JSON.parse(readFileSync(join(root, path), 'utf8'))
 
 function workspaceDirs() {
@@ -30,6 +33,7 @@ function workspaceDirs() {
 
 const published = new Map()
 for (const dir of workspaceDirs()) {
+    if (NOT_RELEASED_BY_RELEASE_PLEASE.has(dir)) continue
     const pkg = readJson(`${dir}/package.json`)
     if (pkg.name?.startsWith(SCOPE) && !pkg.private) published.set(dir, pkg)
 }
@@ -75,6 +79,12 @@ for (const [dir, pkg] of published) {
 const versions = new Set(Object.values(manifest))
 if (versions.size > 1) {
     errors.push(`manifest versions differ, but every package shares one version: ${[...versions].join(', ')}`)
+}
+
+// release-please treats a 0.0.0 manifest as never released and proposes
+// `initial-version`, which defaults to 1.0.0. The first release is 0.1.0.
+if (versions.has('0.0.0') && config['initial-version'] !== FIRST_VERSION) {
+    errors.push(`the manifest is still at 0.0.0, so release-please-config.json needs "initial-version": "${FIRST_VERSION}" (found ${JSON.stringify(config['initial-version'])}); without it the first release is 1.0.0`)
 }
 
 if (errors.length) {

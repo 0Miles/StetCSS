@@ -102,10 +102,11 @@
 **版號與 release PR**
 
 - 每個要發佈的 `@stet-css/*` 共用一個版號，設定在 `release-please-config.json`（`linked-versions`）與 `.release-please-manifest.json`。VS Code 擴充、examples、benchmarks、shared 不在裡面，VS Code 擴充照舊用 `release:vscode`。
-- 推到 main 時，`.github/workflows/release-please.yml` 開出或更新 release PR：新版號、各套件的 `CHANGELOG.md`，再把 `bun.lock` 同步後 commit 回 PR 分支。它不發佈任何東西。
-- 版號由 commit 類型決定。1.0 之前：`fix` 升 patch，`feat` 升 minor，帶 `!` 的破壞性變更也只升 minor。目前的版號是 `0.0.0`（還沒發佈過）；changelog 從 config 的 `bootstrap-sha` 之後算起，這段期間只要有一個 `feat` 或帶 `!` 的 commit，第一張 release PR 就是 `0.1.0`。如果它顯示的不是 `0.1.0`，在 config 頂層加 `"release-as": "0.1.0"`，release PR 合併後再拿掉。
+- 推到 main 時，`.github/workflows/release-please.yml` 開出或更新 release PR：新版號、各套件的 `CHANGELOG.md`，再把 `bun.lock` 同步後 commit 回 PR 分支。它不發佈到 npm；release PR 合併後，下一次執行會替每個套件建立 GitHub release 與 tag（`<套件名>-v<版號>`，例如 `core-v0.1.0`）。
+- 目前的版號是 `0.0.0`，代表還沒發佈過。release-please 把 manifest 裡的 `0.0.0` 當成沒有前一版，第一張 release PR 不看 commit 類型，直接用 config 的 `initial-version`（`0.1.0`）；changelog 從 config 的 `bootstrap-sha` 之後算起。發佈過之後 `initial-version` 不再作用，不必拿掉。
+- 之後的版號由 commit 類型決定。1.0 之前：`fix` 升 patch（`0.1.0` → `0.1.1`），`feat` 升 minor（→ `0.2.0`），帶 `!` 的破壞性變更也只升 minor（→ `0.2.0`）。
 - workflow 只在 repo 變數 `RELEASE_PLEASE_ENABLED` 是 `true` 時執行。release PR 要能觸發 CI，得有 repo secret `RELEASE_PLEASE_TOKEN`（GitHub App token 或 fine-grained PAT）；沒有時退回 `GITHUB_TOKEN`，release PR 不會有 `required`。兩者都由維護者設定。
-- 不要手改版號或 manifest：它們只由 release PR 改。
+- 不要手改版號，版號只由 release PR 改。新增或移除套件時，在 manifest 加或刪那一行，版號照目前的共用版號。
 
 ## 實機驗收
 
