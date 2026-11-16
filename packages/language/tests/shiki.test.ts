@@ -2,19 +2,19 @@ import { expect, test } from 'vitest'
 import { createHighlighter } from 'shiki'
 import sharedTextMateGrammar from '../syntaxes/stet-css.tmLanguage.json' with { type: 'json' }
 
-import masterCSSShikiLanguages, {
-  MASTER_CSS_TEXTMATE_GRAMMAR,
-  createMasterCSSShikiDecorations,
-  getMasterCSSShikiLanguageId,
-  isMasterCSSClassListLanguage,
-  isMasterCSSShikiSupportedLanguage,
-  masterCSSShikiLanguage,
-  transformerMasterCSS
+import stetCSSShikiLanguages, {
+  STET_CSS_TEXTMATE_GRAMMAR,
+  createStetCSSShikiDecorations,
+  getStetCSSShikiLanguageId,
+  isStetCSSClassListLanguage,
+  isStetCSSShikiSupportedLanguage,
+  stetCSSShikiLanguage,
+  transformerStetCSS
 } from '../src/shiki'
-import type { MasterCSSShikiOptions } from '../src/shiki'
+import type { StetCSSShikiOptions } from '../src/shiki'
 import { createPresetManifest } from './helpers/create-preset-manifest'
 
-const manifest: MasterCSSShikiOptions['manifest'] = createPresetManifest({
+const manifest: StetCSSShikiOptions['manifest'] = createPresetManifest({
   variables: [{ key: 'brand', value: '#123456' }],
   utilities: [
     {
@@ -89,7 +89,7 @@ function expectTokensPreserveSource(tokens: ShikiContentToken[][], code: string)
 }
 
 function grammarEntry(key: string) {
-  const entry = MASTER_CSS_TEXTMATE_GRAMMAR.repository[key] as { patterns?: TextMatePattern[] } | undefined
+  const entry = STET_CSS_TEXTMATE_GRAMMAR.repository[key] as { patterns?: TextMatePattern[] } | undefined
   expect(entry?.patterns).toBeDefined()
   return entry as { patterns: TextMatePattern[] }
 }
@@ -107,14 +107,14 @@ function expectGrammarIncludes(entry: { patterns: TextMatePattern[] }, includes:
 }
 
 test.concurrent('exports Shiki language registrations as a default array', async () => {
-  expect(masterCSSShikiLanguages).toEqual([masterCSSShikiLanguage])
-  expect((await import('../src/shiki')).default).toBe(masterCSSShikiLanguages)
+  expect(stetCSSShikiLanguages).toEqual([stetCSSShikiLanguage])
+  expect((await import('../src/shiki')).default).toBe(stetCSSShikiLanguages)
 })
 
 test.concurrent('defines deterministic TextMate grammar scopes for CSS directives', () => {
-  expect(MASTER_CSS_TEXTMATE_GRAMMAR).toBe(sharedTextMateGrammar)
-  expect(masterCSSShikiLanguage.scopeName).toBe(sharedTextMateGrammar.scopeName)
-  expect(masterCSSShikiLanguage.injectTo).toEqual([
+  expect(STET_CSS_TEXTMATE_GRAMMAR).toBe(sharedTextMateGrammar)
+  expect(stetCSSShikiLanguage.scopeName).toBe(sharedTextMateGrammar.scopeName)
+  expect(stetCSSShikiLanguage.injectTo).toEqual([
     'source.css',
     'source.css.scss',
     'source.css.less',
@@ -165,7 +165,7 @@ test('supports Shiki dynamic language imports', async () => {
   })
 
   try {
-    expect(highlighter.getLoadedLanguages()).toEqual(expect.arrayContaining(['css', masterCSSShikiLanguage.name]))
+    expect(highlighter.getLoadedLanguages()).toEqual(expect.arrayContaining(['css', stetCSSShikiLanguage.name]))
 
     const code = '@theme { --color-primary: var(--value); }'
     const result = highlighter.codeToTokens(code, {
@@ -182,11 +182,11 @@ test('supports Shiki dynamic language imports', async () => {
 test('registers a real Shiki TextMate injection grammar for CSS directives', async () => {
   const highlighter = await createHighlighter({
     themes: [shikiSmokeTheme],
-    langs: ['css', masterCSSShikiLanguage]
+    langs: ['css', stetCSSShikiLanguage]
   })
 
   try {
-    expect(highlighter.getLoadedLanguages()).toEqual(expect.arrayContaining(['css', masterCSSShikiLanguage.name]))
+    expect(highlighter.getLoadedLanguages()).toEqual(expect.arrayContaining(['css', stetCSSShikiLanguage.name]))
 
     const code = [
       '@theme {',
@@ -216,7 +216,7 @@ test('registers a real Shiki TextMate injection grammar for CSS directives', asy
 test('keeps guide theme snippets correct with TextMate only', async () => {
   const highlighter = await createHighlighter({
     themes: [shikiSmokeTheme],
-    langs: ['css', masterCSSShikiLanguage]
+    langs: ['css', stetCSSShikiLanguage]
   })
 
   try {
@@ -244,14 +244,14 @@ test.concurrent('does not attach semantic metadata to guide theme CSS directive 
     '    --tracking-tightest: -0.072em;',
     '}'
   ].join('\n')
-  const transformer = transformerMasterCSS({ matchCSSSyntaxStyles: false })
+  const transformer = transformerStetCSS({ matchCSSSyntaxStyles: false })
   const transformedTokens = transformer.tokens.call({
     source: code,
     options: { lang: 'css' }
   }, [[{ content: code, offset: 0, htmlStyle: { color: 'host' } }]])
 
   expect(transformedTokens).toBeUndefined()
-  expect(createMasterCSSShikiDecorations(code, { lang: 'css' })).toEqual([])
+  expect(createStetCSSShikiDecorations(code, { lang: 'css' })).toEqual([])
 })
 
 test.concurrent('does not resolve guide theme CSS directive syntax through semantic scope styles', () => {
@@ -260,7 +260,7 @@ test.concurrent('does not resolve guide theme CSS directive syntax through seman
     '    --tracking-tightest: -0.072em;',
     '}'
   ].join('\n')
-  const transformer = transformerMasterCSS({ manifest })
+  const transformer = transformerStetCSS({ manifest })
   const transformedTokens = transformer.tokens.call({
     source: code,
     options: { lang: 'css' },
@@ -284,27 +284,27 @@ test.concurrent('does not create Master Shiki decorations for native-only CSS', 
     '}'
   ].join('\n')
 
-  expect(createMasterCSSShikiDecorations(code, { lang: 'css' })).toEqual([])
+  expect(createStetCSSShikiDecorations(code, { lang: 'css' })).toEqual([])
 })
 
 test.concurrent('normalizes Shiki language ids separately from class-list languages', () => {
-  expect(getMasterCSSShikiLanguageId('js')).toBe('javascript')
-  expect(getMasterCSSShikiLanguageId('jsx')).toBe('jsx')
-  expect(getMasterCSSShikiLanguageId('tsx')).toBe('tsx')
-  expect(getMasterCSSShikiLanguageId('angular-html')).toBe('angular-html')
-  expect(getMasterCSSShikiLanguageId('md')).toBe('markdown')
-  expect(isMasterCSSShikiSupportedLanguage('typescriptreact')).toBe(true)
-  expect(isMasterCSSShikiSupportedLanguage('mcss')).toBe(false)
-  expect(isMasterCSSClassListLanguage('mcss')).toBe(true)
-  expect(isMasterCSSClassListLanguage('stet-css')).toBe(true)
-  expect(isMasterCSSClassListLanguage('master-css')).toBe(false)
-  expect(transformerMasterCSS().name).toBe('stet-css')
-  expect(masterCSSShikiLanguage).toMatchObject({ name: 'StetCSS Directive Injection', scopeName: 'stet-css.directive.injection' })
+  expect(getStetCSSShikiLanguageId('js')).toBe('javascript')
+  expect(getStetCSSShikiLanguageId('jsx')).toBe('jsx')
+  expect(getStetCSSShikiLanguageId('tsx')).toBe('tsx')
+  expect(getStetCSSShikiLanguageId('angular-html')).toBe('angular-html')
+  expect(getStetCSSShikiLanguageId('md')).toBe('markdown')
+  expect(isStetCSSShikiSupportedLanguage('typescriptreact')).toBe(true)
+  expect(isStetCSSShikiSupportedLanguage('mcss')).toBe(false)
+  expect(isStetCSSClassListLanguage('mcss')).toBe(true)
+  expect(isStetCSSClassListLanguage('stet-css')).toBe(true)
+  expect(isStetCSSClassListLanguage('master-css')).toBe(false)
+  expect(transformerStetCSS().name).toBe('stet-css')
+  expect(stetCSSShikiLanguage).toMatchObject({ name: 'StetCSS Directive Injection', scopeName: 'stet-css.directive.injection' })
 })
 
 test.concurrent('creates Shiki decorations from Master CSS semantic tokens', () => {
   const code = '<div className="fg:brand:hover@sm block btn btn:hover@sm btn_div::before"></div>'
-  const decorations = createMasterCSSShikiDecorations(code, {
+  const decorations = createStetCSSShikiDecorations(code, {
     lang: 'tsx',
     manifest
   })
@@ -384,7 +384,7 @@ test.concurrent('creates Shiki decorations for CSS directive class-list spans', 
     '    }',
     '}'
   ].join('\n')
-  const decorations = createMasterCSSShikiDecorations(code, {
+  const decorations = createStetCSSShikiDecorations(code, {
     lang: 'css',
     manifest
   })
@@ -449,7 +449,7 @@ test.concurrent('creates Shiki decorations for CSS directive class-list spans', 
 
 test.concurrent('creates Shiki decorations for raw Master CSS class lists', () => {
   const code = 'fg:brand:hover@sm {bg:blue;fg:white}'
-  const decorations = createMasterCSSShikiDecorations(code, {
+  const decorations = createStetCSSShikiDecorations(code, {
     lang: 'mcss',
     classList: true,
     manifest
@@ -473,7 +473,7 @@ test.concurrent('creates Shiki decorations for raw Master CSS class lists', () =
 
 test.concurrent('skips semantic token decorations inside host comments', () => {
   const code = '<!-- <div class="fg:red"></div> -->\n<div class="fg:blue"></div>'
-  const decorations = createMasterCSSShikiDecorations(code, {
+  const decorations = createStetCSSShikiDecorations(code, {
     lang: 'html'
   })
   const texts = decorations.map((decoration) => code.slice(decoration.start, decoration.end))
@@ -484,7 +484,7 @@ test.concurrent('skips semantic token decorations inside host comments', () => {
 
 test.concurrent('applies semantic token styles by type and modifier', () => {
   const code = '<div class="block block:hover btn:hover"></div>'
-  const decorations = createMasterCSSShikiDecorations(code, {
+  const decorations = createStetCSSShikiDecorations(code, {
     lang: 'html',
     manifest,
     semanticTokenStyles: {
@@ -523,7 +523,7 @@ test.concurrent('applies semantic decorations in the Shiki tokens hook', () => {
       { start: 0, end: 0, properties: { class: 'existing-decoration' } }
     ]
   }
-  const transformer = transformerMasterCSS({
+  const transformer = transformerStetCSS({
     manifest,
     classPrefix: 'master-css-token',
     dataAttributes: false,
@@ -564,7 +564,7 @@ test.concurrent('uses semantic token scope styles for selector semantic tokens',
   const options = {
     lang: 'html'
   }
-  const transformer = transformerMasterCSS({ manifest })
+  const transformer = transformerStetCSS({ manifest })
   const transformedTokens = transformer.tokens.call({
     source: code,
     options,
@@ -624,7 +624,7 @@ test.concurrent('uses semantic token scope styles for documentation Master CSS t
   const cssOptions = {
     lang: 'css'
   }
-  const transformer = transformerMasterCSS({ manifest })
+  const transformer = transformerStetCSS({ manifest })
   const syntaxTokens = semanticScopeStyleTokens()
   const htmlTransformedTokens = transformer.tokens.call({
     source: htmlCode,
@@ -726,7 +726,7 @@ test.concurrent('uses semantic token scope styles for CSS directive class-list t
     '    }',
     '}'
   ].join('\n')
-  const transformer = transformerMasterCSS()
+  const transformer = transformerStetCSS()
   const transformedTokens = transformer.tokens.call({
     source: code,
     options: { lang: 'css' },

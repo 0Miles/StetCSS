@@ -3,7 +3,7 @@ import {
   SEMANTIC_TOKEN_TYPES,
   SEMANTIC_TOKENS_LEGEND
 } from './common'
-import { defaultManifest, StetCSS, matchesLanguageServiceNativeDeclaration } from './master-css'
+import { defaultManifest, StetCSS, matchesLanguageServiceNativeDeclaration } from './stet-css'
 import { collectClassListHighlightTokenItems } from './semantic/tokenize-class'
 import { collectCSSHighlightTokenItems, isCSSSemanticTokenDocument } from './semantic/tokenize-css'
 import { toSemanticTokenItems, type HighlightTokenItem } from './semantic/highlight'

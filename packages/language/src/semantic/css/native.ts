@@ -32,17 +32,17 @@ function pushDeclarationProperty(source: string, start: number, end: number, tok
   pushHighlightToken(tokens, propertyRange.start, property.length, 'property', 'declaration.property')
 }
 
-function isMasterVariableStart(source: string, index: number) {
+function isStetVariableStart(source: string, index: number) {
   return source[index] === '$' && /[_a-zA-Z-]/.test(source[index + 1] || '')
 }
 
-function readMasterVariable(source: string, index: number) {
+function readStetVariable(source: string, index: number) {
   let end = index + 2
   while (/[_a-zA-Z0-9-]/.test(source[end] || '')) end++
   return end
 }
 
-function tokenizeMasterCSSValueSyntax(source: string, start: number, end: number, tokens: HighlightTokenItem[]) {
+function tokenizeStetCSSValueSyntax(source: string, start: number, end: number, tokens: HighlightTokenItem[]) {
   for (let cursor = start; cursor < end; cursor++) {
     const char = source[cursor]
     const next = source[cursor + 1]
@@ -58,8 +58,8 @@ function tokenizeMasterCSSValueSyntax(source: string, start: number, end: number
       continue
     }
 
-    if (isMasterVariableStart(source, cursor)) {
-      const variableEnd = readMasterVariable(source, cursor)
+    if (isStetVariableStart(source, cursor)) {
+      const variableEnd = readStetVariable(source, cursor)
       pushHighlightToken(tokens, cursor, variableEnd - cursor, 'variable', 'value.variable')
       cursor = variableEnd - 1
       continue
@@ -76,7 +76,7 @@ export function tokenizeDeclarations(source: string, start: number, end: number,
   for (const declaration of collectCSSDeclarationRanges(source, start, end)) {
     pushDeclarationProperty(source, declaration.propertyRange.start, declaration.propertyRange.end, tokens, options.declarationProperties)
     pushHighlightToken(tokens, declaration.separatorRange.start, declaration.separatorRange.end - declaration.separatorRange.start, 'operator', 'declaration.separator')
-    tokenizeMasterCSSValueSyntax(source, declaration.valueRange.start, declaration.valueRange.end, tokens)
+    tokenizeStetCSSValueSyntax(source, declaration.valueRange.start, declaration.valueRange.end, tokens)
     if (declaration.terminatorRange) {
       pushHighlightToken(tokens, declaration.terminatorRange.start, declaration.terminatorRange.end - declaration.terminatorRange.start, 'operator', 'declaration.terminator')
     }

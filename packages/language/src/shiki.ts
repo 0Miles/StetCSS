@@ -1,26 +1,26 @@
 import { SEMANTIC_TOKEN_MODIFIERS } from './common'
-import masterCSSTextMateGrammar from '../syntaxes/stet-css.tmLanguage.json' with { type: 'json' }
+import stetCSSTextMateGrammar from '../syntaxes/stet-css.tmLanguage.json' with { type: 'json' }
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import languageSettings, { type LanguageSettings } from './settings'
 import { collectHighlightTokenItems } from './render-semantic-tokens'
 import type { HighlightTokenItem, HighlightTokenRole } from './semantic/highlight'
 import { collectClassListHighlightTokenItems } from './semantic/tokenize-class'
 import getClassPositions from './utils/get-class-positions'
-import { createLanguageCSS, defaultManifest, type StetCSS } from './master-css'
+import { createLanguageCSS, defaultManifest, type StetCSS } from './stet-css'
 import {
-  MASTER_CSS_SEMANTIC_TOKEN_SCOPE_MAP,
-  getMasterCSSSemanticTokenScopeKeys
+  STET_CSS_SEMANTIC_TOKEN_SCOPE_MAP,
+  getStetCSSSemanticTokenScopeKeys
 } from './semantic/scopes'
 
-export const MASTER_CSS_SHIKI_SCOPE_NAME = 'stet-css.directive.injection'
-export const MASTER_CSS_SHIKI_INJECT_TO = [
+export const STET_CSS_SHIKI_SCOPE_NAME = 'stet-css.directive.injection'
+export const STET_CSS_SHIKI_INJECT_TO = [
   'source.css',
   'source.css.scss',
   'source.css.less',
   'source.css.postcss'
 ] as const
 
-export interface MasterCSSTextMateGrammar {
+export interface StetCSSTextMateGrammar {
   name: string
   scopeName: string
   injectionSelector: string
@@ -29,24 +29,24 @@ export interface MasterCSSTextMateGrammar {
   [key: string]: any
 }
 
-export const MASTER_CSS_TEXTMATE_GRAMMAR = masterCSSTextMateGrammar as MasterCSSTextMateGrammar
+export const STET_CSS_TEXTMATE_GRAMMAR = stetCSSTextMateGrammar as StetCSSTextMateGrammar
 
-export function createMasterCSSShikiLanguageRegistration(): MasterCSSTextMateGrammar & { injectTo: string[] } {
+export function createStetCSSShikiLanguageRegistration(): StetCSSTextMateGrammar & { injectTo: string[] } {
   return {
-    ...MASTER_CSS_TEXTMATE_GRAMMAR,
-    injectTo: [...MASTER_CSS_SHIKI_INJECT_TO]
+    ...STET_CSS_TEXTMATE_GRAMMAR,
+    injectTo: [...STET_CSS_SHIKI_INJECT_TO]
   }
 }
 
-export const masterCSSShikiLanguage = createMasterCSSShikiLanguageRegistration()
+export const stetCSSShikiLanguage = createStetCSSShikiLanguageRegistration()
 
 type SemanticTokenType = HighlightTokenItem['type']
 type SemanticTokenModifier = typeof SEMANTIC_TOKEN_MODIFIERS[number]
-export type MasterCSSShikiSemanticTokenStyleKey = SemanticTokenType | `${SemanticTokenType}.${SemanticTokenModifier}`
-export type MasterCSSShikiHighlightRoleStyleKey = HighlightTokenRole
-export type MasterCSSShikiSemanticTokenStyle = string | Record<string, string>
-export type MasterCSSShikiSemanticTokenStyles = Partial<Record<MasterCSSShikiSemanticTokenStyleKey, MasterCSSShikiSemanticTokenStyle>>
-export type MasterCSSShikiHighlightRoleStyles = Partial<Record<MasterCSSShikiHighlightRoleStyleKey, MasterCSSShikiSemanticTokenStyle>>
+export type StetCSSShikiSemanticTokenStyleKey = SemanticTokenType | `${SemanticTokenType}.${SemanticTokenModifier}`
+export type StetCSSShikiHighlightRoleStyleKey = HighlightTokenRole
+export type StetCSSShikiSemanticTokenStyle = string | Record<string, string>
+export type StetCSSShikiSemanticTokenStyles = Partial<Record<StetCSSShikiSemanticTokenStyleKey, StetCSSShikiSemanticTokenStyle>>
+export type StetCSSShikiHighlightRoleStyles = Partial<Record<StetCSSShikiHighlightRoleStyleKey, StetCSSShikiSemanticTokenStyle>>
 interface ShikiToken {
   content: string
   offset: number
@@ -98,7 +98,7 @@ interface ShikiTransformer {
   tokens(this: ShikiTransformerContext, tokens: ShikiToken[][]): ShikiToken[][] | undefined
 }
 
-export interface MasterCSSShikiDecoration extends Omit<ShikiDecoration, 'start' | 'end'> {
+export interface StetCSSShikiDecoration extends Omit<ShikiDecoration, 'start' | 'end'> {
   start: number
   end: number
   type: SemanticTokenType
@@ -106,7 +106,7 @@ export interface MasterCSSShikiDecoration extends Omit<ShikiDecoration, 'start' 
   modifiers: SemanticTokenModifier[]
 }
 
-export interface MasterCSSShikiOptions {
+export interface StetCSSShikiOptions {
   /**
    * Reuse an existing Master CSS instance when the caller already owns a
    * configured language engine.
@@ -153,12 +153,12 @@ export interface MasterCSSShikiOptions {
    * decorated range, which keeps tokens such as `block` and `block:hover`
    * visually aligned when they share the same semantic type.
    */
-  semanticTokenStyles?: MasterCSSShikiSemanticTokenStyles
+  semanticTokenStyles?: StetCSSShikiSemanticTokenStyles
   /**
    * Inline styles applied by CSS-native highlight role. Role styles are the
    * most precise presentation override and are shared across host languages.
    */
-  highlightRoleStyles?: MasterCSSShikiHighlightRoleStyles
+  highlightRoleStyles?: StetCSSShikiHighlightRoleStyles
   /**
    * Resolve Master CSS semantic token scopes through the active Shiki
    * theme when possible. When disabled, the transformer only splits tokens
@@ -214,24 +214,24 @@ const languageServiceLanguageIds: Record<string, string> = {
   markdown: 'markdown',
   mdx: 'mdx'
 }
-const masterCSSClassListLanguageIds = new Set(['mcss', 'stet-css'])
-const masterCSSShikiSupportedLanguageIds = new Set([
+const stetCSSClassListLanguageIds = new Set(['mcss', 'stet-css'])
+const stetCSSShikiSupportedLanguageIds = new Set([
   ...Object.keys(shikiLanguageIds),
   ...Object.values(shikiLanguageIds)
 ])
 
-export function isMasterCSSClassListLanguage(lang?: string) {
-  return Boolean(lang && masterCSSClassListLanguageIds.has(lang))
+export function isStetCSSClassListLanguage(lang?: string) {
+  return Boolean(lang && stetCSSClassListLanguageIds.has(lang))
 }
 
-export function getMasterCSSShikiLanguageId(lang?: string) {
+export function getStetCSSShikiLanguageId(lang?: string) {
   if (!lang) return
   return shikiLanguageIds[lang] ?? lang
 }
 
-export function isMasterCSSShikiSupportedLanguage(lang?: string) {
-  const languageId = getMasterCSSShikiLanguageId(lang)
-  return Boolean(languageId && masterCSSShikiSupportedLanguageIds.has(languageId))
+export function isStetCSSShikiSupportedLanguage(lang?: string) {
+  const languageId = getStetCSSShikiLanguageId(lang)
+  return Boolean(languageId && stetCSSShikiSupportedLanguageIds.has(languageId))
 }
 
 function createShikiDocument(code: string, lang?: string) {
@@ -241,11 +241,11 @@ function createShikiDocument(code: string, lang?: string) {
   return TextDocument.create(`file:///stet-css-shiki.${uriLang}`, languageId, 0, code)
 }
 
-function createShikiCSS(options: MasterCSSShikiOptions) {
+function createShikiCSS(options: StetCSSShikiOptions) {
   return options.css || createLanguageCSS(options.manifest ?? options.settings?.manifest ?? defaultManifest)
 }
 
-function createShikiSettings(options: MasterCSSShikiOptions): LanguageSettings {
+function createShikiSettings(options: StetCSSShikiOptions): LanguageSettings {
   return {
     ...languageSettings,
     ...options.settings,
@@ -253,7 +253,7 @@ function createShikiSettings(options: MasterCSSShikiOptions): LanguageSettings {
   }
 }
 
-function stringifyStyle(style: MasterCSSShikiSemanticTokenStyle) {
+function stringifyStyle(style: StetCSSShikiSemanticTokenStyle) {
   if (typeof style === 'string') return style
   return Object.entries(style)
     .map(([property, value]) => `${property}:${value}`)
@@ -263,20 +263,20 @@ function stringifyStyle(style: MasterCSSShikiSemanticTokenStyle) {
 function resolveSemanticTokenStyle(
   type: SemanticTokenType,
   modifiers: SemanticTokenModifier[],
-  styles?: MasterCSSShikiSemanticTokenStyles
+  styles?: StetCSSShikiSemanticTokenStyles
 ) {
   if (!styles) return
   const matchedStyles = [
     styles[type],
-    ...modifiers.map((modifier) => styles[`${type}.${modifier}` as MasterCSSShikiSemanticTokenStyleKey])
-  ].filter((style): style is MasterCSSShikiSemanticTokenStyle => Boolean(style))
+    ...modifiers.map((modifier) => styles[`${type}.${modifier}` as StetCSSShikiSemanticTokenStyleKey])
+  ].filter((style): style is StetCSSShikiSemanticTokenStyle => Boolean(style))
   if (!matchedStyles.length) return
   return matchedStyles.map(stringifyStyle).join(';')
 }
 
 function resolveHighlightTokenStyle(
   item: Pick<HighlightTokenItem, 'role' | 'type' | 'modifiers'>,
-  options: MasterCSSShikiOptions
+  options: StetCSSShikiOptions
 ) {
   const roleStyle = options.highlightRoleStyles?.[item.role]
   if (roleStyle) return stringifyStyle(roleStyle)
@@ -348,8 +348,8 @@ function mergeClassProperty(current: unknown, next: unknown) {
 
 function applySemanticDecorationToToken(
   token: ShikiToken,
-  decorations: MasterCSSShikiDecoration[],
-  resolveSyntaxStyle?: (token: ShikiToken, decoration: MasterCSSShikiDecoration, decorations: MasterCSSShikiDecoration[]) => Record<string, string> | undefined
+  decorations: StetCSSShikiDecoration[],
+  resolveSyntaxStyle?: (token: ShikiToken, decoration: StetCSSShikiDecoration, decorations: StetCSSShikiDecoration[]) => Record<string, string> | undefined
 ) {
   const tokenStart = token.offset
   const tokenEnd = token.offset + token.content.length
@@ -503,7 +503,7 @@ function findStyleByScope(entries: ScopeStyleEntry[], scope: string) {
 
 function createSemanticScopeStyleResolver(
   context: ShikiTransformerContext,
-  options: MasterCSSShikiOptions
+  options: StetCSSShikiOptions
 ) {
   if (options.matchCSSSyntaxStyles === false || typeof context.codeToTokens !== 'function') return
   try {
@@ -514,9 +514,9 @@ function createSemanticScopeStyleResolver(
       includeExplanation: 'scopeName'
     }).tokens.flat())
 
-    return (_token: ShikiToken, decoration: MasterCSSShikiDecoration) => {
-      for (const key of getMasterCSSSemanticTokenScopeKeys(decoration.type, decoration.modifiers)) {
-        for (const scope of MASTER_CSS_SEMANTIC_TOKEN_SCOPE_MAP[key]) {
+    return (_token: ShikiToken, decoration: StetCSSShikiDecoration) => {
+      for (const key of getStetCSSSemanticTokenScopeKeys(decoration.type, decoration.modifiers)) {
+        for (const scope of STET_CSS_SEMANTIC_TOKEN_SCOPE_MAP[key]) {
           const style = findStyleByScope(scopeStyleEntries, scope)
           if (style) return style
         }
@@ -529,8 +529,8 @@ function createSemanticScopeStyleResolver(
 
 function createSemanticTokenDecorations(
   tokens: HighlightTokenItem[],
-  options: MasterCSSShikiOptions
-): MasterCSSShikiDecoration[] {
+  options: StetCSSShikiOptions
+): StetCSSShikiDecoration[] {
   const classPrefix = options.classPrefix ?? 'mcss-semantic'
   const includeDataAttributes = options.dataAttributes ?? true
   return tokens.map(({ start, end, type, role, modifiers = [] }) => {
@@ -563,11 +563,11 @@ function createSemanticTokenDecorations(
   })
 }
 
-export function createMasterCSSShikiDecorations(
+export function createStetCSSShikiDecorations(
   code: string,
-  options: MasterCSSShikiOptions = {}
-): MasterCSSShikiDecoration[] {
-  const classList = options.classList ?? isMasterCSSClassListLanguage(options.lang)
+  options: StetCSSShikiOptions = {}
+): StetCSSShikiDecoration[] {
+  const classList = options.classList ?? isStetCSSClassListLanguage(options.lang)
   const document = createShikiDocument(code, classList ? 'plaintext' : options.lang)
   if (!document) return []
   const css = createShikiCSS(options)
@@ -578,16 +578,16 @@ export function createMasterCSSShikiDecorations(
   return createSemanticTokenDecorations(highlightTokens, options)
 }
 
-export function transformerMasterCSS(
-  options: MasterCSSShikiOptions = {}
+export function transformerStetCSS(
+  options: StetCSSShikiOptions = {}
 ): ShikiTransformer {
   return {
     name: 'stet-css',
     enforce: 'post',
     tokens(this: ShikiTransformerContext, tokens) {
       const lang = options.lang ?? this.options.lang
-      const classList = options.classList ?? isMasterCSSClassListLanguage(lang)
-      const decorations = createMasterCSSShikiDecorations(this.source, {
+      const classList = options.classList ?? isStetCSSClassListLanguage(lang)
+      const decorations = createStetCSSShikiDecorations(this.source, {
         ...options,
         lang,
         classList
@@ -604,4 +604,4 @@ export function transformerMasterCSS(
   }
 }
 
-export default [masterCSSShikiLanguage]
+export default [stetCSSShikiLanguage]

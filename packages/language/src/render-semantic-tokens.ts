@@ -5,7 +5,7 @@ import { toSemanticTokenItems, type HighlightTokenItem } from './semantic/highli
 import { collectCSSHighlightTokenItems, isCSSSemanticTokenDocument } from './semantic/tokenize-css'
 import { tokenizeClassToken } from './semantic/tokenize-class'
 import type { SemanticTokenItem } from './semantic/types'
-import type { StetCSS } from './master-css'
+import type { StetCSS } from './stet-css'
 import type { ClassPosition } from './utils/get-class-positions'
 
 export { encodeSemanticTokens }

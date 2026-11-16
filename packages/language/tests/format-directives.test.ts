@@ -1,16 +1,16 @@
 import { expect, test } from 'vitest'
 import {
-  applyMasterCSSDirectiveFormatEdits,
-  formatMasterCSSClassList,
-  formatMasterCSSDirectives
+  applyStetCSSDirectiveFormatEdits,
+  formatStetCSSClassList,
+  formatStetCSSDirectives
 } from '../src'
 
 function format(source: string) {
-  return applyMasterCSSDirectiveFormatEdits(source, formatMasterCSSDirectives(source))
+  return applyStetCSSDirectiveFormatEdits(source, formatStetCSSDirectives(source))
 }
 
 test.concurrent('repairs detached important suffixes in class lists', () => {
-  expect(formatMasterCSSClassList(' bg:transparent !   fg:red !@sm  block!:hover ')).toBe('bg:transparent! fg:red!@sm block!:hover')
+  expect(formatStetCSSClassList(' bg:transparent !   fg:red !@sm  block!:hover ')).toBe('bg:transparent! fg:red!@sm block!:hover')
 })
 
 test.concurrent('formats @compose class-list preludes', () => {
@@ -65,7 +65,7 @@ test.concurrent('ignores directives inside comments and strings', () => {
 test.concurrent('can limit edits to a source range', () => {
   const source = '.a { @compose bg:red !; }\n.b { @compose bg:blue !; }'
   const start = source.indexOf('@compose bg:blue')
-  const result = applyMasterCSSDirectiveFormatEdits(source, formatMasterCSSDirectives(source, {
+  const result = applyStetCSSDirectiveFormatEdits(source, formatStetCSSDirectives(source, {
     range: {
       start,
       end: source.length

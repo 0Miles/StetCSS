@@ -4,7 +4,7 @@ import { beforeAll, expect, test } from 'vitest'
 import { INITIAL, Registry, parseRawGrammar } from 'vscode-textmate'
 import { createOnigScanner, createOnigString, loadWASM } from 'vscode-oniguruma'
 import cssGrammars from '@shikijs/langs/css'
-import { MASTER_CSS_TEXTMATE_GRAMMAR } from '../../language/src/shiki'
+import { STET_CSS_TEXTMATE_GRAMMAR } from '../../language/src/shiki'
 
 const require = createRequire(import.meta.url)
 const grammarPath = require.resolve('@stet-css/language/syntaxes/stet-css.tmLanguage.json')
@@ -51,7 +51,7 @@ beforeAll(async () => {
 })
 
 test('keeps shared grammar asset in sync with the language Shiki registration', () => {
-  expect(sharedGrammar).toEqual(MASTER_CSS_TEXTMATE_GRAMMAR)
+  expect(sharedGrammar).toEqual(STET_CSS_TEXTMATE_GRAMMAR)
 })
 
 function tokenizeWith(targetGrammar, source) {

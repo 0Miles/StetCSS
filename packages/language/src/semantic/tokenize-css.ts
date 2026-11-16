@@ -4,7 +4,7 @@ import {
   tokenizeComposePrelude
 } from './css/prelude'
 import { containsPosition, type ScanOptions } from './css/shared'
-import type { StetCSS } from '../master-css'
+import type { StetCSS } from '../stet-css'
 import {
   collectCSSDirectiveRanges,
   type CSSDirectiveRuleRange

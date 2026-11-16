@@ -1,6 +1,6 @@
 import {
-  formatMasterCSSDirectives,
-  type MasterCSSDirectiveFormatEdit
+  formatStetCSSDirectives,
+  type StetCSSDirectiveFormatEdit
 } from '@stet-css/language'
 import type { Range, TextEdit } from 'vscode-languageserver-protocol'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
@@ -26,7 +26,7 @@ function intersects(a: { start: number, end: number }, b: { start: number, end: 
   return a.start < b.end && b.start < a.end
 }
 
-function toTextEdit(document: TextDocument, edit: MasterCSSDirectiveFormatEdit): TextEdit {
+function toTextEdit(document: TextDocument, edit: StetCSSDirectiveFormatEdit): TextEdit {
   return {
     range: {
       start: document.positionAt(edit.start),
@@ -39,13 +39,13 @@ function toTextEdit(document: TextDocument, edit: MasterCSSDirectiveFormatEdit):
 function collectCSSDocumentFormatEdits(document: TextDocument, range?: Range) {
   const source = document.getText()
   const offsetRange = toOffsetRange(document, range)
-  return formatMasterCSSDirectives(source, { range: offsetRange }).map(toTextEdit.bind(undefined, document))
+  return formatStetCSSDirectives(source, { range: offsetRange }).map(toTextEdit.bind(undefined, document))
 }
 
 function collectSFCFormatEdits(document: TextDocument, range?: Range) {
   const source = document.getText()
   const offsetRange = toOffsetRange(document, range)
-  const edits: MasterCSSDirectiveFormatEdit[] = []
+  const edits: StetCSSDirectiveFormatEdit[] = []
   STYLE_BLOCK_RE.lastIndex = 0
   for (const match of source.matchAll(STYLE_BLOCK_RE)) {
     const styleLanguage = getSFCStyleLanguage(match[1])
@@ -61,7 +61,7 @@ function collectSFCFormatEdits(document: TextDocument, range?: Range) {
         end: Math.min(offsetRange.end, styleEnd) - styleStart
       }
       : undefined
-    for (const edit of formatMasterCSSDirectives(styleText, { range: relativeRange })) {
+    for (const edit of formatStetCSSDirectives(styleText, { range: relativeRange })) {
       edits.push({
         start: styleStart + edit.start,
         end: styleStart + edit.end,

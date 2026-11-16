@@ -1,4 +1,4 @@
-import { isLanguageClassEmitted, UtilityType, type StetCSS } from '../master-css'
+import { isLanguageClassEmitted, UtilityType, type StetCSS } from '../stet-css'
 import { inspectStetCSSClass } from '@stet-css/engine/inspect'
 import {
   collectStetCSSClassListTokenRanges,

@@ -51,8 +51,8 @@ Use the Shiki subpath to register the shared TextMate injection grammar and deco
 
 ```ts
 import {
-  masterCSSShikiLanguage,
-  transformerMasterCSS
+  stetCSSShikiLanguage,
+  transformerStetCSS
 } from '@stet-css/language/shiki'
 ```
 
@@ -68,16 +68,16 @@ const positions = getClassPositions(textDocument, languageSettings)
 
 ### Directive formatting
 
-Use `formatMasterCSSDirectives()` when an editor integration needs source-offset edits for Master CSS directive formatting without LSP service lifecycle.
+Use `formatStetCSSDirectives()` when an editor integration needs source-offset edits for Master CSS directive formatting without LSP service lifecycle.
 
 ```ts
 import {
-  applyMasterCSSDirectiveFormatEdits,
-  formatMasterCSSDirectives
+  applyStetCSSDirectiveFormatEdits,
+  formatStetCSSDirectives
 } from '@stet-css/language'
 
-const edits = formatMasterCSSDirectives(source)
-const formatted = applyMasterCSSDirectiveFormatEdits(source, edits)
+const edits = formatStetCSSDirectives(source)
+const formatted = applyStetCSSDirectiveFormatEdits(source, edits)
 ```
 
 The helper repairs directive class-list important markers such as `bg:transparent !` to `bg:transparent!` and returns offset edits only; it does not compile CSS or change generated output.
