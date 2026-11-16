@@ -3,11 +3,9 @@ import { isStylesheetSourceFile } from '@stet-css/stylesheet'
 import type { PluginContext } from '../core'
 import type { PluginOptions } from '../options'
 import getExtractedCSS, { getStylesheetSourceContext } from '../utils/extracted-css'
-import { getScanner } from '../utils/scanner-context'
 
-/** HMR when the stylesheet entries or the project's source files change */
+/** HMR when the project's source files change */
 export default function StyleEntryHMRPlugin(_options: PluginOptions, context: PluginContext): Plugin {
-  const servers: ViteDevServer[] = []
   let updateChain: Promise<unknown> = Promise.resolve()
   const onError = (label: string) => (err: unknown) => {
     console.error(`[master-css.vite] ${label} failed:`, err)
@@ -63,13 +61,7 @@ export default function StyleEntryHMRPlugin(_options: PluginOptions, context: Pl
     name: 'master-css:style-entry:hmr',
     enforce: 'pre',
     apply: 'serve',
-    buildStart() {
-      getScanner(context).on('change', () => {
-        queueUpdate(() => Promise.all(servers.map((eachServer) => updateStyleCSSImporters({ server: eachServer }))), 'hmr update')
-      })
-    },
     configureServer(server) {
-      servers.push(server)
       for (const event of ['add', 'change', 'unlink'] as const) {
         server.watcher.on(event, (file: string) => {
           handleSourceFileChange(server, file)
