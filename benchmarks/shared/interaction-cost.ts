@@ -321,7 +321,6 @@ const tailwindClasses = {
 
 const staticCSSCache = new Map<string, Promise<string>>()
 let runtimeBundlePromise: Promise<Buffer> | undefined
-let defaultManifestJSONPromise: Promise<Buffer> | undefined
 
 export async function writeInteractionCostReport() {
   const report = await createInteractionCostReport()
@@ -1104,7 +1103,6 @@ async function writeInteractionPage(options: {
   html: string
   externalCSS?: string
   runtimeJS?: Buffer
-  manifestJSON?: Buffer
 }): Promise<InteractionPage> {
   const root = resolve(benchmarkRoot, '.results', options.pageSuite || 'interaction-cost', 'pages', options.variantId)
   await resetDirectory(root)
@@ -1114,7 +1112,6 @@ async function writeInteractionPage(options: {
   }
   if (options.externalCSS !== undefined) files['style.css'] = options.externalCSS
   if (options.runtimeJS) files['global.min.js'] = options.runtimeJS.toString('utf8')
-  if (options.manifestJSON) files['default-manifest.json'] = options.manifestJSON.toString('utf8')
 
   await writeWorkspaceFiles(root, files)
 
@@ -1792,17 +1789,6 @@ async function readRuntimeBundle() {
     })()
   }
   return runtimeBundlePromise
-}
-
-async function readDefaultManifestJSON() {
-  if (!defaultManifestJSONPromise) {
-    defaultManifestJSONPromise = (async () => {
-      const file = resolveBenchmarkPackageFile('@stet-css/preset', 'src/default-manifest.json')
-      assertExistingFile(file, 'Expected @stet-css/preset default manifest to exist.')
-      return readFile(file)
-    })()
-  }
-  return defaultManifestJSONPromise
 }
 
 function assertExistingFile(file: string, message: string) {
