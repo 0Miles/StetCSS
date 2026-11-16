@@ -1,13 +1,13 @@
 import { createCSSWithNativeDeclarations } from '@stet-css/validator'
 import {
-  fixMasterCSSContent,
-  lintMasterCSSContent,
-  resolveMasterCSSLintRules,
-  summarizeMasterCSSLintFiles,
-  type MasterCSSLintFileResult,
-  type MasterCSSLintRuleId,
-  type MasterCSSLintSourceDiagnostic,
-  type MasterCSSLintSummary
+  fixStetCSSContent,
+  lintStetCSSContent,
+  resolveStetCSSLintRules,
+  summarizeStetCSSLintFiles,
+  type StetCSSLintFileResult,
+  type StetCSSLintRuleId,
+  type StetCSSLintSourceDiagnostic,
+  type StetCSSLintSummary
 } from '@stet-css/lint'
 import { loadProjectManifest } from '@stet-css/project/manifest'
 import fg from 'fast-glob'
@@ -37,10 +37,10 @@ interface CLILintReport {
   manifest: {
     status: 'loaded' | 'error'
     entries: string[]
-    diagnostics: MasterCSSLintSourceDiagnostic[]
+    diagnostics: StetCSSLintSourceDiagnostic[]
   }
-  files: MasterCSSLintFileResult[]
-  summary: MasterCSSLintSummary
+  files: StetCSSLintFileResult[]
+  summary: StetCSSLintSummary
 }
 
 interface SourceInput {
@@ -73,7 +73,7 @@ function parseMaxWarnings(value: string | number | undefined) {
   return Number.isFinite(maxWarnings) && maxWarnings >= 0 ? maxWarnings : 0
 }
 
-function createManifestDiagnostic(cwd: string, error: unknown): MasterCSSLintSourceDiagnostic {
+function createManifestDiagnostic(cwd: string, error: unknown): StetCSSLintSourceDiagnostic {
   const range = { start: 0, end: 0 }
   return {
     ruleId: 'manifest',
@@ -93,7 +93,7 @@ function createManifestDiagnostic(cwd: string, error: unknown): MasterCSSLintSou
   }
 }
 
-function createManifestFileResult(cwd: string, diagnostics: MasterCSSLintSourceDiagnostic[]): MasterCSSLintFileResult {
+function createManifestFileResult(cwd: string, diagnostics: StetCSSLintSourceDiagnostic[]): StetCSSLintFileResult {
   return {
     filePath: cwd,
     languageId: 'manifest',
@@ -102,13 +102,13 @@ function createManifestFileResult(cwd: string, diagnostics: MasterCSSLintSourceD
   }
 }
 
-function createReport(cwd: string, manifest: CLILintReport['manifest'], files: MasterCSSLintFileResult[]): CLILintReport {
+function createReport(cwd: string, manifest: CLILintReport['manifest'], files: StetCSSLintFileResult[]): CLILintReport {
   return {
     version: REPORT_VERSION,
     cwd,
     manifest,
     files,
-    summary: summarizeMasterCSSLintFiles(files)
+    summary: summarizeStetCSSLintFiles(files)
   }
 }
 
@@ -155,9 +155,9 @@ function resolveSourceInputs(cwd: string, specifiedSourcePaths: string[], option
 function lintInputs(
   inputs: SourceInput[],
   css: CSSWithNativeDeclarations,
-  rules: Record<MasterCSSLintRuleId, boolean>
+  rules: Record<StetCSSLintRuleId, boolean>
 ) {
-  return inputs.map((input) => lintMasterCSSContent({
+  return inputs.map((input) => lintStetCSSContent({
     content: input.content,
     filePath: input.filePath,
     css,
@@ -168,12 +168,12 @@ function lintInputs(
 function applyFileFixes(
   inputs: SourceInput[],
   css: CSSWithNativeDeclarations,
-  rules: Record<MasterCSSLintRuleId, boolean>,
+  rules: Record<StetCSSLintRuleId, boolean>,
   includeDirectiveFixes: boolean
 ) {
   for (const input of inputs) {
     if (input.stdin) continue
-    const fixed = fixMasterCSSContent({
+    const fixed = fixStetCSSContent({
       content: input.content,
       filePath: input.filePath,
       css,
@@ -191,10 +191,10 @@ export default async function runLint(specifiedSourcePaths: string[] = [], optio
   const cwd = path.resolve(options.cwd || process.cwd())
   const format = options.format || 'json'
   const exitCode = options.exitCode || 'diagnostics'
-  const rules = resolveMasterCSSLintRules(options.rules)
+  const rules = resolveStetCSSLintRules(options.rules)
   const inputs = resolveSourceInputs(cwd, specifiedSourcePaths, options)
   let manifest: CLILintReport['manifest']
-  let files: MasterCSSLintFileResult[]
+  let files: StetCSSLintFileResult[]
 
   try {
     const manifestResult = await loadProjectManifest(cwd)

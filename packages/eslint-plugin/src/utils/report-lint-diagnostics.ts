@@ -1,12 +1,12 @@
 import type { RuleContext, RuleFixer } from '@typescript-eslint/utils/ts-eslint'
 import type { TSESTree } from '@typescript-eslint/utils'
-import type { MasterCSSLintDiagnostic, MasterCSSLintFix } from '@stet-css/lint'
+import type { StetCSSLintDiagnostic, StetCSSLintFix } from '@stet-css/lint'
 import type { ResolvedClassNode } from './resolve-class-node'
 
 type FixRange = [number, number]
 
 interface ReportLintDiagnosticsOptions {
-  getFix?: (diagnostic: MasterCSSLintDiagnostic, fix: MasterCSSLintFix) => { range: FixRange, text: string } | undefined
+  getFix?: (diagnostic: StetCSSLintDiagnostic, fix: StetCSSLintFix) => { range: FixRange, text: string } | undefined
 }
 
 export const messageIdByCode: Record<string, string> = {
@@ -21,7 +21,7 @@ export const messageIdByCode: Record<string, string> = {
   'unapproved-raw-value': 'unapprovedRawValue'
 }
 
-export function stringifyLintDiagnosticData(data: MasterCSSLintDiagnostic['data'] = {}) {
+export function stringifyLintDiagnosticData(data: StetCSSLintDiagnostic['data'] = {}) {
   return Object.fromEntries(
     Object.entries(data)
       .filter(([, value]) => value !== undefined)
@@ -29,14 +29,14 @@ export function stringifyLintDiagnosticData(data: MasterCSSLintDiagnostic['data'
   )
 }
 
-export function stringifyLintDiagnosticMessageData(diagnostic: Pick<MasterCSSLintDiagnostic, 'data' | 'message'>) {
+export function stringifyLintDiagnosticMessageData(diagnostic: Pick<StetCSSLintDiagnostic, 'data' | 'message'>) {
   return stringifyLintDiagnosticData({
     ...diagnostic.data,
     message: diagnostic.message
   })
 }
 
-function defaultFix(resolved: ResolvedClassNode, fix: MasterCSSLintFix) {
+function defaultFix(resolved: ResolvedClassNode, fix: StetCSSLintFix) {
   if (fix.scope === 'directive') return
   return {
     range: [
@@ -51,7 +51,7 @@ export default function reportLintDiagnostics(
   context: RuleContext<any, any[]>,
   node: TSESTree.Node,
   resolved: ResolvedClassNode,
-  diagnostics: MasterCSSLintDiagnostic[],
+  diagnostics: StetCSSLintDiagnostic[],
   options: ReportLintDiagnosticsOptions = {}
 ) {
   const { sourceCode } = context

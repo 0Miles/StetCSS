@@ -1,21 +1,21 @@
 import {
-  lintMasterCSSContent,
-  masterCSSLintRuleIds,
-  type MasterCSSLintContentRuleOptions,
-  type MasterCSSLintRuleId,
-  type MasterCSSLintSourceDiagnostic
+  lintStetCSSContent,
+  stetCSSLintRuleIds,
+  type StetCSSLintContentRuleOptions,
+  type StetCSSLintRuleId,
+  type StetCSSLintSourceDiagnostic
 } from '@stet-css/lint'
 import type { StetCSS } from '@stet-css/core'
 import type { RuleContext, RuleFixer, RuleListener } from '@typescript-eslint/utils/ts-eslint'
 import { messageIdByCode, stringifyLintDiagnosticMessageData } from './report-lint-diagnostics'
 
 type FixRange = [number, number]
-type SourceRuleOptions = MasterCSSLintContentRuleOptions[keyof MasterCSSLintContentRuleOptions]
+type SourceRuleOptions = StetCSSLintContentRuleOptions[keyof StetCSSLintContentRuleOptions]
 
 interface DefineSourceVisitorsOptions {
   context: RuleContext<any, any[]>
   css: StetCSS
-  ruleId: MasterCSSLintRuleId
+  ruleId: StetCSSLintRuleId
   ruleOptions?: SourceRuleOptions
 }
 
@@ -30,23 +30,23 @@ function getFilename(context: RuleContext<any, any[]>) {
   return context.physicalFilename || context.filename || 'source.mdx'
 }
 
-function createSingleRuleSet(ruleId: MasterCSSLintRuleId) {
-  return Object.fromEntries(masterCSSLintRuleIds.map((eachRuleId) => [
+function createSingleRuleSet(ruleId: StetCSSLintRuleId) {
+  return Object.fromEntries(stetCSSLintRuleIds.map((eachRuleId) => [
     eachRuleId,
     eachRuleId === ruleId
-  ])) as Record<MasterCSSLintRuleId, boolean>
+  ])) as Record<StetCSSLintRuleId, boolean>
 }
 
-function createRuleOptions(ruleId: MasterCSSLintRuleId, ruleOptions: DefineSourceVisitorsOptions['ruleOptions']) {
+function createRuleOptions(ruleId: StetCSSLintRuleId, ruleOptions: DefineSourceVisitorsOptions['ruleOptions']) {
   return ruleOptions
-    ? { [ruleId]: ruleOptions } as MasterCSSLintContentRuleOptions
+    ? { [ruleId]: ruleOptions } as StetCSSLintContentRuleOptions
     : undefined
 }
 
 function reportSourceDiagnostic(
   context: RuleContext<any, any[]>,
   node: any,
-  diagnostic: MasterCSSLintSourceDiagnostic
+  diagnostic: StetCSSLintSourceDiagnostic
 ) {
   const { sourceCode } = context
   const messageId = messageIdByCode[diagnostic.code]
@@ -83,7 +83,7 @@ export default function defineSourceVisitors({
 }: DefineSourceVisitorsOptions): RuleListener {
   return {
     Program(node) {
-      const result = lintMasterCSSContent({
+      const result = lintStetCSSContent({
         content: context.sourceCode.getText(),
         filePath: getFilename(context),
         css,

@@ -14,22 +14,22 @@ import {
   createInvalidClassesReport,
   createSortClassesReport,
   createUnapprovedRawValueClassesReport,
-  type MasterCSSCanonicalClassesReportOptions,
-  type MasterCSSClassListLintReportOptions,
-  type MasterCSSInvalidClassesReportOptions,
-  type MasterCSSLintReportOptions,
-  type MasterCSSLintDiagnostic,
-  type MasterCSSLintDiagnosticData,
-  type MasterCSSLintDiagnosticSeverity,
-  type MasterCSSLintFix,
-  type MasterCSSLintRange,
-  type MasterCSSLintRuleId,
-  type MasterCSSUnapprovedRawValueClassesReportOptions
+  type StetCSSCanonicalClassesReportOptions,
+  type StetCSSClassListLintReportOptions,
+  type StetCSSInvalidClassesReportOptions,
+  type StetCSSLintReportOptions,
+  type StetCSSLintDiagnostic,
+  type StetCSSLintDiagnosticData,
+  type StetCSSLintDiagnosticSeverity,
+  type StetCSSLintFix,
+  type StetCSSLintRange,
+  type StetCSSLintRuleId,
+  type StetCSSUnapprovedRawValueClassesReportOptions
 } from './diagnostics'
 
 const MAX_FIX_PASSES = 10
 
-export const masterCSSLintRuleIds: MasterCSSLintRuleId[] = [
+export const stetCSSLintRuleIds: StetCSSLintRuleId[] = [
   'sort-classes',
   'no-invalid-classes',
   'no-conflicting-classes',
@@ -37,7 +37,7 @@ export const masterCSSLintRuleIds: MasterCSSLintRuleId[] = [
   'no-unapproved-raw-values'
 ]
 
-export const defaultMasterCSSLintRules: Record<MasterCSSLintRuleId, boolean> = {
+export const defaultStetCSSLintRules: Record<StetCSSLintRuleId, boolean> = {
   'sort-classes': true,
   'no-invalid-classes': true,
   'no-conflicting-classes': true,
@@ -45,51 +45,51 @@ export const defaultMasterCSSLintRules: Record<MasterCSSLintRuleId, boolean> = {
   'no-unapproved-raw-values': false
 }
 
-export type MasterCSSLintFileSourceKind = 'source' | 'stylesheet' | 'manifest'
-export type MasterCSSLintDiagnosticSourceKind = 'class-attribute' | 'class-expression' | 'compose-directive' | 'manifest'
-export type MasterCSSLintSourceFixKind = 'class-list' | 'directive'
-export type MasterCSSLintSourceFixSafety = 'safe' | 'structural'
+export type StetCSSLintFileSourceKind = 'source' | 'stylesheet' | 'manifest'
+export type StetCSSLintDiagnosticSourceKind = 'class-attribute' | 'class-expression' | 'compose-directive' | 'manifest'
+export type StetCSSLintSourceFixKind = 'class-list' | 'directive'
+export type StetCSSLintSourceFixSafety = 'safe' | 'structural'
 
-export interface MasterCSSLintSourceLocation {
+export interface StetCSSLintSourceLocation {
   line: number
   column: number
 }
 
-export interface MasterCSSLintSourceLocationRange {
-  start: MasterCSSLintSourceLocation
-  end: MasterCSSLintSourceLocation
+export interface StetCSSLintSourceLocationRange {
+  start: StetCSSLintSourceLocation
+  end: StetCSSLintSourceLocation
 }
 
-export interface MasterCSSLintSourceFix {
-  kind: MasterCSSLintSourceFixKind
-  safety: MasterCSSLintSourceFixSafety
-  range: MasterCSSLintRange
+export interface StetCSSLintSourceFix {
+  kind: StetCSSLintSourceFixKind
+  safety: StetCSSLintSourceFixSafety
+  range: StetCSSLintRange
   text: string
   description: string
   requiresFormatting: boolean
 }
 
-export interface MasterCSSLintSourceDiagnostic {
-  ruleId?: MasterCSSLintRuleId | 'manifest'
+export interface StetCSSLintSourceDiagnostic {
+  ruleId?: StetCSSLintRuleId | 'manifest'
   code: string
-  severity: MasterCSSLintDiagnosticSeverity
+  severity: StetCSSLintDiagnosticSeverity
   message: string
-  range: MasterCSSLintRange
-  loc: MasterCSSLintSourceLocationRange
+  range: StetCSSLintRange
+  loc: StetCSSLintSourceLocationRange
   source: 'StetCSS'
-  sourceKind: MasterCSSLintDiagnosticSourceKind
-  data?: MasterCSSLintDiagnosticData
-  fixes?: MasterCSSLintSourceFix[]
+  sourceKind: StetCSSLintDiagnosticSourceKind
+  data?: StetCSSLintDiagnosticData
+  fixes?: StetCSSLintSourceFix[]
 }
 
-export interface MasterCSSLintFileResult {
+export interface StetCSSLintFileResult {
   filePath: string
   languageId: string
-  sourceKind: MasterCSSLintFileSourceKind
-  diagnostics: MasterCSSLintSourceDiagnostic[]
+  sourceKind: StetCSSLintFileSourceKind
+  diagnostics: StetCSSLintSourceDiagnostic[]
 }
 
-export interface MasterCSSLintSummary {
+export interface StetCSSLintSummary {
   files: number
   diagnostics: number
   errors: number
@@ -99,23 +99,23 @@ export interface MasterCSSLintSummary {
   structuralFixes: number
 }
 
-export interface MasterCSSLintContentOptions {
+export interface StetCSSLintContentOptions {
   content: string
   filePath: string
   css: StetCSS
-  rules?: Partial<Record<MasterCSSLintRuleId, boolean>>
-  ruleOptions?: MasterCSSLintContentRuleOptions
-  severities?: Partial<Record<MasterCSSLintRuleId, MasterCSSLintDiagnosticSeverity>>
+  rules?: Partial<Record<StetCSSLintRuleId, boolean>>
+  ruleOptions?: StetCSSLintContentRuleOptions
+  severities?: Partial<Record<StetCSSLintRuleId, StetCSSLintDiagnosticSeverity>>
 }
 
-export interface MasterCSSFixContentOptions extends MasterCSSLintContentOptions {
+export interface StetCSSFixContentOptions extends StetCSSLintContentOptions {
   includeDirectiveFixes?: boolean
 }
 
-export interface MasterCSSLintContentRuleOptions {
-  'no-invalid-classes'?: MasterCSSInvalidClassesReportOptions
-  'prefer-canonical-classes'?: MasterCSSCanonicalClassesReportOptions
-  'no-unapproved-raw-values'?: MasterCSSUnapprovedRawValueClassesReportOptions
+export interface StetCSSLintContentRuleOptions {
+  'no-invalid-classes'?: StetCSSInvalidClassesReportOptions
+  'prefer-canonical-classes'?: StetCSSCanonicalClassesReportOptions
+  'no-unapproved-raw-values'?: StetCSSUnapprovedRawValueClassesReportOptions
 }
 
 interface TextDocumentLike {
@@ -128,7 +128,7 @@ interface TextDocumentLike {
 interface ClassListContext {
   range: SourceRange
   text: string
-  sourceKind: Exclude<MasterCSSLintDiagnosticSourceKind, 'manifest'>
+  sourceKind: Exclude<StetCSSLintDiagnosticSourceKind, 'manifest'>
   unescape?: string | false
   directive?: CSSDirectiveRuleRange
 }
@@ -157,29 +157,29 @@ const languageByExtension: Record<string, string> = {
 
 const stylesheetLanguageIds = new Set(['css', 'scss', 'less'])
 
-export function resolveMasterCSSLintRules(option: string | undefined): Record<MasterCSSLintRuleId, boolean> {
-  if (!option) return { ...defaultMasterCSSLintRules }
-  const resolved = Object.fromEntries(masterCSSLintRuleIds.map((ruleId) => [ruleId, false])) as Record<MasterCSSLintRuleId, boolean>
+export function resolveStetCSSLintRules(option: string | undefined): Record<StetCSSLintRuleId, boolean> {
+  if (!option) return { ...defaultStetCSSLintRules }
+  const resolved = Object.fromEntries(stetCSSLintRuleIds.map((ruleId) => [ruleId, false])) as Record<StetCSSLintRuleId, boolean>
   for (const rule of option.split(',').map((item) => item.trim()).filter(Boolean)) {
     if (rule === 'recommended') {
-      Object.assign(resolved, defaultMasterCSSLintRules)
+      Object.assign(resolved, defaultStetCSSLintRules)
       continue
     }
     if (rule === 'all') {
-      for (const ruleId of masterCSSLintRuleIds) resolved[ruleId] = true
+      for (const ruleId of stetCSSLintRuleIds) resolved[ruleId] = true
       continue
     }
-    if (!masterCSSLintRuleIds.includes(rule as MasterCSSLintRuleId)) {
+    if (!stetCSSLintRuleIds.includes(rule as StetCSSLintRuleId)) {
       throw new Error(`Unknown Master CSS lint rule "${rule}".`)
     }
-    resolved[rule as MasterCSSLintRuleId] = true
+    resolved[rule as StetCSSLintRuleId] = true
   }
   return resolved
 }
 
-function resolveRules(rules: Partial<Record<MasterCSSLintRuleId, boolean>> | undefined) {
+function resolveRules(rules: Partial<Record<StetCSSLintRuleId, boolean>> | undefined) {
   return {
-    ...defaultMasterCSSLintRules,
+    ...defaultStetCSSLintRules,
     ...rules
   }
 }
@@ -188,7 +188,7 @@ function getLanguageId(filePath: string) {
   return languageByExtension[extname(filePath).toLowerCase()] || 'html'
 }
 
-function getFileSourceKind(languageId: string): MasterCSSLintFileSourceKind {
+function getFileSourceKind(languageId: string): StetCSSLintFileSourceKind {
   return stylesheetLanguageIds.has(languageId) ? 'stylesheet' : 'source'
 }
 
@@ -214,7 +214,7 @@ function findComposeDirective(directives: CSSDirectiveRuleRange[], range: Source
   })
 }
 
-function inferClassSourceKind(content: string, range: SourceRange): Exclude<MasterCSSLintDiagnosticSourceKind, 'compose-directive' | 'manifest'> {
+function inferClassSourceKind(content: string, range: SourceRange): Exclude<StetCSSLintDiagnosticSourceKind, 'compose-directive' | 'manifest'> {
   const prefix = content.slice(Math.max(0, range.start - 80), range.start)
   return /(?:^|[\s{<])(?:class|className|class:list|:class|v-bind:class|\[class\]|\[className\]|\[ngClass\])\s*=\s*(?:"|'|`|\{[^]*$)/.test(prefix)
     ? 'class-attribute'
@@ -242,7 +242,7 @@ function collectClassListContexts(content: string, filePath: string): ClassListC
   return [...contexts.values()].sort((a, b) => a.range.start - b.range.start || a.range.end - b.range.end)
 }
 
-function offsetToLocation(content: string, offset: number): MasterCSSLintSourceLocation {
+function offsetToLocation(content: string, offset: number): StetCSSLintSourceLocation {
   let line = 1
   let lineStart = 0
   for (let index = 0; index < offset; index++) {
@@ -257,7 +257,7 @@ function offsetToLocation(content: string, offset: number): MasterCSSLintSourceL
   }
 }
 
-function toLocationRange(content: string, range: SourceRange): MasterCSSLintSourceLocationRange {
+function toLocationRange(content: string, range: SourceRange): StetCSSLintSourceLocationRange {
   return {
     start: offsetToLocation(content, range.start),
     end: offsetToLocation(content, range.end)
@@ -267,8 +267,8 @@ function toLocationRange(content: string, range: SourceRange): MasterCSSLintSour
 function createComposeDirectiveLintDiagnostics(
   context: ClassListContext,
   css: StetCSS,
-  rules: Record<MasterCSSLintRuleId, boolean>,
-  options: MasterCSSLintContentOptions
+  rules: Record<StetCSSLintRuleId, boolean>,
+  options: StetCSSLintContentOptions
 ) {
   return [
     rules['sort-classes'] && createSortClassesReport(context.text, css, withSourceRuleOptions(context, options, 'sort-classes')),
@@ -276,15 +276,15 @@ function createComposeDirectiveLintDiagnostics(
     rules['no-conflicting-classes'] && createConflictingClassesReport(context.text, css, withSourceRuleOptions(context, options, 'no-conflicting-classes')),
     rules['prefer-canonical-classes'] && createCanonicalComposeDirectiveReport(context.text, css, withSourceRuleOptions(context, options, 'prefer-canonical-classes')),
     rules['no-unapproved-raw-values'] && createUnapprovedRawValueClassesReport(context.text, css, withSourceRuleOptions(context, options, 'no-unapproved-raw-values'))
-  ].filter((report): report is { diagnostics: MasterCSSLintDiagnostic[] } => Boolean(report))
+  ].filter((report): report is { diagnostics: StetCSSLintDiagnostic[] } => Boolean(report))
     .flatMap((report) => report.diagnostics)
 }
 
 function createContextLintDiagnostics(
   context: ClassListContext,
   css: StetCSS,
-  rules: Record<MasterCSSLintRuleId, boolean>,
-  options: MasterCSSLintContentOptions
+  rules: Record<StetCSSLintRuleId, boolean>,
+  options: StetCSSLintContentOptions
 ) {
   return context.sourceKind === 'compose-directive'
     ? createComposeDirectiveLintDiagnostics(context, css, rules, options)
@@ -295,7 +295,7 @@ function createContextLintDiagnostics(
     }).diagnostics
 }
 
-function getRuleOptions(options: MasterCSSLintContentOptions): MasterCSSClassListLintReportOptions {
+function getRuleOptions(options: StetCSSLintContentOptions): StetCSSClassListLintReportOptions {
   return {
     ...options.ruleOptions?.['no-invalid-classes'],
     ...options.ruleOptions?.['prefer-canonical-classes'],
@@ -305,8 +305,8 @@ function getRuleOptions(options: MasterCSSLintContentOptions): MasterCSSClassLis
 
 function createClassListLintOptions(
   context: ClassListContext,
-  options: MasterCSSLintContentOptions
-): MasterCSSClassListLintReportOptions {
+  options: StetCSSLintContentOptions
+): StetCSSClassListLintReportOptions {
   return {
     ...getRuleOptions(options),
     unescape: context.unescape
@@ -315,9 +315,9 @@ function createClassListLintOptions(
 
 function withSourceRuleOptions(
   context: ClassListContext,
-  options: MasterCSSLintContentOptions,
-  ruleId: MasterCSSLintRuleId
-): MasterCSSLintReportOptions {
+  options: StetCSSLintContentOptions,
+  ruleId: StetCSSLintRuleId
+): StetCSSLintReportOptions {
   return {
     ...getRuleOptions(options),
     ...getSpecificRuleOptions(options, ruleId),
@@ -326,7 +326,7 @@ function withSourceRuleOptions(
   }
 }
 
-function getSpecificRuleOptions(options: MasterCSSLintContentOptions, ruleId: MasterCSSLintRuleId) {
+function getSpecificRuleOptions(options: StetCSSLintContentOptions, ruleId: StetCSSLintRuleId) {
   switch (ruleId) {
     case 'no-invalid-classes':
       return options.ruleOptions?.['no-invalid-classes']
@@ -339,7 +339,7 @@ function getSpecificRuleOptions(options: MasterCSSLintContentOptions, ruleId: Ma
   }
 }
 
-function toSourceFix(context: ClassListContext, fix: MasterCSSLintFix): MasterCSSLintSourceFix | undefined {
+function toSourceFix(context: ClassListContext, fix: StetCSSLintFix): StetCSSLintSourceFix | undefined {
   if (fix.scope === 'directive') {
     if (!context.directive) return
     return {
@@ -370,8 +370,8 @@ function toSourceFix(context: ClassListContext, fix: MasterCSSLintFix): MasterCS
 function toSourceDiagnostic(
   content: string,
   context: ClassListContext,
-  diagnostic: MasterCSSLintDiagnostic
-): MasterCSSLintSourceDiagnostic {
+  diagnostic: StetCSSLintDiagnostic
+): StetCSSLintSourceDiagnostic {
   const range = {
     start: context.range.start + diagnostic.range.start,
     end: context.range.start + diagnostic.range.end
@@ -392,8 +392,8 @@ function toSourceDiagnostic(
   }
 }
 
-export function lintMasterCSSContent(options: MasterCSSLintContentOptions): MasterCSSLintFileResult {
-  const diagnostics: MasterCSSLintSourceDiagnostic[] = []
+export function lintStetCSSContent(options: StetCSSLintContentOptions): StetCSSLintFileResult {
+  const diagnostics: StetCSSLintSourceDiagnostic[] = []
   const rules = resolveRules(options.rules)
   for (const context of collectClassListContexts(options.content, options.filePath)) {
     diagnostics.push(...createContextLintDiagnostics(context, options.css, rules, options).map((diagnostic) => toSourceDiagnostic(options.content, context, diagnostic)))
@@ -411,7 +411,7 @@ function applyReplacement(content: string, range: SourceRange, text: string) {
   return content.slice(0, range.start) + text + content.slice(range.end)
 }
 
-function uniqueFixes(fixes: MasterCSSLintSourceFix[]) {
+function uniqueFixes(fixes: StetCSSLintSourceFix[]) {
   const seen = new Set<string>()
   return fixes.filter((fix) => {
     const key = `${fix.kind}:${fix.range.start}:${fix.range.end}:${fix.text}`
@@ -421,13 +421,13 @@ function uniqueFixes(fixes: MasterCSSLintSourceFix[]) {
   })
 }
 
-function collectStructuralFixes(file: MasterCSSLintFileResult) {
+function collectStructuralFixes(file: StetCSSLintFileResult) {
   return uniqueFixes(file.diagnostics.flatMap((diagnostic) => diagnostic.fixes ?? []))
     .filter((fix) => fix.kind === 'directive')
     .sort((a, b) => b.range.start - a.range.start || b.range.end - a.range.end)
 }
 
-function applyFixes(content: string, fixes: MasterCSSLintSourceFix[]) {
+function applyFixes(content: string, fixes: StetCSSLintSourceFix[]) {
   let fixed = content
   for (const fix of fixes) {
     fixed = applyReplacement(fixed, fix.range, fix.text)
@@ -435,7 +435,7 @@ function applyFixes(content: string, fixes: MasterCSSLintSourceFix[]) {
   return fixed
 }
 
-function fixClassListText(context: ClassListContext, css: StetCSS, rules: Record<MasterCSSLintRuleId, boolean>, options: MasterCSSLintContentOptions) {
+function fixClassListText(context: ClassListContext, css: StetCSS, rules: Record<StetCSSLintRuleId, boolean>, options: StetCSSLintContentOptions) {
   let fixed = context.text
   for (let pass = 0; pass < MAX_FIX_PASSES; pass++) {
     const nextContext: ClassListContext = {
@@ -445,7 +445,7 @@ function fixClassListText(context: ClassListContext, css: StetCSS, rules: Record
     }
     const fix = createContextLintDiagnostics(nextContext, css, rules, options)
       .map((diagnostic) => diagnostic.fix)
-      .find((fix): fix is MasterCSSLintFix => Boolean(fix && fix.scope !== 'directive'))
+      .find((fix): fix is StetCSSLintFix => Boolean(fix && fix.scope !== 'directive'))
     if (!fix) return fixed
     const next = applyReplacement(fixed, fix.range, fix.text)
     if (next === fixed) return fixed
@@ -454,7 +454,7 @@ function fixClassListText(context: ClassListContext, css: StetCSS, rules: Record
   return fixed
 }
 
-function fixSafeClassLists(content: string, filePath: string, css: StetCSS, rules: Record<MasterCSSLintRuleId, boolean>, options: MasterCSSLintContentOptions) {
+function fixSafeClassLists(content: string, filePath: string, css: StetCSS, rules: Record<StetCSSLintRuleId, boolean>, options: StetCSSLintContentOptions) {
   const replacements = collectClassListContexts(content, filePath)
     .map((context) => ({
       range: context.range,
@@ -473,11 +473,11 @@ function fixSafeClassLists(content: string, filePath: string, css: StetCSS, rule
   })))
 }
 
-export function fixMasterCSSContent(options: MasterCSSFixContentOptions) {
+export function fixStetCSSContent(options: StetCSSFixContentOptions) {
   const rules = resolveRules(options.rules)
   let fixed = fixSafeClassLists(options.content, options.filePath, options.css, rules, options)
   if (!options.includeDirectiveFixes) return fixed
-  const structuralFixes = collectStructuralFixes(lintMasterCSSContent({
+  const structuralFixes = collectStructuralFixes(lintStetCSSContent({
     ...options,
     content: fixed,
     rules
@@ -486,7 +486,7 @@ export function fixMasterCSSContent(options: MasterCSSFixContentOptions) {
   return fixed
 }
 
-export function summarizeMasterCSSLintFiles(files: MasterCSSLintFileResult[]): MasterCSSLintSummary {
+export function summarizeStetCSSLintFiles(files: StetCSSLintFileResult[]): StetCSSLintSummary {
   const diagnostics = files.flatMap((file) => file.diagnostics)
   const fixes = diagnostics.flatMap((diagnostic) => diagnostic.fixes ?? [])
   return {

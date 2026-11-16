@@ -6,9 +6,9 @@ import {
 import type { StetCSS } from '@stet-css/engine'
 import sortClassNames from './sort-class-names'
 
-export type MasterCSSClassListEditOptions = Pick<StetCSSClassListParseOptions, 'unescape'>
+export type StetCSSClassListEditOptions = Pick<StetCSSClassListParseOptions, 'unescape'>
 
-function parseClassList(classList: string, options: MasterCSSClassListEditOptions = {}) {
+function parseClassList(classList: string, options: StetCSSClassListEditOptions = {}) {
   return parseStetCSSClassList(classList, {
     preserveSpaces: true,
     ...options
@@ -73,7 +73,7 @@ function getRawQueuesByToken(items: StetCSSClassListItem[]) {
   return rawQueues
 }
 
-export function sortClassList(classList: string, css: StetCSS, options: MasterCSSClassListEditOptions = {}) {
+export function sortClassList(classList: string, css: StetCSS, options: StetCSSClassListEditOptions = {}) {
   const items = parseClassList(classList, options)
   const classItems = items.filter((item) => item.type === 'class' && item.token)
   if (classItems.length <= 1) return classList
@@ -104,7 +104,7 @@ export function sortClassList(classList: string, css: StetCSS, options: MasterCS
 export function removeClassNamesFromClassList(
   classList: string,
   classNames: string[],
-  options: MasterCSSClassListEditOptions = {}
+  options: StetCSSClassListEditOptions = {}
 ) {
   const items = parseClassList(classList, options)
   for (const className of classNames) {
@@ -117,7 +117,7 @@ export function replaceClassNameInClassList(
   classList: string,
   className: string,
   replacement: string,
-  options: MasterCSSClassListEditOptions = {}
+  options: StetCSSClassListEditOptions = {}
 ) {
   const items = parseClassList(classList, options)
   replaceClassListToken(items, className, replacement)
@@ -128,7 +128,7 @@ export function replaceClassGroupInClassList(
   classList: string,
   classNames: string[],
   replacement: string,
-  options: MasterCSSClassListEditOptions = {}
+  options: StetCSSClassListEditOptions = {}
 ) {
   const [firstClassName, ...classNamesToRemove] = classNames
   const items = parseClassList(classList, options)

@@ -2,7 +2,7 @@ import type { StetCSS } from '@stet-css/engine'
 import { parseStetCSSClassList, type StetCSSClassListItem } from '@stet-css/lexer'
 import type { ClassValidationOptions } from './get-class-validation-issues'
 import getClassValidationIssues from './get-class-validation-issues'
-import type { MasterCSSClassListEditOptions } from './class-list-edits'
+import type { StetCSSClassListEditOptions } from './class-list-edits'
 import {
   removeClassNamesFromClassList,
   replaceClassGroupInClassList,
@@ -24,60 +24,60 @@ import {
   quoteDiagnosticValue
 } from './diagnostic-format'
 
-export type MasterCSSLintRuleId =
+export type StetCSSLintRuleId =
   | 'sort-classes'
   | 'no-invalid-classes'
   | 'no-conflicting-classes'
   | 'prefer-canonical-classes'
   | 'no-unapproved-raw-values'
 
-export type MasterCSSLintDiagnosticSeverity = 'error' | 'warning'
+export type StetCSSLintDiagnosticSeverity = 'error' | 'warning'
 
-export interface MasterCSSLintRange {
+export interface StetCSSLintRange {
   start: number
   end: number
 }
 
-export interface MasterCSSLintFix {
-  range: MasterCSSLintRange
+export interface StetCSSLintFix {
+  range: StetCSSLintRange
   text: string
   scope?: 'class-list' | 'directive'
 }
 
-export type MasterCSSLintDiagnosticData = Record<string, string | number | boolean | string[] | null | undefined>
+export type StetCSSLintDiagnosticData = Record<string, string | number | boolean | string[] | null | undefined>
 
-export interface MasterCSSLintDiagnostic {
-  ruleId: MasterCSSLintRuleId
+export interface StetCSSLintDiagnostic {
+  ruleId: StetCSSLintRuleId
   code: string
   message: string
-  severity: MasterCSSLintDiagnosticSeverity
-  range: MasterCSSLintRange
-  data?: MasterCSSLintDiagnosticData
-  fix?: MasterCSSLintFix
+  severity: StetCSSLintDiagnosticSeverity
+  range: StetCSSLintRange
+  data?: StetCSSLintDiagnosticData
+  fix?: StetCSSLintFix
 }
 
-export interface MasterCSSLintReport {
-  diagnostics: MasterCSSLintDiagnostic[]
+export interface StetCSSLintReport {
+  diagnostics: StetCSSLintDiagnostic[]
 }
 
-export interface MasterCSSLintReportOptions extends MasterCSSClassListEditOptions {
-  severity?: MasterCSSLintDiagnosticSeverity
+export interface StetCSSLintReportOptions extends StetCSSClassListEditOptions {
+  severity?: StetCSSLintDiagnosticSeverity
 }
 
-export interface MasterCSSInvalidClassesReportOptions extends MasterCSSLintReportOptions, ClassValidationOptions { }
+export interface StetCSSInvalidClassesReportOptions extends StetCSSLintReportOptions, ClassValidationOptions { }
 
-export type MasterCSSConflictingClassesReportOptions = MasterCSSLintReportOptions
+export type StetCSSConflictingClassesReportOptions = StetCSSLintReportOptions
 
-export interface MasterCSSCanonicalClassesReportOptions extends MasterCSSLintReportOptions, CanonicalClassNameOptions { }
+export interface StetCSSCanonicalClassesReportOptions extends StetCSSLintReportOptions, CanonicalClassNameOptions { }
 
-export interface MasterCSSUnapprovedRawValueClassesReportOptions extends MasterCSSLintReportOptions, RawValuePolicyOptions { }
+export interface StetCSSUnapprovedRawValueClassesReportOptions extends StetCSSLintReportOptions, RawValuePolicyOptions { }
 
-export interface MasterCSSClassListLintReportOptions extends MasterCSSInvalidClassesReportOptions, RawValuePolicyOptions, CanonicalClassNameOptions {
-  rules?: Partial<Record<MasterCSSLintRuleId, boolean>>
-  severities?: Partial<Record<MasterCSSLintRuleId, MasterCSSLintDiagnosticSeverity>>
+export interface StetCSSClassListLintReportOptions extends StetCSSInvalidClassesReportOptions, RawValuePolicyOptions, CanonicalClassNameOptions {
+  rules?: Partial<Record<StetCSSLintRuleId, boolean>>
+  severities?: Partial<Record<StetCSSLintRuleId, StetCSSLintDiagnosticSeverity>>
 }
 
-const defaultSeverityByRule: Record<MasterCSSLintRuleId, MasterCSSLintDiagnosticSeverity> = {
+const defaultSeverityByRule: Record<StetCSSLintRuleId, StetCSSLintDiagnosticSeverity> = {
   'sort-classes': 'warning',
   'no-invalid-classes': 'error',
   'no-conflicting-classes': 'warning',
@@ -85,19 +85,19 @@ const defaultSeverityByRule: Record<MasterCSSLintRuleId, MasterCSSLintDiagnostic
   'no-unapproved-raw-values': 'warning'
 }
 
-function createReport(diagnostics: MasterCSSLintDiagnostic[] = []): MasterCSSLintReport {
+function createReport(diagnostics: StetCSSLintDiagnostic[] = []): StetCSSLintReport {
   return { diagnostics }
 }
 
-function resolveSeverity(ruleId: MasterCSSLintRuleId, severity?: MasterCSSLintDiagnosticSeverity) {
+function resolveSeverity(ruleId: StetCSSLintRuleId, severity?: StetCSSLintDiagnosticSeverity) {
   return severity || defaultSeverityByRule[ruleId]
 }
 
-function wholeClassListRange(classList: string): MasterCSSLintRange {
+function wholeClassListRange(classList: string): StetCSSLintRange {
   return { start: 0, end: classList.length }
 }
 
-function wholeClassListFix(classList: string, text: string): MasterCSSLintFix | undefined {
+function wholeClassListFix(classList: string, text: string): StetCSSLintFix | undefined {
   return classList === text
     ? undefined
     : {
@@ -107,7 +107,7 @@ function wholeClassListFix(classList: string, text: string): MasterCSSLintFix | 
     }
 }
 
-function parseClassList(classList: string, options: MasterCSSClassListEditOptions = {}) {
+function parseClassList(classList: string, options: StetCSSClassListEditOptions = {}) {
   return parseStetCSSClassList(classList, {
     preserveSpaces: true,
     ...options
@@ -139,7 +139,7 @@ function findClassItem(items: StetCSSClassListItem[], className: string) {
   return classItems(items).find((item) => item.token === className)
 }
 
-function toRange(item: StetCSSClassListItem | undefined, fallback: MasterCSSLintRange): MasterCSSLintRange {
+function toRange(item: StetCSSClassListItem | undefined, fallback: StetCSSLintRange): StetCSSLintRange {
   return item
     ? { start: item.start, end: item.end }
     : fallback
@@ -175,8 +175,8 @@ function formatCanonicalComposeMessage(actual: string, recommended: string, kind
 export function createSortClassesReport(
   classList: string,
   css: StetCSS,
-  options: MasterCSSLintReportOptions = {}
-): MasterCSSLintReport {
+  options: StetCSSLintReportOptions = {}
+): StetCSSLintReport {
   const items = parseClassList(classList, options)
   if (classItems(items).length <= 1) return createReport()
 
@@ -203,10 +203,10 @@ export function createSortClassesReport(
 export function createInvalidClassesReport(
   classList: string,
   css: StetCSS,
-  options: MasterCSSInvalidClassesReportOptions = {}
-): MasterCSSLintReport {
+  options: StetCSSInvalidClassesReportOptions = {}
+): StetCSSLintReport {
   const items = parseClassList(classList, options)
-  const diagnostics: MasterCSSLintDiagnostic[] = []
+  const diagnostics: StetCSSLintDiagnostic[] = []
 
   for (const item of classItems(items)) {
     const issues = getClassValidationIssues(item.token, css, {
@@ -234,8 +234,8 @@ export function createInvalidClassesReport(
 export function createConflictingClassesReport(
   classList: string,
   css: StetCSS,
-  options: MasterCSSConflictingClassesReportOptions = {}
-): MasterCSSLintReport {
+  options: StetCSSConflictingClassesReportOptions = {}
+): StetCSSLintReport {
   const items = parseClassList(classList, options)
   const values = classValues(items)
   const fallbackRange = wholeClassListRange(classList)
@@ -274,7 +274,7 @@ export function createConflictingClassesReport(
   }
 
   const queues = createClassItemQueues(items)
-  const diagnostics: MasterCSSLintDiagnostic[] = []
+  const diagnostics: StetCSSLintDiagnostic[] = []
   for (const conflict of partialConflicts) {
     const classItem = queues.get(conflict.className)?.shift()
     diagnostics.push({
@@ -298,8 +298,8 @@ export function createConflictingClassesReport(
 export function createCanonicalClassesReport(
   classList: string,
   css: StetCSS,
-  options: MasterCSSCanonicalClassesReportOptions = {}
-): MasterCSSLintReport {
+  options: StetCSSCanonicalClassesReportOptions = {}
+): StetCSSLintReport {
   const resolvedOptions = {
     ...defaultCanonicalClassNameOptions,
     ...options
@@ -310,7 +310,7 @@ export function createCanonicalClassesReport(
   const severity = resolveSeverity('prefer-canonical-classes', options.severity)
   const groupSuggestions = suggestCanonicalClassGroups(values, css, resolvedOptions)
   const coveredClassNames = new Set(groupSuggestions.flatMap((suggestion) => suggestion.classNames))
-  const diagnostics: MasterCSSLintDiagnostic[] = []
+  const diagnostics: StetCSSLintDiagnostic[] = []
   let fixedText = classList
 
   for (const suggestion of groupSuggestions) {
@@ -357,8 +357,8 @@ export function createCanonicalClassesReport(
 export function createCanonicalComposeDirectiveReport(
   classList: string,
   css: StetCSS,
-  options: MasterCSSCanonicalClassesReportOptions = {}
-): MasterCSSLintReport {
+  options: StetCSSCanonicalClassesReportOptions = {}
+): StetCSSLintReport {
   const result = suggestCanonicalComposeDirective(classList, css, {
     ...defaultCanonicalClassNameOptions,
     ...options
@@ -379,7 +379,7 @@ export function createCanonicalComposeDirectiveReport(
 
   return createReport(result.suggestions.map((suggestion) => {
     const firstClassItem = findClassItem(items, suggestion.classNames[0]) || classItems(items)[0]
-    const diagnostic: MasterCSSLintDiagnostic = {
+    const diagnostic: StetCSSLintDiagnostic = {
       ruleId: 'prefer-canonical-classes',
       code: suggestion.kind === 'class' ? 'prefer-canonical-class' : `prefer-${suggestion.kind}`,
       message: formatCanonicalComposeMessage(suggestion.actual, suggestion.recommended, suggestion.kind),
@@ -399,13 +399,13 @@ export function createCanonicalComposeDirectiveReport(
 export function createUnapprovedRawValueClassesReport(
   classList: string,
   css: StetCSS,
-  options: MasterCSSUnapprovedRawValueClassesReportOptions = {}
-): MasterCSSLintReport {
+  options: StetCSSUnapprovedRawValueClassesReportOptions = {}
+): StetCSSLintReport {
   const items = parseClassList(classList, options)
   const values = classValues(items)
   const severity = resolveSeverity('no-unapproved-raw-values', options.severity)
   const issues = findUnapprovedRawValueClasses(values, css, options)
-  const diagnostics: MasterCSSLintDiagnostic[] = []
+  const diagnostics: StetCSSLintDiagnostic[] = []
 
   for (const issue of issues) {
     const classItem = findClassItem(items, issue.className)
@@ -431,9 +431,9 @@ export function createUnapprovedRawValueClassesReport(
 export function createClassListLintReport(
   classList: string,
   css: StetCSS,
-  options: MasterCSSClassListLintReportOptions = {}
-): MasterCSSLintReport {
-  const rules: Record<MasterCSSLintRuleId, boolean> = {
+  options: StetCSSClassListLintReportOptions = {}
+): StetCSSLintReport {
+  const rules: Record<StetCSSLintRuleId, boolean> = {
     'sort-classes': true,
     'no-invalid-classes': true,
     'no-conflicting-classes': true,
@@ -441,7 +441,7 @@ export function createClassListLintReport(
     'no-unapproved-raw-values': false,
     ...options.rules
   }
-  const withRuleSeverity = <T extends MasterCSSLintReportOptions>(ruleId: MasterCSSLintRuleId, ruleOptions: T): T => ({
+  const withRuleSeverity = <T extends StetCSSLintReportOptions>(ruleId: StetCSSLintRuleId, ruleOptions: T): T => ({
     ...ruleOptions,
     severity: options.severities?.[ruleId] || ruleOptions.severity || defaultSeverityByRule[ruleId]
   })
@@ -451,7 +451,7 @@ export function createClassListLintReport(
     rules['no-conflicting-classes'] && createConflictingClassesReport(classList, css, withRuleSeverity('no-conflicting-classes', options)),
     rules['prefer-canonical-classes'] && createCanonicalClassesReport(classList, css, withRuleSeverity('prefer-canonical-classes', options)),
     rules['no-unapproved-raw-values'] && createUnapprovedRawValueClassesReport(classList, css, withRuleSeverity('no-unapproved-raw-values', options))
-  ].filter((report): report is MasterCSSLintReport => Boolean(report))
+  ].filter((report): report is StetCSSLintReport => Boolean(report))
 
   return createReport(reports.flatMap((report) => report.diagnostics))
 }
