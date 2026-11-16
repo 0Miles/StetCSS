@@ -189,7 +189,7 @@ describe('style CSS extraction helpers', () => {
     const entryPath = join(root, 'app/globals.css')
     const tokenPath = join(root, 'app/tokens.css')
     writeFileSync(tokenPath, '@components { card { display: block; } }')
-    writeFileSync(entryPath, '@master entry;\n@import "./tokens.css";')
+    writeFileSync(entryPath, '@import "@stet-css/core";\n@import "./tokens.css";')
 
     expect(collectStyleCSSDependencies(entryPath, undefined, root)).toEqual([
       entryPath,
@@ -201,7 +201,7 @@ describe('style CSS extraction helpers', () => {
     const root = createFixture()
     const entryPath = join(root, 'app/globals.css')
 
-    expect(collectStyleCSSDependencies(entryPath, '@master entry;\n@import "./missing.css";', root)).toEqual([
+    expect(collectStyleCSSDependencies(entryPath, '@import "@stet-css/core";\n@import "./missing.css";', root)).toEqual([
       entryPath
     ])
     expect(collectStyleCSSDependencies(join(root, 'app/missing.css'), undefined, root)).toEqual([
@@ -461,7 +461,7 @@ describe('style CSS extraction helpers', () => {
     )).toBeUndefined()
     expect(() => resolveMasterStyleSource(
       join(root, 'app/entry.css'),
-      '@master entry;\n@import "./missing.css";',
+      '@import "@stet-css/core";\n@import "./missing.css";',
       root
     )).toThrow('CSS file not found')
   })
@@ -904,8 +904,6 @@ describe('style CSS extraction helpers', () => {
 
     const styleCSSSources = new Map()
     await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'app/globals.css'), `
-      @master entry;
-
       .card {
         display: grid;
       }

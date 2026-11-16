@@ -45,7 +45,7 @@ describe('Next style CSS loader', () => {
   it('locally lowers @compose in CSS Modules without importing package CSS', async () => {
     const root = createFixture()
     writeFileSync(join(root, 'app/globals.css'), `
-      @master entry;
+      @import "@stet-css/core";
 
       @components {
         brand {
