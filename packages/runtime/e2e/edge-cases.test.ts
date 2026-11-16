@@ -752,6 +752,7 @@ test('leaves a style#master-css already on the page alone and renders its own sh
   page.on('console', (message) => {
     if (message.type() === 'warning' || message.type() === 'error') messages.push(message.text())
   })
+  page.on('pageerror', error => messages.push(error.message))
   const prerenderedText = '@layer utilities{.unknown{color:red}}'
 
   await page.evaluate(({ runtimeStyleId, text }) => {
