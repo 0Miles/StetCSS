@@ -74,8 +74,8 @@ export interface BuildProjectOptions {
 
 /**
  * Runs a real Vite build of a temp project and returns its built `index.html` (empty when the
- * build emits none, such as an SSR build) and the concatenated CSS assets. Fails when the build
- * emits no CSS asset.
+ * build emits none, such as an SSR build), the concatenated CSS assets and their file names.
+ * Fails when the build emits no CSS asset.
  */
 export async function buildProject({
   appClass = '',
@@ -118,6 +118,7 @@ export async function buildProject({
 
     const builtHTMLPath = join(root, 'dist/index.html')
     return {
+      cssFiles,
       css: cssFiles
         .map((file) => readFileSync(join(assetsDir, file), 'utf8'))
         .join('\n'),

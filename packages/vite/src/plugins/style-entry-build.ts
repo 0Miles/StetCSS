@@ -3,16 +3,19 @@ import type { PluginContext } from '../core'
 import getExtractedCSS from '../utils/extracted-css'
 import { getScanner } from '../utils/scanner-context'
 import { getEnvironmentName } from '../utils/environment'
+import { createSlotCSSRulePattern, digestCSS, getSlotSelector } from '../utils/slot'
 
-function replaceSlotCSSRule(source: string, slotCSSRule: string, realCSS: string): { source: string, replaced: boolean } {
-  let replaced = false
-  const nextSource = source.split(slotCSSRule).map((part, index) => {
-    if (index === 0) return part
-    if (replaced) return part
-    replaced = true
-    return realCSS + part
-  }).join('')
-  return { source: nextSource, replaced }
+/**
+ * Puts the generated CSS where the first placeholder was and drops the others; `digests` are
+ * the digests the placeholders carried, which named the asset.
+ */
+function replaceSlotCSSRules(source: string, slotPattern: RegExp, realCSS: string) {
+  const digests: string[] = []
+  const nextSource = source.replace(slotPattern, (_, digest: string) => {
+    digests.push(digest)
+    return digests.length === 1 ? realCSS : ''
+  })
+  return { source: nextSource, digests }
 }
 
 export const NO_STYLE_ENTRY_WARNING =
@@ -36,23 +39,33 @@ export default function StyleEntryBuildPlugin(context: PluginContext): Plugin {
         this.warn(NO_STYLE_ENTRY_WARNING)
       }
       const slotCSSRule = getScanner(context).slotCSSRule
+      const slotPattern = createSlotCSSRulePattern(slotCSSRule)
       const realCSS = await getExtractedCSS(context)
+      const realCSSDigest = digestCSS(realCSS)
       const cssFileNames = Object.keys(bundle).filter(eachFileName => eachFileName.endsWith('.css'))
+      const staleFileNames: string[] = []
       let replacedAny = false
       for (const eachCssFileName of cssFileNames) {
         const chunk = bundle[eachCssFileName]
         if (chunk.type === 'asset') {
-          // @ts-expect-error rollup OutputAsset.source is string|Uint8Array
-          const oldSource = String(bundle[eachCssFileName]['source'])
-          const result = replaceSlotCSSRule(oldSource, slotCSSRule, realCSS)
-          if (result.source !== oldSource) {
-            // @ts-expect-error see above
-            bundle[eachCssFileName]['source'] = result.source
-          }
-          if (result.replaced) {
-            replacedAny = true
-          }
+          const oldSource = String(chunk.source)
+          const result = replaceSlotCSSRules(oldSource, slotPattern, realCSS)
+          if (!result.digests.length) continue
+          chunk.source = result.source
+          replacedAny = true
+          if (!result.digests.includes(realCSSDigest)) staleFileNames.push(eachCssFileName)
         }
+      }
+      // Each placeholder carries the CSS generated when its stylesheet was transformed. A
+      // stylesheet that imports Master CSS and registered later changed that CSS, so the
+      // file name was computed from an earlier version of the content now spliced in.
+      if (staleFileNames.length) {
+        this.warn(
+          `[master-css.vite] ${staleFileNames.join(', ')}: the file name was hashed before ` +
+          `every stylesheet that imports Master CSS was read, so it may not change when its ` +
+          `CSS does and caches can keep serving the old file. Import '@stet-css/core' from ` +
+          `one stylesheet and import that stylesheet wherever it is needed.`
+        )
       }
       // A managed CSS import in this environment emitted the placeholder but
       // no CSS chunk in its bundle still contained it. A downstream CSS
@@ -64,7 +77,7 @@ export default function StyleEntryBuildPlugin(context: PluginContext): Plugin {
       if (placeholderEmitted && !replacedAny && realCSS.length > 0) {
         this.warn(
           `[master-css.vite] Could not splice managed style CSS into any bundle asset. ` +
-          `The placeholder "${slotCSSRule}" was emitted but no CSS chunk in the final ` +
+          `The placeholder rule "${getSlotSelector(slotCSSRule)}" was emitted but no CSS chunk in the final ` +
           `bundle still contained it — Vite's downstream CSS pipeline (a PostCSS ` +
           `plugin in your vite config, the bundler's CSS minifier, etc.) most likely ` +
           `rewrote or dropped it. The output will be missing Master CSS output.`

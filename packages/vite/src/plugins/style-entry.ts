@@ -14,12 +14,19 @@ import { registerStyleCSSSource } from '../utils/register-style-source'
 import { getScanner } from '../utils/scanner-context'
 import { getEnvironmentName } from '../utils/environment'
 import { getProjectDir } from '../utils/project-dir'
+import { createSlotCSSRule } from '../utils/slot'
 
 const RESOLVED_VIRTUAL_CSS_ID = '\0' + VIRTUAL_CSS_ID
 
 function markPlaceholderEmitted(context: PluginContext, pluginContext: unknown) {
   context.virtualCSSPlaceholderEnvironments ??= new Set()
   context.virtualCSSPlaceholderEnvironments.add(getEnvironmentName(pluginContext))
+}
+
+/** The generated CSS in dev; in a build, the placeholder `generateBundle` swaps it into. */
+async function createMasterSource(context: PluginContext) {
+  const css = await getExtractedCSS(context)
+  return context.config?.command === 'serve' ? css : createSlotCSSRule(getScanner(context).slotCSSRule, css)
 }
 
 export default function StyleEntryPlugin(context: PluginContext): Plugin {
@@ -37,12 +44,9 @@ export default function StyleEntryPlugin(context: PluginContext): Plugin {
       context.virtualCSSImporters ??= new Set()
       context.virtualCSSImporters.add(RESOLVED_VIRTUAL_CSS_ID)
 
-      if (context.config?.command === 'serve') {
-        return await getExtractedCSS(context)
-      }
-
-      markPlaceholderEmitted(context, this)
-      return getScanner(context).slotCSSRule
+      const masterSource = await createMasterSource(context)
+      if (context.config?.command !== 'serve') markPlaceholderEmitted(context, this)
+      return masterSource
     },
     async transform(code, id) {
       if (id.startsWith('\0')) return
@@ -79,9 +83,7 @@ export default function StyleEntryPlugin(context: PluginContext): Plugin {
         this.addWatchFile?.(dependency)
       }
 
-      const masterSource = context.config?.command === 'serve'
-        ? await getExtractedCSS(context)
-        : getScanner(context).slotCSSRule
+      const masterSource = await createMasterSource(context)
 
       if (context.config?.command === 'serve') {
         context.virtualCSSImporters ??= new Set()
