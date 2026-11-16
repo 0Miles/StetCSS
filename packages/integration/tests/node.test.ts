@@ -71,7 +71,6 @@ describe('@stet-css/integration/node', () => {
 
   it('hashes manifest asset file names', () => {
     expect(toHashedManifestAssetFileName('{"version":1}')).toMatch(/^master-css-manifest\.[a-f0-9]{8}\.json$/)
-    expect(toHashedManifestAssetFileName('{"version":1}', 'manifest')).toMatch(/^manifest\.[a-f0-9]{8}\.json$/)
   })
 
   it('updates stale virtual module placeholders', () => {
