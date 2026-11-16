@@ -1,4 +1,4 @@
-# master-css-vscode
+# stet-css-vscode
 
 Owns the VS Code extension: activation, language server startup (`./server`), the restart command, active semantic token highlighting, and target-specific **VSIX** packaging.
 
@@ -17,5 +17,5 @@ Owns the VS Code extension: activation, language server startup (`./server`), th
 
 ## Validation
 
-- Packaging changes: `bun run --filter master-css-vscode vscode:package -- --target darwin-arm64`. `tests/server-bundle.test.js` covers native externals and staged VSIX contents; its win32-x64 case skips unless every platform's native packages are installed (`RELEASE.md`).
+- Packaging changes: `bun run --filter stet-css-vscode vscode:package -- --target darwin-arm64`. `tests/server-bundle.test.js` covers native externals and staged VSIX contents; its win32-x64 case skips unless every platform's native packages are installed (`RELEASE.md`).
 - Release flow: `RELEASE.md` (the `release` script).

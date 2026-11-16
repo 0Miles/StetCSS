@@ -1,6 +1,6 @@
 # VS Code Extension Release
 
-Use this package release flow for `master-css-vscode` Marketplace releases.
+Use this package release flow for `stet-css-vscode` Marketplace releases.
 
 ## Requirements
 
@@ -62,7 +62,7 @@ The default target set is `win32-x64`, `win32-arm64`, `linux-x64`, `linux-arm64`
 3. Records the current worktree state so pre-existing CI changes do not fail the release.
 4. Runs the root `bun run build`.
 5. Bumps the extension version with `bun pm version`, without creating a git commit or tag.
-6. Runs `master-css-vscode` `build` and `type-check`.
+6. Runs `stet-css-vscode` `build` and `type-check`.
 7. Verifies that the release only adds expected VS Code version changes.
 8. Verifies VSCE publish rights when publishing, using Microsoft Entra ID when `--azure-credential` is set.
 9. Packages or publishes the selected VSIX targets.
@@ -70,4 +70,4 @@ The default target set is `win32-x64`, `win32-arm64`, `linux-x64`, `linux-arm64`
 
 Marketplace URL:
 
-https://marketplace.visualstudio.com/items?itemName=masterco.master-css-vscode
+https://marketplace.visualstudio.com/items?itemName=masterco.stet-css-vscode

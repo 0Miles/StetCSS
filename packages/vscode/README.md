@@ -14,7 +14,14 @@ For the complete VS Code workflow, use this extension together with the official
 
 ## Quick Start
 
-Install the extension from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=masterco.master-css) or open it directly in VS Code with [vscode:extension/masterco.master-css](vscode:extension/masterco.master-css).
+The extension is not published to the Visual Studio Marketplace or Open VSX yet. Build a VSIX for your platform from this repository and install it with **Extensions: Install from VSIX...**:
+
+```sh
+bun run --filter stet-css-vscode build
+bun run --filter stet-css-vscode vscode:package -- --target darwin-arm64
+```
+
+The package lands in `packages/vscode/vsix/`. See [RELEASE.md](./RELEASE.md) for the supported targets.
 
 Enable suggestions inside strings so utility completions appear in markup, JSX, template strings, and helper calls:
 
@@ -51,7 +58,7 @@ For project-aware tokens, create a CSS entry that imports `@stet-css/core`, or d
 - **Manifest diagnostics**: Reports project manifest loading errors without taking over ESLint class policy warnings.
 - **Directive formatting**: Formats Master CSS directives and keeps class important markers attached, such as `bg:transparent !` to `bg:transparent!`.
 - **Workspace-aware manifests**: Loads project manifests from the closest detected Master CSS workspace so completions and tokens reflect custom variables, components, utilities, and modes.
-- **Restart command**: Provides `Master CSS: Restart Language Server` for reloading the language server after dependency, manifest, or workspace changes.
+- **Restart command**: Provides `StetCSS: Restart Language Server` for reloading the language server after dependency, manifest, or workspace changes.
 
 The default language list covers HTML, PHP, JavaScript, TypeScript, JSX, TSX, CSS, SCSS, LESS, Vue, Svelte, Rust, Astro, Markdown, and MDX.
 
@@ -208,7 +215,7 @@ Disable directive formatting when another formatter integration must own all dir
 Open the Command Palette and run:
 
 ```txt
-Master CSS: Restart Language Server
+StetCSS: Restart Language Server
 ```
 
 Use this after changing dependencies, workspace layout, or project manifest files if VS Code has not reloaded the language server automatically. The extension also restarts the Master CSS language server when `stetCSS.*` settings change.
@@ -223,7 +230,7 @@ Use this after changing dependencies, workspace layout, or project manifest file
 ## Troubleshooting
 
 - **Completions do not show inside strings**: Enable `editor.quickSuggestions.strings` as shown in [Quick Start](#quick-start).
-- **Manifest-specific variables or components are missing**: Ensure the project has a detected CSS entry or Master CSS package dependency, then run `Master CSS: Restart Language Server`.
+- **Manifest-specific variables or components are missing**: Ensure the project has a detected CSS entry or Master CSS package dependency, then run `StetCSS: Restart Language Server`.
 - **The wrong monorepo package is used**: Set `stetCSS.workspaces` to explicit workspace directories.
 - **Embedded markup highlighting is too noisy or too quiet**: Change `stetCSS.embeddedSyntaxHighlighting` to `active`, `always`, or `off`.
 - **Semantic colors do not appear**: Confirm VS Code semantic highlighting is enabled for the active theme.

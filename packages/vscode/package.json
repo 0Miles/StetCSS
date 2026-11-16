@@ -1,5 +1,5 @@
 {
-  "name": "master-css-vscode",
+  "name": "stet-css-vscode",
   "type": "module",
   "scripts": {
     "build": "tsdown && bun run generate",
@@ -13,8 +13,8 @@
     "release": "node scripts/release.js"
   },
   "version": "2.0.36",
-  "description": "Master CSS for Visual Studio Code",
-  "displayName": "Master CSS",
+  "description": "StetCSS for Visual Studio Code",
+  "displayName": "StetCSS",
   "author": "Aoyue Design LLC.",
   "funding": "https://rc.css.master.co/sponsor",
   "homepage": "https://rc.css.master.co/guide/installation/language-service",
@@ -46,7 +46,7 @@
   "capabilities": {
     "virtualWorkspaces": {
       "supported": false,
-      "description": "Using Master CSS is not possible in virtual workspaces."
+      "description": "Using StetCSS is not possible in virtual workspaces."
     },
     "untrustedWorkspaces": {
       "supported": false,
@@ -58,11 +58,11 @@
       {
         "title": "Restart Language Server",
         "command": "stetCSS.restart",
-        "category": "Master CSS"
+        "category": "StetCSS"
       }
     ],
     "configuration": {
-      "title": "Master CSS",
+      "title": "StetCSS",
       "properties": {
         "stetCSS.includedLanguages": {
           "type": "array",
@@ -98,7 +98,7 @@
             "**/node_modules/**",
             "**/.hg/**"
           ],
-          "description": "Configure glob patterns to exclude from all Master Language Service features."
+          "description": "Configure glob patterns to exclude from all StetCSS language-service features."
         },
         "stetCSS.classAttributes": {
           "type": "array",
@@ -186,7 +186,7 @@
         "stetCSS.formatDirectives": {
           "type": "boolean",
           "default": true,
-          "description": "Enables Master CSS directive formatting in CSS-family documents."
+          "description": "Enables StetCSS directive formatting in CSS-family documents."
         },
         "stetCSS.embeddedSyntaxHighlighting": {
           "type": "string",
@@ -196,7 +196,7 @@
             "off"
           ],
           "default": "active",
-          "description": "Controls embedded Master CSS utility highlighting in markup and scripts. Active highlights the class context at the active editor selection, always highlights all discovered embedded utilities, and off disables embedded utility highlighting. Master CSS syntax inside CSS documents is always highlighted."
+          "description": "Controls embedded StetCSS utility highlighting in markup and scripts. Active highlights the class context at the active editor selection, always highlights all discovered embedded utilities, and off disables embedded utility highlighting. StetCSS syntax inside CSS documents is always highlighted."
         },
         "stetCSS.workspaces": {
           "type": [
@@ -204,98 +204,98 @@
             "array"
           ],
           "default": "auto",
-          "description": "Configure Master CSS workspaces. The default auto mode detects CSS files with @import \"@stet-css/core\" and package.json files that declare Master CSS package dependencies."
+          "description": "Configure StetCSS workspaces. The default auto mode detects CSS files with @import \"@stet-css/core\" and package.json files that declare StetCSS package dependencies."
         }
       }
     },
     "semanticTokenModifiers": [
       {
         "id": "component",
-        "description": "Master CSS component semantic token modifier."
+        "description": "StetCSS component semantic token modifier."
       },
       {
         "id": "directive",
-        "description": "Master CSS directive semantic token modifier."
+        "description": "StetCSS directive semantic token modifier."
       },
       {
         "id": "important",
-        "description": "Master CSS important semantic token modifier."
+        "description": "StetCSS important semantic token modifier."
       },
       {
         "id": "pseudoClass",
-        "description": "Master CSS pseudoClass semantic token modifier."
+        "description": "StetCSS pseudoClass semantic token modifier."
       },
       {
         "id": "pseudoElement",
-        "description": "Master CSS pseudoElement semantic token modifier."
+        "description": "StetCSS pseudoElement semantic token modifier."
       },
       {
         "id": "query",
-        "description": "Master CSS query semantic token modifier."
+        "description": "StetCSS query semantic token modifier."
       },
       {
         "id": "quoted",
-        "description": "Master CSS quoted semantic token modifier."
+        "description": "StetCSS quoted semantic token modifier."
       },
       {
         "id": "selector",
-        "description": "Master CSS selector semantic token modifier."
+        "description": "StetCSS selector semantic token modifier."
       },
       {
         "id": "unit",
-        "description": "Master CSS unit semantic token modifier."
+        "description": "StetCSS unit semantic token modifier."
       },
       {
         "id": "blockBrace",
-        "description": "Master CSS blockBrace semantic token modifier."
+        "description": "StetCSS blockBrace semantic token modifier."
       },
       {
         "id": "declarationSeparator",
-        "description": "Master CSS declarationSeparator semantic token modifier."
+        "description": "StetCSS declarationSeparator semantic token modifier."
       },
       {
         "id": "declarationTerminator",
-        "description": "Master CSS declarationTerminator semantic token modifier."
+        "description": "StetCSS declarationTerminator semantic token modifier."
       },
       {
         "id": "directiveTerminator",
-        "description": "Master CSS directiveTerminator semantic token modifier."
+        "description": "StetCSS directiveTerminator semantic token modifier."
       },
       {
         "id": "functionPunctuation",
-        "description": "Master CSS functionPunctuation semantic token modifier."
+        "description": "StetCSS functionPunctuation semantic token modifier."
       },
       {
         "id": "valueSeparator",
-        "description": "Master CSS valueSeparator semantic token modifier."
+        "description": "StetCSS valueSeparator semantic token modifier."
       },
       {
         "id": "valueOperator",
-        "description": "Master CSS valueOperator semantic token modifier."
+        "description": "StetCSS valueOperator semantic token modifier."
       },
       {
         "id": "queryOperator",
-        "description": "Master CSS queryOperator semantic token modifier."
+        "description": "StetCSS queryOperator semantic token modifier."
       },
       {
         "id": "queryPunctuation",
-        "description": "Master CSS queryPunctuation semantic token modifier."
+        "description": "StetCSS queryPunctuation semantic token modifier."
       },
       {
         "id": "selectorCombinator",
-        "description": "Master CSS selectorCombinator semantic token modifier."
+        "description": "StetCSS selectorCombinator semantic token modifier."
       },
       {
         "id": "selectorPunctuation",
-        "description": "Master CSS selectorPunctuation semantic token modifier."
+        "description": "StetCSS selectorPunctuation semantic token modifier."
       },
       {
         "id": "pseudoClassDelimiter",
-        "description": "Master CSS pseudoClassDelimiter semantic token modifier."
+        "description": "StetCSS pseudoClassDelimiter semantic token modifier."
       },
       {
         "id": "pseudoElementDelimiter",
-        "description": "Master CSS pseudoElementDelimiter semantic token modifier."
+        "description": "StetCSS pseudoElementDelimiter semantic token modifier."
       }
     ],
     "semanticTokenScopes": [

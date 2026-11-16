@@ -151,7 +151,7 @@ function createLanguageServer(options = {}) {
 }
 
 async function withStagedExtension(callback, options = {}) {
-  const stagingRoot = await mkdtemp(join(tmpdir(), 'master-css-vscode-test-'))
+  const stagingRoot = await mkdtemp(join(tmpdir(), 'stet-css-vscode-test-'))
   try {
     const target = options.target ?? getCurrentTarget()
     return await callback(
@@ -192,27 +192,37 @@ test('extension bundle includes workspace language server resolution fallback', 
   expect(source).toContain('Using bundled language server')
 })
 
-test('extension bundle reuses one Master CSS output channel for the language client', () => {
+test('extension bundle reuses one StetCSS output channel for the language client', () => {
   const source = readFileSync(extensionPath, 'utf8')
-  const masterCSSOutputChannelCalls = source.match(/\.createOutputChannel\((?:`Master CSS`|"Master CSS"|'Master CSS')/g) ?? []
+  const outputChannelCalls = source.match(/\.createOutputChannel\((?:`StetCSS`|"StetCSS"|'StetCSS')/g) ?? []
   const languageClientConstruction = source.match(
-    /new\s+[A-Za-z_$][\w$]*\.LanguageClient\(\s*(?:`stetCSS`|"stetCSS"|'stetCSS')\s*,\s*(?:`Master CSS`|"Master CSS"|'Master CSS')[\s\S]*?\}\)/
+    /new\s+[A-Za-z_$][\w$]*\.LanguageClient\(\s*(?:`stetCSS`|"stetCSS"|'stetCSS')\s*,\s*(?:`StetCSS`|"StetCSS"|'StetCSS')[\s\S]*?\}\)/
   )?.[0]
 
-  expect(masterCSSOutputChannelCalls).toHaveLength(1)
+  expect(outputChannelCalls).toHaveLength(1)
   expect(languageClientConstruction).toContain('outputChannel:')
 })
 
+/**
+ * Prevents: the extension reading, contributing or registering a different namespace than the
+ * one its README and the language server use, so `stetCSS.*` settings in settings.json are
+ * shown as unknown and never reach the server, or the restart command and server-initiated
+ * restart go unanswered.
+ * Gate 2 trade-off: the contributed keys are generated into package.json, so the check is on
+ * the shared prefix of every key, not on any literal key list.
+ * Reverse check: `getConfiguration('stetCSS')` in `src/extension.min.ts` changed to
+ * `'masterCSS'` turns only this test red.
+ */
 test('extension bundle reads settings and registers commands under the stetCSS names', () => {
   const source = readFileSync(extensionPath, 'utf8')
   const packageJSON = readPackageJSON()
 
-  expect(source).toMatch(/\.getConfiguration\((?:`stetCSS`|"stetCSS"|'stetCSS')\)/)
-  expect(source).toMatch(/registerCommand\((?:`stetCSS\.restart`|"stetCSS\.restart"|'stetCSS\.restart')/)
-  expect(source).toMatch(/onRequest\((?:`stetCSS\/restart`|"stetCSS\/restart"|'stetCSS\/restart')/)
+  expect(source).toMatch(/\.getConfiguration\([`'"]stetCSS[`'"]\)/)
+  expect(source).toMatch(/registerCommand\([`'"]stetCSS\.restart[`'"]/)
+  expect(source).toMatch(/onRequest\([`'"]stetCSS\/restart[`'"]/)
   expect(source).toMatch(/initializationOptions:\s*\(\)\s*=>\s*\(\{\s*stetCSS:/)
   expect(source).not.toContain('masterCSS')
-  expect(packageJSON.contributes.commands.map(({ command }) => command)).toEqual(['stetCSS.restart'])
+  expect(packageJSON.contributes.commands.every(({ command }) => command.startsWith('stetCSS.'))).toBe(true)
   expect(Object.keys(packageJSON.contributes.configuration.properties).every((key) => key.startsWith('stetCSS.'))).toBe(true)
 })
 

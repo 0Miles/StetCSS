@@ -38,7 +38,7 @@ function getIncludedLanguages() {
 
 function log(message: string) {
   outputChannel?.appendLine(message)
-  console.log(`[Master CSS] ${message}`)
+  console.log(`[StetCSS] ${message}`)
 }
 
 function getBundledLanguageServerVersion(context: ExtensionContext) {
@@ -296,7 +296,7 @@ function createSemanticTokensFeature(client: LanguageClient, clientStarted: Then
 }
 
 export function activate(context: ExtensionContext) {
-  outputChannel = window.createOutputChannel('Master CSS', { log: true })
+  outputChannel = window.createOutputChannel('StetCSS', { log: true })
   context.subscriptions.push(outputChannel)
 
   // The server is implemented in node
@@ -342,7 +342,7 @@ export function activate(context: ExtensionContext) {
   // Create the language client and start the client.
   client = new LanguageClient(
     'stetCSS',
-    'Master CSS',
+    'StetCSS',
     serverOptions,
     clientOptions
   )
@@ -352,7 +352,7 @@ export function activate(context: ExtensionContext) {
   const semanticTokensFeature = createSemanticTokensFeature(client, clientStarted, documentSelector)
 
   const restart = async (options = {
-    title: 'Restarting Master CSS'
+    title: 'Restarting StetCSS'
   }) => {
     await window.withProgress({
       location: ProgressLocation.Notification,

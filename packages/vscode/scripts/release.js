@@ -7,7 +7,7 @@ import { TARGETS, assertRuntimePackagesResolvable, packageDir } from './package-
 const scriptDir = dirname(fileURLToPath(import.meta.url))
 const rootDir = resolve(scriptDir, '../../..')
 const packageJsonPath = resolve(packageDir, 'package.json')
-const marketplaceUrl = 'https://marketplace.visualstudio.com/items?itemName=masterco.master-css-vscode'
+const marketplaceUrl = 'https://marketplace.visualstudio.com/items?itemName=masterco.stet-css-vscode'
 const allowedReleaseChanges = new Set([
     'packages/vscode/package.json',
     'bun.lock'
@@ -252,12 +252,12 @@ async function main() {
     const bumpedManifest = await readPackageJson()
     validateVSCodeTypesCompatibility(bumpedManifest)
 
-    await run('bun', ['run', '--filter', 'master-css-vscode', 'build'])
-    await run('bun', ['run', '--filter', 'master-css-vscode', 'type-check'])
+    await run('bun', ['run', '--filter', 'stet-css-vscode', 'build'])
+    await run('bun', ['run', '--filter', 'stet-css-vscode', 'type-check'])
     await assertOnlyExpectedChanges(initialStatusLines)
 
     if (options.noPublish) {
-        await run('bun', ['run', '--filter', 'master-css-vscode', 'vscode:package', ...targetArgs(options.targets)])
+        await run('bun', ['run', '--filter', 'stet-css-vscode', 'vscode:package', ...targetArgs(options.targets)])
     } else {
         await run('bun', [
             'x',
@@ -267,7 +267,7 @@ async function main() {
             ...(options.azureCredential ? ['--azure-credential'] : []),
             bumpedManifest.publisher
         ], { cwd: packageDir })
-        await run('bun', ['run', '--filter', 'master-css-vscode', 'vscode:publish', ...publishArgs(options)])
+        await run('bun', ['run', '--filter', 'stet-css-vscode', 'vscode:publish', ...publishArgs(options)])
     }
 
     console.log('\nVS Code extension release complete')
