@@ -7,7 +7,7 @@ import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import {
   compileCSSManifest,
   createManifestFromCSSResult,
-  resolveMasterCSSPackageImportGraph
+  resolveStetCSSPackageImportGraph
 } from '@stet-css/compiler'
 import CSSScanner from '@stet-css/scanner'
 import {
@@ -510,7 +510,7 @@ describe('style CSS extraction helpers', () => {
     const hostSource = await createMasterCSSPackageHostSource(process.cwd(), {
       projectDir: process.cwd()
     })
-    const graph = resolveMasterCSSPackageImportGraph(process.cwd())
+    const graph = resolveStetCSSPackageImportGraph(process.cwd())
     const compileSource = removeMasterStyleDirectives(removeStyleCSSImports(graph.source).code).code
     const compiledResult = await compileStyleCSS(graph.dependencies[0] || '@stet-css/core', compileSource, {
       projectDir: process.cwd(),

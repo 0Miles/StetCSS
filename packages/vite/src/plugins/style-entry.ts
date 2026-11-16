@@ -5,7 +5,7 @@ import getExtractedCSS from '../utils/extracted-css'
 import {
   collectStyleCSSDependencies,
   createStyleCSSHostSource,
-  isMasterCSSPackageStyleFile,
+  isStetCSSPackageStyleFile,
   isStyleCSSRequest,
   removeMasterStyleDirectives,
   resolveMasterStyleSource
@@ -71,7 +71,7 @@ export default function StyleEntryPlugin(context: PluginContext): Plugin {
         this.addWatchFile?.(dependency)
       }
 
-      if (isMasterCSSPackageStyleFile(id, projectDir)) {
+      if (isStetCSSPackageStyleFile(id, projectDir)) {
         return {
           code: removeMasterStyleDirectives(code).code,
           map: null

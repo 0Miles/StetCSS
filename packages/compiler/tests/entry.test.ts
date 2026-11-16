@@ -6,7 +6,7 @@ import { expect, test } from 'vitest'
 import {
   compileCSS,
   compileProjectManifest,
-  resolveMasterCSSPackageEntryFile
+  resolveStetCSSPackageEntryFile
 } from '../src'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -121,7 +121,7 @@ test('resolves CSS-only preset package root to stylesheet entry', () => {
     default: './src/index.css'
   })
 
-  const entry = resolveMasterCSSPackageEntryFile(
+  const entry = resolveStetCSSPackageEntryFile(
     '@stet-css/preset',
     fileURLToPath(import.meta.url),
     repoRoot
@@ -154,7 +154,7 @@ test('resolves package stylesheet entry before requiring the package JavaScript 
     writeFileSync(entryFile, '@import "@stet-css/core";')
 
     const packageStyleEntry = join(realpathSync(packageRoot), 'src/index.css')
-    const entry = resolveMasterCSSPackageEntryFile('@stet-css/core', entryFile, root)
+    const entry = resolveStetCSSPackageEntryFile('@stet-css/core', entryFile, root)
     const result = compileProjectManifest([entryFile], { root })
 
     expect(entry).toBe(packageStyleEntry)

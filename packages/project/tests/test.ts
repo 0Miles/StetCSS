@@ -8,7 +8,7 @@ import {
   findCSSManifestEntryFilesSync,
   findMasterCSSWorkspaceDirectories,
   hasStetCSSManifestEntrypoint,
-  resolveMasterCSSPackageEntryFile
+  resolveStetCSSPackageEntryFile
 } from '../src/entries'
 import {
   isCompatibleMasterCSSPackageVersion,
@@ -166,7 +166,7 @@ test('loads package entry preset manifest from CSS imports', async () => {
     `)
 
     const result = await loadManifest(entry)
-    const packageEntry = resolveMasterCSSPackageEntryFile('@stet-css/core', entry, cwd)
+    const packageEntry = resolveStetCSSPackageEntryFile('@stet-css/core', entry, cwd)
     expect(packageEntry).toBeTruthy()
     if (!packageEntry) throw new Error('Expected Master CSS package entry')
     expect(result.dependencies).toContain(packageEntry)

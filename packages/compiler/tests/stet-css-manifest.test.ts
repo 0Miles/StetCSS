@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createMasterCSSManifest } from '../src/master-css-manifest'
+import { createStetCSSManifest } from '../src/stet-css-manifest'
 import UtilityType from '@stet-css/schema/utility-type'
 import { flattenStetCSSManifestVariables, type StetCSSManifest } from '@stet-css/schema/manifest'
 import { StetCSS } from '@stet-css/engine'
@@ -8,9 +8,9 @@ function variablesOf(manifest: StetCSSManifest) {
   return flattenStetCSSManifestVariables(manifest.variables)
 }
 
-describe.concurrent('createMasterCSSManifest', () => {
+describe.concurrent('createStetCSSManifest', () => {
   it('lowers variables into resolved records with modes and dependencies without synthetic negative aliases', () => {
-    const manifest = createMasterCSSManifest({
+    const manifest = createStetCSSManifest({
       variables: [
         { namespace: 'spacing', key: 'card', value: 12, static: true },
         { namespace: 'color', key: 'brand', value: 'var(--color-blue-50)' },
@@ -45,7 +45,7 @@ describe.concurrent('createMasterCSSManifest', () => {
   })
 
   it('rejects stylesheet token alias syntax in variable values', () => {
-    expect(() => createMasterCSSManifest({
+    expect(() => createStetCSSManifest({
       variables: [
         { namespace: 'color', key: 'brand', value: '$color-blue-50' }
       ]
@@ -53,7 +53,7 @@ describe.concurrent('createMasterCSSManifest', () => {
   })
 
   it('preserves explicitly authored negative variables', () => {
-    const manifest = createMasterCSSManifest({
+    const manifest = createStetCSSManifest({
       variables: [
         { namespace: 'spacing', key: '-card', value: -12, static: true }
       ]
@@ -72,7 +72,7 @@ describe.concurrent('createMasterCSSManifest', () => {
   })
 
   it('lowers static animation options', () => {
-    const manifest = createMasterCSSManifest({
+    const manifest = createStetCSSManifest({
       animations: {
         fade: {
           to: {
@@ -91,7 +91,7 @@ describe.concurrent('createMasterCSSManifest', () => {
   })
 
   it('does not serialize manifest registry input', () => {
-    const manifest = createMasterCSSManifest({
+    const manifest = createStetCSSManifest({
       keyAliases: { w: 'inline-size' },
       nativeValueNamespaces: [{
         properties: ['width'],
@@ -113,7 +113,7 @@ describe.concurrent('createMasterCSSManifest', () => {
   })
 
   it('lowers breakpoint and container aliases into condition node maps', () => {
-    const manifest = createMasterCSSManifest({
+    const manifest = createStetCSSManifest({
       variables: [
         { namespace: 'breakpoint', key: 'card', value: 777 },
         { namespace: 'container', key: 'panel', value: 333 }
@@ -135,7 +135,7 @@ describe.concurrent('createMasterCSSManifest', () => {
   })
 
   it('keeps unitful numeric theme tokens comparable', () => {
-    const manifest = createMasterCSSManifest({
+    const manifest = createStetCSSManifest({
       variables: [
         { namespace: 'spacing', key: 'card', value: '1.5rem' },
         { namespace: 'radius', key: 'card', value: '8px' },
@@ -172,7 +172,7 @@ describe.concurrent('createMasterCSSManifest', () => {
   })
 
   it('lowers variants into compiled selector and condition branches', () => {
-    const manifest = createMasterCSSManifest({
+    const manifest = createStetCSSManifest({
       variants: [
         { token: ':hocus', branches: [{ selector: '&:hover,&:focus' }] },
         { token: '@motion-safe', branches: [{ conditions: ['@media (prefers-reduced-motion:no-preference)'] }] }
@@ -198,7 +198,7 @@ describe.concurrent('createMasterCSSManifest', () => {
   })
 
   it('lowers CSS-defined semantic utilities and matcher buckets', () => {
-    const manifest = createMasterCSSManifest({
+    const manifest = createStetCSSManifest({
       utilities: [
         {
           name: 'card',

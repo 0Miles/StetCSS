@@ -2,7 +2,7 @@ import {
   createStyleCSSHostSource,
   createStyleEntryEmittedGlobals,
   hasLocalStyleDirectives,
-  isMasterCSSPackageStyleFile,
+  isStetCSSPackageStyleFile,
   removeMasterStyleDirectives,
   resolveMasterStyleSource,
   transformLocalStyleCSS,
@@ -79,7 +79,7 @@ async function transformLocalStyleSource(resourcePath: string, source: string, p
  */
 async function transformStyleSource(resourcePath: string, source: string, options: StyleCSSLoaderOptions) {
   const { projectDir } = options
-  if (isMasterCSSPackageStyleFile(resourcePath, projectDir)) {
+  if (isStetCSSPackageStyleFile(resourcePath, projectDir)) {
     return { code: removeMasterStyleDirectives(source).code, dependencies: [] }
   }
   if (resolveMasterStyleSource(resourcePath, source, projectDir)) {

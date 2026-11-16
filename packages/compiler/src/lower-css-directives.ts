@@ -27,7 +27,7 @@ import {
   type StetCSS
 } from '@stet-css/engine/compiler'
 import type { StetCSSManifest, StetCSSManifestUtilityLayerName } from '@stet-css/schema/manifest'
-import { createMasterCSSManifest, createVariableNameResolver, type CSSDirectiveVariableNameResolver } from './master-css-manifest'
+import { createStetCSSManifest, createVariableNameResolver, type CSSDirectiveVariableNameResolver } from './stet-css-manifest'
 import { combineStyleSelectors } from './utils/selectors'
 import wrapConditions from './utils/wrap-conditions'
 import { cssTreeNativeDeclarationMatcher } from './native-declaration'
@@ -325,7 +325,7 @@ function warnMediaTriggerModes(input: CSSDirectiveManifestInput, css: StetCSS, o
 }
 
 function createDirectiveCSS(input: CSSDirectiveManifestInput, options: LowerCSSDirectivesOptions) {
-  const manifest = timeCompilerDiagnostic(options.diagnostics, 'lower-directive-css-manifest-creation-ms', () => createMasterCSSManifest(input, {
+  const manifest = timeCompilerDiagnostic(options.diagnostics, 'lower-directive-css-manifest-creation-ms', () => createStetCSSManifest(input, {
     baseManifest: getResolutionManifest(options),
     diagnostics: options.diagnostics
   }))
@@ -544,7 +544,7 @@ function resolveConditionVariantReference(token: string, css: StetCSS): Resolved
   return [{ conditions: [generateCondition({ id: condition.id, nodes })] }]
 }
 
-function resolveMasterVariantReference(token: string, css: StetCSS): ResolvedVariantReferenceBranch[] {
+function resolveStetVariantReference(token: string, css: StetCSS): ResolvedVariantReferenceBranch[] {
   if (!token.startsWith('@')) {
     throw new Error(`@variant requires a full variant token: ${token}`)
   }
@@ -588,7 +588,7 @@ function resolveConfiguredBranches(conditionPath: CSSDirectiveConditionPath | un
     const token = entry.token
     const resolvedBranches = token.startsWith(':')
       ? resolveSelectorVariantReference(token, css)
-      : resolveMasterVariantReference(token, css)
+      : resolveStetVariantReference(token, css)
     branches = branches.flatMap((branch) =>
       resolvedBranches.map((resolved) => {
         const nextLayer = resolved.layer || branch.layer
@@ -1029,7 +1029,7 @@ function refreshManagedStyleContext(
   options: LowerCSSDirectivesOptions
 ) {
   const diagnostics = options.diagnostics
-  const refreshManifest = timeCompilerDiagnostic(diagnostics, 'lower-managed-refresh-manifest-creation-ms', () => createMasterCSSManifest(input, {
+  const refreshManifest = timeCompilerDiagnostic(diagnostics, 'lower-managed-refresh-manifest-creation-ms', () => createStetCSSManifest(input, {
     baseManifest: getResolutionManifest(options),
     diagnostics
   }))
@@ -1126,13 +1126,13 @@ export default function lowerCSSDirectives(input: CSSDirectiveManifestInputSourc
   assertDeclaredDefaultMode(directiveInput, css)
   timeCompilerDiagnostic(diagnostics, 'lower-warn-media-modes-ms', () => warnMediaTriggerModes(directiveInput, css, options, warnings))
   timeCompilerDiagnostic(diagnostics, 'lower-finalize-utility-definitions-ms', () => finalizeUtilityDefinitions(directiveInput, css, options))
-  const initialRefreshManifest = timeCompilerDiagnostic(diagnostics, 'lower-initial-refresh-manifest-creation-ms', () => createMasterCSSManifest(directiveInput, {
+  const initialRefreshManifest = timeCompilerDiagnostic(diagnostics, 'lower-initial-refresh-manifest-creation-ms', () => createStetCSSManifest(directiveInput, {
     baseManifest: getResolutionManifest(options),
     diagnostics
   }))
   timeCompilerDiagnostic(diagnostics, 'lower-initial-css-refresh-ms', () => css.refresh(initialRefreshManifest))
   const generatedCSS = timeCompilerDiagnostic(diagnostics, 'lower-finalize-style-definitions-total-ms', () => finalizeStyleDefinitions(directiveInput, getStyleDefinitions(input), css, options))
-  const manifest = timeCompilerDiagnostic(diagnostics, 'lower-final-manifest-creation-ms', () => createMasterCSSManifest(directiveInput, {
+  const manifest = timeCompilerDiagnostic(diagnostics, 'lower-final-manifest-creation-ms', () => createStetCSSManifest(directiveInput, {
     baseManifest: options.baseManifest,
     diagnostics
   }))

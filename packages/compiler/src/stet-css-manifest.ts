@@ -46,7 +46,7 @@ import { normalizeStylesheetValue } from './stylesheet-value'
 
 export type CSSDirectiveManifestInput = SharedCSSDirectiveManifestInput
 
-export interface CreateMasterCSSManifestOptions {
+export interface CreateStetCSSManifestOptions {
   baseManifest?: StetCSSManifest
   diagnostics?: CompilerDiagnosticRecorder
 }
@@ -61,7 +61,7 @@ export interface ResolvedCSSDirectiveVariableName {
 }
 
 export type CSSDirectiveVariableNameResolver = (variable: CSSDirectiveVariableDefinition) => ResolvedCSSDirectiveVariableName
-type MasterCSSManifestVariableDraft = StetCSSManifestVariable & { namespace?: string }
+type StetCSSManifestVariableDraft = StetCSSManifestVariable & { namespace?: string }
 
 function clone<T>(value: T): T {
   if (Array.isArray(value)) return value.map((item) => clone(item)) as T
@@ -112,7 +112,7 @@ function addUtilityVariableNamespaces(namespaces: Set<string>, utilities: (Parti
   }
 }
 
-function collectVariableNamespaces(input: CSSDirectiveManifestInput = {}, options: CreateMasterCSSManifestOptions = {}) {
+function collectVariableNamespaces(input: CSSDirectiveManifestInput = {}, options: CreateStetCSSManifestOptions = {}) {
   const namespaces = new Set<string>(builtinNamespaces)
   for (const variable of flattenStetCSSManifestVariables(options.baseManifest?.variables)) {
     addVariableNamespace(namespaces, variable.namespace)
@@ -152,7 +152,7 @@ function resolveVariableName(variable: CSSDirectiveVariableDefinition, namespace
     }
 }
 
-export function createVariableNameResolver(input: CSSDirectiveManifestInput = {}, options: CreateMasterCSSManifestOptions = {}): CSSDirectiveVariableNameResolver {
+export function createVariableNameResolver(input: CSSDirectiveManifestInput = {}, options: CreateStetCSSManifestOptions = {}): CSSDirectiveVariableNameResolver {
   const namespaces = collectVariableNamespaces(input, options)
   return (variable) => resolveVariableName(variable, namespaces)
 }
@@ -182,7 +182,7 @@ function variableSlot(variable: Pick<StetCSSManifestVariable, 'name' | 'namespac
   return variable.name || `${variable.namespace || ''}\0${variable.key}`
 }
 
-function pushVariable(target: MasterCSSManifestVariableDraft[], variable: MasterCSSManifestVariableDraft) {
+function pushVariable(target: StetCSSManifestVariableDraft[], variable: StetCSSManifestVariableDraft) {
   const slot = variableSlot(variable)
   const existing = target.find((eachVariable) => variableSlot(eachVariable) === slot)
   if (existing) {
@@ -195,10 +195,10 @@ function pushVariable(target: MasterCSSManifestVariableDraft[], variable: Master
 function compileVariables(
   input: CSSDirectiveVariableDefinition[] | undefined,
   resolveVariableName: CSSDirectiveVariableNameResolver
-): MasterCSSManifestVariableDraft[] | undefined {
+): StetCSSManifestVariableDraft[] | undefined {
   if (!input?.length) return
-  const variables: MasterCSSManifestVariableDraft[] = []
-  const byName = new Map<string, MasterCSSManifestVariableDraft>()
+  const variables: StetCSSManifestVariableDraft[] = []
+  const byName = new Map<string, StetCSSManifestVariableDraft>()
 
   for (const definition of input) {
     const resolved = resolveVariableName(definition)
@@ -242,7 +242,7 @@ function compileVariables(
       continue
     }
 
-    const variable: MasterCSSManifestVariableDraft = {
+    const variable: StetCSSManifestVariableDraft = {
       name: resolved.name,
       key: resolved.key,
       ...(resolved.namespace ? { namespace: resolved.namespace } : {}),
@@ -289,7 +289,7 @@ function createVariableCondition(variable: StetCSSManifestVariable, id: 'media' 
   }
 }
 
-function compileConditions(variables: MasterCSSManifestVariableDraft[] | undefined) {
+function compileConditions(variables: StetCSSManifestVariableDraft[] | undefined) {
   const conditions: StetCSSManifestConditions = {}
   const breakpointConditions: StetCSSManifestConditions = {}
   const containerConditions: StetCSSManifestConditions = {}
@@ -785,7 +785,7 @@ function mergeManifest(baseManifest: StetCSSManifest | undefined, fragment: Stet
   )) as StetCSSManifest
 }
 
-export function createMasterCSSManifest(input: CSSDirectiveManifestInput = {}, options: CreateMasterCSSManifestOptions = {}): StetCSSManifest {
+export function createStetCSSManifest(input: CSSDirectiveManifestInput = {}, options: CreateStetCSSManifestOptions = {}): StetCSSManifest {
   const diagnostics = options.diagnostics
   addCompilerDiagnosticCount(diagnostics, 'manifest-create-count')
   setCompilerDiagnosticCount(diagnostics, 'manifest-input-variable-count', input.variables?.length || 0)

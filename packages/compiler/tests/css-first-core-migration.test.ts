@@ -596,7 +596,7 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
    * `@dark` as `@variant dark` gets different CSS. The expected strings are the output of the
    * same source written with `@dark` / `@light` on main before the removal (3fcc78db5), under
    * every mode trigger, in native rules, nested selectors, top-level blocks, and `@components`.
-   * Reverse-checked: `` `@${token}` `` changed to `` `${token}` `` in `parseMasterVariantBlock` reds
+   * Reverse-checked: `` `@${token}` `` changed to `` `${token}` `` in `parseStetVariantBlock` reds
    * all three rows plus the other `@variant` tests in compiler, project, vite and webpack; nothing
    * reds this test alone, since no code is specific to dark or light any more.
    */
@@ -666,13 +666,13 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
    * or being passed through as an unknown native at-rule that the browser drops, so the
    * developer's dark or light styles silently disappear. The compiler checks in two places: the
    * lightningcss visitor, which reaches rules it walks into (top level, a plain style rule,
-   * `@media`), and `parseMasterVariantBlock`, which every hand-written traversal of a body the
+   * `@media`), and `parseStetVariantBlock`, which every hand-written traversal of a body the
    * compiler consumes goes through (beside `@compose`, inside `@variant`, `@components`, and a
    * dynamic utility). The error is matched on the suggested rewrite only, so rewording the rest
    * of the sentence does not turn this red.
    * Reverse-checked in `core.ts`: deleting the visitor's `assertNotRemovedVariantShorthand(rule)`
    * reds the style rule and `@media` rows plus the stylesheet local-style test; deleting the call in
-   * `parseMasterVariantBlock` reds the `@compose`, `@variant`, `@components` and dynamic utility
+   * `parseStetVariantBlock` reds the `@compose`, `@variant`, `@components` and dynamic utility
    * rows; checking only `name === 'dark'` reds every row plus the stylesheet `@light` case. The
    * top-level row stays green under either deletion alone, because both checks reach it.
    */
@@ -1095,7 +1095,7 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
    * Prevents (#72): `@variant sm&dark {}` reading `dark` as part of the media query
    * (`@media (width>=52.125rem) and dark`, dropped by browsers) instead of the mode, so the block
    * never applies; it must mean what `@variant sm@dark {}` means under every trigger.
-   * Reverse-checked: dropping `splitModeConjuncts` in `resolveMasterVariantReference` reds these
+   * Reverse-checked: dropping `splitModeConjuncts` in `resolveStetVariantReference` reds these
    * three rows and the `@variant &` row above, nothing else in this file.
    */
   test.each([
@@ -1116,7 +1116,7 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
    * Prevents (#72): a declared mode inside a `,` list or after `!` (`@variant sm,md&dark {}`)
    * compiling to `… or (width>=64rem) and dark`, a query browsers drop; no single query or
    * selector expresses it, so the build fails and names the mode.
-   * Reverse-checked: dropping the generic throw in `resolveMasterVariantReference` reds both rows.
+   * Reverse-checked: dropping the generic throw in `resolveStetVariantReference` reds both rows.
    */
   /**
    * Prevents (#72): `@variant sm&print {}` emitting `@media (width>=52.125rem) and print`, which

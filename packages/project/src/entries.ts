@@ -3,7 +3,7 @@ import { readFile, readdir } from 'node:fs/promises'
 import { dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import {
   inspectCSS,
-  resolveMasterCSSPackageEntryFile
+  resolveStetCSSPackageEntryFile
 } from '@stet-css/compiler'
 import {
   createStetCSSManifestEntryPattern,
@@ -52,12 +52,12 @@ export {
   createStetCSSManifestEntryPattern,
   isStetCSSModuleId,
   normalizeStetCSSModuleIds,
-  resolveMasterCSSPackageEntryFile
+  resolveStetCSSPackageEntryFile
 }
 
 export function hasStetCSSManifestEntrypoint(source: string) {
   try {
-    return inspectCSS(source).hasMasterEntry
+    return inspectCSS(source).hasStetEntry
   } catch {
     return hasMasterCSSManifestEntrypointFallback(source)
   }

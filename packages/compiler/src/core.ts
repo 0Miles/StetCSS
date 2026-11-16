@@ -49,7 +49,7 @@ import {
   mergeCSSDirectiveExtractionPolicy,
   removeStandaloneCSSDirectives,
   type StandaloneCSSDirectiveStatement
-} from './lexer/standalone-master'
+} from './lexer/standalone-directives'
 import { combineSelectorLists } from './utils/selectors'
 import { normalizeStylesheetValue } from './stylesheet-value'
 
@@ -122,7 +122,7 @@ export interface ParsedDirectives extends Pick<CompileCSSResult, 'manifestInput'
   sourceLocationResolver?: ReturnType<typeof createSourceLocationResolver>
 }
 
-const MASTER_CUSTOM_AT_RULES = {
+const STET_CUSTOM_AT_RULES = {
   settings: {
     prelude: '*',
     body: 'style-block'
@@ -314,7 +314,7 @@ function defineThemeVariable(manifestInput: CSSDirectiveManifestInput, property:
   manifestInput.variables.push(definition)
 }
 
-function parseMasterOption(manifestInput: CSSDirectiveManifestInput, property: string, value: string) {
+function parseStetOption(manifestInput: CSSDirectiveManifestInput, property: string, value: string) {
   switch (property) {
     case 'root-size':
       throw new Error(`@settings root-size was removed; rem conversion always uses ${ROOT_FONT_SIZE}px`)
@@ -948,7 +948,7 @@ function parseSettingsDeclarations(block: DeclarationBlock<Declaration>, manifes
   for (const declaration of (block.declarations || []) as Declaration[]) {
     const property = getDeclarationName(declaration)
     const value = formatDeclarationValue(declaration)
-    if (!parseMasterOption(manifestInput, property, value)) {
+    if (!parseStetOption(manifestInput, property, value)) {
       throw new Error(`Unsupported @settings option: ${property}`)
     }
   }
@@ -1036,7 +1036,7 @@ function collectVariantTemplateBranches(
     if (isCustomVariantDefinition(child)) {
       throw new Error('@custom-variant cannot be nested inside @custom-variant')
     }
-    if (parseMasterVariantBlock(child)) {
+    if (parseStetVariantBlock(child)) {
       throw new Error('@variant cannot be used inside @custom-variant')
     }
     if (child.type === 'keyframes') {
@@ -1265,7 +1265,7 @@ function assertNotRemovedVariantShorthand(rule: any) {
   }
 }
 
-function parseMasterVariantBlock(rule: any) {
+function parseStetVariantBlock(rule: any) {
   assertNotRemovedVariantShorthand(rule)
   if (rule.type !== 'custom' && rule.type !== 'unknown') return
   if (rule.value?.name !== 'variant') return
@@ -1299,7 +1299,7 @@ function isNestedStyleRule(rule: Rule) {
     || rule.type === 'container'
     || rule.type === 'starting-style'
     || rule.type === 'layer-block'
-    || Boolean(parseMasterVariantBlock(rule))
+    || Boolean(parseStetVariantBlock(rule))
 }
 
 type StyleRuleBodyItem =
@@ -1463,9 +1463,9 @@ function parseNestedManagedStyleChildRule(child: Rule, parsed: ParsedDirectives,
     throw new Error('Nested @layer blocks are not allowed inside managed style definitions')
   }
 
-  const masterVariantBlock = parseMasterVariantBlock(child)
-  if (masterVariantBlock) {
-    parseStyleRuleBody(masterVariantBlock.rules, parsed, parentSelectorDefinition, [...conditionPath, variantEntry(masterVariantBlock.token)], layer)
+  const stetVariantBlock = parseStetVariantBlock(child)
+  if (stetVariantBlock) {
+    parseStyleRuleBody(stetVariantBlock.rules, parsed, parentSelectorDefinition, [...conditionPath, variantEntry(stetVariantBlock.token)], layer)
     return
   }
 
@@ -1546,9 +1546,9 @@ function parseNativeRuleBody(
       continue
     }
 
-    const masterVariantBlock = parseMasterVariantBlock(child)
-    if (masterVariantBlock) {
-      parseNativeRuleBody(masterVariantBlock.rules, parsed, [...conditionPath, variantEntry(masterVariantBlock.token)], parentSelectorDefinition)
+    const stetVariantBlock = parseStetVariantBlock(child)
+    if (stetVariantBlock) {
+      parseNativeRuleBody(stetVariantBlock.rules, parsed, [...conditionPath, variantEntry(stetVariantBlock.token)], parentSelectorDefinition)
       continue
     }
 
@@ -1584,9 +1584,9 @@ function parseNativeRuleBody(
 function parseNestedNativeStyleChildRule(child: Rule, parsed: ParsedDirectives, parentSelectorDefinition: StyleSelectorDefinition, conditionPath: CSSDirectiveConditionPath) {
   assertNotSlotRule(child)
 
-  const masterVariantBlock = parseMasterVariantBlock(child)
-  if (masterVariantBlock) {
-    parseNativeRuleBody(masterVariantBlock.rules, parsed, [...conditionPath, variantEntry(masterVariantBlock.token)], parentSelectorDefinition)
+  const stetVariantBlock = parseStetVariantBlock(child)
+  if (stetVariantBlock) {
+    parseNativeRuleBody(stetVariantBlock.rules, parsed, [...conditionPath, variantEntry(stetVariantBlock.token)], parentSelectorDefinition)
     return
   }
 
@@ -1677,8 +1677,8 @@ function parseSettingsChildRule(child: Rule, parsed: ParsedDirectives, section: 
     throw new Error('@settings does not accept @layer')
   }
 
-  const masterVariantBlock = parseMasterVariantBlock(child)
-  if (masterVariantBlock) {
+  const stetVariantBlock = parseStetVariantBlock(child)
+  if (stetVariantBlock) {
     throw new Error('@settings does not accept @variant')
   }
 
@@ -2009,15 +2009,15 @@ function parseManagedPatternChildRule(
 
   assertNotSlotRule(child)
 
-  const masterVariantBlock = parseMasterVariantBlock(child)
-  if (masterVariantBlock) {
+  const stetVariantBlock = parseStetVariantBlock(child)
+  if (stetVariantBlock) {
     parseManagedPatternStyleDefinitionBody(
       parsed,
       definition,
-      collectDirectiveStyleRuleBody(EMPTY_DECLARATION_BLOCK, masterVariantBlock.rules, parsed),
+      collectDirectiveStyleRuleBody(EMPTY_DECLARATION_BLOCK, stetVariantBlock.rules, parsed),
       directiveName,
       selectors,
-      [...conditionPath, variantEntry(masterVariantBlock.token)]
+      [...conditionPath, variantEntry(stetVariantBlock.token)]
     )
     return
   }
@@ -2118,13 +2118,13 @@ function parseManagedDefinitionDirectiveChildRule(
     throw new Error(`Nested @layer blocks are not allowed inside @${directiveName}`)
   }
 
-  const masterVariantBlock = parseMasterVariantBlock(child)
-  if (masterVariantBlock) {
-    for (const nestedChild of masterVariantBlock.rules) {
+  const stetVariantBlock = parseStetVariantBlock(child)
+  if (stetVariantBlock) {
+    for (const nestedChild of stetVariantBlock.rules) {
       parseManagedDefinitionDirectiveChildRule(
         nestedChild,
         parsed,
-        [...conditionPath, variantEntry(masterVariantBlock.token)],
+        [...conditionPath, variantEntry(stetVariantBlock.token)],
         layer,
         directiveName
       )
@@ -2307,7 +2307,7 @@ export function compileCSS(source: string, options: CompileCSSOptions = {}): Com
   const transformed = getCSSTransform()({
     filename,
     code: encodeCSS(preprocessedSource),
-    customAtRules: MASTER_CUSTOM_AT_RULES,
+    customAtRules: STET_CUSTOM_AT_RULES,
     visitor: {
       Rule(rule: any) {
         assertNotRemovedVariantShorthand(rule)
@@ -2316,9 +2316,9 @@ export function compileCSS(source: string, options: CompileCSSOptions = {}): Com
             parseVariantDefinition(rule, parsed)
             return []
           }
-          const masterVariantBlock = parseMasterVariantBlock(rule)
-          if (masterVariantBlock) {
-            parseNativeRuleBody(masterVariantBlock.rules, parsed, [variantEntry(masterVariantBlock.token)])
+          const stetVariantBlock = parseStetVariantBlock(rule)
+          if (stetVariantBlock) {
+            parseNativeRuleBody(stetVariantBlock.rules, parsed, [variantEntry(stetVariantBlock.token)])
             return []
           }
           const nestedAtRuleChildren = getNestedAtRuleChildren(rule)

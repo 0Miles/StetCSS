@@ -4,7 +4,7 @@ import { getHost } from './utils/hosts'
 import {
   collectStyleCSSDependencies,
   hasLocalStyleDirectives,
-  isMasterCSSPackageStyleFile,
+  isStetCSSPackageStyleFile,
   resolveMasterStyleSource
 } from '@stet-css/stylesheet'
 
@@ -32,7 +32,7 @@ function toCSSImportPath(fromFile: string, toFile?: string) {
 
 function shouldAddStyleDependencies(resourcePath: string, source: string, projectDir?: string) {
   if (hasLocalStyleDirectives(source)) return true
-  if (isMasterCSSPackageStyleFile(resourcePath, projectDir)) return true
+  if (isStetCSSPackageStyleFile(resourcePath, projectDir)) return true
   try {
     return Boolean(resolveMasterStyleSource(resourcePath, source, projectDir))
   } catch {
