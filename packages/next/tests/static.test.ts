@@ -137,22 +137,16 @@ describe('Next static CSS', () => {
   })
 
   /**
-   * Guards entries declared with `@master entry;` instead of importing the package: they are
-   * rewritten and their native CSS reaches the generated module.
-   * Reverse check: matching entries only by an `@stet-css/core` import (`hasMasterCSSImport`)
-   * in the style loader turns it red.
+   * Prevents: a stylesheet still marked with the removed `@master entry;` passing the build. It is
+   * no longer an entry, so the style loader must fail with the import that replaces it instead of
+   * leaving the file, and its classes, out of the generated CSS without a word.
    */
-  it('rewrites @master entry stylesheets to the generated module', async () => {
+  it('fails stylesheets still marked with @master entry', async () => {
     const globals = '@master entry;\n.main { color: red; }'
     const root = createFixture(globals)
-    writeFileSync(join(root, 'app/page.tsx'), 'export default () => <main className="main" />')
 
-    const host = await runStyleCSSLoader(root, join(root, 'app/globals.css'), globals)
-    const { css } = await runGeneratedCSSLoader(root)
-
-    expect(host).toBe('@import "../.master/next.css";')
-    expect(css).toContain('.main')
-    expect(css).not.toContain('@master entry')
+    await expect(runStyleCSSLoader(root, join(root, 'app/globals.css'), globals))
+      .rejects.toThrow(`mark stylesheet entries with @import '@stet-css/core'; instead`)
   })
 
   /**

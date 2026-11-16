@@ -64,6 +64,21 @@ test.concurrent('collects dark and light ranges under their own names', () => {
   expect(source.slice(ranges[2].keywordRange.start, ranges[2].keywordRange.end)).toBe('@light')
 })
 
+/**
+ * Prevents: a stylesheet whose only StetCSS syntax is a removed `@master` at-rule skipping the
+ * compiler and its removal error. Every `@master` statement and block is located, whatever its
+ * prelude, so local-style routing sends the file to the compiler.
+ */
+test.concurrent('collects every @master at-rule, statement or block', () => {
+  const source = '@master entry;\n@master shake;\n@master { mode-trigger: media; }\n.a { color: red; }'
+  const ranges = collectCSSDirectiveRanges(source)
+
+  expect(ranges.map((range) => range.name)).toEqual(['master', 'master', 'master'])
+  expect(source.slice(ranges[1].preludeRange.start, ranges[1].preludeRange.end).trim()).toBe('shake')
+  expect(ranges[2].blockRange).toBeDefined()
+  expect(collectCSSDirectiveRanges('.logo { background: url(logo@master.png); }')).toEqual([])
+})
+
 test.concurrent('collects slot directive ranges inside custom variants', () => {
   const source = '@custom-variant motion-safe { @media (prefers-reduced-motion: no-preference) { @slot; } }'
   const ranges = collectCSSDirectiveRanges(source)

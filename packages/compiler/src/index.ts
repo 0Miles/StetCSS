@@ -6,7 +6,7 @@ import { transform } from 'lightningcss'
 import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 import { stringifyMasterCSSManifestJSON } from '@stet-css/schema/manifest-json'
 import type { CSSDirectiveReference } from '@stet-css/schema/css-directives'
-import { MASTER_CSS_ENTRY_DIRECTIVE_NAME, collectCSSDirectiveRanges } from '@stet-css/lexer'
+import { collectCSSDirectiveRanges } from '@stet-css/lexer'
 import { createCSSImportGraphReader, type CSSImportGraphReader } from './css-import-graph-reader'
 import { createMasterCSSManifest } from './master-css-manifest'
 import lowerCSSDirectives from './lower-css-directives'
@@ -15,7 +15,6 @@ import {
   compileCSS,
   createCSSDirectiveExtractionPolicy,
   findCSSReferenceStatements,
-  findStandaloneMasterDirectiveStatements,
   mergeCSSDirectiveExtractionPolicy,
   removeCSSReferenceStatements,
   type CompileCSSOptions,
@@ -40,8 +39,7 @@ export type {
   CompileCSSResult,
   CSSReferenceStatement,
   ResolvedCSSImportGraph,
-  StandaloneCSSDirectiveStatement,
-  StandaloneMasterDirectiveStatement
+  StandaloneCSSDirectiveStatement
 } from './core'
 
 setCSSTransform(transform)
@@ -57,7 +55,6 @@ interface CSSPackageJSON {
 }
 
 export interface InspectCSSResult {
-  hasMasterEntryDirective: boolean
   hasMasterCSSImport: boolean
   hasMasterEntry: boolean
 }
@@ -222,15 +219,13 @@ export function resolveMasterCSSPackageEntryFile(importSource: string, fromFile 
   return styleFile
 }
 
+/** A stylesheet entry is recognised by its `@stet-css/core` import alone. */
 export function inspectCSS(source: string): InspectCSSResult {
-  const hasMasterEntryDirective = findStandaloneMasterDirectiveStatements(source)
-    .some((statement) => statement.name === MASTER_CSS_ENTRY_DIRECTIVE_NAME)
   const hasMasterCSSImport = findCSSImportStatements(source)
     .some((statement) => statement.source === MASTER_CSS_PACKAGE_ID)
   return {
-    hasMasterEntryDirective,
     hasMasterCSSImport,
-    hasMasterEntry: hasMasterEntryDirective || hasMasterCSSImport
+    hasMasterEntry: hasMasterCSSImport
   }
 }
 

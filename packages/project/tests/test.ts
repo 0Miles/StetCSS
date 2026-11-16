@@ -206,9 +206,7 @@ test('loads project-level CSS manifest entries', async () => {
       }
     `)
 
-    expect(hasMasterCSSManifestEntrypoint('@master entry;')).toBe(true)
-    expect(hasMasterCSSManifestEntrypoint('@master;')).toBe(false)
-    expect(hasMasterCSSManifestEntrypoint('@master global;')).toBe(false)
+    expect(hasMasterCSSManifestEntrypoint('@master entry;')).toBe(false)
     expect(hasMasterCSSManifestEntrypoint('@source "./page.tsx";')).toBe(false)
     expect(hasMasterCSSManifestEntrypoint('@import "@stet-css/core/index.css";')).toBe(false)
     await expect(findCSSManifestEntryFiles(cwd)).resolves.toStrictEqual([entry])
