@@ -74,6 +74,19 @@ test.concurrent('locates removed @master and @preserve at-rules for the editor',
 })
 
 /**
+ * Prevents: an error for a source compiled without `from` (editor buffers, API callers)
+ * pointing at `master.css`, a file the user never had; the placeholder is `stet.css`, the
+ * CLI's default output file.
+ * Reverse check: `options.from || 'stet.css'` in `compileCSS` (`src/core.ts`) changed to
+ * `'master.css'` turns only this test red.
+ */
+test.concurrent('names stet.css in errors for a source compiled without a file name', () => {
+  const source = '.a {'.repeat(65) + '}'.repeat(65)
+
+  expect(() => compileCSS(source)).toThrow(/levels at line 1: stet\.css$/)
+})
+
+/**
  * Prevents: native CSS that merely contains the text `@master` failing the build, such as an
  * image named `logo@master.png` or a comment. Only an at-rule that starts a statement is rejected.
  * Reverse check: ignoring the lexer's statement-start flag for `@master` turns this test red, plus

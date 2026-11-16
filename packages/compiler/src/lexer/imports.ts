@@ -12,7 +12,7 @@ export interface CSSImportStatement {
   rule: Extract<Rule, { type: 'import' }>
 }
 
-export function findCSSImportStatements(source: string, filename = 'master.css') {
+export function findCSSImportStatements(source: string, filename = 'stet.css') {
   assertCSSNestingDepth(source, filename)
   const statements: CSSImportStatement[] = []
   const maskedSource = maskManagedPatternEntryNames(source)
@@ -41,7 +41,7 @@ export function findCSSImportStatements(source: string, filename = 'master.css')
   return statements
 }
 
-export function removeCSSImportStatements(source: string, filename = 'master.css') {
+export function removeCSSImportStatements(source: string, filename = 'stet.css') {
   return removeSourceRanges(source, findCSSImportStatements(source, filename))
 }
 

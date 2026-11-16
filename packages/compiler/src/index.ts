@@ -397,7 +397,7 @@ function resolveCSSReferenceFile(reference: CSSDirectiveReference, options: Comp
     ? isAbsolute(reference.file)
       ? reference.file
       : resolve(options.root || '', reference.file)
-    : resolve(options.root || process.cwd(), 'master.css')
+    : resolve(options.root || process.cwd(), 'stet.css')
   const packageFile = resolveMasterCSSPackageEntryFile(reference.source, fromFile, options.root)
   if (packageFile) return packageFile
   if (isExpandableImportSource(reference.source)) return resolve(dirname(fromFile), reference.source)

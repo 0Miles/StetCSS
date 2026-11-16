@@ -230,7 +230,7 @@ function parseStandaloneCSSDirectiveStatement(
   } satisfies StandaloneCSSDirectiveStatement
 }
 
-export function findStandaloneCSSDirectiveStatements(source: string, filename = 'master.css') {
+export function findStandaloneCSSDirectiveStatements(source: string, filename = 'stet.css') {
   void filename
   const statements: StandaloneCSSDirectiveStatement[] = []
   let quote = ''
@@ -324,6 +324,6 @@ export function collectStandaloneCSSDirectiveExtractionPolicy(source: string, fi
   return policy
 }
 
-export function removeStandaloneCSSDirectives(source: string, filename = 'master.css') {
+export function removeStandaloneCSSDirectives(source: string, filename = 'stet.css') {
   return removeSourceRanges(source, findStandaloneCSSDirectiveStatements(source, filename))
 }
