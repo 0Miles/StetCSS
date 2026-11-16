@@ -180,8 +180,10 @@ describe('ManifestLoaderPlugin', () => {
     const send = vi.fn()
 
     await (plugin.load as any).call({ addWatchFile: vi.fn() }, resolvedId)
+    const changedModule = { id: manifestPath }
     const result = await (plugin.handleHotUpdate as any)({
       file: manifestPath,
+      modules: [changedModule],
       server: {
         moduleGraph: {
           getModuleById: vi.fn((id) => id === resolvedId ? module : undefined),
@@ -193,6 +195,8 @@ describe('ManifestLoaderPlugin', () => {
 
     expect(invalidateModule).toHaveBeenCalledWith(module)
     expect(send).not.toHaveBeenCalled()
-    expect(result).toEqual([module])
+    // The edited stylesheet keeps its own update. Reverse check: starting `modules` empty in
+    // `manifest-loader.ts` turns only this test red.
+    expect(result).toEqual([changedModule, module])
   })
 })
