@@ -16,7 +16,7 @@ Owns the Vite plugin chain that builds static CSS: the style entry pipeline, the
 - **Splice warning** is tracked per Vite environment (`this.environment.name`); Astro bundles prerender, server and client separately.
 - **No-entry warning**: a build where no environment registered a managed CSS entry warns once; the check spans environments so Astro's client build after its server build stays quiet.
 - **Dev HMR across environments**: on a class change the CSS entry is invalidated in every non-client `server.environments[*].moduleGraph`, because frameworks inline the server environment's copy into dev HTML; `server.moduleGraph` alone returns the client module.
-- **`handleHotUpdate` results replace Vite's update list**: a hook that adds modules (the manifest modules, the local compose modules) returns the changed file's own `modules` too, or the edited stylesheet never reaches the page.
+- **`handleHotUpdate` results replace Vite's update list**: a hook that returns modules (the manifest modules) includes the changed file's own `modules`, or the edited stylesheet never reaches the page; local compose reloads its modules and returns nothing.
 - **`virtual:master-css-manifest`** is the project-level manifest API; keep stylesheet output and scanner usage out of it. **`virtual:master-css-emitted-globals`** describes only the generated variables and keyframes the runtime treats as already present.
 - **Virtual module IDs** are defined in `@stet-css/integration` and imported across integrations; keep them stable.
 - **Options**: `PluginOptions` holds only `scanner` and the defaults in `src/options.ts` are empty; #65/#66 reshape the public options.
