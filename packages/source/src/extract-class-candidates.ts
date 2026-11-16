@@ -41,7 +41,9 @@ const NON_QUOTE_RUN = /[^"'`]+/g
 const SPLIT_SENTINEL_TEXT = 'SPLIT_BY_THIS'
 
 const TRIM_LEADING = /^[^:@~(]*(?<!@>?)=/
-const TRIM_TRAILING = /[([{\\:#=.]+$/
+// Stripped from the end of a token. A `/[...]+$/` regex would retry from every
+// character of a long run of them, so the scan walks back from the end.
+const TRIM_TRAILING_CHARS = new Set(['(', '[', '{', '\\', ':', '#', '=', '.'])
 
 const PRE_EXCLUDE_BLOCK_COMMENT = /\/\*(?:(?!\*\/)[\S\s])*\*\//g
 const PRE_EXCLUDE_HTML_COMMENT = /<!--(?:(?!-->)[\S\s])*-->/g
@@ -54,9 +56,12 @@ const PRE_EXCLUDE_DECORATOR = /(?:@.*\n)+(?:export|function|class)/g
 
 const GROUP_BODY = /{(.*)}/
 
-// "Keep this token" patterns OR'd into one — cheaper than four separate
-// `.match()` calls.
-const KEEP_TOKEN = /(?:\S*\{\S*\})|(?:^[\w\-()]+:\S+)|(?:^[\w-]+\(\S+\))|(?:^[\w-]+)/
+// "Keep this token" patterns OR'd into one — cheaper than three separate
+// `.match()` calls. A `{...}` group is the fourth keep pattern, checked by
+// `hasBraceGroup`.
+const KEEP_TOKEN = /(?:^[\w\-()]+:\S+)|(?:^[\w-]+\(\S+\))|(?:^[\w-]+)/
+const WHITESPACE = /\s/
+const LINE_TERMINATORS = new Set(['\n', '\r', '\u2028', '\u2029'])
 
 // CSS unit suffix used by the `WxH` shorthand recognizer.
 const KEEP_WXH = new RegExp(`^(?:calc\\(.*\\)|\\d+(?:${MASTER_CSS_VALUE_UNIT_PATTERN})?)x(?:calc\\(.*\\)|\\d+(?:${MASTER_CSS_VALUE_UNIT_PATTERN})?)$`)
@@ -75,7 +80,7 @@ const REJECT_PATTERNS: RegExp[] = [
   /\(\{[^}]*\}/,
   /:\[/,
   /\*\*/,
-  /function\(|\(.*\)=>/,
+  /function\(/,
 ]
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -154,12 +159,18 @@ function splitStringByQuotation(content: string): string[] {
  * Iteratively strip a leading `name=` prefix and trailing punctuation. The
  * loop reaches the same fixed point without stack growth on long inputs.
  */
+function trimTrailing(content: string): string {
+  let end = content.length
+  while (end > 0 && TRIM_TRAILING_CHARS.has(content[end - 1])) end--
+  return end === content.length ? content : content.slice(0, end)
+}
+
 function trimString(content: string): string {
   while (true) {
     const before = content
     content = keepCompleteStringAndProcessContent(
       content,
-      c => c.replace(TRIM_LEADING, '').replace(TRIM_TRAILING, '')
+      c => trimTrailing(c.replace(TRIM_LEADING, ''))
     )
     if (before === content || !content) return content
   }
@@ -199,16 +210,53 @@ function preExclude(content: string): string {
   )
 }
 
+/**
+ * Whether a `{` is followed by a `}` with no whitespace between them, the
+ * same as testing `/\S*\{\S*\}/` but in one pass: that regex retries from
+ * every character of a long token that has no such group.
+ */
+function hasBraceGroup(content: string): boolean {
+  const first = content.indexOf('{')
+  if (first < 0) return false
+  let open = false
+  for (let i = first; i < content.length; i++) {
+    const ch = content[i]
+    if (ch === '{') open = true
+    else if (ch === '}') {
+      if (open) return true
+    } else if (open && WHITESPACE.test(ch)) open = false
+  }
+  return false
+}
+
+/**
+ * Whether a `(` comes before a `)=>` on the same line, the same as testing
+ * `/\(.*\)=>/` but in one pass: that regex rescans the rest of the line from
+ * every `(`.
+ */
+function hasParenthesizedArrow(content: string): boolean {
+  const last = content.lastIndexOf(')=>')
+  if (last < 0) return false
+  let open = false
+  for (let i = 0; i <= last; i++) {
+    const ch = content[i]
+    if (LINE_TERMINATORS.has(ch)) open = false
+    else if (ch === ')' && open && content.startsWith(')=>', i)) return true
+    else if (ch === '(') open = true
+  }
+  return false
+}
+
 function needExclude(content: string): boolean {
   if (!content) return true
-  // Structural keep-or-reject: if neither KEEP_TOKEN nor KEEP_WXH matches,
-  // this string doesn't look like a class.
-  if (!KEEP_TOKEN.test(content) && !KEEP_WXH.test(content)) return true
+  // Structural keep-or-reject: if no keep pattern matches, this string
+  // doesn't look like a class.
+  if (!hasBraceGroup(content) && !KEEP_TOKEN.test(content) && !KEEP_WXH.test(content)) return true
   if (SENTINEL_REGEX.test(content)) return true
   for (let i = 0; i < REJECT_PATTERNS.length; i++) {
     if (REJECT_PATTERNS[i].test(content)) return true
   }
-  return false
+  return hasParenthesizedArrow(content)
 }
 
 function checkToExclude(content: string): boolean {
