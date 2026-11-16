@@ -18,7 +18,7 @@
  *     runtime against a blank page.
  */
 import { afterEach, beforeAll, describe, test, expect, vi } from 'vitest'
-import StyleEntryBuildPlugin from '../../src/plugins/style-entry-build'
+import StyleEntryBuildPlugin, { NO_STYLE_ENTRY_WARNING } from '../../src/plugins/style-entry-build'
 import StyleEntryPlugin from '../../src/plugins/style-entry'
 import getExtractedCSS from '../../src/utils/extracted-css'
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
@@ -125,9 +125,15 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
     expect(msg).toContain(SLOT)
   })
 
-  test('does NOT warn if no managed CSS import emitted the placeholder', async () => {
-    // No extracted CSS to splice in, no placeholder ever emitted →
-    // generateBundle must be a quiet no-op.
+  /**
+   * Guards the silent unstyled build: when no stylesheet in the build imports Master CSS
+   * (Astro inlines `@import '@stet-css/core'` written inside an `.astro` `<style>` before
+   * Vite plugins see it), the build used to exit cleanly with zero generated rules. It now
+   * warns once, naming the supported pattern, and never with the splice warning.
+   * Reverse check: removing the `!context.virtualCSSPlaceholderEnvironments?.size` warning
+   * in `style-entry-build.ts` turns only this test red.
+   */
+  test('warns once when no managed CSS import was registered in the build', async () => {
     const ctx = makeContext()
     const plugin = StyleEntryBuildPlugin({} as any, ctx)
     const warn = vi.fn()
@@ -135,7 +141,29 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
     const bundle = makeBundle({
       'assets/index-abc.css': 'body{margin:0}',
     })
-    await (plugin as any).generateBundle.call({ warn }, {}, bundle)
+    await (plugin as any).generateBundle.call({ warn, environment: { name: 'ssr' } }, {}, bundle)
+    await (plugin as any).generateBundle.call({ warn, environment: { name: 'client' } }, {}, bundle)
+
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn).toHaveBeenCalledWith(NO_STYLE_ENTRY_WARNING)
+    expect(bundle['assets/index-abc.css'].source).toBe('body{margin:0}')
+  })
+
+  /**
+   * Guards multi-environment builds against a false warning: Astro builds its server
+   * environment, which holds the CSS entry, before a client environment with no CSS; the
+   * shared context must keep the later environment quiet.
+   * Reverse check: checking only the current environment's entry turns this test red, plus
+   * the per-environment splice warning test, whose prerender-only fixture then also warns.
+   */
+  test('does NOT warn about a missing entry once any environment registered one', async () => {
+    const ctx = makeContext()
+    const plugin = StyleEntryBuildPlugin({} as any, ctx)
+    const warn = vi.fn()
+
+    ctx.virtualCSSPlaceholderEnvironments = new Set(['ssr'])
+
+    await (plugin as any).generateBundle.call({ warn, environment: { name: 'client' } }, {}, makeBundle({}))
 
     expect(warn).not.toHaveBeenCalled()
   })
