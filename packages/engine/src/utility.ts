@@ -39,6 +39,16 @@ type ResolvedVariableAlias = {
   negative?: boolean
 }
 
+/**
+ * The most branches one class may expand to. Each stacked multi-branch variant multiplies the
+ * branches before it, and every branch builds its own rule, so the expansion grows exponentially.
+ */
+const MAX_STATE_BRANCHES = 4096
+
+function exceedsStateBranches(branches: readonly unknown[], variantBranches: readonly unknown[]) {
+  return branches.length * variantBranches.length > MAX_STATE_BRANCHES
+}
+
 function isVariantToken(value: string): value is MasterCSSManifestVariantToken {
   return /^:{1,2}[-_a-zA-Z][-_a-zA-Z0-9]*$/.test(value) || /^@[-_a-zA-Z][-_a-zA-Z0-9]*$/.test(value)
 }
@@ -686,10 +696,12 @@ export class Utility {
     return declarations as PropertiesHyphen
   }
 
+  /** The branches a state token selects; none, leaving the class invalid, past `MAX_STATE_BRANCHES`. */
   resolveStateBranches(stateToken: string): UtilityStateBranch[] {
     const [selectorToken = '', ...conditionTokens] = stateToken.split('@')
-    let branches: UtilityStateBranch[] = [{ key: '' }]
-    branches = this.applySelectorTokenBranches(branches, selectorToken)
+    const selectorBranches = this.applySelectorTokenBranches([{ key: '' }], selectorToken)
+    if (!selectorBranches) return []
+    let branches = selectorBranches
 
     for (const conditionToken of conditionTokens) {
       if (this.css.modes.includes(conditionToken)) {
@@ -705,6 +717,7 @@ export class Utility {
       const variantToken = `@${conditionToken}` as MasterCSSManifestVariantToken
       const variantBranches = this.css.resolveVariant(variantToken)
       if (variantBranches) {
+        if (exceedsStateBranches(branches, variantBranches)) return []
         branches = branches.flatMap((branch) =>
           variantBranches.map((variantBranch, index) =>
             mergeBranch(branch, variantBranch, this.css, `${variantToken}#${index}`)
@@ -728,7 +741,8 @@ export class Utility {
     return branches.length ? branches : [{ key: '' }]
   }
 
-  applySelectorTokenBranches(branches: UtilityStateBranch[], selectorToken: string): UtilityStateBranch[] {
+  /** The branches after a selector token; `undefined` past `MAX_STATE_BRANCHES`. */
+  applySelectorTokenBranches(branches: UtilityStateBranch[], selectorToken: string): UtilityStateBranch[] | undefined {
     if (!selectorToken) return branches
 
     const selectorVariantTokens = [...this.css.variants.keys()]
@@ -789,6 +803,7 @@ export class Utility {
           index = end + 1
         }
       }
+      if (exceedsStateBranches(branches, variantBranches)) return
       branches = branches.flatMap((branch) =>
         variantBranches.map((variantBranch, branchIndex) => {
           const selector = variantBranch.selector && suffix
