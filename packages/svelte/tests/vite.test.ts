@@ -1,26 +1,22 @@
 import { describe, expect, test } from 'vitest'
-import masterCSS, { SVELTEKIT_SSR_EXTERNAL } from '../src/lib/vite.js'
+import masterCSS from '../src/lib/vite.js'
 
 describe('Svelte Vite integration', () => {
   test('includes the emittedGlobals virtual module from the wrapped Vite plugin', () => {
     expect(masterCSS().map((plugin) => plugin.name)).toContain('master-css:virtual-module:emitted-globals')
   })
 
-  test('externalizes server hook dependencies from SvelteKit server bundles', () => {
-    const plugin = masterCSS().find((candidate) => candidate.name === 'master-css:svelte-kit-server-external')
-    const config = typeof plugin?.config === 'function'
-      ? plugin.config.call({} as never, {}, { command: 'build', mode: 'production' } as never)
-      : undefined
+  /**
+   * Guards: `masterCSS()` with no options registers neither HTML pre-rendering nor runtime
+   * injection, so a SvelteKit project gets static CSS only. If the wrapper set a default mode
+   * again, SvelteKit pages would carry a runtime script the project never asked for.
+   *
+   * Reverse check: passing `mode: 'progressive'` from `src/lib/vite.ts` fails this test.
+   */
+  test('registers no pre-render or runtime injection plugin by default', () => {
+    const names = masterCSS().map((plugin) => plugin.name)
 
-    expect(config).toEqual({
-      ssr: {
-        external: SVELTEKIT_SSR_EXTERNAL
-      },
-      build: {
-        rollupOptions: {
-          external: SVELTEKIT_SSR_EXTERNAL
-        }
-      }
-    })
+    expect(names).not.toContain('master-css:pre-render')
+    expect(names.filter((name) => name.startsWith('master-css:inject-runtime'))).toEqual([])
   })
 })
