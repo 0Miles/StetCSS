@@ -9,7 +9,7 @@ The CSS source compiler: parses Master CSS directives and native CSS, resolves t
 
 ## Risks
 
-- **Entry markers**: `@master entry;` and `@import "@stet-css/core"` are equivalent user project entry markers. Package CSS files stay free of `@master entry;`.
+- **Entry marker**: `@import "@stet-css/core"` is the only user project entry marker. Every `@master` at-rule (`@master entry;`, `@master { … }`) fails with the replacement; `assertNoMasterAtRules` is the one check, run by directive collection and by `@stet-css/stylesheet` before it decides a file is not an entry.
 - **Definitions emit nothing alone**: components, utilities, variables, variants, and animations produce CSS only once a class uses or extracts them.
 - **Managed vs native**: generated definitions go through managed directives. Native `@layer` blocks are not compiler-managed, and top-level native `@keyframes` stay native CSS; managed animations go inside top-level `@theme`.
 - **Directive shape**: managed definition directives (`@defaults`, `@components`, `@utilities`) take bare first-level names such as `btn { }`, with selector states and descendants as nested selectors inside the named block. `@compose` works in managed class definitions and native style rules, including inside `@variant`.
