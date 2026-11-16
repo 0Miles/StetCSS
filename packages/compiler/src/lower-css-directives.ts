@@ -552,11 +552,8 @@ function resolveMasterVariantReference(token: string, css: MasterCSS): ResolvedV
 
   let branches: ResolvedVariantReferenceBranch[] = [{}]
   const conditionStacks = token.slice(1).split('@').flatMap((stack) => {
-    const { tokens, inexpressibleMode } = splitModeConjuncts(stack, css)
+    const { tokens, inexpressibleMode } = splitModeConjuncts(stack, css, `@variant ${token.slice(1)}`)
     if (inexpressibleMode === undefined) return tokens
-    if (!css.modes.includes(inexpressibleMode)) {
-      throw new UndeclaredModeError(`@variant ${inexpressibleMode}`, inexpressibleMode, css.modes)
-    }
     throw new Error(`@variant ${token} puts mode "${inexpressibleMode}" in a "," list or after "!"; no single query or selector expresses that`)
   })
 
