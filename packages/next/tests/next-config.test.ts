@@ -45,7 +45,11 @@ function findLoaders(rules: unknown[], file: string) {
 }
 
 describe('withMasterCSS', () => {
-  /** Guards #57: composition breaks when withMasterCSS returns a Promise, as static mode used to. */
+  /**
+   * Guards #57: an outer wrapper cannot spread a Promise, as static mode used to return, and
+   * must still reach the Turbopack rules and webpack hook withMasterCSS added.
+   * Reverse check: making withMasterCSS return `Promise.resolve(config)` turns it red.
+   */
   it('composes inside another wrapper and keeps both webpack hooks', () => {
     const onWebpack = vi.fn()
     const nextConfig = withX(withMasterCSS({ reactStrictMode: true }), onWebpack)
@@ -63,6 +67,11 @@ describe('withMasterCSS', () => {
     expect(webpackConfig.resolve.alias[VIRTUAL_CSS_ID]).toBe(join(projectDir, '.master/next.css'))
   })
 
+  /**
+   * Guards the reverse order: withMasterCSS must chain the inner wrapper's webpack hook, or that
+   * wrapper's loaders and aliases silently disappear.
+   * Reverse check: not calling the user's `webpack` from withMasterCSS turns it red.
+   */
   it('wraps another wrapper and still runs its webpack hook', () => {
     const onWebpack = vi.fn()
     const nextConfig = withMasterCSS(withX({}, onWebpack))
@@ -74,6 +83,10 @@ describe('withMasterCSS', () => {
     expect(findLoaders(webpackConfig.module.rules, 'generated-css-loader.js')).toHaveLength(1)
   })
 
+  /**
+   * Guards that withMasterCSS adds to the user's Turbopack config instead of replacing it.
+   * Reverse check: dropping the user's `'*'` rules from the merged list turns it red.
+   */
   it('keeps the user Turbopack rules and aliases', () => {
     const userStarRule = { loaders: ['user-loader'] }
     const nextConfig = withMasterCSS({
@@ -93,12 +106,18 @@ describe('withMasterCSS', () => {
     expect(resolveAlias[VIRTUAL_CSS_ID]).toBe('./.master/next.css')
   })
 
-  /** The pre-render adapter and runtime injection are gone, not just disabled. */
-  it('exports only withMasterCSS and adds no adapter or instrumentation client', async () => {
+  /**
+   * Guards #57's removal: no adapter export, no adapter path and no instrumentation client
+   * alias, so nothing renders HTML or injects the runtime.
+   * Reverse check: re-adding an `adapterPath` to the returned config turns it red.
+   */
+  it('exports no adapter and adds no adapter or instrumentation client', async () => {
     const nextConfig = withMasterCSS({}) as NextConfig & { adapterPath?: string }
     const webpackConfig = runWebpack(nextConfig)
 
-    expect(Object.keys(await import('../src')).sort()).toEqual(['default', 'withMasterCSS'])
+    const exports = Object.keys(await import('../src'))
+    expect(exports).toContain('withMasterCSS')
+    expect(exports.filter((name) => /adapter|renderNextBuildOutputs/i.test(name))).toEqual([])
     expect(nextConfig.adapterPath).toBeUndefined()
     expect(Object.keys(nextConfig.turbopack!.resolveAlias!).filter((id) => id.includes('instrumentation'))).toEqual([])
     expect(Object.keys(webpackConfig.resolve.alias).filter((id) => id.includes('instrumentation'))).toEqual([])
