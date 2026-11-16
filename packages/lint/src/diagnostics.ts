@@ -1,5 +1,5 @@
 import type { MasterCSS } from '@stet-css/engine'
-import { parseMasterCSSClassList, type MasterCSSClassListItem } from '@stet-css/lexer'
+import { parseStetCSSClassList, type StetCSSClassListItem } from '@stet-css/lexer'
 import type { ClassValidationOptions } from './get-class-validation-issues'
 import getClassValidationIssues from './get-class-validation-issues'
 import type { MasterCSSClassListEditOptions } from './class-list-edits'
@@ -108,22 +108,22 @@ function wholeClassListFix(classList: string, text: string): MasterCSSLintFix | 
 }
 
 function parseClassList(classList: string, options: MasterCSSClassListEditOptions = {}) {
-  return parseMasterCSSClassList(classList, {
+  return parseStetCSSClassList(classList, {
     preserveSpaces: true,
     ...options
   })
 }
 
-function classItems(items: MasterCSSClassListItem[]) {
+function classItems(items: StetCSSClassListItem[]) {
   return items.filter((item) => item.type === 'class')
 }
 
-function classValues(items: MasterCSSClassListItem[]) {
+function classValues(items: StetCSSClassListItem[]) {
   return classItems(items).map((item) => item.token)
 }
 
-function createClassItemQueues(items: MasterCSSClassListItem[]) {
-  const queues = new Map<string, MasterCSSClassListItem[]>()
+function createClassItemQueues(items: StetCSSClassListItem[]) {
+  const queues = new Map<string, StetCSSClassListItem[]>()
   for (const item of classItems(items)) {
     const queue = queues.get(item.token)
     if (queue) {
@@ -135,11 +135,11 @@ function createClassItemQueues(items: MasterCSSClassListItem[]) {
   return queues
 }
 
-function findClassItem(items: MasterCSSClassListItem[], className: string) {
+function findClassItem(items: StetCSSClassListItem[], className: string) {
   return classItems(items).find((item) => item.token === className)
 }
 
-function toRange(item: MasterCSSClassListItem | undefined, fallback: MasterCSSLintRange): MasterCSSLintRange {
+function toRange(item: StetCSSClassListItem | undefined, fallback: MasterCSSLintRange): MasterCSSLintRange {
   return item
     ? { start: item.start, end: item.end }
     : fallback

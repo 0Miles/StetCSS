@@ -4,7 +4,7 @@ import type { NextConfig } from 'next'
 import type { TurbopackLoaderOptions } from 'next/dist/server/config-shared'
 import { escapeRegExp } from '@stet-css/lexer'
 import { validatePluginOptions } from '@stet-css/scanner'
-import { createMasterCSSManifestEntryPattern } from '@stet-css/project/entries'
+import { createStetCSSManifestEntryPattern } from '@stet-css/project/entries'
 import {
   MASTER_CSS_MANIFEST_QUERY,
   VIRTUAL_MANIFEST_ID
@@ -35,7 +35,7 @@ const MASTER_CSS_VIRTUAL_MANIFEST_PATH_PATTERN = createVirtualDefaultManifestMod
  * rejects (`@dark` and `@light` were folded into `@variant`; `@master` at-rules were removed in
  * favour of `@import '@stet-css/core'` and `@settings`).
  */
-const MASTER_CSS_STYLE_CONTENT_PATTERN = new RegExp(`${createMasterCSSManifestEntryPattern().source}|@(compose|variant|reference|dark|light|master)\\b`)
+const MASTER_CSS_STYLE_CONTENT_PATTERN = new RegExp(`${createStetCSSManifestEntryPattern().source}|@(compose|variant|reference|dark|light|master)\\b`)
 const STYLE_FILE_PATTERN = /\.(css|scss|sass)$/
 
 interface MasterCSSNextSetup {

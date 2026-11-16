@@ -18,11 +18,11 @@ import { renderCompiledManifestCSS, type RenderCompiledManifestCSSResult } from 
 import {
   findCSSImportStatements,
   collectCSSDirectiveRanges,
-  createMasterCSSManifestEntryPattern,
-  hasMasterCSSImport,
-  hasMasterCSSManifestEntrypoint,
-  isMasterCSSModuleId as isMasterCSSManifestModuleId,
-  normalizeMasterCSSModuleIds,
+  createStetCSSManifestEntryPattern,
+  hasStetCSSImport,
+  hasStetCSSManifestEntrypoint,
+  isStetCSSModuleId as isMasterCSSManifestModuleId,
+  normalizeStetCSSModuleIds,
   parseCSSImportSource
 } from '@stet-css/lexer'
 import type { SourceAdapter } from '@stet-css/source'
@@ -199,11 +199,11 @@ function defaultLoadSass(projectDir?: string): SassModule {
 }
 
 export function normalizeStyleCSSModuleIds() {
-  return normalizeMasterCSSModuleIds()
+  return normalizeStetCSSModuleIds()
 }
 
 export function createStyleCSSImportPattern() {
-  return createMasterCSSManifestEntryPattern()
+  return createStetCSSManifestEntryPattern()
 }
 
 export function createMasterStyleCSSPattern() {
@@ -400,7 +400,7 @@ export function hasDefaultStyleCSSImport(source: string) {
 }
 
 export function hasMasterStyleEntrypoint(source: string) {
-  return hasMasterCSSManifestEntrypoint(source)
+  return hasStetCSSManifestEntrypoint(source)
 }
 
 export function resolveMasterStyleSource(
@@ -430,7 +430,7 @@ function isRemovedMasterAtRuleError(error: unknown) {
   return (error as { code?: unknown } | undefined)?.code === REMOVED_MASTER_AT_RULE_ERROR_CODE
 }
 
-export function isMasterCSSModuleId(id: string) {
+export function isStetCSSModuleId(id: string) {
   return isMasterCSSManifestModuleId(id)
 }
 
@@ -855,7 +855,7 @@ export async function registerStyleCSSSource(
       directives: createStylesheetDirectives(),
       dependencies: []
     }
-  const masterCSS = hasMasterCSSImport(resolvedSource.source)
+  const masterCSS = hasStetCSSImport(resolvedSource.source)
   const sourceWithoutImports = removeCSSImportStatements(resolvedSource.source)
   const cleanSource = removeMasterStyleDirectives(sourceWithoutImports).code
   const defaultArtifact = masterCSS

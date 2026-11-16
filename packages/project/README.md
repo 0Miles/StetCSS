@@ -112,7 +112,7 @@ Use `@stet-css/project/entries` when tooling needs the same project entry and wo
 import {
   findCSSManifestEntryFiles,
   findMasterCSSWorkspaceDirectories,
-  hasMasterCSSManifestEntrypoint,
+  hasStetCSSManifestEntrypoint,
 } from '@stet-css/project/entries'
 ```
 

@@ -30,7 +30,7 @@ import { assertCSSNestingDepth } from './css-nesting'
 import { decodeCSS, encodeCSS, getCSSTransform, setCSSTransform, type CSSTransform } from './css-transform'
 import {
   collectCSSDirectiveRanges,
-  collectMasterCSSClassListTokenRanges,
+  collectStetCSSClassListTokenRanges,
   createSourceLocationResolver,
   findCSSBlockEnd,
   findCSSClosingQuote,
@@ -1205,7 +1205,7 @@ function validateComposeRange(parsed: ParsedDirectives, range: CSSDirectiveRuleR
   }
   const contentRange = trimSourceRange(source, range.preludeRange)
   const classList = source.slice(contentRange.start, contentRange.end)
-  for (const token of collectMasterCSSClassListTokenRanges(classList)) {
+  for (const token of collectStetCSSClassListTokenRanges(classList)) {
     if (token.token.startsWith('{')) {
       throw createComposeGroupSyntaxError(parsed, {
         start: contentRange.start + token.start,
@@ -1230,7 +1230,7 @@ function parseComposeRule(rule: any, parsed: ParsedDirectives): ParsedComposeRul
     const classList = contentRange && parsed.source
       ? parsed.source.slice(contentRange.start, contentRange.end)
       : formatPrelude(rule.value.prelude)
-    const classTokens = collectMasterCSSClassListTokenRanges(classList)
+    const classTokens = collectStetCSSClassListTokenRanges(classList)
     return {
       classNames: classTokens.map((token) => ({
         className: token.token,

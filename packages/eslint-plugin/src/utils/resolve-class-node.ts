@@ -1,5 +1,5 @@
 import { RuleContext } from '@typescript-eslint/utils/ts-eslint'
-import { parseMasterCSSClassList } from '@stet-css/lexer'
+import { parseStetCSSClassList } from '@stet-css/lexer'
 
 export type ResolvedClassListUnescape = string | false
 
@@ -82,7 +82,7 @@ export default function resolveClassNode(node: any, context: RuleContext<any, an
     end = end - 1
   }
 
-  const nodes: ResolvedClassListNode[] = parseMasterCSSClassList(raw, {
+  const nodes: ResolvedClassListNode[] = parseStetCSSClassList(raw, {
     preserveSpaces: true,
     unescape
   }).map((item) => {

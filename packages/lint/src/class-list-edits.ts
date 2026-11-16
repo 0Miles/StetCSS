@@ -1,29 +1,29 @@
 import {
-  parseMasterCSSClassList,
-  type MasterCSSClassListItem,
-  type MasterCSSClassListParseOptions
+  parseStetCSSClassList,
+  type StetCSSClassListItem,
+  type StetCSSClassListParseOptions
 } from '@stet-css/lexer'
 import type { MasterCSS } from '@stet-css/engine'
 import sortClassNames from './sort-class-names'
 
-export type MasterCSSClassListEditOptions = Pick<MasterCSSClassListParseOptions, 'unescape'>
+export type MasterCSSClassListEditOptions = Pick<StetCSSClassListParseOptions, 'unescape'>
 
 function parseClassList(classList: string, options: MasterCSSClassListEditOptions = {}) {
-  return parseMasterCSSClassList(classList, {
+  return parseStetCSSClassList(classList, {
     preserveSpaces: true,
     ...options
   })
 }
 
-function cloneClassListItems(items: MasterCSSClassListItem[]) {
+function cloneClassListItems(items: StetCSSClassListItem[]) {
   return items.map((item) => ({ ...item }))
 }
 
-function buildClassList(items: MasterCSSClassListItem[]) {
+function buildClassList(items: StetCSSClassListItem[]) {
   return items.map((item) => item.raw).join('')
 }
 
-function removeClassListItemAt(items: MasterCSSClassListItem[], index: number) {
+function removeClassListItemAt(items: StetCSSClassListItem[], index: number) {
   const previous = items[index - 1]
   const next = items[index + 1]
   if (previous?.type === 'space') {
@@ -38,7 +38,7 @@ function removeClassListItemAt(items: MasterCSSClassListItem[], index: number) {
   return index
 }
 
-function removeClassListToken(items: MasterCSSClassListItem[], token: string) {
+function removeClassListToken(items: StetCSSClassListItem[], token: string) {
   for (let index = 0; index < items.length; index++) {
     const item = items[index]
     if (item.type !== 'class' || item.token !== token) continue
@@ -48,7 +48,7 @@ function removeClassListToken(items: MasterCSSClassListItem[], token: string) {
   return false
 }
 
-function replaceClassListToken(items: MasterCSSClassListItem[], token: string, replacement: string) {
+function replaceClassListToken(items: StetCSSClassListItem[], token: string, replacement: string) {
   for (const item of items) {
     if (item.type !== 'class' || item.token !== token) continue
     item.raw = replacement
@@ -59,7 +59,7 @@ function replaceClassListToken(items: MasterCSSClassListItem[], token: string, r
   return false
 }
 
-function getRawQueuesByToken(items: MasterCSSClassListItem[]) {
+function getRawQueuesByToken(items: StetCSSClassListItem[]) {
   const rawQueues = new Map<string, string[]>()
   for (const item of items) {
     if (item.type !== 'class') continue

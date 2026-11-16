@@ -10,7 +10,7 @@ import {
   normalizeMasterCSSNumericValue,
   type MasterCSSClassInspection
 } from '@stet-css/engine/inspect'
-import { splitMasterCSSTopLevel } from '@stet-css/lexer'
+import { splitStetCSSTopLevel } from '@stet-css/lexer'
 import UtilityType from '@stet-css/schema/utility-type'
 import type { Variable } from '@stet-css/schema/css-syntax'
 import {
@@ -176,7 +176,7 @@ function getRecommendationIndex(css: MasterCSS) {
 }
 
 function splitTopLevelValueSegments(value: string) {
-  const segments = splitMasterCSSTopLevel(value, '|')
+  const segments = splitStetCSSTopLevel(value, '|')
   if (segments.length <= 1) return
   const values = segments.map(({ start, end }) => value.slice(start, end))
   if (values.some((segment) => segment === '')) return
@@ -302,7 +302,7 @@ function getSafeBreakpointTokenName(token: string, css: MasterCSS) {
 function getCanonicalConditionStateToken(stateToken: string | undefined, css: MasterCSS) {
   if (!stateToken?.includes('@')) return
 
-  const parts = splitMasterCSSTopLevel(stateToken, '@')
+  const parts = splitStetCSSTopLevel(stateToken, '@')
   if (parts.length <= 2) return
 
   const selectorPrefix = stateToken.slice(parts[0].start, parts[0].end)

@@ -4,7 +4,7 @@ import {
   inspectMasterCSSClass,
   type MasterCSSClassInspection
 } from '@stet-css/engine/inspect'
-import { splitMasterCSSTopLevel } from '@stet-css/lexer'
+import { splitStetCSSTopLevel } from '@stet-css/lexer'
 import { equalVariants } from './rule-signatures'
 import suggestCanonicalClassName from './suggest-canonical-class-name'
 
@@ -253,7 +253,7 @@ function getDeclarationEntry(rule: GeneratedRule) {
 }
 
 function hasTopLevelMultiValue(value: string) {
-  return splitMasterCSSTopLevel(value, '|').length > 1
+  return splitStetCSSTopLevel(value, '|').length > 1
 }
 
 function partKey(family: PartialConflictFamily, parts: Iterable<ConflictPart>) {

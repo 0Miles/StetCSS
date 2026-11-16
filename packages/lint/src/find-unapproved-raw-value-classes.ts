@@ -1,7 +1,7 @@
 import { generateValidRules } from '@stet-css/validator'
 import type { MasterCSS } from '@stet-css/engine'
 import { inspectMasterCSSClass } from '@stet-css/engine/inspect'
-import { splitMasterCSSTopLevel } from '@stet-css/lexer'
+import { splitStetCSSTopLevel } from '@stet-css/lexer'
 
 export interface RawValuePolicyOptions {
   allowRawValues?: boolean
@@ -21,7 +21,7 @@ function getDeclarationProperties(rules: ReturnType<typeof generateValidRules>) 
 }
 
 function splitTopLevelValueSegments(value: string) {
-  return splitMasterCSSTopLevel(value, '|').map(({ start, end }) => value.slice(start, end))
+  return splitStetCSSTopLevel(value, '|').map(({ start, end }) => value.slice(start, end))
 }
 
 function matchesAllowedPattern(value: string, patterns: string[]) {

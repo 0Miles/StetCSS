@@ -1,5 +1,5 @@
 /** CSS `<length>` units: what a length such as the `base-unit` setting may end in. */
-export const MASTER_CSS_LENGTH_UNITS = [
+export const STET_CSS_LENGTH_UNITS = [
   'cm',
   'mm',
   'q',
@@ -51,9 +51,9 @@ export const MASTER_CSS_LENGTH_UNITS = [
   'cqmax'
 ] as const
 
-export const MASTER_CSS_VALUE_UNITS = [
+export const STET_CSS_VALUE_UNITS = [
   '%',
-  ...MASTER_CSS_LENGTH_UNITS,
+  ...STET_CSS_LENGTH_UNITS,
   'deg',
   'grad',
   'rad',
@@ -71,4 +71,4 @@ export const MASTER_CSS_VALUE_UNITS = [
   'st'
 ] as const
 
-export const MASTER_CSS_VALUE_UNIT_PATTERN = MASTER_CSS_VALUE_UNITS.join('|')
+export const STET_CSS_VALUE_UNIT_PATTERN = STET_CSS_VALUE_UNITS.join('|')

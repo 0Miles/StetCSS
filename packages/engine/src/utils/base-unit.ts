@@ -1,4 +1,4 @@
-import { MASTER_CSS_LENGTH_UNITS } from '@stet-css/lexer'
+import { STET_CSS_LENGTH_UNITS } from '@stet-css/lexer'
 import { formatDimension } from './format-dimension'
 
 /** The length one `x` stands for, parsed from the `baseUnit` setting. */
@@ -7,7 +7,7 @@ export interface BaseUnit {
   unit: string
 }
 
-const BASE_UNIT_SETTING_REGEX = new RegExp(`^(\\d+(?:\\.\\d+)?|\\.\\d+)(${MASTER_CSS_LENGTH_UNITS.join('|')})$`, 'i')
+const BASE_UNIT_SETTING_REGEX = new RegExp(`^(\\d+(?:\\.\\d+)?|\\.\\d+)(${STET_CSS_LENGTH_UNITS.join('|')})$`, 'i')
 // One engine has one base unit, so remembering the last parse spares every `x` value a regex run.
 let lastSetting: string | undefined
 let lastBaseUnit: BaseUnit | undefined

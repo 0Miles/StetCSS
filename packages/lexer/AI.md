@@ -4,7 +4,7 @@ Owns **lexical scanning** with exact source ranges: class-list parsing and token
 
 ## Boundaries
 
-- Class lists vs candidates: lexer parses a class list it is handed (`parseMasterCSSClassList`); finding class-like strings in arbitrary source is `@stet-css/source`.
+- Class lists vs candidates: lexer parses a class list it is handed (`parseStetCSSClassList`); finding class-like strings in arbitrary source is `@stet-css/source`.
 - Directives and entries: lexer locates directive ranges and entry statements; `@stet-css/compiler` parses and lowers directives, and `@stet-css/project` decides which files are entries.
 
 ## Risks

@@ -1,4 +1,4 @@
-import { MASTER_CSS_VALUE_UNIT_PATTERN } from '@stet-css/lexer'
+import { STET_CSS_VALUE_UNIT_PATTERN } from '@stet-css/lexer'
 import {
   getGroupBody,
   hasBraceGroup,
@@ -68,7 +68,7 @@ const PRE_EXCLUDE_LINE_COMMENT = /\/\/.*/g
 const KEEP_TOKEN = /(?:^[\w\-()]+:\S+)|(?:^[\w-]+\(\S+\))|(?:^[\w-]+)/
 
 // CSS unit suffix used by the `WxH` shorthand recognizer.
-const KEEP_WXH = new RegExp(`^(?:calc\\(.*\\)|\\d+(?:${MASTER_CSS_VALUE_UNIT_PATTERN})?)x(?:calc\\(.*\\)|\\d+(?:${MASTER_CSS_VALUE_UNIT_PATTERN})?)$`)
+const KEEP_WXH = new RegExp(`^(?:calc\\(.*\\)|\\d+(?:${STET_CSS_VALUE_UNIT_PATTERN})?)x(?:calc\\(.*\\)|\\d+(?:${STET_CSS_VALUE_UNIT_PATTERN})?)$`)
 
 // Reject the token when any of these match. Listed in order of frequency in
 // real codebases, so the loop short-circuits earlier on average. Two more
