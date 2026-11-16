@@ -59,7 +59,7 @@ For CSS, SCSS, and LESS document formatting, the extension delegates to VS Code'
 
 ## Workspace Discovery
 
-`masterCSS.workspaces` defaults to `auto`. In auto mode, the language server always creates a root workspace and also detects:
+`stetCSS.workspaces` defaults to `auto`. In auto mode, the language server always creates a root workspace and also detects:
 
 - CSS files importing `@stet-css/core`
 - `package.json` files that declare Master CSS package dependencies such as `@stet-css/core`, `@stet-css/runtime`, or official integration packages matching `@stet-css/core*`
@@ -70,7 +70,7 @@ Use explicit workspace globs when auto detection is not the intended project sha
 
 ```json
 {
-  "masterCSS.workspaces": [
+  "stetCSS.workspaces": [
     "apps/admin",
     "apps/shop",
     "packages/design-system"
@@ -80,36 +80,36 @@ Use explicit workspace globs when auto detection is not the intended project sha
 
 ## Settings
 
-Set options in `.vscode/settings.json` or VS Code user settings with the `masterCSS.` prefix.
+Set options in `.vscode/settings.json` or VS Code user settings with the `stetCSS.` prefix.
 
 ```json
 {
-  "masterCSS.suggestSyntax": true,
-  "masterCSS.formatDirectives": true,
-  "masterCSS.embeddedSyntaxHighlighting": "active"
+  "stetCSS.suggestSyntax": true,
+  "stetCSS.formatDirectives": true,
+  "stetCSS.embeddedSyntaxHighlighting": "active"
 }
 ```
 
 | Setting | Type and default | Description |
 | --- | --- | --- |
-| `masterCSS.includedLanguages` | `string[]`, default supported language list | Language IDs that receive Master CSS language features. |
-| `masterCSS.exclude` | `string[]`, default `["**/.git/**", "**/node_modules/**", "**/.hg/**"]` | Glob patterns excluded from all Master CSS language-service features. |
-| `masterCSS.classAttributes` | `string[]`, default `["class", "className"]` | Markup attributes whose quoted string values are treated as Master CSS class strings. |
-| `masterCSS.classAttributeBindings` | `Record<string, [string, string] \| false>`, see defaults below | Bound markup attributes and their wrapping delimiters for framework binding syntax. Set an entry to `false` to disable that binding form. |
-| `masterCSS.classDeclarations` | `string[]`, default `[]` | Variable declarations or object properties whose strings are treated as Master CSS class strings. |
-| `masterCSS.classFunctions` | `string[]`, see defaults below | Function, tagged template, or method-call patterns whose string arguments are treated as Master CSS class strings. |
-| `masterCSS.suggestSyntax` | `boolean`, default `true` | Enables Master CSS completion items. |
-| `masterCSS.inspectSyntax` | `boolean`, default `true` | Enables hover inspection and generated CSS previews. |
-| `masterCSS.renderSyntaxColors` | `boolean`, default `true` | Enables color information for Master CSS syntax. |
-| `masterCSS.formatDirectives` | `boolean`, default `true` | Enables Master CSS directive formatting in CSS-family documents. |
-| `masterCSS.embeddedSyntaxHighlighting` | `"active"`, `"always"`, or `"off"`; default `"active"` | Controls semantic highlighting for embedded utilities in markup and scripts. CSS directive syntax is still highlighted by the TextMate grammar. |
-| `masterCSS.workspaces` | `"auto"` or `string[]`, default `"auto"` | Configures Master CSS workspaces. Auto mode detects CSS entries and Master CSS package dependencies. |
+| `stetCSS.includedLanguages` | `string[]`, default supported language list | Language IDs that receive Master CSS language features. |
+| `stetCSS.exclude` | `string[]`, default `["**/.git/**", "**/node_modules/**", "**/.hg/**"]` | Glob patterns excluded from all Master CSS language-service features. |
+| `stetCSS.classAttributes` | `string[]`, default `["class", "className"]` | Markup attributes whose quoted string values are treated as Master CSS class strings. |
+| `stetCSS.classAttributeBindings` | `Record<string, [string, string] \| false>`, see defaults below | Bound markup attributes and their wrapping delimiters for framework binding syntax. Set an entry to `false` to disable that binding form. |
+| `stetCSS.classDeclarations` | `string[]`, default `[]` | Variable declarations or object properties whose strings are treated as Master CSS class strings. |
+| `stetCSS.classFunctions` | `string[]`, see defaults below | Function, tagged template, or method-call patterns whose string arguments are treated as Master CSS class strings. |
+| `stetCSS.suggestSyntax` | `boolean`, default `true` | Enables Master CSS completion items. |
+| `stetCSS.inspectSyntax` | `boolean`, default `true` | Enables hover inspection and generated CSS previews. |
+| `stetCSS.renderSyntaxColors` | `boolean`, default `true` | Enables color information for Master CSS syntax. |
+| `stetCSS.formatDirectives` | `boolean`, default `true` | Enables Master CSS directive formatting in CSS-family documents. |
+| `stetCSS.embeddedSyntaxHighlighting` | `"active"`, `"always"`, or `"off"`; default `"active"` | Controls semantic highlighting for embedded utilities in markup and scripts. CSS directive syntax is still highlighted by the TextMate grammar. |
+| `stetCSS.workspaces` | `"auto"` or `string[]`, default `"auto"` | Configures Master CSS workspaces. Auto mode detects CSS entries and Master CSS package dependencies. |
 
 Default class binding and function detection:
 
 ```json
 {
-  "masterCSS.classAttributeBindings": {
+  "stetCSS.classAttributeBindings": {
     "className": ["{", "}"],
     "class": ["{", "}"],
     "class:list": ["{", "}"],
@@ -119,7 +119,7 @@ Default class binding and function detection:
     "[className]": ["\"", "\""],
     "[ngClass]": ["\"", "\""]
   },
-  "masterCSS.classFunctions": [
+  "stetCSS.classFunctions": [
     "clsx",
     "cva",
     "ctl",
@@ -139,7 +139,7 @@ Add a custom language ID:
 
 ```json
 {
-  "masterCSS.includedLanguages": [
+  "stetCSS.includedLanguages": [
     "html",
     "typescriptreact",
     "vue",
@@ -153,16 +153,16 @@ Recognize project-specific class containers:
 
 ```json
 {
-  "masterCSS.classAttributes": [
+  "stetCSS.classAttributes": [
     "class",
     "className",
     "ui"
   ],
-  "masterCSS.classDeclarations": [
+  "stetCSS.classDeclarations": [
     "classes",
     "styles"
   ],
-  "masterCSS.classFunctions": [
+  "stetCSS.classFunctions": [
     "clsx",
     "cva",
     "tw",
@@ -175,7 +175,7 @@ Exclude generated or vendored files:
 
 ```json
 {
-  "masterCSS.exclude": [
+  "stetCSS.exclude": [
     "**/.git/**",
     "**/node_modules/**",
     "**/.hg/**",
@@ -189,7 +189,7 @@ Choose embedded highlighting behavior:
 
 ```json
 {
-  "masterCSS.embeddedSyntaxHighlighting": "always"
+  "stetCSS.embeddedSyntaxHighlighting": "always"
 }
 ```
 
@@ -199,7 +199,7 @@ Disable directive formatting when another formatter integration must own all dir
 
 ```json
 {
-  "masterCSS.formatDirectives": false
+  "stetCSS.formatDirectives": false
 }
 ```
 
@@ -211,7 +211,7 @@ Open the Command Palette and run:
 Master CSS: Restart Language Server
 ```
 
-Use this after changing dependencies, workspace layout, or project manifest files if VS Code has not reloaded the language server automatically. The extension also restarts the Master CSS language server when `masterCSS.*` settings change.
+Use this after changing dependencies, workspace layout, or project manifest files if VS Code has not reloaded the language server automatically. The extension also restarts the Master CSS language server when `stetCSS.*` settings change.
 
 ## Requirements and Limitations
 
@@ -224,8 +224,8 @@ Use this after changing dependencies, workspace layout, or project manifest file
 
 - **Completions do not show inside strings**: Enable `editor.quickSuggestions.strings` as shown in [Quick Start](#quick-start).
 - **Manifest-specific variables or components are missing**: Ensure the project has a detected CSS entry or Master CSS package dependency, then run `Master CSS: Restart Language Server`.
-- **The wrong monorepo package is used**: Set `masterCSS.workspaces` to explicit workspace directories.
-- **Embedded markup highlighting is too noisy or too quiet**: Change `masterCSS.embeddedSyntaxHighlighting` to `active`, `always`, or `off`.
+- **The wrong monorepo package is used**: Set `stetCSS.workspaces` to explicit workspace directories.
+- **Embedded markup highlighting is too noisy or too quiet**: Change `stetCSS.embeddedSyntaxHighlighting` to `active`, `always`, or `off`.
 - **Semantic colors do not appear**: Confirm VS Code semantic highlighting is enabled for the active theme.
 
 ## Documentation

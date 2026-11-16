@@ -12,7 +12,7 @@ Wraps `@stet-css/language-service` in **LSP**: server lifecycle, one language se
 
 - **Workspace routing**: each document goes to the deepest workspace that contains it, and external documents go to the global workspace; keep monorepo packages on their own workspace.
 - **Manifest source**: each workspace loads its manifest from its own directory through `@stet-css/project`.
-- **Restarts**: saving a `.css` file (manifest entries are CSS) or changing `masterCSS` settings sends `masterCSS/restart` to the client and refreshes semantic tokens; keep both triggers.
+- **Restarts**: saving a `.css` file (manifest entries are CSS) or changing `stetCSS` settings sends `stetCSS/restart` to the client and refreshes semantic tokens; keep both triggers.
 - **Build parity**: every runtime the server builds (workspace or bundled) takes its native declaration matcher and rule generator from `@stet-css/validator`, so hover and semantic tokens show what the build emits: nothing for a class the build drops, and a group without its invalid declarations. Keep both runtimes on the same pair.
 - **Capabilities**: advertise only handlers that are implemented and tested. `onInitialize` drops semantic tokens unless `embeddedSyntaxHighlighting` is `'always'`, and formatting unless `formatDirectives` is on.
 

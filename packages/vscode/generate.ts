@@ -53,14 +53,14 @@ pkg.set('contributes.semanticTokenScopes', [
 pkg.set('contributes.configuration', {
   title: 'Master CSS',
   properties: {
-    'masterCSS.includedLanguages': {
+    'stetCSS.includedLanguages': {
       'type': 'array',
       'items': {
         'type': 'string'
       },
       'default': settings.includedLanguages
     },
-    'masterCSS.exclude': {
+    'stetCSS.exclude': {
       'type': 'array',
       'items': {
         'type': 'string'
@@ -68,55 +68,55 @@ pkg.set('contributes.configuration', {
       'default': settings.exclude,
       'description': 'Configure glob patterns to exclude from all Master Language Service features.'
     },
-    'masterCSS.classAttributes': {
+    'stetCSS.classAttributes': {
       'type': 'array',
       'items': {
         'type': 'string'
       },
       'default': settings.classAttributes
     },
-    'masterCSS.classAttributeBindings': {
+    'stetCSS.classAttributeBindings': {
       'type': 'object',
       'default': settings.classAttributeBindings
     },
-    'masterCSS.classDeclarations': {
+    'stetCSS.classDeclarations': {
       'type': 'array',
       'items': {
         'type': 'string'
       },
       'default': settings.classDeclarations
     },
-    'masterCSS.classFunctions': {
+    'stetCSS.classFunctions': {
       'type': 'array',
       'items': {
         'type': 'string'
       },
       'default': settings.classFunctions
     },
-    'masterCSS.suggestSyntax': {
+    'stetCSS.suggestSyntax': {
       'type': 'boolean',
       'default': settings.suggestSyntax
     },
-    'masterCSS.inspectSyntax': {
+    'stetCSS.inspectSyntax': {
       'type': 'boolean',
       'default': settings.inspectSyntax
     },
-    'masterCSS.renderSyntaxColors': {
+    'stetCSS.renderSyntaxColors': {
       'type': 'boolean',
       'default': settings.renderSyntaxColors
     },
-    'masterCSS.formatDirectives': {
+    'stetCSS.formatDirectives': {
       'type': 'boolean',
       'default': settings.formatDirectives,
       'description': 'Enables Master CSS directive formatting in CSS-family documents.'
     },
-    'masterCSS.embeddedSyntaxHighlighting': {
+    'stetCSS.embeddedSyntaxHighlighting': {
       'type': 'string',
       'enum': ['active', 'always', 'off'],
       'default': settings.embeddedSyntaxHighlighting,
       'description': 'Controls embedded Master CSS utility highlighting in markup and scripts. Active highlights the class context at the active editor selection, always highlights all discovered embedded utilities, and off disables embedded utility highlighting. Master CSS syntax inside CSS documents is always highlighted.'
     },
-    'masterCSS.workspaces': {
+    'stetCSS.workspaces': {
       'type': [
         'string',
         'array'

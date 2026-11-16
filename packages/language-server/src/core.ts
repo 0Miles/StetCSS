@@ -46,8 +46,8 @@ export declare interface Workspace {
   planEntries?: string[]
 }
 
-export const ACTIVE_SEMANTIC_TOKENS_REQUEST = 'masterCSS/renderActiveSemanticTokens'
-export const DOCUMENT_SEMANTIC_TOKENS_REQUEST = 'masterCSS/renderDocumentSemanticTokens'
+export const ACTIVE_SEMANTIC_TOKENS_REQUEST = 'stetCSS/renderActiveSemanticTokens'
+export const DOCUMENT_SEMANTIC_TOKENS_REQUEST = 'stetCSS/renderDocumentSemanticTokens'
 
 const SERVER_CAPABILITIES: ServerCapabilities = {
   textDocumentSync: TextDocumentSyncKind.Incremental,
@@ -145,8 +145,8 @@ function isCSSDirectiveError(error: unknown): error is CSSDirectiveError {
 
 function getInitializationSettings(initializationOptions: unknown): Settings | undefined {
   if (!initializationOptions || typeof initializationOptions !== 'object') return
-  const options = initializationOptions as { masterCSS?: Settings } & Settings
-  return options.masterCSS ?? options
+  const options = initializationOptions as { stetCSS?: Settings } & Settings
+  return options.stetCSS ?? options
 }
 
 function isWindowsFilePath(fsPath: string) {
@@ -391,22 +391,22 @@ export default class CSSLanguageServer {
     const name = path.basename(URI.parse(params.document.uri).fsPath)
     if (name.endsWith('.css')) {
       this.refreshSemanticTokens()
-      this.connection.sendRequest('masterCSS/restart', {
-        title: 'Updating Master CSS configuration',
+      this.connection.sendRequest('stetCSS/restart', {
+        title: 'Updating StetCSS configuration',
       })
     }
   }
 
   async onDidChangeConfiguration({ settings: changedSettings }: DidChangeConfigurationParams) {
     await this.init()
-    if (changedSettings?.masterCSS) {
-      this.connection.sendNotification('masterCSS/globalSettingsChanged', changedSettings.masterCSS)
-      this.customSettings = changedSettings.masterCSS
+    if (changedSettings?.stetCSS) {
+      this.connection.sendNotification('stetCSS/globalSettingsChanged', changedSettings.stetCSS)
+      this.customSettings = changedSettings.stetCSS
       this.settings = defu(this.customSettings, settings) as Settings
       this.globalWorkspace.languageServiceSettings = this.settings as Settings
       this.refreshSemanticTokens()
-      this.connection.sendRequest('masterCSS/restart', {
-        title: 'Updating Master CSS settings',
+      this.connection.sendRequest('stetCSS/restart', {
+        title: 'Updating StetCSS settings',
       })
       for (const workspace of [this.globalWorkspace, ...this.workspaces.values()]) {
         for (const document of workspace.openedTextDocuments) {
@@ -422,7 +422,7 @@ export default class CSSLanguageServer {
     if (this.clientCapabilities.workspace?.configuration) {
       customWorkspaceFolderSettings = await this.connection.workspace.getConfiguration({
         scopeUri: workspaceFolderURI,
-        section: 'masterCSS'
+        section: 'stetCSS'
       }) as Settings
     }
     const { workspaces, ...languageServiceSettings } = defu(customWorkspaceFolderSettings, this.customSettings, settings) as Settings
@@ -709,7 +709,7 @@ export default class CSSLanguageServer {
   }
 
   stop(): void {
-    this.connection.sendNotification('masterCSS/dispose')
+    this.connection.sendNotification('stetCSS/dispose')
     this.disposables.forEach((disposable) => disposable.dispose())
     this.disposables.length = 0
     this.connection.dispose()
