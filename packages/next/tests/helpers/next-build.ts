@@ -2,9 +2,14 @@ import { existsSync, readdirSync, readFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import execBunSync from './bun-command'
 
-/** Runs a fixture's package script from a clean `.next`, surfacing the build log on failure. */
+/**
+ * Runs a fixture's package script from a clean `.next` and `.master`, surfacing the build log
+ * on failure. A `.master/next.css` left by a webpack build holds real CSS, so a Turbopack
+ * build could otherwise pass without its generated CSS loader running.
+ */
 export function runFixtureScript(fixtureDir: string, script = 'build') {
   rmSync(join(fixtureDir, '.next'), { recursive: true, force: true })
+  rmSync(join(fixtureDir, '.master'), { recursive: true, force: true })
   try {
     execBunSync(['run', script], {
       cwd: fixtureDir,
