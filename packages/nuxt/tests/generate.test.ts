@@ -17,7 +17,7 @@ setupNuxtTest({ rootDir, server: false, nuxtConfig: generateConfig })
 
 /**
  * Guards `nuxt generate`: the prerendered page links CSS that holds the server component's
- * and the layer's classes, and the output has no `_master-css/` assets.
+ * and both layers' classes, and the output has no `_master-css/` assets.
  */
 it('generates static CSS that covers server components and layers', () => {
   // @nuxt/test-utils writes Nitro's output to `<buildDir>/output`.
@@ -26,6 +26,7 @@ it('generates static CSS that covers server components and layers', () => {
   const html = readFileSync(join(publicDir, 'index.html'), 'utf8')
   expect(html).toContain('server component')
   expect(html).toContain('layer component')
+  expect(html).toContain('extended base card')
   const hrefs = findStylesheetHrefs(html)
   expect(hrefs.length).toBeGreaterThan(0)
   const css = hrefs.map((href) => readFileSync(join(publicDir, href), 'utf8')).join('\n')

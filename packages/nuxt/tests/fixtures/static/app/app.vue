@@ -3,5 +3,6 @@
     basic
     <ServerCard />
     <LayerCard />
+    <BaseCard />
   </div>
 </template>
