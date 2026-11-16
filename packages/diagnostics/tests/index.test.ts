@@ -51,6 +51,40 @@ describe('@stet-css/diagnostics', () => {
     }
   })
 
+  /**
+   * Guards that missing-CSS checks follow the entry's `@safelist` and `@blocklist`, the only
+   * place those lists live: a blocked class a file uses must report missing, not generated,
+   * and a safelisted class nothing uses must report present.
+   * Reverse check: classifying a valid class as generated before the blocklist check turns only
+   * this test red.
+   */
+  it('classifies missing CSS by the entry\'s @safelist and @blocklist', async () => {
+    const cwd = createTempDir('master-css-diagnostics-directives-')
+    try {
+      writeFileSync(join(cwd, 'index.css'), `
+        @import "@stet-css/core";
+        @safelist 'p:2x';
+        @blocklist 'block';
+      `)
+      writeFileSync(join(cwd, 'index.html'), '<div class="block"></div>')
+      const report = await createMasterCSSInspectionReport({
+        cwd,
+        classes: ['block', 'p:2x']
+      })
+
+      expect(report.scanner.classes.safelist).toEqual(['p:2x'])
+      expect(report.scanner.classes.blocklist).toEqual(['block'])
+      expect(report.missingCSS.missing).toEqual([
+        { className: 'block', status: 'missing', reason: 'blocklisted' }
+      ])
+      expect(report.missingCSS.present).toEqual([
+        { className: 'p:2x', status: 'present', reason: 'safelist' }
+      ])
+    } finally {
+      rmSync(cwd, { recursive: true, force: true })
+    }
+  })
+
   it('includes generated CSS and stylesheet entry metadata', async () => {
     const cwd = createTempDir('master-css-diagnostics-css-')
     try {
