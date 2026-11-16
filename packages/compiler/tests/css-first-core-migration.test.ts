@@ -1073,8 +1073,29 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
    * Reverse-checked: removing the `isUndeclaredPresetMode` branch in `resolveConditionVariantReference`
    * reds the `@variant` row only; removing the engine throw reds the `@compose` row only.
    */
+  /**
+   * Prevents (#72): `@variant sm&dark {}` reading `dark` as part of the media query
+   * (`@media (width>=52.125rem) and dark`, dropped by browsers) instead of the mode, so the block
+   * never applies; it must mean what `@variant sm@dark {}` means under every trigger.
+   * Reverse-checked: dropping `splitModeConjuncts` in `resolveMasterVariantReference` reds both
+   * rows and the `@variant &` row of the undeclared-mode test below, nothing else in this file.
+   */
+  test.each([
+    ['media', '@media (width>=52.125rem){@media (prefers-color-scheme:dark){.card{color:red}}}'],
+    ['class', '@media (width>=52.125rem){.dark .card{color:red}}']
+  ])('@variant sm&dark is @variant sm@dark: %s trigger', (trigger, css) => {
+    const compile = (variant: string) => compileCSSManifest(
+      `@settings { mode-trigger: ${trigger}; } .card { @variant ${variant} { color: red; } }`,
+      { baseManifest: defaultManifest }
+    ).css
+
+    expect(compile('sm&dark')).toBe(css)
+    expect(compile('sm@dark')).toBe(css)
+  })
+
   test.each([
     ['@variant', '.a { color: red; @variant dark { color: blue; } }', '@variant dark uses mode "dark", which is not declared (declared modes: "sepia")'],
+    ['@variant &', '.a { color: red; @variant sm&dark { color: blue; } }', '@variant dark uses mode "dark", which is not declared (declared modes: "sepia")'],
     ['@compose', '.b { @compose fg:red@dark; }', 'Class "fg:red@dark" uses mode "dark", which is not declared (declared modes: "sepia")']
   ])('rejects an undeclared mode in entry CSS: %s', (_, body, message) => {
     expect(() => compileCSSManifest(`@theme sepia {}\n${body}`, { baseManifest: defaultManifest })).toThrow(message)

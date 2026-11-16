@@ -21,6 +21,7 @@ import {
   isUndeclaredPresetMode,
   parseCondition,
   parseSelector,
+  splitModeConjuncts,
   type GeneratedRule,
   type MasterCSS
 } from '@stet-css/engine/compiler'
@@ -544,7 +545,7 @@ function resolveMasterVariantReference(token: string, css: MasterCSS): ResolvedV
   }
 
   let branches: ResolvedVariantReferenceBranch[] = [{}]
-  const conditionStacks = token.slice(1).split('@')
+  const conditionStacks = token.slice(1).split('@').flatMap((stack) => splitModeConjuncts(stack, css.modes))
 
   for (const conditionStack of conditionStacks) {
     if (!conditionStack) continue
