@@ -3,6 +3,7 @@ import { relative } from 'node:path'
 import type { NextConfig } from 'next'
 import type { TurbopackLoaderOptions } from 'next/dist/server/config-shared'
 import { escapeRegExp } from '@stet-css/lexer'
+import { validatePluginOptions } from '@stet-css/scanner'
 import { createMasterCSSManifestEntryPattern } from '@stet-css/project/entries'
 import {
   MASTER_CSS_MANIFEST_QUERY,
@@ -38,6 +39,8 @@ const STYLE_FILE_PATTERN = /\.(css|scss|sass)$/
 
 interface MasterCSSNextSetup {
   projectDir: string
+  /** Custom source adapters, given to the webpack loaders only. */
+  adapters: NonNullable<Options['adapters']>
   /** The generated CSS module, absolute. */
   outputPath: string
   virtualManifestPath: string
@@ -61,7 +64,7 @@ function toRuleArray(rule: TurbopackRuleConfigCollection | undefined) {
   return Array.isArray(rule) ? rule : rule ? [rule] : []
 }
 
-/** Turbopack passes loader options to its workers as JSON; scanner options are plain data. */
+/** Turbopack passes loader options to its workers as JSON, so they never carry adapters. */
 function toTurbopackLoader(loader: { loader: string, options: object }) {
   return {
     loader: loader.loader,
@@ -104,7 +107,10 @@ function applyMasterCSSWebpackConfig(config: WebpackConfig, setup: MasterCSSNext
     // `test` or `include` matches `.css` files.
     {
       resource: createExactPathPattern(setup.outputPath),
-      use: [setup.generatedCSSLoader]
+      use: [{
+        ...setup.generatedCSSLoader,
+        options: { ...setup.generatedCSSLoader.options, adapters: setup.adapters }
+      }]
     },
     {
       resource: {
@@ -114,7 +120,7 @@ function applyMasterCSSWebpackConfig(config: WebpackConfig, setup: MasterCSSNext
       resourceQuery: { not: [MASTER_CSS_MANIFEST_RESOURCE_QUERY] },
       use: [{
         ...setup.styleCSSLoader,
-        options: { ...setup.styleCSSLoader.options, writeOutput: true }
+        options: { ...setup.styleCSSLoader.options, adapters: setup.adapters, writeOutput: true }
       }]
     }
   )
@@ -225,24 +231,31 @@ function applyMasterCSSTurbopackConfig(turbopack: TurbopackConfig = {}, setup: M
  * one generated CSS module whose content is computed from the project's files, for both
  * Turbopack and `--webpack`. Returns a plain config object synchronously, so other `withX`
  * wrappers compose on either side.
+ * @param options - Only `adapters`; a removed or unknown key throws. Custom adapters need
+ * webpack (`next dev --webpack`, `next build --webpack`).
  */
 export function withMasterCSS<T extends NextConfig>(nextConfig: T = {} as T, options: Options = {}): T {
+  validatePluginOptions(options, '@stet-css/next')
+  const adapters = options.adapters ?? []
+  // `next dev` and `next build` set TURBOPACK before loading the config when Turbopack runs.
+  if (adapters.length && process.env.TURBOPACK) {
+    throw new Error('[@stet-css/next] Custom adapters need webpack: run `next dev --webpack` and `next build --webpack`. Turbopack passes loader options to its workers as JSON, which drops the adapter functions.')
+  }
   const projectDir = process.cwd()
   const outputPath = ensureStaticOutputFile(projectDir)
-  const scannerOptions = options.scannerOptions ?? {}
   const setup: MasterCSSNextSetup = {
     projectDir,
+    adapters,
     outputPath,
     virtualManifestPath: ensureVirtualManifestModulePath(projectDir),
     virtualEmittedGlobalsPath: ensureVirtualEmittedGlobalsModulePath(projectDir),
     generatedCSSLoader: {
       loader: resolveLoaderPath('generated-css-loader.js'),
-      options: { projectDir, scannerOptions }
+      options: { projectDir }
     },
     styleCSSLoader: {
       loader: resolveLoaderPath('style-css-loader.js'),
-      // `scannerOptions` is read only when the entry writes the CSS itself (webpack).
-      options: { outputPath, projectDir, scannerOptions }
+      options: { outputPath, projectDir }
     },
     cssManifestLoaderPath: resolveLoaderPath('css-manifest-loader.js'),
     cssManifestImportLoaderPath: resolveLoaderPath('css-manifest-import-loader.js')

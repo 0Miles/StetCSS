@@ -17,7 +17,8 @@ const STATIC_OUTPUT_PLACEHOLDER = '/* Replaced by @stet-css/next with the CSS ge
 
 export interface StaticCSSOptions {
   projectDir: string
-  scannerOptions?: ScannerOptions
+  /** Custom source adapters; webpack loaders only, since Turbopack loader options are JSON. */
+  adapters?: ScannerOptions['adapters']
 }
 
 export interface StaticCSSResult {
@@ -76,8 +77,8 @@ export function toCSSImportPath(fromFile: string, toFile: string) {
  * the class set `@stet-css/stylesheet` decides from the project's files. No module scan
  * feeds it, so the result does not depend on which modules the bundler compiled first.
  */
-export async function createStaticCSS({ projectDir, scannerOptions = {} }: StaticCSSOptions): Promise<StaticCSSResult> {
-  const scanner = new CSSScanner(scannerOptions, projectDir)
+export async function createStaticCSS({ projectDir, adapters }: StaticCSSOptions): Promise<StaticCSSResult> {
+  const scanner = new CSSScanner(adapters ? { adapters } : {}, projectDir)
   await scanner.init()
   const styleCSSSources: StyleCSSSources = new Map()
   for (const entry of await findCSSManifestEntryFiles(projectDir, { extensions: STYLE_ENTRY_EXTENSIONS })) {
