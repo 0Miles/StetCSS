@@ -19,7 +19,7 @@ const CSS_SEMANTIC_TOKEN_LANGUAGE_IDS = new Set(['css', 'scss', 'less'])
 const CSS_FORMAT_LANGUAGE_IDS = new Set(['css', 'scss', 'less'])
 let formattingDelegationDepth = 0
 
-function getMasterCSSSettings(): Partial<Settings> {
+function getStetCSSSettings(): Partial<Settings> {
   const configuration = workspace.getConfiguration('stetCSS')
   const result: Partial<Settings> = {}
   const writableResult = result as Record<string, unknown>
@@ -33,7 +33,7 @@ function getMasterCSSSettings(): Partial<Settings> {
 }
 
 function getIncludedLanguages() {
-  return getMasterCSSSettings().includedLanguages ?? settings.includedLanguages ?? []
+  return getStetCSSSettings().includedLanguages ?? settings.includedLanguages ?? []
 }
 
 function log(message: string) {
@@ -88,7 +88,7 @@ function resolveWorkspaceServerModule(context: ExtensionContext, bundledServerMo
 }
 
 function getEmbeddedSyntaxHighlighting(): NonNullable<Settings['embeddedSyntaxHighlighting']> {
-  const mode = getMasterCSSSettings().embeddedSyntaxHighlighting
+  const mode = getStetCSSSettings().embeddedSyntaxHighlighting
   return mode === 'always' || mode === 'off' ? mode : 'active'
 }
 
@@ -160,7 +160,7 @@ async function provideDocumentFormattingEdits(
   next: (document: TextDocument, options: FormattingOptions, token: CancellationToken) => ProviderResult<TextEdit[]>
 ): Promise<TextEdit[]> {
   if (formattingDelegationDepth) return []
-  if (!getMasterCSSSettings().formatDirectives) return []
+  if (!getStetCSSSettings().formatDirectives) return []
   if (!isCSSFormattingDocument(document)) return await next(document, options, token) ?? []
 
   const delegatedEdits = await getDelegatedDocumentFormattingEdits(document, options)
@@ -179,7 +179,7 @@ async function provideDocumentRangeFormattingEdits(
   next: (document: TextDocument, range: Range, options: FormattingOptions, token: CancellationToken) => ProviderResult<TextEdit[]>
 ): Promise<TextEdit[]> {
   if (formattingDelegationDepth) return []
-  if (!getMasterCSSSettings().formatDirectives) return []
+  if (!getStetCSSSettings().formatDirectives) return []
   if (!isCSSFormattingDocument(document)) return await next(document, range, options, token) ?? []
   return createDirectiveTextEdits(document, range)
 }
@@ -327,7 +327,7 @@ export function activate(context: ExtensionContext) {
     documentSelector,
     outputChannel,
     initializationOptions: () => ({
-      stetCSS: getMasterCSSSettings()
+      stetCSS: getStetCSSSettings()
     }),
     middleware: {
       provideDocumentFormattingEdits,
