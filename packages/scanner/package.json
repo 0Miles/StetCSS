@@ -70,9 +70,6 @@
     "@stet-css/preset": "workspace:^",
     "@stet-css/source": "workspace:^",
     "@stet-css/validator": "workspace:^",
-    "consola": "^3.4.2",
-    "defu": "^6.1.7",
-    "minimatch": "^10.2.5",
     "@stet-css/schema": "workspace:^",
     "@stet-css/lexer": "workspace:^"
   },
