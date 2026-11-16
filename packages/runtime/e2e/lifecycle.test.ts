@@ -283,9 +283,8 @@ test('registers emittedGlobals counts once on a new runtime', () => {
 
 /**
  * #90: a page that hides `<html>` until the runtime renders must never stay blank. The CDN
- * bundle's 3 s timer runs on Playwright's paused clock, so only `runFor` can fire it.
+ * bundle's reveal fallback timer runs on Playwright's paused clock, so only `runFor` can fire it.
  */
-const CDN_REVEAL_TIMEOUT_MS = 3000
 
 function collectPageErrors(page: Page) {
   const errors: string[] = []
@@ -328,9 +327,10 @@ test('CDN: reveals the page at once and still reports the error when startup thr
 /**
  * Guards: a bundled module throwing while the bundle evaluates, before the startup call
  * runs, so no try/catch around that call sees it. Here the `MasterCSSRuntime` global throws
- * when core reads it. Dropping the timer in `src/reveal-timeout.ts` turns it red.
+ * when core reads it. The reveal waits for the next task, so it stays hidden while the clock
+ * is paused. Dropping the timer in `src/reveal-fallback.ts` turns it red.
  */
-test('CDN: reveals the page after 3 s when startup never finishes', async ({ page }) => {
+test('CDN: reveals the page when a bundled module throws while loading', async ({ page }) => {
   const errors = collectPageErrors(page)
   await openHiddenCDNPage(page, `
     Object.defineProperty(window, 'MasterCSSRuntime', {
@@ -340,15 +340,14 @@ test('CDN: reveals the page after 3 s when startup never finishes', async ({ pag
   `)
 
   expect(errors).toEqual(['MasterCSSRuntime is unavailable'])
-  await page.clock.runFor(CDN_REVEAL_TIMEOUT_MS - 1)
   expect(await readHidden(page)).toBe(true)
   await page.clock.runFor(1)
   expect(await readHidden(page)).toBe(false)
 })
 
 /**
- * Guards: the 3 s timer outliving a successful start and removing a `hidden` the page sets
- * later. Not red before #90 (no timer existed); dropping the `clearTimeout` turns it red.
+ * Guards: the reveal fallback timer outliving a successful start and removing a `hidden` the
+ * page sets later. Not red before #90 (no timer existed); dropping the `clearTimeout` turns it red.
  */
 test('CDN: a started runtime leaves a later hidden attribute alone', async ({ page }) => {
   const errors = collectPageErrors(page)
@@ -356,7 +355,7 @@ test('CDN: a started runtime leaves a later hidden attribute alone', async ({ pa
 
   expect(await readHidden(page)).toBe(false)
   await page.evaluate(() => document.documentElement.setAttribute('hidden', ''))
-  await page.clock.runFor(CDN_REVEAL_TIMEOUT_MS)
+  await page.clock.runFor(1000)
   expect(await readHidden(page)).toBe(true)
   expect(errors).toEqual([])
 })
