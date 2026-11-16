@@ -117,7 +117,7 @@ describe('stylesheet CSS directives', () => {
   /**
    * Guards a build against an `@source` pattern whose braces expand into millions of globs:
    * twenty `{a,b}` groups made the build spend over nine seconds and gigabytes of memory
-   * listing files, where it should stop at once with an error naming the pattern.
+   * listing files, where it should stop at once with an error naming the pattern and its file.
    * Reverse check: raising the compiler's expansion limit turns this test and the compiler's
    * `@source` limit tests red.
    */
@@ -126,13 +126,11 @@ describe('stylesheet CSS directives', () => {
     const pattern = `./${'{a,b}'.repeat(20)}.tsx`
     const scanner = new CSSScanner({}, root)
     await scanner.init()
-    const startedAt = performance.now()
 
     await expect(registerStyleCSSSource(scanner, new Map(), join(root, 'app/entry.css'), `
       @master entry;
       @source '${pattern}';
-    `)).rejects.toThrow(pattern)
-    expect(performance.now() - startedAt).toBeLessThan(1000)
+    `)).rejects.toThrow(`'${pattern}' expands its braces into more than 1024 patterns (in ${join(root, 'app/entry.css')})`)
   })
 
   it('unions source directives and subtracts source not directives', async () => {
