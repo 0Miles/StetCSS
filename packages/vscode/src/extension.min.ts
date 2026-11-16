@@ -20,7 +20,7 @@ const CSS_FORMAT_LANGUAGE_IDS = new Set(['css', 'scss', 'less'])
 let formattingDelegationDepth = 0
 
 function getMasterCSSSettings(): Partial<Settings> {
-  const configuration = workspace.getConfiguration('masterCSS')
+  const configuration = workspace.getConfiguration('stetCSS')
   const result: Partial<Settings> = {}
   const writableResult = result as Record<string, unknown>
   for (const optionName in settings) {
@@ -327,7 +327,7 @@ export function activate(context: ExtensionContext) {
     documentSelector,
     outputChannel,
     initializationOptions: () => ({
-      masterCSS: getMasterCSSSettings()
+      stetCSS: getMasterCSSSettings()
     }),
     middleware: {
       provideDocumentFormattingEdits,
@@ -341,7 +341,7 @@ export function activate(context: ExtensionContext) {
 
   // Create the language client and start the client.
   client = new LanguageClient(
-    'masterCSS',
+    'stetCSS',
     'Master CSS',
     serverOptions,
     clientOptions
@@ -370,13 +370,13 @@ export function activate(context: ExtensionContext) {
 
   context.subscriptions.push(
     semanticTokensFeature,
-    commands.registerCommand('masterCSS.restart', restart),
-    client.onRequest('masterCSS/restart', restart),
+    commands.registerCommand('stetCSS.restart', restart),
+    client.onRequest('stetCSS/restart', restart),
     workspace.onDidChangeConfiguration(async (event) => {
       const affectedProperties: string[] = []
       let shouldRestart = false
       for (const optionName in settings) {
-        const property = `masterCSS.${optionName}`
+        const property = `stetCSS.${optionName}`
         if (event.affectsConfiguration(property)) {
           affectedProperties.push(property)
           shouldRestart = true

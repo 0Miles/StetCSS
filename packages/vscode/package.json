@@ -57,14 +57,14 @@
     "commands": [
       {
         "title": "Restart Language Server",
-        "command": "masterCSS.restart",
+        "command": "stetCSS.restart",
         "category": "Master CSS"
       }
     ],
     "configuration": {
       "title": "Master CSS",
       "properties": {
-        "masterCSS.includedLanguages": {
+        "stetCSS.includedLanguages": {
           "type": "array",
           "items": {
             "type": "string"
@@ -88,7 +88,7 @@
             "astro"
           ]
         },
-        "masterCSS.exclude": {
+        "stetCSS.exclude": {
           "type": "array",
           "items": {
             "type": "string"
@@ -100,7 +100,7 @@
           ],
           "description": "Configure glob patterns to exclude from all Master Language Service features."
         },
-        "masterCSS.classAttributes": {
+        "stetCSS.classAttributes": {
           "type": "array",
           "items": {
             "type": "string"
@@ -110,7 +110,7 @@
             "className"
           ]
         },
-        "masterCSS.classAttributeBindings": {
+        "stetCSS.classAttributeBindings": {
           "type": "object",
           "default": {
             "className": [
@@ -147,14 +147,14 @@
             ]
           }
         },
-        "masterCSS.classDeclarations": {
+        "stetCSS.classDeclarations": {
           "type": "array",
           "items": {
             "type": "string"
           },
           "default": []
         },
-        "masterCSS.classFunctions": {
+        "stetCSS.classFunctions": {
           "type": "array",
           "items": {
             "type": "string"
@@ -171,24 +171,24 @@
             "classList(?:\\s+)?\\.(?:add|remove|toggle|replace)"
           ]
         },
-        "masterCSS.suggestSyntax": {
+        "stetCSS.suggestSyntax": {
           "type": "boolean",
           "default": true
         },
-        "masterCSS.inspectSyntax": {
+        "stetCSS.inspectSyntax": {
           "type": "boolean",
           "default": true
         },
-        "masterCSS.renderSyntaxColors": {
+        "stetCSS.renderSyntaxColors": {
           "type": "boolean",
           "default": true
         },
-        "masterCSS.formatDirectives": {
+        "stetCSS.formatDirectives": {
           "type": "boolean",
           "default": true,
           "description": "Enables Master CSS directive formatting in CSS-family documents."
         },
-        "masterCSS.embeddedSyntaxHighlighting": {
+        "stetCSS.embeddedSyntaxHighlighting": {
           "type": "string",
           "enum": [
             "active",
@@ -198,7 +198,7 @@
           "default": "active",
           "description": "Controls embedded Master CSS utility highlighting in markup and scripts. Active highlights the class context at the active editor selection, always highlights all discovered embedded utilities, and off disables embedded utility highlighting. Master CSS syntax inside CSS documents is always highlighted."
         },
-        "masterCSS.workspaces": {
+        "stetCSS.workspaces": {
           "type": [
             "string",
             "array"

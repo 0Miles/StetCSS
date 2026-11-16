@@ -196,11 +196,24 @@ test('extension bundle reuses one Master CSS output channel for the language cli
   const source = readFileSync(extensionPath, 'utf8')
   const masterCSSOutputChannelCalls = source.match(/\.createOutputChannel\((?:`Master CSS`|"Master CSS"|'Master CSS')/g) ?? []
   const languageClientConstruction = source.match(
-    /new\s+[A-Za-z_$][\w$]*\.LanguageClient\(\s*(?:`masterCSS`|"masterCSS"|'masterCSS')\s*,\s*(?:`Master CSS`|"Master CSS"|'Master CSS')[\s\S]*?\}\)/
+    /new\s+[A-Za-z_$][\w$]*\.LanguageClient\(\s*(?:`stetCSS`|"stetCSS"|'stetCSS')\s*,\s*(?:`Master CSS`|"Master CSS"|'Master CSS')[\s\S]*?\}\)/
   )?.[0]
 
   expect(masterCSSOutputChannelCalls).toHaveLength(1)
   expect(languageClientConstruction).toContain('outputChannel:')
+})
+
+test('extension bundle reads settings and registers commands under the stetCSS names', () => {
+  const source = readFileSync(extensionPath, 'utf8')
+  const packageJSON = readPackageJSON()
+
+  expect(source).toMatch(/\.getConfiguration\((?:`stetCSS`|"stetCSS"|'stetCSS')\)/)
+  expect(source).toMatch(/registerCommand\((?:`stetCSS\.restart`|"stetCSS\.restart"|'stetCSS\.restart')/)
+  expect(source).toMatch(/onRequest\((?:`stetCSS\/restart`|"stetCSS\/restart"|'stetCSS\/restart')/)
+  expect(source).toMatch(/initializationOptions:\s*\(\)\s*=>\s*\(\{\s*stetCSS:/)
+  expect(source).not.toContain('masterCSS')
+  expect(packageJSON.contributes.commands.map(({ command }) => command)).toEqual(['stetCSS.restart'])
+  expect(Object.keys(packageJSON.contributes.configuration.properties).every((key) => key.startsWith('stetCSS.'))).toBe(true)
 })
 
 test('server bundle keeps expected native runtime imports external', () => {
@@ -291,12 +304,12 @@ test('manifest contributes TextMate grammar, semantic token scopes, and CSS diag
     expect.objectContaining({ id: 'selectorCombinator' }),
     expect.objectContaining({ id: 'pseudoClassDelimiter' })
   ]))
-  expect(packageJSON.contributes.configuration.properties['masterCSS.includedLanguages'].default).toEqual(expect.arrayContaining([
+  expect(packageJSON.contributes.configuration.properties['stetCSS.includedLanguages'].default).toEqual(expect.arrayContaining([
     'css',
     'scss',
     'less'
   ]))
-  expect(packageJSON.contributes.configuration.properties['masterCSS.formatDirectives']).toMatchObject({
+  expect(packageJSON.contributes.configuration.properties['stetCSS.formatDirectives']).toMatchObject({
     type: 'boolean',
     default: true
   })

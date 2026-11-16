@@ -7,5 +7,5 @@
     "typescriptreact",
     "html"
   ],
-  "masterCSS.workspaces": "auto"
+  "stetCSS.workspaces": "auto"
 }
