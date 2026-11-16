@@ -23,15 +23,11 @@
     "directory": "packages/nuxt"
   },
   "keywords": [
-    "nitro",
     "vue",
-    "server",
-    "hooks",
     "css",
     "nuxt",
     "mastercss",
-    "server-side-rendering",
-    "ssr"
+    "static"
   ],
   "sideEffects": false,
   "exports": {
@@ -71,7 +67,6 @@
     "unbuild": "^3.6.1",
     "vite": "^8.0.16",
     "vitest": "^4.1.9",
-    "vue": "^3.5.38",
-    "@stet-css/schema": "workspace:^"
+    "vue": "^3.5.38"
   }
 }

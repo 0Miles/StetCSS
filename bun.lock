@@ -628,7 +628,6 @@
         "@nuxt/module-builder": "^1.0.2",
         "@nuxt/schema": "^4.4.8",
         "@nuxt/test-utils": "^4.0.3",
-        "@stet-css/schema": "workspace:^",
         "@types/js-beautify": "^1.14.3",
         "@vue/test-utils": "^2.4.11",
         "changelogen": "^0.6.2",
