@@ -722,7 +722,7 @@ async function prepareRuntimeDiagnosticPage(page: Page, variant: RuntimeStyleDia
 
 async function installRetainedSetInstrumentation(page: Page) {
   await page.evaluate(() => {
-    const runtime = globalThis.masterCSSRuntime as {
+    const runtime = globalThis.stetCSSRuntime as {
       retainedClassNames?: Set<string> & {
         __benchmarkInstrumented?: boolean
       }
@@ -762,7 +762,7 @@ async function preseedRuntimeTempRules(page: Page) {
         temp?: string[]
       }
     }
-    const runtime = globalThis.masterCSSRuntime as {
+    const runtime = globalThis.stetCSSRuntime as {
       classUtilities?: {
         size?: number
       }
@@ -781,7 +781,7 @@ async function preseedRuntimeTempRules(page: Page) {
 
 async function seedRetainedRuntimeRules(page: Page, count: number) {
   return page.evaluate((classCount) => {
-    const runtime = globalThis.masterCSSRuntime as {
+    const runtime = globalThis.stetCSSRuntime as {
       ensureClassRules?: (...classNames: string[]) => unknown
       classUtilities?: Map<string, Array<{
         text?: string
@@ -855,7 +855,7 @@ async function seedRetainedRuntimeRules(page: Page, count: number) {
 
 async function pauseRuntimeObserver(page: Page) {
   return page.evaluate(() => {
-    const runtime = globalThis.masterCSSRuntime as {
+    const runtime = globalThis.stetCSSRuntime as {
       observer?: {
         disconnect?: () => void
       }
@@ -997,7 +997,7 @@ async function traceRuntimeStyleInvalidationDiagnostic(page: Page, action: Runti
   const afterFlushState = await page.evaluate(() => globalThis.__readInteractionState())
   const afterFlushRuntimeStyleRuleCount = afterFlushState.runtimeGeneratedRuleCount
   const forcedRetainedCleanup = await page.evaluate(() => {
-    const runtime = globalThis.masterCSSRuntime as {
+    const runtime = globalThis.stetCSSRuntime as {
       flushRetainedClassRules?: () => number
     } | undefined
     const startedAt = performance.now()
@@ -1142,7 +1142,7 @@ async function assertDiagnosticPageReady(page: Page, modeId: InteractionModeId) 
   const state = await page.evaluate(() => ({
     ready: document.documentElement.dataset.benchmarkReady,
     textAlign: getComputedStyle(document.getElementById('interaction-style-probe')!).textAlign,
-    runtimeAvailable: Boolean(globalThis.masterCSSRuntime),
+    runtimeAvailable: Boolean(globalThis.stetCSSRuntime),
     htmlHidden: document.documentElement.hasAttribute('hidden')
   }))
 
@@ -1155,7 +1155,7 @@ async function assertDiagnosticPageReady(page: Page, modeId: InteractionModeId) 
   }
 
   if (modeId === 'master-runtime') {
-    if (!state.runtimeAvailable) throw new Error(`${modeId} did not expose globalThis.masterCSSRuntime.`)
+    if (!state.runtimeAvailable) throw new Error(`${modeId} did not expose globalThis.stetCSSRuntime.`)
     if (state.htmlHidden) throw new Error('Master runtime diagnostic page did not reveal the hidden html element.')
   }
 }

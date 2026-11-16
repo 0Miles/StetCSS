@@ -222,13 +222,13 @@ export const interactionCostMetrics = [
     id: 'runtime-generated-rule-count-delta',
     label: 'Runtime rule delta',
     unit: 'count',
-    description: 'Change in recursive style#master-css CSSOM rule count after the interaction.'
+    description: 'Change in recursive style#stet-css CSSOM rule count after the interaction.'
   },
   {
     id: 'runtime-style-raw-bytes-delta',
     label: 'Runtime style byte delta',
     unit: 'B',
-    description: 'Change in raw bytes for style#master-css after the interaction.'
+    description: 'Change in raw bytes for style#stet-css after the interaction.'
   },
   {
     id: 'style-recalculation-ms',
@@ -928,7 +928,7 @@ function renderInteractionScript(options: {
     '            return window.__flushRuntimeMutationStrategy("before-result");',
     '        }',
     '        function readRuntimeState() {',
-    '            const runtime = globalThis.masterCSSRuntime;',
+    '            const runtime = globalThis.stetCSSRuntime;',
     '            const runtimeStyleText = runtime?.style?.textContent || runtime?.text || "";',
     '            const retainedClassNames = [...(runtime?.retainedClassNames || [])].map(String);',
     '            const retainedRuleState = readRetainedRuleState(runtime, retainedClassNames);',
@@ -1050,7 +1050,7 @@ async function traceInteraction(page: Page, scenarioId: InteractionScenarioId) {
 
   if (scenarioId === 'mutation-cleanup-cycle') {
     const forcedRetainedCleanup = await page.evaluate(() => {
-      const runtime = globalThis.masterCSSRuntime as {
+      const runtime = globalThis.stetCSSRuntime as {
         flushRetainedClassRules?: () => number
         retainedClassNames?: Set<string>
       } | undefined
@@ -1513,8 +1513,8 @@ async function waitForBenchmarkReady(page: Page) {
 async function assertInteractionPageReady(page: Page, modeId: InteractionModeId) {
   const state = await page.evaluate(() => {
     const runtime = (globalThis as typeof globalThis & {
-      masterCSSRuntime?: object
-    }).masterCSSRuntime
+      stetCSSRuntime?: object
+    }).stetCSSRuntime
 
     return {
       ready: document.documentElement.dataset.benchmarkReady,
@@ -1533,7 +1533,7 @@ async function assertInteractionPageReady(page: Page, modeId: InteractionModeId)
   }
 
   if (modeId === 'master-runtime') {
-    if (!state.runtimeAvailable) throw new Error(`${modeId} did not expose globalThis.masterCSSRuntime.`)
+    if (!state.runtimeAvailable) throw new Error(`${modeId} did not expose globalThis.stetCSSRuntime.`)
     if (state.htmlHidden) throw new Error('Master runtime interaction page did not reveal the hidden html element.')
   }
 }

@@ -527,7 +527,7 @@ export const browserLifecycleMetrics = [
     id: 'runtime-generated-rule-count',
     label: 'Runtime generated rules',
     unit: 'count',
-    description: 'Runtime class utility count or recursive style#master-css rule count after the measured scenario.'
+    description: 'Runtime class utility count or recursive style#stet-css rule count after the measured scenario.'
   },
   {
     id: 'runtime-generated-rule-count-delta',
@@ -539,13 +539,13 @@ export const browserLifecycleMetrics = [
     id: 'runtime-style-raw-bytes',
     label: 'Runtime style raw bytes',
     unit: 'B',
-    description: 'Raw bytes of style#master-css after the measured scenario.'
+    description: 'Raw bytes of style#stet-css after the measured scenario.'
   },
   {
     id: 'runtime-style-raw-bytes-delta',
     label: 'Runtime style byte delta',
     unit: 'B',
-    description: 'Change in raw style#master-css bytes during the measured scenario.'
+    description: 'Change in raw style#stet-css bytes during the measured scenario.'
   },
   {
     id: 'retained-class-count',
@@ -1378,7 +1378,7 @@ function renderLifecycleScenarioScript(options: {
     '            return card;',
     '        }',
     '        function readLifecycleState() {',
-    '            const runtime = globalThis.masterCSSRuntime;',
+    '            const runtime = globalThis.stetCSSRuntime;',
     '            const runtimeStyleText = runtime?.style?.textContent || runtime?.text || "";',
     '            const retainedClassNames = [...(runtime?.retainedClassNames || [])].map(String);',
     '            const retainedRuleCount = countRetainedRules(runtime, retainedClassNames);',

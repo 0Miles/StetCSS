@@ -475,7 +475,7 @@ export const runtimeMutationDiagnosticMetrics = [
     id: 'runtime-style-raw-bytes-delta',
     label: 'Runtime style byte delta',
     unit: 'B',
-    description: 'Change in raw bytes for style#master-css after cleanup.'
+    description: 'Change in raw bytes for style#stet-css after cleanup.'
   },
   {
     id: 'computed-style-valid',
@@ -696,7 +696,7 @@ async function preseedRuntimeTempRules(page: Page, ruleState: RuntimeMutationRul
         temp?: string[]
       }
     }
-    const runtime = globalThis.masterCSSRuntime as {
+    const runtime = globalThis.stetCSSRuntime as {
       classUtilities?: {
         size?: number
       }
@@ -785,7 +785,7 @@ async function traceRuntimeMutationDiagnostic(page: Page) {
     }
   })
   const forcedRetainedCleanup = await page.evaluate(() => {
-    const runtime = globalThis.masterCSSRuntime as {
+    const runtime = globalThis.stetCSSRuntime as {
       flushRetainedClassRules?: () => number
     } | undefined
     const startedAt = performance.now()
@@ -1219,7 +1219,7 @@ async function assertRuntimeModeReady(page: Page, modeId: InteractionModeId) {
   const state = await page.evaluate(() => ({
     ready: document.documentElement.dataset.benchmarkReady,
     textAlign: getComputedStyle(document.getElementById('interaction-style-probe')!).textAlign,
-    runtimeAvailable: Boolean(globalThis.masterCSSRuntime),
+    runtimeAvailable: Boolean(globalThis.stetCSSRuntime),
     htmlHidden: document.documentElement.hasAttribute('hidden')
   }))
 
@@ -1232,7 +1232,7 @@ async function assertRuntimeModeReady(page: Page, modeId: InteractionModeId) {
   }
 
   if (!state.runtimeAvailable) {
-    throw new Error(`${modeId} did not expose globalThis.masterCSSRuntime.`)
+    throw new Error(`${modeId} did not expose globalThis.stetCSSRuntime.`)
   }
 
   if (state.htmlHidden) {

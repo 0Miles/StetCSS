@@ -20,25 +20,25 @@ test('383', async ({ page }) => {
     `
   })
   await init(page)
-  expect(await page.evaluate(() => globalThis.masterCSSRuntime.utilitiesLayer?.native?.parentStyleSheet)).toBeDefined()
+  expect(await page.evaluate(() => globalThis.stetCSSRuntime.utilitiesLayer?.native?.parentStyleSheet)).toBeDefined()
   await page.evaluate(() => {
     document.body.innerHTML = ``
   })
   await waitForRuntimeRemovalFlush(page)
   const retained = await page.evaluate(() => ({
-    retainedClassNames: [...globalThis.masterCSSRuntime.retainedClassNames],
-    hasClassUtility: globalThis.masterCSSRuntime.classUtilities.has('text-center'),
-    utilitiesStyleSheet: globalThis.masterCSSRuntime.utilitiesLayer?.native?.parentStyleSheet
+    retainedClassNames: [...globalThis.stetCSSRuntime.retainedClassNames],
+    hasClassUtility: globalThis.stetCSSRuntime.classUtilities.has('text-center'),
+    utilitiesStyleSheet: globalThis.stetCSSRuntime.utilitiesLayer?.native?.parentStyleSheet
   }))
   expect(retained.retainedClassNames).toEqual(['text-center'])
   expect(retained.hasClassUtility).toBe(true)
   expect(retained.utilitiesStyleSheet).toBeDefined()
 
   const afterForcedCleanup = await page.evaluate(() => ({
-    removedCount: globalThis.masterCSSRuntime.flushRetainedClassRules(),
-    retainedClassNames: [...globalThis.masterCSSRuntime.retainedClassNames],
-    hasClassUtility: globalThis.masterCSSRuntime.classUtilities.has('text-center'),
-    utilitiesStyleSheet: globalThis.masterCSSRuntime.utilitiesLayer?.native?.parentStyleSheet
+    removedCount: globalThis.stetCSSRuntime.flushRetainedClassRules(),
+    retainedClassNames: [...globalThis.stetCSSRuntime.retainedClassNames],
+    hasClassUtility: globalThis.stetCSSRuntime.classUtilities.has('text-center'),
+    utilitiesStyleSheet: globalThis.stetCSSRuntime.utilitiesLayer?.native?.parentStyleSheet
   }))
   expect(afterForcedCleanup).toEqual({
     removedCount: 1,
@@ -51,5 +51,5 @@ test('383', async ({ page }) => {
       <div class="font:bold fg:red"></div>
     `
   })
-  expect(await page.evaluate(() => globalThis.masterCSSRuntime.utilitiesLayer?.native?.parentStyleSheet)).toBeDefined()
+  expect(await page.evaluate(() => globalThis.stetCSSRuntime.utilitiesLayer?.native?.parentStyleSheet)).toBeDefined()
 })

@@ -12,25 +12,25 @@ import init, { RUNTIME_SCRIPT_URL, getRuntimeLoaderURL, routeRuntimeAssets } fro
 type ClobberingCase = { label: string, markup: string, selector: string }
 
 /**
- * Guards: `create` reading `instances` from a page element held in the `MasterCSSRuntime`
+ * Guards: `create` reading `instances` from a page element held in the `StetCSSRuntime`
  * global (TypeError, `<html hidden>` never cleared). Reverting `register-global.ts` and the
  * `CSSRuntime.instances` reads in `core.ts` turns these 6 tests (global and module paths) red.
  */
 const WINDOW_GUARD_CASES: ClobberingCase[] = [
-  { label: 'an element with id="MasterCSSRuntime"', markup: '<div id="MasterCSSRuntime"></div>', selector: 'div[id="MasterCSSRuntime"]' },
+  { label: 'an element with id="StetCSSRuntime"', markup: '<div id="StetCSSRuntime"></div>', selector: 'div[id="StetCSSRuntime"]' },
   // Two elements sharing an id make the global an HTMLCollection.
-  { label: 'a pair of elements with id="MasterCSSRuntime"', markup: '<div id="MasterCSSRuntime"></div><div id="MasterCSSRuntime"></div>', selector: 'div[id="MasterCSSRuntime"]' },
-  { label: 'a form with name="MasterCSSRuntime"', markup: '<form name="MasterCSSRuntime"></form>', selector: 'form[name="MasterCSSRuntime"]' }
+  { label: 'a pair of elements with id="StetCSSRuntime"', markup: '<div id="StetCSSRuntime"></div><div id="StetCSSRuntime"></div>', selector: 'div[id="StetCSSRuntime"]' },
+  { label: 'a form with name="StetCSSRuntime"', markup: '<form name="StetCSSRuntime"></form>', selector: 'form[name="StetCSSRuntime"]' }
 ]
 
 /**
  * AC2 confirmations, not regression guards: these 4 tests are green before the fix too
- * (`masterCSSRuntime` is only ever written as an own property; the runtime never looks
- * `#master-css` up). Keep them as the ticket's acceptance evidence.
+ * (`stetCSSRuntime` is only ever written as an own property; the runtime never looks
+ * `#stet-css` up). Keep them as the ticket's acceptance evidence.
  */
 const WINDOW_CONFIRMATION_CASES: ClobberingCase[] = [
-  { label: 'an element with id="masterCSSRuntime"', markup: '<div id="masterCSSRuntime"></div>', selector: 'div[id="masterCSSRuntime"]' },
-  { label: 'an element with id="master-css"', markup: '<div id="master-css"></div>', selector: 'div[id="master-css"]' }
+  { label: 'an element with id="stetCSSRuntime"', markup: '<div id="stetCSSRuntime"></div>', selector: 'div[id="stetCSSRuntime"]' },
+  { label: 'an element with id="stet-css"', markup: '<div id="stet-css"></div>', selector: 'div[id="stet-css"]' }
 ]
 
 /**
@@ -64,22 +64,22 @@ function collectMessages(page: Page) {
 }
 
 async function waitForRuntime(page: Page) {
-  await page.waitForFunction(() => globalThis.masterCSSRuntime?.observing === true, undefined, { timeout: 5000 })
+  await page.waitForFunction(() => globalThis.stetCSSRuntime?.observing === true, undefined, { timeout: 5000 })
 }
 
 async function readRuntimeState(page: Page, selector: string) {
   return page.evaluate(({ selector, styleId }) => {
     // The page's own elements may shadow `document` members, so read them from the prototype.
     const query = (selectors: string) => Document.prototype.querySelectorAll.call(document, selectors)
-    const Runtime = globalThis.MasterCSSRuntime
+    const Runtime = globalThis.StetCSSRuntime
     return {
       runtimeIsClass: typeof Runtime === 'function',
-      instanceOfRuntime: globalThis.masterCSSRuntime instanceof Runtime,
-      registered: Runtime.instances.get(document) === globalThis.masterCSSRuntime,
+      instanceOfRuntime: globalThis.stetCSSRuntime instanceof Runtime,
+      registered: Runtime.instances.get(document) === globalThis.stetCSSRuntime,
       runtimeStyles: query(`style#${styleId}`).length,
       hidden: query('html')[0].hasAttribute('hidden'),
       display: getComputedStyle(query('p')[0]).display,
-      // The runtime adds its own `style#master-css`, so look the page's element up by tag.
+      // The runtime adds its own `style#stet-css`, so look the page's element up by tag.
       clobberingElementKept: query(selector).length > 0
     }
   }, { selector, styleId: MASTER_CSS_RUNTIME_STYLE_ID })
@@ -138,7 +138,7 @@ for (const { label, markup, selector } of [...WINDOW_GUARD_CASES, ...WINDOW_CONF
 
 /**
  * Guards: a bundled import beside the CDN script starting a second runtime on the document,
- * which adds a second `style#master-css` and generates every rule twice. Giving `CSSRuntime.instances` its own
+ * which adds a second `style#stet-css` and generates every rule twice. Giving `CSSRuntime.instances` its own
  * map when another runtime class holds the global (`core.ts`) turns this test red.
  */
 test('a module copy loaded after the CDN script reuses the CDN runtime', async ({ page }) => {
@@ -155,13 +155,13 @@ test('a module copy loaded after the CDN script reuses the CDN runtime', async (
     </html>
   `)
   await waitForRuntime(page)
-  const cdnRuntime = await page.evaluateHandle(() => globalThis.masterCSSRuntime)
+  const cdnRuntime = await page.evaluateHandle(() => globalThis.stetCSSRuntime)
   const reused = await page.evaluate(async ({ loaderURL, cdnRuntime }) => {
     const { startCSSRuntime } = await import(loaderURL)
     const { default: ModuleRuntime } = await import(new URL('/src/core.ts', loaderURL).href)
     return {
-      separateCopy: ModuleRuntime !== globalThis.MasterCSSRuntime,
-      sameInstance: startCSSRuntime() === cdnRuntime && globalThis.masterCSSRuntime === cdnRuntime
+      separateCopy: ModuleRuntime !== globalThis.StetCSSRuntime,
+      sameInstance: startCSSRuntime() === cdnRuntime && globalThis.stetCSSRuntime === cdnRuntime
     }
   }, { loaderURL: await getRuntimeLoaderURL(), cdnRuntime })
 
@@ -172,7 +172,7 @@ test('a module copy loaded after the CDN script reuses the CDN runtime', async (
 
 /**
  * Guards: the CDN script, loaded after a bundled import, replacing the module's
- * `MasterCSSRuntime` class and starting a second runtime. Making `registerGlobal` always
+ * `StetCSSRuntime` class and starting a second runtime. Making `registerGlobal` always
  * overwrite the global, or giving `CSSRuntime.instances` its own map, turns this test red.
  */
 test('the CDN script loaded after a module copy keeps the module runtime', async ({ page }) => {
@@ -187,8 +187,8 @@ test('the CDN script loaded after a module copy keeps the module runtime', async
   await init(page)
   await waitForRuntime(page)
   const moduleState = await page.evaluateHandle(() => ({
-    Runtime: globalThis.MasterCSSRuntime,
-    runtime: globalThis.masterCSSRuntime
+    Runtime: globalThis.StetCSSRuntime,
+    runtime: globalThis.stetCSSRuntime
   }))
 
   await routeRuntimeAssets(page)
@@ -196,8 +196,8 @@ test('the CDN script loaded after a module copy keeps the module runtime', async
   await page.addScriptTag({ url: RUNTIME_SCRIPT_URL })
 
   expect(await page.evaluate(moduleState => ({
-    keptClass: globalThis.MasterCSSRuntime === moduleState.Runtime,
-    keptInstance: globalThis.masterCSSRuntime === moduleState.runtime
+    keptClass: globalThis.StetCSSRuntime === moduleState.Runtime,
+    keptInstance: globalThis.stetCSSRuntime === moduleState.runtime
   }), moduleState)).toEqual({ keptClass: true, keptInstance: true })
   expect(await readRuntimeState(page, 'p')).toEqual(expectedState)
   expect(messages).toEqual([])

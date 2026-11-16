@@ -29,7 +29,7 @@ test('keeps default variable buckets before mode buckets when CSSOM buckets are 
     target.className = 'fg:accent'
     document.body.append(target)
     await waitForRuntimeRuleFlush()
-    const sheet = document.querySelector<HTMLStyleElement>('style#master-css')?.sheet
+    const sheet = document.querySelector<HTMLStyleElement>('style#stet-css')?.sheet
     const themeRule = sheet
       ? Array.from(sheet.cssRules).map((rule) => rule.cssText).find((text) => text.includes('@layer theme')) || ''
       : ''

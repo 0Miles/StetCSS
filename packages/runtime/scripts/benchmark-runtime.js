@@ -156,9 +156,9 @@ async function loadRuntime(page, scriptURL) {
     script.src = url
     document.head.append(script)
 
-    while (!globalThis.masterCSSRuntime?.observing) {
+    while (!globalThis.stetCSSRuntime?.observing) {
       if (performance.now() - startedAt > 10_000) {
-        throw new Error('Timed out waiting for masterCSSRuntime to observe the document.')
+        throw new Error('Timed out waiting for stetCSSRuntime to observe the document.')
       }
       await new Promise((resolveFrame) => requestAnimationFrame(resolveFrame))
     }
@@ -300,7 +300,7 @@ try {
     const page = await createPage(browser, server.url, scanMarkup)
     try {
       const elapsed = await loadRuntime(page, scriptURL)
-      const generatedCount = await page.evaluate(() => globalThis.masterCSSRuntime.classUtilities.size)
+      const generatedCount = await page.evaluate(() => globalThis.stetCSSRuntime.classUtilities.size)
       if (generatedCount !== scanClasses.length) {
         throw new Error(`Expected ${scanClasses.length} generated classes, got ${generatedCount}.`)
       }
@@ -324,11 +324,11 @@ try {
         return performance.now() - startedAt
       }, { html: mutationMarkup })
       await waitForRuntimeRemovalFlush(page)
-      await page.evaluate(() => globalThis.masterCSSRuntime.flushRetainedClassRules())
+      await page.evaluate(() => globalThis.stetCSSRuntime.flushRetainedClassRules())
       const state = await page.evaluate(() => ({
-        classes: globalThis.masterCSSRuntime.classCounts.size,
-        utilities: globalThis.masterCSSRuntime.classUtilities.size,
-        retained: globalThis.masterCSSRuntime.retainedClassNames.size
+        classes: globalThis.stetCSSRuntime.classCounts.size,
+        utilities: globalThis.stetCSSRuntime.classUtilities.size,
+        retained: globalThis.stetCSSRuntime.retainedClassNames.size
       }))
       if (state.classes || state.utilities || state.retained) {
         throw new Error(`Expected mutation cleanup to empty runtime state, got ${JSON.stringify(state)}.`)
@@ -344,11 +344,11 @@ try {
     try {
       const elapsed = await page.evaluate((classes) => {
         const startedAt = performance.now()
-        globalThis.masterCSSRuntime.ensureClassRules(...classes)
-        globalThis.masterCSSRuntime.deleteClassRules(...classes)
+        globalThis.stetCSSRuntime.ensureClassRules(...classes)
+        globalThis.stetCSSRuntime.deleteClassRules(...classes)
         return performance.now() - startedAt
       }, mutationClasses)
-      const generatedCount = await page.evaluate(() => globalThis.masterCSSRuntime.classUtilities.size)
+      const generatedCount = await page.evaluate(() => globalThis.stetCSSRuntime.classUtilities.size)
       if (generatedCount) {
         throw new Error(`Expected direct ensure/delete cleanup to empty classUtilities, got ${generatedCount}.`)
       }

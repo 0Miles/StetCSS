@@ -234,13 +234,13 @@ export const masterDeliveryModeMetrics = [
     id: 'runtime-generated-rule-count',
     label: 'Runtime generated rules',
     unit: 'count',
-    description: 'CSSOM rule count in style#master-css after runtime observe.'
+    description: 'CSSOM rule count in style#stet-css after runtime observe.'
   },
   {
     id: 'runtime-style-raw-bytes',
     label: 'Runtime style raw bytes',
     unit: 'B',
-    description: 'Raw bytes of style#master-css after runtime observe.'
+    description: 'Raw bytes of style#stet-css after runtime observe.'
   }
 ] satisfies BenchmarkMetric[]
 
@@ -588,12 +588,12 @@ function collectConsoleWarnings(page: Page) {
 
 async function readDeliveryDiagnostics(page: Page, consoleWarnings: string[]): Promise<DeliveryModeDiagnostics> {
   const diagnostics = await page.evaluate(() => {
-    const runtime = globalThis.masterCSSRuntime as unknown as {
+    const runtime = globalThis.stetCSSRuntime as unknown as {
       style?: HTMLStyleElement | null
       text?: string
       classUtilities?: Map<string, unknown>
     } | undefined
-    const styleElement = document.querySelector<HTMLStyleElement>('style#master-css')
+    const styleElement = document.querySelector<HTMLStyleElement>('style#stet-css')
     const styleRules = styleElement?.sheet?.cssRules
     const runtimeStyleText = runtime?.style?.textContent || runtime?.text || ''
     const runtimeClassUtilityNames = [...(runtime?.classUtilities?.keys?.() || [])].map(String).sort()
@@ -816,7 +816,7 @@ async function assertDeliveryModeCorrect(page: Page, modeId: DeliveryModeId) {
   const state = await page.evaluate(() => ({
     ready: document.documentElement.dataset.benchmarkReady,
     textAlign: getComputedStyle(document.getElementById('benchmark-style-probe')!).textAlign,
-    runtimeAvailable: Boolean(globalThis.masterCSSRuntime),
+    runtimeAvailable: Boolean(globalThis.stetCSSRuntime),
     htmlHidden: document.documentElement.hasAttribute('hidden')
   }))
 
@@ -829,7 +829,7 @@ async function assertDeliveryModeCorrect(page: Page, modeId: DeliveryModeId) {
   }
 
   if (modeId === 'master-runtime') {
-    if (!state.runtimeAvailable) throw new Error(`${modeId} did not expose globalThis.masterCSSRuntime.`)
+    if (!state.runtimeAvailable) throw new Error(`${modeId} did not expose globalThis.stetCSSRuntime.`)
     if (state.htmlHidden) throw new Error('Master runtime variant did not reveal the hidden html element.')
   }
 }
@@ -973,12 +973,12 @@ function assertExistingFile(file: string, message: string) {
 }
 
 declare global {
-  var MasterCSSRuntime: {
+  var StetCSSRuntime: {
     prototype: {
       observe: (...args: unknown[]) => unknown
     }
   }
-  var masterCSSRuntime: object | undefined
+  var stetCSSRuntime: object | undefined
   var __deliveryMetrics: {
     error?: string
     runtimeScriptLoadedMs?: number

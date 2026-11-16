@@ -71,7 +71,7 @@ export default defineConfig({
 })
 ```
 
-`masterCSS()` builds static CSS. It reads classes from the project's files, `.astro` templates included, and writes their rules into the CSS that imports Master CSS. Nothing ships to the browser besides that CSS: no runtime script, no `<style id="master-css">`. `astro dev` updates the CSS when a class changes.
+`masterCSS()` builds static CSS. It reads classes from the project's files, `.astro` templates included, and writes their rules into the CSS that imports Master CSS. Nothing ships to the browser besides that CSS: no runtime script, no `<style id="stet-css">`. `astro dev` updates the CSS when a class changes.
 
 Import Master CSS from a CSS file:
 

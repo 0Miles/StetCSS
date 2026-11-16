@@ -107,7 +107,7 @@ for (const { name, cdn, short } of [
     const scriptPath = short ? packagePath : `${packagePath}/dist/global.min.js`
 
     await page.setContent(renderPage(scriptPath))
-    await expect.poll(() => page.evaluate(() => globalThis.masterCSSRuntime?.text))
+    await expect.poll(() => page.evaluate(() => globalThis.stetCSSRuntime?.text))
       .toContain('.font\\:bold{font-weight:var(--font-weight-bold)}')
 
     expect(requests.filter((path) => path !== scriptPath && path !== `${packagePath}/${resolveEntryPath(cdn)}`)).toEqual([])
@@ -121,7 +121,7 @@ for (const { name, cdn, short } of [
  */
 test('reveals the page when started from a head script', async ({ page }) => {
   await page.setContent(renderPage(`${CDN_PACKAGE_PATHS.jsdelivr}/dist/global.min.js`))
-  await page.waitForFunction(() => !!globalThis.masterCSSRuntime?.observing)
+  await page.waitForFunction(() => !!globalThis.stetCSSRuntime?.observing)
 
   expect(await page.evaluate(() => document.documentElement.hasAttribute('hidden'))).toBe(false)
 })
@@ -142,8 +142,8 @@ test('ignores global manifest override', async ({ page }) => {
     (globalThis as typeof globalThis & { masterCSSManifest?: unknown }).masterCSSManifest = manifest
   }, { manifest })
   await page.addScriptTag({ url: `${origin}${CDN_PACKAGE_PATHS.jsdelivr}/dist/global.min.js` })
-  await page.waitForFunction(() => !!globalThis.masterCSSRuntime?.observing)
+  await page.waitForFunction(() => !!globalThis.stetCSSRuntime?.observing)
 
-  expect(await page.evaluate(() => globalThis.masterCSSRuntime.variables.get('primary'))).toBeUndefined()
-  expect(await page.evaluate(() => globalThis.masterCSSRuntime.variables.get('font-weight-bold'))).toBeDefined()
+  expect(await page.evaluate(() => globalThis.stetCSSRuntime.variables.get('primary'))).toBeUndefined()
+  expect(await page.evaluate(() => globalThis.stetCSSRuntime.variables.get('font-weight-bold'))).toBeDefined()
 })

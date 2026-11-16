@@ -19,6 +19,6 @@ describe('playground', () => {
     expect(css).toContain('#0070f3')
     expect(css).toContain('.font\\:heavy{')
     expect(clientSource.includes('__MASTER_CSS_NEXT_RUNTIME__')).toBe(false)
-    expect(clientSource.includes('masterCSSRuntime')).toBe(false)
+    expect(clientSource.includes('stetCSSRuntime')).toBe(false)
   })
 })

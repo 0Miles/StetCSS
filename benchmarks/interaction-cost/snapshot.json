@@ -494,13 +494,13 @@
       "id": "runtime-generated-rule-count-delta",
       "label": "Runtime rule delta",
       "unit": "count",
-      "description": "Change in recursive style#master-css CSSOM rule count after the interaction."
+      "description": "Change in recursive style#stet-css CSSOM rule count after the interaction."
     },
     {
       "id": "runtime-style-raw-bytes-delta",
       "label": "Runtime style byte delta",
       "unit": "B",
-      "description": "Change in raw bytes for style#master-css after the interaction."
+      "description": "Change in raw bytes for style#stet-css after the interaction."
     },
     {
       "id": "style-recalculation-ms",
