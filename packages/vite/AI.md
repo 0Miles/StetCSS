@@ -10,7 +10,7 @@ Owns the Vite plugin chain behind the `runtime`, `static`, `pre-render` and `pro
 
 ## Risks
 
-- **Scanner lifecycle** is shared by every mode; a change there reaches all four. The scanner only carries options (`safelist`, `blocklist`, `adapters`, `manifest`) and the slot placeholder.
+- **Scanner lifecycle** is shared by every mode; a change there reaches all four. The plugin scans no modules with it; the stylesheet reads its options (`safelist`, `blocklist`, `adapters`, `manifest`), `cwd`, default manifest and native-class state, and the plugin uses its slot placeholder and `change` event.
 - **Dev updates**: `style-entry-hmr.ts` reloads the managed CSS when the watcher reports a file that `isStylesheetSourceFile` accepts and the extracted CSS changed.
 - **Splice warning** is tracked per Vite environment (`this.environment.name`); Astro bundles prerender, server and client separately.
 - **Style entry pipeline** runs in every mode; `static` differs only by `includeGeneratedCSS` on the plugin context.
