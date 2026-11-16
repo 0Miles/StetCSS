@@ -164,8 +164,8 @@ describe('ManifestVirtualModulePlugin', () => {
   /**
    * Guards dev updates of the CSS entry: the hook must return the edited entry's own modules
    * along with the manifest module, or the page keeps the old CSS until a reload.
-   * Reverse check: starting `modules` empty in `manifest-virtual-module.ts` turns this test and
-   * the entry HMR test in `dev-hmr.test.ts` red.
+   * Reverse check: dropping `...changedModules` from the list `manifest-virtual-module.ts`
+   * returns turns this test and the entry HMR test in `dev-hmr.test.ts` red.
    */
   it('updates the default virtual manifest module through HMR when imported', async () => {
     const root = path.join(FIXTURE_DIR, 'css-only')
