@@ -3,7 +3,8 @@ import type { PluginContext } from '../core'
 import getExtractedCSS from '../utils/extracted-css'
 import { getScanner } from '../utils/scanner-context'
 import { getEnvironmentName } from '../utils/environment'
-import { createSlotCSSRulePattern, digestCSS, getSlotSelector } from '../utils/slot'
+import { createSlotCSSRulePattern, getSlotSelector } from '../utils/slot'
+import { createBuildDigest } from '../utils/build-digest'
 
 /**
  * Puts the generated CSS where the first placeholder was and drops the others; `digests` are
@@ -41,7 +42,7 @@ export default function StyleEntryBuildPlugin(context: PluginContext): Plugin {
       const slotCSSRule = getScanner(context).slotCSSRule
       const slotPattern = createSlotCSSRulePattern(slotCSSRule)
       const realCSS = await getExtractedCSS(context)
-      const realCSSDigest = digestCSS(realCSS)
+      const buildDigest = await createBuildDigest(context)
       const cssFileNames = Object.keys(bundle).filter(eachFileName => eachFileName.endsWith('.css'))
       const staleFileNames: string[] = []
       let replacedAny = false
@@ -53,18 +54,19 @@ export default function StyleEntryBuildPlugin(context: PluginContext): Plugin {
           if (!result.digests.length) continue
           chunk.source = result.source
           replacedAny = true
-          if (!result.digests.includes(realCSSDigest)) staleFileNames.push(eachCssFileName)
+          if (!result.digests.includes(buildDigest)) staleFileNames.push(eachCssFileName)
         }
       }
-      // Each placeholder carries the CSS generated when its stylesheet was transformed. A
-      // stylesheet that imports Master CSS and registered later changed that CSS, so the
-      // file name was computed from an earlier version of the content now spliced in.
+      // Each placeholder carries the build's digest from when its stylesheet was transformed.
+      // It covers every entry discovery finds, so only an entry discovery misses (one outside
+      // the project root, a framework's style block) that registered later can leave an
+      // asset named after an earlier version of the CSS now spliced in.
       if (staleFileNames.length) {
         this.warn(
           `[master-css.vite] ${staleFileNames.join(', ')}: the file name was hashed before ` +
           `every stylesheet that imports Master CSS was read, so it may not change when its ` +
-          `CSS does and caches can keep serving the old file. Import '@stet-css/core' from ` +
-          `one stylesheet and import that stylesheet wherever it is needed.`
+          `CSS does and caches can keep serving the old file. Keep stylesheets that import ` +
+          `'@stet-css/core' as .css, .scss or .sass files inside the project root.`
         )
       }
       // A managed CSS import in this environment emitted the placeholder but

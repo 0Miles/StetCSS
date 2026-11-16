@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import StyleEntryPlugin from '../../src/plugins/style-entry'
 import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
-import getExtractedCSS from '../../src/utils/extracted-css'
+import { createBuildDigest } from '../../src/utils/build-digest'
 import { createSlotCSSRule } from '../../src/utils/slot'
 import { createProjectContext, removeProjects, SLOT_CSS_RULE as SLOT } from '../plugin-test-helper'
 
@@ -9,9 +9,9 @@ const RESOLVED_VIRTUAL_CSS_ID = '\0' + VIRTUAL_CSS_ID
 
 afterEach(removeProjects)
 
-/** The build placeholder for the CSS the context generates now. */
+/** The build placeholder for the context's current build digest. */
 async function slotFor(context: any) {
-  return createSlotCSSRule(SLOT, await getExtractedCSS(context))
+  return createSlotCSSRule(SLOT, await createBuildDigest(context))
 }
 
 /** A project whose only source file uses `fg:red`. */

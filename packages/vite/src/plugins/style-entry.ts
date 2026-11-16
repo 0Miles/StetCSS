@@ -15,6 +15,7 @@ import { getScanner } from '../utils/scanner-context'
 import { getEnvironmentName } from '../utils/environment'
 import { getProjectDir } from '../utils/project-dir'
 import { createSlotCSSRule } from '../utils/slot'
+import { createBuildDigest } from '../utils/build-digest'
 
 const RESOLVED_VIRTUAL_CSS_ID = '\0' + VIRTUAL_CSS_ID
 
@@ -25,8 +26,8 @@ function markPlaceholderEmitted(context: PluginContext, pluginContext: unknown) 
 
 /** The generated CSS in dev; in a build, the placeholder `generateBundle` swaps it into. */
 async function createMasterSource(context: PluginContext) {
-  const css = await getExtractedCSS(context)
-  return context.config?.command === 'serve' ? css : createSlotCSSRule(getScanner(context).slotCSSRule, css)
+  if (context.config?.command === 'serve') return await getExtractedCSS(context)
+  return createSlotCSSRule(getScanner(context).slotCSSRule, await createBuildDigest(context))
 }
 
 export default function StyleEntryPlugin(context: PluginContext): Plugin {
