@@ -3,6 +3,7 @@
   "globalDependencies": [
     "bun.lock",
     "bunfig.toml",
+    "shared/tsdown-package.config.ts",
     "tsconfig.json"
   ],
   "tasks": {
