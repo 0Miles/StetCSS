@@ -473,10 +473,10 @@ describe('style CSS extraction helpers', () => {
    * Prevents: a stylesheet that still uses a removed `@master` at-rule being handed back to the
    * bundler untouched. `@master entry;` no longer makes an entry, so without this check a file
    * marked only that way, or one importing such a file, is never compiled and the developer sees
-   * no error. The check also must not hide behind the import graph's catch, which hands files with
-   * unresolvable imports back to the bundler.
-   * Reverse check: removing either `assertNoMasterAtRules` call from `resolveMasterStyleSource`
-   * turns only this test red.
+   * no error. The import graph's catch hands non-entries with unreadable imports back to the
+   * bundler; the `@master` error raised while reading an imported file must not go with them.
+   * Reverse check: dropping the `@master` rethrow from that catch, or the check in the import-graph
+   * reader, turns only this test red in this package.
    */
   it('rejects @master at-rules in a stylesheet or the stylesheets it imports', () => {
     const root = createFixture()
@@ -503,7 +503,7 @@ describe('style CSS extraction helpers', () => {
       join(root, 'app/globals.css'),
       '@import "./settings.css";\n.card { color: red; }',
       root
-    )).toThrow(join(root, 'app/globals.css'))
+    )).toThrow(join(root, 'app/settings.css'))
   })
 
   it('derives package host CSS from the package entry graph', async () => {

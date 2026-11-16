@@ -39,13 +39,12 @@ import {
 } from '@stet-css/lexer'
 import {
   assertNoMasterAtRules,
-  assertNoRemovedDirectives,
+  REMOVED_MASTER_AT_RULE_ERROR_CODE,
   collectStandaloneCSSDirectiveExtractionPolicy,
   createCSSDirectiveExtractionPolicy,
   findStandaloneCSSDirectiveStatements,
   mergeCSSDirectiveExtractionPolicy,
   removeStandaloneCSSDirectives,
-  type RemovedDirectiveCheckOptions,
   type StandaloneCSSDirectiveStatement
 } from './lexer/standalone-master'
 import { combineSelectorLists } from './utils/selectors'
@@ -78,7 +77,7 @@ function createConditionPathProperties(conditionPath: CSSDirectiveConditionPath 
 
 export {
   assertNoMasterAtRules,
-  assertNoRemovedDirectives,
+  REMOVED_MASTER_AT_RULE_ERROR_CODE,
   collectStandaloneCSSDirectiveExtractionPolicy,
   createCSSDirectiveExtractionPolicy,
   findStandaloneCSSDirectiveStatements,
@@ -86,7 +85,7 @@ export {
   removeStandaloneCSSDirectives,
   setCSSTransform
 }
-export type { CSSTransform, RemovedDirectiveCheckOptions, StandaloneCSSDirectiveStatement }
+export type { CSSTransform, StandaloneCSSDirectiveStatement }
 
 export interface CompileCSSOptions {
   from?: string
@@ -2318,9 +2317,6 @@ export function maskManagedPatternEntryNames(source: string) {
 
 export function compileCSS(source: string, options: CompileCSSOptions = {}): CompileCSSResult {
   const filename = options.from || 'master.css'
-  // Checked on the source as given, before `@reference` statements are cut out, so the error's
-  // source reference lines up with what the caller passed.
-  assertNoRemovedDirectives(source, options.from)
   const references = findCSSReferenceStatements(source, filename)
   const sourceWithoutReferences = removeSourceRanges(source, references)
   const parsed: ParsedDirectives = {
@@ -2334,7 +2330,9 @@ export function compileCSS(source: string, options: CompileCSSOptions = {}): Com
     composeRangeIndex: 0,
     sourceLocationResolver: createSourceLocationResolver(source)
   }
-  parsed.extractionPolicy = collectStandaloneCSSDirectiveExtractionPolicy(sourceWithoutReferences, options.from)
+  // Collected from the source as given (`@reference` is no extraction directive), so the
+  // removed-directive errors' source references line up with what the caller passed.
+  parsed.extractionPolicy = collectStandaloneCSSDirectiveExtractionPolicy(source, options.from, true)
   validateComposeRanges(parsed)
   const preprocessedSource = maskManagedPatternEntryNames(removeStandaloneCSSDirectives(sourceWithoutReferences, filename))
   let ruleDepth = 0

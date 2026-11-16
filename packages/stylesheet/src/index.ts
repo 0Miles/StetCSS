@@ -1,7 +1,7 @@
 import {
-  assertNoMasterAtRules,
   compileCSS,
   createManifestFromCSSResult,
+  REMOVED_MASTER_AT_RULE_ERROR_CODE,
   type CompileCSSOptions,
   type CompileCSSResult
 } from '@stet-css/compiler'
@@ -409,9 +409,6 @@ export function resolveMasterStyleSource(
   projectDir?: string
 ) {
   if (!isStyleCSSRequest(file)) return
-  // Removed `@master` at-rules fail here, before the catch below can hand the file back to the
-  // bundler: `@master entry;` no longer makes an entry, so nothing else would compile the file.
-  assertNoMasterAtRules(source, file)
   const sourceHasMasterEntry = hasMasterStyleEntrypoint(source)
   let unresolvedPackageSource: ResolvedStyleCSSSource
   try {
@@ -419,12 +416,18 @@ export function resolveMasterStyleSource(
       expandMasterCSSPackage: false
     })
   } catch (error) {
-    if (!sourceHasMasterEntry) return
+    // The graph reader rejects removed `@master` at-rules in the file or anything it imports.
+    // That error must not be handed back to the bundler with the file: `@master entry;` no
+    // longer makes an entry, so nothing else would compile the file and report it.
+    if (!sourceHasMasterEntry && !isRemovedMasterAtRuleError(error)) return
     throw error
   }
-  assertNoMasterAtRules(unresolvedPackageSource.source, file)
   if (!isMasterStyleSource(unresolvedPackageSource.source)) return
   return resolveStyleCSSImportGraph(file, source, projectDir)
+}
+
+function isRemovedMasterAtRuleError(error: unknown) {
+  return (error as { code?: unknown } | undefined)?.code === REMOVED_MASTER_AT_RULE_ERROR_CODE
 }
 
 export function isMasterCSSModuleId(id: string) {
