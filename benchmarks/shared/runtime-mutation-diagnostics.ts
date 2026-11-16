@@ -14,6 +14,7 @@ import {
 import {
   createInteractionPage,
   createInteractionVariantId,
+  formatInteractionModeLabel,
   type InteractionModeId,
   type InteractionResult,
   type RuntimeMutationStrategyId,
@@ -513,7 +514,7 @@ function createRuntimeMutationDiagnosticVariants(): BenchmarkVariant[] {
       id: createRuntimeMutationDiagnosticVariantId(fixtureId, modeId, traceWindow.id, ruleState.id),
       fixtureId,
       adapterId: modeId,
-      label: `${fixtureId} / Master CSS runtime / ${traceWindow.label} / ${ruleState.label}`
+      label: `${fixtureId} / ${formatInteractionModeLabel(modeId)} / ${traceWindow.label} / ${ruleState.label}`
     })))
   )))
 }
@@ -1234,7 +1235,7 @@ async function assertRuntimeModeReady(page: Page, modeId: InteractionModeId) {
     throw new Error(`${modeId} did not expose globalThis.masterCSSRuntime.`)
   }
 
-  if (modeId === 'master-runtime' && state.htmlHidden) {
+  if (state.htmlHidden) {
     throw new Error('Master runtime diagnostic page did not reveal the hidden html element.')
   }
 }
