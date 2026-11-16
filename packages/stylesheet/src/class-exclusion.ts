@@ -29,6 +29,11 @@ export function isClassExcludedByMatcher(className: string, matcher: ClassExclus
   return false
 }
 
+/** Whether `@blocklist` removes `className` from the class set. */
+export function isClassBlocklisted(className: string, blocklist?: Iterable<ClassExcludePattern>) {
+  return isClassExcludedByMatcher(className, createClassExclusionMatcher(blocklist))
+}
+
 export function filterExcludedClasses(classes: string[], excludeClasses?: Iterable<ClassExcludePattern>) {
   const matcher = createClassExclusionMatcher(excludeClasses)
   if (!matcher.exact.size && !matcher.patterns.length) return classes
