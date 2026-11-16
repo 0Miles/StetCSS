@@ -1,7 +1,7 @@
 // The two halves of the npm publish job in .github/workflows/release-please.yml.
 //
 //   node scripts/publish-packages.mjs pack --tag <release tag> --out <dir>
-//   node scripts/publish-packages.mjs publish --dir <dir>
+//   node scripts/publish-packages.mjs publish --tag <release tag> --dir <dir>
 //
 // `pack` writes one tarball per published package with `bun pm pack`, the tool
 // `check:packages` inspects: it rewrites `workspace:^` to the shared version.
@@ -14,12 +14,13 @@
 // versions the registry already has, and stops at the first failure: a rerun
 // publishes only what is missing, and no published package ever depends on a
 // version that is not there yet. It imports nothing from the repo, so the job
-// holding the npm identity runs no dependency code.
+// holding the npm identity runs no dependency code, and it refuses a tarball
+// that is outside the @stet-css scope or not at the release tag's version.
 //
 // NPM_BIN replaces the `npm` executable; the reverse checks point it at a fake.
 
 import { execFileSync, spawnSync } from 'node:child_process'
-import { mkdirSync, readdirSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 
@@ -34,6 +35,7 @@ else if (!npmEnv.NODE_AUTH_TOKEN) delete npmEnv.NODE_AUTH_TOKEN
 // Trusted publishing (OIDC) arrived in npm 11.5.1; older versions fall back
 // to a token without saying so.
 const MIN_NPM = [11, 5, 1]
+const SCOPE = '@stet-css/'
 const INSTALLED_DEPENDENCY_FIELDS = ['dependencies', 'peerDependencies', 'optionalDependencies']
 
 function fail(message) {
@@ -41,12 +43,24 @@ function fail(message) {
     process.exit(1)
 }
 
+/** Tags are `<component>-v<version>`; every published package shares the version. */
+function releaseVersion(tag) {
+    const version = /-v(\d+\.\d+\.\d+(?:-[\w.-]+)?)$/.exec(tag)?.[1]
+    if (!version) fail(`"${tag}" is not a release tag such as core-v0.1.0`)
+    return version
+}
+
+/** Runs npm with the token handling above; a missing executable is an error, not a stack trace. */
+function npm(args, options) {
+    const result = spawnSync(NPM, args, { env: npmEnv, ...options })
+    if (result.error) fail(`cannot run ${NPM}: ${result.error.message}`)
+    return result
+}
+
 async function pack({ tag, out }) {
     if (!tag || !out) fail('usage: publish-packages.mjs pack --tag <release tag> --out <dir>')
     const { publishedPackages, root } = await import('./published-packages.mjs')
-    // Tags are `<component>-v<version>`; every published package shares the version.
-    const version = /-v(\d+\.\d+\.\d+(?:-[\w.-]+)?)$/.exec(tag)?.[1]
-    if (!version) fail(`"${tag}" is not a release tag such as core-v0.1.0`)
+    const version = releaseVersion(tag)
 
     const published = publishedPackages()
     const mismatched = [...published.values()].filter((pkg) => pkg.version !== version)
@@ -66,6 +80,7 @@ async function pack({ tag, out }) {
 }
 
 function readTarballs(dir) {
+    if (!existsSync(dir)) fail(`${dir} does not exist`)
     return readdirSync(dir)
         .filter((name) => name.endsWith('.tgz'))
         .map((name) => {
@@ -94,23 +109,24 @@ function dependencyOrder(tarballs) {
 
 /** Whether the registry already has this exact version. Anything but a clear yes or "not found" aborts. */
 function isPublished({ name, version }) {
-    const result = spawnSync(NPM, ['view', `${name}@${version}`, 'version', '--json'], { encoding: 'utf8', env: npmEnv })
-    if (result.error) fail(`cannot run ${NPM}: ${result.error.message}`)
+    const result = npm(['view', `${name}@${version}`, 'version', '--json'], { encoding: 'utf8' })
     // An unknown version of a known package prints nothing and exits 0; an unknown package is E404.
     if (result.status === 0) return result.stdout.trim() !== ''
     if (/\bE404\b/.test(result.stdout + result.stderr)) return false
     fail(`cannot tell whether ${name}@${version} is published:\n${(result.stderr || result.stdout).trim()}`)
 }
 
-function publish({ dir }) {
-    if (!dir) fail('usage: publish-packages.mjs publish --dir <dir>')
+function publish({ tag, dir }) {
+    if (!tag || !dir) fail('usage: publish-packages.mjs publish --tag <release tag> --dir <dir>')
+    const version = releaseVersion(tag)
     const tarballs = dependencyOrder(readTarballs(resolve(dir)))
     if (!tarballs.length) fail(`no tarballs in ${resolve(dir)}`)
 
-    const versions = new Set(tarballs.map(({ pkg }) => pkg.version))
-    if (versions.size !== 1) fail(`tarballs carry more than one version: ${[...versions].join(', ')}`)
+    // The tarballs come from another job; publish only what this release is.
+    const foreign = tarballs.filter(({ pkg }) => !pkg.name?.startsWith(SCOPE) || pkg.version !== version)
+    if (foreign.length) fail(`${tag} releases ${SCOPE}*@${version}, but the tarballs include ${foreign.map(({ pkg }) => `${pkg.name}@${pkg.version}`).join(', ')}`)
 
-    const npmVersion = execFileSync(NPM, ['--version'], { encoding: 'utf8', env: npmEnv }).trim()
+    const npmVersion = npm(['--version'], { encoding: 'utf8' }).stdout.trim()
     const parts = npmVersion.split('.').map((part) => Number.parseInt(part, 10))
     const differs = MIN_NPM.findIndex((min, index) => parts[index] !== min)
     if (differs !== -1 && !(parts[differs] > MIN_NPM[differs])) fail(`npm ${npmVersion} is older than ${MIN_NPM.join('.')}, the first with trusted publishing`)
@@ -125,16 +141,16 @@ function publish({ dir }) {
     for (const [index, { path, pkg }] of missing.entries()) {
         console.log(`publish ${pkg.name}@${pkg.version}`)
         // The tarball is final: no lifecycle script may rebuild or alter it.
-        const result = spawnSync(NPM, ['publish', path, '--access', 'public', '--provenance', '--ignore-scripts'], { stdio: 'inherit', env: npmEnv })
+        const result = npm(['publish', path, '--access', 'public', '--provenance', '--ignore-scripts'], { stdio: 'inherit' })
         if (result.status !== 0) {
             const left = missing.slice(index).map((tarball) => tarball.pkg.name)
-            console.error(`error: publishing ${pkg.name}@${pkg.version} failed${result.error ? `: ${result.error.message}` : ''}`)
+            console.error(`error: publishing ${pkg.name}@${pkg.version} failed`)
             console.error(`${index} published in this run, ${left.length} still missing: ${left.join(', ')}`)
             console.error('Rerun the failed job, or start the workflow by hand with the release tag: versions already on the registry are skipped.')
             process.exit(1)
         }
     }
-    console.log(`${missing.length} published, ${tarballs.length - missing.length} already on the registry, version ${[...versions][0]}`)
+    console.log(`${missing.length} published, ${tarballs.length - missing.length} already on the registry, version ${version}`)
 }
 
 const { positionals, values } = parseArgs({
@@ -143,4 +159,4 @@ const { positionals, values } = parseArgs({
 })
 if (positionals[0] === 'pack') await pack(values)
 else if (positionals[0] === 'publish') publish(values)
-else fail('usage: publish-packages.mjs <pack --tag <release tag> --out <dir> | publish --dir <dir>>')
+else fail('usage: publish-packages.mjs <pack --tag <release tag> --out <dir> | publish --tag <release tag> --dir <dir>>')
