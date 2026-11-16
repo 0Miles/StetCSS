@@ -5,7 +5,7 @@ import { transform } from 'lightningcss'
 import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 import { stringifyMasterCSSManifestJSON } from '@stet-css/schema/manifest-json'
 import type { CSSDirectiveReference } from '@stet-css/schema/css-directives'
-import { MASTER_CSS_ENTRY_DIRECTIVE_NAME } from '@stet-css/lexer'
+import { MASTER_CSS_ENTRY_DIRECTIVE_NAME, collectCSSDirectiveRanges } from '@stet-css/lexer'
 import { createCSSImportGraphReader, type CSSImportGraphReader } from './css-import-graph-reader'
 import { createMasterCSSManifest } from './master-css-manifest'
 import lowerCSSDirectives from './lower-css-directives'
@@ -65,6 +65,21 @@ export interface ResolveCSSImportGraphOptions {
   projectDir?: string
   expandPackageImports?: boolean
   onReference?: (reference: CSSReferenceStatement, fromFile: string) => void
+}
+
+interface ResolveCSSImportGraphFileOptions extends ResolveCSSImportGraphOptions {
+  inPackage?: boolean
+  onSource?: (source: string, inPackage: boolean) => void
+}
+
+function collectThemeModeNames(source: string, target: Set<string>) {
+  for (const range of collectCSSDirectiveRanges(source)) {
+    if (range.name !== 'theme') continue
+    const mode = source.slice(range.preludeRange.start, range.preludeRange.end)
+      .split(/\s+/)
+      .find((part) => part && part !== 'inline' && part !== 'static')
+    if (mode) target.add(mode)
+  }
 }
 
 export type CompileCSSManifestOptions = CompileCSSFileOptions & {
@@ -225,7 +240,7 @@ function resolveCSSImportGraphFile(
   dependencies: string[],
   dependencySet: Set<string>,
   stack: string[],
-  options: ResolveCSSImportGraphOptions = {}
+  options: ResolveCSSImportGraphFileOptions = {}
 ): string {
   const absoluteFile = resolve(file)
   if (stack.includes(absoluteFile)) {
@@ -245,6 +260,7 @@ function resolveCSSImportGraphFile(
     options.onReference?.(reference, absoluteFile)
   }
   const sourceWithoutReferences = removeCSSReferenceStatements(source, absoluteFile)
+  options.onSource?.(sourceWithoutReferences, Boolean(options.inPackage))
   const imports = findCSSImportStatements(sourceWithoutReferences, absoluteFile)
   if (!imports.length) return sourceWithoutReferences
 
@@ -256,7 +272,7 @@ function resolveCSSImportGraphFile(
       : undefined
     if (packageFile || isExpandableImportSource(importSource)) {
       const importedFile = packageFile || resolve(dirname(absoluteFile), importSource)
-      return resolveCSSImportGraphFile(importedFile, readCSSImport, dependencies, dependencySet, [...stack, absoluteFile], options)
+      return resolveCSSImportGraphFile(importedFile, readCSSImport, dependencies, dependencySet, [...stack, absoluteFile], packageFile ? { ...options, inPackage: true } : options)
     }
     preservedImports.push(importStatement.statement.trim())
     return ''
@@ -282,17 +298,24 @@ function resolveCSSImportGraphWithReader(
 ): ResolvedCSSImportGraph {
   const dependencies: string[] = []
   const references: CSSReferenceStatement[] = []
+  const packageModes = new Set<string>()
+  const ownModes = new Set<string>()
   const source = resolveCSSImportGraphFile(file, readCSSImport, dependencies, new Set(), [], {
     ...options,
     onReference(reference, fromFile) {
       references.push(reference)
       options.onReference?.(reference, fromFile)
+    },
+    onSource(fileSource, inPackage) {
+      if (fileSource.includes('@theme')) collectThemeModeNames(fileSource, inPackage ? packageModes : ownModes)
     }
   })
+  const implicitModes = [...packageModes].filter((mode) => !ownModes.has(mode))
   return {
     source,
     dependencies,
-    ...(references.length ? { references } : {})
+    ...(references.length ? { references } : {}),
+    ...(implicitModes.length ? { implicitModes } : {})
   }
 }
 
@@ -359,6 +382,7 @@ function compileCSSImportGraph(
     ...compileOptions,
     from: file
   })
+  if (graph.implicitModes) result.manifestInput.implicitModes = graph.implicitModes
   return {
     ...result,
     dependencies: graph.dependencies,

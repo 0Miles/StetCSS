@@ -244,6 +244,10 @@ function normalizeDirectiveInput(input: CSSDirectiveManifestInputSource = {}, op
   for (const variable of source.variables || []) {
     addVariable(normalized, variable, resolveVariableName)
   }
+  const implicitModes = source.implicitModes
+  if (implicitModes?.length && normalized.modes?.some((mode) => !implicitModes.includes(mode))) {
+    normalized.modes = normalized.modes.filter((mode) => !implicitModes.includes(mode))
+  }
   return normalized
 }
 
@@ -307,6 +311,11 @@ function warnUnsupportedMediaModes(input: CSSDirectiveManifestInput, options: Lo
   const modeList = [...customModes].map((mode) => `"${mode}"`).join(', ')
   const subject = customModes.size === 1 ? 'mode' : 'modes'
   warn(warnings, options, `Custom ${subject} ${modeList} will not work with mode-trigger: media. Browsers only support light and dark prefers-color-scheme values; use mode-trigger: class or host for custom modes.`)
+}
+
+function assertDeclaredDefaultMode(input: CSSDirectiveManifestInput, css: MasterCSS) {
+  if (!isNamedDefaultMode(input.defaultMode) || css.modes.includes(input.defaultMode)) return
+  throw new UndeclaredModeError('default-mode', input.defaultMode, css.modes)
 }
 
 function warnMediaDefaultMode(input: CSSDirectiveManifestInput, css: MasterCSS, options: LowerCSSDirectivesOptions, warnings: string[]) {
@@ -1106,6 +1115,7 @@ export default function lowerCSSDirectives(input: CSSDirectiveManifestInputSourc
   timeCompilerDiagnostic(diagnostics, 'lower-warn-media-modes-ms', () => warnUnsupportedMediaModes(directiveInput, options, warnings))
 
   const css = timeCompilerDiagnostic(diagnostics, 'lower-create-directive-css-total-ms', () => createDirectiveCSS(directiveInput, options))
+  assertDeclaredDefaultMode(directiveInput, css)
   warnMediaDefaultMode(directiveInput, css, options, warnings)
   timeCompilerDiagnostic(diagnostics, 'lower-finalize-utility-definitions-ms', () => finalizeUtilityDefinitions(directiveInput, css, options))
   const initialRefreshManifest = timeCompilerDiagnostic(diagnostics, 'lower-initial-refresh-manifest-creation-ms', () => createMasterCSSManifest(directiveInput, {
