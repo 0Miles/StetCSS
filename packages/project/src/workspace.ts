@@ -2,7 +2,7 @@ import { existsSync, readFileSync, statSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join, resolve } from 'node:path'
 
-export interface ResolvedMasterCSSWorkspacePackage {
+export interface ResolvedStetCSSWorkspacePackage {
   name: string
   entry: string
   directory: string
@@ -10,17 +10,17 @@ export interface ResolvedMasterCSSWorkspacePackage {
   version?: string
 }
 
-export interface MasterCSSWorkspacePackageResolution {
+export interface StetCSSWorkspacePackageResolution {
   workspaceDir: string
-  css?: ResolvedMasterCSSWorkspacePackage
-  engine?: ResolvedMasterCSSWorkspacePackage
-  presetManifest?: ResolvedMasterCSSWorkspacePackage
-  utilityType?: ResolvedMasterCSSWorkspacePackage
-  languageServer?: ResolvedMasterCSSWorkspacePackage
-  errors: MasterCSSWorkspacePackageResolutionError[]
+  css?: ResolvedStetCSSWorkspacePackage
+  engine?: ResolvedStetCSSWorkspacePackage
+  presetManifest?: ResolvedStetCSSWorkspacePackage
+  utilityType?: ResolvedStetCSSWorkspacePackage
+  languageServer?: ResolvedStetCSSWorkspacePackage
+  errors: StetCSSWorkspacePackageResolutionError[]
 }
 
-export interface MasterCSSWorkspacePackageResolutionError {
+export interface StetCSSWorkspacePackageResolutionError {
   name: string
   message: string
 }
@@ -59,7 +59,7 @@ function findPackageDir(entry: string, packageName: string) {
 function resolvePackage(
   name: string,
   resolver: NodeJS.Require
-): ResolvedMasterCSSWorkspacePackage {
+): ResolvedStetCSSWorkspacePackage {
   const entry = resolver.resolve(name)
   const packageName = name.startsWith('@stet-css/preset/') ? '@stet-css/preset'
     : name.startsWith('@stet-css/schema/') ? '@stet-css/schema'
@@ -81,7 +81,7 @@ function resolvePackage(
 function tryResolvePackage(
   name: string,
   resolver: NodeJS.Require,
-  errors: MasterCSSWorkspacePackageResolutionError[]
+  errors: StetCSSWorkspacePackageResolutionError[]
 ) {
   try {
     return resolvePackage(name, resolver)
@@ -97,15 +97,15 @@ function createWorkspaceRequire(workspaceDir: string) {
   return createRequire(join(resolve(workspaceDir), 'package.json'))
 }
 
-function createPackageRequire(resolvedPackage: ResolvedMasterCSSWorkspacePackage) {
+function createPackageRequire(resolvedPackage: ResolvedStetCSSWorkspacePackage) {
   return createRequire(resolvedPackage.packageJSON || join(resolvedPackage.directory, 'package.json'))
 }
 
-export function resolveMasterCSSWorkspacePackages(workspaceDir = process.cwd()): MasterCSSWorkspacePackageResolution {
-  const errors: MasterCSSWorkspacePackageResolutionError[] = []
+export function resolveStetCSSWorkspacePackages(workspaceDir = process.cwd()): StetCSSWorkspacePackageResolution {
+  const errors: StetCSSWorkspacePackageResolutionError[] = []
   const workspaceRequire = createWorkspaceRequire(workspaceDir)
   const css = tryResolvePackage('@stet-css/core', workspaceRequire, errors)
-  const result: MasterCSSWorkspacePackageResolution = {
+  const result: StetCSSWorkspacePackageResolution = {
     workspaceDir: resolve(workspaceDir),
     errors,
     ...(css ? { css } : {})
@@ -134,7 +134,7 @@ function parseVersionMajor(version: string | undefined) {
   return match ? Number(match[1]) : undefined
 }
 
-export function isCompatibleMasterCSSPackageVersion(actualVersion: string | undefined, expectedVersion: string | undefined) {
+export function isCompatibleStetCSSPackageVersion(actualVersion: string | undefined, expectedVersion: string | undefined) {
   const actualMajor = parseVersionMajor(actualVersion)
   const expectedMajor = parseVersionMajor(expectedVersion)
   return actualMajor === undefined || expectedMajor === undefined || actualMajor === expectedMajor

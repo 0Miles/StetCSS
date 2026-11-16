@@ -8,14 +8,14 @@ import {
 import {
   createStetCSSManifestEntryPattern,
   findMasterAtRule,
-  hasStetCSSManifestEntrypoint as hasMasterCSSManifestEntrypointFallback,
+  hasStetCSSManifestEntrypoint as hasStetCSSManifestEntrypointFallback,
   isStetCSSModuleId,
   normalizeStetCSSModuleIds
 } from '@stet-css/lexer'
 import { stripResourceQuery } from '@stet-css/integration/manifest-module'
 import { isIgnoredProjectDirectory } from './sources'
 
-const MASTER_CSS_PACKAGE_NAME_PATTERN = /^@stet-css\/(?!eslint-|create$)/
+const STET_CSS_PACKAGE_NAME_PATTERN = /^@stet-css\/(?!eslint-|create$)/
 
 const PACKAGE_JSON_DEPENDENCY_FIELDS = [
   'dependencies',
@@ -59,7 +59,7 @@ export function hasStetCSSManifestEntrypoint(source: string) {
   try {
     return inspectCSS(source).hasStetEntry
   } catch {
-    return hasMasterCSSManifestEntrypointFallback(source)
+    return hasStetCSSManifestEntrypointFallback(source)
   }
 }
 
@@ -141,30 +141,30 @@ export function findCSSManifestEntryFileSync(projectDir = process.cwd()) {
   return findCSSManifestEntryFilesSync(projectDir)[0]
 }
 
-function isMasterCSSDependencyName(dependency: string) {
-  return MASTER_CSS_PACKAGE_NAME_PATTERN.test(dependency)
+function isStetCSSDependencyName(dependency: string) {
+  return STET_CSS_PACKAGE_NAME_PATTERN.test(dependency)
 }
 
-function hasMasterCSSDependency(packageJSON: PackageJSON) {
+function hasStetCSSDependency(packageJSON: PackageJSON) {
   return PACKAGE_JSON_DEPENDENCY_FIELDS.some((field) => {
     const dependencies = packageJSON[field]
     if (!dependencies || typeof dependencies !== 'object') return false
-    return Object.keys(dependencies).some(isMasterCSSDependencyName)
+    return Object.keys(dependencies).some(isStetCSSDependencyName)
   })
 }
 
-async function collectMasterCSSPackageWorkspaceDirectories(root: string, directory: string, directories: Set<string>) {
+async function collectStetCSSPackageWorkspaceDirectories(root: string, directory: string, directories: Set<string>) {
   try {
     for (const dirent of await readdir(directory, { withFileTypes: true })) {
       const file = join(directory, dirent.name)
       if (dirent.isDirectory()) {
         if (isIgnoredProjectDirectory(relative(root, file))) continue
-        await collectMasterCSSPackageWorkspaceDirectories(root, file, directories)
+        await collectStetCSSPackageWorkspaceDirectories(root, file, directories)
         continue
       }
       if (!dirent.isFile() || dirent.name !== 'package.json') continue
       try {
-        if (hasMasterCSSDependency(JSON.parse(await readFile(file, 'utf8')) as PackageJSON)) {
+        if (hasStetCSSDependency(JSON.parse(await readFile(file, 'utf8')) as PackageJSON)) {
           directories.add(dirname(file))
         }
       } catch {
@@ -176,18 +176,18 @@ async function collectMasterCSSPackageWorkspaceDirectories(root: string, directo
   }
 }
 
-function collectMasterCSSPackageWorkspaceDirectoriesSync(root: string, directory: string, directories: Set<string>) {
+function collectStetCSSPackageWorkspaceDirectoriesSync(root: string, directory: string, directories: Set<string>) {
   try {
     for (const dirent of readdirSync(directory, { withFileTypes: true })) {
       const file = join(directory, dirent.name)
       if (dirent.isDirectory()) {
         if (isIgnoredProjectDirectory(relative(root, file))) continue
-        collectMasterCSSPackageWorkspaceDirectoriesSync(root, file, directories)
+        collectStetCSSPackageWorkspaceDirectoriesSync(root, file, directories)
         continue
       }
       if (!dirent.isFile() || dirent.name !== 'package.json') continue
       try {
-        if (hasMasterCSSDependency(JSON.parse(readFileSync(file, 'utf8')) as PackageJSON)) {
+        if (hasStetCSSDependency(JSON.parse(readFileSync(file, 'utf8')) as PackageJSON)) {
           directories.add(dirname(file))
         }
       } catch {
@@ -225,11 +225,11 @@ function resolveWorkspaceDirectoryForEntry(cssFile: string, workspaceDirectories
   return closestDirectory || dirname(absoluteCSSFile)
 }
 
-export async function findMasterCSSWorkspaceDirectories(rootDir = process.cwd()) {
+export async function findStetCSSWorkspaceDirectories(rootDir = process.cwd()) {
   const root = resolve(rootDir)
   const directories = new Set<string>([root])
   const packageDirectories = new Set<string>()
-  await collectMasterCSSPackageWorkspaceDirectories(root, root, packageDirectories)
+  await collectStetCSSPackageWorkspaceDirectories(root, root, packageDirectories)
   for (const directory of packageDirectories) {
     directories.add(directory)
   }
@@ -239,11 +239,11 @@ export async function findMasterCSSWorkspaceDirectories(rootDir = process.cwd())
   return [...directories].sort()
 }
 
-export function findMasterCSSWorkspaceDirectoriesSync(rootDir = process.cwd()) {
+export function findStetCSSWorkspaceDirectoriesSync(rootDir = process.cwd()) {
   const root = resolve(rootDir)
   const directories = new Set<string>([root])
   const packageDirectories = new Set<string>()
-  collectMasterCSSPackageWorkspaceDirectoriesSync(root, root, packageDirectories)
+  collectStetCSSPackageWorkspaceDirectoriesSync(root, root, packageDirectories)
   for (const directory of packageDirectories) {
     directories.add(directory)
   }

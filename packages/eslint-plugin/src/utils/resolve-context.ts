@@ -1,7 +1,7 @@
 import type { RuleContext } from '@typescript-eslint/utils/ts-eslint'
 import settings, { Settings } from '../settings'
 import { StetCSS, createCSSWithNativeDeclarations, defaultManifest } from './master-css'
-import { findMasterCSSWorkspaceDirectoriesSync } from '@stet-css/project/entries'
+import { findStetCSSWorkspaceDirectoriesSync } from '@stet-css/project/entries'
 import { loadProjectManifestSync } from '@stet-css/project/manifest-sync'
 import path from 'node:path'
 import { existsSync } from 'node:fs'
@@ -20,7 +20,7 @@ function getContextFilename(context: RuleContext<any, any[]>) {
 function getWorkspaceDirectories(cwd: string) {
   let directories = workspaceDirectoriesByCwd.get(cwd)
   if (!directories) {
-    directories = findMasterCSSWorkspaceDirectoriesSync(cwd)
+    directories = findStetCSSWorkspaceDirectoriesSync(cwd)
     workspaceDirectoriesByCwd.set(cwd, directories)
   }
   return directories
