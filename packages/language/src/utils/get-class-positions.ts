@@ -2,8 +2,9 @@ import type { TextDocument } from 'vscode-languageserver-textdocument'
 import type { Position } from 'vscode-languageserver-protocol'
 import findMatchingPairs from './find-matching-brackets'
 import escapeRegexp from 'lodash.escaperegexp'
-import { parseSync, visitorKeys } from 'oxc-parser'
+import { visitorKeys } from 'oxc-parser'
 import { collectCSSDirectiveRanges, exceedsScriptNestingLimit, parseMasterCSSClassList } from '@stet-css/lexer'
+import { parseOxcOnSourceStack } from './oxc-stack'
 
 export interface ClassPosition {
   range: { start: number, end: number }
@@ -499,39 +500,28 @@ function createOxcClassPositions(
   settings: ClassPositionSettings
 ): CachedOxcClassPositions {
   const source = textDocument.getText()
-  // oxc-parser overflows its native stack on deep nesting, killing the host process.
-  if (exceedsScriptNestingLimit(source)) {
-    return {
-      version: textDocument.version,
-      languageId: textDocument.languageId,
-      parseFailed: true,
-      positions: []
-    }
+  const parseFailed: CachedOxcClassPositions = {
+    version: textDocument.version,
+    languageId: textDocument.languageId,
+    parseFailed: true,
+    positions: []
   }
+  // oxc-parser overflows its native stack on deep nesting, killing the host
+  // process: bracket nesting past the limit skips oxc, and the rest parses on
+  // a stack sized to the source.
+  if (exceedsScriptNestingLimit(source)) return parseFailed
 
-  let parseResult: ReturnType<typeof parseSync>
+  let parseResult: ReturnType<typeof parseOxcOnSourceStack>
   try {
-    parseResult = parseSync(getOxcSource(textDocument), source, {
+    parseResult = parseOxcOnSourceStack(getOxcSource(textDocument), source, {
       range: true,
       sourceType: 'unambiguous'
     })
   } catch {
-    return {
-      version: textDocument.version,
-      languageId: textDocument.languageId,
-      parseFailed: true,
-      positions: []
-    }
+    return parseFailed
   }
 
-  if (parseResult.errors.length) {
-    return {
-      version: textDocument.version,
-      languageId: textDocument.languageId,
-      parseFailed: true,
-      positions: []
-    }
-  }
+  if (!parseResult || parseResult.errors.length) return parseFailed
 
   const classPositions: ClassPosition[] = []
   const classAttributes = new Set(settings.classAttributes ?? [])
@@ -593,7 +583,13 @@ function createOxcClassPositions(
     }
   }
 
-  visit(parseResult.program)
+  try {
+    visit(parseResult.program)
+  } catch (error) {
+    // A tree nested deeper than the JS stack: fall back to the regex scan.
+    if (error instanceof RangeError) return parseFailed
+    throw error
+  }
   return {
     version: textDocument.version,
     languageId: textDocument.languageId,
