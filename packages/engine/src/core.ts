@@ -503,9 +503,9 @@ export default class MasterCSS {
     }
   }
 
-  private createGroupUtility(className: string, fixedClass?: string, mode?: string, branchIndex = 0): Utility | undefined {
+  private createGroupUtility(className: string, fixedClass?: string, mode?: string, branchIndex = 0, stateBranches?: Utility['stateBranches']): Utility | undefined {
     if (!this.isGroupClassName(className)) return
-    return this.createRuleWithDefinition(className, builtinGroupUtility, fixedClass, mode, branchIndex)
+    return this.createRuleWithDefinition(className, builtinGroupUtility, fixedClass, mode, branchIndex, stateBranches)
   }
 
   private createAllGroupUtilities(className: string, fixedClass?: string, mode?: string): Utility[] {
@@ -513,7 +513,7 @@ export default class MasterCSS {
     if (!utility?.valid) return []
     const utilities = [utility]
     for (let branchIndex = 1; branchIndex < utility.branchCount; branchIndex++) {
-      const branchUtility = this.createGroupUtility(className, fixedClass, mode, branchIndex)
+      const branchUtility = this.createGroupUtility(className, fixedClass, mode, branchIndex, utility.stateBranches)
       if (branchUtility?.valid) utilities.push(branchUtility)
     }
     return utilities
@@ -731,7 +731,7 @@ export default class MasterCSS {
 
     const utilities = [utility]
     for (let branchIndex = 1; branchIndex < utility.branchCount; branchIndex++) {
-      const branchUtility = this.createRuleWithDefinition(sourceClassName, registeredUtility, fixedClass, mode, branchIndex)
+      const branchUtility = this.createRuleWithDefinition(sourceClassName, registeredUtility, fixedClass, mode, branchIndex, utility.stateBranches)
       if (branchUtility?.valid && this.isNativeDeclarationUtility(branchUtility)) utilities.push(branchUtility)
     }
     return utilities
@@ -749,7 +749,7 @@ export default class MasterCSS {
 
     const utilities = [utility]
     for (let branchIndex = 1; branchIndex < utility.branchCount; branchIndex++) {
-      const branchUtility = this.createRuleWithDefinition(sourceClassName, registeredUtility, fixedClass, mode, branchIndex)
+      const branchUtility = this.createRuleWithDefinition(sourceClassName, registeredUtility, fixedClass, mode, branchIndex, utility.stateBranches)
       if (
         branchUtility?.valid
         && (!this.options.nativeDeclarationMatcher || this.isNativeDeclarationUtility(branchUtility))
@@ -846,7 +846,7 @@ export default class MasterCSS {
         if (utility && utility.valid) {
           rawUtilities.push(utility)
           for (let branchIndex = 1; branchIndex < utility.branchCount; branchIndex++) {
-            const branchUtility = this.createRuleWithDefinition(sourceClassName, registeredUtility, fixedClass, mode, branchIndex)
+            const branchUtility = this.createRuleWithDefinition(sourceClassName, registeredUtility, fixedClass, mode, branchIndex, utility.stateBranches)
             if (branchUtility?.valid) rawUtilities.push(branchUtility)
           }
         }
@@ -867,7 +867,7 @@ export default class MasterCSS {
         if (utility?.valid) {
           sourceUtilities.push(utility)
           for (let branchIndex = 1; branchIndex < utility.branchCount; branchIndex++) {
-            const branchUtility = this.createRuleWithDefinition(sourceClassName, registeredUtility, fixedClass, mode, branchIndex)
+            const branchUtility = this.createRuleWithDefinition(sourceClassName, registeredUtility, fixedClass, mode, branchIndex, utility.stateBranches)
             if (branchUtility?.valid) sourceUtilities.push(branchUtility)
           }
         } else if (utility?.invalidValueSyntax) {
@@ -898,7 +898,7 @@ export default class MasterCSS {
       if (utility && utility.valid) {
         utilities.push(utility)
         for (let branchIndex = 1; branchIndex < utility.branchCount; branchIndex++) {
-          const branchUtility = this.createRuleWithDefinition(sourceClassName, registeredUtility, fixedClass, mode, branchIndex)
+          const branchUtility = this.createRuleWithDefinition(sourceClassName, registeredUtility, fixedClass, mode, branchIndex, utility.stateBranches)
           if (branchUtility?.valid) utilities.push(branchUtility)
         }
       }
@@ -910,8 +910,8 @@ export default class MasterCSS {
       : this.createNativeDeclarationFallback(className, fixedClass, mode, sourceClassName)
   }
 
-  protected createRuleWithDefinition(className: string, registeredUtility: CompiledUtility, fixedClass?: string, mode?: string, branchIndex = 0): Utility | undefined {
-    const candidate = new Utility(className, this, registeredUtility, fixedClass, mode, branchIndex)
+  protected createRuleWithDefinition(className: string, registeredUtility: CompiledUtility, fixedClass?: string, mode?: string, branchIndex = 0, stateBranches?: Utility['stateBranches']): Utility | undefined {
+    const candidate = new Utility(className, this, registeredUtility, fixedClass, mode, branchIndex, stateBranches)
     if (
       candidate.valid
       && this.shouldValidateNativeDeclarationUtility(registeredUtility)

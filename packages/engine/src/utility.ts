@@ -22,7 +22,7 @@ import { createAlphaColorValue, createCSSVariableReference, normalizeEngineVaria
 import collectAnimationNames from './utils/collect-animation-names'
 import { isKnownPseudoClass } from './pseudo-classes'
 
-type UtilityStateBranch = {
+export type UtilityStateBranch = {
   selectorTemplate?: string
   selectorNodes?: SelectorNode[]
   conditions?: Partial<Record<MasterCSSManifestConditionIdentifier, ConditionNode[]>>
@@ -306,6 +306,11 @@ export class Utility {
   variableNames?: Set<string>
   readonly branchIndex?: number
   readonly branchCount: number = 1
+  /**
+   * Every branch of a class that expands to more than one, resolved once by its first rule and
+   * handed to the rest so each branch does not resolve them all again.
+   */
+  readonly stateBranches?: readonly UtilityStateBranch[]
   readonly selectorTemplate?: string
   variantBranchKey?: string
   invalidValueSyntax = false
@@ -315,7 +320,8 @@ export class Utility {
     public readonly registeredUtility: CompiledUtility,
     public fixedClass?: string,
     mode?: string,
-    branchIndex = 0
+    branchIndex = 0,
+    stateBranches?: readonly UtilityStateBranch[]
   ) {
     this.branchIndex = branchIndex
     this.mode = mode as string
@@ -376,8 +382,21 @@ export class Utility {
     }
 
     this.stateToken = stateToken
+    if (stateToken.includes('@')) {
+      for (const conditionToken of stateToken.split('@').slice(1)) {
+        if (!css.modes.includes(conditionToken)) this.conditionToken = (this.conditionToken || '') + '@' + conditionToken
+      }
+    }
 
-    const stateBranches = this.resolveStateBranches(stateToken)
+    if (!stateBranches) {
+      stateBranches = this.resolveStateBranches(stateToken)
+      if (stateBranches && stateBranches.length > 1) this.stateBranches = stateBranches
+    }
+    if (!stateBranches) {
+      this.branchCount = 0
+      this.valid = false
+      return
+    }
     this.branchCount = stateBranches.length
     const stateBranch = stateBranches[branchIndex]
     if (!stateBranch) {
@@ -387,6 +406,7 @@ export class Utility {
     if (stateBranch.mode) this.mode = stateBranch.mode
     if (stateBranch.selectorNodes?.length) this.selectorNodes = stateBranch.selectorNodes
     if (stateBranch.selectorTemplate) this.selectorTemplate = stateBranch.selectorTemplate
+    // Shared with the class's other rules: the steps below replace conditions instead of changing them.
     if (stateBranch.conditions) this.conditions = stateBranch.conditions
     if (stateBranch.valid === false) this.valid = false
     this.variantBranchKey = stateBranch.key
@@ -397,7 +417,7 @@ export class Utility {
         value: this.mode
       } as ConditionStringNode
       if (this.conditions?.media) {
-        this.conditions.media.push(atComp)
+        this.conditions = { ...this.conditions, media: [...this.conditions.media, atComp] }
       } else {
         this.conditions = {
           media: [atComp]
@@ -421,7 +441,7 @@ export class Utility {
       if (layerName === 'base' || layerName === 'defaults' || layerName === 'components' || layerName === 'utilities') {
         this.layerName = layerName
         this.explicitLayerName = layerName
-        this.conditions.layer = undefined
+        this.conditions = { ...this.conditions, layer: undefined }
       }
     }
     this.layer = css.getUtilityLayer(this.layerName)
@@ -695,12 +715,11 @@ export class Utility {
     return declarations as PropertiesHyphen
   }
 
-  /** The branches a state token selects; none, leaving the class invalid, past `MAX_STATE_BRANCHES`. */
-  resolveStateBranches(stateToken: string): UtilityStateBranch[] {
+  /** The branches a state token selects; `undefined`, leaving the class invalid, past `MAX_STATE_BRANCHES`. */
+  resolveStateBranches(stateToken: string): UtilityStateBranch[] | undefined {
     const [selectorToken = '', ...conditionTokens] = stateToken.split('@')
-    const selectorBranches = this.applySelectorTokenBranches([{ key: '' }], selectorToken)
-    if (!selectorBranches) return []
-    let branches = selectorBranches
+    let branches = this.applySelectorTokenBranches([{ key: '' }], selectorToken)
+    if (!branches) return
 
     for (const conditionToken of conditionTokens) {
       if (this.css.modes.includes(conditionToken)) {
@@ -712,11 +731,10 @@ export class Utility {
         continue
       }
 
-      this.conditionToken = (this.conditionToken || '') + '@' + conditionToken
       const variantToken = `@${conditionToken}` as MasterCSSManifestVariantToken
       const variantBranches = this.css.resolveVariant(variantToken)
       if (variantBranches) {
-        if (exceedsStateBranches(branches, variantBranches)) return []
+        if (exceedsStateBranches(branches, variantBranches)) return
         branches = branches.flatMap((branch) =>
           variantBranches.map((variantBranch, index) =>
             mergeBranch(branch, variantBranch, this.css, `${variantToken}#${index}`)
