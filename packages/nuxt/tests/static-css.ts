@@ -7,6 +7,20 @@ export function findStylesheetHrefs(html: string) {
 }
 
 /**
+ * Checks the static fixture's page rendered its server component and both layers' components
+ * without `_master-css/` references, and returns its stylesheet links.
+ */
+export function expectStaticFixtureHTML(html: string) {
+  expect(html).toContain('server component')
+  expect(html).toContain('layer component')
+  expect(html).toContain('extended base card')
+  expect(html).not.toContain('_master-css')
+  const hrefs = findStylesheetHrefs(html)
+  expect(hrefs.length).toBeGreaterThan(0)
+  return hrefs
+}
+
+/**
  * The static fixture's classes: the app's component, a server component, a `layers/`
  * component, a component of the layer it extends from outside the project root, and a
  * class only `server/` code names, beside `app/` and in no layer.
