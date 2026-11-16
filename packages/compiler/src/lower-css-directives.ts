@@ -303,7 +303,7 @@ function validateTokenConflicts(input: CSSDirectiveManifestInput, resolveVariabl
 /**
  * Reads the engine-resolved trigger and modes, so the default trigger and settings inherited from
  * the base manifest warn like an explicit `mode-trigger: media`. Runs after
- * `assertDeclaredDefaultMode`, which puts a named `default-mode` in `css.modes`.
+ * `assertDeclaredDefaultMode`, which throws unless a named `default-mode` is in `css.modes`.
  */
 function warnUnsupportedMediaModes(css: MasterCSS, options: LowerCSSDirectivesOptions, warnings: string[]) {
   if (css.settings.modeTrigger !== 'media') return
