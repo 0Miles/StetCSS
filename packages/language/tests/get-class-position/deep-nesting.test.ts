@@ -25,6 +25,17 @@ const shapes: [name: string, ext: keyof typeof languageIdOfExt, nest: (depth: nu
   ['nested template literals', 'tsx', (depth) => `x=${'`${'.repeat(depth)} clsx('block')${'}`'.repeat(depth)}`]
 ]
 
+// Chains written one level per line. The prescan ends a chain at each newline
+// (or never counts the construct), so these reach oxc at full depth.
+const lineShapes: [name: string, ext: keyof typeof languageIdOfExt, nest: (depth: number) => string][] = [
+  ['chained conditionals', 'js', (depth) => `x=${'a?b:\n'.repeat(depth)} clsx('block')`],
+  ['else-if chains', 'js', (depth) => `if(a){}${'else if(a){}\n'.repeat(depth)}else{x= clsx('block')}`],
+  ['assignment chains', 'js', (depth) => `x=${'a=\n'.repeat(depth)} clsx('block')`],
+  ['chained arrow functions', 'js', (depth) => `x=${'a=>\n'.repeat(depth)} clsx('block')`],
+  ['nested JSX elements', 'tsx', (depth) => `x=<a className="block">${'<a>\n'.repeat(depth - 1)}${'</a>'.repeat(depth)}`],
+  ['new chains', 'js', (depth) => `x=${'new\n'.repeat(depth)}A( clsx('block'))`]
+]
+
 function deepestAllowed(nest: (depth: number) => string) {
   let allowed = 1
   let rejected = 1 << 16
@@ -99,6 +110,26 @@ describe.concurrent('documents nested 20,000 deep', () => {
 describe.concurrent('documents at the deepest nesting oxc still parses', () => {
   test.each(shapes)('%s parse without crashing', async (_, ext, nest) => {
     const { code, signal, stdout, stderr } = await getClassTokensOnWorkerInChild(ext, nest(deepestAllowed(nest)))
+
+    expect({ code, signal }, stderr).toEqual({ code: 0, signal: null })
+    expect(JSON.parse(stdout)).toContain('block')
+  })
+})
+
+/**
+ * Guards: a chain written one level per line passes the prescan, which cannot
+ * tell a newline that ends a statement from one inside a formatted expression,
+ * and still overflows oxc-parser's native stack at 20,000 levels, killing the
+ * language server. oxc must parse these on a stack sized to the source, and
+ * the document's class positions must come back, from the regex scan when the
+ * tree is too deep to walk. Reverse check: setting `INLINE_LENGTH` in
+ * `oxc-stack.ts` to `Infinity` turns only these six cases red; dropping the
+ * `RangeError` fallback in `createOxcClassPositions` turns only the `new`
+ * chains case red.
+ */
+describe.concurrent('documents chained one level per line, 20,000 deep', () => {
+  test.each(lineShapes)('%s survive class position scanning and keep their classes', async (_, ext, nest) => {
+    const { code, signal, stdout, stderr } = await getClassTokensOnWorkerInChild(ext, nest(20_000))
 
     expect({ code, signal }, stderr).toEqual({ code: 0, signal: null })
     expect(JSON.parse(stdout)).toContain('block')
