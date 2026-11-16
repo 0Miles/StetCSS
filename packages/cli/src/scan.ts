@@ -28,6 +28,17 @@ export interface ScanOptions {
   cwd?: string
 }
 
+/**
+ * A stylesheet entry the CSS cannot be built from, such as one with a removed at-rule or a
+ * missing import. Its message names the file and the fix, so it is reported without a stack.
+ */
+export class StylesheetEntryError extends Error {
+  constructor(cause: unknown) {
+    super(cause instanceof Error ? cause.message : String(cause), { cause })
+    this.name = 'StylesheetEntryError'
+  }
+}
+
 async function registerManagedCSSEntries(scanner: CSSScanner, styleCSSSources: StyleCSSSources) {
   const [
     { registerStyleCSSSource },
@@ -38,9 +49,13 @@ async function registerManagedCSSEntries(scanner: CSSScanner, styleCSSSources: S
   ])
   styleCSSSources.clear()
   for (const entry of await findCSSManifestEntryFiles(scanner.cwd)) {
-    await registerStyleCSSSource(scanner, styleCSSSources, entry, fs.readFileSync(entry, 'utf8'), {
-      projectDir: scanner.cwd
-    })
+    try {
+      await registerStyleCSSSource(scanner, styleCSSSources, entry, fs.readFileSync(entry, 'utf8'), {
+        projectDir: scanner.cwd
+      })
+    } catch (error) {
+      throw new StylesheetEntryError(error)
+    }
   }
   scanner.resetDependencies = [...new Set(
     Array.from(styleCSSSources.values()).flatMap((source) => source.dependencies)
