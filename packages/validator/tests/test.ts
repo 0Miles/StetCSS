@@ -67,13 +67,13 @@ it.each(['flex:col', 'top:48', 'block:foo', 'fg:red:col', 'flex:col@sm'])('rejec
 })
 
 /**
- * Guards #81: a static build dropped a whole group when one declaration was
- * invalid, while runtime and native CSS drop only that declaration. The
- * scanner inserts exactly these rules, so the text is the build output.
- * `validate()` must still report the bad declaration for lint.
+ * Guards #81: scanner-served build CSS dropped a whole group when one
+ * declaration was invalid, while runtime and native CSS drop only that
+ * declaration. The scanner inserts exactly these rules, so the text is its
+ * build output.
  *
- * Reverse check: returning `[]` instead of the reduced group in
- * `generate-valid-rules.ts` reddens the reduced-group rows only.
+ * Reverse check: making `getValidGroupDeclarations` return `undefined` in
+ * `generate-valid-rules.ts` reddens the five rows of this test only.
  */
 it.each([
   ['{display:banana;bg:red}', '.\\{display\\:banana\\;bg\\:red\\}{background-color:var(--color-red)}'],
@@ -83,11 +83,42 @@ it.each([
   ['{text-align:asdf;bg:red}:hover@sm', '@media (width>=52.125rem){.\\{text-align\\:asdf\\;bg\\:red\\}\\:hover\\@sm:hover{background-color:var(--color-red)}}']
 ])('drops only the invalid declaration of group %s', (className, text) => {
   expect(generateValidRules(className).map((rule) => rule.text)).toEqual([text])
-  expect(validate(className).errors).toHaveLength(1)
 })
 
+/**
+ * Guards #81: keeping a group's valid declarations for the build must not
+ * hide the invalid one from lint and ESLint, which report through `validate()`.
+ *
+ * Reverse check: making `validate()` skip a rule's errors when it is a group
+ * reddens only this test.
+ */
+it('still reports the invalid declaration of a group', () => {
+  expect(validate('{display:banana;bg:red}').errors.map(({ message }) => message))
+    .toEqual(['Invalid value for `display` property'])
+})
+
+/**
+ * Guards #81: a group with no valid declaration left must emit nothing, not
+ * an empty `{}` rule, and stay out of the scanner's valid classes.
+ *
+ * Reverse check: returning the empty declaration object from
+ * `getValidGroupDeclarations` reddens only this test.
+ */
 it('drops a group whose declarations are all invalid', () => {
   expect(generateValidRules('{display:banana;top:48}')).toHaveLength(0)
+})
+
+/**
+ * Guards #81's scope: only groups drop single declarations; a utility's
+ * declarations all come from one value, so a bad value drops the class.
+ * `grid-cols:banana` emits a valid `display:grid` next to an invalid
+ * `grid-template-columns` and must not build as a bare `display:grid`.
+ *
+ * Reverse check: removing the group check from `getValidGroupDeclarations`
+ * reddens only this test.
+ */
+it('drops a non-group rule with one invalid declaration whole', () => {
+  expect(generateValidRules('grid-cols:banana')).toHaveLength(0)
 })
 
 it('fairly irregular classes can be ignored very well', () => {
