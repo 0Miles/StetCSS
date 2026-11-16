@@ -10,7 +10,7 @@ function createTempDir(prefix: string) {
 
 describe('@stet-css/diagnostics', () => {
   it('reports scanner state, per-file discoveries, and missing CSS diagnostics', async () => {
-    const cwd = createTempDir('master-css-diagnostics-inspect-')
+    const cwd = createTempDir('stet-css-diagnostics-inspect-')
     try {
       writeFileSync(join(cwd, 'index.html'), '<div class="block text-decoration:bad()"></div>')
       const report = await createStetCSSInspectionReport({
@@ -59,7 +59,7 @@ describe('@stet-css/diagnostics', () => {
    * this test red.
    */
   it('classifies missing CSS by the entry\'s @safelist and @blocklist', async () => {
-    const cwd = createTempDir('master-css-diagnostics-directives-')
+    const cwd = createTempDir('stet-css-diagnostics-directives-')
     try {
       writeFileSync(join(cwd, 'index.css'), `
         @import "@stet-css/core";
@@ -86,7 +86,7 @@ describe('@stet-css/diagnostics', () => {
   })
 
   it('includes generated CSS and stylesheet entry metadata', async () => {
-    const cwd = createTempDir('master-css-diagnostics-css-')
+    const cwd = createTempDir('stet-css-diagnostics-css-')
     try {
       writeFileSync(join(cwd, 'index.css'), '@import "@stet-css/core";')
       writeFileSync(join(cwd, 'index.html'), '<div class="block"></div>')
@@ -120,7 +120,7 @@ describe('@stet-css/diagnostics', () => {
    * this test red.
    */
   it('reports classes styled by an entry native rule as present', async () => {
-    const cwd = createTempDir('master-css-diagnostics-native-')
+    const cwd = createTempDir('stet-css-diagnostics-native-')
     try {
       writeFileSync(join(cwd, 'index.css'), [
         '@import "@stet-css/core";',
@@ -153,7 +153,7 @@ describe('@stet-css/diagnostics', () => {
    * turns only this test red.
    */
   it('reports the entry compiler warning for default-mode under the media trigger', async () => {
-    const cwd = createTempDir('master-css-diagnostics-entry-warning-')
+    const cwd = createTempDir('stet-css-diagnostics-entry-warning-')
     try {
       writeFileSync(join(cwd, 'index.css'), '@import "@stet-css/core";\n@settings { default-mode: dark; }')
       writeFileSync(join(cwd, 'index.html'), '<div class="block"></div>')
@@ -183,7 +183,7 @@ describe('@stet-css/diagnostics', () => {
    * this test red.
    */
   it('inspects the same source files the root command reads', async () => {
-    const cwd = createTempDir('master-css-diagnostics-sources-')
+    const cwd = createTempDir('stet-css-diagnostics-sources-')
     try {
       mkdirSync(join(cwd, 'src/legacy'), { recursive: true })
       mkdirSync(join(cwd, 'build'), { recursive: true })
@@ -208,12 +208,12 @@ describe('@stet-css/diagnostics', () => {
 
   /**
    * Prevents (#71): `stet-css inspect` warning that a class using the entry's own token, mode,
-   * utility or component "did not generate Master CSS rules" while the build emits a rule for it, because the
+   * utility or component "did not generate StetCSS rules" while the build emits a rule for it, because the
    * scanner judged classes by the preset's default manifest instead of the entry's.
    * Reverse check: building the scanner without the entry manifest turns only this test red.
    */
   it('judges classes by the tokens, modes, utilities and components the entry declares, as the build does', async () => {
-    const cwd = createTempDir('master-css-diagnostics-entry-manifest-')
+    const cwd = createTempDir('stet-css-diagnostics-entry-manifest-')
     try {
       writeFileSync(join(cwd, 'index.css'), [
         '@import "@stet-css/core";',
@@ -252,7 +252,7 @@ describe('@stet-css/diagnostics', () => {
    * (`isDiscoveredCSSManifestEntry`) turns this test red.
    */
   it('reports stylesheets still marked with @master entry as errors', async () => {
-    const cwd = createTempDir('master-css-diagnostics-master-entry-')
+    const cwd = createTempDir('stet-css-diagnostics-removed-at-rule-')
     try {
       writeFileSync(join(cwd, 'index.css'), '@master entry;\n.btn { color: red; }')
       writeFileSync(join(cwd, 'index.html'), '<div class="block"></div>')
@@ -276,7 +276,7 @@ describe('@stet-css/diagnostics', () => {
   })
 
   it('reports stylesheet entry errors without hiding scanner diagnostics', async () => {
-    const cwd = createTempDir('master-css-diagnostics-entry-error-')
+    const cwd = createTempDir('stet-css-diagnostics-entry-error-')
     try {
       writeFileSync(join(cwd, 'index.css'), '@import "@stet-css/core";\n@import "./missing.css";')
       writeFileSync(join(cwd, 'index.html'), '<div class="block"></div>')

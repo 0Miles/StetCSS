@@ -17,7 +17,7 @@ const rootDir = resolve(__dirname, './fixtures/spa/')
  * return in `src/module.ts` turns only this test red.
  */
 it('rejects unknown keys and names "adapters", also under nuxi prepare', async () => {
-  const buildDir = mkdtempSync(join(tmpdir(), 'master-css-nuxt-options-'))
+  const buildDir = mkdtempSync(join(tmpdir(), 'stet-css-nuxt-options-'))
   try {
     await expect(loadNuxt({
       cwd: rootDir,

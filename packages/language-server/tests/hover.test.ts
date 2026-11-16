@@ -72,7 +72,7 @@ withFixture('monorepo', async (context) => {
  * `src/core.ts` reddens the two invalid rows of this block only.
  */
 describe('bundled runtime', () => {
-  const cwd = mkdtempSync(join(tmpdir(), 'master-css-language-server-hover-'))
+  const cwd = mkdtempSync(join(tmpdir(), 'stet-css-language-server-hover-'))
   const { server, clientConnection } = connect()
   const rootUri = URI.file(cwd).toString()
   const hover = (className: string) =>

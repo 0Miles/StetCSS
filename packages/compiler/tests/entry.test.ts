@@ -133,7 +133,7 @@ test('resolves CSS-only preset package root to stylesheet entry', () => {
 })
 
 test('resolves package stylesheet entry before requiring the package JavaScript entry', () => {
-  const root = mkdtempSync(join(tmpdir(), 'master-css-package-entry-'))
+  const root = mkdtempSync(join(tmpdir(), 'stet-css-package-entry-'))
   try {
     const packageRoot = join(root, 'node_modules/@stet-css/core')
     const entryFile = join(root, 'src/app.css')

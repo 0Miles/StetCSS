@@ -232,7 +232,7 @@ test.concurrent('renders semantic tokens for grouped declarations, strings, unit
   expectToken(tokens, '(', 'operator', ['functionPunctuation'])
   expectToken(tokens, '10', 'number')
   expectToken(tokens, 'x', 'enumMember', ['unit'])
-  // Master CSS uses `|` as a compact separator in places where native CSS
+  // StetCSS uses `|` as a compact separator in places where native CSS
   // often uses whitespace or commas, so it keeps a distinct value role.
   expectToken(tokens, '|', 'operator', ['valueSeparator'])
   expectToken(tokens, '20', 'number')

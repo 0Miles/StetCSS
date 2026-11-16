@@ -69,7 +69,7 @@ describe('root command', () => {
     ['a removed @master at-rule', '@master entry;\n', '@master entry; was removed'],
     ['a missing import', '@import "@stet-css/core";\n@import "./missing.css";\n', 'CSS file not found']
   ])('prints only the message for a stylesheet with %s', (_, css, message) => {
-    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'master-css-cli-stylesheet-error-'))
+    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'stet-css-cli-stylesheet-error-'))
     try {
       fs.writeFileSync(resolve(cwd, 'index.css'), css)
       fs.writeFileSync(resolve(cwd, 'index.html'), '<div class="block"></div>')
@@ -93,7 +93,7 @@ describe('root command', () => {
 
 describe('inspect command', () => {
   it('prints scanner state and missing CSS diagnostics as json', () => {
-    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'master-css-cli-inspect-json-'))
+    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'stet-css-cli-inspect-json-'))
     try {
       fs.writeFileSync(resolve(cwd, 'index.html'), '<div class="block text-decoration:bad()"></div>')
       const error = runFailedCLI([
@@ -137,7 +137,7 @@ describe('inspect command', () => {
   })
 
   it('can include generated CSS and stylesheet entry metadata without failing', () => {
-    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'master-css-cli-inspect-css-'))
+    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'stet-css-cli-inspect-css-'))
     try {
       fs.writeFileSync(resolve(cwd, 'index.css'), '@import "@stet-css/core";')
       fs.writeFileSync(resolve(cwd, 'index.html'), '<div class="block"></div>')
@@ -166,7 +166,7 @@ describe('inspect command', () => {
   })
 
   it('reports stylesheet entry errors without hiding scanner diagnostics', () => {
-    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'master-css-cli-inspect-entry-error-'))
+    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'stet-css-cli-inspect-entry-error-'))
     try {
       fs.writeFileSync(resolve(cwd, 'index.css'), '@import "@stet-css/core";\n@import "./missing.css";')
       fs.writeFileSync(resolve(cwd, 'index.html'), '<div class="block"></div>')
@@ -194,7 +194,7 @@ describe('inspect command', () => {
 
 describe('lint command', () => {
   it('prints machine-readable diagnostics as json', () => {
-    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'master-css-cli-lint-json-'))
+    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'stet-css-cli-lint-json-'))
     try {
       fs.writeFileSync(resolve(cwd, 'index.html'), '<div class="fg:white m:2x text-decoration:bad()"></div>')
       const error = runFailedCLI(['lint', 'index.html'], { cwd })
@@ -216,7 +216,7 @@ describe('lint command', () => {
   })
 
   it('lints stdin buffers without requiring ESLint parser configuration', () => {
-    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'master-css-cli-lint-stdin-'))
+    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'stet-css-cli-lint-stdin-'))
     try {
       const output = runCLI([
         'lint',
@@ -239,7 +239,7 @@ describe('lint command', () => {
   })
 
   it('includes stylesheet compose diagnostics in the default source set', () => {
-    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'master-css-cli-lint-css-'))
+    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'stet-css-cli-lint-css-'))
     try {
       fs.writeFileSync(resolve(cwd, 'index.css'), '.btn { @compose text-align:center contain:content; }')
       const output = runCLI(['lint', '--exit-code', 'never'], { cwd })
@@ -261,7 +261,7 @@ describe('lint command', () => {
   })
 
   it('reports manifest preflight diagnostics', () => {
-    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'master-css-cli-lint-manifest-'))
+    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'stet-css-cli-lint-manifest-'))
     try {
       fs.writeFileSync(resolve(cwd, 'index.css'), '@import "@stet-css/core";\n\n.btn { @compose "block"; }')
       const error = runFailedCLI(['lint'], { cwd })
@@ -281,7 +281,7 @@ describe('lint command', () => {
   })
 
   it('fixes class-list diagnostics', () => {
-    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'master-css-cli-lint-fix-'))
+    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'stet-css-cli-lint-fix-'))
     try {
       const file = resolve(cwd, 'index.html')
       fs.writeFileSync(file, '<div class="fg:white m:2x"></div>')
@@ -293,7 +293,7 @@ describe('lint command', () => {
   })
 
   it('does not write structural directive fixes unless explicitly allowed', () => {
-    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'master-css-cli-lint-directive-fix-'))
+    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'stet-css-cli-lint-directive-fix-'))
     try {
       const file = resolve(cwd, 'index.css')
       fs.writeFileSync(file, '.btn { @compose contain:content; }')

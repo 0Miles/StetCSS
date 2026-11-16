@@ -44,7 +44,7 @@ test('validates against the internal manifest a first-party caller passes', asyn
 })
 
 test('ignores native CSS classes from unmanaged CSS files', async () => {
-  const cwd = mkdtempSync(join(tmpdir(), 'master-css-scanner-'))
+  const cwd = mkdtempSync(join(tmpdir(), 'stet-css-scanner-'))
   try {
     writeFileSync(join(cwd, 'theme.css'), `
       .native-card {

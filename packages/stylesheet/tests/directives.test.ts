@@ -10,7 +10,7 @@ import {
 } from '../src'
 
 function createFixture() {
-  const root = mkdtempSync(join(tmpdir(), 'master-css-stylesheet-directives-'))
+  const root = mkdtempSync(join(tmpdir(), 'stet-css-stylesheet-directives-'))
   mkdirSync(join(root, 'app/a'), { recursive: true })
   mkdirSync(join(root, 'app/b'), { recursive: true })
   return root

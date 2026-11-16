@@ -175,7 +175,7 @@ export function createRuntimeProjectManifest(manifest: RuntimeProjectManifestInp
   } satisfies StetCSSManifest
 }
 
-const RUNTIME_ASSET_BASE_URL = 'http://master-css-runtime.test'
+const RUNTIME_ASSET_BASE_URL = 'http://stet-css-runtime.test'
 export const RUNTIME_SCRIPT_URL = `${RUNTIME_ASSET_BASE_URL}/css-runtime@rc`
 /** Serves the built CDN bundle (`dist/global.min.js`), which embeds its default manifest. */
 export async function routeRuntimeAssets(page: Page) {

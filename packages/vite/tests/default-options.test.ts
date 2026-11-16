@@ -11,7 +11,7 @@ beforeAll(async () => {
   await Promise.all(Object.entries(builds).map(async ([label, plugins]) => {
     outputs[label] = await buildProject({
       plugins: [plugins()],
-      prefix: 'master-css-vite-default-options-',
+      prefix: 'stet-css-vite-default-options-',
       html: [
         '<!DOCTYPE html>',
         '<html lang="en">',

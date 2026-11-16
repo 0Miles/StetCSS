@@ -4,7 +4,7 @@ import stylesheetParser from '../src/stylesheet-parser'
 
 const cssParser = {
     meta: {
-        name: 'master-css-test-css-parser',
+        name: 'stet-css-test-css-parser',
         version: '1.0.0'
     },
     parseForESLint(code: string) {

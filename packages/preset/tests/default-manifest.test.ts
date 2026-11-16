@@ -643,7 +643,7 @@ describe('@stet-css/preset defaultManifest', () => {
     }
   })
 
-  it('prunes pure native coverage and keeps Master CSS native DX utilities', () => {
+  it('prunes pure native coverage and keeps StetCSS native DX utilities', () => {
     const css = createTestCSS(defaultManifest)
     const nativeCSS = createTestCSS(defaultManifest, {
       nativeDeclarationMatcher: ({ property }) => property === 'perspective-origin'

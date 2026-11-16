@@ -28,7 +28,7 @@ test.concurrent('finds top-level CSS imports without splitting quoted semicolons
  * Reverse check: matching `@master entry;` in `createStetCSSManifestEntryPattern` again turns
  * only this test red.
  */
-test.concurrent('matches only the @stet-css/core import as a Master CSS manifest entrypoint', () => {
+test.concurrent('matches only the @stet-css/core import as a StetCSS manifest entrypoint', () => {
   const pattern = createStetCSSManifestEntryPattern()
 
   expect(pattern.test('@import "@stet-css/core";')).toBe(true)

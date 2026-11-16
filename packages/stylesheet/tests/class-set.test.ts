@@ -15,7 +15,7 @@ import {
 const roots: string[] = []
 
 function createProject(files: Record<string, string>) {
-  const root = mkdtempSync(join(tmpdir(), 'master-css-stylesheet-class-set-'))
+  const root = mkdtempSync(join(tmpdir(), 'stet-css-stylesheet-class-set-'))
   roots.push(root)
   for (const [file, content] of Object.entries(files)) {
     mkdirSync(dirname(join(root, file)), { recursive: true })

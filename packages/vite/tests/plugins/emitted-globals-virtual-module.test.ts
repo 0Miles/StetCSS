@@ -13,7 +13,7 @@ function parseDefaultExport(code: string) {
 
 describe('EmittedGlobalsVirtualModulePlugin', () => {
   it('loads emittedGlobals counts from the managed CSS entry output', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'master-css-vite-emittedGlobals-'))
+    const root = mkdtempSync(join(tmpdir(), 'stet-css-vite-emittedGlobals-'))
     try {
       mkdirSync(join(root, 'app'), { recursive: true })
       const scanner = new CSSScanner({}, root)

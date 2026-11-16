@@ -5,7 +5,7 @@ import path from 'node:path'
 import LocalComposePlugin from '../../src/plugins/local-compose'
 
 function createFixture() {
-  const root = mkdtempSync(path.join(tmpdir(), 'master-css-vite-local-compose-'))
+  const root = mkdtempSync(path.join(tmpdir(), 'stet-css-vite-local-compose-'))
   mkdirSync(path.join(root, 'src'), { recursive: true })
   writeFileSync(path.join(root, 'app.css'), `
     @import "@stet-css/core";
@@ -33,7 +33,7 @@ function createContext(root: string) {
 }
 
 describe('LocalComposePlugin', () => {
-  test('lowers @compose in CSS Modules without emitting a Master CSS slot', async () => {
+  test('lowers @compose in CSS Modules without emitting a StetCSS slot', async () => {
     const root = createFixture()
     try {
       const context = createContext(root)
@@ -86,7 +86,7 @@ describe('LocalComposePlugin', () => {
     }
   })
 
-  test('leaves ordinary CSS and Master entries to their existing pipelines', async () => {
+  test('leaves ordinary CSS and StetCSS entries to their existing pipelines', async () => {
     const root = createFixture()
     try {
       const context = createContext(root)

@@ -10,7 +10,7 @@ const cliFilepath = resolve(__dirname, '../../src/bin/index.ts')
 const tsxLoaderURL = pathToFileURL(createRequire(import.meta.url).resolve('tsx')).href
 
 it('basic extract', async () => {
-  const cwd = fs.mkdtempSync(join(os.tmpdir(), 'master-css-cli-extract-'))
+  const cwd = fs.mkdtempSync(join(os.tmpdir(), 'stet-css-cli-extract-'))
   try {
     fs.writeFileSync(join(cwd, 'a.html'), '<h1 class="bg:primary fg:primary">Hello World</h1>', { flag: 'w' })
     fs.writeFileSync(join(cwd, 'b.html'), '<h1 class="m:12x text-center font:sans font:heavy font:48px">Hello World</h1>', { flag: 'w' })
@@ -35,7 +35,7 @@ it('basic extract', async () => {
  * Reverse check: having the CLI pass its old default glob as `sources` turns only this test red.
  */
 it('writes the class set of the project files and the entry directives', async () => {
-  const cwd = fs.mkdtempSync(join(os.tmpdir(), 'master-css-cli-class-set-'))
+  const cwd = fs.mkdtempSync(join(os.tmpdir(), 'stet-css-cli-class-set-'))
   try {
     fs.mkdirSync(join(cwd, 'src/legacy'), { recursive: true })
     fs.mkdirSync(join(cwd, 'build'), { recursive: true })
@@ -62,7 +62,7 @@ it('writes the class set of the project files and the entry directives', async (
  * Reverse check: having the CLI ignore its source path arguments turns only this test red.
  */
 it('reads only the files named by source path arguments', async () => {
-  const cwd = fs.mkdtempSync(join(os.tmpdir(), 'master-css-cli-sources-'))
+  const cwd = fs.mkdtempSync(join(os.tmpdir(), 'stet-css-cli-sources-'))
   try {
     fs.writeFileSync(join(cwd, 'a.html'), '<h1 class="font:heavy">Hello</h1>')
     fs.writeFileSync(join(cwd, 'b.html'), '<h1 class="m:4x">Hello</h1>')
@@ -78,7 +78,7 @@ it('reads only the files named by source path arguments', async () => {
 })
 
 it('prints CSS without exporting', async () => {
-  const cwd = fs.mkdtempSync(join(os.tmpdir(), 'master-css-cli-no-export-'))
+  const cwd = fs.mkdtempSync(join(os.tmpdir(), 'stet-css-cli-no-export-'))
   try {
     fs.writeFileSync(join(cwd, 'index.html'), '<h1 class="text-center">Hello World</h1>', { flag: 'w' })
     const output = execFileSync(process.execPath, ['--import', tsxLoaderURL, cliFilepath, '--no-export'], {
@@ -108,7 +108,7 @@ function runCLI(cwd: string, args: string[] = []) {
  * Reverse check: making the CLI ignore its verbose level turns only this test red.
  */
 it('logs by its own -v level', async () => {
-  const cwd = fs.mkdtempSync(join(os.tmpdir(), 'master-css-cli-verbose-'))
+  const cwd = fs.mkdtempSync(join(os.tmpdir(), 'stet-css-cli-verbose-'))
   try {
     fs.writeFileSync(join(cwd, 'page.html'), '<h1 class="text-center">Hello World</h1>')
     const defaultLog = runCLI(cwd).stdout
@@ -130,7 +130,7 @@ it('logs by its own -v level', async () => {
  * Reverse check: logging to stdout under `--no-export` turns only this test red.
  */
 it('keeps stdout pure CSS with --no-export and logs to stderr', async () => {
-  const cwd = fs.mkdtempSync(join(os.tmpdir(), 'master-css-cli-no-export-log-'))
+  const cwd = fs.mkdtempSync(join(os.tmpdir(), 'stet-css-cli-no-export-log-'))
   try {
     fs.writeFileSync(join(cwd, 'page.html'), '<h1 class="text-center">Hello World</h1>')
     const { stdout, stderr } = runCLI(cwd, ['--no-export', '-v', '2'])

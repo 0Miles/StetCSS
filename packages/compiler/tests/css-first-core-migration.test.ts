@@ -578,7 +578,7 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     `, { baseManifest: defaultManifest })).toThrow('Managed dynamic utilities must use key:<...> syntax')
   })
 
-  test('does not consume @utility as a Master CSS directive', () => {
+  test('does not consume @utility as a StetCSS directive', () => {
     const result = compileCSS(`
       @utility text-<left|right> {
         text-align: --value();
