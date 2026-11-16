@@ -14,6 +14,12 @@ export interface StylesheetSourceScope {
   projectDir: string
   /** Glob patterns that replace the project's own source files as the base file set. */
   sources?: string[]
+  /**
+   * More project directories whose own source files join `projectDir`'s, each found by the
+   * same rules with itself as the root: a framework's layers or app directories outside
+   * `projectDir`. Unused when `sources` replaces the base file set.
+   */
+  extraProjectDirs?: string[]
   /** `@source` patterns: files added on top of the base file set. */
   include?: string[]
   /** `@source not` patterns: files removed from the result. */
@@ -126,6 +132,12 @@ export function resolveStylesheetIncludedFiles(scope: Pick<StylesheetSourceScope
   return withoutExcludedFiles(globIncludedFiles(toProjectPatterns(scope.include, projectDir), projectDir), projectDir, scope.exclude)
 }
 
+/** The project's own source files: those of `projectDir` and of every extra project directory. */
+async function findScopeProjectSourceFiles(scope: StylesheetSourceScope, projectDir: string) {
+  const projectDirs = [projectDir, ...(scope.extraProjectDirs || []).map((dir) => resolve(dir))]
+  return (await Promise.all(projectDirs.map((dir) => findProjectSourceFiles(dir)))).flat()
+}
+
 /**
  * Lists the files a scope reads classes from: the project's own source files (or the
  * `sources` patterns), plus `@source` files, minus `@source not` files and `ignorePaths`.
@@ -133,7 +145,7 @@ export function resolveStylesheetIncludedFiles(scope: Pick<StylesheetSourceScope
 export async function resolveStylesheetScopeFiles(scope: StylesheetSourceScope) {
   const projectDir = resolve(scope.projectDir)
   return withoutExcludedFiles([
-    ...(scope.sources ? globIncludedFiles(toProjectPatterns(scope.sources, projectDir), projectDir) : await findProjectSourceFiles(projectDir)),
+    ...(scope.sources ? globIncludedFiles(toProjectPatterns(scope.sources, projectDir), projectDir) : await findScopeProjectSourceFiles(scope, projectDir)),
     ...globIncludedFiles(toProjectPatterns(scope.include, projectDir), projectDir)
   ], projectDir, scope.exclude, scope.ignorePaths)
 }
@@ -151,6 +163,7 @@ export function isStylesheetScopeFile(file: string, scope: StylesheetSourceScope
   const isBaseFile = scope.sources
     ? isIncludedPath(relativePath, toProjectPatterns(scope.sources, projectDir))
     : isProjectSourceFile(absoluteFile, projectDir)
+      || Boolean(scope.extraProjectDirs?.some((dir) => isProjectSourceFile(absoluteFile, dir)))
   return isBaseFile || isIncludedPath(relativePath, toProjectPatterns(scope.include, projectDir))
 }
 
