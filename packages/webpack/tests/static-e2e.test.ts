@@ -194,7 +194,7 @@ describe('Webpack static CSS', () => {
    * all three tests here red, as each needs a class from a file no JS module holds.
    */
   it('ships utilities in the extracted CSS asset', async () => {
-    const MasterCSSPlugin = await importPlugin()
+    const StetCSSPlugin = await importPlugin()
     const { default: webpackModule } = await import('webpack')
     const root = createFixture('extract', {
       'src/index.js': 'import "./app.css"\ndocument.body.className = "block"\n',
@@ -209,7 +209,7 @@ describe('Webpack static CSS', () => {
         entry: './src/index.js',
         ...extractedCSSConfig,
         output: { path: join(root, 'dist'), filename: '[name].js', cssFilename: '[name].css' },
-        plugins: [new MasterCSSPlugin({}, root)]
+        plugins: [new StetCSSPlugin({}, root)]
       })
 
       const css = readOutput(join(root, 'dist'), '.css')
@@ -227,7 +227,7 @@ describe('Webpack static CSS', () => {
    * Reverse check: creating the scanner with `{}` in `src/plugin.ts` turns only this test red.
    */
   it('ships the classes custom adapters find', async () => {
-    const MasterCSSPlugin = await importPlugin()
+    const StetCSSPlugin = await importPlugin()
     const { default: webpackModule } = await import('webpack')
     const root = createFixture('adapters', {
       'src/index.js': 'import "./app.css"\n',
@@ -242,7 +242,7 @@ describe('Webpack static CSS', () => {
         entry: './src/index.js',
         ...extractedCSSConfig,
         output: { path: join(root, 'dist'), filename: '[name].js', cssFilename: '[name].css' },
-        plugins: [new MasterCSSPlugin({
+        plugins: [new StetCSSPlugin({
           adapters: [{
             // Finds a class no built-in adapter can: the class is in the adapter, not in the file.
             name: 'probe',
@@ -268,7 +268,7 @@ describe('Webpack static CSS', () => {
    * generated CSS module built before the outside entry was reported.
    */
   it('keeps the directives of Sass entries and of entries outside the project root', async () => {
-    const MasterCSSPlugin = await importPlugin()
+    const StetCSSPlugin = await importPlugin()
     const { default: webpackModule } = await import('webpack')
     const workspace = createFixture('entries', {
       'app/package.json': '{ "private": true }',
@@ -290,7 +290,7 @@ describe('Webpack static CSS', () => {
         experiments: { css: true },
         module: { rules: [{ test: /\.(css|scss)$/, type: 'css', sideEffects: true }] },
         output: { path: join(root, 'dist'), filename: '[name].js', cssFilename: '[name].css' },
-        plugins: [new MasterCSSPlugin({}, root)]
+        plugins: [new StetCSSPlugin({}, root)]
       })
 
       const css = readOutput(join(root, 'dist'), '.css')
@@ -311,7 +311,7 @@ describe('Webpack static CSS', () => {
    * only this test red.
    */
   it('rebuilds once per source edit and never on its own output', async () => {
-    const MasterCSSPlugin = await importPlugin()
+    const StetCSSPlugin = await importPlugin()
     const { default: webpackModule } = await import('webpack')
     const root = createFixture('watch', {
       'src/index.js': 'import "./app.css"\n',
@@ -326,7 +326,7 @@ describe('Webpack static CSS', () => {
       entry: './src/index.js',
       ...extractedCSSConfig,
       output: { path: output, filename: '[name].js', cssFilename: '[name].css' },
-      plugins: [new MasterCSSPlugin({}, root)]
+      plugins: [new StetCSSPlugin({}, root)]
     })
     let builds = 0
     let failure: Error | undefined

@@ -3,13 +3,13 @@ import { toInlineManifestModule } from '@stet-css/integration/manifest-facade'
 import { EMPTY_EMITTED_GLOBALS_MODULE } from '@stet-css/integration/emitted-globals-module'
 import type { Compiler } from 'webpack'
 import VirtualModulesPlugin from 'webpack-virtual-modules'
-import type { MasterCSSWebpackContext, WebpackSubPlugin } from '../plugin'
+import type { StetCSSWebpackContext, WebpackSubPlugin } from '../plugin'
 
 interface WebpackPluginAdapter {
   apply(compiler: Compiler): void
 }
 
-export default function VirtualModuleRegistryPlugin(context: MasterCSSWebpackContext): WebpackSubPlugin {
+export default function VirtualModuleRegistryPlugin(context: StetCSSWebpackContext): WebpackSubPlugin {
   return {
     apply(compiler: Compiler) {
       const initialModules = {

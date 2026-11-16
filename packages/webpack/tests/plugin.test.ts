@@ -1,10 +1,10 @@
 /**
- * Unit tests for MasterCSSPlugin's webpack hook surface, driven through real tapable hooks
+ * Unit tests for StetCSSPlugin's webpack hook surface, driven through real tapable hooks
  * instead of a full webpack run; `static-e2e.test.ts` runs real builds.
  */
 import { describe, test, expect, vi } from 'vitest'
 import { SyncHook, AsyncSeriesHook } from 'tapable'
-import MasterCSSPlugin from '../src'
+import StetCSSPlugin from '../src'
 import { VIRTUAL_MANIFEST_ID, STET_CSS_MANIFEST_QUERY } from '@stet-css/integration/manifest-module'
 import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
 import { VIRTUAL_EMITTED_GLOBALS_ID } from '@stet-css/integration/emitted-globals-module'
@@ -114,7 +114,7 @@ function resolveBefore(normalModuleFactory: ReturnType<typeof makeNormalModuleFa
 // only want to drive the webpack hook surface. We keep the real
 // constructor + init() so `this.options` is populated correctly.
 function makePlugin(options: Record<string, unknown> = {}, cwd = process.cwd()) {
-  const plugin = new MasterCSSPlugin({
+  const plugin = new StetCSSPlugin({
     ...options,
   } as any, cwd)
   // webpack-virtual-modules pokes at compiler.webpack internals; stub
@@ -153,25 +153,25 @@ function makeRegisteredStyleSource(dependencies: string[]) {
   }
 }
 
-describe('MasterCSSPlugin', () => {
+describe('StetCSSPlugin', () => {
   test('exports the plugin as the default export', () => {
-    expect(MasterCSSPlugin.name).toBe('MasterCSSPlugin')
+    expect(StetCSSPlugin.name).toBe('StetCSSPlugin')
   })
 
   /**
    * Guards that the plugin takes only `adapters`: the second form, scanner options passed
-   * straight in (`new MasterCSSPlugin({ safelist })`), the nested `scanner` and a typo all
+   * straight in (`new StetCSSPlugin({ safelist })`), the nested `scanner` and a typo all
    * throw when the config loads instead of being ignored, as `examples/webpack`'s `sources`
    * once was.
    * Reverse check: dropping the `validatePluginOptions` call in `src/plugin.ts` turns only this
    * test red.
    */
   test('rejects scanner options, the nested scanner and unknown keys', () => {
-    expect(() => new MasterCSSPlugin({ safelist: ['block'] } as never))
+    expect(() => new StetCSSPlugin({ safelist: ['block'] } as never))
       .toThrow('@stet-css/webpack option "safelist" was removed; use @safelist in the CSS entry.')
-    expect(() => new MasterCSSPlugin({ scanner: { adapters: [] } } as never))
+    expect(() => new StetCSSPlugin({ scanner: { adapters: [] } } as never))
       .toThrow('@stet-css/webpack option "scanner" was removed; pass "adapters" directly.')
-    expect(() => new MasterCSSPlugin({ sources: ['./src'] } as never))
+    expect(() => new StetCSSPlugin({ sources: ['./src'] } as never))
       .toThrow('Unknown @stet-css/webpack option "sources"; the only option is "adapters".')
   })
 
@@ -417,7 +417,7 @@ describe('MasterCSSPlugin', () => {
   })
 
   test('resolves virtual:stet-css-manifest to a JS facade and external JSON asset', async () => {
-    const plugin = new MasterCSSPlugin()
+    const plugin = new StetCSSPlugin()
     const { compiler } = makeFakeCompiler()
     ;(compiler as any).webpack = { sources: { RawSource: function NoopSource(this: object) { /* stub */ } } }
     plugin.apply(compiler as any)
@@ -478,7 +478,7 @@ describe('MasterCSSPlugin', () => {
     expect((compiler.inputFileSystem._writeVirtualFile as any).mock.calls.at(-1)?.[2])
       .toMatch(/^export default \{"version":1/)
     expect((compiler.inputFileSystem._writeVirtualFile as any).mock.calls.at(-1)?.[2])
-      .not.toContain('loadMasterCSSManifestModule')
+      .not.toContain('loadStetCSSManifestModule')
     expect([...(plugin as any).manifestJSONAssets.values()]).toEqual([])
   })
 
@@ -527,7 +527,7 @@ describe('MasterCSSPlugin', () => {
   test('resolves virtual:stet-css-emitted-globals to a JS virtual module', async () => {
     const root = mkdtempSync(path.join(tmpdir(), 'master-css-webpack-emitted-globals-'))
     try {
-      const plugin = new MasterCSSPlugin({}, root)
+      const plugin = new StetCSSPlugin({}, root)
       const { compiler } = makeFakeCompiler({ context: root })
       ;(compiler as any).webpack = { sources: { RawSource: function NoopSource(this: object) { /* stub */ } } }
       plugin.apply(compiler as any)
@@ -848,7 +848,7 @@ describe('MasterCSSPlugin', () => {
         '}'
       ].join('\n'))
 
-      const { css } = await new MasterCSSPlugin({}, root).generateCSS()
+      const { css } = await new StetCSSPlugin({}, root).generateCSS()
 
       expect(css).toContain('.native-used')
       expect(css).toContain('.root-native')
@@ -864,7 +864,7 @@ describe('MasterCSSPlugin', () => {
     try {
       writeFileSync(path.join(root, 'app.css'), '@import "@stet-css/core";')
 
-      const { css } = await new MasterCSSPlugin({}, root).generateCSS()
+      const { css } = await new StetCSSPlugin({}, root).generateCSS()
 
       expect(css).toContain('@layer base')
       expect(css).toContain('text-rendering: geometricprecision')
@@ -883,7 +883,7 @@ describe('MasterCSSPlugin', () => {
         '  card { @compose bg:neutral-120; }',
         '}'
       ].join('\n'))
-      const plugin = new MasterCSSPlugin({}, root)
+      const plugin = new StetCSSPlugin({}, root)
 
       const failed = await plugin.generateCSS()
 
@@ -908,7 +908,7 @@ describe('MasterCSSPlugin', () => {
     const configPath = path.join(root, 'app.css')
     const plugin = makePlugin({}, root)
     ;(plugin as any).defaultManifestDependencies = [configPath]
-    const reset = vi.fn(async function (this: MasterCSSPlugin) {
+    const reset = vi.fn(async function (this: StetCSSPlugin) {
       this.emit('reset')
       return this
     })
@@ -939,7 +939,7 @@ describe('MasterCSSPlugin', () => {
       ;(plugin as any).styleCSSSources = new Map([
         [configPath, makeRegisteredStyleSource([configPath, tokenPath])]
       ])
-      const reset = vi.fn(async function (this: MasterCSSPlugin) {
+      const reset = vi.fn(async function (this: StetCSSPlugin) {
         this.emit('reset')
         return this
       })
@@ -1002,7 +1002,7 @@ describe('MasterCSSPlugin', () => {
     const root = path.resolve(__dirname, 'fixtures/manifest-virtual-module/css-only')
     const plugin = makePlugin({}, root)
     ;(plugin as any).defaultManifestDependencies = [path.join(root, 'app.css')]
-    const reset = vi.fn(async function (this: MasterCSSPlugin) {
+    const reset = vi.fn(async function (this: StetCSSPlugin) {
       this.emit('reset')
       return this
     })

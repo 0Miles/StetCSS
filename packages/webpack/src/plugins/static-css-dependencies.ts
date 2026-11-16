@@ -1,5 +1,5 @@
 import type { Compiler, Module } from 'webpack'
-import type { MasterCSSWebpackContext, WebpackSubPlugin } from '../plugin'
+import type { StetCSSWebpackContext, WebpackSubPlugin } from '../plugin'
 import { normalizePath } from '../utils/path'
 import { addFileDependency } from '../utils/file-dependencies'
 
@@ -9,7 +9,7 @@ import { addFileDependency } from '../utils/file-dependencies'
  * An entry the style loader reports late, after the generated CSS module was built, gets
  * that module rebuilt before the compilation seals.
  */
-export default function StaticCSSDependenciesPlugin(context: MasterCSSWebpackContext): WebpackSubPlugin {
+export default function StaticCSSDependenciesPlugin(context: StetCSSWebpackContext): WebpackSubPlugin {
   return {
     apply(compiler: Compiler) {
       const virtualCSSPath = normalizePath(context.virtualCSSImportModuleId)

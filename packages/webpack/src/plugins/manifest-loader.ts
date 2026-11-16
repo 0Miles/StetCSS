@@ -12,12 +12,12 @@ import {
 } from '@stet-css/integration/node'
 import { loadManifestJSON } from '@stet-css/project/manifest'
 import type { Compiler } from 'webpack'
-import type { MasterCSSWebpackContext, WebpackSubPlugin } from '../plugin'
+import type { StetCSSWebpackContext, WebpackSubPlugin } from '../plugin'
 import { isCSSManifestRequest } from '@stet-css/project/entries'
 import { collectStyleCSSDependencies } from '@stet-css/stylesheet'
 import { addFileDependency } from '../utils/file-dependencies'
 
-export default function ManifestLoaderPlugin(context: MasterCSSWebpackContext): WebpackSubPlugin {
+export default function ManifestLoaderPlugin(context: StetCSSWebpackContext): WebpackSubPlugin {
   return {
     apply(compiler: Compiler) {
       compiler.hooks.normalModuleFactory.tap(context.name, (normalModuleFactory) => {

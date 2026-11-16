@@ -1,10 +1,10 @@
 import { VIRTUAL_MANIFEST_ID } from '@stet-css/integration/manifest-module'
 import { VIRTUAL_EMITTED_GLOBALS_ID } from '@stet-css/integration/emitted-globals-module'
 import type { Compiler } from 'webpack'
-import type { MasterCSSWebpackContext, WebpackSubPlugin } from '../plugin'
+import type { StetCSSWebpackContext, WebpackSubPlugin } from '../plugin'
 import { addFileDependency } from '../utils/file-dependencies'
 
-export default function ManifestVirtualModulePlugin(context: MasterCSSWebpackContext): WebpackSubPlugin {
+export default function ManifestVirtualModulePlugin(context: StetCSSWebpackContext): WebpackSubPlugin {
   return {
     apply(compiler: Compiler) {
       compiler.hooks.normalModuleFactory.tap(context.name, (normalModuleFactory) => {

@@ -25,7 +25,7 @@ interface TransformStyleSourceOptions {
   stetImport?: string
 }
 
-function hasMasterStyleManifestDirective(source: string) {
+function hasStetStyleManifestDirective(source: string) {
   return source.includes('@settings') || source.includes('@theme')
 }
 
@@ -56,7 +56,7 @@ export async function transformStyleSource(
   }
   if (isStetCSSPackageStyleFile(resourcePath, projectDir)) {
     const cleanSource = removeStetStyleDirectives(source).code
-    if (!hasMasterStyleManifestDirective(cleanSource)) {
+    if (!hasStetStyleManifestDirective(cleanSource)) {
       return {
         code: cleanSource,
         dependencies

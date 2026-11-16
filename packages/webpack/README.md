@@ -61,11 +61,11 @@ npm install @stet-css/webpack
 ## Usage
 
 ```js
-import MasterCSSPlugin from '@stet-css/webpack'
+import StetCSSPlugin from '@stet-css/webpack'
 
 export default {
   plugins: [
-    new MasterCSSPlugin()
+    new StetCSSPlugin()
   ]
 }
 ```
@@ -94,7 +94,7 @@ The plugin builds static CSS with no options: before each compilation it reads t
 ## Options
 
 ```js
-new MasterCSSPlugin({
+new StetCSSPlugin({
   adapters: [{
     name: 'markdown-attributes',
     test: /\.md$/,
@@ -110,6 +110,6 @@ new MasterCSSPlugin({
 | --- | --- | --- | --- |
 | `adapters` | `SourceAdapter[]` | `[]` | Custom source adapters. For each file the class set reads, the first adapter whose `test` matches extracts its classes, custom ones before the built-in ones. |
 
-`adapters` is the only option. Any other key throws and names `adapters`; a removed key such as `mode`, `injectRuntime` or `scanner` names its replacement, and class rules (`@safelist`, `@blocklist`, `@source`, `@source not`) go in the CSS entry. An adapter sees the files the class set reads: the project's source files and the entry's `@source` files. Scanner options passed straight to the plugin (`new MasterCSSPlugin({ safelist })`) throw the same way.
+`adapters` is the only option. Any other key throws and names `adapters`; a removed key such as `mode`, `injectRuntime` or `scanner` names its replacement, and class rules (`@safelist`, `@blocklist`, `@source`, `@source not`) go in the CSS entry. An adapter sees the files the class set reads: the project's source files and the entry's `@source` files. Scanner options passed straight to the plugin (`new StetCSSPlugin({ safelist })`) throw the same way.
 
 See the [Webpack installation guide](https://rc.css.master.co/guide/installation/webpack) for a complete project setup.

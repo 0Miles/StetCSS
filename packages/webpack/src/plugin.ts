@@ -40,7 +40,7 @@ import StyleEntryPlugin from './plugins/style-entry'
 import StaticCSSDependenciesPlugin from './plugins/static-css-dependencies'
 import type { PluginOptions } from './options'
 
-const NAME = 'MasterCSSPlugin'
+const NAME = 'StetCSSPlugin'
 const SEED_FILE_TIME = new Date('2000-01-01T00:00:00Z')
 let hostCount = 0
 
@@ -56,7 +56,7 @@ export interface WebpackSubPlugin {
   apply(compiler: Compiler): void
 }
 
-export interface MasterCSSWebpackContext {
+export interface StetCSSWebpackContext {
   name: string
   /** Lets the style loader report entries to this plugin instance. */
   hostId: string
@@ -96,7 +96,7 @@ export interface MasterCSSWebpackContext {
  * each compilation and is in the virtual CSS module from its first build, so `style-loader`
  * and CSS extraction both ship it.
  */
-export class MasterCSSPlugin {
+export class StetCSSPlugin {
 
   readonly scanner: CSSScanner
   readonly hostId = `${NAME}:${hostCount++}`
@@ -111,7 +111,7 @@ export class MasterCSSPlugin {
   loadedStyleEntries = new Set<string>()
   /** Serializes generations: the style loader can ask for one during a compilation. */
   generation: Promise<void> = Promise.resolve()
-  private context?: MasterCSSWebpackContext
+  private context?: StetCSSWebpackContext
   /** The last generation: written CSS, its dependencies and its error, if any. */
   staticCSS?: string
   staticCSSDependencies: string[] = []
@@ -351,13 +351,13 @@ export class MasterCSSPlugin {
     return toEmittedGlobalsModule(this.emittedGlobals)
   }
 
-  private createContext(compiler: Compiler): MasterCSSWebpackContext {
+  private createContext(compiler: Compiler): StetCSSWebpackContext {
     const compilerContext = compiler.context || this.cwd || process.cwd()
     const isRspack = Boolean((compiler.webpack as { rspackVersion?: string } | undefined)?.rspackVersion)
     this.development = compiler.options.mode === 'development'
     // Plugins apply before webpack fills option defaults, so `output.path` is read later.
     this.compiler = compiler
-    const context: MasterCSSWebpackContext = {
+    const context: StetCSSWebpackContext = {
       name: NAME,
       hostId: this.hostId,
       cwd: this.cwd,
@@ -417,7 +417,7 @@ export class MasterCSSPlugin {
     return context
   }
 
-  private createSubPlugins(context: MasterCSSWebpackContext): WebpackSubPlugin[] {
+  private createSubPlugins(context: StetCSSWebpackContext): WebpackSubPlugin[] {
     return [
       ScannerLifecyclePlugin(context),
       VirtualModuleRegistryPlugin(context),
