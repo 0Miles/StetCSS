@@ -59,13 +59,60 @@
 
 </div>
 
-## Installation
+## When to use the runtime
+
+The build integrations generate static CSS ahead of time, and production pages should use it. The runtime generates CSS in the browser instead. It has two entries:
+
+- **CDN**: a page with no build step loads it with one `<script>` tag. It knows only the default preset.
+- **Manual import**: a project with a build integration imports it itself, for classes the build cannot see, such as HTML a CMS returns at request time.
+
+## CDN
+
+```html
+<!DOCTYPE html>
+<html lang="en" hidden>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stet-css/preset@<version>/src/base.css">
+  <script src="https://cdn.jsdelivr.net/npm/@stet-css/runtime@<version>"></script>
+</head>
+<body>
+  <h1 class="italic m:12x fg:strong font:40px font:heavy">Hello World</h1>
+</body>
+</html>
+```
+
+Replace both `<version>` placeholders with the same release, such as `0.1.0`. unpkg serves the same files at `https://unpkg.com/@stet-css/preset@<version>/src/base.css` and `https://unpkg.com/@stet-css/runtime@<version>`. [`examples/cdn`](../../examples/cdn) has this page, pinned to `0.1.0` and with the `onerror` fallback described below.
+
+- Link `base.css` from `@stet-css/preset`. The `base.css` in `@stet-css/core` only imports the preset's file by package name, which a browser cannot resolve.
+- Put the `<link>` before the `<script>`: `base.css` declares the cascade layer order the runtime's rules rely on (see [Layer order](#layer-order)).
+- The script carries the default manifest, so it makes no other request. It starts in `<head>`, styles the classes of the page as the browser parses them, and registers the document runtime as `globalThis.masterCSSRuntime`.
+- Only the default preset works. The CDN runtime reads no options and no project CSS, so `@theme`, `@utilities`, `@components`, and the other directives of a CSS entry have no effect on it.
+- For production, generate static CSS with a build integration or the CLI. A CDN page downloads about 36 KB (gzip) of script before it can style anything, and generates every rule again on every visit.
+
+### `hidden` and startup failures
+
+`hidden` on `<html>` keeps the page blank until the runtime's first render, so visitors don't see it unstyled. It is optional. The runtime removes it after the first render. It also removes it when startup fails in a way it can see: `CSSRuntime.create()` or `observe()` throws, or a part of the CDN script throws while it loads.
+
+The runtime cannot remove `hidden` when it never runs:
+
+- **The script does not load**, because of a wrong URL, a network error, or a Content Security Policy that blocks the CDN. Reveal the page from the tag itself:
+
+  ```html
+  <script src="https://cdn.jsdelivr.net/npm/@stet-css/runtime@<version>" onerror="document.documentElement.hidden = false"></script>
+  ```
+
+- **JavaScript is turned off.** Nothing runs, so the page stays blank. Leave `hidden` out of pages that must stay readable without JavaScript, or use static CSS.
+- **Your own code fails before `CSSRuntime.create()`** (manual import only), for example a module your entry imports throws while it loads. Start the runtime from the first module your entry imports, or remove `hidden` in your own error handling.
+
+## Manual import
 
 ```bash
 npm install @stet-css/runtime
 ```
 
-Initialize the runtime with the project manifest and emitted global CSS state provided by an official integration:
+`@stet-css/vite` provides two virtual modules for the runtime: `virtual:master-css-manifest`, the manifest built from your CSS entry, and `virtual:master-css-emitted-globals`, the variables and keyframes that entry already emitted.
 
 ```js
 import CSSRuntime from '@stet-css/runtime'
@@ -75,17 +122,46 @@ import emittedGlobals from 'virtual:master-css-emitted-globals'
 CSSRuntime.create({ manifest, emittedGlobals }).observe()
 ```
 
-## CDN IIFE
+For their types, add `/// <reference types="@stet-css/integration/client" />` to a declaration file and install `@stet-css/integration`. Keep your CSS entry as it is (`@import '@stet-css/core';`) and link it in the HTML `<head>`, so it loads before the runtime starts.
 
-Use the CDN runtime when a page only needs the default preset and zero configuration:
+To style a shadow root, pass it as `root`, or decorate a custom element with `cssRuntime`, which starts a runtime for the element's shadow root when the element connects:
 
-```html
-<link rel="preload" as="style" href="https://cdn.master.co/css@rc/base.css">
-<link rel="stylesheet" href="https://cdn.master.co/css@rc/base.css">
-<script src="https://cdn.master.co/css-runtime@rc"></script>
+```ts
+import { LitElement } from 'lit'
+import { cssRuntime } from '@stet-css/runtime'
+import manifest from 'virtual:master-css-manifest'
+import emittedGlobals from 'virtual:master-css-emitted-globals'
+
+@cssRuntime({ manifest, emittedGlobals })
+class MyElement extends LitElement { /* … */ }
 ```
 
-The IIFE carries the default manifest inside the script, so it makes no other request and works from a package's short CDN URL. It starts as soon as it runs and registers the document runtime as `globalThis.masterCSSRuntime`. It does not read global options or custom manifests. Use ESM `CSSRuntime.create({ manifest, emittedGlobals }).observe()` for custom theme tokens, utilities, modes, or emitted globals.
+[`examples/lit`](../../examples/lit) uses both modules this way. A project without `@stet-css/vite` can pass the default preset's manifest instead, as [`examples/angular`](../../examples/angular) does; it then knows only the default preset, like the CDN:
+
+```ts
+import CSSRuntime, { type MasterCSSManifest } from '@stet-css/runtime'
+import defaultManifest from '@stet-css/preset/default-manifest.json'
+
+CSSRuntime.create({ manifest: defaultManifest as unknown as MasterCSSManifest }).observe()
+```
+
+Such a project loads `@stet-css/preset/base.css` itself, before the runtime starts.
+
+### Rules generated twice
+
+The build still emits static CSS for every class it finds in your sources. The runtime does not read that CSS: it generates a rule for every class on the page into its own `style#master-css` at the end of `<head>`. A class the build already saw therefore has the same rule twice. The page looks the same: both copies sit in the same cascade layer with the same selector and declarations, the order between layers comes from the `@layer` statement in `base.css` rather than from which sheet comes later, and your own CSS outside layers still outranks both. The cost is the extra rules in the CSSOM and the time spent generating them.
+
+### Layer order
+
+`base.css` starts with:
+
+```css
+@layer theme, base, defaults, components, utilities;
+```
+
+The runtime's sheet does not repeat this statement. Load `base.css`, or the CSS entry that includes it, before the runtime starts. Otherwise layers rank by where they first appear, and the layers `base.css` adds later outrank the ones the runtime created first, so a component class can override a utility.
+
+A shadow root does not see the page's CSS. There the runtime keeps its own layer blocks in this order.
 
 ## API
 
@@ -138,9 +214,3 @@ CSSRuntime.create({ manifest, emittedGlobals }).observe()
 ```
 
 `emittedGlobals` tells the runtime which variables and keyframes were already emitted by the project CSS entry, so future dynamic classes can reuse them without inserting duplicate global CSS.
-
-## Related docs
-
-- [General installation](https://rc.css.master.co/guide/installation)
-- [Using CDNs](https://rc.css.master.co/guide/installation/cdn)
-- [Runtime rendering](https://rc.css.master.co/guide/rendering-modes#runtime-rendering)
