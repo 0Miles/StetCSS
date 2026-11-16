@@ -16,9 +16,9 @@ export const VIRTUAL_MODULE_DIR = 'node_modules/.master-css'
 const VIRTUAL_MODULE_DIR_SEGMENTS = ['node_modules', '.master-css'] as const
 const VIRTUAL_MODULE_PACKAGE_JSON_SOURCE = '{\n    "type": "module"\n}\n'
 
-export function toHashedManifestAssetFileName(json: string, basename = 'master-css-manifest') {
+export function toHashedManifestAssetFileName(json: string) {
   const hash = createHash('sha256').update(json).digest('hex').slice(0, 8)
-  return `${basename}.${hash}.json`
+  return `master-css-manifest.${hash}.json`
 }
 
 export function toResolvedMasterCSSManifestId(file: string) {
