@@ -38,6 +38,8 @@ export type CSSImportGraphReader = (file: string, source?: string) => string
  */
 export function createCSSImportGraphReader(): CSSImportGraphReader {
   const sources = new Map<string, string>()
+  /** The text each file was last checked with, so repeated inclusions skip the `@master` scan. */
+  const checkedSources = new Map<string, string>()
   let inclusions = 0
   let bytes = 0
   return (file, source) => {
@@ -50,7 +52,10 @@ export function createCSSImportGraphReader(): CSSImportGraphReader {
       text = readCSSFile(file)
       sources.set(file, text)
     }
-    assertNoMasterAtRules(text, file, true)
+    if (checkedSources.get(file) !== text) {
+      assertNoMasterAtRules(text, file, true)
+      checkedSources.set(file, text)
+    }
     bytes += Buffer.byteLength(text)
     if (bytes > MAX_CSS_IMPORT_GRAPH_BYTES) {
       throw new Error(`CSS imports inline more than ${MAX_CSS_IMPORT_GRAPH_BYTES / MiB} MiB: ${file}`)
