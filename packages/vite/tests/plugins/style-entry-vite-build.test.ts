@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import masterCSS from '../../src/core'
+import stetCSS from '../../src/core'
 import { buildProject } from '../plugin-test-helper'
 
 function expectMasterBaseCSS(css: string) {
@@ -15,7 +15,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
     const { css } = await buildProject({
       appClass: 'block',
       plugins: [
-        masterCSS()
+        stetCSS()
       ],
       prefix: 'master-css-vite-import-order-',
       styleCSS: [
@@ -45,7 +45,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
     const { css } = await buildProject({
       appClass: 'block',
       plugins: [
-        masterCSS()
+        stetCSS()
       ],
       styleCSS: [
         '@import "@stet-css/core";',
@@ -67,7 +67,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
   test('lets Vite expand the explicit base.css subpath import', async () => {
     const { css } = await buildProject({
       plugins: [
-        masterCSS()
+        stetCSS()
       ],
       styleCSS: [
         '@import "@stet-css/core/base.css";',
@@ -92,7 +92,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
    */
   test('static SSR build emits rules for classes in server-only templates', async () => {
     const { css } = await buildProject({
-      plugins: [masterCSS()],
+      plugins: [stetCSS()],
       prefix: 'master-css-vite-ssr-template-',
       styleCSS: '@import "@stet-css/core";',
       build: {
@@ -125,7 +125,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
   test('static build without a stylesheet entry emits rules for the virtual CSS module', async () => {
     const { css } = await buildProject({
       appClass: 'block',
-      plugins: [masterCSS()],
+      plugins: [stetCSS()],
       prefix: 'master-css-vite-virtual-only-',
       mainTS: 'import "virtual:stet-utilities.css"\n'
     })
@@ -145,7 +145,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
   test('names the CSS asset after the generated CSS', async () => {
     const buildCSSFiles = async (appClass: string, nativeCSS = '') => (await buildProject({
       appClass,
-      plugins: [masterCSS()],
+      plugins: [stetCSS()],
       prefix: 'master-css-vite-asset-hash-',
       styleCSS: `@import "@stet-css/core";\n${nativeCSS}`
     })).cssFiles
@@ -175,7 +175,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
   test('renames every CSS asset when a lazily loaded stylesheet changes', async () => {
     const buildLazy = (color: string) => buildProject({
       appClass: 'block',
-      plugins: [masterCSS()],
+      plugins: [stetCSS()],
       prefix: 'master-css-vite-asset-hash-lazy-',
       styleCSS: '@import "@stet-css/core";\n.a { color: red; }\n',
       mainTS: 'import "./style.css"\nimport("./lazy")\n',

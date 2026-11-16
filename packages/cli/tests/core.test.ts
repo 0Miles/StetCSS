@@ -154,7 +154,7 @@ describe('inspect command', () => {
       expect(report.stylesheets.entries).toHaveLength(1)
       expect(report.stylesheets.entries[0]).toEqual(expect.objectContaining({
         filePath: fs.realpathSync(resolve(cwd, 'index.css')),
-        masterCSS: true
+        stetCSS: true
       }))
       expect(report.stylesheets.entries[0].dependencies).toContain(fs.realpathSync(resolve(cwd, 'index.css')))
       expect(report.css.included).toBe(true)

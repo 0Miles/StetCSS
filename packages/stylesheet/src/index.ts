@@ -7,7 +7,7 @@ import {
 } from '@stet-css/compiler'
 import {
   createCSSImportGraphReader,
-  isStetCSSPackageStyleFile as isMasterCSSCompilerPackageStyleFile,
+  isStetCSSPackageStyleFile as isStetCSSCompilerPackageStyleFile,
   resolveStetCSSPackageImportGraph,
   type CSSImportGraphReader
 } from '@stet-css/compiler'
@@ -21,7 +21,7 @@ import {
   createStetCSSManifestEntryPattern,
   hasStetCSSImport,
   hasStetCSSManifestEntrypoint,
-  isStetCSSModuleId as isMasterCSSManifestModuleId,
+  isStetCSSModuleId as isStetCSSManifestModuleId,
   normalizeStetCSSModuleIds,
   parseCSSImportSource
 } from '@stet-css/lexer'
@@ -131,7 +131,7 @@ export interface CreateExtractedCSSOptions extends CompileStyleCSSOptions, Style
   manifest?: StetCSSManifest
   includeGeneratedCSS?: boolean
   includeNativeCSS?: boolean
-  includeMasterBaseCSS?: boolean
+  includeStetBaseCSS?: boolean
 }
 
 export interface CreateExtractedCSSResult {
@@ -151,7 +151,7 @@ export interface ScannerState {
 
 export interface StyleCSSSource {
   source: string
-  masterCSS: boolean
+  stetCSS: boolean
   directives: StylesheetDirectives
   dependencies: string[]
   sourceDependencies: string[]
@@ -165,15 +165,15 @@ export interface ResolvedStyleCSSSource {
 }
 
 export interface ResolveStyleCSSImportGraphOptions {
-  expandMasterCSSPackage?: boolean
+  expandStetCSSPackage?: boolean
 }
 
 export interface CreateStyleCSSHostSourceOptions {
-  masterImport?: string
-  masterSource?: string
+  stetImport?: string
+  stetSource?: string
 }
 
-interface DefaultMasterCSSPackageArtifact {
+interface DefaultStetCSSPackageArtifact {
   manifest: StetCSSManifest
   nativeCSS: string
   dependencies: string[]
@@ -206,7 +206,7 @@ export function createStyleCSSImportPattern() {
   return createStetCSSManifestEntryPattern()
 }
 
-export function createMasterStyleCSSPattern() {
+export function createStetStyleCSSPattern() {
   return createStyleCSSImportPattern()
 }
 
@@ -288,7 +288,7 @@ function resolveStyleCSSImportGraphFile(
   for (const importStatement of imports) {
     output += source.slice(index, importStatement.start)
     const importSource = parseCSSImportSource(importStatement.statement)
-    const packageGraph = options.expandMasterCSSPackage !== false && importSource && isMasterCSSManifestModuleId(importSource)
+    const packageGraph = options.expandStetCSSPackage !== false && importSource && isStetCSSManifestModuleId(importSource)
       ? resolveStetCSSPackageImportGraph(projectDir)
       : undefined
     if (packageGraph && importSource) {
@@ -363,7 +363,7 @@ export function collectStyleCSSDependencies(
 
   try {
     const graph = resolveStyleCSSImportGraph(filename, resolvedSource, projectDir, {
-      expandMasterCSSPackage: false
+      expandStetCSSPackage: false
     })
     for (const dependency of graph.dependencies) {
       dependencies.add(cleanStyleRequest(dependency))
@@ -399,30 +399,30 @@ export function hasDefaultStyleCSSImport(source: string) {
   return hasStyleCSSImport(source)
 }
 
-export function hasMasterStyleEntrypoint(source: string) {
+export function hasStetStyleEntrypoint(source: string) {
   return hasStetCSSManifestEntrypoint(source)
 }
 
-export function resolveMasterStyleSource(
+export function resolveStetStyleSource(
   file: string,
   source: string,
   projectDir?: string
 ) {
   if (!isStyleCSSRequest(file)) return
-  const sourceHasMasterEntry = hasMasterStyleEntrypoint(source)
+  const sourceHasStetEntry = hasStetStyleEntrypoint(source)
   let unresolvedPackageSource: ResolvedStyleCSSSource
   try {
     unresolvedPackageSource = resolveStyleCSSImportGraph(file, source, projectDir, {
-      expandMasterCSSPackage: false
+      expandStetCSSPackage: false
     })
   } catch (error) {
     // The graph reader rejects removed `@master` at-rules in the file or anything it imports.
     // That error must not be handed back to the bundler with the file: `@master entry;` no
     // longer makes an entry, so nothing else would compile the file and report it.
-    if (!sourceHasMasterEntry && !isRemovedMasterAtRuleError(error)) return
+    if (!sourceHasStetEntry && !isRemovedMasterAtRuleError(error)) return
     throw error
   }
-  if (!isMasterStyleSource(unresolvedPackageSource.source)) return
+  if (!isStetStyleSource(unresolvedPackageSource.source)) return
   return resolveStyleCSSImportGraph(file, source, projectDir)
 }
 
@@ -431,14 +431,14 @@ function isRemovedMasterAtRuleError(error: unknown) {
 }
 
 export function isStetCSSModuleId(id: string) {
-  return isMasterCSSManifestModuleId(id)
+  return isStetCSSManifestModuleId(id)
 }
 
 export function isStetCSSPackageStyleFile(id: string, projectDir?: string) {
-  return isMasterCSSCompilerPackageStyleFile(id, projectDir)
+  return isStetCSSCompilerPackageStyleFile(id, projectDir)
 }
 
-export function removeMasterStyleDirectives(source: string) {
+export function removeStetStyleDirectives(source: string) {
   return removeStylesheetDirectiveStatements(source)
 }
 
@@ -454,22 +454,22 @@ export function hasLocalStyleDirectives(source: string) {
     .some((directive) => LOCAL_STYLE_LOWERED_DIRECTIVE_NAMES.has(directive.name) || LOCAL_STYLE_REJECTED_DIRECTIVE_NAMES.has(directive.name))
 }
 
-function isStyleCSSHostImport(importSource: string, masterImport: string) {
-  return importSource === masterImport || (masterImport === '@stet-css/core' && normalizeStyleCSSModuleIds().has(importSource))
+function isStyleCSSHostImport(importSource: string, stetImport: string) {
+  return importSource === stetImport || (stetImport === '@stet-css/core' && normalizeStyleCSSModuleIds().has(importSource))
 }
 
 export function createStyleCSSHostSource(source: string, options: CreateStyleCSSHostSourceOptions = {}) {
-  const masterImport = options.masterImport || '@stet-css/core'
-  const masterSource = options.masterSource
-  const hasMasterSource = Object.prototype.hasOwnProperty.call(options, 'masterSource')
-  const cleanSource = removeMasterStyleDirectives(source).code
+  const stetImport = options.stetImport || '@stet-css/core'
+  const stetSource = options.stetSource
+  const hasStetSource = Object.prototype.hasOwnProperty.call(options, 'stetSource')
+  const cleanSource = removeStetStyleDirectives(source).code
   const imports = findImportStatements(cleanSource)
   const preservedImports: string[] = []
   for (const importStatement of imports) {
     const importSource = parseCSSImportSource(importStatement.statement)
     if (!importSource) continue
     if (importSource === VIRTUAL_CSS_ID || normalizeStyleCSSModuleIds().has(importSource)) {
-      if (!hasMasterSource && isStyleCSSHostImport(importSource, masterImport)) {
+      if (!hasStetSource && isStyleCSSHostImport(importSource, stetImport)) {
         preservedImports.push(importStatement.statement.trim())
       }
       continue
@@ -478,20 +478,20 @@ export function createStyleCSSHostSource(source: string, options: CreateStyleCSS
       preservedImports.push(importStatement.statement.trim())
     }
   }
-  if (hasMasterSource) {
-    if (masterSource) {
-      preservedImports.push(masterSource)
+  if (hasStetSource) {
+    if (stetSource) {
+      preservedImports.push(stetSource)
     }
   } else if (!preservedImports.some((statement) => {
     const importSource = parseCSSImportSource(statement)
-    return importSource && isStyleCSSHostImport(importSource, masterImport)
+    return importSource && isStyleCSSHostImport(importSource, stetImport)
   })) {
-    preservedImports.unshift(`@import "${masterImport}";`)
+    preservedImports.unshift(`@import "${stetImport}";`)
   }
   return preservedImports.join('\n')
 }
 
-function canUseDefaultMasterCSSPackageArtifact(options: CompileStyleCSSOptions = {}) {
+function canUseDefaultStetCSSPackageArtifact(options: CompileStyleCSSOptions = {}) {
   return !options.baseManifest
     && !options.loadSass
     && !options.onWarning
@@ -520,8 +520,8 @@ function findDefaultPresetArtifactFiles(dependencies: string[]) {
   }
 }
 
-function readDefaultMasterCSSPackageArtifact(projectDir: string | undefined, options: CompileStyleCSSOptions = {}): DefaultMasterCSSPackageArtifact | undefined {
-  if (!canUseDefaultMasterCSSPackageArtifact(options)) return
+function readDefaultStetCSSPackageArtifact(projectDir: string | undefined, options: CompileStyleCSSOptions = {}): DefaultStetCSSPackageArtifact | undefined {
+  if (!canUseDefaultStetCSSPackageArtifact(options)) return
 
   const graph = resolveStetCSSPackageImportGraph(projectDir)
   const artifactFiles = findDefaultPresetArtifactFiles(graph.dependencies)
@@ -538,19 +538,19 @@ function readDefaultMasterCSSPackageArtifact(projectDir: string | undefined, opt
   }
 }
 
-function resolveMasterCSSPackageCompileSource(projectDir?: string) {
+function resolveStetCSSPackageCompileSource(projectDir?: string) {
   const graph = resolveStetCSSPackageImportGraph(projectDir)
   return {
-    source: removeMasterStyleDirectives(removeStyleCSSImports(graph.source).code).code,
+    source: removeStetStyleDirectives(removeStyleCSSImports(graph.source).code).code,
     dependencies: graph.dependencies
   }
 }
 
-export async function createMasterCSSPackageHostSource(
+export async function createStetCSSPackageHostSource(
   projectDir: string | undefined,
   options: CompileStyleCSSOptions = {}
 ) {
-  const defaultArtifact = readDefaultMasterCSSPackageArtifact(options.projectDir ?? projectDir, options)
+  const defaultArtifact = readDefaultStetCSSPackageArtifact(options.projectDir ?? projectDir, options)
   if (defaultArtifact) {
     const renderedCSS = renderCompiledManifestCSS({
       manifest: defaultArtifact.manifest,
@@ -562,7 +562,7 @@ export async function createMasterCSSPackageHostSource(
     }
   }
 
-  const graph = resolveMasterCSSPackageCompileSource(projectDir)
+  const graph = resolveStetCSSPackageCompileSource(projectDir)
   const result = await compileStyleCSS(graph.dependencies[0] || '@stet-css/core', graph.source, {
     ...options,
     preserveNativeCSS: true
@@ -578,8 +578,8 @@ export async function createMasterCSSPackageHostSource(
   }
 }
 
-export function isMasterStyleSource(source: string) {
-  return hasMasterStyleEntrypoint(source)
+export function isStetStyleSource(source: string) {
+  return hasStetStyleEntrypoint(source)
 }
 
 export async function preprocessStyleCSS(source: string, id: string, options: CompileStyleCSSOptions = {}) {
@@ -697,7 +697,7 @@ export async function createStyleEntryEmittedGlobals(
   for (const entry of [...new Set(entries)].sort()) {
     const filename = cleanStyleRequest(entry)
     const source = readFileSync(filename, 'utf-8')
-    const resolvedSource = resolveMasterStyleSource(filename, source, options.projectDir)
+    const resolvedSource = resolveStetStyleSource(filename, source, options.projectDir)
     if (!resolvedSource) continue
     for (const dependency of resolvedSource.dependencies) {
       dependencies.add(cleanStyleRequest(dependency))
@@ -841,7 +841,7 @@ export async function registerStyleCSSSource(
   const filename = cleanStyleRequest(id)
   const detectionSource = resolveStyleCSSImportGraph(filename, source, options.projectDir ?? scanner.cwd)
   const resolvedSource = resolveStyleCSSImportGraph(filename, source, options.projectDir ?? scanner.cwd, {
-    expandMasterCSSPackage: false
+    expandStetCSSPackage: false
   })
   // Sass passes a Sass entry's directives through untouched, so they are read from its
   // output; plain CSS comes back from `preprocessStyleCSS` as is.
@@ -855,14 +855,14 @@ export async function registerStyleCSSSource(
       directives: createStylesheetDirectives(),
       dependencies: []
     }
-  const masterCSS = hasStetCSSImport(resolvedSource.source)
+  const stetCSS = hasStetCSSImport(resolvedSource.source)
   const sourceWithoutImports = removeCSSImportStatements(resolvedSource.source)
-  const cleanSource = removeMasterStyleDirectives(sourceWithoutImports).code
-  const defaultArtifact = masterCSS
-    ? readDefaultMasterCSSPackageArtifact(options.projectDir ?? scanner.cwd, options)
+  const cleanSource = removeStetStyleDirectives(sourceWithoutImports).code
+  const defaultArtifact = stetCSS
+    ? readDefaultStetCSSPackageArtifact(options.projectDir ?? scanner.cwd, options)
     : undefined
-  const compileOptions = masterCSS && !options.baseManifest
-    ? { ...options, baseManifest: await resolveMasterCSSPackageManifest(options.projectDir ?? scanner.cwd, options, defaultArtifact) }
+  const compileOptions = stetCSS && !options.baseManifest
+    ? { ...options, baseManifest: await resolveStetCSSPackageManifest(options.projectDir ?? scanner.cwd, options, defaultArtifact) }
     : options
   const result = await compileStyleCSS(filename, cleanSource, compileOptions)
   const sourceDependencies = resolveStylesheetIncludedFiles({
@@ -880,7 +880,7 @@ export async function registerStyleCSSSource(
   ])]
   styleCSSSources.set(filename, {
     source: cleanSource,
-    masterCSS,
+    stetCSS,
     directives: collectedDirectives.directives,
     dependencies: result.dependencies || [],
     sourceDependencies
@@ -892,8 +892,8 @@ export interface CreateStyleCSSManifestOptions extends CompileStyleCSSOptions {
   styleCSSSources?: StyleCSSSources
 }
 
-function hasMasterCSSPackageSource(styleCSSSources?: StyleCSSSources) {
-  return Array.from(styleCSSSources?.values() || []).some((styleSource) => styleSource.masterCSS)
+function hasStetCSSPackageSource(styleCSSSources?: StyleCSSSources) {
+  return Array.from(styleCSSSources?.values() || []).some((styleSource) => styleSource.stetCSS)
 }
 
 /**
@@ -901,19 +901,19 @@ function hasMasterCSSPackageSource(styleCSSSources?: StyleCSSSources) {
  * without that import, so without it `@compose inline-flex` cannot see the package's
  * static utilities.
  */
-async function resolveMasterCSSPackageManifest(
+async function resolveStetCSSPackageManifest(
   projectDir: string | undefined,
   options: CompileStyleCSSOptions,
-  defaultArtifact = readDefaultMasterCSSPackageArtifact(projectDir, options)
+  defaultArtifact = readDefaultStetCSSPackageArtifact(projectDir, options)
 ) {
   if (defaultArtifact) return defaultArtifact.manifest
-  const graph = resolveMasterCSSPackageCompileSource(projectDir)
+  const graph = resolveStetCSSPackageCompileSource(projectDir)
   const { finalizedResult } = await compileStyleCSSResult(graph.dependencies[0] || '@stet-css/core', graph.source, options)
   return finalizedResult.manifest
 }
 
-async function compileMasterCSSPackage(projectDir: string | undefined, options: CompileStyleCSSOptions) {
-  const graph = resolveMasterCSSPackageCompileSource(projectDir)
+async function compileStetCSSPackage(projectDir: string | undefined, options: CompileStyleCSSOptions) {
+  const graph = resolveStetCSSPackageCompileSource(projectDir)
   const result = await compileStyleCSS(graph.dependencies[0] || '@stet-css/core', graph.source, options)
   return {
     ...result,
@@ -927,13 +927,13 @@ export async function createStyleCSSManifest(options: CreateStyleCSSManifestOpti
     ...compileOptions
   } = options
   const entries = Array.from(styleCSSSources || [])
-  const hasMasterCSS = hasMasterCSSPackageSource(styleCSSSources)
-  const defaultArtifact = hasMasterCSS
-    ? readDefaultMasterCSSPackageArtifact(compileOptions.projectDir, compileOptions)
+  const hasStetCSS = hasStetCSSPackageSource(styleCSSSources)
+  const defaultArtifact = hasStetCSS
+    ? readDefaultStetCSSPackageArtifact(compileOptions.projectDir, compileOptions)
     : undefined
   const styleResults = await Promise.all([
-    ...(hasMasterCSS && !defaultArtifact
-      ? [compileMasterCSSPackage(compileOptions.projectDir, compileOptions)]
+    ...(hasStetCSS && !defaultArtifact
+      ? [compileStetCSSPackage(compileOptions.projectDir, compileOptions)]
       : []),
     ...entries.map(([id, styleSource]) => compileStyleCSS(id, styleSource.source, compileOptions))
   ])
@@ -966,7 +966,7 @@ export async function createExtractedCSSResult(options: CreateExtractedCSSOption
     manifest: explicitPlan,
     includeGeneratedCSS = true,
     includeNativeCSS = true,
-    includeMasterBaseCSS = true,
+    includeStetBaseCSS = true,
     sources,
     extraProjectDirs,
     ignorePaths,
@@ -983,12 +983,12 @@ export async function createExtractedCSSResult(options: CreateExtractedCSSOption
   // One class set for every entry's generated rules; native CSS is kept as written.
   const classes = await collectStylesheetScopeClasses(createStylesheetSourceScope(sourceContext))
 
-  const hasMasterCSS = hasMasterCSSPackageSource(styleCSSSources)
-  const defaultArtifact = hasMasterCSS && !explicitPlan
-    ? readDefaultMasterCSSPackageArtifact(compileOptions.projectDir ?? scanner.cwd, compileOptions)
+  const hasStetCSS = hasStetCSSPackageSource(styleCSSSources)
+  const defaultArtifact = hasStetCSS && !explicitPlan
+    ? readDefaultStetCSSPackageArtifact(compileOptions.projectDir ?? scanner.cwd, compileOptions)
     : undefined
-  const masterCSSResult = hasMasterCSS && !defaultArtifact
-    ? await compileMasterCSSPackage(compileOptions.projectDir, compileOptions)
+  const stetCSSResult = hasStetCSS && !defaultArtifact
+    ? await compileStetCSSPackage(compileOptions.projectDir, compileOptions)
     : undefined
   let mergedPlan = defaultArtifact?.manifest ?? compileOptions.baseManifest ?? explicitPlan ?? scanner.css.manifest
   const finalizedStyleResults = new Map<CompileCSSResult, ReturnType<typeof createManifestFromCSSResult>>()
@@ -1001,22 +1001,22 @@ export async function createExtractedCSSResult(options: CreateExtractedCSSOption
     mergedPlan = finalizedResult.manifest
     finalizedStyleResults.set(result, finalizedResult)
   }
-  if (masterCSSResult) finalize(masterCSSResult)
+  if (stetCSSResult) finalize(stetCSSResult)
   // Entries that import the package resolve `@compose` against the package's manifest.
-  const stetCSSManifest = compileOptions.baseManifest ?? (hasMasterCSS ? mergedPlan : undefined)
+  const stetCSSManifest = compileOptions.baseManifest ?? (hasStetCSS ? mergedPlan : undefined)
   const entryStyleResults = await Promise.all(
     Array.from(styleCSSSources || [])
       .map(([id, styleSource]) => compileStyleCSS(id, styleSource.source, {
         ...compileOptions,
-        baseManifest: styleSource.masterCSS ? stetCSSManifest : compileOptions.baseManifest
+        baseManifest: styleSource.stetCSS ? stetCSSManifest : compileOptions.baseManifest
       }))
   )
   for (const result of entryStyleResults) finalize(result)
   const nativeCSS = [
-    ...(includeMasterBaseCSS
+    ...(includeStetBaseCSS
       ? [
         ...(defaultArtifact ? [defaultArtifact.nativeCSS] : []),
-        ...(masterCSSResult ? [getNativeCSS(finalizedStyleResults.get(masterCSSResult) || masterCSSResult)] : [])
+        ...(stetCSSResult ? [getNativeCSS(finalizedStyleResults.get(stetCSSResult) || stetCSSResult)] : [])
       ]
       : []),
     ...(includeNativeCSS

@@ -146,7 +146,7 @@ function runStyleCSSLoader(root: string, resourcePath: string, source: string) {
 function makeRegisteredStyleSource(dependencies: string[]) {
   return {
     source: '',
-    masterCSS: false,
+    stetCSS: false,
     directives: createStylesheetDirectives(),
     dependencies,
     sourceDependencies: []
@@ -213,7 +213,7 @@ describe('MasterCSSPlugin', () => {
 
       const result = await transformStyleSource(entryPath, readFileSync(entryPath, 'utf-8'), {
         projectDir: root,
-        masterImport: '../node_modules/.stet-css/stet-utilities.css'
+        stetImport: '../node_modules/.stet-css/stet-utilities.css'
       })
 
       expect(result.code).toBe('@import "../node_modules/.stet-css/stet-utilities.css";')
@@ -244,7 +244,7 @@ describe('MasterCSSPlugin', () => {
 
       const transformed = await transformStyleSource(entryPath, readFileSync(entryPath, 'utf-8'), {
         projectDir: root,
-        masterImport: '../node_modules/.stet-css/stet-utilities.css'
+        stetImport: '../node_modules/.stet-css/stet-utilities.css'
       })
       expect(transformed.code).toBe('@import "../node_modules/.stet-css/stet-utilities.css";')
 
@@ -282,7 +282,7 @@ describe('MasterCSSPlugin', () => {
 
       const result = await transformStyleSource(modulePath, '.button { @compose inline-flex brand; color: white; }', {
         projectDir: root,
-        masterImport: '../node_modules/.stet-css/stet-utilities.css'
+        stetImport: '../node_modules/.stet-css/stet-utilities.css'
       })
 
       expect(result.code).toContain('.button{')
@@ -310,7 +310,7 @@ describe('MasterCSSPlugin', () => {
 
       const result = await transformStyleSource(modulePath, '.home { @compose py:5xl; }', {
         projectDir: root,
-        masterImport: '../node_modules/.stet-css/stet-utilities.css'
+        stetImport: '../node_modules/.stet-css/stet-utilities.css'
       })
 
       expect(result.code).toContain('.home{padding-block:var(--spacing-5xl)}')
@@ -370,7 +370,7 @@ describe('MasterCSSPlugin', () => {
 
       const result = await transformStyleSource(modulePath, '@reference "./tokens.css"; .button { @compose brand; }', {
         projectDir: root,
-        masterImport: '../node_modules/.stet-css/stet-utilities.css'
+        stetImport: '../node_modules/.stet-css/stet-utilities.css'
       })
 
       expect(result.code).toContain('.button{padding:var(--spacing-card);animation:1s pop}')
@@ -393,7 +393,7 @@ describe('MasterCSSPlugin', () => {
       const source = '.button { color: red; }'
       const result = await transformStyleSource(modulePath, source, {
         projectDir: root,
-        masterImport: '../node_modules/.stet-css/stet-utilities.css'
+        stetImport: '../node_modules/.stet-css/stet-utilities.css'
       })
 
       expect(result.code).toBe(source)

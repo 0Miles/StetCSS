@@ -48,7 +48,7 @@ export interface MasterCSSSourceInspection {
 
 export interface MasterCSSStylesheetInspection {
   filePath: string
-  masterCSS: boolean
+  stetCSS: boolean
   dependencies: string[]
   sourceDependencies: string[]
   warnings: string[]
@@ -297,7 +297,7 @@ async function registerManagedCSSEntries(
       const styleSource = styleCSSSources.get(filePath)
       entries.push({
         filePath,
-        masterCSS: Boolean(styleSource?.masterCSS),
+        stetCSS: Boolean(styleSource?.stetCSS),
         dependencies: sortedValues(styleSource?.dependencies ?? []),
         sourceDependencies: sortedValues(styleSource?.sourceDependencies ?? []),
         warnings: result.warnings ?? [],
@@ -309,7 +309,7 @@ async function registerManagedCSSEntries(
       const message = error instanceof Error ? error.message : String(error)
       entries.push({
         filePath,
-        masterCSS: false,
+        stetCSS: false,
         dependencies: [],
         sourceDependencies: [],
         warnings: [],

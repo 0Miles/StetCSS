@@ -18,7 +18,7 @@ import {
   createExtractedCSSResult,
   isStylesheetSourceFile,
   registerStyleCSSSource,
-  resolveMasterStyleSource,
+  resolveStetStyleSource,
   resolveStylesheetSourceFiles,
   type StyleCSSSources,
   type StylesheetSourceContext
@@ -229,7 +229,7 @@ export class MasterCSSPlugin {
       }
       dependencies.add(entry)
       try {
-        if (this.loadedStyleEntries.has(entry) && !resolveMasterStyleSource(entry, source, this.cwd)) {
+        if (this.loadedStyleEntries.has(entry) && !resolveStetStyleSource(entry, source, this.cwd)) {
           this.loadedStyleEntries.delete(entry)
           continue
         }

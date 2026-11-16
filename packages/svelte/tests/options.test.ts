@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { build } from 'vite'
 import type { PluginOptions } from '@stet-css/vite'
 import { describe, expect, test } from 'vitest'
-import masterCSS from '../src/lib/vite.js'
+import stetCSS from '../src/lib/vite.js'
 
 const packageDir = dirname(dirname(fileURLToPath(import.meta.url)))
 
@@ -17,7 +17,7 @@ const probeAdapter: NonNullable<PluginOptions['adapters']>[number] = {
   }
 }
 
-describe('masterCSS options', () => {
+describe('stetCSS options', () => {
   /**
    * Guards that a config with a removed or misspelled key fails when Vite loads it and names
    * this package and the one allowed key, instead of building without what it asked for.
@@ -25,7 +25,7 @@ describe('masterCSS options', () => {
    * `src/core.ts` turns this test red.
    */
   test('rejects unknown keys and names "adapters"', () => {
-    expect(() => masterCSS({ adapter: [] } as never))
+    expect(() => stetCSS({ adapter: [] } as never))
       .toThrow('Unknown @stet-css/svelte option "adapter"; the only option is "adapters".')
   })
 
@@ -49,7 +49,7 @@ describe('masterCSS options', () => {
         root,
         configFile: false,
         logLevel: 'silent',
-        plugins: [masterCSS({ adapters: [probeAdapter] })]
+        plugins: [stetCSS({ adapters: [probeAdapter] })]
       })
 
       const assetsDir = join(root, 'dist/assets')

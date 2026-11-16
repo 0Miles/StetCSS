@@ -19,7 +19,7 @@ It accepts structural scanner state from callers and does not depend on `@stet-c
 ```ts
 import {
   isStyleCSSRequest,
-  resolveMasterStyleSource,
+  resolveStetStyleSource,
   transformLocalStyleCSS,
   registerStyleCSSSource,
   createStyleCSSManifest,

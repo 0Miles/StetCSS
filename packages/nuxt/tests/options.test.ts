@@ -13,7 +13,7 @@ const rootDir = resolve(__dirname, './fixtures/spa/')
  * as Nuxt installs the module, `nuxi prepare` (postinstall) included, and names the module
  * and the one allowed key, instead of building without what it asked for. The key comes
  * through `stetcss` in the Nuxt config, the module's config key.
- * Reverse check: dropping the `masterCSS(options, { name })` check before the `_prepare`
+ * Reverse check: dropping the `stetCSS(options, { name })` check before the `_prepare`
  * return in `src/module.ts` turns only this test red.
  */
 it('rejects unknown keys and names "adapters", also under nuxi prepare', async () => {

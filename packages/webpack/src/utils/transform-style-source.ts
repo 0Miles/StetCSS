@@ -5,8 +5,8 @@ import {
   hasLocalStyleDirectives,
   isStetCSSPackageStyleFile,
   isStyleCSSRequest,
-  removeMasterStyleDirectives,
-  resolveMasterStyleSource,
+  removeStetStyleDirectives,
+  resolveStetStyleSource,
   transformLocalStyleCSS
 } from '@stet-css/stylesheet'
 import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
@@ -22,7 +22,7 @@ interface TransformStyleSourceResult {
 
 interface TransformStyleSourceOptions {
   projectDir?: string
-  masterImport?: string
+  stetImport?: string
 }
 
 function hasMasterStyleManifestDirective(source: string) {
@@ -49,13 +49,13 @@ export async function transformStyleSource(
   source: string,
   options: TransformStyleSourceOptions = {}
 ): Promise<TransformStyleSourceResult> {
-  const { projectDir, masterImport = VIRTUAL_CSS_ID } = options
+  const { projectDir, stetImport = VIRTUAL_CSS_ID } = options
   const dependencies: string[] = []
   if (!isStyleCSSRequest(resourcePath)) {
     return { code: source, dependencies }
   }
   if (isStetCSSPackageStyleFile(resourcePath, projectDir)) {
-    const cleanSource = removeMasterStyleDirectives(source).code
+    const cleanSource = removeStetStyleDirectives(source).code
     if (!hasMasterStyleManifestDirective(cleanSource)) {
       return {
         code: cleanSource,
@@ -72,7 +72,7 @@ export async function transformStyleSource(
     }
   }
 
-  const resolvedSource = resolveMasterStyleSource(resourcePath, source, projectDir)
+  const resolvedSource = resolveStetStyleSource(resourcePath, source, projectDir)
   if (!resolvedSource) {
     if (hasLocalStyleDirectives(source)) {
       const entries = await findCSSManifestEntryFiles(projectDir)
@@ -102,7 +102,7 @@ export async function transformStyleSource(
   dependencies.push(...resolvedSource.dependencies)
   return {
     code: createStyleCSSHostSource(source, {
-      masterImport
+      stetImport
     }),
     dependencies,
     entry: true

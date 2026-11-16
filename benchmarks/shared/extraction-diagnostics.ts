@@ -21,7 +21,7 @@ import {
   createExtractedCSS,
   getNativeCSS,
   registerStyleCSSSource,
-  removeMasterStyleDirectives,
+  removeStetStyleDirectives,
   removeStyleCSSImports,
   type StyleCSSSource,
   type StyleCSSSources
@@ -119,7 +119,7 @@ const DEFAULT_PRESET_SOURCE_FILES = [
   'utilities.css'
 ]
 
-interface DefaultMasterCSSPackageArtifact {
+interface DefaultStetCSSPackageArtifact {
   manifest: StetCSSManifest
   nativeCSS: string
 }
@@ -284,12 +284,12 @@ async function createDiagnosticExtractedCSS(options: {
   recorder.setCount('latent-class-count', scanner.latentClasses.size)
   recorder.setCount('valid-class-count', scanner.validClasses.size)
 
-  const hasMasterCSS = hasMasterCSSPackageSource(styleCSSSources)
-  const defaultArtifact = hasMasterCSS
-    ? readDefaultMasterCSSPackageArtifact(projectDir, recorder)
+  const hasStetCSS = hasStetCSSPackageSource(styleCSSSources)
+  const defaultArtifact = hasStetCSS
+    ? readDefaultStetCSSPackageArtifact(projectDir, recorder)
     : undefined
-  const masterCSSResult = hasMasterCSS && !defaultArtifact
-    ? await compileMasterCSSPackage(projectDir, recorder)
+  const stetCSSResult = hasStetCSS && !defaultArtifact
+    ? await compileStetCSSPackage(projectDir, recorder)
     : undefined
 
   const entryStyleResults: CompileCSSResult[] = []
@@ -301,7 +301,7 @@ async function createDiagnosticExtractedCSS(options: {
   }
 
   const styleResults = [
-    ...(masterCSSResult ? [masterCSSResult] : []),
+    ...(stetCSSResult ? [stetCSSResult] : []),
     ...entryStyleResults
   ]
   let mergedManifest = defaultArtifact?.manifest ?? scanner.css.manifest
@@ -321,8 +321,8 @@ async function createDiagnosticExtractedCSS(options: {
     ...(defaultArtifact
       ? [defaultArtifact.nativeCSS]
       : []),
-    ...(masterCSSResult
-      ? [getNativeCSS(finalizedStyleResults.get(masterCSSResult) || masterCSSResult)]
+    ...(stetCSSResult
+      ? [getNativeCSS(finalizedStyleResults.get(stetCSSResult) || stetCSSResult)]
       : []),
     ...entryStyleResults
       .map((result) => finalizedStyleResults.get(result)?.css || result.nativeCSS)
@@ -350,9 +350,9 @@ async function createDiagnosticExtractedCSS(options: {
   })
 }
 
-async function compileMasterCSSPackage(projectDir: string, recorder: DiagnosticRecorder) {
+async function compileStetCSSPackage(projectDir: string, recorder: DiagnosticRecorder) {
   recorder.setCount('master-package-shortcut-fallback-count', 1)
-  const graph = recorder.timeSync('master-import-graph-resolution-ms', () => resolveMasterCSSPackageCompileSource(projectDir))
+  const graph = recorder.timeSync('master-import-graph-resolution-ms', () => resolveStetCSSPackageCompileSource(projectDir))
   const result = await recorder.time('master-package-css-compilation-ms', () => compileStyleCSS(graph.dependencies[0] || '@stet-css/core', graph.source, {
     projectDir
   }))
@@ -362,15 +362,15 @@ async function compileMasterCSSPackage(projectDir: string, recorder: DiagnosticR
   }
 }
 
-function resolveMasterCSSPackageCompileSource(projectDir: string) {
+function resolveStetCSSPackageCompileSource(projectDir: string) {
   const graph = resolveStetCSSPackageImportGraph(projectDir)
   return {
-    source: removeMasterStyleDirectives(removeStyleCSSImports(graph.source).code).code,
+    source: removeStetStyleDirectives(removeStyleCSSImports(graph.source).code).code,
     dependencies: graph.dependencies
   }
 }
 
-function readDefaultMasterCSSPackageArtifact(projectDir: string, recorder: DiagnosticRecorder): DefaultMasterCSSPackageArtifact | undefined {
+function readDefaultStetCSSPackageArtifact(projectDir: string, recorder: DiagnosticRecorder): DefaultStetCSSPackageArtifact | undefined {
   const graph = recorder.timeSync('master-import-graph-resolution-ms', () => resolveStetCSSPackageImportGraph(projectDir))
   const artifactFiles = findDefaultPresetArtifactFiles(graph.dependencies)
   if (!artifactFiles) {
@@ -548,8 +548,8 @@ function createEmittedGlobals(css: StylesheetCSS): Required<StetCSSEmittedGlobal
   return emittedGlobals
 }
 
-function hasMasterCSSPackageSource(styleCSSSources: StyleCSSSources) {
-  return Array.from(styleCSSSources.values()).some((styleSource) => styleSource.masterCSS)
+function hasStetCSSPackageSource(styleCSSSources: StyleCSSSources) {
+  return Array.from(styleCSSSources.values()).some((styleSource) => styleSource.stetCSS)
 }
 
 function hasCompiledStyleManifestInput(result: CompileCSSResult) {

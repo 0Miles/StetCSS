@@ -1,9 +1,9 @@
 import { beforeAll, describe, expect, test } from 'vitest'
-import masterCSS from '../src'
+import stetCSS from '../src'
 import { buildProject } from './plugin-test-helper'
 
 const builds = {
-  'masterCSS()': () => masterCSS()
+  'stetCSS()': () => stetCSS()
 }
 const outputs: Record<string, { css: string, html: string }> = {}
 

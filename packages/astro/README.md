@@ -62,16 +62,16 @@ npm install @stet-css/astro
 
 ```js
 import { defineConfig } from 'astro/config'
-import masterCSS from '@stet-css/astro'
+import stetCSS from '@stet-css/astro'
 
 export default defineConfig({
   integrations: [
-    masterCSS()
+    stetCSS()
   ]
 })
 ```
 
-`masterCSS()` builds static CSS. It reads classes from the project's files, `.astro` templates included, and writes their rules into the CSS that imports Master CSS. Nothing ships to the browser besides that CSS: no runtime script, no `<style id="stet-css">`. `astro dev` updates the CSS when a class changes.
+`stetCSS()` builds static CSS. It reads classes from the project's files, `.astro` templates included, and writes their rules into the CSS that imports Master CSS. Nothing ships to the browser besides that CSS: no runtime script, no `<style id="stet-css">`. `astro dev` updates the CSS when a class changes.
 
 Import Master CSS from a CSS file:
 
@@ -95,7 +95,7 @@ Do not write `@import '@stet-css/core'` inside an `.astro` `<style>` block, `is:
 The options are the `@stet-css/vite` plugin options.
 
 ```js
-masterCSS({
+stetCSS({
   adapters: [{
     name: 'markdown-attributes',
     test: /\.md$/,

@@ -46,7 +46,7 @@ export interface PluginContext {
  * @param options - Only `adapters`; a removed or unknown key throws.
  * @param host - Internal: set by first-party framework integrations only.
  */
-export default function masterCSS(options: PluginOptions = {}, host?: PluginHost): Plugin[] {
+export default function stetCSS(options: PluginOptions = {}, host?: PluginHost): Plugin[] {
   validatePluginOptions(options, host?.name ?? '@stet-css/vite')
   const context: PluginContext = { host }
   return [
