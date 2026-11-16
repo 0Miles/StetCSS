@@ -93,7 +93,7 @@ export function removeStylesheetDirectiveStatements(source: string) {
 }
 
 export function collectStylesheetDirectives(source: string, file?: string, cwd = process.cwd()): StylesheetDirectives {
-  const directives = collectStandaloneCSSDirectiveExtractionPolicy(source)
+  const directives = collectStandaloneCSSDirectiveExtractionPolicy(source, file)
   directives.include = directives.include.map((arg: string) => normalizeSourcePattern(arg, file, cwd))
   directives.exclude = directives.exclude.map((arg: string) => normalizeSourcePattern(arg, file, cwd))
   return directives
