@@ -74,7 +74,7 @@ bun run check -- --continue
   - 測什麼：用真的框架對 `tests/fixtures/` 跑建置或起 dev server，斷言輸出的 CSS 與檔案。
   - 例：
     - `packages/vite/tests/dev-hmr.test.ts`
-    - `packages/webpack/tests/runtime-e2e.test.ts`
+    - `packages/webpack/tests/static-e2e.test.ts`
     - `packages/nuxt/tests/static.test.ts`
     - `packages/next/tests/*-e2e.test.ts`：只在 `--mode e2e` 下跑，由 `bun run e2e` 觸發。
 - **瀏覽器**（Playwright Firefox，`packages/runtime/e2e/` 與 `packages/runtime/tests/issues/`）
