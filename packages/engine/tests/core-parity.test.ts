@@ -10,10 +10,10 @@ import {
   expectLayerText
 } from './helpers/css-tester'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import UtilityType from '@stet-css/schema/utility-type'
 
-const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
+const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
 
 describe.concurrent('default manifest utility parity', () => {
   test('generates representative background utilities', () => {

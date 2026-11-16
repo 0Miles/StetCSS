@@ -1,6 +1,6 @@
 import { CLASS_ATTRIBUTES, CLASS_DECLARATIONS, CLASS_FUNCTIONS } from './master-css'
 import type { ClassPositionSettings } from './utils/get-class-positions'
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 
 const languageSettings: LanguageSettings = {
   classAttributes: CLASS_ATTRIBUTES,
@@ -22,6 +22,6 @@ const languageSettings: LanguageSettings = {
 export default languageSettings
 
 export interface LanguageSettings extends ClassPositionSettings {
-  manifest?: MasterCSSManifest
+  manifest?: StetCSSManifest
   embeddedSyntaxHighlighting?: 'active' | 'always' | 'off'
 }

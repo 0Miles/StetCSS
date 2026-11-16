@@ -1,4 +1,4 @@
-import type { MasterCSSManifestConditionIdentifier } from '@stet-css/schema/manifest'
+import type { StetCSSManifestConditionIdentifier } from '@stet-css/schema/manifest'
 import type { ConditionNode } from './parse-condition'
 
 const AND: ConditionNode = { type: 'logical', value: 'and' }
@@ -25,7 +25,7 @@ function indexOfTypeOrName(flat: ConditionNode[], from = 0) {
 }
 
 /** A media query's `not` / `only`, which may precede its media type. */
-function hasModifierBeforeType(id: MasterCSSManifestConditionIdentifier, flat: ConditionNode[]) {
+function hasModifierBeforeType(id: StetCSSManifestConditionIdentifier, flat: ConditionNode[]) {
   return id === 'media' && (isLogical(flat[0], 'not') || isLogical(flat[0], 'only'))
 }
 
@@ -35,7 +35,7 @@ function hasModifierBeforeType(id: MasterCSSManifestConditionIdentifier, flat: C
  * anywhere but the lead (`(…) or print`) or the lead is not followed the way one query allows
  * (`print or screen`, `sidebar or (…)`), so nothing can join it.
  */
-function splitLead(id: MasterCSSManifestConditionIdentifier, nodes: ConditionNode[]) {
+function splitLead(id: StetCSSManifestConditionIdentifier, nodes: ConditionNode[]) {
   const flat = flattenUngrouped(nodes)
   if (id === 'supports') return { lead: [], rest: nodes, restFlat: flat }
   const leadEnd = hasModifierBeforeType(id, flat) && isMediaTypeOrName(flat[1]) ? 2 : isMediaTypeOrName(flat[0]) ? 1 : 0
@@ -52,7 +52,7 @@ function splitLead(id: MasterCSSManifestConditionIdentifier, nodes: ConditionNod
  * `sm&print` is `print and (…)`. `undefined` when no move makes it valid: a type or name in an
  * `or` list, negated, or more than one of them; a container name after a condition.
  */
-function leadFirst(id: MasterCSSManifestConditionIdentifier, nodes: ConditionNode[]) {
+function leadFirst(id: StetCSSManifestConditionIdentifier, nodes: ConditionNode[]) {
   if (id !== 'media' && id !== 'container') return nodes
   const flat = flattenUngrouped(nodes)
   const position = indexOfTypeOrName(flat)
@@ -84,7 +84,7 @@ function leadText(nodes: ConditionNode[]) {
  * condition it cannot move ahead of, or two container names that may name different containers.
  */
 export default function joinConditionNodes(
-  id: MasterCSSManifestConditionIdentifier,
+  id: StetCSSManifestConditionIdentifier,
   current: ConditionNode[] | undefined,
   next: ConditionNode[]
 ): ConditionNode[] | undefined {

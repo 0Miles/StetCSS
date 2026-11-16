@@ -9,7 +9,7 @@ import {
 import {
   stripResourceQuery
 } from '@stet-css/integration/manifest-module'
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import {
   type LoadManifestOptions,
   type LoadManifestResult,
@@ -19,7 +19,7 @@ import {
 import { findCSSManifestEntryFilesSync } from './entries'
 
 const require = createRequire(import.meta.url)
-const defaultManifest = require('@stet-css/preset/default-manifest.json') as MasterCSSManifest
+const defaultManifest = require('@stet-css/preset/default-manifest.json') as StetCSSManifest
 
 export type {
   LoadManifestOptions,

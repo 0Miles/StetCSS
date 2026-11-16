@@ -140,10 +140,10 @@ class MyElement extends LitElement { /* … */ }
 [`examples/lit`](../../examples/lit) uses both modules this way. A project without a build integration can pass the default preset's manifest instead, as [`examples/angular`](../../examples/angular) does; it then knows only the default preset, like the CDN:
 
 ```ts
-import CSSRuntime, { type MasterCSSManifest } from '@stet-css/runtime'
+import CSSRuntime, { type StetCSSManifest } from '@stet-css/runtime'
 import defaultManifest from '@stet-css/preset/default-manifest.json'
 
-CSSRuntime.create({ manifest: defaultManifest as unknown as MasterCSSManifest }).observe()
+CSSRuntime.create({ manifest: defaultManifest as unknown as StetCSSManifest }).observe()
 ```
 
 Such a project loads `@stet-css/core/base.css` itself, before the runtime starts.
@@ -196,7 +196,7 @@ cssRuntime.observe()
 | `deleteClassRules(...classNames)` | `void` | Synchronously deletes generated rules for class names. |
 | `flushRetainedClassRules()` | `number` | Synchronously removes retained mutation rules that are no longer active and returns the removed class count. |
 | `disconnect()` | `this \| undefined` | Cancels observation. |
-| `refresh(manifest?)` | `this` | Refreshes with a complete `MasterCSSManifest`. |
+| `refresh(manifest?)` | `this` | Refreshes with a complete `StetCSSManifest`. |
 | `reset()` | `this` | Clears rules and styles. |
 | `destroy()` | `this` | Removes this runtime from `CSSRuntime.instances`. |
 

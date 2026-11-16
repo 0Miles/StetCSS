@@ -3,11 +3,11 @@ import { builtinKeyAliases, builtinNativeValueNamespaces } from '@stet-css/engin
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 import UtilityType from '@stet-css/schema/utility-type'
 import type { ValueComponent, Variable } from '@stet-css/schema/css-syntax'
-import type { MasterCSSManifest, MasterCSSManifestConditionNode } from '@stet-css/schema/manifest'
+import type { StetCSSManifest, StetCSSManifestConditionNode } from '@stet-css/schema/manifest'
 import { getMdnPropertySyntax } from './utils/mdn-css-data'
 
 export type { CompiledUtility, ValueComponent, Variable }
-const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
+const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
 export { builtinKeyAliases, builtinNativeValueNamespaces, defaultManifest, MasterCSS, UtilityType }
 
 export function matchesLanguageServiceNativeDeclaration({ property }: { property: string }) {
@@ -24,7 +24,7 @@ export type LanguageRuleGenerator = (css: MasterCSS, className: string) => Gener
 export interface CSSLanguageRuntime {
   MasterCSS: typeof MasterCSS
   UtilityType: typeof UtilityType
-  defaultManifest: MasterCSSManifest
+  defaultManifest: StetCSSManifest
   builtinKeyAliases: typeof builtinKeyAliases
   builtinNativeValueNamespaces: typeof builtinNativeValueNamespaces
   nativeDeclarationMatcher: NativeCSSDeclarationMatcher
@@ -52,7 +52,7 @@ export const CLASS_FUNCTIONS = ['clsx', 'cva', 'ctl', 'cv', 'class', 'classnames
 
 export interface Condition {
   id: string
-  nodes: MasterCSSManifestConditionNode[]
+  nodes: StetCSSManifestConditionNode[]
 }
 
 export function createDefaultCSS(runtime: CSSLanguageRuntime = defaultCSSLanguageRuntime) {
@@ -64,7 +64,7 @@ export function createDefaultCSS(runtime: CSSLanguageRuntime = defaultCSSLanguag
 
 const ruleGenerators = new WeakMap<MasterCSS, LanguageRuleGenerator>()
 
-export function createLanguageCSS(manifest: MasterCSSManifest = defaultManifest, runtime: CSSLanguageRuntime = defaultCSSLanguageRuntime) {
+export function createLanguageCSS(manifest: StetCSSManifest = defaultManifest, runtime: CSSLanguageRuntime = defaultCSSLanguageRuntime) {
   const css = runtime.MasterCSS.create({
     manifest,
     nativeDeclarationMatcher: runtime.nativeDeclarationMatcher
@@ -123,7 +123,7 @@ export function getStaticUtilityDeclarations(utility: CompiledUtility) {
   }
 }
 
-function findNumberNode(nodes: MasterCSSManifestConditionNode[]): Extract<MasterCSSManifestConditionNode, { type: 'number' }> | undefined {
+function findNumberNode(nodes: StetCSSManifestConditionNode[]): Extract<StetCSSManifestConditionNode, { type: 'number' }> | undefined {
   for (const node of nodes) {
     if (node.type === 'number') return node
     if ('children' in node) {
@@ -133,7 +133,7 @@ function findNumberNode(nodes: MasterCSSManifestConditionNode[]): Extract<Master
   }
 }
 
-export function getSingleConditionNumberNode(nodes: MasterCSSManifestConditionNode[]) {
+export function getSingleConditionNumberNode(nodes: StetCSSManifestConditionNode[]) {
   return findNumberNode(nodes)
 }
 

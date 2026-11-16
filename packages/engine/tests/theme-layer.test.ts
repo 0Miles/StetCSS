@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { MasterCSS } from '../src'
 import { cloneManifest } from './helpers/css-tester'
-import { flattenMasterCSSManifestVariables, groupMasterCSSManifestVariables } from '@stet-css/schema/manifest'
+import { flattenStetCSSManifestVariables, groupStetCSSManifestVariables } from '@stet-css/schema/manifest'
 
 describe.concurrent('ThemeLayer', () => {
   test('keeps default variable buckets before mode buckets when defaults are inserted later', () => {
@@ -13,8 +13,8 @@ describe.concurrent('ThemeLayer', () => {
       modes: ['light', 'dark']
     }
     const overriddenVariables = new Set(['color-blue', 'color-accent', 'color-amber-10'])
-    manifest.variables = groupMasterCSSManifestVariables([
-      ...flattenMasterCSSManifestVariables(manifest.variables)
+    manifest.variables = groupStetCSSManifestVariables([
+      ...flattenStetCSSManifestVariables(manifest.variables)
         .filter((variable) => !variable.name || !overriddenVariables.has(variable.name)),
       {
         name: 'color-blue',
@@ -96,7 +96,7 @@ describe.concurrent('ThemeLayer', () => {
   test('does not emit color-scheme for custom mode buckets', () => {
     const manifest = createModeVariableManifest('class')
     manifest.settings!.modes = ['light', 'dark', 'sepia']
-    manifest.variables = groupMasterCSSManifestVariables([{
+    manifest.variables = groupStetCSSManifestVariables([{
       name: 'color-primary',
       key: 'primary',
       namespace: 'color',
@@ -121,7 +121,7 @@ function createModeVariableManifest(modeTrigger: 'class' | 'host' | 'media', def
     modeTrigger,
     modes: ['light', 'dark']
   }
-  manifest.variables = groupMasterCSSManifestVariables([{
+  manifest.variables = groupStetCSSManifestVariables([{
     name: 'color-primary',
     key: 'primary',
     namespace: 'color',

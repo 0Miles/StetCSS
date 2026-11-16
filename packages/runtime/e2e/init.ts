@@ -1,10 +1,10 @@
 import { Page } from '@playwright/test'
-import type { MasterCSSManifest } from '@stet-css/core'
+import type { StetCSSManifest } from '@stet-css/core'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 import {
-  flattenMasterCSSManifestVariables,
-  groupMasterCSSManifestVariables,
-  type MasterCSSManifestVariable
+  flattenStetCSSManifestVariables,
+  groupStetCSSManifestVariables,
+  type StetCSSManifestVariable
 } from '@stet-css/schema/manifest'
 import UtilityType from '@stet-css/schema/utility-type'
 import { readFileSync } from 'node:fs'
@@ -15,21 +15,21 @@ import { createServer, type ViteDevServer } from 'vite'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 const packageRoot = resolve(__dirname, '..')
-const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
+const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
 let runtimeServerPromise: Promise<ViteDevServer> | undefined
 
-type RuntimeProjectManifestUtilityInput = Partial<NonNullable<MasterCSSManifest['utilities']>[number]> & {
+type RuntimeProjectManifestUtilityInput = Partial<NonNullable<StetCSSManifest['utilities']>[number]> & {
   declarations?: Record<string, string | number>
   rules?: { selector?: string, declarations: Record<string, string | number> }[]
 }
 
-type RuntimeManifestVariableInput = MasterCSSManifestVariable
-type RuntimeManifestVariable = MasterCSSManifestVariable
+type RuntimeManifestVariableInput = StetCSSManifestVariable
+type RuntimeManifestVariable = StetCSSManifestVariable
 
-type RuntimeProjectManifestInput = Partial<Omit<MasterCSSManifest, 'utilities'>> & {
+type RuntimeProjectManifestInput = Partial<Omit<StetCSSManifest, 'utilities'>> & {
   baseUnit?: string
   defaultMode?: string
-  modeTrigger?: NonNullable<MasterCSSManifest['settings']>['modeTrigger']
+  modeTrigger?: NonNullable<StetCSSManifest['settings']>['modeTrigger']
   modes?: string[]
   variables?: RuntimeManifestVariableInput[]
   utilities?: RuntimeProjectManifestUtilityInput[]
@@ -116,11 +116,11 @@ function createRuntimeVariables(defaultVariables: RuntimeManifestVariable[], inp
     variables.set(normalized.name!, current)
   }
 
-  return groupMasterCSSManifestVariables([...variables.values()])
+  return groupStetCSSManifestVariables([...variables.values()])
 }
 
-function normalizeUtility(utility: RuntimeProjectManifestUtilityInput, order: number): NonNullable<MasterCSSManifest['utilities']>[number] {
-  if (utility.emit && utility.matchers) return utility as NonNullable<MasterCSSManifest['utilities']>[number]
+function normalizeUtility(utility: RuntimeProjectManifestUtilityInput, order: number): NonNullable<StetCSSManifest['utilities']>[number] {
+  if (utility.emit && utility.matchers) return utility as NonNullable<StetCSSManifest['utilities']>[number]
   const name = utility.name || utility.id || ''
   const isSemantic = utility.type === UtilityType.Semantic || utility.type === undefined
   return {
@@ -145,7 +145,7 @@ function normalizeUtility(utility: RuntimeProjectManifestUtilityInput, order: nu
 export function createRuntimeProjectManifest(manifest: RuntimeProjectManifestInput) {
   const defaultUtilities = defaultManifest.utilities || []
   const { baseUnit, defaultMode, modeTrigger, modes, ...rest } = manifest
-  const variables = createRuntimeVariables(flattenMasterCSSManifestVariables(defaultManifest.variables), rest.variables)
+  const variables = createRuntimeVariables(flattenStetCSSManifestVariables(defaultManifest.variables), rest.variables)
   const customUtilities = (rest.utilities || []).map((utility, index) => normalizeUtility(utility, defaultUtilities.length + index))
   return {
     ...defaultManifest,
@@ -172,7 +172,7 @@ export function createRuntimeProjectManifest(manifest: RuntimeProjectManifestInp
       ...defaultUtilities,
       ...customUtilities
     ]
-  } satisfies MasterCSSManifest
+  } satisfies StetCSSManifest
 }
 
 const RUNTIME_ASSET_BASE_URL = 'http://master-css-runtime.test'

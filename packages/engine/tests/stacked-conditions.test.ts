@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest'
-import type { MasterCSSManifestModeTrigger } from '@stet-css/schema/manifest'
+import type { StetCSSManifestModeTrigger } from '@stet-css/schema/manifest'
 import { MasterCSS, UndeclaredModeError } from '../src'
 import { cloneManifest } from './helpers/css-tester'
 
-function createCSS(modeTrigger?: MasterCSSManifestModeTrigger, modes?: string[]) {
+function createCSS(modeTrigger?: StetCSSManifestModeTrigger, modes?: string[]) {
   const manifest = cloneManifest()
   manifest.settings = { ...manifest.settings, ...(modeTrigger ? { modeTrigger } : {}), ...(modes ? { modes } : {}) }
   manifest.variants = [

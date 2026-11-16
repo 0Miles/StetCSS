@@ -1,22 +1,22 @@
 import type {
-  MasterCSSManifestDefaultMode,
-  MasterCSSManifestUtilityKind,
-  MasterCSSManifestModeTrigger,
-  MasterCSSManifestUtilityLayerName,
-  MasterCSSManifestVariant
+  StetCSSManifestDefaultMode,
+  StetCSSManifestUtilityKind,
+  StetCSSManifestModeTrigger,
+  StetCSSManifestUtilityLayerName,
+  StetCSSManifestVariant
 } from './manifest.js'
 
 export type CSSDirectiveVariableValue = number | string | false | (number | string)[]
 
 export type CSSDirectiveDeclarations = Record<string, string>
 
-export type CSSDirectiveLayerName = MasterCSSManifestUtilityLayerName
+export type CSSDirectiveLayerName = StetCSSManifestUtilityLayerName
 
-export type CSSDirectiveModeTrigger = MasterCSSManifestModeTrigger
+export type CSSDirectiveModeTrigger = StetCSSManifestModeTrigger
 
-export type CSSDirectiveDefaultMode = MasterCSSManifestDefaultMode
+export type CSSDirectiveDefaultMode = StetCSSManifestDefaultMode
 
-export type CSSDirectiveVariantDefinitions = Pick<MasterCSSManifestVariant, 'token' | 'branches'>[]
+export type CSSDirectiveVariantDefinitions = Pick<StetCSSManifestVariant, 'token' | 'branches'>[]
 
 export interface CSSDirectiveSourceRange {
   start: number
@@ -131,7 +131,7 @@ export interface CSSDirectiveUtilityPatternDefinition {
 export interface CSSDirectiveUtilityDynamicDefinition {
   key: string
   variableAliasRefs?: string[]
-  kind?: MasterCSSManifestUtilityKind
+  kind?: StetCSSManifestUtilityKind
   values?: string[]
   arbitrary?: boolean
 }

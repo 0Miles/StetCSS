@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'vitest'
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 import mdnSelectors from 'mdn-data/css/selectors.json' with { type: 'json' }
 import { MasterCSS, type NativeCSSDeclarationMatcher } from '../src'
 import builtinPseudoClasses from '../src/pseudo-classes'
 
-const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
+const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
 
 /**
  * Stands in for the css-tree matcher that builds pass in: it accepts only

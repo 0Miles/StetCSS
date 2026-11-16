@@ -15,7 +15,7 @@ import { loadProjectManifest } from '@stet-css/project/manifest'
 import { resolveMasterCSSWorkspacePackages, type MasterCSSWorkspacePackageResolution } from '@stet-css/project/workspace'
 import { defu } from 'defu'
 import settings from './settings'
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import {
   AT_TRIGGER_CHARACTER,
   DECLARATION_SEPARATOR_TRIGGER_CHARACTER,
@@ -459,7 +459,7 @@ export default class CSSLanguageServer {
 
   async initWorkspaceLanguageService(workspace: Workspace) {
     workspace.languageRuntime = await this.loadWorkspaceLanguageRuntime(workspace)
-    let workspacePlan: MasterCSSManifest | undefined
+    let workspacePlan: StetCSSManifest | undefined
     workspace.manifestErrors = []
     if (workspace !== this.globalWorkspace) {
       try {
@@ -527,7 +527,7 @@ export default class CSSLanguageServer {
       if (!builtinKeyAliases) throw new Error(`Missing builtinKeyAliases export from ${enginePackage.entry}`)
       if (!builtinNativeValueNamespaces) throw new Error(`Missing builtinNativeValueNamespaces export from ${enginePackage.entry}`)
 
-      const manifest = JSON.parse(await readFile(presetManifestPackage.entry, 'utf8')) as MasterCSSManifest
+      const manifest = JSON.parse(await readFile(presetManifestPackage.entry, 'utf8')) as StetCSSManifest
       workspace.languageRuntimeSource = 'workspace'
       this.console.info(`Using workspace Master CSS runtime ${cssPackage.version ?? '(unknown version)'} from ${cssPackage.directory}`)
       if (resolution.errors.length) {

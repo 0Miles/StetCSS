@@ -8,26 +8,26 @@ import type {
   CSSDirectiveVariableDefinition
 } from '@stet-css/schema/css-directives'
 import type {
-  MasterCSSManifest,
-  MasterCSSManifestAnimations,
-  MasterCSSManifestCondition,
-  MasterCSSManifestConditionNode,
-  MasterCSSManifestConditions,
-  MasterCSSManifestCSSDeclarationPrimitive,
-  MasterCSSManifestCSSDeclarations,
-  MasterCSSManifestSelectorNode,
-  MasterCSSManifestSelectors,
-  MasterCSSManifestUtility,
-  MasterCSSManifestUtilityRule,
-  MasterCSSManifestUtilityMatcher,
-  MasterCSSManifestVariableNumericValue,
-  MasterCSSManifestVariable,
-  MasterCSSManifestVariables,
-  MasterCSSManifestVariant,
-  MasterCSSManifestVariantBranch,
-  MasterCSSManifestVariants
+  StetCSSManifest,
+  StetCSSManifestAnimations,
+  StetCSSManifestCondition,
+  StetCSSManifestConditionNode,
+  StetCSSManifestConditions,
+  StetCSSManifestCSSDeclarationPrimitive,
+  StetCSSManifestCSSDeclarations,
+  StetCSSManifestSelectorNode,
+  StetCSSManifestSelectors,
+  StetCSSManifestUtility,
+  StetCSSManifestUtilityRule,
+  StetCSSManifestUtilityMatcher,
+  StetCSSManifestVariableNumericValue,
+  StetCSSManifestVariable,
+  StetCSSManifestVariables,
+  StetCSSManifestVariant,
+  StetCSSManifestVariantBranch,
+  StetCSSManifestVariants
 } from '@stet-css/schema/manifest'
-import { flattenMasterCSSManifestVariables, groupMasterCSSManifestVariables } from '@stet-css/schema/manifest'
+import { flattenStetCSSManifestVariables, groupStetCSSManifestVariables } from '@stet-css/schema/manifest'
 import {
   ROOT_FONT_SIZE,
   createCompilerCSS,
@@ -47,7 +47,7 @@ import { normalizeStylesheetValue } from './stylesheet-value'
 export type CSSDirectiveManifestInput = SharedCSSDirectiveManifestInput
 
 export interface CreateMasterCSSManifestOptions {
-  baseManifest?: MasterCSSManifest
+  baseManifest?: StetCSSManifest
   diagnostics?: CompilerDiagnosticRecorder
 }
 
@@ -61,7 +61,7 @@ export interface ResolvedCSSDirectiveVariableName {
 }
 
 export type CSSDirectiveVariableNameResolver = (variable: CSSDirectiveVariableDefinition) => ResolvedCSSDirectiveVariableName
-type MasterCSSManifestVariableDraft = MasterCSSManifestVariable & { namespace?: string }
+type MasterCSSManifestVariableDraft = StetCSSManifestVariable & { namespace?: string }
 
 function clone<T>(value: T): T {
   if (Array.isArray(value)) return value.map((item) => clone(item)) as T
@@ -94,19 +94,19 @@ function addImplicitUtilityNamespace(namespaces: Set<string>, value: unknown) {
   addVariableNamespace(namespaces, value)
 }
 
-function addUtilityVariableNamespaces(namespaces: Set<string>, utilities: (Partial<MasterCSSManifestUtility> | CSSDirectiveUtilityDefinition)[] | undefined) {
+function addUtilityVariableNamespaces(namespaces: Set<string>, utilities: (Partial<StetCSSManifestUtility> | CSSDirectiveUtilityDefinition)[] | undefined) {
   for (const utility of utilities || []) {
-    for (const namespace of (utility as Partial<MasterCSSManifestUtility>).namespaces || []) {
+    for (const namespace of (utility as Partial<StetCSSManifestUtility>).namespaces || []) {
       addVariableNamespace(namespaces, namespace)
     }
-    for (const ref of (utility as Partial<MasterCSSManifestUtility>).variableAliasRefs || []) {
+    for (const ref of (utility as Partial<StetCSSManifestUtility>).variableAliasRefs || []) {
       addVariableAliasRefNamespace(namespaces, ref)
     }
     if (
-      (utility as Partial<MasterCSSManifestUtility>).implicitNamespace !== false
-      && (utility as Partial<MasterCSSManifestUtility>).emit?.type === 'property'
+      (utility as Partial<StetCSSManifestUtility>).implicitNamespace !== false
+      && (utility as Partial<StetCSSManifestUtility>).emit?.type === 'property'
     ) {
-      addImplicitUtilityNamespace(namespaces, (utility as Partial<MasterCSSManifestUtility>).id)
+      addImplicitUtilityNamespace(namespaces, (utility as Partial<StetCSSManifestUtility>).id)
       addImplicitUtilityNamespace(namespaces, utility.name)
     }
   }
@@ -114,7 +114,7 @@ function addUtilityVariableNamespaces(namespaces: Set<string>, utilities: (Parti
 
 function collectVariableNamespaces(input: CSSDirectiveManifestInput = {}, options: CreateMasterCSSManifestOptions = {}) {
   const namespaces = new Set<string>(builtinNamespaces)
-  for (const variable of flattenMasterCSSManifestVariables(options.baseManifest?.variables)) {
+  for (const variable of flattenStetCSSManifestVariables(options.baseManifest?.variables)) {
     addVariableNamespace(namespaces, variable.namespace)
   }
   for (const variable of input.variables || []) {
@@ -157,14 +157,14 @@ export function createVariableNameResolver(input: CSSDirectiveManifestInput = {}
   return (variable) => resolveVariableName(variable, namespaces)
 }
 
-function getVariableType(value: MasterCSSManifestVariable['value']): NonNullable<MasterCSSManifestVariable['type']> {
+function getVariableType(value: StetCSSManifestVariable['value']): NonNullable<StetCSSManifestVariable['type']> {
   return typeof value === 'number' ? 'number' : 'string'
 }
 
 function getVariableNumericValue(
-  value: MasterCSSManifestVariable['value'],
+  value: StetCSSManifestVariable['value'],
   namespace: string | undefined
-): MasterCSSManifestVariableNumericValue | undefined {
+): StetCSSManifestVariableNumericValue | undefined {
   if (!namespace || !NUMERIC_THEME_NAMESPACES.has(namespace)) return
   if (typeof value === 'number') {
     return { value }
@@ -178,7 +178,7 @@ function getVariableNumericValue(
   }
 }
 
-function variableSlot(variable: Pick<MasterCSSManifestVariable, 'name' | 'namespace' | 'key'>) {
+function variableSlot(variable: Pick<StetCSSManifestVariable, 'name' | 'namespace' | 'key'>) {
   return variable.name || `${variable.namespace || ''}\0${variable.key}`
 }
 
@@ -260,7 +260,7 @@ function compileVariables(
   return variables.length ? variables : undefined
 }
 
-function normalizeNumericConditionValue(variable: MasterCSSManifestVariable) {
+function normalizeNumericConditionValue(variable: StetCSSManifestVariable) {
   if (variable.key.startsWith('-')) return
   const numeric = variable.numeric || (typeof variable.value === 'number' ? { value: variable.value } : undefined)
   if (!numeric) return
@@ -276,7 +276,7 @@ function normalizeNumericConditionValue(variable: MasterCSSManifestVariable) {
   }
 }
 
-function createVariableCondition(variable: MasterCSSManifestVariable, id: 'media' | 'container'): MasterCSSManifestCondition | undefined {
+function createVariableCondition(variable: StetCSSManifestVariable, id: 'media' | 'container'): StetCSSManifestCondition | undefined {
   const value = normalizeNumericConditionValue(variable)
   if (value === undefined) return
   return {
@@ -290,9 +290,9 @@ function createVariableCondition(variable: MasterCSSManifestVariable, id: 'media
 }
 
 function compileConditions(variables: MasterCSSManifestVariableDraft[] | undefined) {
-  const conditions: MasterCSSManifestConditions = {}
-  const breakpointConditions: MasterCSSManifestConditions = {}
-  const containerConditions: MasterCSSManifestConditions = {}
+  const conditions: StetCSSManifestConditions = {}
+  const breakpointConditions: StetCSSManifestConditions = {}
+  const containerConditions: StetCSSManifestConditions = {}
 
   for (const variable of variables || []) {
     if (variable.namespace === 'breakpoint') {
@@ -316,26 +316,26 @@ function compileConditions(variables: MasterCSSManifestVariableDraft[] | undefin
   }
 }
 
-function cloneConditionNode(node: MasterCSSManifestConditionNode): MasterCSSManifestConditionNode {
+function cloneConditionNode(node: StetCSSManifestConditionNode): StetCSSManifestConditionNode {
   return 'children' in node
     ? { ...node, children: node.children.map(cloneConditionNode) }
     : { ...node }
 }
 
-function cloneCondition(condition: MasterCSSManifestCondition): MasterCSSManifestCondition {
+function cloneCondition(condition: StetCSSManifestCondition): StetCSSManifestCondition {
   return {
     id: condition.id,
     nodes: condition.nodes.map(cloneConditionNode)
   }
 }
 
-function cloneSelectorNode(node: MasterCSSManifestSelectorNode): MasterCSSManifestSelectorNode {
+function cloneSelectorNode(node: StetCSSManifestSelectorNode): StetCSSManifestSelectorNode {
   return 'children' in node && node.children?.length
     ? { ...node, children: node.children.map(cloneSelectorNode) }
     : { ...node }
 }
 
-function compileVariantBranch(branch: MasterCSSManifestVariantBranch, css: ReturnType<typeof createCompilerCSS>): MasterCSSManifestVariantBranch {
+function compileVariantBranch(branch: StetCSSManifestVariantBranch, css: ReturnType<typeof createCompilerCSS>): StetCSSManifestVariantBranch {
   const selector = branch.selector?.trim()
   const bodylessSelector = selector
     ? selector.includes('&')
@@ -345,12 +345,12 @@ function compileVariantBranch(branch: MasterCSSManifestVariantBranch, css: Retur
   const selectorNodes = branch.selectorNodes?.length
     ? branch.selectorNodes.map(cloneSelectorNode)
     : bodylessSelector
-      ? parseSelector(bodylessSelector, css, false).map((node) => cloneSelectorNode(node as MasterCSSManifestSelectorNode))
+      ? parseSelector(bodylessSelector, css, false).map((node) => cloneSelectorNode(node as StetCSSManifestSelectorNode))
       : undefined
   const conditionNodes = branch.conditionNodes?.length
     ? branch.conditionNodes.map(cloneCondition)
     : branch.conditions?.length
-      ? branch.conditions.map((condition) => cloneCondition(parseCondition(condition, css, false) as MasterCSSManifestCondition))
+      ? branch.conditions.map((condition) => cloneCondition(parseCondition(condition, css, false) as StetCSSManifestCondition))
       : undefined
   return {
     ...branch,
@@ -360,16 +360,16 @@ function compileVariantBranch(branch: MasterCSSManifestVariantBranch, css: Retur
   }
 }
 
-function compileVariants(input: MasterCSSManifestVariants | undefined, baseManifest: MasterCSSManifest): {
-  variants?: MasterCSSManifestVariants
-  selectors?: MasterCSSManifestSelectors
-  conditions?: MasterCSSManifestConditions
+function compileVariants(input: StetCSSManifestVariants | undefined, baseManifest: StetCSSManifest): {
+  variants?: StetCSSManifestVariants
+  selectors?: StetCSSManifestSelectors
+  conditions?: StetCSSManifestConditions
 } {
   if (!input?.length) return {}
   const css = createCompilerCSS(baseManifest)
-  const variants: MasterCSSManifestVariant[] = []
-  const selectors: MasterCSSManifestSelectors = {}
-  const conditions: MasterCSSManifestConditions = {}
+  const variants: StetCSSManifestVariant[] = []
+  const selectors: StetCSSManifestSelectors = {}
+  const conditions: StetCSSManifestConditions = {}
   for (const variant of input) {
     const branches = variant.branches.map((branch) => compileVariantBranch(branch, css))
     variants.push({
@@ -405,7 +405,7 @@ function compileVariants(input: MasterCSSManifestVariants | undefined, baseManif
   }
 }
 
-function cloneDeclarations<T extends MasterCSSManifestCSSDeclarations>(declarations: T): T {
+function cloneDeclarations<T extends StetCSSManifestCSSDeclarations>(declarations: T): T {
   return Array.isArray(declarations)
     ? [...declarations] as unknown as T
     : { ...(declarations as object) } as T
@@ -419,7 +419,7 @@ function assertNoValuePlaceholder(declarations: CSSDirectiveUtilityRuleDefinitio
   }
 }
 
-function compileUtilityRule(rule: CSSDirectiveUtilityRuleDefinition): MasterCSSManifestUtilityRule {
+function compileUtilityRule(rule: CSSDirectiveUtilityRuleDefinition): StetCSSManifestUtilityRule {
   assertNoValuePlaceholder(rule.declarations)
   return {
     declarations: cloneDeclarations(rule.declarations),
@@ -494,7 +494,7 @@ function parseValuePlaceholderCall(value: string, index: number) {
   return end
 }
 
-function compilePatternDeclarationValue(value: string): MasterCSSManifestCSSDeclarationPrimitive | MasterCSSManifestCSSDeclarationPrimitive[] {
+function compilePatternDeclarationValue(value: string): StetCSSManifestCSSDeclarationPrimitive | StetCSSManifestCSSDeclarationPrimitive[] {
   if (!value.includes(VALUE_PLACEHOLDER_NAME)) return value
 
   const parts: (string | null)[] = []
@@ -528,15 +528,15 @@ function compilePatternDeclarationValue(value: string): MasterCSSManifestCSSDecl
   return value === VALUE_PLACEHOLDER_FUNCTION ? null : parts
 }
 
-function compilePatternDeclarations(declarations: CSSDirectiveUtilityRuleDefinition['declarations']): MasterCSSManifestCSSDeclarations {
-  const compiled: Record<string, MasterCSSManifestCSSDeclarationPrimitive | MasterCSSManifestCSSDeclarationPrimitive[]> = {}
+function compilePatternDeclarations(declarations: CSSDirectiveUtilityRuleDefinition['declarations']): StetCSSManifestCSSDeclarations {
+  const compiled: Record<string, StetCSSManifestCSSDeclarationPrimitive | StetCSSManifestCSSDeclarationPrimitive[]> = {}
   for (const property in declarations) {
     compiled[property] = compilePatternDeclarationValue(declarations[property])
   }
   return compiled
 }
 
-function compilePatternUtilityRule(rule: CSSDirectiveUtilityRuleDefinition): MasterCSSManifestUtilityRule {
+function compilePatternUtilityRule(rule: CSSDirectiveUtilityRuleDefinition): StetCSSManifestUtilityRule {
   return {
     declarations: compilePatternDeclarations(rule.declarations),
     ...(rule.conditions?.length ? { conditions: [...rule.conditions] } : {}),
@@ -544,20 +544,20 @@ function compilePatternUtilityRule(rule: CSSDirectiveUtilityRuleDefinition): Mas
   }
 }
 
-function declarationValueUsesPlaceholder(value: MasterCSSManifestCSSDeclarationPrimitive | MasterCSSManifestCSSDeclarationPrimitive[]) {
+function declarationValueUsesPlaceholder(value: StetCSSManifestCSSDeclarationPrimitive | StetCSSManifestCSSDeclarationPrimitive[]) {
   return value === null || (Array.isArray(value) && value.includes(null))
 }
 
-function countValuePlaceholderProperties(declarations: MasterCSSManifestCSSDeclarations) {
+function countValuePlaceholderProperties(declarations: StetCSSManifestCSSDeclarations) {
   let count = 0
-  const declarationMap = declarations as Record<string, MasterCSSManifestCSSDeclarationPrimitive | MasterCSSManifestCSSDeclarationPrimitive[]>
+  const declarationMap = declarations as Record<string, StetCSSManifestCSSDeclarationPrimitive | StetCSSManifestCSSDeclarationPrimitive[]>
   for (const property in declarationMap) {
     if (declarationValueUsesPlaceholder(declarationMap[property])) count++
   }
   return count
 }
 
-function utilityTypeFromRules(rules: MasterCSSManifestUtilityRule[]) {
+function utilityTypeFromRules(rules: StetCSSManifestUtilityRule[]) {
   return rules.some(({ declarations }) => {
     const properties = Object.keys(declarations)
     return properties.some((property) => isNativeCSSShorthandProperty(property))
@@ -567,7 +567,7 @@ function utilityTypeFromRules(rules: MasterCSSManifestUtilityRule[]) {
     : UtilityType.Normal
 }
 
-function getPatternMatcher(pattern: CSSDirectiveUtilityPatternDefinition): MasterCSSManifestUtilityMatcher {
+function getPatternMatcher(pattern: CSSDirectiveUtilityPatternDefinition): StetCSSManifestUtilityMatcher {
   return {
     type: 'pattern',
     prefix: pattern.prefix,
@@ -576,8 +576,8 @@ function getPatternMatcher(pattern: CSSDirectiveUtilityPatternDefinition): Maste
   }
 }
 
-function getDynamicMatchers(dynamic: CSSDirectiveUtilityDynamicDefinition): MasterCSSManifestUtilityMatcher[] {
-  const matchers: MasterCSSManifestUtilityMatcher[] = []
+function getDynamicMatchers(dynamic: CSSDirectiveUtilityDynamicDefinition): StetCSSManifestUtilityMatcher[] {
+  const matchers: StetCSSManifestUtilityMatcher[] = []
   if (dynamic.variableAliasRefs?.length) {
     matchers.push({
       type: 'variable',
@@ -609,12 +609,12 @@ function getDynamicMatchers(dynamic: CSSDirectiveUtilityDynamicDefinition): Mast
   return matchers
 }
 
-function compileUtility(definition: CSSDirectiveUtilityDefinition, order: number): MasterCSSManifestUtility {
+function compileUtility(definition: CSSDirectiveUtilityDefinition, order: number): StetCSSManifestUtility {
   if (definition.type === 'pattern') {
     if (!definition.pattern) {
       throw new Error('Managed enum pattern definition is missing a pattern')
     }
-    const rules: MasterCSSManifestUtilityRule[] = []
+    const rules: StetCSSManifestUtilityRule[] = []
     if (definition.declarations) {
       rules.push({
         declarations: compilePatternDeclarations(definition.declarations),
@@ -642,7 +642,7 @@ function compileUtility(definition: CSSDirectiveUtilityDefinition, order: number
     if (!definition.dynamic) {
       throw new Error('Managed dynamic utility definition is missing a dynamic source')
     }
-    const rules: MasterCSSManifestUtilityRule[] = []
+    const rules: StetCSSManifestUtilityRule[] = []
     if (definition.declarations) {
       rules.push({
         declarations: compilePatternDeclarations(definition.declarations),
@@ -671,7 +671,7 @@ function compileUtility(definition: CSSDirectiveUtilityDefinition, order: number
   }
 
   const name = definition.name.startsWith('.') ? definition.name.slice(1) : definition.name
-  const rules: MasterCSSManifestUtilityRule[] = []
+  const rules: StetCSSManifestUtilityRule[] = []
   if (definition.declarations) {
     assertNoValuePlaceholder(definition.declarations)
     rules.push({
@@ -699,17 +699,17 @@ function compileUtility(definition: CSSDirectiveUtilityDefinition, order: number
   }
 }
 
-function compileUtilities(input: CSSDirectiveUtilityDefinition[] | undefined): MasterCSSManifestUtility[] | undefined {
+function compileUtilities(input: CSSDirectiveUtilityDefinition[] | undefined): StetCSSManifestUtility[] | undefined {
   if (!input?.length) return
   return input.map((definition, index) => compileUtility(definition, index))
 }
 
-function compileAnimations(input: CSSDirectiveManifestInput['animations']): MasterCSSManifestAnimations | undefined {
-  return input ? clone(input) as MasterCSSManifestAnimations : undefined
+function compileAnimations(input: CSSDirectiveManifestInput['animations']): StetCSSManifestAnimations | undefined {
+  return input ? clone(input) as StetCSSManifestAnimations : undefined
 }
 
-function compileAnimationOptions(input: CSSDirectiveManifestInput['animationOptions']): MasterCSSManifest['animationOptions'] | undefined {
-  return input ? clone(input) as MasterCSSManifest['animationOptions'] : undefined
+function compileAnimationOptions(input: CSSDirectiveManifestInput['animationOptions']): StetCSSManifest['animationOptions'] | undefined {
+  return input ? clone(input) as StetCSSManifest['animationOptions'] : undefined
 }
 
 function mergeBy<T>(base: T[] | undefined, next: T[] | undefined, getKey: (value: T) => string | undefined) {
@@ -727,15 +727,15 @@ function mergeBy<T>(base: T[] | undefined, next: T[] | undefined, getKey: (value
 }
 
 function mergeVariables(
-  base: MasterCSSManifestVariables | undefined,
-  next: MasterCSSManifestVariables | undefined
+  base: StetCSSManifestVariables | undefined,
+  next: StetCSSManifestVariables | undefined
 ) {
   const merged = mergeBy(
-    flattenMasterCSSManifestVariables(base),
-    flattenMasterCSSManifestVariables(next),
+    flattenStetCSSManifestVariables(base),
+    flattenStetCSSManifestVariables(next),
     (variable) => variable.name
   )
-  return groupMasterCSSManifestVariables(merged)
+  return groupStetCSSManifestVariables(merged)
 }
 
 function mergeRecords<T>(base: Record<string, T> | undefined, next: Record<string, T> | undefined) {
@@ -745,9 +745,9 @@ function mergeRecords<T>(base: Record<string, T> | undefined, next: Record<strin
 }
 
 function mergeAnimationOptions(
-  base: MasterCSSManifest['animationOptions'],
-  next: MasterCSSManifest['animationOptions'],
-  animations: MasterCSSManifest['animations']
+  base: StetCSSManifest['animationOptions'],
+  next: StetCSSManifest['animationOptions'],
+  animations: StetCSSManifest['animations']
 ) {
   const merged = mergeRecords(base, next)
   if (!merged) return
@@ -759,12 +759,12 @@ function mergeAnimationOptions(
   return Object.keys(merged).length ? merged : undefined
 }
 
-function mergeManifest(baseManifest: MasterCSSManifest | undefined, fragment: MasterCSSManifest): MasterCSSManifest {
+function mergeManifest(baseManifest: StetCSSManifest | undefined, fragment: StetCSSManifest): StetCSSManifest {
   if (!baseManifest) {
     return clone(fragment)
   }
 
-  const manifest: MasterCSSManifest = {
+  const manifest: StetCSSManifest = {
     version: 1,
     settings: { ...(baseManifest.settings || {}), ...(fragment.settings || {}) },
     variables: mergeVariables(baseManifest.variables, fragment.variables),
@@ -782,10 +782,10 @@ function mergeManifest(baseManifest: MasterCSSManifest | undefined, fragment: Ma
     value !== undefined
     && (!Array.isArray(value) || value.length)
     && (typeof value !== 'object' || Array.isArray(value) || Object.keys(value).length)
-  )) as MasterCSSManifest
+  )) as StetCSSManifest
 }
 
-export function createMasterCSSManifest(input: CSSDirectiveManifestInput = {}, options: CreateMasterCSSManifestOptions = {}): MasterCSSManifest {
+export function createMasterCSSManifest(input: CSSDirectiveManifestInput = {}, options: CreateMasterCSSManifestOptions = {}): StetCSSManifest {
   const diagnostics = options.diagnostics
   addCompilerDiagnosticCount(diagnostics, 'manifest-create-count')
   setCompilerDiagnosticCount(diagnostics, 'manifest-input-variable-count', input.variables?.length || 0)
@@ -795,7 +795,7 @@ export function createMasterCSSManifest(input: CSSDirectiveManifestInput = {}, o
 
   const resolveVariableName = timeCompilerDiagnostic(diagnostics, 'manifest-variable-name-resolver-ms', () => createVariableNameResolver(input, options))
   const variableDefinitions = timeCompilerDiagnostic(diagnostics, 'manifest-compile-variables-ms', () => compileVariables(input.variables, resolveVariableName))
-  const variables = timeCompilerDiagnostic(diagnostics, 'manifest-group-variables-ms', () => groupMasterCSSManifestVariables(variableDefinitions))
+  const variables = timeCompilerDiagnostic(diagnostics, 'manifest-group-variables-ms', () => groupStetCSSManifestVariables(variableDefinitions))
   const { conditions, breakpointConditions, containerConditions } = timeCompilerDiagnostic(diagnostics, 'manifest-compile-conditions-ms', () => compileConditions(variableDefinitions))
   const settings = {
     ...(input.baseUnit !== undefined ? { baseUnit: input.baseUnit } : {}),
@@ -813,11 +813,11 @@ export function createMasterCSSManifest(input: CSSDirectiveManifestInput = {}, o
     ...(breakpointConditions ? { breakpointConditions } : {}),
     ...(containerConditions ? { containerConditions } : {})
   }))
-  const { variants, selectors, conditions: variantConditions } = timeCompilerDiagnostic(diagnostics, 'manifest-compile-variants-ms', () => compileVariants(input.variants as MasterCSSManifestVariants | undefined, variantBaseManifest))
+  const { variants, selectors, conditions: variantConditions } = timeCompilerDiagnostic(diagnostics, 'manifest-compile-variants-ms', () => compileVariants(input.variants as StetCSSManifestVariants | undefined, variantBaseManifest))
   const utilities = timeCompilerDiagnostic(diagnostics, 'manifest-compile-utilities-ms', () => compileUtilities(input.utilities))
   const animations = timeCompilerDiagnostic(diagnostics, 'manifest-compile-animations-ms', () => compileAnimations(input.animations))
   const animationOptions = timeCompilerDiagnostic(diagnostics, 'manifest-compile-animation-options-ms', () => compileAnimationOptions(input.animationOptions))
-  const fragment: MasterCSSManifest = {
+  const fragment: StetCSSManifest = {
     version: 1,
     ...(Object.keys(settings).length ? { settings } : {}),
     ...(variables ? { variables } : {}),

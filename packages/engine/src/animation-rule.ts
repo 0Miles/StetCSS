@@ -1,7 +1,7 @@
 import MasterCSS from './core'
 import collectVariableNames from './utils/collect-variable-names'
 import type { PropertiesHyphen } from 'csstype'
-import type { MasterCSSManifestAnimations } from '@stet-css/schema/manifest'
+import type { StetCSSManifestAnimations } from '@stet-css/schema/manifest'
 
 export default class AnimationRule {
   native?: CSSKeyframeRule
@@ -9,7 +9,7 @@ export default class AnimationRule {
 
   constructor(
     public readonly name: string,
-    public readonly keyframes: MasterCSSManifestAnimations[string],
+    public readonly keyframes: StetCSSManifestAnimations[string],
     public readonly css: MasterCSS,
   ) {
     for (const declarations of Object.values(keyframes)) {

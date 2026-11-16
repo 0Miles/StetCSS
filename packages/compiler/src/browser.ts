@@ -1,5 +1,5 @@
 import init, { transform } from 'lightningcss-wasm'
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import {
   compileCSS as compileCSSCore,
   parseDirectives as parseDirectivesCore,
@@ -12,11 +12,11 @@ import lowerCSSDirectives from './lower-css-directives'
 export type * from './core'
 
 export type CompileCSSManifestSourceOptions = CompileCSSOptions & {
-  baseManifest?: MasterCSSManifest
+  baseManifest?: StetCSSManifest
 }
 
 export interface CompileCSSManifestResult extends Omit<CompileCSSResult, 'manifestInput'> {
-  manifest: MasterCSSManifest
+  manifest: StetCSSManifest
   directives: CompileCSSResult
 }
 

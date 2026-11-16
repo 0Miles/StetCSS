@@ -1,202 +1,202 @@
 import type { PropertiesHyphen } from 'csstype'
 import type { UtilityType } from './utility-type.js'
 
-export type MasterCSSManifestConditionIdentifier = 'container' | 'starting-style' | 'supports' | 'media' | 'layer'
-export type MasterCSSManifestUtilityLayerName = 'base' | 'defaults' | 'components' | 'utilities'
-export type MasterCSSManifestDefaultMode = 'light' | 'dark' | 'none' | string
-export type MasterCSSManifestModeTrigger = 'class' | 'media' | 'host'
-export type MasterCSSManifestVariantToken = `:${string}` | `::${string}` | `@${string}`
-export type MasterCSSManifestUtilityKind = 'number' | 'color' | 'image'
+export type StetCSSManifestConditionIdentifier = 'container' | 'starting-style' | 'supports' | 'media' | 'layer'
+export type StetCSSManifestUtilityLayerName = 'base' | 'defaults' | 'components' | 'utilities'
+export type StetCSSManifestDefaultMode = 'light' | 'dark' | 'none' | string
+export type StetCSSManifestModeTrigger = 'class' | 'media' | 'host'
+export type StetCSSManifestVariantToken = `:${string}` | `::${string}` | `@${string}`
+export type StetCSSManifestUtilityKind = 'number' | 'color' | 'image'
 /** Defaults to single for variable/value matchers; multiple is an explicit opt-in. */
-export type MasterCSSManifestUtilityMatcherValueSegments = 'single' | 'multiple'
+export type StetCSSManifestUtilityMatcherValueSegments = 'single' | 'multiple'
 
-export type MasterCSSManifestCSSDeclarationPrimitive = string | number | null
-export type MasterCSSManifestCSSDeclarations = PropertiesHyphen | Record<string, MasterCSSManifestCSSDeclarationPrimitive | MasterCSSManifestCSSDeclarationPrimitive[]>
-export type MasterCSSManifestVariableValue = number | string | false | (number | string)[]
-export type MasterCSSManifestVariableType = 'number' | 'string'
-export interface MasterCSSManifestVariableNumericValue {
+export type StetCSSManifestCSSDeclarationPrimitive = string | number | null
+export type StetCSSManifestCSSDeclarations = PropertiesHyphen | Record<string, StetCSSManifestCSSDeclarationPrimitive | StetCSSManifestCSSDeclarationPrimitive[]>
+export type StetCSSManifestVariableValue = number | string | false | (number | string)[]
+export type StetCSSManifestVariableType = 'number' | 'string'
+export interface StetCSSManifestVariableNumericValue {
   value: number
   unit?: string
 }
 
-export interface MasterCSSManifestConditionBooleanNode { raw?: string, name: string, type: 'boolean' }
-export interface MasterCSSManifestConditionNumberNode { raw?: string, name?: string, type: 'number', value: number, unit?: string, operator?: string }
-export interface MasterCSSManifestConditionStringNode { raw?: string, name?: string, type: 'string', value: string }
-export type MasterCSSManifestConditionValueNode = MasterCSSManifestConditionNumberNode | MasterCSSManifestConditionStringNode
-export interface MasterCSSManifestConditionComparisonOperatorNode { type: 'comparison', raw?: string, value: string }
-export interface MasterCSSManifestConditionLogicalOperatorNode { type: 'logical', raw?: string, value: string }
-export type MasterCSSManifestConditionOperatorNode = MasterCSSManifestConditionComparisonOperatorNode | MasterCSSManifestConditionLogicalOperatorNode
-export interface MasterCSSManifestConditionGroupNode { type?: 'group', raw?: string, children: MasterCSSManifestConditionNode[] }
-export type MasterCSSManifestConditionNode =
-  | MasterCSSManifestConditionBooleanNode
-  | MasterCSSManifestConditionValueNode
-  | MasterCSSManifestConditionComparisonOperatorNode
-  | MasterCSSManifestConditionLogicalOperatorNode
-  | MasterCSSManifestConditionGroupNode
+export interface StetCSSManifestConditionBooleanNode { raw?: string, name: string, type: 'boolean' }
+export interface StetCSSManifestConditionNumberNode { raw?: string, name?: string, type: 'number', value: number, unit?: string, operator?: string }
+export interface StetCSSManifestConditionStringNode { raw?: string, name?: string, type: 'string', value: string }
+export type StetCSSManifestConditionValueNode = StetCSSManifestConditionNumberNode | StetCSSManifestConditionStringNode
+export interface StetCSSManifestConditionComparisonOperatorNode { type: 'comparison', raw?: string, value: string }
+export interface StetCSSManifestConditionLogicalOperatorNode { type: 'logical', raw?: string, value: string }
+export type StetCSSManifestConditionOperatorNode = StetCSSManifestConditionComparisonOperatorNode | StetCSSManifestConditionLogicalOperatorNode
+export interface StetCSSManifestConditionGroupNode { type?: 'group', raw?: string, children: StetCSSManifestConditionNode[] }
+export type StetCSSManifestConditionNode =
+  | StetCSSManifestConditionBooleanNode
+  | StetCSSManifestConditionValueNode
+  | StetCSSManifestConditionComparisonOperatorNode
+  | StetCSSManifestConditionLogicalOperatorNode
+  | StetCSSManifestConditionGroupNode
 
-export interface MasterCSSManifestCondition {
-  id: MasterCSSManifestConditionIdentifier
-  nodes: MasterCSSManifestConditionNode[]
+export interface StetCSSManifestCondition {
+  id: StetCSSManifestConditionIdentifier
+  nodes: StetCSSManifestConditionNode[]
 }
 
-export type MasterCSSManifestConditions = Record<string, MasterCSSManifestCondition>
+export type StetCSSManifestConditions = Record<string, StetCSSManifestCondition>
 
-export interface MasterCSSManifestSelectorLiteralNode {
+export interface StetCSSManifestSelectorLiteralNode {
   type?: 'attribute' | 'pseudo-class' | 'pseudo-element' | 'class' | 'universal' | 'id'
   raw?: string
   value?: string
-  children?: MasterCSSManifestSelectorNode[]
+  children?: StetCSSManifestSelectorNode[]
 }
 
-export interface MasterCSSManifestSelectorSeparatorNode {
+export interface StetCSSManifestSelectorSeparatorNode {
   type: 'separator'
   raw?: string
   value: string
 }
 
-export interface MasterCSSManifestSelectorCombinatorNode {
+export interface StetCSSManifestSelectorCombinatorNode {
   type: 'combinator'
   raw?: string
   value: string
 }
 
-export type MasterCSSManifestSelectorNode =
-  | MasterCSSManifestSelectorLiteralNode
-  | MasterCSSManifestSelectorCombinatorNode
-  | MasterCSSManifestSelectorSeparatorNode
+export type StetCSSManifestSelectorNode =
+  | StetCSSManifestSelectorLiteralNode
+  | StetCSSManifestSelectorCombinatorNode
+  | StetCSSManifestSelectorSeparatorNode
 
-export type MasterCSSManifestSelectors = Record<string, MasterCSSManifestSelectorNode[]>
+export type StetCSSManifestSelectors = Record<string, StetCSSManifestSelectorNode[]>
 
-export interface MasterCSSManifestSettings {
+export interface StetCSSManifestSettings {
   /** The length one `x` stands for, as a CSS length such as `0.25rem` or `4px`. */
   baseUnit?: string
-  defaultMode?: MasterCSSManifestDefaultMode
+  defaultMode?: StetCSSManifestDefaultMode
   scope?: string
   important?: boolean
-  modeTrigger?: MasterCSSManifestModeTrigger
+  modeTrigger?: StetCSSManifestModeTrigger
   modes?: string[]
 }
 
-export interface MasterCSSManifestVariable {
+export interface StetCSSManifestVariable {
   name?: string
   key: string
   namespace?: string
-  type?: MasterCSSManifestVariableType
-  value?: MasterCSSManifestVariableValue
-  numeric?: MasterCSSManifestVariableNumericValue
-  modes?: Record<string, { type: MasterCSSManifestVariableType, value: number | string, numeric?: MasterCSSManifestVariableNumericValue }>
+  type?: StetCSSManifestVariableType
+  value?: StetCSSManifestVariableValue
+  numeric?: StetCSSManifestVariableNumericValue
+  modes?: Record<string, { type: StetCSSManifestVariableType, value: number | string, numeric?: StetCSSManifestVariableNumericValue }>
   dependencies?: string[]
   mode?: string
   inline?: boolean
   static?: boolean
 }
 
-export type MasterCSSManifestVariables = Record<string, MasterCSSManifestVariable[]>
-export type MasterCSSManifestVariableEntry = MasterCSSManifestVariable & {
+export type StetCSSManifestVariables = Record<string, StetCSSManifestVariable[]>
+export type StetCSSManifestVariableEntry = StetCSSManifestVariable & {
   name: string
   namespace?: string
-  type: MasterCSSManifestVariableType
+  type: StetCSSManifestVariableType
 }
 
-export type MasterCSSManifestKeyframes<TDeclarations = MasterCSSManifestCSSDeclarations> = Record<'from' | 'to' | string, TDeclarations>
-export type MasterCSSManifestAnimations<TDeclarations = MasterCSSManifestCSSDeclarations> = Record<string, MasterCSSManifestKeyframes<TDeclarations>>
-export type MasterCSSManifestAnimationOptions = Record<string, { static?: boolean }>
+export type StetCSSManifestKeyframes<TDeclarations = StetCSSManifestCSSDeclarations> = Record<'from' | 'to' | string, TDeclarations>
+export type StetCSSManifestAnimations<TDeclarations = StetCSSManifestCSSDeclarations> = Record<string, StetCSSManifestKeyframes<TDeclarations>>
+export type StetCSSManifestAnimationOptions = Record<string, { static?: boolean }>
 
-export interface MasterCSSManifestVariantBranch {
+export interface StetCSSManifestVariantBranch {
   selector?: string
-  selectorNodes?: MasterCSSManifestSelectorNode[]
+  selectorNodes?: StetCSSManifestSelectorNode[]
   conditions?: string[]
-  conditionNodes?: MasterCSSManifestCondition[]
-  layer?: MasterCSSManifestUtilityLayerName
+  conditionNodes?: StetCSSManifestCondition[]
+  layer?: StetCSSManifestUtilityLayerName
 }
 
-export interface MasterCSSManifestVariant {
-  token: MasterCSSManifestVariantToken
-  branches: MasterCSSManifestVariantBranch[]
+export interface StetCSSManifestVariant {
+  token: StetCSSManifestVariantToken
+  branches: StetCSSManifestVariantBranch[]
 }
 
-export type MasterCSSManifestVariants = MasterCSSManifestVariant[]
+export type StetCSSManifestVariants = StetCSSManifestVariant[]
 
-export type MasterCSSManifestUtilityMatcher =
+export type StetCSSManifestUtilityMatcher =
   | { type: 'static'; name: string }
   | { type: 'pattern'; prefix: string; values: string[]; valueMap?: Record<string, string> }
   | { type: 'key'; keys: string[] }
-  | { type: 'variable'; keys: string[]; segments?: MasterCSSManifestUtilityMatcherValueSegments }
-  | { type: 'value'; keys: string[]; segments?: MasterCSSManifestUtilityMatcherValueSegments }
+  | { type: 'variable'; keys: string[]; segments?: StetCSSManifestUtilityMatcherValueSegments }
+  | { type: 'value'; keys: string[]; segments?: StetCSSManifestUtilityMatcherValueSegments }
 
-export type MasterCSSManifestVariableAlias = [key: string, name: string]
-export type MasterCSSManifestVariableAliasSet = MasterCSSManifestVariableAlias[]
+export type StetCSSManifestVariableAlias = [key: string, name: string]
+export type StetCSSManifestVariableAliasSet = StetCSSManifestVariableAlias[]
 
-export type MasterCSSManifestUtilityEmit =
+export type StetCSSManifestUtilityEmit =
   | { type: 'declarations'; declarations: string[] }
-  | { type: 'template'; declarations: MasterCSSManifestCSSDeclarations }
+  | { type: 'template'; declarations: StetCSSManifestCSSDeclarations }
   | { type: 'property'; property: string }
-  | { type: 'static'; rules: MasterCSSManifestUtilityRule[] }
+  | { type: 'static'; rules: StetCSSManifestUtilityRule[] }
 
-export interface MasterCSSManifestUtilityRule<TDeclarations = MasterCSSManifestCSSDeclarations> {
+export interface StetCSSManifestUtilityRule<TDeclarations = StetCSSManifestCSSDeclarations> {
   declarations: TDeclarations
   conditions?: string[]
   selector?: string
 }
 
-export interface MasterCSSManifestUtility {
+export interface StetCSSManifestUtility {
   id: string
   name?: string
   type: UtilityType
   order?: number
-  layer?: MasterCSSManifestUtilityLayerName
+  layer?: StetCSSManifestUtilityLayerName
   key?: string
   subkey?: string
   keys?: string[]
   aliasGroups?: string[]
-  kind?: MasterCSSManifestUtilityKind
+  kind?: StetCSSManifestUtilityKind
   namespaces?: string[]
   implicitNamespace?: boolean
   separators?: string[]
   conditions?: string[]
-  variableAliases?: MasterCSSManifestVariableAliasSet
+  variableAliases?: StetCSSManifestVariableAliasSet
   variableAliasRefs?: string[]
-  emit: MasterCSSManifestUtilityEmit
-  matchers: MasterCSSManifestUtilityMatcher[]
+  emit: StetCSSManifestUtilityEmit
+  matchers: StetCSSManifestUtilityMatcher[]
   debug?: Record<string, unknown>
 }
 
-export type MasterCSSManifestUtilities = MasterCSSManifestUtility[]
+export type StetCSSManifestUtilities = StetCSSManifestUtility[]
 
-export interface MasterCSSManifest {
+export interface StetCSSManifest {
   /**
-   * MasterCSSManifest IR schema/codec version.
+   * StetCSSManifest IR schema/codec version.
    * This is not a legacy Config compatibility marker; engines must reject
    * unsupported manifest versions instead of migrating authoring APIs at runtime.
    */
   version: 1
-  settings?: MasterCSSManifestSettings
-  variables?: MasterCSSManifestVariables
-  animations?: MasterCSSManifestAnimations
-  animationOptions?: MasterCSSManifestAnimationOptions
-  variants?: MasterCSSManifestVariants
-  conditions?: MasterCSSManifestConditions
-  breakpointConditions?: MasterCSSManifestConditions
-  containerConditions?: MasterCSSManifestConditions
-  selectors?: MasterCSSManifestSelectors
-  utilities?: MasterCSSManifestUtilities
+  settings?: StetCSSManifestSettings
+  variables?: StetCSSManifestVariables
+  animations?: StetCSSManifestAnimations
+  animationOptions?: StetCSSManifestAnimationOptions
+  variants?: StetCSSManifestVariants
+  conditions?: StetCSSManifestConditions
+  breakpointConditions?: StetCSSManifestConditions
+  containerConditions?: StetCSSManifestConditions
+  selectors?: StetCSSManifestSelectors
+  utilities?: StetCSSManifestUtilities
   debug?: Record<string, unknown>
 }
 
-export function getMasterCSSManifestVariableName(namespace: string, variable: Pick<MasterCSSManifestVariable, 'key' | 'name'>) {
+export function getStetCSSManifestVariableName(namespace: string, variable: Pick<StetCSSManifestVariable, 'key' | 'name'>) {
   return variable.name || (namespace ? `${namespace}${variable.key ? '-' + variable.key : ''}` : variable.key)
 }
 
-export function flattenMasterCSSManifestVariables(
-  variables: MasterCSSManifestVariables | undefined
-): MasterCSSManifestVariableEntry[] {
-  const flattened: MasterCSSManifestVariableEntry[] = []
+export function flattenStetCSSManifestVariables(
+  variables: StetCSSManifestVariables | undefined
+): StetCSSManifestVariableEntry[] {
+  const flattened: StetCSSManifestVariableEntry[] = []
   for (const [namespace, definitions] of Object.entries(variables || {})) {
     for (const definition of definitions) {
       const type = definition.type || (typeof definition.value === 'number' ? 'number' : 'string')
       flattened.push({
         ...definition,
-        name: getMasterCSSManifestVariableName(namespace, definition),
+        name: getStetCSSManifestVariableName(namespace, definition),
         ...(namespace ? { namespace } : {}),
         type
       })
@@ -205,11 +205,11 @@ export function flattenMasterCSSManifestVariables(
   return flattened
 }
 
-export function groupMasterCSSManifestVariables(
-  variables: readonly MasterCSSManifestVariable[] | undefined
-): MasterCSSManifestVariables | undefined {
+export function groupStetCSSManifestVariables(
+  variables: readonly StetCSSManifestVariable[] | undefined
+): StetCSSManifestVariables | undefined {
   if (!variables?.length) return
-  const grouped: MasterCSSManifestVariables = {}
+  const grouped: StetCSSManifestVariables = {}
   for (const variable of variables) {
     const namespace = variable.namespace || ''
     const group = grouped[namespace] ||= []

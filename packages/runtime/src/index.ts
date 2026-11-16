@@ -5,5 +5,5 @@ export { default as RuntimeUtilityLayer } from './utility-layer'
 
 export type { CSSRuntimeDecoratorOptions, CSSRuntimeOptions } from './css-runtime'
 export type { MasterCSSEmittedGlobals } from '@stet-css/engine'
-export type { MasterCSSManifest } from '@stet-css/schema/manifest'
+export type { StetCSSManifest } from '@stet-css/schema/manifest'
 export * from './utility-layer'

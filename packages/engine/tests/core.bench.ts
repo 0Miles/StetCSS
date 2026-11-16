@@ -1,11 +1,11 @@
 import { bench, describe } from 'vitest'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import UtilityType from '@stet-css/schema/utility-type'
 import { MasterCSS } from '../src'
 import { compileManifest } from '../src/compile-manifest'
 
-const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
+const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
 const options = {
   nativeDeclarationMatcher: () => true
 }
@@ -40,7 +40,7 @@ const benchOptions = {
 
 let sink = 0
 
-function createPatternBenchmarkManifest(separator: '-' | '_'): MasterCSSManifest {
+function createPatternBenchmarkManifest(separator: '-' | '_'): StetCSSManifest {
   const utilities = Array.from({ length: 100 }, (_, index) => ({
     id: `icon-${index}<left|right>`,
     name: `icon-${index}<left|right>`,

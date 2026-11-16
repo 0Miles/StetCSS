@@ -16,12 +16,12 @@ import type { SelectorNode } from './utils/parse-selector'
 import type { MasterCSSEmittedGlobals } from './emitted-globals'
 import { isNativeCSSShorthandProperty } from '@stet-css/schema/native-css-shorthand'
 import type {
-  MasterCSSManifest,
-  MasterCSSManifestAnimations,
-  MasterCSSManifestUtilityLayerName,
-  MasterCSSManifestUtilityMatcher,
-  MasterCSSManifestVariantBranch,
-  MasterCSSManifestVariantToken
+  StetCSSManifest,
+  StetCSSManifestAnimations,
+  StetCSSManifestUtilityLayerName,
+  StetCSSManifestUtilityMatcher,
+  StetCSSManifestVariantBranch,
+  StetCSSManifestVariantToken
 } from '@stet-css/schema/manifest'
 import {
   cloneCompiledSettings,
@@ -46,7 +46,7 @@ export interface MasterCSSOptions {
 }
 
 export interface MasterCSSCreateOptions extends MasterCSSOptions {
-  manifest: MasterCSSManifest
+  manifest: StetCSSManifest
   emittedGlobals?: MasterCSSEmittedGlobals
 }
 
@@ -138,7 +138,7 @@ function hasTopLevelValueSeparator(value: string) {
   return false
 }
 
-function matchesValueSegmentPolicy(value: string, matcher: MasterCSSManifestUtilityMatcher) {
+function matchesValueSegmentPolicy(value: string, matcher: StetCSSManifestUtilityMatcher) {
   return (matcher.type !== 'variable' && matcher.type !== 'value')
     || matcher.segments === 'multiple'
     || !hasTopLevelValueSeparator(value)
@@ -187,10 +187,10 @@ export default class MasterCSS {
   variables = new Map<string, Variable>()
   modes: string[] = []
   conditions = new Map<string, Condition>()
-  variants = new Map<MasterCSSManifestVariantToken, MasterCSSManifestVariantBranch[]>()
+  variants = new Map<StetCSSManifestVariantToken, StetCSSManifestVariantBranch[]>()
   breakpointConditions = new Map<string, Condition>()
   containerConditions = new Map<string, Condition>()
-  animations = new Map<string, MasterCSSManifestAnimations[string]>()
+  animations = new Map<string, StetCSSManifestAnimations[string]>()
   protected readonly staticVariableTokens = new Set<string>()
   protected readonly staticAnimationTokens = new Set<string>()
   readonly emittedGlobals: Required<MasterCSSEmittedGlobals> = {
@@ -203,7 +203,7 @@ export default class MasterCSS {
   protected nativeValueNamespaceUtilities = new Map<string, CompiledUtility>()
   protected keyAliases = new Map<string, string>()
 
-  manifest!: MasterCSSManifest
+  manifest!: StetCSSManifest
 
   static create(options: MasterCSSCreateOptions) {
     const { manifest, emittedGlobals, ...engineOptions } = options
@@ -211,7 +211,7 @@ export default class MasterCSS {
   }
 
   protected constructor(
-    manifest: MasterCSSManifest,
+    manifest: StetCSSManifest,
     emittedGlobals?: MasterCSSEmittedGlobals,
     protected readonly options: MasterCSSOptions = {}
   ) {
@@ -228,7 +228,7 @@ export default class MasterCSS {
       .map(({ text }) => text).join('')
   }
 
-  getUtilityLayer(layerName: MasterCSSManifestUtilityLayerName = 'utilities') {
+  getUtilityLayer(layerName: StetCSSManifestUtilityLayerName = 'utilities') {
     switch (layerName) {
       case 'base':
         return this.baseLayer
@@ -247,7 +247,7 @@ export default class MasterCSS {
     return [this.baseLayer, this.defaultsLayer, this.componentsLayer, this.utilitiesLayer]
   }
 
-  loadManifest(manifest: MasterCSSManifest) {
+  loadManifest(manifest: StetCSSManifest) {
     const compiledManifest = getCompiledManifest(manifest)
     this.manifest = compiledManifest.manifest
     this.settings = cloneCompiledSettings(compiledManifest.settings)
@@ -358,7 +358,7 @@ export default class MasterCSS {
     return this
   }
 
-  resolveVariant(token: MasterCSSManifestVariantToken) {
+  resolveVariant(token: StetCSSManifestVariantToken) {
     return this.variants.get(token)
   }
 
@@ -371,7 +371,7 @@ export default class MasterCSS {
    * @param className
    * @returns css text
    */
-  private matchesMatcher(className: string, utility: CompiledUtility, matcher: MasterCSSManifestUtilityMatcher) {
+  private matchesMatcher(className: string, utility: CompiledUtility, matcher: StetCSSManifestUtilityMatcher) {
     switch (matcher.type) {
       case 'static':
         return matchesStaticUtility(className, matcher.name)
@@ -416,7 +416,7 @@ export default class MasterCSS {
     }
   }
 
-  private matchesUtility(className: string, utility: CompiledUtility, matcherType?: MasterCSSManifestUtilityMatcher['type']) {
+  private matchesUtility(className: string, utility: CompiledUtility, matcherType?: StetCSSManifestUtilityMatcher['type']) {
     return utility.matchers.some((matcher) =>
       (!matcherType || matcher.type === matcherType) && this.matchesMatcher(className, utility, matcher)
     )
@@ -926,7 +926,7 @@ export default class MasterCSS {
    * Create utility from given selector text
    * @param selectorText
    */
-  createRulesFromSelectorText(selectorText: string, layerName?: MasterCSSManifestUtilityLayerName) {
+  createRulesFromSelectorText(selectorText: string, layerName?: StetCSSManifestUtilityLayerName) {
     const selectorTextSplits = selectorText.split(' ')
     const stopChars = /[.#\[!\*>+~:,\s]/
     for (let i = 0; i < selectorTextSplits.length; i++) {
@@ -962,7 +962,7 @@ export default class MasterCSS {
   /**
    * 根據蒐集到的所有 DOM class 重新 create
    */
-  refresh(manifest: MasterCSSManifest = this.manifest) {
+  refresh(manifest: StetCSSManifest = this.manifest) {
     this.reset()
     this.loadManifest(manifest)
     this.applyEmittedGlobalsCounts(this.emittedGlobals)

@@ -1,7 +1,7 @@
-import type { MasterCSSManifest } from './manifest.js'
+import type { StetCSSManifest } from './manifest.js'
 
-type ManifestUtility = NonNullable<MasterCSSManifest['utilities']>[number]
-type ManifestVariables = NonNullable<MasterCSSManifest['variables']>
+type ManifestUtility = NonNullable<StetCSSManifest['utilities']>[number]
+type ManifestVariables = NonNullable<StetCSSManifest['variables']>
 type ManifestVariable = ManifestVariables[string][number]
 
 function getVariableName(namespace: string, variable: Pick<ManifestVariable, 'key' | 'name'>) {
@@ -54,7 +54,7 @@ function normalizeUtilityForJSON(utility: ManifestUtility): ManifestUtility {
   }
 }
 
-export function normalizeMasterCSSManifestForJSON(manifest: MasterCSSManifest): MasterCSSManifest {
+export function normalizeStetCSSManifestForJSON(manifest: StetCSSManifest): StetCSSManifest {
   return {
     ...manifest,
     ...(manifest.variables ? { variables: normalizeVariablesForJSON(manifest.variables) } : {}),
@@ -62,6 +62,6 @@ export function normalizeMasterCSSManifestForJSON(manifest: MasterCSSManifest): 
   }
 }
 
-export function stringifyMasterCSSManifestJSON(manifest: MasterCSSManifest): string {
-  return JSON.stringify(normalizeMasterCSSManifestForJSON(manifest))
+export function stringifyStetCSSManifestJSON(manifest: StetCSSManifest): string {
+  return JSON.stringify(normalizeStetCSSManifestForJSON(manifest))
 }

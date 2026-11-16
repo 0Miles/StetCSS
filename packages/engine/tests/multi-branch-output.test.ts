@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest'
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import { MasterCSS } from '../src'
 import { cloneManifest } from './helpers/css-tester'
 
-type ModeTrigger = NonNullable<MasterCSSManifest['settings']>['modeTrigger']
+type ModeTrigger = NonNullable<StetCSSManifest['settings']>['modeTrigger']
 
 const createCSS = (modeTrigger: ModeTrigger) => {
   const manifest = cloneManifest()

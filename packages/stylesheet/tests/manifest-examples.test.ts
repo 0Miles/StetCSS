@@ -5,7 +5,7 @@ import { describe, expect, test } from 'vitest'
 import { compileCSSManifestFile } from '@stet-css/compiler'
 import { extractHTMLClasses } from '@stet-css/source'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import { renderCompiledManifestCSS } from '../src/render'
 
 /**
@@ -15,7 +15,7 @@ import { renderCompiledManifestCSS } from '../src/render'
  *
  * Guards: CSS generated for the documented manifest examples drifts from the published output.
  */
-const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
+const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
 const fixturesDirectory = join(dirname(fileURLToPath(import.meta.url)), 'fixtures/manifest-examples')
 const fixtureNames = readdirSync(fixturesDirectory).sort()
 

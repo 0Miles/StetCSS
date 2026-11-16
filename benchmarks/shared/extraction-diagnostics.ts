@@ -35,7 +35,7 @@ import {
   type StylesheetSourceOptions
 } from '@stet-css/stylesheet/directives'
 import { createCSSWithNativeDeclarations } from '@stet-css/validator/native-declaration'
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import fg from 'fast-glob'
 import { getStaticFixtureSource } from '../fixtures/static'
 import { hashBytes, summarizeBytes } from './bytes'
@@ -120,7 +120,7 @@ const DEFAULT_PRESET_SOURCE_FILES = [
 ]
 
 interface DefaultMasterCSSPackageArtifact {
-  manifest: MasterCSSManifest
+  manifest: StetCSSManifest
   nativeCSS: string
 }
 
@@ -381,7 +381,7 @@ function readDefaultMasterCSSPackageArtifact(projectDir: string, recorder: Diagn
   recorder.setCount('master-package-shortcut-hit-count', 1)
   recorder.setCount('master-package-shortcut-fallback-count', 0)
   return recorder.timeSync('master-package-artifact-read-ms', () => ({
-    manifest: JSON.parse(readFileSync(artifactFiles.manifestFile, 'utf8')) as MasterCSSManifest,
+    manifest: JSON.parse(readFileSync(artifactFiles.manifestFile, 'utf8')) as StetCSSManifest,
     nativeCSS: readFileSync(artifactFiles.nativeCSSFile, 'utf8')
   }))
 }

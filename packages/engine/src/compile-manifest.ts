@@ -2,17 +2,17 @@ import { type PropertiesHyphen } from 'csstype'
 import type { Variable } from '@stet-css/schema/css-syntax'
 import { isNativeCSSShorthandProperty } from '@stet-css/schema/native-css-shorthand'
 import type {
-  MasterCSSManifest,
-  MasterCSSManifestAnimations,
-  MasterCSSManifestConditions,
-  MasterCSSManifestSettings,
-  MasterCSSManifestUtility,
-  MasterCSSManifestUtilityMatcher,
-  MasterCSSManifestVariableAliasSet,
-  MasterCSSManifestVariantBranch,
-  MasterCSSManifestVariantToken
+  StetCSSManifest,
+  StetCSSManifestAnimations,
+  StetCSSManifestConditions,
+  StetCSSManifestSettings,
+  StetCSSManifestUtility,
+  StetCSSManifestUtilityMatcher,
+  StetCSSManifestVariableAliasSet,
+  StetCSSManifestVariantBranch,
+  StetCSSManifestVariantToken
 } from '@stet-css/schema/manifest'
-import { flattenMasterCSSManifestVariables } from '@stet-css/schema/manifest'
+import { flattenStetCSSManifestVariables } from '@stet-css/schema/manifest'
 import UtilityType from '@stet-css/schema/utility-type'
 import { collectCSSVariableReferences } from '@stet-css/lexer'
 import { MATCH_NAME_BOUNDARY } from './common'
@@ -24,17 +24,17 @@ import { PRESET_MODES } from './utils/undeclared-mode'
 import type { Condition } from './utils/parse-condition'
 import type { SelectorNode } from './utils/parse-selector'
 
-export type CompiledUtility = Omit<MasterCSSManifestUtility, 'emit' | 'name' | 'order'> & {
+export type CompiledUtility = Omit<StetCSSManifestUtility, 'emit' | 'name' | 'order'> & {
   name: string
   order: number
-  emit: MasterCSSManifestUtility['emit'] | { type: 'group' }
+  emit: StetCSSManifestUtility['emit'] | { type: 'group' }
   variables?: Map<string, Variable>
 }
 
-export type EngineSettings = MasterCSSManifestSettings & {
+export type EngineSettings = StetCSSManifestSettings & {
   baseUnit: string
-  defaultMode: NonNullable<MasterCSSManifestSettings['defaultMode']>
-  modeTrigger: NonNullable<MasterCSSManifestSettings['modeTrigger']>
+  defaultMode: NonNullable<StetCSSManifestSettings['defaultMode']>
+  modeTrigger: NonNullable<StetCSSManifestSettings['modeTrigger']>
   modes: string[]
 }
 
@@ -46,7 +46,7 @@ const DEFAULT_SETTINGS: EngineSettings = {
 }
 
 export interface CompiledManifest {
-  manifest: MasterCSSManifest
+  manifest: StetCSSManifest
   settings: EngineSettings
   definedUtilities: CompiledUtility[]
   variableMatcherUtilities: CompiledUtility[]
@@ -63,27 +63,27 @@ export interface CompiledManifest {
   variables: Map<string, Variable>
   modes: string[]
   conditions: Map<string, Condition>
-  variants: Map<MasterCSSManifestVariantToken, MasterCSSManifestVariantBranch[]>
+  variants: Map<StetCSSManifestVariantToken, StetCSSManifestVariantBranch[]>
   breakpointConditions: Map<string, Condition>
   containerConditions: Map<string, Condition>
-  animations: Map<string, MasterCSSManifestAnimations[string]>
+  animations: Map<string, StetCSSManifestAnimations[string]>
   nativeDeclarationFastPathBlockedProperties: Set<string>
   nativeValueNamespaceUtilities: Map<string, CompiledUtility>
   keyAliases: Map<string, string>
 }
 
 // Manifests are compiled by object identity. Mutating a manifest after first use is unsupported.
-const compiledManifestCache = new WeakMap<MasterCSSManifest, CompiledManifest>()
+const compiledManifestCache = new WeakMap<StetCSSManifest, CompiledManifest>()
 
-function assertMasterCSSManifest(manifest: MasterCSSManifest): asserts manifest is MasterCSSManifest {
+function assertMasterCSSManifest(manifest: StetCSSManifest): asserts manifest is StetCSSManifest {
   if (!manifest || manifest.version !== 1) {
-    throw new TypeError('Unsupported MasterCSSManifest version. Expected version 1.')
+    throw new TypeError('Unsupported StetCSSManifest version. Expected version 1.')
   }
   if (Array.isArray((manifest as { variables?: unknown }).variables)) {
-    throw new TypeError('Unsupported MasterCSSManifest variables format. Expected namespace-grouped variables.')
+    throw new TypeError('Unsupported StetCSSManifest variables format. Expected namespace-grouped variables.')
   }
   if ('utilityBuckets' in manifest) {
-    throw new TypeError('Unsupported MasterCSSManifest utilityBuckets field. Matcher indexes are engine-derived.')
+    throw new TypeError('Unsupported StetCSSManifest utilityBuckets field. Matcher indexes are engine-derived.')
   }
 }
 
@@ -206,7 +206,7 @@ function canIndexStaticOnlyUtilities(utilities: CompiledUtility[]) {
   )
 }
 
-function createCompiledSettings(manifest: MasterCSSManifest): EngineSettings {
+function createCompiledSettings(manifest: StetCSSManifest): EngineSettings {
   if (manifest.settings?.baseUnit !== undefined) assertBaseUnit(manifest.settings.baseUnit)
   return {
     ...DEFAULT_SETTINGS,
@@ -232,7 +232,7 @@ function compileKeyAliases() {
   return keyAliases
 }
 
-type ManifestVariableEntry = ReturnType<typeof flattenMasterCSSManifestVariables>[number]
+type ManifestVariableEntry = ReturnType<typeof flattenStetCSSManifestVariables>[number]
 
 /**
  * Once a manifest declares its modes, values for any other mode (the preset light and dark values
@@ -240,7 +240,7 @@ type ManifestVariableEntry = ReturnType<typeof flattenMasterCSSManifestVariables
  * that then has no value at all takes the value of the default mode, else light, as its plain
  * value, so preset tokens such as `--color-red` keep resolving.
  */
-function scopeVariableToDeclaredModes(definition: ManifestVariableEntry, settings: MasterCSSManifest['settings']): ManifestVariableEntry {
+function scopeVariableToDeclaredModes(definition: ManifestVariableEntry, settings: StetCSSManifest['settings']): ManifestVariableEntry {
   const declaredModes = settings?.modes
   if (!definition.modes || !declaredModes) return definition
   const entries = Object.entries(definition.modes)
@@ -266,9 +266,9 @@ function scopeVariableToDeclaredModes(definition: ManifestVariableEntry, setting
   return scoped
 }
 
-function compileVariables(manifest: MasterCSSManifest) {
+function compileVariables(manifest: StetCSSManifest) {
   const variables = new Map<string, Variable>()
-  for (const entry of flattenMasterCSSManifestVariables(manifest.variables)) {
+  for (const entry of flattenStetCSSManifestVariables(manifest.variables)) {
     const definition = scopeVariableToDeclaredModes(entry, manifest.settings)
     if (!definition.name || !definition.type || definition.value === false) continue
     variables.set(definition.name, {
@@ -289,11 +289,11 @@ function compileVariables(manifest: MasterCSSManifest) {
   return variables
 }
 
-function compileAnimations(manifest: MasterCSSManifest) {
-  const animations = new Map<string, MasterCSSManifestAnimations[string]>()
+function compileAnimations(manifest: StetCSSManifest) {
+  const animations = new Map<string, StetCSSManifestAnimations[string]>()
   if (!manifest.animations) return animations
   for (const animationName in manifest.animations) {
-    const eachAnimation: MasterCSSManifestAnimations[string] = {}
+    const eachAnimation: StetCSSManifestAnimations[string] = {}
     animations.set(animationName, eachAnimation)
     const eachKeyframes = manifest.animations[animationName]
     for (const eachKeyframeValue in eachKeyframes) {
@@ -307,7 +307,7 @@ function compileAnimations(manifest: MasterCSSManifest) {
   return animations
 }
 
-function compileConditionMap(conditions: MasterCSSManifestConditions | undefined) {
+function compileConditionMap(conditions: StetCSSManifestConditions | undefined) {
   const target = new Map<string, Condition>()
   if (!conditions) return target
   for (const [name, condition] of Object.entries(conditions)) {
@@ -319,7 +319,7 @@ function compileConditionMap(conditions: MasterCSSManifestConditions | undefined
   return target
 }
 
-function compileVariantAliases(manifest: MasterCSSManifest) {
+function compileVariantAliases(manifest: StetCSSManifest) {
   const selectors = new Map<string, SelectorNode[]>()
   for (const [name, nodes] of Object.entries(builtinSelectorAliases)) {
     selectors.set(name, cloneSelectorNodes(nodes))
@@ -330,7 +330,7 @@ function compileVariantAliases(manifest: MasterCSSManifest) {
     }
   }
 
-  const variants = new Map<MasterCSSManifestVariantToken, MasterCSSManifestVariantBranch[]>()
+  const variants = new Map<StetCSSManifestVariantToken, StetCSSManifestVariantBranch[]>()
   for (const variant of manifest.variants || []) {
     variants.set(variant.token, variant.branches.map((branch) => ({
       ...branch,
@@ -353,13 +353,13 @@ function cloneSelectorNodes(nodes: SelectorNode[]): SelectorNode[] {
 }
 
 function createVariableAliasRefResolver(variables: Map<string, Variable>) {
-  const aliasRefCache = new Map<string, MasterCSSManifestVariableAliasSet>()
-  return (ref: string): MasterCSSManifestVariableAliasSet => {
+  const aliasRefCache = new Map<string, StetCSSManifestVariableAliasSet>()
+  return (ref: string): StetCSSManifestVariableAliasSet => {
     const cached = aliasRefCache.get(ref)
     if (cached) return cached
 
     const namespace = ref[0] === '=' || ref[0] === '~' ? ref.slice(1) : ''
-    const aliases: MasterCSSManifestVariableAliasSet = []
+    const aliases: StetCSSManifestVariableAliasSet = []
     const usedKeys = new Set<string>()
     if (namespace) {
       for (const variable of variables.values()) {
@@ -375,9 +375,9 @@ function createVariableAliasRefResolver(variables: Map<string, Variable>) {
 }
 
 function compileUtilityDefinition(
-  utility: MasterCSSManifestUtility,
+  utility: StetCSSManifestUtility,
   variables: Map<string, Variable>,
-  resolveAliasRef: (ref: string) => MasterCSSManifestVariableAliasSet,
+  resolveAliasRef: (ref: string) => StetCSSManifestVariableAliasSet,
   index = 0,
   count = 1
 ): CompiledUtility {
@@ -386,7 +386,7 @@ function compileUtilityDefinition(
     name: utility.name || utility.id,
     order: utility.order ?? count - index - 1,
     layer: utility.layer || 'utilities',
-    matchers: utility.matchers.map((matcher: MasterCSSManifestUtilityMatcher) => ({ ...matcher }))
+    matchers: utility.matchers.map((matcher: StetCSSManifestUtilityMatcher) => ({ ...matcher }))
   } as CompiledUtility
 
   const variableAliases = [
@@ -409,7 +409,7 @@ function compileUtilityDefinition(
 function createNativeValueNamespaceUtility(
   property: string,
   namespace: Pick<MasterCSSBuiltinNativeValueNamespace, 'variableAliasRefs'>
-): MasterCSSManifestUtility {
+): StetCSSManifestUtility {
   return {
     id: property,
     name: property,
@@ -431,7 +431,7 @@ function createNativeValueNamespaceUtility(
 
 function compileNativeValueNamespaces(
   variables: Map<string, Variable>,
-  resolveAliasRef: (ref: string) => MasterCSSManifestVariableAliasSet
+  resolveAliasRef: (ref: string) => StetCSSManifestVariableAliasSet
 ) {
   const nativeValueNamespaceUtilities = new Map<string, CompiledUtility>()
   for (const namespace of builtinNativeValueNamespaces) {
@@ -501,9 +501,9 @@ function registerUtilityMatcherBuckets(
 }
 
 function compileUtilities(
-  manifest: MasterCSSManifest,
+  manifest: StetCSSManifest,
   variables: Map<string, Variable>,
-  resolveAliasRef: (ref: string) => MasterCSSManifestVariableAliasSet
+  resolveAliasRef: (ref: string) => StetCSSManifestVariableAliasSet
 ) {
   const definedUtilities: CompiledUtility[] = []
   const variableMatcherUtilities: CompiledUtility[] = []
@@ -548,7 +548,7 @@ function compileUtilities(
   }
 }
 
-export function compileManifest(manifest: MasterCSSManifest): CompiledManifest {
+export function compileManifest(manifest: StetCSSManifest): CompiledManifest {
   assertMasterCSSManifest(manifest)
   const settings = createCompiledSettings(manifest)
   const variables = compileVariables(manifest)
@@ -586,7 +586,7 @@ export function compileManifest(manifest: MasterCSSManifest): CompiledManifest {
   }
 }
 
-export function getCompiledManifest(manifest: MasterCSSManifest) {
+export function getCompiledManifest(manifest: StetCSSManifest) {
   const cached = compiledManifestCache.get(manifest)
   if (cached) return cached
   const compiledManifest = compileManifest(manifest)

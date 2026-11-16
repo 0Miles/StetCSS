@@ -4,11 +4,11 @@ import {
   type CompileCSSManifestResult
 } from '@stet-css/compiler/browser'
 import type { MasterCSSEmittedGlobals } from '@stet-css/core'
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import { renderCompiledManifestCSS } from './render'
 
 export interface CompileBrowserStyleCSSOptions {
-  baseManifest?: MasterCSSManifest
+  baseManifest?: StetCSSManifest
   classNames?: Iterable<string>
   from?: string
   preserveNativeCSS?: boolean
@@ -19,7 +19,7 @@ export interface CompileBrowserStyleCSSResult {
   css: string
   nativeCSS: string
   generatedCSS: string
-  manifest: MasterCSSManifest
+  manifest: StetCSSManifest
   warnings: string[]
   emittedGlobals: Required<MasterCSSEmittedGlobals>
   result: CompileCSSManifestResult

@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
-import { MASTER_CSS_RUNTIME_STYLE_ID } from '@stet-css/schema/runtime-style'
+import { STET_CSS_RUNTIME_STYLE_ID } from '@stet-css/schema/runtime-style'
 import init from './init'
 
 async function waitForRuntimeRemovalFlush(page: Page) {
@@ -762,7 +762,7 @@ test('leaves a style#stet-css already on the page alone and renders its own shee
     style.textContent = text
     document.head.append(style)
     ;(globalThis as any).prerenderedStyle = style
-  }, { runtimeStyleId: MASTER_CSS_RUNTIME_STYLE_ID, text: prerenderedText })
+  }, { runtimeStyleId: STET_CSS_RUNTIME_STYLE_ID, text: prerenderedText })
   await init(page)
 
   const result = await page.evaluate(() => {

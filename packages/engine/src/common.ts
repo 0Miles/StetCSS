@@ -1,5 +1,5 @@
 import { MASTER_CSS_VALUE_UNIT_PATTERN, MASTER_CSS_VALUE_UNITS } from '@stet-css/lexer'
-import type { MasterCSSManifestConditionIdentifier } from '@stet-css/schema/manifest'
+import type { StetCSSManifestConditionIdentifier } from '@stet-css/schema/manifest'
 
 export const VALUE_DELIMITERS = {
   '(': ')',
@@ -37,7 +37,7 @@ export const CONDITION_LOGICAL_OPERATORS = {
 
 }
 // the order is intentional and should not be changed
-export const CONDITION_IDENTIFIERS: MasterCSSManifestConditionIdentifier[] = ['container', 'starting-style', 'supports', 'media', 'layer']
+export const CONDITION_IDENTIFIERS: StetCSSManifestConditionIdentifier[] = ['container', 'starting-style', 'supports', 'media', 'layer']
 export const COMPARISION_OPERATORS = ['>=', '<=', '>', '<', '=']
 export const CONDITION_COMPARABLE_FEATURES = ['width', 'height', 'resolution']
 export const CONDITION_FEATURE_ALIASES = {

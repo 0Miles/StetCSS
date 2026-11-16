@@ -1,7 +1,7 @@
 declare module '*?stet-css-manifest' {
-  import type { MasterCSSManifest } from '@stet-css/engine'
+  import type { StetCSSManifest } from '@stet-css/engine'
 
-  const manifest: MasterCSSManifest
+  const manifest: StetCSSManifest
   export default manifest
 }
 
@@ -9,9 +9,9 @@ declare module 'virtual:stet-utilities.css' {
 }
 
 declare module 'virtual:stet-css-manifest' {
-  import type { MasterCSSManifest } from '@stet-css/engine'
+  import type { StetCSSManifest } from '@stet-css/engine'
 
-  const manifest: MasterCSSManifest
+  const manifest: StetCSSManifest
   export default manifest
 }
 

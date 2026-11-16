@@ -2,8 +2,8 @@ import { writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { MasterCSS } from '@stet-css/engine'
-import { normalizeMasterCSSManifestForJSON, stringifyMasterCSSManifestJSON } from '@stet-css/schema/manifest-json'
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import { normalizeStetCSSManifestForJSON, stringifyStetCSSManifestJSON } from '@stet-css/schema/manifest-json'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const packageRoot = resolve(__dirname, '..')
@@ -24,17 +24,17 @@ function isDefaultSettingValue(value: unknown, defaultValue: unknown) {
   return value === defaultValue
 }
 
-function createDefaultManifestSettings(settings: MasterCSSManifest['settings']): MasterCSSManifest['settings'] {
+function createDefaultManifestSettings(settings: StetCSSManifest['settings']): StetCSSManifest['settings'] {
   if (!settings) return
   const entries = Object.entries(settings).filter(([key, value]) =>
     !isDefaultSettingValue(value, defaultEngineSettings[key as keyof typeof defaultEngineSettings])
   )
-  return entries.length ? Object.fromEntries(entries) as MasterCSSManifest['settings'] : undefined
+  return entries.length ? Object.fromEntries(entries) as StetCSSManifest['settings'] : undefined
 }
 
-export function createDefaultManifest(cssManifest: MasterCSSManifest): MasterCSSManifest {
+export function createDefaultManifest(cssManifest: StetCSSManifest): StetCSSManifest {
   const settings = createDefaultManifestSettings(cssManifest.settings)
-  return normalizeMasterCSSManifestForJSON({
+  return normalizeStetCSSManifestForJSON({
     version: 1,
     ...(settings ? { settings } : {}),
     ...(cssManifest.variables ? { variables: clone(cssManifest.variables) } : {}),
@@ -58,8 +58,8 @@ export function createDefaultNativeCSSFromSourceFile(file = sourceFile) {
   }).directives.nativeCSS
 }
 
-export function createDefaultManifestJSON(manifest: MasterCSSManifest) {
-  return stringifyMasterCSSManifestJSON(manifest)
+export function createDefaultManifestJSON(manifest: StetCSSManifest) {
+  return stringifyStetCSSManifestJSON(manifest)
 }
 
 export function writeDefaultManifest(file = manifestOutputFile) {

@@ -8,7 +8,7 @@ import { collectClassListHighlightTokenItems } from './semantic/tokenize-class'
 import { collectCSSHighlightTokenItems, isCSSSemanticTokenDocument } from './semantic/tokenize-css'
 import { toSemanticTokenItems, type HighlightTokenItem } from './semantic/highlight'
 import type { SemanticTokenItem, SemanticTokenModifier } from './semantic/types'
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 
 export {
   SEMANTIC_TOKEN_MODIFIERS,
@@ -19,7 +19,7 @@ export type { HighlightTokenItem, SemanticTokenItem }
 
 export interface BrowserSemanticTokenOptions {
   css?: MasterCSS
-  manifest?: MasterCSSManifest
+  manifest?: StetCSSManifest
   classAttributes?: string[]
 }
 

@@ -1,5 +1,5 @@
 import { languageSettings, type LanguageSettings } from '@stet-css/language'
-import type { MasterCSSManifest } from '@stet-css/core'
+import type { StetCSSManifest } from '@stet-css/core'
 
 /**
  * @example styles https://regex101.com/r/HLPdsw/1
@@ -59,7 +59,7 @@ export default settings
 export declare interface Settings extends LanguageSettings {
   includedLanguages?: string[]
   exclude?: string[]
-  manifest?: MasterCSSManifest
+  manifest?: StetCSSManifest
   // features
   suggestSyntax?: boolean
   inspectSyntax?: boolean

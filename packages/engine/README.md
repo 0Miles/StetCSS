@@ -10,7 +10,7 @@ npm install @stet-css/engine
 
 ## Responsibility
 
-`@stet-css/engine` executes `MasterCSSManifest` values. It owns class matching, value parsing, selector and at-rule parsing/generation, variable and animation insertion, cascade layers, rule priority sorting, CSS text emission, and built-in key/namespace registries.
+`@stet-css/engine` executes `StetCSSManifest` values. It owns class matching, value parsing, selector and at-rule parsing/generation, variable and animation insertion, cascade layers, rule priority sorting, CSS text emission, and built-in key/namespace registries.
 
 This package does not discover project files, resolve CSS imports, compile CSS directives, or integrate with frameworks.
 

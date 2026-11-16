@@ -1,17 +1,17 @@
 import { expect } from 'vitest'
 import UtilityType from '@stet-css/schema/utility-type'
 import type {
-  MasterCSSManifest,
-  MasterCSSManifestCSSDeclarations,
-  MasterCSSManifestVariable,
-  MasterCSSManifestUtilityLayerName,
-  MasterCSSManifestUtilityRule
+  StetCSSManifest,
+  StetCSSManifestCSSDeclarations,
+  StetCSSManifestVariable,
+  StetCSSManifestUtilityLayerName,
+  StetCSSManifestUtilityRule
 } from '@stet-css/schema/manifest'
-import { flattenMasterCSSManifestVariables, groupMasterCSSManifestVariables } from '@stet-css/schema/manifest'
+import { flattenStetCSSManifestVariables, groupStetCSSManifestVariables } from '@stet-css/schema/manifest'
 import { builtinNativeValueNamespaces, MasterCSS } from '../../src'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 
-const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
+const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
 const nativeFallbackProperties = new Set([
   'animation-direction',
   'animation-fill-mode',
@@ -160,16 +160,16 @@ for (const namespace of builtinNativeValueNamespaces) {
   }
 }
 
-export type SemanticRuleInput = MasterCSSManifestUtilityRule<MasterCSSManifestCSSDeclarations>
+export type SemanticRuleInput = StetCSSManifestUtilityRule<StetCSSManifestCSSDeclarations>
 
 export interface SemanticUtilityInput {
   name: string
-  layer?: MasterCSSManifestUtilityLayerName
+  layer?: StetCSSManifestUtilityLayerName
   rules: SemanticRuleInput[]
 }
 
-export function cloneManifest(manifest: MasterCSSManifest = defaultManifest): MasterCSSManifest {
-  return JSON.parse(JSON.stringify(manifest)) as MasterCSSManifest
+export function cloneManifest(manifest: StetCSSManifest = defaultManifest): StetCSSManifest {
+  return JSON.parse(JSON.stringify(manifest)) as StetCSSManifest
 }
 
 export function createDefaultCSS() {
@@ -179,21 +179,21 @@ export function createDefaultCSS() {
   })
 }
 
-export function createManifestWithVariables(variables: MasterCSSManifestVariable[], baseManifest = defaultManifest): MasterCSSManifest {
+export function createManifestWithVariables(variables: StetCSSManifestVariable[], baseManifest = defaultManifest): StetCSSManifest {
   const manifest = cloneManifest(baseManifest)
-  manifest.variables = groupMasterCSSManifestVariables([
-    ...flattenMasterCSSManifestVariables(manifest.variables),
+  manifest.variables = groupStetCSSManifestVariables([
+    ...flattenStetCSSManifestVariables(manifest.variables),
     ...variables
   ])
 
   return manifest
 }
 
-export function createCSSWithVariables(variables: MasterCSSManifestVariable[], baseManifest = defaultManifest) {
+export function createCSSWithVariables(variables: StetCSSManifestVariable[], baseManifest = defaultManifest) {
   return MasterCSS.create({ manifest: createManifestWithVariables(variables, baseManifest) })
 }
 
-export function createManifestWithSemanticUtilities(utilities: SemanticUtilityInput[], baseManifest = defaultManifest): MasterCSSManifest {
+export function createManifestWithSemanticUtilities(utilities: SemanticUtilityInput[], baseManifest = defaultManifest): StetCSSManifest {
   const manifest = cloneManifest(baseManifest)
   manifest.utilities ??= []
 

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { MasterCSS } from '../src'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import {
   cloneManifest,
   createCSSWithSemanticUtilities,
@@ -11,7 +11,7 @@ import {
   expectLayerText
 } from './helpers/css-tester'
 
-const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
+const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
 
 describe.concurrent('migrated cascade and layer parity', () => {
   test('keeps on-demand insertion lifecycle for utilities variables and semantic components', () => {

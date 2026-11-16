@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import { compileBrowserStyleCSS } from '../src/browser'
 
-const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
+const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
 
 describe('@stet-css/stylesheet/browser', () => {
   it('renders class names with the compiled manifest', async () => {

@@ -3,8 +3,8 @@ import { existsSync, readFileSync, realpathSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, extname, isAbsolute, resolve } from 'node:path'
 import { transform } from 'lightningcss'
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
-import { stringifyMasterCSSManifestJSON } from '@stet-css/schema/manifest-json'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
+import { stringifyStetCSSManifestJSON } from '@stet-css/schema/manifest-json'
 import type { CSSDirectiveReference } from '@stet-css/schema/css-directives'
 import { collectCSSDirectiveRanges } from '@stet-css/lexer'
 import { createCSSImportGraphReader, type CSSImportGraphReader } from './css-import-graph-reader'
@@ -80,10 +80,10 @@ function collectThemeModeNames(source: string, target: Set<string>) {
 }
 
 export type CompileCSSManifestOptions = CompileCSSFileOptions & {
-  baseManifest?: MasterCSSManifest
+  baseManifest?: StetCSSManifest
 }
 export type CompileCSSManifestSourceOptions = CompileCSSOptions & {
-  baseManifest?: MasterCSSManifest
+  baseManifest?: StetCSSManifest
   root?: string
 }
 
@@ -92,8 +92,8 @@ type CompileCSSManifestInternalOptions = CompileCSSManifestSourceOptions & {
 }
 
 export interface CompileCSSManifestResult extends Omit<CompileCSSResult, 'manifestInput'> {
-  manifest: MasterCSSManifest
-  resolutionManifest: MasterCSSManifest
+  manifest: StetCSSManifest
+  resolutionManifest: StetCSSManifest
   directives: CompileCSSResult
 }
 
@@ -588,7 +588,7 @@ export function compileProjectManifest(entries: string[], options: CompileCSSMan
     warnings: [],
     dependencies: []
   }
-  let manifest: MasterCSSManifest | undefined = options.baseManifest
+  let manifest: StetCSSManifest | undefined = options.baseManifest
   for (const entry of entries) {
     const { result, manifestResult } = compileCSSManifestEntry(entry, {
       ...options,
@@ -624,10 +624,10 @@ export function compileProjectManifest(entries: string[], options: CompileCSSMan
   }
 }
 
-function toManifestJSONResult<T extends { manifest: MasterCSSManifest }>(result: T): T & { json: string } {
+function toManifestJSONResult<T extends { manifest: StetCSSManifest }>(result: T): T & { json: string } {
   return {
     ...result,
-    json: stringifyMasterCSSManifestJSON(result.manifest)
+    json: stringifyStetCSSManifestJSON(result.manifest)
   }
 }
 

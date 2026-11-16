@@ -1,8 +1,8 @@
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
-import { stringifyMasterCSSManifestJSON } from '@stet-css/schema/manifest-json'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
+import { stringifyStetCSSManifestJSON } from '@stet-css/schema/manifest-json'
 import { MANIFEST_ASSET_FILE, MANIFEST_MODULE_FILE } from './manifest-facade'
 
-export type { MasterCSSManifest }
+export type { StetCSSManifest }
 
 export const VIRTUAL_MANIFEST_ID = 'virtual:stet-css-manifest'
 export const MASTER_CSS_MANIFEST_QUERY = '?stet-css-manifest'
@@ -11,7 +11,7 @@ export const VIRTUAL_MANIFEST_ASSET_FILE = MANIFEST_ASSET_FILE
 export const EMPTY_MANIFEST_JSON = '{"version":1}'
 
 export interface CSSManifestLoadResult {
-  manifest: MasterCSSManifest
+  manifest: StetCSSManifest
   dependencies: string[]
   classNames?: string[]
   nativeCSS?: string
@@ -38,8 +38,8 @@ export function stripResourceQuery(resourcePath: string) {
   return resourcePath.replace(/[?#].*$/, '')
 }
 
-export function toManifestJSON(manifest: MasterCSSManifest) {
-  return stringifyMasterCSSManifestJSON(manifest)
+export function toManifestJSON(manifest: StetCSSManifest) {
+  return stringifyStetCSSManifestJSON(manifest)
 }
 
 export function toManifestJSONResult<T extends CSSManifestLoadResult>(result: T): T & { json: string } {

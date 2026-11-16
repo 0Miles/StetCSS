@@ -2,19 +2,19 @@ import { describe, expect, test } from 'vitest'
 import { MasterCSS } from '@stet-css/engine'
 import defaultManifestJSON from '../src/default-manifest.json' with { type: 'json' }
 import {
-  flattenMasterCSSManifestVariables,
-  groupMasterCSSManifestVariables,
-  type MasterCSSManifest
+  flattenStetCSSManifestVariables,
+  groupStetCSSManifestVariables,
+  type StetCSSManifest
 } from '@stet-css/schema/manifest'
 
-const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
+const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
 
-function createTestCSS(manifest: MasterCSSManifest) {
+function createTestCSS(manifest: StetCSSManifest) {
   return MasterCSS.create({ manifest })
 }
 
 function findVariable(name: string) {
-  return flattenMasterCSSManifestVariables(defaultManifest.variables).find((variable) => variable.name === name)
+  return flattenStetCSSManifestVariables(defaultManifest.variables).find((variable) => variable.name === name)
 }
 
 function varDependencyName(value: string) {
@@ -349,7 +349,7 @@ describe.concurrent('@stet-css/preset design token parity', () => {
   })
 
   test('does not publish synthetic negative number tokens', () => {
-    expect(flattenMasterCSSManifestVariables(defaultManifest.variables)
+    expect(flattenStetCSSManifestVariables(defaultManifest.variables)
       .filter((variable) => variable.type === 'number' && variable.name?.startsWith('-'))).toEqual([])
     expect(Object.hasOwn(defaultManifest, 'variableNamespaces')).toBe(false)
     expect(Object.hasOwn(defaultManifest, 'variableAliasSets')).toBe(false)
@@ -410,9 +410,9 @@ describe.concurrent('@stet-css/preset design token parity', () => {
   })
 
   test('keeps project text and line role namespaces available', () => {
-    const manifest = JSON.parse(JSON.stringify(defaultManifest)) as MasterCSSManifest
-    manifest.variables = groupMasterCSSManifestVariables([
-      ...flattenMasterCSSManifestVariables(manifest.variables),
+    const manifest = JSON.parse(JSON.stringify(defaultManifest)) as StetCSSManifest
+    manifest.variables = groupStetCSSManifestVariables([
+      ...flattenStetCSSManifestVariables(manifest.variables),
       {
         name: 'color-text-action',
         key: 'action',
