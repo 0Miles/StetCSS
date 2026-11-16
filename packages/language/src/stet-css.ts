@@ -97,8 +97,8 @@ export function generateCSS(
   css: StetCSS = createDefaultCSS(),
   runtime: CSSLanguageRuntime = defaultCSSLanguageRuntime
 ) {
-  const MasterCSSConstructor = css.constructor as typeof StetCSS
-  const generatedCSS = MasterCSSConstructor.create({
+  const StetCSSConstructor = css.constructor as typeof StetCSS
+  const generatedCSS = StetCSSConstructor.create({
     manifest: css.manifest,
     nativeDeclarationMatcher: runtime.nativeDeclarationMatcher
   })

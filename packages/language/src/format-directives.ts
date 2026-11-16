@@ -5,13 +5,13 @@ import {
   type SourceRange
 } from '@stet-css/lexer'
 
-export interface MasterCSSDirectiveFormatEdit {
+export interface StetCSSDirectiveFormatEdit {
   start: number
   end: number
   newText: string
 }
 
-export interface FormatMasterCSSDirectivesOptions {
+export interface FormatStetCSSDirectivesOptions {
   range?: SourceRange
 }
 
@@ -27,7 +27,7 @@ function isDetachedImportantSuffix(token: string) {
   return /^!(?:$|[:@_>+~].*)/.test(token)
 }
 
-export function formatMasterCSSClassList(classList: string) {
+export function formatStetCSSClassList(classList: string) {
   const tokens = classList.trim().split(/\s+/).filter(Boolean)
   const formatted: string[] = []
   for (const token of tokens) {
@@ -41,12 +41,12 @@ export function formatMasterCSSClassList(classList: string) {
   return formatted.join(' ')
 }
 
-function createEdit(source: string, start: number, end: number, newText: string): MasterCSSDirectiveFormatEdit | undefined {
+function createEdit(source: string, start: number, end: number, newText: string): StetCSSDirectiveFormatEdit | undefined {
   if (source.slice(start, end) === newText) return
   return { start, end, newText }
 }
 
-function applyRelativeEdits(source: string, edits: MasterCSSDirectiveFormatEdit[]) {
+function applyRelativeEdits(source: string, edits: StetCSSDirectiveFormatEdit[]) {
   let result = source
   for (const edit of [...edits].sort((a, b) => b.start - a.start || b.end - a.end)) {
     result = result.slice(0, edit.start) + edit.newText + result.slice(edit.end)
@@ -65,11 +65,11 @@ function normalizePreludeText(source: string, directive: CSSDirectiveRuleRange) 
 
 function formatSafelistPrelude(source: string, directive: CSSDirectiveRuleRange) {
   const prelude = source.slice(directive.preludeRange.start, directive.preludeRange.end)
-  const relativeEdits: MasterCSSDirectiveFormatEdit[] = []
+  const relativeEdits: StetCSSDirectiveFormatEdit[] = []
   for (const stringRange of collectCSSQuotedStringRanges(source, directive.preludeRange.start, directive.preludeRange.end)) {
     const contentStart = stringRange.contentRange.start - directive.preludeRange.start
     const contentEnd = stringRange.contentRange.end - directive.preludeRange.start
-    const formattedClassList = formatMasterCSSClassList(source.slice(stringRange.contentRange.start, stringRange.contentRange.end))
+    const formattedClassList = formatStetCSSClassList(source.slice(stringRange.contentRange.start, stringRange.contentRange.end))
     const edit = createEdit(prelude, contentStart, contentEnd, formattedClassList)
     if (edit) relativeEdits.push(edit)
   }
@@ -80,7 +80,7 @@ function formatSafelistPrelude(source: string, directive: CSSDirectiveRuleRange)
 function formatComposePrelude(source: string, directive: CSSDirectiveRuleRange) {
   if (directive.blockRange || directive.quotedStringRanges.length) return
   const classList = source.slice(directive.preludeRange.start, directive.preludeRange.end)
-  const formattedClassList = formatMasterCSSClassList(classList)
+  const formattedClassList = formatStetCSSClassList(classList)
   return formattedClassList ? ` ${formattedClassList}` : ''
 }
 
@@ -102,7 +102,7 @@ function formatDirectivePrelude(source: string, directive: CSSDirectiveRuleRange
 }
 
 function collectDirectiveFormatEdits(source: string, directive: CSSDirectiveRuleRange) {
-  const edits: MasterCSSDirectiveFormatEdit[] = []
+  const edits: StetCSSDirectiveFormatEdit[] = []
   const formattedPrelude = formatDirectivePrelude(source, directive)
   if (formattedPrelude !== undefined) {
     const preludeEdit = createEdit(source, directive.preludeRange.start, directive.preludeRange.end, formattedPrelude)
@@ -111,8 +111,8 @@ function collectDirectiveFormatEdits(source: string, directive: CSSDirectiveRule
   return edits
 }
 
-export function formatMasterCSSDirectives(source: string, options: FormatMasterCSSDirectivesOptions = {}) {
-  const edits: MasterCSSDirectiveFormatEdit[] = []
+export function formatStetCSSDirectives(source: string, options: FormatStetCSSDirectivesOptions = {}) {
+  const edits: StetCSSDirectiveFormatEdit[] = []
   for (const directive of collectCSSDirectiveRanges(source)) {
     if (options.range && !isWithinRange(directive, options.range) && !rangesEqual(directive.preludeRange, options.range)) {
       continue
@@ -124,6 +124,6 @@ export function formatMasterCSSDirectives(source: string, options: FormatMasterC
   return edits
 }
 
-export function applyMasterCSSDirectiveFormatEdits(source: string, edits: MasterCSSDirectiveFormatEdit[]) {
+export function applyStetCSSDirectiveFormatEdits(source: string, edits: StetCSSDirectiveFormatEdit[]) {
   return applyRelativeEdits(source, edits)
 }

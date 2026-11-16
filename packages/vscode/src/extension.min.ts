@@ -2,7 +2,7 @@ import path from 'path'
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient/node'
 import { commands, Disposable, EventEmitter, ExtensionContext, languages, ProgressLocation, Range, SemanticTokens, SemanticTokensLegend, TextEdit, window, workspace, type CancellationToken, type FormattingOptions, type LogOutputChannel, type Position, type ProviderResult, type TextDocument } from 'vscode'
 import { ACTIVE_SEMANTIC_TOKENS_REQUEST, DOCUMENT_SEMANTIC_TOKENS_REQUEST, settings, type Settings } from '@stet-css/language-server'
-import { applyMasterCSSDirectiveFormatEdits, formatMasterCSSDirectives, SEMANTIC_TOKENS_LEGEND } from '@stet-css/language'
+import { applyStetCSSDirectiveFormatEdits, formatStetCSSDirectives, SEMANTIC_TOKENS_LEGEND } from '@stet-css/language'
 import { isCompatibleStetCSSPackageVersion, resolveStetCSSWorkspacePackages } from '@stet-css/project/workspace'
 
 let client: LanguageClient
@@ -127,7 +127,7 @@ function applyTextEdits(document: TextDocument, edits: readonly TextEdit[]) {
 }
 
 function formatDirectiveText(text: string) {
-  return applyMasterCSSDirectiveFormatEdits(text, formatMasterCSSDirectives(text))
+  return applyStetCSSDirectiveFormatEdits(text, formatStetCSSDirectives(text))
 }
 
 function createDirectiveTextEdits(document: TextDocument, range?: Range) {
@@ -138,7 +138,7 @@ function createDirectiveTextEdits(document: TextDocument, range?: Range) {
       end: document.offsetAt(range.end)
     }
     : undefined
-  return formatMasterCSSDirectives(source, { range: offsetRange }).map((edit) => TextEdit.replace(
+  return formatStetCSSDirectives(source, { range: offsetRange }).map((edit) => TextEdit.replace(
     new Range(document.positionAt(edit.start), document.positionAt(edit.end)),
     edit.newText
   ))

@@ -1,6 +1,6 @@
 import { pushHighlightToken, type HighlightTokenItem } from '../highlight'
 import { collectClassListHighlightTokenItems, tokenizeState } from '../tokenize-class'
-import type { StetCSS } from '../../master-css'
+import type { StetCSS } from '../../stet-css'
 import {
   collectCSSQuotedStringRanges,
   findCSSClosingQuote,

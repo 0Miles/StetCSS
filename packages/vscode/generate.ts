@@ -1,10 +1,10 @@
 import editJsonFile from 'edit-json-file'
 import settings from '../language-server/src/settings'
 import { SEMANTIC_TOKEN_MODIFIERS } from '../language/src/common'
-import { MASTER_CSS_SEMANTIC_TOKEN_SCOPE_MAP } from '../language/src/semantic/scopes'
+import { STET_CSS_SEMANTIC_TOKEN_SCOPE_MAP } from '../language/src/semantic/scopes'
 import {
-  MASTER_CSS_SHIKI_INJECT_TO,
-  MASTER_CSS_SHIKI_SCOPE_NAME
+  STET_CSS_SHIKI_INJECT_TO,
+  STET_CSS_SHIKI_SCOPE_NAME
 } from '../language/src/shiki'
 import { dirname, join } from 'node:path'
 import { createRequire } from 'node:module'
@@ -26,9 +26,9 @@ pkg.set('files', [
 ])
 pkg.set('contributes.grammars', [
   {
-    scopeName: MASTER_CSS_SHIKI_SCOPE_NAME,
+    scopeName: STET_CSS_SHIKI_SCOPE_NAME,
     path: MASTER_CSS_GRAMMAR_PATH,
-    injectTo: [...MASTER_CSS_SHIKI_INJECT_TO]
+    injectTo: [...STET_CSS_SHIKI_INJECT_TO]
   }
 ])
 pkg.set('contributes.configurationDefaults', {
@@ -46,7 +46,7 @@ pkg.set('contributes.semanticTokenModifiers', SEMANTIC_TOKEN_MODIFIERS
 
 pkg.set('contributes.semanticTokenScopes', [
   {
-    scopes: MASTER_CSS_SEMANTIC_TOKEN_SCOPE_MAP
+    scopes: STET_CSS_SEMANTIC_TOKEN_SCOPE_MAP
   }
 ])
 

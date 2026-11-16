@@ -1,6 +1,6 @@
 import type { SemanticTokenModifier, SemanticTokenType } from './types'
 
-export const MASTER_CSS_SEMANTIC_TOKEN_SCOPE_MAP = {
+export const STET_CSS_SEMANTIC_TOKEN_SCOPE_MAP = {
   class: ['entity.other.attribute-name.class.css'],
   'class.component': ['entity.other.attribute-name.class.css'],
   'class.declaration': ['entity.other.attribute-name.class.css'],
@@ -72,13 +72,13 @@ export const MASTER_CSS_SEMANTIC_TOKEN_SCOPE_MAP = {
   'type.selector': ['entity.name.tag.css']
 } as const satisfies Record<string, string[]>
 
-export type MasterCSSSemanticTokenScopeKey = keyof typeof MASTER_CSS_SEMANTIC_TOKEN_SCOPE_MAP
+export type StetCSSSemanticTokenScopeKey = keyof typeof STET_CSS_SEMANTIC_TOKEN_SCOPE_MAP
 
-export function getMasterCSSSemanticTokenScopeKeys(type: SemanticTokenType, modifiers: SemanticTokenModifier[] = []) {
+export function getStetCSSSemanticTokenScopeKeys(type: SemanticTokenType, modifiers: SemanticTokenModifier[] = []) {
   const keys: string[] = []
   for (const modifier of [...modifiers].reverse()) {
     keys.push(`${type}.${modifier}`)
   }
   keys.push(type)
-  return keys.filter((key): key is MasterCSSSemanticTokenScopeKey => key in MASTER_CSS_SEMANTIC_TOKEN_SCOPE_MAP)
+  return keys.filter((key): key is StetCSSSemanticTokenScopeKey => key in STET_CSS_SEMANTIC_TOKEN_SCOPE_MAP)
 }

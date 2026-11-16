@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { createLanguageCSS, defaultCSSLanguageRuntime, generateCSS, type CSSLanguageRuntime } from '../src/master-css'
+import { createLanguageCSS, defaultCSSLanguageRuntime, generateCSS, type CSSLanguageRuntime } from '../src/stet-css'
 import { createPresetManifest } from './helpers/create-preset-manifest'
 
 const hookRuntime: CSSLanguageRuntime = {

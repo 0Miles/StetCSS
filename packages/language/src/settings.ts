@@ -1,4 +1,4 @@
-import { CLASS_ATTRIBUTES, CLASS_DECLARATIONS, CLASS_FUNCTIONS } from './master-css'
+import { CLASS_ATTRIBUTES, CLASS_DECLARATIONS, CLASS_FUNCTIONS } from './stet-css'
 import type { ClassPositionSettings } from './utils/get-class-positions'
 import type { StetCSSManifest } from '@stet-css/schema/manifest'
 
