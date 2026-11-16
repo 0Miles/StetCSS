@@ -1,4 +1,4 @@
-/** The placeholder rule's selector, `#master-css-slot`. */
+/** The placeholder rule's selector, `#stet-css-slot`. */
 export function getSlotSelector(slotCSSRule: string) {
   return slotCSSRule.slice(0, slotCSSRule.indexOf('{'))
 }
@@ -14,7 +14,7 @@ export function createSlotCSSRule(slotCSSRule: string, digest: string) {
 
 /**
  * Matches every build placeholder, minified or as an unminified build prints it
- * (`#master-css-slot {\n  --slot: h…;\n}`); the first group is the digest it carries.
+ * (`#stet-css-slot {\n  --slot: h…;\n}`); the first group is the digest it carries.
  */
 export function createSlotCSSRulePattern(slotCSSRule: string) {
   const selector = getSlotSelector(slotCSSRule).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')

@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { build, createLogger, type BuildOptions, type Plugin, type PluginOption } from 'vite'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 
-export const SLOT_CSS_RULE = '#master-css-slot{--slot:0}'
+export const SLOT_CSS_RULE = '#stet-css-slot{--slot:0}'
 
 export async function runTransform(plugin: Plugin, id: string) {
   if (typeof plugin.transform === 'function') {

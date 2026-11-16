@@ -52,7 +52,7 @@ describe('LocalComposePlugin', () => {
       expect(result.code).toContain('background-color:#123456')
       expect(result.code).toContain('color:#fff')
       expect(result.code).not.toContain('@compose')
-      expect(result.code).not.toContain('master-css-slot')
+      expect(result.code).not.toContain('stet-css-slot')
       expect(addWatchFile).toHaveBeenCalledWith(path.join(root, 'app.css'))
       expect(addWatchFile).toHaveBeenCalledWith(path.join(root, 'src/Button.module.css'))
     } finally {
@@ -79,7 +79,7 @@ describe('LocalComposePlugin', () => {
 
       expect(result.code).toContain('.home{padding-block:var(--spacing-5xl)}')
       expect(result.code).not.toContain('--spacing-5xl:')
-      expect(result.code).not.toContain('master-css-slot')
+      expect(result.code).not.toContain('stet-css-slot')
       expect(addWatchFile).toHaveBeenCalledWith(path.join(root, 'app.css'))
     } finally {
       rmSync(root, { recursive: true, force: true })
@@ -160,7 +160,7 @@ describe('LocalComposePlugin', () => {
       expect(result.code).toContain('@keyframes pop')
       expect(result.code).not.toContain('@reference')
       expect(result.code).not.toContain('referenced-native')
-      expect(result.code).not.toContain('master-css-slot')
+      expect(result.code).not.toContain('stet-css-slot')
       expect(addWatchFile).toHaveBeenCalledWith(themePath)
     } finally {
       rmSync(root, { recursive: true, force: true })

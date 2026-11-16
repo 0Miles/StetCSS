@@ -462,7 +462,7 @@ describe('@stet-css/webpack with Rspack', () => {
       expect(html).toContain('Rspack fixture')
       expectStaticCSS(css)
       expect(html).not.toContain('master-css-runtime')
-      expect(css + js).not.toContain('master-css-slot')
+      expect(css + js).not.toContain('stet-css-slot')
     } finally {
       cleanupFixture(root)
     }
@@ -481,7 +481,7 @@ describe('@stet-css/webpack with Rsbuild', () => {
       expect(html).toContain('root')
       expectStaticCSS(css)
       expect(html).not.toContain('master-css-runtime')
-      expect(css + js).not.toContain('master-css-slot')
+      expect(css + js).not.toContain('stet-css-slot')
     } finally {
       cleanupFixture(root)
     }
