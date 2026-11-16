@@ -38,6 +38,8 @@
   "esnext": "./dist/index.js",
   "module": "./dist/index.js",
   "browser": "./dist/global.min.js",
+  "unpkg": "./dist/global.min.js",
+  "jsdelivr": "./dist/global.min.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
