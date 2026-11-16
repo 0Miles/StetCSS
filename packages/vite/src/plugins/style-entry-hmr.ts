@@ -2,7 +2,7 @@ import type { Plugin, ViteDevServer } from 'vite'
 import { isStylesheetSourceFile } from '@stet-css/stylesheet'
 import type { PluginContext } from '../core'
 import type { PluginOptions } from '../options'
-import getExtractedCSS from '../utils/extracted-css'
+import getExtractedCSS, { getStylesheetSourceContext } from '../utils/extracted-css'
 import { getScanner } from '../utils/scanner-context'
 
 /** HMR when the stylesheet entries or the project's source files change */
@@ -33,11 +33,7 @@ export default function StyleEntryHMRPlugin(_options: PluginOptions, context: Pl
    */
   const handleSourceFileChange = (server: ViteDevServer, file: string) => {
     if (!context.virtualCSSImporters?.size) return
-    if (!isStylesheetSourceFile(file, {
-      scanner: getScanner(context),
-      styleCSSSources: context.styleCSSSources,
-      projectDir: context.config?.root
-    })) return
+    if (!isStylesheetSourceFile(file, getStylesheetSourceContext(context))) return
     return queueUpdate(async () => {
       const previousCSS = context.extractedCSS
       if (await getExtractedCSS(context) === previousCSS) return
