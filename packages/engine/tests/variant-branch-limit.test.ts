@@ -28,7 +28,9 @@ describe('variant branch limit', () => {
    * selector variants or both, return no rules quickly instead of expanding: the branches are
    * counted before any is built. Reverse check: raising `MAX_STATE_BRANCHES` in `src/utility.ts` to
    * 1 << 20, or letting an over-limit `resolveStateBranches` return the `[{ key: '' }]` fallback,
-   * turns only this test red.
+   * turns only this test red. The `@touch&dark` rows (#72) guard the count against `&` lists: the
+   * variant only resolves once the mode is split out, so counting the raw `touch&dark` token would
+   * let these expand; counting the unsplit tokens turns only this test red.
    */
   test('classes expanding past 4096 branches generate nothing within a second', () => {
     const css = createCSS()
@@ -37,7 +39,9 @@ describe('variant branch limit', () => {
       'block' + '@touch'.repeat(14),
       'block' + ':hocus'.repeat(13),
       'block' + ':hocus'.repeat(7) + '@touch'.repeat(7),
-      'block' + ':hocus'.repeat(12) + '@touch'
+      'block' + ':hocus'.repeat(12) + '@touch',
+      'block' + '@touch&dark'.repeat(13),
+      'block' + ':hocus'.repeat(12) + '@touch&dark'
     ]
 
     for (const className of classNames) {
