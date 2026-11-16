@@ -500,7 +500,7 @@ function createOxcClassPositions(
   settings: ClassPositionSettings
 ): CachedOxcClassPositions {
   const source = textDocument.getText()
-  const parseFailed: CachedOxcClassPositions = {
+  const failedResult: CachedOxcClassPositions = {
     version: textDocument.version,
     languageId: textDocument.languageId,
     parseFailed: true,
@@ -509,7 +509,7 @@ function createOxcClassPositions(
   // oxc-parser overflows its native stack on deep nesting, killing the host
   // process: bracket nesting past the limit skips oxc, and the rest parses on
   // a stack sized to the source.
-  if (exceedsScriptNestingLimit(source)) return parseFailed
+  if (exceedsScriptNestingLimit(source)) return failedResult
 
   let parseResult: ReturnType<typeof parseOxcOnSourceStack>
   try {
@@ -518,10 +518,10 @@ function createOxcClassPositions(
       sourceType: 'unambiguous'
     })
   } catch {
-    return parseFailed
+    return failedResult
   }
 
-  if (!parseResult || parseResult.errors.length) return parseFailed
+  if (!parseResult || parseResult.errors.length) return failedResult
 
   const classPositions: ClassPosition[] = []
   const classAttributes = new Set(settings.classAttributes ?? [])
@@ -586,8 +586,8 @@ function createOxcClassPositions(
   try {
     visit(parseResult.program)
   } catch (error) {
-    // A tree nested deeper than the JS stack: fall back to the regex scan.
-    if (error instanceof RangeError) return parseFailed
+    // A tree nested deeper than the JS stack can walk: fall back to the regex scan.
+    if (error instanceof RangeError && error.message.includes('call stack')) return failedResult
     throw error
   }
   return {
