@@ -3,10 +3,8 @@ import { createTest, type TestOptions } from '@nuxt/test-utils/e2e'
 import { basename } from 'node:path'
 
 const fixturePorts: Record<string, number> = {
-  'pre-render': 49_101,
-  'progressive': 49_102,
-  runtime: 49_103,
-  static: 49_104
+  static: 49_104,
+  spa: 49_105
 }
 
 function getFixturePort(rootDir = process.cwd()) {
