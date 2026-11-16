@@ -97,12 +97,13 @@ Replace both `<version>` placeholders with the same release, such as `0.1.0`. un
 
 The runtime cannot remove `hidden` when it never runs:
 
-- **The script does not load**, because of a wrong URL, a network error, or a Content Security Policy that blocks the CDN. Reveal the page from the tag itself:
+- **The script does not load**, because of a wrong URL or a network error. Reveal the page from the tag itself:
 
   ```html
   <script src="https://cdn.jsdelivr.net/npm/@stet-css/runtime@<version>" onerror="document.documentElement.hidden = false"></script>
   ```
 
+- **A Content Security Policy blocks the CDN.** A policy strict enough for that also blocks inline handlers such as `onerror`, so the page stays blank. Allow the CDN in `script-src` and `style-src`, or leave `hidden` out.
 - **JavaScript is turned off.** Nothing runs, so the page stays blank. Leave `hidden` out of pages that must stay readable without JavaScript, or use static CSS.
 - **Your own code fails before `CSSRuntime.create()`** (manual import only), for example a module your entry imports throws while it loads. Start the runtime from the first module your entry imports, or remove `hidden` in your own error handling.
 
@@ -112,7 +113,7 @@ The runtime cannot remove `hidden` when it never runs:
 npm install @stet-css/runtime
 ```
 
-`@stet-css/vite` provides two virtual modules for the runtime: `virtual:master-css-manifest`, the manifest built from your CSS entry, and `virtual:master-css-emitted-globals`, the variables and keyframes that entry already emitted.
+The build integrations (`@stet-css/vite`, `@stet-css/webpack`, `@stet-css/next`) provide two virtual modules for the runtime: `virtual:master-css-manifest`, the manifest built from your CSS entry, and `virtual:master-css-emitted-globals`, the variables and keyframes that entry already emitted.
 
 ```js
 import CSSRuntime from '@stet-css/runtime'
@@ -136,7 +137,7 @@ import emittedGlobals from 'virtual:master-css-emitted-globals'
 class MyElement extends LitElement { /* … */ }
 ```
 
-[`examples/lit`](../../examples/lit) uses both modules this way. A project without `@stet-css/vite` can pass the default preset's manifest instead, as [`examples/angular`](../../examples/angular) does; it then knows only the default preset, like the CDN:
+[`examples/lit`](../../examples/lit) uses both modules this way. A project without a build integration can pass the default preset's manifest instead, as [`examples/angular`](../../examples/angular) does; it then knows only the default preset, like the CDN:
 
 ```ts
 import CSSRuntime, { type MasterCSSManifest } from '@stet-css/runtime'
@@ -145,11 +146,11 @@ import defaultManifest from '@stet-css/preset/default-manifest.json'
 CSSRuntime.create({ manifest: defaultManifest as unknown as MasterCSSManifest }).observe()
 ```
 
-Such a project loads `@stet-css/preset/base.css` itself, before the runtime starts.
+Such a project loads `@stet-css/core/base.css` itself, before the runtime starts.
 
 ### Rules generated twice
 
-The build still emits static CSS for every class it finds in your sources. The runtime does not read that CSS: it generates a rule for every class on the page into its own `style#master-css` at the end of `<head>`. A class the build already saw therefore has the same rule twice. The page looks the same: both copies sit in the same cascade layer with the same selector and declarations, the order between layers comes from the `@layer` statement in `base.css` rather than from which sheet comes later, and your own CSS outside layers still outranks both. The cost is the extra rules in the CSSOM and the time spent generating them.
+The build still emits static CSS for every class it finds in your sources. The runtime does not read that CSS: it generates a rule for every class on the page into its own `style#master-css` at the end of `<head>`. A class the build already saw therefore has the same rule twice. The page looks the same: both copies sit in the same cascade layer with the same selector and declarations, the order between layers comes from the `@layer` statement in `base.css` rather than from which sheet comes later, and your own normal declarations outside layers still outrank both (`!important` ones in a layer beat unlayered ones, as in plain CSS). The cost is the extra rules in the CSSOM and the time spent generating them.
 
 ### Layer order
 
@@ -159,9 +160,9 @@ The build still emits static CSS for every class it finds in your sources. The r
 @layer theme, base, defaults, components, utilities;
 ```
 
-The runtime's sheet does not repeat this statement. Load `base.css`, or the CSS entry that includes it, before the runtime starts. Otherwise layers rank by where they first appear, and the layers `base.css` adds later outrank the ones the runtime created first, so a component class can override a utility.
+The runtime's sheet does not repeat this statement. Load `base.css`, or the CSS entry that includes it, before the runtime starts. Otherwise layers rank by where they first appear: the layers `base.css` adds later, such as `base` and `defaults` with its preflight, outrank the runtime's `components` and `utilities`.
 
-A shadow root does not see the page's CSS. There the runtime keeps its own layer blocks in this order.
+The runtime keeps its own layer blocks in this order in every root. That is what orders them in a shadow root, which does not see the page's CSS.
 
 ## API
 
