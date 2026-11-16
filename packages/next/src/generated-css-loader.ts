@@ -17,9 +17,9 @@ interface LoaderContext {
 
 /**
  * Fills the generated CSS module with the project's CSS. Every file the CSS came from is a
- * dependency, so dev recompiles it when a source or stylesheet changes. It stays
- * uncacheable because a new source file changes the class set without touching any
- * dependency, and a persistent cache would otherwise serve the old CSS.
+ * dependency, so dev recompiles it when one of those files changes. A new file is picked up
+ * once a dependency changes, usually the module that starts importing it. Under webpack the
+ * loader is also uncacheable, so a build never reuses CSS computed before a file was added.
  */
 export default function masterCSSNextGeneratedCSSLoader(this: LoaderContext) {
   this.cacheable?.(false)
