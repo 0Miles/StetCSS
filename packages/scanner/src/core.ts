@@ -209,7 +209,7 @@ export default class CSSScanner extends EventEmitter {
   }
 
   get slotCSSRule(): string {
-    return '#' + cssEscape('master-css-slot') + '{--slot:0}'
+    return '#' + cssEscape('stet-css-slot') + '{--slot:0}'
   }
 }
 

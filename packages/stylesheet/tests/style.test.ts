@@ -583,7 +583,7 @@ describe('style CSS extraction helpers', () => {
       '',
       '.card { color: red; }'
     ].join('\n'), {
-      masterSource: '#master-css-slot{--slot:0}'
+      masterSource: '#stet-css-slot{--slot:0}'
     })
     const masterLast = createStyleCSSHostSource([
       '@import "@fontsource/fira-mono";',
@@ -591,11 +591,11 @@ describe('style CSS extraction helpers', () => {
       '',
       '.card { color: red; }'
     ].join('\n'), {
-      masterSource: '#master-css-slot{--slot:0}'
+      masterSource: '#stet-css-slot{--slot:0}'
     })
 
-    expect(masterFirst).toBe('@import "@fontsource/fira-mono";\n#master-css-slot{--slot:0}')
-    expect(masterLast).toBe('@import "@fontsource/fira-mono";\n#master-css-slot{--slot:0}')
+    expect(masterFirst).toBe('@import "@fontsource/fira-mono";\n#stet-css-slot{--slot:0}')
+    expect(masterLast).toBe('@import "@fontsource/fira-mono";\n#stet-css-slot{--slot:0}')
   })
 
   it('preserves native import modifiers before generated host CSS', () => {
@@ -604,13 +604,13 @@ describe('style CSS extraction helpers', () => {
       '@import "normalize.css" layer(reset);',
       '@import "@stet-css/core";'
     ].join('\n'), {
-      masterSource: '#master-css-slot{--slot:0}'
+      masterSource: '#stet-css-slot{--slot:0}'
     })
 
     expect(result).toBe([
       '@import url("@fontsource/fira-mono") layer(fonts) screen;',
       '@import "normalize.css" layer(reset);',
-      '#master-css-slot{--slot:0}'
+      '#stet-css-slot{--slot:0}'
     ].join('\n'))
   })
 

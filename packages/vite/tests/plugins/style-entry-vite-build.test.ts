@@ -37,7 +37,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
     expect(css).toContain('.fake-font')
     expect(css).toContain('.block{display:block}')
     expect(css.indexOf('.fake-font')).toBeLessThan(css.indexOf('.block{display:block}'))
-    expect(css).not.toContain('#master-css-slot')
+    expect(css).not.toContain('#stet-css-slot')
     expect(css).not.toContain('@stet-css/core')
   })
 
@@ -57,7 +57,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
     expectMasterBaseCSS(css)
     expect(css).toContain('.block{display:block}')
     expect(css).not.toContain('@stet-css/core')
-    expect(css).not.toContain('#master-css-slot')
+    expect(css).not.toContain('#stet-css-slot')
   })
 
   /**
@@ -79,7 +79,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
     expectMasterBaseCSS(css)
     expect(css).toMatch(/body\s*\{\s*margin:\s*0/)
     expect(css).not.toContain('@stet-css/core/base.css')
-    expect(css).not.toContain('#master-css-slot')
+    expect(css).not.toContain('#stet-css-slot')
   })
 
   /**
@@ -111,7 +111,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
     })
 
     expect(css).toContain('.font\\:heavy{font-weight:var(--font-weight-heavy)}')
-    expect(css).not.toContain('#master-css-slot')
+    expect(css).not.toContain('#stet-css-slot')
   })
 
   /**
@@ -131,7 +131,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
     })
 
     expect(css).toContain('.block{display:block}')
-    expect(css).not.toContain('#master-css-slot')
+    expect(css).not.toContain('#stet-css-slot')
   })
 
   /**

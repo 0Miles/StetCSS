@@ -166,7 +166,7 @@ describe('Webpack static CSS', () => {
       })
 
       const js = readOutput(dist, '.js')
-      expect(js).not.toContain('master-css-slot')
+      expect(js).not.toContain('stet-css-slot')
       expect(js).toContain('.abs{position:absolute}')
 
       const served = await serveDirectory(dist)
@@ -177,8 +177,8 @@ describe('Webpack static CSS', () => {
       await page.waitForSelector('h1')
       expect(await page.evaluate(() => ({
         position: getComputedStyle(document.querySelector('.abs')!).position,
-        slot: Boolean(document.getElementById('master-css-slot')) || [...document.styleSheets]
-          .some((sheet) => [...sheet.cssRules].some((rule) => rule.cssText.includes('master-css-slot')))
+        slot: Boolean(document.getElementById('stet-css-slot')) || [...document.styleSheets]
+          .some((sheet) => [...sheet.cssRules].some((rule) => rule.cssText.includes('stet-css-slot')))
       }))).toEqual({ position: 'absolute', slot: false })
     } finally {
       await browser?.close()
@@ -213,7 +213,7 @@ describe('Webpack static CSS', () => {
       })
 
       const css = readOutput(join(root, 'dist'), '.css')
-      expect(css).not.toContain('master-css-slot')
+      expect(css).not.toContain('stet-css-slot')
       expect(css).toMatch(/\.block\s*\{\s*display:\s*block/)
       expect(css).toMatch(/\.fg\\:red\s*\{\s*color:/)
     } finally {

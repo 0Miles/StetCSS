@@ -113,7 +113,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
     const digest = /--slot:(\w+)/.exec(SLOT)![1]
 
     const bundle = makeBundle({
-      'assets/index-abc.css': `body {\n  margin: 0;\n}\n\n#master-css-slot {\n  --slot: ${digest};\n}\n`
+      'assets/index-abc.css': `body {\n  margin: 0;\n}\n\n#stet-css-slot {\n  --slot: ${digest};\n}\n`
     })
     await (plugin as any).generateBundle.call({ warn }, {}, bundle)
 
@@ -175,7 +175,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
     expect(warn).toHaveBeenCalledTimes(1)
     const msg = warn.mock.calls[0][0] as string
     expect(msg).toContain('Could not splice managed style CSS')
-    expect(msg).toContain('#master-css-slot')
+    expect(msg).toContain('#stet-css-slot')
   })
 
   /**
