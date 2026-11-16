@@ -111,6 +111,12 @@ export interface StylesheetSourceContext {
    * files; `@source` and `@source not` still apply on top.
    */
   sources?: string[]
+  /**
+   * Absolute files or directories the class set never reads, not even through `@source`;
+   * a build integration passes its output directory so emitted bundles neither feed classes
+   * back nor become watched sources.
+   */
+  ignorePaths?: string[]
 }
 
 export interface CreateExtractedCSSOptions extends CompileStyleCSSOptions, StylesheetSourceContext {
@@ -814,7 +820,8 @@ function createStylesheetSourceScope(context: StylesheetSourceContext): Styleshe
     exclude: directives.exclude,
     safelist: [...(scanner.options.safelist || []), ...directives.safelist],
     blocklist: [...(scanner.options.blocklist || []), ...directives.blocklist],
-    adapters: scanner.options.adapters
+    adapters: scanner.options.adapters,
+    ignorePaths: context.ignorePaths
   }
 }
 
@@ -998,13 +1005,15 @@ export async function createExtractedCSSResult(options: CreateExtractedCSSOption
     includeNativeCSS = true,
     includeMasterBaseCSS = true,
     sources,
+    ignorePaths,
     ...compileOptions
   } = options
   const sourceContext: StylesheetSourceContext = {
     scanner,
     styleCSSSources,
     projectDir: compileOptions.projectDir,
-    sources
+    sources,
+    ignorePaths
   }
   // Classes a build integration collected from its own module graph; the project's class
   // set is added on top until every integration reads only the project's files.
