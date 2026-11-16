@@ -237,6 +237,38 @@ describe('static class set', () => {
   })
 
   /**
+   * Guards Sass stylesheet entries: their `@safelist`, `@source` and `@theme` must reach the
+   * static CSS like a `.css` entry's, or a Sass user silently gets the default theme and loses
+   * forced classes. Sass itself is stubbed; it is the project's dependency, not ours.
+   * Reverse check: reading directives from `.css` entries only turns only this test red.
+   */
+  it('applies a Sass entry\'s directives and theme', async () => {
+    const root = createProject({
+      'src/app.html': '<div class="fg:brand"></div>',
+      'templates/page.html': '<div class="m:4x"></div>'
+    })
+    const loadSass = () => ({
+      compileStringAsync: async (source: string) => ({ css: source.replace(/\$brand/g, '#123456') })
+    })
+    const scanner = new CSSScanner({ verbose: 0 }, root)
+    await scanner.init()
+    const styleCSSSources: StyleCSSSources = new Map()
+    await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'src/index.scss'), `
+      @import "@stet-css/core";
+      @source '../templates';
+      @safelist 'p:2x';
+      @theme { --color-brand: $brand; }
+    `, { projectDir: root, loadSass })
+
+    const css = await createExtractedCSS({ scanner, styleCSSSources, projectDir: root, classes: [], loadSass })
+
+    expect(css).toContain(rule('fg:brand'))
+    expect(css).toContain('--color-brand:#123456')
+    expect(css).toContain(rule('p:2x'))
+    expect(css).toContain(rule('m:4x'))
+  })
+
+  /**
    * Guards a build integration's output directory under the project root under a name the
    * built-in exclusions do not know (`www`): the emitted bundle must not feed classes back
    * into the CSS or count as a source file a watcher rebuilds on, even when `@source` names
