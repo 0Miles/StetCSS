@@ -1,7 +1,6 @@
 import type { Plugin } from 'vite'
 import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
 import type { PluginContext } from '../core'
-import type { PluginOptions } from '../options'
 import getExtractedCSS from '../utils/extracted-css'
 import {
   collectStyleCSSDependencies,
@@ -23,7 +22,7 @@ function markPlaceholderEmitted(context: PluginContext, pluginContext: unknown) 
   context.virtualCSSPlaceholderEnvironments.add(getEnvironmentName(pluginContext))
 }
 
-export default function StyleEntryPlugin(_options: PluginOptions, context: PluginContext): Plugin {
+export default function StyleEntryPlugin(context: PluginContext): Plugin {
   return {
     name: 'master-css:style-entry',
     enforce: 'pre',

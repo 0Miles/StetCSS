@@ -1,6 +1,5 @@
 import type { Plugin } from 'vite'
 import type { PluginContext } from '../core'
-import type { PluginOptions } from '../options'
 import getExtractedCSS from '../utils/extracted-css'
 import { getScanner } from '../utils/scanner-context'
 import { getEnvironmentName } from '../utils/environment'
@@ -22,7 +21,7 @@ export const NO_STYLE_ENTRY_WARNING =
   'Astro inlines @import inside .astro <style> blocks before Vite plugins see it, so an ' +
   'import written there ships the raw preset source instead.'
 
-export default function StyleEntryBuildPlugin(_options: PluginOptions, context: PluginContext): Plugin {
+export default function StyleEntryBuildPlugin(context: PluginContext): Plugin {
   let warnedNoStyleEntry = false
   return {
     name: 'master-css:style-entry:build',

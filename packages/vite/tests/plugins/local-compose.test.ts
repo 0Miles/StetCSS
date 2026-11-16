@@ -37,7 +37,7 @@ describe('LocalComposePlugin', () => {
     const root = createFixture()
     try {
       const context = createContext(root)
-      const plugin = LocalComposePlugin({} as any, context)
+      const plugin = LocalComposePlugin(context)
       const addWatchFile = vi.fn()
       await (plugin as any).buildStart.call({})
 
@@ -68,7 +68,7 @@ describe('LocalComposePlugin', () => {
         '.global-section { padding-block: var(--spacing-5xl); }'
       ].join('\n'))
       const context = createContext(root)
-      const plugin = LocalComposePlugin({} as any, context)
+      const plugin = LocalComposePlugin(context)
       const addWatchFile = vi.fn()
 
       const result = await (plugin as any).transform.call(
@@ -90,7 +90,7 @@ describe('LocalComposePlugin', () => {
     const root = createFixture()
     try {
       const context = createContext(root)
-      const plugin = LocalComposePlugin({} as any, context)
+      const plugin = LocalComposePlugin(context)
 
       expect(await (plugin as any).transform.call(
         {},
@@ -111,7 +111,7 @@ describe('LocalComposePlugin', () => {
     const root = createFixture()
     try {
       const context = createContext(root)
-      const plugin = LocalComposePlugin({} as any, context)
+      const plugin = LocalComposePlugin(context)
 
       const result = await (plugin as any).transform.call(
         { addWatchFile: vi.fn() },
@@ -146,7 +146,7 @@ describe('LocalComposePlugin', () => {
         '.referenced-native { color: red; }'
       ].join('\n'))
       const context = createContext(root)
-      const plugin = LocalComposePlugin({} as any, context)
+      const plugin = LocalComposePlugin(context)
       const addWatchFile = vi.fn()
 
       const result = await (plugin as any).transform.call(
@@ -171,7 +171,7 @@ describe('LocalComposePlugin', () => {
     const root = createFixture()
     try {
       const context = createContext(root)
-      const plugin = LocalComposePlugin({} as any, context)
+      const plugin = LocalComposePlugin(context)
       const modulePath = path.join(root, 'src/Button.module.css')
       const addWatchFile = vi.fn()
 
@@ -204,7 +204,7 @@ describe('LocalComposePlugin', () => {
     const root = createFixture()
     try {
       const context = createContext(root)
-      const plugin = LocalComposePlugin({} as any, context)
+      const plugin = LocalComposePlugin(context)
       const modulePath = path.join(root, 'src/Button.module.css')
       const module = { id: modulePath }
       const invalidateModule = vi.fn()
