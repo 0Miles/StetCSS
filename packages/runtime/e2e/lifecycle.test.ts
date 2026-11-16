@@ -4,7 +4,7 @@ import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 import UtilityType from '@stet-css/schema/utility-type'
 import { MASTER_CSS_RUNTIME_STYLE_ID } from '@stet-css/schema/runtime-style'
 import CSSRuntime from '../src'
-import init from './init'
+import init, { RUNTIME_SCRIPT_URL, getRuntimeLoaderURL, routeRuntimeAssets } from './init'
 
 const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
 
@@ -279,4 +279,118 @@ test('registers emittedGlobals counts once on a new runtime', () => {
   expect(Object.fromEntries(cssRuntime.animationsNonLayer.tokenCounts)).toMatchObject({ fade: 1 })
 
   cssRuntime.destroy()
+})
+
+/**
+ * #90: a page that hides `<html>` until the runtime renders must never stay blank. The CDN
+ * bundle's 3 s timer runs on Playwright's paused clock, so only `runFor` can fire it.
+ */
+const CDN_REVEAL_TIMEOUT_MS = 3000
+
+function collectPageErrors(page: Page) {
+  const errors: string[] = []
+  page.on('pageerror', error => errors.push(error.message))
+  return errors
+}
+
+function readHidden(page: Page) {
+  return page.evaluate(() => document.documentElement.hasAttribute('hidden'))
+}
+
+async function openHiddenCDNPage(page: Page, setup = '') {
+  await page.clock.install({ time: 0 })
+  await page.clock.pauseAt(1000)
+  await routeRuntimeAssets(page)
+  await page.setContent(`
+    <!doctype html>
+    <html hidden>
+    <head>
+      <script>${setup}</script>
+      <script src="${RUNTIME_SCRIPT_URL}"></script>
+    </head>
+    <body><p class="display:flex"></p></body>
+    </html>
+  `)
+}
+
+/**
+ * Guards: a CDN startup failure (here a browser without `MutationObserver`) leaving the page
+ * blank, or the reveal swallowing the error. Removing the reveal from `observe()` turns it red.
+ */
+test('CDN: reveals the page at once and still reports the error when startup throws', async ({ page }) => {
+  const errors = collectPageErrors(page)
+  await openHiddenCDNPage(page, 'window.MutationObserver = undefined')
+
+  expect(await readHidden(page)).toBe(false)
+  expect(errors).toHaveLength(1)
+})
+
+/**
+ * Guards: a bundled module throwing while the bundle evaluates, before the startup call
+ * runs, so no try/catch around that call sees it. Here the `MasterCSSRuntime` global throws
+ * when core reads it. Dropping the timer in `src/reveal-timeout.ts` turns it red.
+ */
+test('CDN: reveals the page after 3 s when startup never finishes', async ({ page }) => {
+  const errors = collectPageErrors(page)
+  await openHiddenCDNPage(page, `
+    Object.defineProperty(window, 'MasterCSSRuntime', {
+      configurable: true,
+      get() { throw new Error('MasterCSSRuntime is unavailable') }
+    })
+  `)
+
+  expect(errors).toEqual(['MasterCSSRuntime is unavailable'])
+  await page.clock.runFor(CDN_REVEAL_TIMEOUT_MS - 1)
+  expect(await readHidden(page)).toBe(true)
+  await page.clock.runFor(1)
+  expect(await readHidden(page)).toBe(false)
+})
+
+/**
+ * Guards: the 3 s timer outliving a successful start and removing a `hidden` the page sets
+ * later. Not red before #90 (no timer existed); dropping the `clearTimeout` turns it red.
+ */
+test('CDN: a started runtime leaves a later hidden attribute alone', async ({ page }) => {
+  const errors = collectPageErrors(page)
+  await openHiddenCDNPage(page)
+
+  expect(await readHidden(page)).toBe(false)
+  await page.evaluate(() => document.documentElement.setAttribute('hidden', ''))
+  await page.clock.runFor(CDN_REVEAL_TIMEOUT_MS)
+  expect(await readHidden(page)).toBe(true)
+  expect(errors).toEqual([])
+})
+
+async function startHiddenModuleRuntime(page: Page, options: { manifest?: unknown, setup?: () => void } = {}) {
+  await page.setContent('<!doctype html><html hidden><head></head><body></body></html>')
+  if (options.setup) await page.evaluate(options.setup)
+  return page.evaluate(async ({ loaderURL, manifest }) => {
+    const { startCSSRuntime } = await import(loaderURL)
+    try {
+      startCSSRuntime({ manifest })
+      return 'started'
+    } catch (error) {
+      return (error as Error).name
+    }
+  }, { loaderURL: await getRuntimeLoaderURL(), manifest: options.manifest })
+}
+
+/**
+ * Guards: a manual import whose manifest the engine rejects leaving the page blank, or the
+ * error not reaching the caller. Removing the reveal from `CSSRuntime.create` turns it red.
+ */
+test('module: create() with an invalid manifest reveals the page and rethrows', async ({ page }) => {
+  expect(await startHiddenModuleRuntime(page, { manifest: { version: 2 } })).toBe('TypeError')
+  expect(await readHidden(page)).toBe(false)
+})
+
+/**
+ * Guards: `observe()` throwing part-way leaving the page blank, or the error not reaching the
+ * caller. Removing the reveal from `observe()` turns it red.
+ */
+test('module: observe() that throws reveals the page and rethrows', async ({ page }) => {
+  expect(await startHiddenModuleRuntime(page, {
+    setup: () => { (window as { MutationObserver?: unknown }).MutationObserver = undefined }
+  })).toBe('TypeError')
+  expect(await readHidden(page)).toBe(false)
 })
