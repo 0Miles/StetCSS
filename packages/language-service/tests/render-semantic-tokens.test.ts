@@ -559,8 +559,9 @@ test.concurrent('does not render static theme modifier semantic tokens', () => {
   expect(tokens).toEqual([])
 })
 
-test.concurrent('does not render non-entry @master at-rules as CSS directives', () => {
+test.concurrent('does not render removed @master at-rules as CSS directives', () => {
   const { tokens } = renderTokens(`
+    @master entry;
     @master shake;
     @master no-shake;
   `, 'css')
