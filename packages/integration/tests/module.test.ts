@@ -21,7 +21,7 @@ import {
 } from '../src/module'
 
 describe('@stet-css/integration module helpers', () => {
-  it('defines Master CSS virtual module ids', () => {
+  it('defines StetCSS virtual module ids', () => {
     expect(VIRTUAL_MANIFEST_ID).toBe('virtual:stet-css-manifest')
     expect(VIRTUAL_CSS_ID).toBe('virtual:stet-utilities.css')
     expect(VIRTUAL_EMITTED_GLOBALS_ID).toBe('virtual:stet-css-emitted-globals')

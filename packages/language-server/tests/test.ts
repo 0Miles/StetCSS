@@ -37,8 +37,8 @@ withFixture('basic', async (context) => {
   })
 
   test('matches Windows URI variants for the same workspace path', ({ expect }) => {
-    const workspaceURI = 'file:///c%3A/Users/RUNNER~1/AppData/Local/Temp/master-css-vscode-workspace-laNRGV'
-    const documentURI = 'file:///C:/Users/RUNNER%7E1/AppData/Local/Temp/master-css-vscode-workspace-laNRGV/index.html'
+    const workspaceURI = 'file:///c%3A/Users/RUNNER~1/AppData/Local/Temp/stet-css-vscode-workspace-laNRGV'
+    const documentURI = 'file:///C:/Users/RUNNER%7E1/AppData/Local/Temp/stet-css-vscode-workspace-laNRGV/index.html'
     const workspace = createWorkspace(workspaceURI)
     context.server.workspaces.set(workspaceURI, workspace)
     try {
@@ -49,8 +49,8 @@ withFixture('basic', async (context) => {
   })
 
   test('does not match sibling Windows path prefixes', ({ expect }) => {
-    const workspaceURI = 'file:///C:/Users/RUNNER%7E1/AppData/Local/Temp/master-css-vscode-workspace-laNRGV'
-    const documentURI = 'file:///C:/Users/RUNNER%7E1/AppData/Local/Temp/master-css-vscode-workspace-laNRGV2/index.html'
+    const workspaceURI = 'file:///C:/Users/RUNNER%7E1/AppData/Local/Temp/stet-css-vscode-workspace-laNRGV'
+    const documentURI = 'file:///C:/Users/RUNNER%7E1/AppData/Local/Temp/stet-css-vscode-workspace-laNRGV2/index.html'
     const workspace = createWorkspace(workspaceURI)
     context.server.workspaces.set(workspaceURI, workspace)
     try {

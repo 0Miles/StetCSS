@@ -37,7 +37,7 @@ import { renderCompiledManifestCSS } from '../src/render'
 const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
 
 function createFixture() {
-  const root = mkdtempSync(join(tmpdir(), 'master-css-stylesheet-'))
+  const root = mkdtempSync(join(tmpdir(), 'stet-css-stylesheet-'))
   mkdirSync(join(root, 'app'), { recursive: true })
   return root
 }
@@ -98,19 +98,19 @@ describe('style CSS extraction helpers', () => {
 
   it('replaces @stet-css/core imports with CSS import modifiers', () => {
     const result = replaceStyleCSSImports([
-      '@import "@stet-css/core" layer(master);',
-      '@import url(\'master.css\') layer(master);',
+      '@import "@stet-css/core" layer(stet);',
+      '@import url(\'stet.css\') layer(stet);',
       '@import "./other.css";'
-    ].join('\n'), '/* master */')
+    ].join('\n'), '/* stet */')
 
     expect(result.replaced).toBe(true)
-    expect(result.code).toContain('/* master */')
+    expect(result.code).toContain('/* stet */')
     expect(result.code).not.toContain('@stet-css/core')
-    expect(result.code).toContain('@import url(\'master.css\') layer(master);')
+    expect(result.code).toContain('@import url(\'stet.css\') layer(stet);')
     expect(result.code).toContain('@import "./other.css";')
   })
 
-  it('renders native CSS and keyframes from expanded Master CSS entry graphs', async () => {
+  it('renders native CSS and keyframes from expanded StetCSS entry graphs', async () => {
     const root = createFixture()
     const entryPath = join(root, 'app/globals.css')
     const homePath = join(root, 'app/home.css')
@@ -145,7 +145,7 @@ describe('style CSS extraction helpers', () => {
     })
   })
 
-  it('detects Master CSS entrypoints', () => {
+  it('detects StetCSS entrypoints', () => {
     expect(hasStetStyleEntrypoint('@import "@stet-css/core";')).toBe(true)
     expect(hasStetStyleEntrypoint('@master entry;')).toBe(false)
     expect(hasStetStyleEntrypoint('@safelist "card";')).toBe(false)
@@ -160,13 +160,13 @@ describe('style CSS extraction helpers', () => {
       { expandStetCSSPackage: false }
     ).source)).toBe(true)
     expect(isStetStyleSource('@import "virtual:stet-utilities.css";')).toBe(false)
-    expect(isStetStyleSource('@import "master.css";')).toBe(false)
+    expect(isStetStyleSource('@import "stet.css";')).toBe(false)
     expect(isStetStyleSource('@master entry;')).toBe(false)
     expect(isStetStyleSource('@safelist "card";')).toBe(false)
     expect(isStetStyleSource('@import "./other.css";')).toBe(false)
   })
 
-  it('detects local compose styles without treating them as Master entries', () => {
+  it('detects local compose styles without treating them as StetCSS entries', () => {
     expect(hasLocalStyleDirectives('.card { @compose block; }')).toBe(true)
     expect(hasLocalStyleDirectives('.card { @variant print { color: red; } }')).toBe(true)
     expect(hasLocalStyleDirectives('.card { @dark { color: red; } }')).toBe(true)
@@ -436,7 +436,7 @@ describe('style CSS extraction helpers', () => {
     expect(result.code).toBe(source)
   })
 
-  it('resolves Master style sources through the stylesheet import graph', () => {
+  it('resolves StetCSS style sources through the stylesheet import graph', () => {
     const root = createFixture()
     const result = resolveStetStyleSource(
       join(root, 'app/globals.css'),
@@ -548,7 +548,7 @@ describe('style CSS extraction helpers', () => {
     expect(result.dependencies.some((dependency: string) => dependency.endsWith('default-native.css'))).toBe(true)
   })
 
-  it('removes top-level master style directives', () => {
+  it('removes top-level StetCSS style directives', () => {
     const result = removeStetStyleDirectives([
       '@source "./page.tsx";',
       '@safelist "card";',
@@ -568,7 +568,7 @@ describe('style CSS extraction helpers', () => {
     expect(result.code).toContain('@media (min-width: 768px) {\n    @source "./nested.tsx";\n}')
   })
 
-  it('treats an empty host source as an intentionally handled Master CSS import', () => {
+  it('treats an empty host source as an intentionally handled StetCSS import', () => {
     const result = createStyleCSSHostSource('@import "@stet-css/core";', {
       stetSource: ''
     })
@@ -739,7 +739,7 @@ describe('style CSS extraction helpers', () => {
     expect(css).not.toContain('@stet-css/core')
   })
 
-  it('reports emittedGlobals variables and animations emitted by the Master CSS entry', async () => {
+  it('reports emittedGlobals variables and animations emitted by the StetCSS entry', async () => {
     const root = createFixture()
     const scanner = new CSSScanner({}, root)
     await scanner.init()
@@ -869,7 +869,7 @@ describe('style CSS extraction helpers', () => {
     })
   })
 
-  it('keeps native CSS from local CSS imports in Master CSS import roots', async () => {
+  it('keeps native CSS from local CSS imports in StetCSS import roots', async () => {
     const root = createFixture()
     mkdirSync(join(root, 'app/styles'), { recursive: true })
     writeFileSync(join(root, 'app/styles/btn.css'), `
@@ -932,7 +932,7 @@ describe('style CSS extraction helpers', () => {
     `)).rejects.toThrow(/@preserve was removed; .* delete "@preserve native;" \(in .*app\/globals\.css or a stylesheet it imports\)/)
   })
 
-  it('can emit native CSS without generated Master CSS', async () => {
+  it('can emit native CSS without generated StetCSS', async () => {
     const root = createFixture()
     const scanner = new CSSScanner({}, root)
     await scanner.init()
@@ -958,7 +958,7 @@ describe('style CSS extraction helpers', () => {
     expect(css).not.toContain('.block{display:block}')
   })
 
-  it('keeps package base CSS without generated utilities for Master CSS imports', async () => {
+  it('keeps package base CSS without generated utilities for StetCSS imports', async () => {
     const root = createFixture()
     const scanner = new CSSScanner({}, root)
     await scanner.init()

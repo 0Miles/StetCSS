@@ -46,7 +46,7 @@ describe('stetCSS options', () => {
   test('builds the classes custom adapters find', async () => {
     const { css } = await buildProject({
       plugins: [stetCSS({ adapters: [probeAdapter] })],
-      prefix: 'master-css-vite-adapters-',
+      prefix: 'stet-css-vite-adapters-',
       styleCSS: '@import "@stet-css/core";\n',
       setup: (root) => writeFileSync(join(root, 'adapter-probe.md'), 'probe\n')
     })

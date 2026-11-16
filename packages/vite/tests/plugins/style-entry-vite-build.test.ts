@@ -17,7 +17,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
       plugins: [
         stetCSS()
       ],
-      prefix: 'master-css-vite-import-order-',
+      prefix: 'stet-css-vite-import-order-',
       styleCSS: [
         '@import "@stet-css/core";',
         '@import "fake-font/index.css";',
@@ -41,7 +41,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
     expect(css).not.toContain('@stet-css/core')
   })
 
-  test('emits preset base CSS for the root Master CSS import', async () => {
+  test('emits preset base CSS for the root StetCSS import', async () => {
     const { css } = await buildProject({
       appClass: 'block',
       plugins: [
@@ -93,7 +93,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
   test('static SSR build emits rules for classes in server-only templates', async () => {
     const { css } = await buildProject({
       plugins: [stetCSS()],
-      prefix: 'master-css-vite-ssr-template-',
+      prefix: 'stet-css-vite-ssr-template-',
       styleCSS: '@import "@stet-css/core";',
       build: {
         ssr: 'src/entry-server.ts',
@@ -126,7 +126,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
     const { css } = await buildProject({
       appClass: 'block',
       plugins: [stetCSS()],
-      prefix: 'master-css-vite-virtual-only-',
+      prefix: 'stet-css-vite-virtual-only-',
       mainTS: 'import "virtual:stet-utilities.css"\n'
     })
 
@@ -146,7 +146,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
     const buildCSSFiles = async (appClass: string, nativeCSS = '') => (await buildProject({
       appClass,
       plugins: [stetCSS()],
-      prefix: 'master-css-vite-asset-hash-',
+      prefix: 'stet-css-vite-asset-hash-',
       styleCSS: `@import "@stet-css/core";\n${nativeCSS}`
     })).cssFiles
 
@@ -176,7 +176,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
     const buildLazy = (color: string) => buildProject({
       appClass: 'block',
       plugins: [stetCSS()],
-      prefix: 'master-css-vite-asset-hash-lazy-',
+      prefix: 'stet-css-vite-asset-hash-lazy-',
       styleCSS: '@import "@stet-css/core";\n.a { color: red; }\n',
       mainTS: 'import "./style.css"\nimport("./lazy")\n',
       setup(root) {

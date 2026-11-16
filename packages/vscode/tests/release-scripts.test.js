@@ -35,11 +35,11 @@ test('package rejects Azure credential authentication', () => {
 })
 
 test('package accepts publisher override for staged VSIX manifests', () => {
-  const options = parseCLIArgs(['package', '--publisher', 'master', '--out-dir', 'open-vsx', '--target', 'darwin-arm64'])
+  const options = parseCLIArgs(['package', '--publisher', 'stet', '--out-dir', 'open-vsx', '--target', 'darwin-arm64'])
 
   expect(options).toMatchObject({
     command: 'package',
-    publisher: 'master',
+    publisher: 'stet',
     packageArgs: [],
     targets: ['darwin-arm64']
   })

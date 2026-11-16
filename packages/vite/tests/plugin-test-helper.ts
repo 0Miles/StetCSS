@@ -43,7 +43,7 @@ export function createProjectContext({
   command?: 'serve' | 'build'
   html?: string
 } = {}) {
-  const root = mkdtempSync(join(tmpdir(), 'master-css-vite-project-'))
+  const root = mkdtempSync(join(tmpdir(), 'stet-css-vite-project-'))
   projectRoots.push(root)
   writeFileSync(join(root, 'index.html'), html)
   return {
@@ -84,7 +84,7 @@ export async function buildProject({
   html,
   mainTS = 'import "./style.css"\n',
   plugins,
-  prefix = 'master-css-vite-style-entry-',
+  prefix = 'stet-css-vite-style-entry-',
   setup,
   styleCSS
 }: BuildProjectOptions) {

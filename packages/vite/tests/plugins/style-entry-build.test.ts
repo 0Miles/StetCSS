@@ -179,7 +179,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
   })
 
   /**
-   * Guards the silent unstyled build: when no stylesheet in the build imports Master CSS
+   * Guards the silent unstyled build: when no stylesheet in the build imports StetCSS
    * (Astro inlines `@import '@stet-css/core'` written inside an `.astro` `<style>` before
    * Vite plugins see it), the build used to exit cleanly with zero generated rules. It now
    * warns once, naming the supported pattern, and never with the splice warning.
@@ -222,7 +222,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
   })
 
   test('does NOT warn when extracted CSS is empty (no classes found at all)', async () => {
-    // Edge case: a managed CSS import exists but no Master CSS class
+    // Edge case: a managed CSS import exists but no StetCSS class
     // was extracted (e.g. config-only project). Warning here would be
     // noise — there's nothing to splice anyway.
     const ctx = makeContext('<div></div>')
@@ -288,7 +288,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
   })
 
   test('compiles managed CSS entry config rules and keeps all native CSS', async () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'master-css-vite-'))
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-vite-'))
     try {
       const entryPath = path.join(root, 'app.css')
       const source = `
@@ -344,7 +344,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
   })
 
   test('uses the managed CSS entry for config and keeps its native CSS', async () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'master-css-vite-'))
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-vite-'))
     try {
       const entryPath = path.join(root, 'app.css')
       const source = `

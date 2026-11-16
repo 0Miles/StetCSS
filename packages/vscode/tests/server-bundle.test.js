@@ -264,8 +264,8 @@ test('staged extension preserves the Marketplace publisher by default', async ()
 test('staged extension supports an Open VSX publisher override', async () => {
   await withStagedExtension(({ stagingDir }) => {
     expect(readPackageJSON().publisher).toBe('masterco')
-    expect(readPackageJSON(join(stagingDir, 'package.json')).publisher).toBe('master')
-  }, { publisher: 'master' })
+    expect(readPackageJSON(join(stagingDir, 'package.json')).publisher).toBe('stet')
+  }, { publisher: 'stet' })
 })
 
 test('staged extension rejects unsupported targets', async () => {

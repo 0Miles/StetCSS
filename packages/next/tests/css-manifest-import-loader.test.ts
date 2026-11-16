@@ -7,7 +7,7 @@ import stetCSSManifestImportLoader from '../src/css-manifest-import-loader'
 let fixtureDir: string | undefined
 
 function createFixtureDir() {
-  fixtureDir = mkdtempSync(join(tmpdir(), 'master-css-next-import-'))
+  fixtureDir = mkdtempSync(join(tmpdir(), 'stet-css-next-import-'))
   return fixtureDir
 }
 

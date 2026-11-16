@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Master CSS manifest query e2e'
+  title: 'StetCSS manifest query e2e'
 }
 
 export default function RootLayout({ children }) {

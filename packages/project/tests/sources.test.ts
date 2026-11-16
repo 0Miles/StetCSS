@@ -8,7 +8,7 @@ import { findProjectSourceFiles, isProjectSourceFile } from '../src/sources'
 const roots: string[] = []
 
 function createProject(files: string[]) {
-  const root = mkdtempSync(join(tmpdir(), 'master-css-project-sources-'))
+  const root = mkdtempSync(join(tmpdir(), 'stet-css-project-sources-'))
   roots.push(root)
   for (const file of files) {
     mkdirSync(dirname(join(root, file)), { recursive: true })

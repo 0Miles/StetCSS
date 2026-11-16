@@ -79,7 +79,7 @@ describe('Vite dev HMR', () => {
     writeFileSync(path.join(fixtureDir, 'index.html'), [
       '<!doctype html>',
       '<html>',
-      '<head><title>Master CSS Vite HMR</title></head>',
+      '<head><title>StetCSS Vite HMR</title></head>',
       '<body><div id="probe" class="probe"></div><script type="module" src="/main.ts"></script></body>',
       '</html>'
     ].join(''))

@@ -15,7 +15,7 @@ const cwd = process.cwd()
 let projectDir: string
 
 beforeEach(() => {
-  projectDir = realpathSync(mkdtempSync(join(tmpdir(), 'master-css-next-config-')))
+  projectDir = realpathSync(mkdtempSync(join(tmpdir(), 'stet-css-next-config-')))
   process.chdir(projectDir)
 })
 

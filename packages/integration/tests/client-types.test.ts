@@ -9,8 +9,8 @@ const require = createRequire(import.meta.url)
 const tscPath = path.join(path.dirname(require.resolve('typescript/package.json')), 'bin', 'tsc')
 
 describe('@stet-css/integration/client', () => {
-  it('provides types for Master CSS integration virtual modules', () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'master-css-integration-client-'))
+  it('provides types for StetCSS integration virtual modules', () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-integration-client-'))
 
     try {
       const cssPackageDir = path.join(root, 'node_modules', '@stet-css', 'core')

@@ -6,7 +6,7 @@ import { compileCSSManifestFile, compileProjectManifest } from '../src'
 import { flattenStetCSSManifestVariables } from '@stet-css/schema/manifest'
 
 function createFixture() {
-  const root = mkdtempSync(join(tmpdir(), 'master-css-reference-'))
+  const root = mkdtempSync(join(tmpdir(), 'stet-css-reference-'))
   mkdirSync(join(root, 'src'), { recursive: true })
   return root
 }
@@ -117,7 +117,7 @@ describe('CSS @reference', () => {
     }
   })
 
-  test('keeps ordinary package imports before expanded Master CSS entries', () => {
+  test('keeps ordinary package imports before expanded StetCSS entries', () => {
     const root = createFixture()
     try {
       const entryPath = join(root, 'src/app.css')

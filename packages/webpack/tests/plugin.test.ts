@@ -199,7 +199,7 @@ describe('StetCSSPlugin', () => {
   })
 
   test('rewrites managed CSS entries to the generated CSS virtual import', async () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'master-css-webpack-style-'))
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-webpack-style-'))
     const entryPath = path.join(root, 'app.css')
     const themePath = path.join(root, 'theme.css')
     try {
@@ -225,7 +225,7 @@ describe('StetCSSPlugin', () => {
   })
 
   test('keeps imported native CSS and keyframes in the generated CSS virtual module', async () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'master-css-webpack-native-css-'))
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-webpack-native-css-'))
     const entryPath = path.join(root, 'app.css')
     const homePath = path.join(root, 'home.css')
     const pagePath = path.join(root, 'page.tsx')
@@ -269,7 +269,7 @@ describe('StetCSSPlugin', () => {
     }
   })
   test('locally lowers @compose in CSS Modules without rewriting to the virtual CSS import', async () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'master-css-webpack-local-compose-'))
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-webpack-local-compose-'))
     const entryPath = path.join(root, 'app.css')
     const modulePath = path.join(root, 'Button.module.css')
     try {
@@ -299,7 +299,7 @@ describe('StetCSSPlugin', () => {
   })
 
   test('dedupes local theme variables already emitted by global style entries', async () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'master-css-webpack-local-dedupe-'))
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-webpack-local-dedupe-'))
     const entryPath = path.join(root, 'app.css')
     const modulePath = path.join(root, 'Home.module.css')
     try {
@@ -324,7 +324,7 @@ describe('StetCSSPlugin', () => {
   })
 
   test('style loader keeps local style dependencies registered after invalid @compose', async () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'master-css-webpack-loader-invalid-'))
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-webpack-loader-invalid-'))
     const modulePath = path.join(root, 'Button.module.css')
     try {
       let error: Error & { dependencies?: string[] } | undefined
@@ -347,7 +347,7 @@ describe('StetCSSPlugin', () => {
   })
 
   test('locally lowers explicit @reference CSS Modules and reports reference dependencies', async () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'master-css-webpack-reference-'))
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-webpack-reference-'))
     const modulePath = path.join(root, 'Button.module.css')
     const tokenPath = path.join(root, 'tokens.css')
     try {
@@ -387,7 +387,7 @@ describe('StetCSSPlugin', () => {
   })
 
   test('leaves ordinary CSS unchanged in the style loader helper', async () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'master-css-webpack-local-compose-'))
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-webpack-local-compose-'))
     const modulePath = path.join(root, 'Button.module.css')
     try {
       const source = '.button { color: red; }'
@@ -403,7 +403,7 @@ describe('StetCSSPlugin', () => {
     }
   })
 
-  test('strips Master directives from package CSS files before css-loader sees them', async () => {
+  test('strips StetCSS directives from package CSS files before css-loader sees them', async () => {
     const themePath = path.resolve(__dirname, '../../core/src/theme.css')
     const result = await transformStyleSource(
       themePath,
@@ -445,7 +445,7 @@ describe('StetCSSPlugin', () => {
   })
 
   test('adds resolve file dependencies to Set and array-like containers', () => {
-    const dependency = path.join(process.cwd(), 'master.css')
+    const dependency = path.join(process.cwd(), 'stet.css')
     const setDependencies = new Set<string>()
     const arrayDependencies: string[] = []
 
@@ -483,7 +483,7 @@ describe('StetCSSPlugin', () => {
   })
 
   test('keeps virtual manifest file dependencies after invalid CSS', async () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'master-css-webpack-invalid-manifest-'))
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-webpack-invalid-manifest-'))
     const entryPath = path.join(root, 'app.css')
     try {
       writeFileSync(entryPath, [
@@ -525,7 +525,7 @@ describe('StetCSSPlugin', () => {
   })
 
   test('resolves virtual:stet-css-emitted-globals to a JS virtual module', async () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'master-css-webpack-emitted-globals-'))
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-webpack-emitted-globals-'))
     try {
       const plugin = new StetCSSPlugin({}, root)
       const { compiler } = makeFakeCompiler({ context: root })
@@ -610,7 +610,7 @@ describe('StetCSSPlugin', () => {
   })
 
   test('keeps ?stet-css-manifest file dependencies after invalid CSS', async () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'master-css-webpack-invalid-query-manifest-'))
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-webpack-invalid-query-manifest-'))
     const manifestPath = path.join(root, 'theme.css')
     try {
       writeFileSync(manifestPath, [
@@ -780,7 +780,7 @@ describe('StetCSSPlugin', () => {
   })
 
   test('adds managed CSS import graph as virtual manifest dependencies', async () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'master-css-webpack-config-'))
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-webpack-config-'))
     const entryPath = path.join(root, 'app.css')
     const themePath = path.join(root, 'theme.css')
     try {
@@ -818,7 +818,7 @@ describe('StetCSSPlugin', () => {
   })
 
   test('keeps managed CSS entry native CSS and uses its config', async () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'master-css-webpack-'))
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-webpack-'))
     try {
       mkdirSync(path.join(root, 'src'), { recursive: true })
       writeFileSync(path.join(root, 'src/page.html'), '<div class="btn native-used root-native"></div>')
@@ -860,7 +860,7 @@ describe('StetCSSPlugin', () => {
     }
   })
   test('includes package base CSS for managed package imports', async () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'master-css-webpack-package-'))
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-webpack-package-'))
     try {
       writeFileSync(path.join(root, 'app.css'), '@import "@stet-css/core";')
 
@@ -874,7 +874,7 @@ describe('StetCSSPlugin', () => {
     }
   })
   test('keeps managed CSS fallback dependencies after failed style registration', async () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'master-css-webpack-style-invalid-'))
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-webpack-style-invalid-'))
     const entryPath = path.join(root, 'app.css')
     try {
       writeFileSync(entryPath, [
@@ -928,7 +928,7 @@ describe('StetCSSPlugin', () => {
   })
 
   test('resets scanner when a managed CSS import dependency changes in watch mode', async () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'master-css-webpack-watch-'))
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-webpack-watch-'))
     const configPath = path.join(root, 'app.css')
     const tokenPath = path.join(root, 'theme.css')
     try {
@@ -969,7 +969,7 @@ describe('StetCSSPlugin', () => {
    * watch test in `static-e2e.test.ts` red.
    */
   test('hands the static CSS dependencies to the compilation', async () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'master-css-webpack-deps-'))
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-webpack-deps-'))
     const entryPath = path.join(root, 'src/app.css')
     const themePath = path.join(root, 'src/theme.css')
     const templatePath = path.join(root, 'src/template.html')

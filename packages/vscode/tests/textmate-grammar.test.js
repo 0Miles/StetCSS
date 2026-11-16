@@ -274,7 +274,7 @@ test('documents native CSS punctuation scopes used by semantic token mappings', 
   expectScope(tokens, '--token', 'variable.css')
 })
 
-test('highlights every Master CSS directive keyword', () => {
+test('highlights every StetCSS directive keyword', () => {
   const tokens = tokenize(`
     @settings {}
     @source not "app.tsx";
@@ -439,7 +439,7 @@ test('highlights custom variants, nested selectors, queries, and values', () => 
   expectNoScope(tokens, '99% 0.0033 72', 'constant.numeric.stet-css')
 })
 
-test('highlights detailed Master directive syntax without misclassifying native pieces', () => {
+test('highlights detailed StetCSS directive syntax without misclassifying native pieces', () => {
   const tokens = tokenize(`
     @theme static brand {
       /* Font families */

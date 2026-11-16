@@ -70,7 +70,7 @@ async function waitForWatchRestart(onReady: () => void) {
 
 beforeAll(() => {
   subprocessOutput = ''
-  workspacePath = fs.mkdtempSync(path.join(os.tmpdir(), 'master-css-cli-watch-'))
+  workspacePath = fs.mkdtempSync(path.join(os.tmpdir(), 'stet-css-cli-watch-'))
   HTMLFilepath = path.join(workspacePath, 'test.html')
   configFilepath = path.join(workspacePath, 'index.css')
   virtualCSSFilepath = path.join(workspacePath, 'output.css')

@@ -37,7 +37,7 @@ test.concurrent('collects reference directive ranges', () => {
   expect(source.slice(ranges[0].quotedStringRanges[0].contentRange.start, ranges[0].quotedStringRanges[0].contentRange.end)).toBe('./a;b.css')
 })
 
-test.concurrent('collects nested Master directive ranges without treating host at-rules as directives', () => {
+test.concurrent('collects nested StetCSS directive ranges without treating host at-rules as directives', () => {
   const source = '@layer components { .btn { @compose block; @variant <sm { @compose hidden; } } }'
   const ranges = collectCSSDirectiveRanges(source)
 
@@ -100,7 +100,7 @@ test.concurrent('collects managed definition directive ranges', () => {
   expect(source.slice(ranges[1].preludeRange.start, ranges[1].preludeRange.end).trim()).toBe('block')
 })
 
-test.concurrent('does not collect @utility as a Master CSS directive', () => {
+test.concurrent('does not collect @utility as a StetCSS directive', () => {
   const source = '@utility text-<left|center|right> { text-align: --value(); }'
   const ranges = collectCSSDirectiveRanges(source)
 

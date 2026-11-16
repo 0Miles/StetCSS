@@ -49,7 +49,7 @@ describe('ManifestVirtualModulePlugin', () => {
   })
 
   it('keeps default manifest dependencies registered after invalid CSS and recovers on the next run', async () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'master-css-vite-manifest-'))
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-vite-manifest-'))
     const entryPath = path.join(root, 'app.css')
     try {
       mkdirSync(root, { recursive: true })

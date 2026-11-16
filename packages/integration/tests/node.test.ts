@@ -23,7 +23,7 @@ import { EMPTY_EMITTED_GLOBALS_MODULE } from '../src/emitted-globals-module'
 let fixtureDir: string | undefined
 
 function createFixtureDir() {
-  fixtureDir = mkdtempSync(path.join(tmpdir(), 'master-css-integration-node-'))
+  fixtureDir = mkdtempSync(path.join(tmpdir(), 'stet-css-integration-node-'))
   return fixtureDir
 }
 

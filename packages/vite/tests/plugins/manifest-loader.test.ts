@@ -66,7 +66,7 @@ describe('ManifestLoaderPlugin', () => {
   })
 
   it('keeps per-file manifest dependencies registered after invalid CSS and recovers on the next run', async () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'master-css-vite-query-manifest-'))
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-vite-query-manifest-'))
     const manifestPath = path.join(root, 'theme.css')
     try {
       mkdirSync(root, { recursive: true })

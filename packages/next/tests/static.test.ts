@@ -7,7 +7,7 @@ import stetCSSNextGeneratedCSSLoader from '../src/generated-css-loader'
 import stetCSSStyleCSSLoader from '../src/style-css-loader'
 
 function createFixture(globals = '@import "@stet-css/core";') {
-  const root = mkdtempSync(join(tmpdir(), 'master-css-next-static-'))
+  const root = mkdtempSync(join(tmpdir(), 'stet-css-next-static-'))
   mkdirSync(join(root, 'app'), { recursive: true })
   writeFileSync(join(root, 'app/globals.css'), globals)
   return root
@@ -198,9 +198,9 @@ describe('Next static CSS', () => {
   })
 
   /**
-   * Guards that plain stylesheets with Master directives but no entry are not hijacked into
+   * Guards that plain stylesheets with StetCSS directives but no entry are not hijacked into
    * the generated module.
-   * Reverse check: rewriting every stylesheet with a Master directive turns it red.
+   * Reverse check: rewriting every stylesheet with a StetCSS directive turns it red.
    */
   it('leaves stylesheets that are not entries unchanged', async () => {
     const root = createFixture()

@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import stetCSSStyleCSSLoader from '../src/style-css-loader'
 
 function createFixture() {
-  const root = mkdtempSync(join(tmpdir(), 'master-css-next-style-'))
+  const root = mkdtempSync(join(tmpdir(), 'stet-css-next-style-'))
   mkdirSync(join(root, 'app'), { recursive: true })
   return root
 }

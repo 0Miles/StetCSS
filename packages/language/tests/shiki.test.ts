@@ -272,7 +272,7 @@ test.concurrent('does not resolve guide theme CSS directive syntax through seman
   expect(transformedTokens).toBeUndefined()
 })
 
-test.concurrent('does not create Master Shiki decorations for native-only CSS', () => {
+test.concurrent('does not create StetCSS Shiki decorations for native-only CSS', () => {
   const code = [
     '@keyframes fade {',
     '    from { opacity: 0; transform: translateX(0); }',
@@ -302,7 +302,7 @@ test.concurrent('normalizes Shiki language ids separately from class-list langua
   expect(stetCSSShikiLanguage).toMatchObject({ name: 'StetCSS Directive Injection', scopeName: 'stet-css.directive.injection' })
 })
 
-test.concurrent('creates Shiki decorations from Master CSS semantic tokens', () => {
+test.concurrent('creates Shiki decorations from StetCSS semantic tokens', () => {
   const code = '<div className="fg:brand:hover@sm block btn btn:hover@sm btn_div::before"></div>'
   const decorations = createStetCSSShikiDecorations(code, {
     lang: 'tsx',
@@ -447,7 +447,7 @@ test.concurrent('creates Shiki decorations for CSS directive class-list spans', 
   ]))
 })
 
-test.concurrent('creates Shiki decorations for raw Master CSS class lists', () => {
+test.concurrent('creates Shiki decorations for raw StetCSS class lists', () => {
   const code = 'fg:brand:hover@sm {bg:blue;fg:white}'
   const decorations = createStetCSSShikiDecorations(code, {
     lang: 'mcss',
@@ -525,7 +525,7 @@ test.concurrent('applies semantic decorations in the Shiki tokens hook', () => {
   }
   const transformer = transformerStetCSS({
     manifest,
-    classPrefix: 'master-css-token',
+    classPrefix: 'stet-css-token',
     dataAttributes: false,
     semanticTokenStyles: {
       'class.declaration': {
@@ -543,7 +543,7 @@ test.concurrent('applies semantic decorations in the Shiki tokens hook', () => {
     expect.objectContaining({
       content: 'btn',
       htmlAttrs: {
-        class: 'master-css-token master-css-token-class master-css-token-role-utility-component master-css-token-class-declaration master-css-token-class-component'
+        class: 'stet-css-token stet-css-token-class stet-css-token-role-utility-component stet-css-token-class-declaration stet-css-token-class-component'
       },
       htmlStyle: {
         'font-weight': '600'
@@ -552,7 +552,7 @@ test.concurrent('applies semantic decorations in the Shiki tokens hook', () => {
     expect.objectContaining({
       content: 'hover',
       htmlAttrs: {
-        class: 'master-css-token master-css-token-modifier master-css-token-role-selector-pseudoClass-name master-css-token-modifier-pseudoClass'
+        class: 'stet-css-token stet-css-token-modifier stet-css-token-role-selector-pseudoClass-name stet-css-token-modifier-pseudoClass'
       },
       htmlStyle: {}
     })
@@ -607,7 +607,7 @@ test.concurrent('uses semantic token scope styles for selector semantic tokens',
   ]))
 })
 
-test.concurrent('uses semantic token scope styles for documentation Master CSS tokens', () => {
+test.concurrent('uses semantic token scope styles for documentation StetCSS tokens', () => {
   const htmlCode = '<section class="bg:blue block grid-cols:2@md fg:primary:hover"></section>'
   const htmlOptions = {
     lang: 'html'

@@ -20,7 +20,7 @@ import { tmpdir } from 'node:os'
 import { flattenStetCSSManifestVariables } from '@stet-css/schema/manifest'
 
 function createFixture() {
-  return mkdtempSync(join(tmpdir(), 'master-css-manifester-'))
+  return mkdtempSync(join(tmpdir(), 'stet-css-manifester-'))
 }
 
 function isSameOrChildPath(parentPath: string, childPath: string) {
@@ -168,7 +168,7 @@ test('loads package entry preset manifest from CSS imports', async () => {
     const result = await loadManifest(entry)
     const packageEntry = resolveStetCSSPackageEntryFile('@stet-css/core', entry, cwd)
     expect(packageEntry).toBeTruthy()
-    if (!packageEntry) throw new Error('Expected Master CSS package entry')
+    if (!packageEntry) throw new Error('Expected StetCSS package entry')
     expect(result.dependencies).toContain(packageEntry)
     const packageDependencies = result.dependencies
       .filter((dependency: string) => !isSameOrChildPath(cwd, dependency))
@@ -281,7 +281,7 @@ test('finds Sass stylesheet entries only when the caller asks for their extensio
   }
 })
 
-test('finds Master CSS workspace directories from package and CSS entries', async () => {
+test('finds StetCSS workspace directories from package and CSS entries', async () => {
   const cwd = createFixture()
   try {
     mkdirSync(join(cwd, 'packages', 'app'), { recursive: true })
@@ -326,7 +326,7 @@ test('does not match sibling workspace path prefixes', async () => {
   }
 })
 
-test('resolves Master CSS workspace packages and optional language server', () => {
+test('resolves StetCSS workspace packages and optional language server', () => {
   const cwd = createFixture()
   try {
     writeJSON(join(cwd, 'package.json'), {
