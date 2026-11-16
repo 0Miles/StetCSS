@@ -98,10 +98,10 @@ Every build plugin (`@stet-css/vite`, `webpack`, `next`, `nuxt`, `astro`, `svelt
 
 | Removed plugin option | Replacement |
 | --- | --- |
-| `mode` | none; static CSS is the only output (import `@stet-css/runtime` in the app to also run the runtime) |
-| `injectRuntime` | import `@stet-css/runtime` in the app |
+| `mode` | none; static CSS is the only output (to also run the runtime, start `@stet-css/runtime` in the app with `CSSRuntime.create(...).observe()`) |
+| `injectRuntime` | start `@stet-css/runtime` in the app with `CSSRuntime.create(...).observe()` |
 | `avoidFOUC` | none; static CSS is in the page before it renders |
-| `scanner`, `scannerOptions` | pass `adapters` directly |
+| `scanner`, `scannerOptions` | pass `adapters` directly; removed keys inside them are named in the same error |
 
 ## CSS directives
 
