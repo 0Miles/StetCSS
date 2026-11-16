@@ -90,7 +90,7 @@ describe('SvelteKit project with masterCSS() and no hooks.server', () => {
    * generation to a server hook or the runtime, the linked stylesheet would ship without them,
    * and the server-only page, which runs no script, would stay unstyled.
    *
-   * Reverse check: returning `[]` from `src/lib/vite.ts` fails this test.
+   * Reverse check: returning `[]` from `src/lib/vite.ts` fails both tests in this file.
    */
   test('build writes the utilities into the stylesheet the built page links', async () => {
     await build({ root, logLevel: 'silent' })
@@ -109,7 +109,7 @@ describe('SvelteKit project with masterCSS() and no hooks.server', () => {
    * into the page, so the page is styled before any script runs, on the page that reads its class
    * from server load data and on the page only the server renders.
    *
-   * Reverse check: returning `[]` from `src/lib/vite.ts` fails this test.
+   * Reverse check: returning `[]` from `src/lib/vite.ts` fails both tests in this file.
    */
   test('dev serves the utilities in the server-rendered pages', async () => {
     const server = await createServer({
