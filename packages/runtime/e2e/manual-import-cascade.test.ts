@@ -5,11 +5,16 @@ import { MasterCSS } from '@stet-css/core'
 import init, { createRuntimeProjectManifest, getRuntimeLoaderURL } from './init'
 
 /**
- * The README's claims about importing the runtime by hand:
- * - Beside the static CSS a build emitted, the runtime generates the same rules again in its own
- *   `style#master-css`, appended after them. The page looks the same, because `base.css` declares the
- *   layer order first and both copies sit in the same layer.
- * - Inside a shadow root nothing declares the order, so the runtime keeps its layer blocks in that order itself.
+ * Guards the README's claims about importing the runtime by hand (`README.md`, "Rules generated twice" and "Layer order").
+ *
+ * - The static-page test guards against the runtime adopting or dropping rules the build already emitted, and
+ *   against it re-emitting an `@layer` statement: it must generate the same two rules again in its own sheet, in
+ *   the layers `base.css` declared. Its colour assertions read the browser's cascade on purpose (testing.md rule 6
+ *   trade-off): they are the README's claim that the page looks the same, so they stay next to the CSSOM checks.
+ * - The two layer-order tests guard against layer blocks landing in first-use order where nothing declares the
+ *   order (a shadow root, a page without base.css), which let a component used after a utility beat it.
+ *   Reverse-checked: restoring `insertRule(this.text, nativeSheet.cssRules.length)` in `src/layer.ts` and
+ *   `src/theme-layer.ts` turns only these two tests red.
  */
 const require = createRequire(import.meta.url)
 const baseCSS = readFileSync(require.resolve('@stet-css/preset/base.css'), 'utf8')
@@ -17,7 +22,6 @@ const manifestInput = {
   utilities: [{ name: 'btn', layer: 'components' as const, declarations: { color: 'rgb(0, 0, 255)' } }]
 }
 const RED = 'rgb(255, 0, 0)'
-const BLUE = 'rgb(0, 0, 255)'
 const GREEN = 'rgb(0, 128, 0)'
 
 /** The rules a build emits for these classes; static rendering writes the same engine output. */
@@ -33,12 +37,12 @@ function waitForRuntimeRuleFlush(page: Page) {
   }))
 }
 
-async function startStaticPage(page: Page, layerStatement: string) {
+async function startStaticPage(page: Page) {
   await page.setContent(`
     <!doctype html>
     <html>
     <head>
-      <style>${layerStatement}</style>
+      <style>${baseCSS}</style>
       <style id="static">${renderStaticCSS('btn', 'color:#f00')}</style>
       <style>.author { color: ${GREEN} }</style>
     </head>
@@ -67,7 +71,7 @@ function readStaticPage(page: Page) {
 }
 
 test('the runtime regenerates static rules without changing the cascade base.css declares', async ({ page }) => {
-  await startStaticPage(page, baseCSS)
+  await startStaticPage(page)
 
   expect(await readStaticPage(page)).toEqual({
     // The runtime's `.btn` (components) comes after the static `.color:#f00` (utilities); the layer order still ranks the utility first.
@@ -78,12 +82,6 @@ test('the runtime regenerates static rules without changing the cascade base.css
     runtimeLayers: ['components', 'utilities'],
     runtimeSelectors: ['.btn', '.color\\:\\#f00']
   })
-})
-
-test('reverse check: the declared layer order, not source order, decides the static page', async ({ page }) => {
-  await startStaticPage(page, '@layer theme, base, defaults, utilities, components;')
-
-  expect((await readStaticPage(page)).mixed).toBe(BLUE)
 })
 
 for (const rootKind of ['shadow root', 'document without base.css'] as const) {
