@@ -155,7 +155,6 @@ async function runMasterCLIDiagnostic(workspace: string, fixtureId: BenchmarkFix
 
   await recorder.time('cli-scanner-init-ms', async () => {
     await scanner.init()
-    scanner.options.verbose = 0
   })
 
   await recorder.time('cli-css-entry-register-ms', async () => {

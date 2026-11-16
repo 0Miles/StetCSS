@@ -116,10 +116,11 @@ describe('StyleEntryPlugin Vite build integration', () => {
 
   /**
    * Guards integrations that import only the generated CSS module and have no stylesheet
-   * entry: without an entry the stylesheet falls back to classes from a module scan, which
-   * the plugin no longer runs, so it must ask for the project's class set explicitly.
-   * Reverse check: dropping `classes: []` from `src/utils/extracted-css.ts` turns this test
-   * and the serve load test of the virtual CSS module in `style-entry.test.ts` red.
+   * entry: the project's class set applies without an entry too, so the module gets the
+   * project's rules.
+   * Reverse check: having `createExtractedCSSResult` return the scanner's own CSS when no
+   * entry is registered turns this test and the serve load test of the virtual CSS module in
+   * `style-entry.test.ts` red.
    */
   test('static build without a stylesheet entry emits rules for the virtual CSS module', async () => {
     const { css } = await buildProject({

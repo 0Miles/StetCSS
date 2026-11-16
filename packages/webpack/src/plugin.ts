@@ -1,5 +1,5 @@
 import { CSSScanner, type ScannerOptions } from '@stet-css/scanner'
-import type { MasterCSSEmittedGlobals } from '@stet-css/core'
+import type { MasterCSSEmittedGlobals, MasterCSSManifest } from '@stet-css/core'
 import { toManifestJSON } from '@stet-css/integration/manifest-module'
 import {
   toBrowserManifestFacadeModule,
@@ -109,6 +109,8 @@ export class MasterCSSPlugin {
   manifestJSONAssets = new Map<string, string>()
   defaultManifestDependencies: string[] = []
   emittedGlobals: MasterCSSEmittedGlobals = {}
+  /** The project manifest the manifest module last loaded; static CSS renders with it. */
+  projectManifest?: MasterCSSManifest
   styleCSSSources: StyleCSSSources = new Map()
   /** Entries the style loader reported that discovery may miss, e.g. outside the root. */
   loadedStyleEntries = new Set<string>()
@@ -188,10 +190,7 @@ export class MasterCSSPlugin {
     this.defaultManifestDependencies = [...dependencies]
 
     const result = await loadProjectManifest(this.cwd, { entries })
-    this.scanner.customOptions = {
-      ...this.scanner.customOptions,
-      manifest: result.manifest
-    }
+    this.projectManifest = result.manifest
     for (const dependency of result.dependencies) {
       dependencies.add(dependency)
     }
@@ -285,10 +284,10 @@ export class MasterCSSPlugin {
       await this.registerStyleEntries(dependencies)
       const sourceContext = this.createSourceContext()
       const [result, sourceFiles] = await Promise.all([
+        // Every class comes from the project's class set, none from compiled modules.
         createExtractedCSSResult({
           ...sourceContext,
-          // Every class comes from the project's class set, none from compiled modules.
-          classes: []
+          manifest: this.projectManifest
         }),
         resolveStylesheetSourceFiles(sourceContext)
       ])
