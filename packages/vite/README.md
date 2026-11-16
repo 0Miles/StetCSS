@@ -79,7 +79,7 @@ Import the default stylesheet from the CSS entry your app already loads:
 @import '@stet-css/core';
 ```
 
-With no options the plugin runs in `static` mode: the build writes the rules for the classes in your source into that stylesheet, and the HTML gets no runtime script and no `hidden` attribute.
+With no options the plugin runs in `static` mode: the build writes the rules for the classes in your source into that stylesheet, and the HTML gets no runtime script and no `hidden` attribute. If your HTML has a hand-written `hidden` on `<html>` for runtime rendering, remove it: static mode never removes it, so the page would stay blank.
 
 ## Client types
 Add the client type reference when TypeScript source files import Master CSS virtual manifest, emittedGlobals, or generated CSS modules:
