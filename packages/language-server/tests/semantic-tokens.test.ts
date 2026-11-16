@@ -171,6 +171,31 @@ withFixture('basic', async (context) => {
     expect(hasTokenModifier(semanticTokens.data, 'selectorCombinator')).toBe(true)
     await context.server.onDidClose({ document: textDocument })
   })
+
+  /**
+   * Guards #82: classes the build drops were highlighted as valid classes.
+   * They must get no tokens, while the valid class next to them keeps its own.
+   *
+   * Reverse check: removing `generateRules` from `buildValidity` in
+   * `src/core.ts` reddens this test and the alias and group hover rows.
+   */
+  test('gives no tokens to classes the build drops', async ({ expect }) => {
+    async function tokenCount(classList: string) {
+      const textDocument = context.createDocument(`<div class="${classList}"></div>`)
+      await context.server.onDidOpen({ document: textDocument })
+      const semanticTokens = await context.server.onSemanticTokens({
+        textDocument: {
+          uri: textDocument.uri
+        }
+      } as any)
+      await context.server.onDidClose({ document: textDocument })
+      return semanticTokens.data.length / 5
+    }
+
+    expect(await tokenCount('top:48 flex:col font:14')).toBe(0)
+    expect(await tokenCount('top:0')).toBe(3)
+    expect(await tokenCount('top:48 top:0 font:14')).toBe(3)
+  })
 }, {
   embeddedSyntaxHighlighting: 'always'
 })

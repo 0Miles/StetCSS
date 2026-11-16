@@ -28,6 +28,9 @@
       "path": "../project/tsconfig.typecheck.json"
     },
     {
+      "path": "../validator/tsconfig.typecheck.json"
+    },
+    {
       "path": "../schema/tsconfig.typecheck.json"
     }
   ],
