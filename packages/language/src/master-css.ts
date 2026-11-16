@@ -1,4 +1,4 @@
-import { MasterCSS, type CompiledUtility, type NativeCSSDeclarationMatcher } from '@stet-css/core'
+import { MasterCSS, isUndeclaredModeError, type CompiledUtility, type NativeCSSDeclarationMatcher } from '@stet-css/core'
 import { builtinKeyAliases, builtinNativeValueNamespaces } from '@stet-css/engine'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 import UtilityType from '@stet-css/schema/utility-type'
@@ -72,7 +72,12 @@ export function generateCSS(
     nativeDeclarationMatcher: runtime.nativeDeclarationMatcher
   })
   for (const className of classNames) {
-    generatedCSS.ensureClassRules(className)
+    try {
+      generatedCSS.ensureClassRules(className)
+    } catch (error) {
+      // A class naming an undeclared mode has no CSS to show; hover and lint report the error.
+      if (!isUndeclaredModeError(error)) throw error
+    }
   }
   return generatedCSS.text
 }
