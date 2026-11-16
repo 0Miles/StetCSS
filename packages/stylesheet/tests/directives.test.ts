@@ -117,7 +117,7 @@ describe('stylesheet CSS directives', () => {
     await scanner.init()
 
     await expect(registerStyleCSSSource(scanner, new Map(), join(root, 'app/entry.css'), `
-      @master entry;
+      @import "@stet-css/core";
       @source '${pattern}';
     `)).rejects.toThrow(`'${pattern}' expands its braces into more than 1024 patterns (in ${join(root, 'app/entry.css')})`)
   })
