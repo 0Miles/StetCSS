@@ -761,12 +761,6 @@
     "packages/svelte": {
       "name": "@stet-css/svelte",
       "dependencies": {
-        "@stet-css/core": "workspace:^",
-        "@stet-css/integration": "workspace:^",
-        "@stet-css/lexer": "workspace:^",
-        "@stet-css/preset": "workspace:^",
-        "@stet-css/schema": "workspace:^",
-        "@stet-css/server": "workspace:^",
         "@stet-css/vite": "workspace:^",
       },
       "devDependencies": {

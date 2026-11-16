@@ -1,7 +1,7 @@
 <script lang="ts">
   const items = [
     'SvelteKit Vite plugin',
-    'Server hook rendering',
+    'Static CSS from the project class set',
     'Automatic .svelte source extraction'
   ];
 </script>
