@@ -116,7 +116,7 @@ import {
 } from '@stet-css/project/entries'
 ```
 
-`findCSSManifestEntryFiles(projectDir)` searches CSS files for entry markers. `findMasterCSSWorkspaceDirectories(rootDir)` creates workspace roots from discovered CSS entries and `package.json` files that declare Master CSS package dependencies.
+`findCSSManifestEntryFiles(projectDir, { extensions })` searches CSS files for entry markers; pass `extensions: STYLE_ENTRY_EXTENSIONS` to include `.scss` and `.sass` stylesheet entries. `findMasterCSSWorkspaceDirectories(rootDir)` creates workspace roots from discovered CSS entries and `package.json` files that declare Master CSS package dependencies.
 
 ## Discover project source files
 

@@ -3,7 +3,9 @@ import { loadManifest, loadManifestJSON, loadProjectManifest } from '../src/mani
 import { loadManifestJSONSync, loadManifestSync, loadProjectManifestSync } from '../src/manifest-sync'
 import { MASTER_CSS_MANIFEST_QUERY } from '@stet-css/integration/manifest-module'
 import {
+  STYLE_ENTRY_EXTENSIONS,
   findCSSManifestEntryFiles,
+  findCSSManifestEntryFilesSync,
   findMasterCSSWorkspaceDirectories,
   hasMasterCSSManifestEntrypoint,
   resolveMasterCSSPackageEntryFile
@@ -217,6 +219,36 @@ test('loads project-level CSS manifest entries', async () => {
     expect(result.manifest.utilities).not.toContainEqual(expect.objectContaining({
       name: 'ignored'
     }))
+  } finally {
+    rmSync(cwd, { recursive: true, force: true })
+  }
+})
+
+/**
+ * Guards Sass stylesheet entries for static CSS: a build that only looks for `.css` entries
+ * drops a Sass entry's `@theme` and `@components`, while manifest loading, which reads plain
+ * CSS only, must keep ignoring Sass files.
+ * Reverse check: ignoring the `extensions` option turns only this test red.
+ */
+test('finds Sass stylesheet entries only when the caller asks for their extensions', async () => {
+  const cwd = createFixture()
+  try {
+    mkdirSync(join(cwd, 'styles'), { recursive: true })
+    mkdirSync(join(cwd, 'node_modules', 'ui'), { recursive: true })
+    writeFileSync(join(cwd, 'styles', 'app.css'), '@import "@stet-css/core";')
+    writeFileSync(join(cwd, 'styles', 'theme.scss'), '$brand: #123456;\n@import "@stet-css/core";\n@theme { --color-brand: #{$brand}; }')
+    writeFileSync(join(cwd, 'styles', 'legacy.sass'), '@master entry;')
+    writeFileSync(join(cwd, 'styles', 'plain.scss'), '.card { color: red; }')
+    writeFileSync(join(cwd, 'node_modules', 'ui', 'index.scss'), '@import "@stet-css/core";')
+
+    const styleEntries = [
+      join(cwd, 'styles', 'app.css'),
+      join(cwd, 'styles', 'legacy.sass'),
+      join(cwd, 'styles', 'theme.scss')
+    ]
+    await expect(findCSSManifestEntryFiles(cwd)).resolves.toStrictEqual([join(cwd, 'styles', 'app.css')])
+    await expect(findCSSManifestEntryFiles(cwd, { extensions: STYLE_ENTRY_EXTENSIONS })).resolves.toStrictEqual(styleEntries)
+    expect(findCSSManifestEntryFilesSync(cwd, { extensions: STYLE_ENTRY_EXTENSIONS })).toStrictEqual(styleEntries)
   } finally {
     rmSync(cwd, { recursive: true, force: true })
   }
