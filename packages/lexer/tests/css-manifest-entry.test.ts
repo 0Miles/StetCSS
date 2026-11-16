@@ -24,7 +24,9 @@ test.concurrent('finds top-level CSS imports without splitting quoted semicolons
 /**
  * Prevents: a stylesheet marked only with the removed `@master entry;` counting as an entry again.
  * Entries are recognised by the `@stet-css/core` import alone; `@master` at-rules are rejected by
- * the compiler instead.
+ * the compiler instead, which is why the detection helpers assert `false` for it on purpose.
+ * Reverse check: matching `@master entry;` in `createMasterCSSManifestEntryPattern` again turns
+ * only this test red.
  */
 test.concurrent('matches only the @stet-css/core import as a Master CSS manifest entrypoint', () => {
   const pattern = createMasterCSSManifestEntryPattern()

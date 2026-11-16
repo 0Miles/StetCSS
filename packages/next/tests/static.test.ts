@@ -140,6 +140,9 @@ describe('Next static CSS', () => {
    * Prevents: a stylesheet still marked with the removed `@master entry;` passing the build. It is
    * no longer an entry, so the style loader must fail with the import that replaces it instead of
    * leaving the file, and its classes, out of the generated CSS without a word.
+   * Reverse check: removing both `assertNoMasterAtRules` calls from `resolveMasterStyleSource` and
+   * `master` from the local-style rejected names turns only this test red; either guard alone
+   * keeps it green.
    */
   it('fails stylesheets still marked with @master entry', async () => {
     const globals = '@master entry;\n.main { color: red; }'

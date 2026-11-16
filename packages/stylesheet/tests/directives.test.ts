@@ -37,6 +37,8 @@ describe('stylesheet CSS directives', () => {
    * Prevents: removed `@master` at-rules in an entry graph being skipped by directive collection
    * and left in the CSS, where they do nothing. Directive collection runs for every registered
    * entry, so it must fail with the replacement.
+   * Reverse check: removing the `assertNoMasterAtRules` call from
+   * `collectStandaloneCSSDirectiveExtractionPolicy` turns only this test red in this file.
    */
   it('rejects @master at-rules while collecting extraction directives', () => {
     const root = createFixture()
