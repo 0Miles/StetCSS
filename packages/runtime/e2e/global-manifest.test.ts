@@ -128,7 +128,7 @@ test('reveals the page when started from a head script', async ({ page }) => {
 
 /**
  * Guards: the CDN bundle uses only its embedded default manifest; a page global named
- * `masterCSSManifest` cannot replace the design tokens.
+ * `stetCSSManifest` cannot replace the design tokens.
  * Reverse check: none run in #88; this behaviour predates it and the test only moved to the npm CDN layout.
  */
 test('ignores global manifest override', async ({ page }) => {
@@ -139,7 +139,7 @@ test('ignores global manifest override', async ({ page }) => {
     ]
   } as const
   await page.evaluate(({ manifest }) => {
-    (globalThis as typeof globalThis & { masterCSSManifest?: unknown }).masterCSSManifest = manifest
+    (globalThis as typeof globalThis & { stetCSSManifest?: unknown }).stetCSSManifest = manifest
   }, { manifest })
   await page.addScriptTag({ url: `${origin}${CDN_PACKAGE_PATHS.jsdelivr}/dist/global.min.js` })
   await page.waitForFunction(() => !!globalThis.stetCSSRuntime?.observing)
