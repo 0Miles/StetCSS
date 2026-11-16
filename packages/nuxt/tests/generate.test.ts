@@ -17,12 +17,12 @@ setupNuxtTest({ rootDir, server: false, nuxtConfig: generateConfig })
 
 /**
  * Guards `nuxt generate`: the prerendered page links CSS that holds the server component's
- * and both layers' classes, and the output has no `_master-css/` assets.
+ * and both layers' classes, and the output has no `_stet-css/` assets.
  */
 it('generates static CSS that covers server components and layers', () => {
   // @nuxt/test-utils writes Nitro's output to `<buildDir>/output`.
   const publicDir = join(useTestContext().nuxt!.options.buildDir, 'output', 'public')
-  expect(existsSync(join(publicDir, '_master-css'))).toBe(false)
+  expect(existsSync(join(publicDir, '_stet-css'))).toBe(false)
   const html = readFileSync(join(publicDir, 'index.html'), 'utf8')
   const hrefs = expectStaticFixtureHTML(html)
   const css = hrefs.map((href) => readFileSync(join(publicDir, href), 'utf8')).join('\n')

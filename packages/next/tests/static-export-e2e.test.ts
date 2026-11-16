@@ -26,7 +26,7 @@ describe('static export e2e', () => {
     expect(css).toContain('.font\\:40px{font-size:40px}')
     expect(css).toContain('.fg\\:blue{color:var(--color-blue)}')
     expect(css).toContain('.font\\:32px{font-size:32px}')
-    expect(existsSync(join(outDir, '_next/static/master-css'))).toBe(false)
+    expect(existsSync(join(outDir, '_next/static/stet-css'))).toBe(false)
     expect(readFileSync(join(outDir, 'index.html'), 'utf-8')).not.toContain('<style id="stet-css"')
   })
 })

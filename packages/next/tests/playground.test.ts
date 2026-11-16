@@ -18,7 +18,7 @@ describe('playground', () => {
     expect(css).toContain('.fg\\:primary{color:var(--color-primary)}')
     expect(css).toContain('#0070f3')
     expect(css).toContain('.font\\:heavy{')
-    expect(clientSource.includes('__MASTER_CSS_NEXT_RUNTIME__')).toBe(false)
+    expect(clientSource.includes('__STET_CSS_NEXT_RUNTIME__')).toBe(false)
     expect(clientSource.includes('stetCSSRuntime')).toBe(false)
   })
 })
