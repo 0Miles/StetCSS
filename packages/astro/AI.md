@@ -10,8 +10,10 @@ Owns the Astro integration: it registers `@stet-css/vite` in static mode through
 ## Risks
 
 - **Split builds**: Astro builds the prerender, server and client environments separately; classes reach the CSS from the project's files, not from the modules a given environment compiles.
-- **Inline `@import`**: Astro inlines `@import` in `.astro` `<style>` blocks before Vite plugins run, so `@import '@stet-css/core'` there ships raw preset source. The supported pattern imports a `.css` file.
+- **Inline `@import`**: Astro inlines `@import` in `.astro` `<style>` blocks before Vite plugins run, so `@import '@stet-css/core'` there ships raw preset source; the Vite plugin's no-entry build warning names the supported pattern (import a `.css` file).
+
+- **Silent unstyled build**: when no stylesheet imports Master CSS, `@stet-css/vite` warns at build end; keep that warning reachable from Astro builds.
 
 ## Validation
 
-Build `examples/astro` when Astro behaviour changes, and check that every class in its `.astro` files that generates a rule appears in `dist/_astro/*.css`.
+`tests/static-build.test.ts` builds `tests/fixtures/static-build` (prerendered page, `prerender = false` page, server island) with a stub adapter. Also build `examples/astro` when Astro behaviour changes, and check that every class in its `.astro` files that generates a rule appears in `dist/_astro/*.css`.
