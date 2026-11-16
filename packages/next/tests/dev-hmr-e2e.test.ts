@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:net'
 import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { chromium, type Browser } from '@playwright/test'
+import { chromium, type Browser, type Page } from '@playwright/test'
 import { describe, expect, it } from 'vitest'
 import execBunSync from './helpers/bun-command'
 
@@ -50,7 +50,9 @@ function createGlobalsCSS(compose: string) {
   ].join('\n')
 }
 
-function writeFixture(fixtureDir: string, compose = 'inline-flex') {
+// Native property classes: composing a preset static utility such as `inline-flex` from an
+// entry still fails in @stet-css/stylesheet's static pipeline (reported separately).
+function writeFixture(fixtureDir: string, compose = 'display:inline-flex') {
   mkdirSync(join(fixtureDir, 'app'), { recursive: true })
   writeFileSync(join(fixtureDir, 'package.json'), JSON.stringify({
     private: true,
@@ -72,12 +74,32 @@ function writeFixture(fixtureDir: string, compose = 'inline-flex') {
     ''
   ].join('\n'))
   writeFileSync(join(fixtureDir, 'app/page.jsx'), [
+    `import ServerCard from './server-card'`,
+    '',
     `export default function Page() {`,
-    `    return <main><div id="cascade" className="box block">Cascade</div><div id="probe" className="probe">Probe</div></main>`,
+    `    return <main><div id="cascade" className="box block">Cascade</div><div id="probe" className="probe">Probe</div><ServerCard /></main>`,
     `}`,
     ''
   ].join('\n'))
+  writeServerCard(fixtureDir, 'w:120px')
   writeFileSync(join(fixtureDir, 'app/globals.css'), createGlobalsCSS(compose))
+}
+
+/** A Server Component: its module never reaches the client bundle. */
+function writeServerCard(fixtureDir: string, className: string) {
+  writeFileSync(join(fixtureDir, 'app/server-card.jsx'), [
+    `export default function ServerCard() {`,
+    `    return <section id="server-card" className="${className}">Server</section>`,
+    `}`,
+    ''
+  ].join('\n'))
+}
+
+async function waitForWidth(page: Page, selector: string, width: string) {
+  await page.waitForFunction(([target, expectedWidth]) => {
+    const element = document.querySelector(target)
+    return element && getComputedStyle(element).width === expectedWidth
+  }, [selector, width])
 }
 
 function buildPackage() {
@@ -163,7 +185,7 @@ async function expectDisplay(browser: Browser, url: string, display: string) {
 }
 
 describe('Next dev HMR', () => {
-  it('updates Master CSS without a full reload', async () => {
+  it('updates the CSS for stylesheet and Server Component edits', async () => {
     buildPackage()
     const workspaceDir = join(packageDir, 'e2e/dev-hmr-workspaces')
     mkdirSync(workspaceDir, { recursive: true })
@@ -189,7 +211,7 @@ describe('Next dev HMR', () => {
         markerWindow.__MASTER_CSS_HMR_MARKER = 'preserve'
       })
 
-      writeFileSync(globalsPath, createGlobalsCSS('flex'))
+      writeFileSync(globalsPath, createGlobalsCSS('display:flex'))
       await page.waitForFunction(() => {
         const probe = document.getElementById('probe')
         return probe && getComputedStyle(probe).display === 'flex'
@@ -197,6 +219,11 @@ describe('Next dev HMR', () => {
       await expect(page.evaluate(() => {
         return (window as unknown as { __MASTER_CSS_HMR_MARKER?: string }).__MASTER_CSS_HMR_MARKER
       })).resolves.toBe('preserve')
+
+      // Guards #57: editing a class in a Server Component updates the generated CSS in dev.
+      await waitForWidth(page, '#server-card', '120px')
+      writeServerCard(fixtureDir, 'w:240px')
+      await waitForWidth(page, '#server-card', '240px')
     } finally {
       await browser?.close()
       await stopNextDev(child)

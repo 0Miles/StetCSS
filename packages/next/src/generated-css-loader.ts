@@ -1,0 +1,54 @@
+import type { ScannerOptions } from '@stet-css/scanner'
+import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
+import { collectStyleCSSDependencies } from '@stet-css/stylesheet'
+import { createStaticCSS } from './static'
+
+export interface GeneratedCSSLoaderOptions {
+  projectDir: string
+  scannerOptions?: ScannerOptions
+}
+
+interface LoaderContext {
+  addDependency?: (file: string) => void
+  cacheable?: (flag?: boolean) => void
+  async?: () => (error: Error | null, content?: string) => void
+  getOptions?: () => GeneratedCSSLoaderOptions
+}
+
+/**
+ * Fills the generated CSS module with the project's CSS. Every file the CSS came from is a
+ * dependency, so dev recompiles it when a source or stylesheet changes. It stays
+ * uncacheable because a new source file changes the class set without touching any
+ * dependency, and a persistent cache would otherwise serve the old CSS.
+ */
+export default function masterCSSNextGeneratedCSSLoader(this: LoaderContext) {
+  this.cacheable?.(false)
+  const callback = this.async?.()
+  if (!callback) {
+    throw new Error('[@stet-css/next] Generated CSS loader requires an async loader context.')
+  }
+  const options = this.getOptions?.()
+  if (!options?.projectDir) {
+    callback(new Error('[@stet-css/next] Missing generated CSS loader projectDir option.'))
+    return
+  }
+  createStaticCSS(options)
+    .then((result) => {
+      for (const dependency of result.dependencies) {
+        this.addDependency?.(dependency)
+      }
+      callback(null, result.css)
+    })
+    .catch(async (error: Error) => {
+      // Keep watching the stylesheet entries so fixing an invalid one recompiles the CSS.
+      try {
+        for (const entry of await findCSSManifestEntryFiles(options.projectDir)) {
+          for (const dependency of collectStyleCSSDependencies(entry, undefined, options.projectDir)) {
+            this.addDependency?.(dependency)
+          }
+        }
+      } finally {
+        callback(error)
+      }
+    })
+}
