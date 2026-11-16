@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import { createHighlighter } from 'shiki'
-import sharedTextMateGrammar from '../syntaxes/master-css.tmLanguage.json' with { type: 'json' }
+import sharedTextMateGrammar from '../syntaxes/stet-css.tmLanguage.json' with { type: 'json' }
 
 import masterCSSShikiLanguages, {
   MASTER_CSS_TEXTMATE_GRAMMAR,
@@ -46,12 +46,12 @@ function scopeToken(scopeName: string, color: string) {
 
 function semanticScopeStyleTokens() {
   return [
-    ...scopeToken('keyword.control.at-rule.master-css', 'keyword'),
-    ...scopeToken('support.type.property-name.master-css', 'property'),
-    ...scopeToken('support.constant.property-value.master-css', 'value'),
-    ...scopeToken('entity.other.attribute-name.class.master-css', 'class'),
-    ...scopeToken('storage.modifier.master-css', 'modifier'),
-    ...scopeToken('variable.other.master-css', 'variable'),
+    ...scopeToken('keyword.control.at-rule.stet-css', 'keyword'),
+    ...scopeToken('support.type.property-name.stet-css', 'property'),
+    ...scopeToken('support.constant.property-value.stet-css', 'value'),
+    ...scopeToken('entity.other.attribute-name.class.stet-css', 'class'),
+    ...scopeToken('storage.modifier.stet-css', 'modifier'),
+    ...scopeToken('variable.other.stet-css', 'variable'),
     ...scopeToken('variable.css', 'variable'),
     ...scopeToken('entity.name.tag.css', 'type'),
     ...scopeToken('entity.other.attribute-name.class.css', 'class'),
@@ -121,41 +121,41 @@ test.concurrent('defines deterministic TextMate grammar scopes for CSS directive
     'source.css.postcss'
   ])
 
-  const directive = grammarEntry('master-directive')
+  const directive = grammarEntry('stet-directive')
   const themeDirective = findGrammarPattern(directive, (pattern) => pattern.begin === '(@)(theme)\\b')
   const managedDirective = findGrammarPattern(directive, (pattern) => pattern.begin === '(@)(defaults|components|utilities)\\b')
   const composeDirective = findGrammarPattern(directive, (pattern) => pattern.begin === '(@)(compose)\\b')
 
-  expect(themeDirective.beginCaptures?.['2']?.name).toBe('keyword.control.at-rule.master-css')
-  expect(managedDirective.beginCaptures?.['2']?.name).toBe('keyword.control.at-rule.master-css')
-  expect(composeDirective.beginCaptures?.['2']?.name).toBe('keyword.control.at-rule.master-css')
-  expectGrammarIncludes({ patterns: themeDirective.patterns ?? [] }, ['#master-theme-block', '#master-theme-prelude'])
-  expectGrammarIncludes({ patterns: managedDirective.patterns ?? [] }, ['#master-managed-block'])
-  expectGrammarIncludes({ patterns: composeDirective.patterns ?? [] }, ['#master-compose-prelude'])
+  expect(themeDirective.beginCaptures?.['2']?.name).toBe('keyword.control.at-rule.stet-css')
+  expect(managedDirective.beginCaptures?.['2']?.name).toBe('keyword.control.at-rule.stet-css')
+  expect(composeDirective.beginCaptures?.['2']?.name).toBe('keyword.control.at-rule.stet-css')
+  expectGrammarIncludes({ patterns: themeDirective.patterns ?? [] }, ['#stet-theme-block', '#stet-theme-prelude'])
+  expectGrammarIncludes({ patterns: managedDirective.patterns ?? [] }, ['#stet-managed-block'])
+  expectGrammarIncludes({ patterns: composeDirective.patterns ?? [] }, ['#stet-compose-prelude'])
 
-  const themeBlock = grammarEntry('master-theme-block')
+  const themeBlock = grammarEntry('stet-theme-block')
   expectGrammarIncludes({ patterns: themeBlock.patterns[0]?.patterns ?? [] }, [
-    '#master-theme-declaration',
-    '#master-keyframes',
-    '#master-directive'
+    '#stet-theme-declaration',
+    '#stet-keyframes',
+    '#stet-directive'
   ])
 
-  const themeValue = grammarEntry('master-theme-value')
+  const themeValue = grammarEntry('stet-theme-value')
   expect(themeValue.patterns).not.toContainEqual(expect.objectContaining({
     match: '\\$[_a-zA-Z-][_a-zA-Z0-9-]*',
-    name: 'variable.other.master-css'
+    name: 'variable.other.stet-css'
   }))
-  findGrammarPattern(themeValue, (pattern) => pattern.match === '--alpha(?=\\()' && pattern.name === 'support.function.misc.master-css')
+  findGrammarPattern(themeValue, (pattern) => pattern.match === '--alpha(?=\\()' && pattern.name === 'support.function.misc.stet-css')
 
-  const composePrelude = grammarEntry('master-compose-prelude')
-  expectGrammarIncludes(composePrelude, ['#master-string', '#master-query', '#master-selector', '#master-class-fragment'])
+  const composePrelude = grammarEntry('stet-compose-prelude')
+  expectGrammarIncludes(composePrelude, ['#stet-string', '#stet-query', '#stet-selector', '#stet-class-fragment'])
 
-  const classFragment = grammarEntry('master-class-fragment')
-  findGrammarPattern(classFragment, (pattern) => pattern.name === 'support.constant.property-value.master-css')
-  findGrammarPattern(classFragment, (pattern) => pattern.name === 'entity.other.attribute-name.class.master-css')
-  findGrammarPattern(classFragment, (pattern) => pattern.name === 'keyword.control.at-rule.master-css.query')
-  const propertyFragment = findGrammarPattern(classFragment, (pattern) => pattern.captures?.['1']?.name === 'support.type.property-name.master-css')
-  expect(propertyFragment.captures?.['2']?.name).toBe('keyword.operator.master-css')
+  const classFragment = grammarEntry('stet-class-fragment')
+  findGrammarPattern(classFragment, (pattern) => pattern.name === 'support.constant.property-value.stet-css')
+  findGrammarPattern(classFragment, (pattern) => pattern.name === 'entity.other.attribute-name.class.stet-css')
+  findGrammarPattern(classFragment, (pattern) => pattern.name === 'keyword.control.at-rule.stet-css.query')
+  const propertyFragment = findGrammarPattern(classFragment, (pattern) => pattern.captures?.['1']?.name === 'support.type.property-name.stet-css')
+  expect(propertyFragment.captures?.['2']?.name).toBe('keyword.operator.stet-css')
 })
 
 test('supports Shiki dynamic language imports', async () => {
@@ -296,7 +296,10 @@ test.concurrent('normalizes Shiki language ids separately from class-list langua
   expect(isMasterCSSShikiSupportedLanguage('typescriptreact')).toBe(true)
   expect(isMasterCSSShikiSupportedLanguage('mcss')).toBe(false)
   expect(isMasterCSSClassListLanguage('mcss')).toBe(true)
-  expect(isMasterCSSClassListLanguage('master-css')).toBe(true)
+  expect(isMasterCSSClassListLanguage('stet-css')).toBe(true)
+  expect(isMasterCSSClassListLanguage('master-css')).toBe(false)
+  expect(transformerMasterCSS().name).toBe('stet-css')
+  expect(masterCSSShikiLanguage).toMatchObject({ name: 'StetCSS Directive Injection', scopeName: 'stet-css.directive.injection' })
 })
 
 test.concurrent('creates Shiki decorations from Master CSS semantic tokens', () => {

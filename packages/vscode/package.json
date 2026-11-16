@@ -335,11 +335,11 @@
             "support.type.property-name.css"
           ],
           "variable": [
-            "variable.other.master-css.css",
+            "variable.other.stet-css.css",
             "variable.css"
           ],
           "variable.directive": [
-            "variable.parameter.master-css.css"
+            "variable.parameter.stet-css.css"
           ],
           "variable.selector": [
             "entity.other.attribute-name.id.css"
@@ -365,7 +365,7 @@
             "keyword.control.at-rule"
           ],
           "keyword.directive": [
-            "keyword.control.at-rule.master-css.css"
+            "keyword.control.at-rule.stet-css.css"
           ],
           "keyword.query": [
             "keyword.control.at-rule"
@@ -374,7 +374,7 @@
             "entity.other.attribute-name.pseudo-class.css"
           ],
           "modifier.directive": [
-            "storage.modifier.master-css.css"
+            "storage.modifier.stet-css.css"
           ],
           "modifier.pseudoClass": [
             "entity.other.attribute-name.pseudo-class.css"
@@ -470,8 +470,8 @@
     ],
     "grammars": [
       {
-        "scopeName": "master-css.directive.injection",
-        "path": "./node_modules/@stet-css/language/syntaxes/master-css.tmLanguage.json",
+        "scopeName": "stet-css.directive.injection",
+        "path": "./node_modules/@stet-css/language/syntaxes/stet-css.tmLanguage.json",
         "injectTo": [
           "source.css",
           "source.css.scss",

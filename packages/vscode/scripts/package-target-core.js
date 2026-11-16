@@ -71,8 +71,8 @@ const STATIC_EXTENSION_PATHS = [
   'README.md',
   'icon.png'
 ]
-const MASTER_CSS_SOURCE_GRAMMAR_PATH = './node_modules/@stet-css/language/syntaxes/master-css.tmLanguage.json'
-const MASTER_CSS_STAGED_GRAMMAR_PATH = './dist/node_modules/@stet-css/language/syntaxes/master-css.tmLanguage.json'
+const MASTER_CSS_SOURCE_GRAMMAR_PATH = './node_modules/@stet-css/language/syntaxes/stet-css.tmLanguage.json'
+const MASTER_CSS_STAGED_GRAMMAR_PATH = './dist/node_modules/@stet-css/language/syntaxes/stet-css.tmLanguage.json'
 
 const BASE_RUNTIME_PACKAGES = [
   'lightningcss',
@@ -260,7 +260,7 @@ async function copyRuntimePackage(stagingDir, packageName) {
 }
 
 async function copyTextMateGrammar(stagingDir) {
-  const sourcePath = packageRequire.resolve('@stet-css/language/syntaxes/master-css.tmLanguage.json')
+  const sourcePath = packageRequire.resolve('@stet-css/language/syntaxes/stet-css.tmLanguage.json')
   const destinationPath = join(stagingDir, MASTER_CSS_STAGED_GRAMMAR_PATH)
   await mkdir(dirname(destinationPath), { recursive: true })
   await cp(sourcePath, destinationPath, { force: true })

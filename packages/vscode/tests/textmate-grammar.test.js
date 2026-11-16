@@ -7,8 +7,8 @@ import cssGrammars from '@shikijs/langs/css'
 import { MASTER_CSS_TEXTMATE_GRAMMAR } from '../../language/src/shiki'
 
 const require = createRequire(import.meta.url)
-const grammarPath = require.resolve('@stet-css/language/syntaxes/master-css.tmLanguage.json')
-const grammarScope = 'master-css.directive.injection'
+const grammarPath = require.resolve('@stet-css/language/syntaxes/stet-css.tmLanguage.json')
+const grammarScope = 'stet-css.directive.injection'
 const cssGrammarScope = 'source.css'
 const grammarSource = readFileSync(grammarPath, 'utf8')
 const sharedGrammar = JSON.parse(grammarSource)
@@ -231,11 +231,11 @@ test('highlights keyframes nested inside theme directives with native CSS scopes
   expectScope(tokens, 'zoom', 'variable.parameter.keyframe-list.css')
   expectScope(tokens, '0%', 'entity.other.keyframe-offset.percentage.css')
   expectScope(tokens, 'to', 'entity.other.keyframe-offset.css')
-  expectNoScope(tokens, 'to', 'entity.other.attribute-name.class.master-css')
+  expectNoScope(tokens, 'to', 'entity.other.attribute-name.class.stet-css')
   expectScope(tokens, 'transform', 'support.type.property-name.css')
   expectScope(tokens, 'scale', 'support.function.transform.css')
   expectScope(tokens, 'none', 'support.constant.property-value.css')
-  expectScope(tokens, '--color-stone-0', 'variable.css.custom-property.master-css')
+  expectScope(tokens, '--color-stone-0', 'variable.css.custom-property.stet-css')
 })
 
 test('documents native CSS punctuation scopes used by semantic token mappings', () => {
@@ -306,7 +306,7 @@ test('highlights every Master CSS directive keyword', () => {
     'variant',
     'slot'
   ]) {
-    expectScope(tokens, directive, 'keyword.control.at-rule.master-css')
+    expectScope(tokens, directive, 'keyword.control.at-rule.stet-css')
   }
 })
 
@@ -324,7 +324,7 @@ test('does not highlight @dark or @light as directives', () => {
       @variant dark { color: white; }
     }
   `)
-  const directiveTokens = tokens.filter((token) => token.scopes.includes('keyword.control.at-rule.master-css'))
+  const directiveTokens = tokens.filter((token) => token.scopes.includes('keyword.control.at-rule.stet-css'))
 
   expect(directiveTokens).toEqual([
     expect.objectContaining({ text: 'variant' })
@@ -342,7 +342,7 @@ test('does not highlight @master as a directive', () => {
     @master { mode-trigger: media; }
     @source "app.tsx";
   `)
-  const directiveTokens = tokens.filter((token) => token.scopes.includes('keyword.control.at-rule.master-css'))
+  const directiveTokens = tokens.filter((token) => token.scopes.includes('keyword.control.at-rule.stet-css'))
 
   expect(directiveTokens).toEqual([
     expect.objectContaining({ text: 'source' })
@@ -359,7 +359,7 @@ test('does not highlight @preserve as a directive', () => {
     @preserve native;
     @source "app.tsx";
   `)
-  const directiveTokens = tokens.filter((token) => token.scopes.includes('keyword.control.at-rule.master-css'))
+  const directiveTokens = tokens.filter((token) => token.scopes.includes('keyword.control.at-rule.stet-css'))
 
   expect(directiveTokens).toEqual([
     expect.objectContaining({ text: 'source' })
@@ -384,31 +384,31 @@ test('highlights directive preludes, strings, class lists, and dynamic patterns'
     }
   `)
 
-  expectScope(tokens, 'not', 'storage.modifier.master-css')
-  expectSomeScope(tokens, 'src', 'string.quoted.double.master-css')
-  expectSomeScope(tokens, 'tokens', 'string.quoted.single.master-css')
-  expectSomeScope(tokens, 'debug-', 'string.quoted.double.master-css')
-  expectNoSomeScope(tokens, 'src', 'entity.other.attribute-name.class.master-css')
-  expectNoSomeScope(tokens, 'tokens', 'entity.other.attribute-name.class.master-css')
-  expectNoSomeScope(tokens, 'debug-', 'entity.other.attribute-name.class.master-css')
-  expectScope(tokens, 'inline', 'storage.modifier.master-css')
-  expectScope(tokens, 'dark', 'support.constant.property-value.master-css')
-  expectScope(tokens, 'block', 'entity.other.attribute-name.class.master-css')
-  expectScope(tokens, 'inline-flex', 'entity.other.attribute-name.class.master-css')
-  expectScope(tokens, 'fg', 'support.type.property-name.master-css')
-  expectScope(tokens, 'primary', 'support.constant.property-value.master-css')
-  expectScope(tokens, 'hover', 'entity.other.attribute-name.pseudo-class.master-css')
-  expectScope(tokens, 'md', 'keyword.control.at-rule.master-css.query')
+  expectScope(tokens, 'not', 'storage.modifier.stet-css')
+  expectSomeScope(tokens, 'src', 'string.quoted.double.stet-css')
+  expectSomeScope(tokens, 'tokens', 'string.quoted.single.stet-css')
+  expectSomeScope(tokens, 'debug-', 'string.quoted.double.stet-css')
+  expectNoSomeScope(tokens, 'src', 'entity.other.attribute-name.class.stet-css')
+  expectNoSomeScope(tokens, 'tokens', 'entity.other.attribute-name.class.stet-css')
+  expectNoSomeScope(tokens, 'debug-', 'entity.other.attribute-name.class.stet-css')
+  expectScope(tokens, 'inline', 'storage.modifier.stet-css')
+  expectScope(tokens, 'dark', 'support.constant.property-value.stet-css')
+  expectScope(tokens, 'block', 'entity.other.attribute-name.class.stet-css')
+  expectScope(tokens, 'inline-flex', 'entity.other.attribute-name.class.stet-css')
+  expectScope(tokens, 'fg', 'support.type.property-name.stet-css')
+  expectScope(tokens, 'primary', 'support.constant.property-value.stet-css')
+  expectScope(tokens, 'hover', 'entity.other.attribute-name.pseudo-class.stet-css')
+  expectScope(tokens, 'md', 'keyword.control.at-rule.stet-css.query')
   expectScope(tokens, '!', 'keyword.operator.important.css')
-  expectScope(tokens, 'sm', 'keyword.control.at-rule.master-css.query')
-  expectScope(tokens, 'font', 'support.type.property-name.master-css')
-  expectScope(tokens, '~', 'keyword.operator.master-css')
-  expectScope(tokens, 'font-size', 'variable.parameter.master-css')
-  expectScope(tokens, 'number', 'variable.parameter.master-css')
-  expectScope(tokens, 'text-', 'entity.other.attribute-name.class.master-css')
-  expectScope(tokens, 'left', 'support.constant.property-value.master-css')
-  expectScope(tokens, 'center', 'support.constant.property-value.master-css')
-  expectScope(tokens, '--value', 'support.function.misc.master-css')
+  expectScope(tokens, 'sm', 'keyword.control.at-rule.stet-css.query')
+  expectScope(tokens, 'font', 'support.type.property-name.stet-css')
+  expectScope(tokens, '~', 'keyword.operator.stet-css')
+  expectScope(tokens, 'font-size', 'variable.parameter.stet-css')
+  expectScope(tokens, 'number', 'variable.parameter.stet-css')
+  expectScope(tokens, 'text-', 'entity.other.attribute-name.class.stet-css')
+  expectScope(tokens, 'left', 'support.constant.property-value.stet-css')
+  expectScope(tokens, 'center', 'support.constant.property-value.stet-css')
+  expectScope(tokens, '--value', 'support.function.misc.stet-css')
 })
 
 test('highlights custom variants, nested selectors, queries, and values', () => {
@@ -425,18 +425,18 @@ test('highlights custom variants, nested selectors, queries, and values', () => 
     }
   `)
 
-  expectScope(tokens, 'custom-variant', 'keyword.control.at-rule.master-css')
-  expectScope(tokens, 'motion-safe', 'variable.parameter.master-css')
-  expectScope(tokens, 'media', 'keyword.control.at-rule.master-css.query')
-  expectScope(tokens, 'slot', 'keyword.control.at-rule.master-css')
-  expectScope(tokens, '::', 'punctuation.definition.entity.master-css')
-  expectScope(tokens, '.', 'punctuation.definition.entity.master-css')
-  expectScope(tokens, 'active', 'entity.other.attribute-name.class.master-css')
-  expectScope(tokens, '#', 'punctuation.definition.entity.master-css')
-  expectScope(tokens, 'thumb', 'variable.other.master-css')
+  expectScope(tokens, 'custom-variant', 'keyword.control.at-rule.stet-css')
+  expectScope(tokens, 'motion-safe', 'variable.parameter.stet-css')
+  expectScope(tokens, 'media', 'keyword.control.at-rule.stet-css.query')
+  expectScope(tokens, 'slot', 'keyword.control.at-rule.stet-css')
+  expectScope(tokens, '::', 'punctuation.definition.entity.stet-css')
+  expectScope(tokens, '.', 'punctuation.definition.entity.stet-css')
+  expectScope(tokens, 'active', 'entity.other.attribute-name.class.stet-css')
+  expectScope(tokens, '#', 'punctuation.definition.entity.stet-css')
+  expectScope(tokens, 'thumb', 'variable.other.stet-css')
   expectScope(tokens, '--color-gray-100', 'variable.argument.css')
-  expectNoScope(tokens, 'oklch', 'support.function.misc.master-css')
-  expectNoScope(tokens, '99% 0.0033 72', 'constant.numeric.master-css')
+  expectNoScope(tokens, 'oklch', 'support.function.misc.stet-css')
+  expectNoScope(tokens, '99% 0.0033 72', 'constant.numeric.stet-css')
 })
 
 test('highlights detailed Master directive syntax without misclassifying native pieces', () => {
@@ -480,37 +480,37 @@ test('highlights detailed Master directive syntax without misclassifying native 
     }
   `)
 
-  expectScope(tokens, 'static', 'storage.modifier.master-css')
-  expectScope(tokens, 'brand', 'support.constant.property-value.master-css')
+  expectScope(tokens, 'static', 'storage.modifier.stet-css')
+  expectScope(tokens, 'brand', 'support.constant.property-value.stet-css')
   expectSomeScope(tokens, 'Font families', 'comment.block.css')
-  expectScope(tokens, '--color-primary', 'variable.css.custom-property.master-css')
-  expectScope(tokens, '--alpha', 'support.function.misc.master-css')
+  expectScope(tokens, '--color-primary', 'variable.css.custom-property.stet-css')
+  expectScope(tokens, '--alpha', 'support.function.misc.stet-css')
   expectScope(tokens, '--color-blue-60', 'variable.argument.css')
-  expectScope(tokens, '$size', 'variable.other.master-css')
+  expectScope(tokens, '$size', 'variable.other.stet-css')
   expectScope(tokens, '-0.072', 'constant.numeric.css')
   expectScope(tokens, 'em', 'keyword.other.unit.em.css')
-  expectScope(tokens, 'dialog-open', 'entity.other.attribute-name.class.master-css')
-  expectScope(tokens, 'bg', 'support.type.property-name.master-css')
-  expectScope(tokens, 'primary', 'support.constant.property-value.master-css')
-  expectScope(tokens, '@dark', 'keyword.control.at-rule.master-css.query')
-  expectScope(tokens, 'headings', 'variable.parameter.master-css')
-  expectScope(tokens, 'btn', 'entity.other.attribute-name.class.master-css')
-  expectScope(tokens, 'static', 'entity.other.attribute-name.class.master-css')
-  expectScope(tokens, 'native', 'entity.other.attribute-name.class.master-css')
-  expectScope(tokens, 'inline-flex', 'entity.other.attribute-name.class.master-css')
-  expectScope(tokens, 'align-items', 'support.type.property-name.master-css')
-  expectScope(tokens, 'center', 'support.constant.property-value.master-css')
-  expectScope(tokens, 'h', 'keyword.control.at-rule.master-css.query')
-  expectScope(tokens, 'sm', 'support.constant.property-value.master-css.query')
-  expectScope(tokens, 'lg', 'support.constant.property-value.master-css.query')
-  expectScope(tokens, 'scrollbar-thumb', 'entity.other.attribute-name.pseudo-class.master-css')
-  expectScope(tokens, 'text-decoration', 'support.type.property-name.master-css')
-  expectScope(tokens, 'color', 'variable.parameter.master-css')
-  expectScope(tokens, '*', 'keyword.operator.master-css')
-  expectScope(tokens, '--value', 'support.function.misc.master-css')
-  expectNoSomeScope(tokens, 'src', 'entity.other.attribute-name.class.master-css')
-  expectNoSomeScope(tokens, 'tokens', 'entity.other.attribute-name.class.master-css')
-  expectNoSomeScope(tokens, 'debug-', 'entity.other.attribute-name.class.master-css')
+  expectScope(tokens, 'dialog-open', 'entity.other.attribute-name.class.stet-css')
+  expectScope(tokens, 'bg', 'support.type.property-name.stet-css')
+  expectScope(tokens, 'primary', 'support.constant.property-value.stet-css')
+  expectScope(tokens, '@dark', 'keyword.control.at-rule.stet-css.query')
+  expectScope(tokens, 'headings', 'variable.parameter.stet-css')
+  expectScope(tokens, 'btn', 'entity.other.attribute-name.class.stet-css')
+  expectScope(tokens, 'static', 'entity.other.attribute-name.class.stet-css')
+  expectScope(tokens, 'native', 'entity.other.attribute-name.class.stet-css')
+  expectScope(tokens, 'inline-flex', 'entity.other.attribute-name.class.stet-css')
+  expectScope(tokens, 'align-items', 'support.type.property-name.stet-css')
+  expectScope(tokens, 'center', 'support.constant.property-value.stet-css')
+  expectScope(tokens, 'h', 'keyword.control.at-rule.stet-css.query')
+  expectScope(tokens, 'sm', 'support.constant.property-value.stet-css.query')
+  expectScope(tokens, 'lg', 'support.constant.property-value.stet-css.query')
+  expectScope(tokens, 'scrollbar-thumb', 'entity.other.attribute-name.pseudo-class.stet-css')
+  expectScope(tokens, 'text-decoration', 'support.type.property-name.stet-css')
+  expectScope(tokens, 'color', 'variable.parameter.stet-css')
+  expectScope(tokens, '*', 'keyword.operator.stet-css')
+  expectScope(tokens, '--value', 'support.function.misc.stet-css')
+  expectNoSomeScope(tokens, 'src', 'entity.other.attribute-name.class.stet-css')
+  expectNoSomeScope(tokens, 'tokens', 'entity.other.attribute-name.class.stet-css')
+  expectNoSomeScope(tokens, 'debug-', 'entity.other.attribute-name.class.stet-css')
 })
 
 test('does not highlight directives inside comments or quoted strings', () => {
@@ -521,7 +521,7 @@ test('does not highlight directives inside comments or quoted strings', () => {
     }
     @theme {}
   `)
-  const directiveTokens = tokens.filter((token) => token.scopes.includes('keyword.control.at-rule.master-css'))
+  const directiveTokens = tokens.filter((token) => token.scopes.includes('keyword.control.at-rule.stet-css'))
 
   expect(directiveTokens).toEqual([
     expect.objectContaining({ text: 'theme' })

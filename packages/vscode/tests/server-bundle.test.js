@@ -18,8 +18,8 @@ const packageDir = resolve(here, '..')
 const distDir = resolve(packageDir, 'dist')
 const serverPath = resolve(distDir, 'server.min.js')
 const extensionPath = resolve(distDir, 'extension.min.js')
-const sourceGrammarPath = './node_modules/@stet-css/language/syntaxes/master-css.tmLanguage.json'
-const stagedGrammarPath = './dist/node_modules/@stet-css/language/syntaxes/master-css.tmLanguage.json'
+const sourceGrammarPath = './node_modules/@stet-css/language/syntaxes/stet-css.tmLanguage.json'
+const stagedGrammarPath = './dist/node_modules/@stet-css/language/syntaxes/stet-css.tmLanguage.json'
 
 function readPackageJSON(path = resolve(packageDir, 'package.json')) {
   return JSON.parse(readFileSync(path, 'utf8'))
@@ -281,7 +281,7 @@ test('manifest contributes TextMate grammar, semantic token scopes, and CSS diag
   expect(packageJSON.contributes.css).toBeUndefined()
   expect(packageJSON.contributes.grammars).toEqual([
     {
-      scopeName: 'master-css.directive.injection',
+      scopeName: 'stet-css.directive.injection',
       path: sourceGrammarPath,
       injectTo: [
         'source.css',

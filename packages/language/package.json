@@ -59,7 +59,7 @@
       "import": "./dist/shiki.js",
       "default": "./dist/shiki.js"
     },
-    "./syntaxes/master-css.tmLanguage.json": "./syntaxes/master-css.tmLanguage.json"
+    "./syntaxes/stet-css.tmLanguage.json": "./syntaxes/stet-css.tmLanguage.json"
   },
   "files": [
     "dist",

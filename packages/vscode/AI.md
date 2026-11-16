@@ -5,7 +5,7 @@ Owns the VS Code extension: activation, language server startup (`./server`), th
 ## Boundaries
 
 - Language features and setting defaults live in `@stet-css/language-server` (`src/settings.ts`).
-- The TextMate grammar source lives in `@stet-css/language` (`syntaxes/master-css.tmLanguage.json`).
+- The TextMate grammar source lives in `@stet-css/language` (`syntaxes/stet-css.tmLanguage.json`).
 
 ## Risks
 
