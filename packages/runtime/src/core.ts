@@ -8,7 +8,7 @@ import {
   type MasterCSSHydrationManifest
 } from '@stet-css/schema/hydration-manifest'
 import { MASTER_CSS_RUNTIME_STYLE_ID } from '@stet-css/schema/runtime-style'
-import registerGlobal from './register-global'
+import registerGlobal, { isRuntimeClass } from './register-global'
 import { HydrateResult } from './types'
 import RuntimeUtilityLayer, { RuntimeUtilityLayerInstance } from './utility-layer'
 import RuntimeThemeLayer from './theme-layer'
@@ -64,6 +64,15 @@ function findElementById(root: Document | ShadowRoot, id: string) {
     : 'querySelector' in root
       ? root.querySelector(`#${id}`)
       : undefined
+}
+
+/**
+ * Another copy of the runtime on the page (a CDN script beside a bundled import) holds the
+ * `MasterCSSRuntime` global. Share its instances so each root keeps a single runtime.
+ */
+function getRegisteredRuntimeInstances() {
+  const registered: unknown = globalThis.MasterCSSRuntime
+  return registered !== CSSRuntime && isRuntimeClass(registered) ? registered.instances : undefined
 }
 
 function validateHydrationManifest(hydrationManifest: unknown): MasterCSSHydrationManifest | undefined {
@@ -147,7 +156,7 @@ export default class CSSRuntime extends MasterCSS {
     const resolvedHydrationManifest = hydrationManifest === undefined
       ? readInlineHydrationManifest(root)
       : hydrationManifest
-    const current = CSSRuntime.instances.get(root)
+    const current = CSSRuntime.instances.get(root) ?? getRegisteredRuntimeInstances()?.get(root)
     if (current) {
       current.registerEmittedGlobals(emittedGlobals)
       if (resolvedHydrationManifest !== undefined) current.setHydrationManifest(resolvedHydrationManifest)
@@ -180,6 +189,7 @@ export default class CSSRuntime extends MasterCSS {
   register(): this {
     const registered = CSSRuntime.instances.get(this.root) === this
     CSSRuntime.instances.set(this.root, this)
+    getRegisteredRuntimeInstances()?.set(this.root, this)
     if (isDocumentRoot(this.root)) {
       this.root.defaultView!.globalThis.masterCSSRuntime = this
     }
@@ -191,6 +201,8 @@ export default class CSSRuntime extends MasterCSS {
 
   unregister(): this {
     CSSRuntime.instances.delete(this.root)
+    const registeredInstances = getRegisteredRuntimeInstances()
+    if (registeredInstances?.get(this.root) === this) registeredInstances.delete(this.root)
     if (isDocumentRoot(this.root) && this.root.defaultView!.globalThis.masterCSSRuntime === this) {
       this.root.defaultView!.globalThis.masterCSSRuntime = undefined as unknown as CSSRuntime
     }
