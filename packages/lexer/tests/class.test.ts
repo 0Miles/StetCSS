@@ -1,15 +1,15 @@
 import { expect, test } from 'vitest'
 import {
-  collectMasterCSSClassListTokenRanges,
-  parseMasterCSSClassList,
-  tokenizeMasterCSSAtQuery,
-  tokenizeMasterCSSGroupedClassToken,
-  tokenizeMasterCSSState,
-  tokenizeMasterCSSValue,
-  type MasterCSSLexicalTokenItem
+  collectStetCSSClassListTokenRanges,
+  parseStetCSSClassList,
+  tokenizeStetCSSAtQuery,
+  tokenizeStetCSSGroupedClassToken,
+  tokenizeStetCSSState,
+  tokenizeStetCSSValue,
+  type StetCSSLexicalTokenItem
 } from '../src'
 
-function texts(source: string, tokens: MasterCSSLexicalTokenItem[]) {
+function texts(source: string, tokens: StetCSSLexicalTokenItem[]) {
   return tokens.map((token) => ({
     text: source.slice(token.start, token.end),
     type: token.type,
@@ -19,7 +19,7 @@ function texts(source: string, tokens: MasterCSSLexicalTokenItem[]) {
 }
 
 test.concurrent('parses class lists with ASCII whitespace ranges', () => {
-  expect(parseMasterCSSClassList('  block\tfg:red\nm:1x ', { preserveSpaces: true })).toEqual([
+  expect(parseStetCSSClassList('  block\tfg:red\nm:1x ', { preserveSpaces: true })).toEqual([
     { type: 'space', start: 0, end: 2, raw: '  ', token: '  ' },
     { type: 'class', start: 2, end: 7, raw: 'block', token: 'block' },
     { type: 'space', start: 7, end: 8, raw: '\t', token: '\t' },
@@ -31,13 +31,13 @@ test.concurrent('parses class lists with ASCII whitespace ranges', () => {
 })
 
 test.concurrent('does not split class lists on full-width whitespace', () => {
-  expect(parseMasterCSSClassList('block\u3000fg:red')).toEqual([
+  expect(parseStetCSSClassList('block\u3000fg:red')).toEqual([
     { type: 'class', start: 0, end: 12, raw: 'block\u3000fg:red', token: 'block\u3000fg:red' }
   ])
 })
 
 test.concurrent('parses empty class positions for cursor contexts', () => {
-  expect(parseMasterCSSClassList('a  b ', { includeEmpty: true }).filter((item) => item.type === 'class')).toEqual([
+  expect(parseStetCSSClassList('a  b ', { includeEmpty: true }).filter((item) => item.type === 'class')).toEqual([
     { type: 'class', start: 0, end: 1, raw: 'a', token: 'a' },
     { type: 'class', start: 1, end: 1, raw: '', token: '' },
     { type: 'class', start: 2, end: 2, raw: '', token: '' },
@@ -48,11 +48,11 @@ test.concurrent('parses empty class positions for cursor contexts', () => {
 })
 
 test.concurrent('unescapes configured quote characters in class list tokens', () => {
-  expect(parseMasterCSSClassList("content:\\'\\' block", { unescape: '\'' })).toEqual([
+  expect(parseStetCSSClassList("content:\\'\\' block", { unescape: '\'' })).toEqual([
     { type: 'class', start: 0, end: 12, raw: "content:\\'\\'", token: 'content:\'\'' },
     { type: 'class', start: 13, end: 18, raw: 'block', token: 'block' }
   ])
-  expect(parseMasterCSSClassList('content:\\`\\`', { unescape: '`' })[0]).toEqual({
+  expect(parseStetCSSClassList('content:\\`\\`', { unescape: '`' })[0]).toEqual({
     type: 'class',
     start: 0,
     end: 12,
@@ -62,7 +62,7 @@ test.concurrent('unescapes configured quote characters in class list tokens', ()
 })
 
 test.concurrent('collects class list token ranges through the shared parser', () => {
-  expect(collectMasterCSSClassListTokenRanges(' block  fg:red\u3000m:1x ')).toEqual([
+  expect(collectStetCSSClassListTokenRanges(' block  fg:red\u3000m:1x ')).toEqual([
     { start: 1, end: 6, token: 'block' },
     { start: 8, end: 19, token: 'fg:red\u3000m:1x' }
   ])
@@ -70,7 +70,7 @@ test.concurrent('collects class list token ranges through the shared parser', ()
 
 test.concurrent('tokenizes values without depending on core utilities', () => {
   const source = '12px/$space url("/a;b.png")!'
-  expect(texts(source, tokenizeMasterCSSValue(source, 0, {
+  expect(texts(source, tokenizeStetCSSValue(source, 0, {
     isKnownVariable: (name) => name === '$space'
   }))).toEqual([
     { text: '12', type: 'number', role: 'value.number', modifiers: undefined },
@@ -89,7 +89,7 @@ test.concurrent('tokenizes values without depending on core utilities', () => {
 
 test.concurrent('tokenizes managed value placeholders as CSS functions', () => {
   const source = '--value() calc(--value() * -1)'
-  expect(texts(source, tokenizeMasterCSSValue(source, 0))).toEqual([
+  expect(texts(source, tokenizeStetCSSValue(source, 0))).toEqual([
     { text: '--value', type: 'function', role: 'value.function.name', modifiers: undefined },
     { text: '(', type: 'operator', role: 'value.function.punctuation', modifiers: undefined },
     { text: ')', type: 'operator', role: 'value.function.punctuation', modifiers: undefined },
@@ -108,8 +108,8 @@ test.concurrent('tokenizes managed value placeholders as CSS functions', () => {
 test.concurrent('tokenizes at queries and selector state', () => {
   const source = '@sm>=640:hover>.item'
   expect(texts(source, [
-    ...tokenizeMasterCSSAtQuery(source.slice(0, 8), 0),
-    ...tokenizeMasterCSSState(source, 8, 0)
+    ...tokenizeStetCSSAtQuery(source.slice(0, 8), 0),
+    ...tokenizeStetCSSState(source, 8, 0)
   ])).toEqual([
     { text: '@sm', type: 'keyword', role: 'query.keyword', modifiers: ['query'] },
     { text: '>=', type: 'operator', role: 'query.operator', modifiers: ['query'] },
@@ -126,8 +126,8 @@ test.concurrent('tokenizes native-like query and selector punctuation roles', ()
   const source = '@media(pointer:coarse),screen_:is(.active,#target,button)'
   const stateStart = source.indexOf('_')
   expect(texts(source, [
-    ...tokenizeMasterCSSAtQuery(source.slice(0, stateStart), 0),
-    ...tokenizeMasterCSSState(source, stateStart, 0)
+    ...tokenizeStetCSSAtQuery(source.slice(0, stateStart), 0),
+    ...tokenizeStetCSSState(source, stateStart, 0)
   ])).toEqual([
     { text: '@media', type: 'keyword', role: 'query.keyword', modifiers: ['query'] },
     { text: '(', type: 'operator', role: 'query.punctuation', modifiers: ['query'] },
@@ -154,7 +154,7 @@ test.concurrent('tokenizes native-like query and selector punctuation roles', ()
 
 test.concurrent('tokenizes named query ranges with matching endpoint values', () => {
   const source = '@sm&<=md'
-  expect(texts(source, tokenizeMasterCSSAtQuery(source, 0))).toEqual([
+  expect(texts(source, tokenizeStetCSSAtQuery(source, 0))).toEqual([
     { text: '@', type: 'keyword', role: 'query.keyword', modifiers: ['query'] },
     { text: 'sm', type: 'enumMember', role: 'query.value', modifiers: ['query'] },
     { text: '&', type: 'operator', role: 'query.operator', modifiers: ['query'] },
@@ -165,7 +165,7 @@ test.concurrent('tokenizes named query ranges with matching endpoint values', ()
 
 test.concurrent('tokenizes grouped class shell without parsing class semantics', () => {
   const source = '{fg:red;bg:blue}'
-  const tokens = tokenizeMasterCSSGroupedClassToken(source, 0, (token, offset) => [
+  const tokens = tokenizeStetCSSGroupedClassToken(source, 0, (token, offset) => [
     { start: offset, end: offset + token.length, type: 'class', role: 'utility.semantic' }
   ])
 
@@ -180,7 +180,7 @@ test.concurrent('tokenizes grouped class shell without parsing class semantics',
 
 test.concurrent('tokenizes grouped class suffix as selector and query state', () => {
   const source = '{fg:red;block}>li:hover@sm'
-  const tokens = tokenizeMasterCSSGroupedClassToken(source, 0, (token, offset) => [
+  const tokens = tokenizeStetCSSGroupedClassToken(source, 0, (token, offset) => [
     { start: offset, end: offset + token.length, type: 'class', role: 'utility.semantic' }
   ])
 
@@ -200,7 +200,7 @@ test.concurrent('tokenizes grouped class suffix as selector and query state', ()
 
 test.concurrent('tokenizes grouped class query suffix', () => {
   const source = '{block}@sm'
-  const tokens = tokenizeMasterCSSGroupedClassToken(source, 0, (token, offset) => [
+  const tokens = tokenizeStetCSSGroupedClassToken(source, 0, (token, offset) => [
     { start: offset, end: offset + token.length, type: 'class', role: 'utility.semantic' }
   ])
 
@@ -214,7 +214,7 @@ test.concurrent('tokenizes grouped class query suffix', () => {
 
 test.concurrent('preserves grouped class recovery without closing braces', () => {
   const source = '{fg:red;bg:blue'
-  const tokens = tokenizeMasterCSSGroupedClassToken(source, 0, (token, offset) => [
+  const tokens = tokenizeStetCSSGroupedClassToken(source, 0, (token, offset) => [
     { start: offset, end: offset + token.length, type: 'class', role: 'utility.semantic' }
   ])
 
@@ -228,7 +228,7 @@ test.concurrent('preserves grouped class recovery without closing braces', () =>
 
 test.concurrent('preserves brace-less grouped declarations', () => {
   const source = 'fg:red;bg:blue'
-  const tokens = tokenizeMasterCSSGroupedClassToken(source, 0, (token, offset) => [
+  const tokens = tokenizeStetCSSGroupedClassToken(source, 0, (token, offset) => [
     { start: offset, end: offset + token.length, type: 'class', role: 'utility.semantic' }
   ])
 

@@ -1,8 +1,8 @@
 import { expect, test } from 'vitest'
 import {
-  createMasterCSSManifestEntryPattern,
+  createStetCSSManifestEntryPattern,
   findCSSImportStatements,
-  hasMasterCSSManifestEntrypoint,
+  hasStetCSSManifestEntrypoint,
   parseCSSImportSource
 } from '../src'
 
@@ -25,14 +25,14 @@ test.concurrent('finds top-level CSS imports without splitting quoted semicolons
  * Prevents: a stylesheet marked only with the removed `@master entry;` counting as an entry again.
  * Entries are recognised by the `@stet-css/core` import alone; `@master` at-rules are rejected by
  * the compiler instead, which is why the detection helpers assert `false` for it on purpose.
- * Reverse check: matching `@master entry;` in `createMasterCSSManifestEntryPattern` again turns
+ * Reverse check: matching `@master entry;` in `createStetCSSManifestEntryPattern` again turns
  * only this test red.
  */
 test.concurrent('matches only the @stet-css/core import as a Master CSS manifest entrypoint', () => {
-  const pattern = createMasterCSSManifestEntryPattern()
+  const pattern = createStetCSSManifestEntryPattern()
 
   expect(pattern.test('@import "@stet-css/core";')).toBe(true)
   expect(pattern.test('@master entry;')).toBe(false)
-  expect(hasMasterCSSManifestEntrypoint('@master entry;\n.a{}')).toBe(false)
-  expect(hasMasterCSSManifestEntrypoint('@import url("@stet-css/core");\n.a{}')).toBe(true)
+  expect(hasStetCSSManifestEntrypoint('@master entry;\n.a{}')).toBe(false)
+  expect(hasStetCSSManifestEntrypoint('@import url("@stet-css/core");\n.a{}')).toBe(true)
 })

@@ -20,7 +20,7 @@ It does not validate classes, generate CSS, resolve manifests, compile directive
 import {
   collectCSSDirectiveRanges,
   findCSSManifestEntryStatements,
-  tokenizeMasterCSSClass,
+  tokenizeStetCSSClass,
 } from '@stet-css/lexer'
 ```
 

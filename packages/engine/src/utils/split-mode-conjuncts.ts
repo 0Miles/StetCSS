@@ -1,8 +1,8 @@
-import { splitMasterCSSTopLevel } from '@stet-css/lexer'
+import { splitStetCSSTopLevel } from '@stet-css/lexer'
 import { UndeclaredModeError, isUndeclaredPresetMode } from './undeclared-mode'
 
 function splitTopLevel(token: string, separator: string) {
-  return splitMasterCSSTopLevel(token, separator).map(({ start, end }) => token.slice(start, end))
+  return splitStetCSSTopLevel(token, separator).map(({ start, end }) => token.slice(start, end))
 }
 
 export interface ModeConjuncts {

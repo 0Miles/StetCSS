@@ -1,6 +1,6 @@
 import {
   collectCSSDirectiveRanges,
-  parseMasterCSSClassList,
+  parseStetCSSClassList,
   type SourceRange
 } from '@stet-css/lexer'
 import type { RuleContext } from '@typescript-eslint/utils/ts-eslint'
@@ -138,7 +138,7 @@ function resolveComposeDirectiveClassNode(
   if (start >= end) return
 
   const raw = source.slice(start, end)
-  const nodes: ResolvedClassListNode[] = parseMasterCSSClassList(raw, {
+  const nodes: ResolvedClassListNode[] = parseStetCSSClassList(raw, {
     preserveSpaces: true
   }).map((item) => {
     const startOffset = start + item.start

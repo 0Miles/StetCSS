@@ -1,8 +1,8 @@
 import { escapeRegExp, findCSSStatementEnd } from './source'
 
-export const MASTER_CSS_PACKAGE_MODULE_IDS = ['@stet-css/core'] as const
+export const STET_CSS_PACKAGE_MODULE_IDS = ['@stet-css/core'] as const
 
-const MASTER_CSS_PACKAGE_MODULE_ID_SET = new Set<string>(MASTER_CSS_PACKAGE_MODULE_IDS)
+const STET_CSS_PACKAGE_MODULE_ID_SET = new Set<string>(STET_CSS_PACKAGE_MODULE_IDS)
 
 export interface CSSImportStatement {
   start: number
@@ -10,22 +10,22 @@ export interface CSSImportStatement {
   statement: string
 }
 
-export function normalizeMasterCSSModuleIds(): Set<string> {
-  return new Set(MASTER_CSS_PACKAGE_MODULE_IDS)
+export function normalizeStetCSSModuleIds(): Set<string> {
+  return new Set(STET_CSS_PACKAGE_MODULE_IDS)
 }
 
-export function isMasterCSSModuleId(id: string) {
-  return MASTER_CSS_PACKAGE_MODULE_ID_SET.has(id)
+export function isStetCSSModuleId(id: string) {
+  return STET_CSS_PACKAGE_MODULE_ID_SET.has(id)
 }
 
-export function createMasterCSSImportPattern() {
-  const ids = [...normalizeMasterCSSModuleIds()].map(escapeRegExp)
+export function createStetCSSImportPattern() {
+  const ids = [...normalizeStetCSSModuleIds()].map(escapeRegExp)
   return new RegExp(String.raw`@import\s+(?:url\(\s*)?(['"])(?:${ids.join('|')})\1\s*\)?[^;]*;`)
 }
 
 /** A stylesheet entry is recognised by its `@stet-css/core` import alone. */
-export function createMasterCSSManifestEntryPattern() {
-  return createMasterCSSImportPattern()
+export function createStetCSSManifestEntryPattern() {
+  return createStetCSSImportPattern()
 }
 
 export function findCSSImportEnd(source: string, start: number) {
@@ -92,20 +92,20 @@ export function findCSSImportStatements(source: string) {
   return imports
 }
 
-export function replaceMasterCSSImports(source: string, replacement: string) {
+export function replaceStetCSSImports(source: string, replacement: string) {
   let replaced = false
   const code = source.replace(/@import\s+(?:url\(\s*)?(["'])([^"']+)\1\s*\)?[^;]*;/g, (rule, _quote: string, id: string) => {
-    if (!isMasterCSSModuleId(id)) return rule
+    if (!isStetCSSModuleId(id)) return rule
     replaced = true
     return replacement
   })
   return { code, replaced }
 }
 
-export function hasMasterCSSImport(source: string) {
-  return replaceMasterCSSImports(source, '').replaced
+export function hasStetCSSImport(source: string) {
+  return replaceStetCSSImports(source, '').replaced
 }
 
-export function hasMasterCSSManifestEntrypoint(source: string) {
-  return hasMasterCSSImport(source)
+export function hasStetCSSManifestEntrypoint(source: string) {
+  return hasStetCSSImport(source)
 }

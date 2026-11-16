@@ -1,6 +1,6 @@
-import { MASTER_CSS_VALUE_UNITS } from './units'
+import { STET_CSS_VALUE_UNITS } from './units'
 
-export type MasterCSSLexicalTokenType =
+export type StetCSSLexicalTokenType =
   | 'class'
   | 'enumMember'
   | 'property'
@@ -13,7 +13,7 @@ export type MasterCSSLexicalTokenType =
   | 'operator'
   | 'type'
 
-export type MasterCSSLexicalTokenModifier =
+export type StetCSSLexicalTokenModifier =
   | 'declaration'
   | 'defaultLibrary'
   | 'component'
@@ -26,7 +26,7 @@ export type MasterCSSLexicalTokenModifier =
   | 'selector'
   | 'unit'
 
-export type MasterCSSLexicalTokenRole =
+export type StetCSSLexicalTokenRole =
   | 'block.brace'
   | 'declaration.property'
   | 'declaration.separator'
@@ -68,43 +68,43 @@ export type MasterCSSLexicalTokenRole =
   | 'value.unit'
   | 'value.variable'
 
-export interface MasterCSSLexicalTokenItem {
+export interface StetCSSLexicalTokenItem {
   start: number
   end: number
-  type: MasterCSSLexicalTokenType
-  role: MasterCSSLexicalTokenRole
-  modifiers?: MasterCSSLexicalTokenModifier[]
+  type: StetCSSLexicalTokenType
+  role: StetCSSLexicalTokenRole
+  modifiers?: StetCSSLexicalTokenModifier[]
 }
 
-export interface MasterCSSSplitPart {
+export interface StetCSSSplitPart {
   start: number
   end: number
   separatorStart?: number
 }
 
-export type MasterCSSClassListItemType = 'class' | 'space'
+export type StetCSSClassListItemType = 'class' | 'space'
 
-export interface MasterCSSClassListItem {
-  type: MasterCSSClassListItemType
+export interface StetCSSClassListItem {
+  type: StetCSSClassListItemType
   start: number
   end: number
   raw: string
   token: string
 }
 
-export interface MasterCSSClassListTokenRange {
+export interface StetCSSClassListTokenRange {
   start: number
   end: number
   token: string
 }
 
-export interface MasterCSSClassListParseOptions {
+export interface StetCSSClassListParseOptions {
   preserveSpaces?: boolean
   includeEmpty?: boolean
   unescape?: string | readonly string[] | false
 }
 
-export interface MasterCSSValueTokenizeOptions {
+export interface StetCSSValueTokenizeOptions {
   isKnownVariable?: (name: string) => boolean
 }
 
@@ -115,14 +115,14 @@ const VARIABLE_RE = /^\$[A-Za-z0-9-]+(?:\/[+-]?(?:\d+\.\d+|\.\d+|\d+|[A-Za-z0-9_
 const NUMERIC_RE = /^([+-]?(?:\d+\.\d+|\.\d+|\d+))([A-Za-z%]+)?/
 const SIZE_PAIR_RE = /^([+-]?(?:\d+\.\d+|\.\d+|\d+))x([+-]?(?:\d+\.\d+|\.\d+|\d+))(?![0-9A-Za-z])/
 
-const MASTER_CSS_VALUE_UNIT_SET = new Set<string>(MASTER_CSS_VALUE_UNITS)
+const STET_CSS_VALUE_UNIT_SET = new Set<string>(STET_CSS_VALUE_UNITS)
 const ASCII_WHITESPACE = new Set(['\t', '\n', '\f', '\r', ' '])
 
 function isASCIIWhitespace(char: string | undefined) {
   return char !== undefined && ASCII_WHITESPACE.has(char)
 }
 
-export function unescapeMasterCSSClassListToken(raw: string, unescape: MasterCSSClassListParseOptions['unescape']) {
+export function unescapeStetCSSClassListToken(raw: string, unescape: StetCSSClassListParseOptions['unescape']) {
   if (!unescape) return raw
   const characters = Array.isArray(unescape) ? unescape : [unescape]
   let token = raw
@@ -132,19 +132,19 @@ export function unescapeMasterCSSClassListToken(raw: string, unescape: MasterCSS
   return token
 }
 
-export function pushMasterCSSLexicalToken(
-  tokens: MasterCSSLexicalTokenItem[],
+export function pushStetCSSLexicalToken(
+  tokens: StetCSSLexicalTokenItem[],
   start: number,
   length: number,
-  type: MasterCSSLexicalTokenType,
-  role: MasterCSSLexicalTokenRole,
-  modifiers?: MasterCSSLexicalTokenModifier[]
+  type: StetCSSLexicalTokenType,
+  role: StetCSSLexicalTokenRole,
+  modifiers?: StetCSSLexicalTokenModifier[]
 ) {
   if (length <= 0) return
   tokens.push({ start, end: start + length, type, role, modifiers })
 }
 
-export function findMasterCSSClosingQuote(source: string, start: number, quote: string) {
+export function findStetCSSClosingQuote(source: string, start: number, quote: string) {
   for (let i = start + 1; i < source.length; i++) {
     if (source[i] === '\\') {
       i++
@@ -155,7 +155,7 @@ export function findMasterCSSClosingQuote(source: string, start: number, quote: 
   return source.length - 1
 }
 
-export function findMasterCSSClosingParen(source: string, open: number) {
+export function findStetCSSClosingParen(source: string, open: number) {
   let quote = ''
   let depth = 0
   for (let i = open; i < source.length; i++) {
@@ -181,8 +181,8 @@ export function findMasterCSSClosingParen(source: string, open: number) {
   return source.length - 1
 }
 
-export function splitMasterCSSTopLevel(source: string, separator: string): MasterCSSSplitPart[] {
-  const parts: MasterCSSSplitPart[] = []
+export function splitStetCSSTopLevel(source: string, separator: string): StetCSSSplitPart[] {
+  const parts: StetCSSSplitPart[] = []
   let quote = ''
   let depth = 0
   let start = 0
@@ -214,17 +214,17 @@ export function splitMasterCSSTopLevel(source: string, separator: string): Maste
   return parts
 }
 
-export function collectMasterCSSClassListTokenRanges(classList: string): MasterCSSClassListTokenRange[] {
-  return parseMasterCSSClassList(classList)
+export function collectStetCSSClassListTokenRanges(classList: string): StetCSSClassListTokenRange[] {
+  return parseStetCSSClassList(classList)
     .filter((item) => item.type === 'class' && item.raw)
     .map(({ start, end, token }) => ({ start, end, token }))
 }
 
-export function parseMasterCSSClassList(
+export function parseStetCSSClassList(
   classList: string,
-  options: MasterCSSClassListParseOptions = {}
-): MasterCSSClassListItem[] {
-  const items: MasterCSSClassListItem[] = []
+  options: StetCSSClassListParseOptions = {}
+): StetCSSClassListItem[] {
+  const items: StetCSSClassListItem[] = []
   const pushClass = (start: number, end: number) => {
     const raw = classList.slice(start, end)
     items.push({
@@ -232,7 +232,7 @@ export function parseMasterCSSClassList(
       start,
       end,
       raw,
-      token: unescapeMasterCSSClassListToken(raw, options.unescape)
+      token: unescapeStetCSSClassListToken(raw, options.unescape)
     })
   }
   const pushSpace = (start: number, end: number) => {
@@ -270,76 +270,76 @@ export function parseMasterCSSClassList(
   return items
 }
 
-function withUnitModifier(modifiers: MasterCSSLexicalTokenModifier[] = []) {
+function withUnitModifier(modifiers: StetCSSLexicalTokenModifier[] = []) {
   return [...modifiers, 'unit' as const]
 }
 
 function pushNumberOrKeyword(
-  tokens: MasterCSSLexicalTokenItem[],
+  tokens: StetCSSLexicalTokenItem[],
   absoluteStart: number,
   raw: string,
-  modifiers?: MasterCSSLexicalTokenModifier[],
-  options?: MasterCSSValueTokenizeOptions
+  modifiers?: StetCSSLexicalTokenModifier[],
+  options?: StetCSSValueTokenizeOptions
 ) {
   if (!raw) return
   if (options?.isKnownVariable?.(raw)) {
-    pushMasterCSSLexicalToken(tokens, absoluteStart, raw.length, 'variable', 'value.variable', modifiers)
+    pushStetCSSLexicalToken(tokens, absoluteStart, raw.length, 'variable', 'value.variable', modifiers)
     return
   }
 
   const numeric = NUMERIC_RE.exec(raw)
   if (!numeric || numeric[0].length !== raw.length) {
-    pushMasterCSSLexicalToken(tokens, absoluteStart, raw.length, 'enumMember', raw.startsWith('#') ? 'value.color' : 'value.keyword', modifiers)
+    pushStetCSSLexicalToken(tokens, absoluteStart, raw.length, 'enumMember', raw.startsWith('#') ? 'value.color' : 'value.keyword', modifiers)
     return
   }
 
   const [, numberText, unit] = numeric
-  if (unit && !MASTER_CSS_VALUE_UNIT_SET.has(unit)) {
-    pushMasterCSSLexicalToken(tokens, absoluteStart, raw.length, 'enumMember', 'value.keyword', modifiers)
+  if (unit && !STET_CSS_VALUE_UNIT_SET.has(unit)) {
+    pushStetCSSLexicalToken(tokens, absoluteStart, raw.length, 'enumMember', 'value.keyword', modifiers)
     return
   }
 
-  pushMasterCSSLexicalToken(tokens, absoluteStart, numberText.length, 'number', 'value.number', modifiers)
+  pushStetCSSLexicalToken(tokens, absoluteStart, numberText.length, 'number', 'value.number', modifiers)
   if (unit) {
-    pushMasterCSSLexicalToken(tokens, absoluteStart + numberText.length, unit.length, 'enumMember', 'value.unit', withUnitModifier(modifiers))
+    pushStetCSSLexicalToken(tokens, absoluteStart + numberText.length, unit.length, 'enumMember', 'value.unit', withUnitModifier(modifiers))
   }
 }
 
-function pushQueryNumberOrValue(tokens: MasterCSSLexicalTokenItem[], absoluteStart: number, raw: string) {
+function pushQueryNumberOrValue(tokens: StetCSSLexicalTokenItem[], absoluteStart: number, raw: string) {
   const numeric = NUMERIC_RE.exec(raw)
   if (!numeric || numeric[0].length !== raw.length) {
-    pushMasterCSSLexicalToken(tokens, absoluteStart, raw.length, 'enumMember', 'query.value', ['query'])
+    pushStetCSSLexicalToken(tokens, absoluteStart, raw.length, 'enumMember', 'query.value', ['query'])
     return
   }
   const [, numberText, unit] = numeric
-  pushMasterCSSLexicalToken(tokens, absoluteStart, numberText.length, 'number', 'query.number', ['query'])
+  pushStetCSSLexicalToken(tokens, absoluteStart, numberText.length, 'number', 'query.number', ['query'])
   if (unit) {
-    pushMasterCSSLexicalToken(tokens, absoluteStart + numberText.length, unit.length, 'enumMember', 'query.unit', ['query', 'unit'])
+    pushStetCSSLexicalToken(tokens, absoluteStart + numberText.length, unit.length, 'enumMember', 'query.unit', ['query', 'unit'])
   }
 }
 
 function pushSlashSeparatedValue(
-  tokens: MasterCSSLexicalTokenItem[],
+  tokens: StetCSSLexicalTokenItem[],
   absoluteStart: number,
   raw: string,
-  options?: MasterCSSValueTokenizeOptions
+  options?: StetCSSValueTokenizeOptions
 ) {
   let segmentStart = 0
   for (let i = 0; i < raw.length; i++) {
     if (raw[i] !== '/') continue
     pushNumberOrKeyword(tokens, absoluteStart + segmentStart, raw.slice(segmentStart, i), undefined, options)
-    pushMasterCSSLexicalToken(tokens, absoluteStart + i, 1, 'operator', 'value.separator')
+    pushStetCSSLexicalToken(tokens, absoluteStart + i, 1, 'operator', 'value.separator')
     segmentStart = i + 1
   }
   pushNumberOrKeyword(tokens, absoluteStart + segmentStart, raw.slice(segmentStart), undefined, options)
 }
 
-export function tokenizeMasterCSSValue(
+export function tokenizeStetCSSValue(
   valueText: string,
   valueStart: number,
-  options?: MasterCSSValueTokenizeOptions
-): MasterCSSLexicalTokenItem[] {
-  const tokens: MasterCSSLexicalTokenItem[] = []
+  options?: StetCSSValueTokenizeOptions
+): StetCSSLexicalTokenItem[] {
+  const tokens: StetCSSLexicalTokenItem[] = []
 
   for (let i = 0; i < valueText.length;) {
     const char = valueText[i]
@@ -350,12 +350,12 @@ export function tokenizeMasterCSSValue(
     }
 
     if (char === '"' || char === '\'') {
-      const end = findMasterCSSClosingQuote(valueText, i, char)
-      pushMasterCSSLexicalToken(tokens, valueStart + i, 1, 'string', 'value.string.quote', ['quoted'])
+      const end = findStetCSSClosingQuote(valueText, i, char)
+      pushStetCSSLexicalToken(tokens, valueStart + i, 1, 'string', 'value.string.quote', ['quoted'])
       if (end > i + 1) {
-        pushMasterCSSLexicalToken(tokens, valueStart + i + 1, end - i - 1, 'string', 'value.string', ['quoted'])
+        pushStetCSSLexicalToken(tokens, valueStart + i + 1, end - i - 1, 'string', 'value.string', ['quoted'])
       }
-      pushMasterCSSLexicalToken(tokens, valueStart + end, 1, 'string', 'value.string.quote', ['quoted'])
+      pushStetCSSLexicalToken(tokens, valueStart + end, 1, 'string', 'value.string.quote', ['quoted'])
       i = end + 1
       continue
     }
@@ -366,11 +366,11 @@ export function tokenizeMasterCSSValue(
         const variable = match[0]
         const slash = variable.lastIndexOf('/')
         if (slash > 0) {
-          pushMasterCSSLexicalToken(tokens, valueStart + i, slash, 'variable', 'value.variable')
-          pushMasterCSSLexicalToken(tokens, valueStart + i + slash, 1, 'operator', 'value.separator')
+          pushStetCSSLexicalToken(tokens, valueStart + i, slash, 'variable', 'value.variable')
+          pushStetCSSLexicalToken(tokens, valueStart + i + slash, 1, 'operator', 'value.separator')
           pushNumberOrKeyword(tokens, valueStart + i + slash + 1, variable.slice(slash + 1))
         } else {
-          pushMasterCSSLexicalToken(tokens, valueStart + i, variable.length, 'variable', 'value.variable')
+          pushStetCSSLexicalToken(tokens, valueStart + i, variable.length, 'variable', 'value.variable')
         }
         i += variable.length
         continue
@@ -380,7 +380,7 @@ export function tokenizeMasterCSSValue(
     if (char === '#') {
       const match = valueText.slice(i).match(HASH_RE)
       if (match) {
-        pushMasterCSSLexicalToken(tokens, valueStart + i, match[0].length, 'enumMember', 'value.color')
+        pushStetCSSLexicalToken(tokens, valueStart + i, match[0].length, 'enumMember', 'value.color')
         i += match[0].length
         continue
       }
@@ -392,8 +392,8 @@ export function tokenizeMasterCSSValue(
         const word = customFunction[0]
         const wordEnd = i + word.length
         if (word === '--value' && valueText[wordEnd] === '(') {
-          pushMasterCSSLexicalToken(tokens, valueStart + i, word.length, 'function', 'value.function.name')
-          pushMasterCSSLexicalToken(tokens, valueStart + wordEnd, 1, 'operator', 'value.function.punctuation')
+          pushStetCSSLexicalToken(tokens, valueStart + i, word.length, 'function', 'value.function.name')
+          pushStetCSSLexicalToken(tokens, valueStart + wordEnd, 1, 'operator', 'value.function.punctuation')
           i = wordEnd + 1
           continue
         }
@@ -402,9 +402,9 @@ export function tokenizeMasterCSSValue(
 
     const pair = valueText.slice(i).match(SIZE_PAIR_RE)
     if (pair) {
-      pushMasterCSSLexicalToken(tokens, valueStart + i, pair[1].length, 'number', 'value.number')
-      pushMasterCSSLexicalToken(tokens, valueStart + i + pair[1].length, 1, 'operator', 'value.separator', ['unit'])
-      pushMasterCSSLexicalToken(tokens, valueStart + i + pair[1].length + 1, pair[2].length, 'number', 'value.number')
+      pushStetCSSLexicalToken(tokens, valueStart + i, pair[1].length, 'number', 'value.number')
+      pushStetCSSLexicalToken(tokens, valueStart + i + pair[1].length, 1, 'operator', 'value.separator', ['unit'])
+      pushStetCSSLexicalToken(tokens, valueStart + i + pair[1].length + 1, pair[2].length, 'number', 'value.number')
       i += pair[0].length
       continue
     }
@@ -424,22 +424,22 @@ export function tokenizeMasterCSSValue(
       const word = identifier[0]
       const wordEnd = i + word.length
       if (valueText[wordEnd] === '(') {
-        pushMasterCSSLexicalToken(tokens, valueStart + i, word.length, 'function', 'value.function.name')
-        pushMasterCSSLexicalToken(tokens, valueStart + wordEnd, 1, 'operator', 'value.function.punctuation')
+        pushStetCSSLexicalToken(tokens, valueStart + i, word.length, 'function', 'value.function.name')
+        pushStetCSSLexicalToken(tokens, valueStart + wordEnd, 1, 'operator', 'value.function.punctuation')
         if (word === 'url') {
-          const close = findMasterCSSClosingParen(valueText, wordEnd)
+          const close = findStetCSSClosingParen(valueText, wordEnd)
           const innerStart = wordEnd + 1
           const innerEnd = Math.max(innerStart, close)
           const inner = valueText.slice(innerStart, innerEnd)
           if (inner) {
             if (inner[0] === '"' || inner[0] === '\'') {
-              tokens.push(...tokenizeMasterCSSValue(inner, valueStart + innerStart, options))
+              tokens.push(...tokenizeStetCSSValue(inner, valueStart + innerStart, options))
             } else {
-              pushMasterCSSLexicalToken(tokens, valueStart + innerStart, inner.length, 'string', 'value.string')
+              pushStetCSSLexicalToken(tokens, valueStart + innerStart, inner.length, 'string', 'value.string')
             }
           }
           if (valueText[close] === ')') {
-            pushMasterCSSLexicalToken(tokens, valueStart + close, 1, 'operator', 'value.function.punctuation')
+            pushStetCSSLexicalToken(tokens, valueStart + close, 1, 'operator', 'value.function.punctuation')
             i = close + 1
           } else {
             i = innerEnd
@@ -458,30 +458,30 @@ export function tokenizeMasterCSSValue(
     }
 
     if (char === '|' || char === '_' || char === ',' || char === '/') {
-      pushMasterCSSLexicalToken(tokens, valueStart + i, 1, 'operator', 'value.separator')
+      pushStetCSSLexicalToken(tokens, valueStart + i, 1, 'operator', 'value.separator')
       i++
       continue
     }
 
     if (char === '(' || char === ')') {
-      pushMasterCSSLexicalToken(tokens, valueStart + i, 1, 'operator', 'value.function.punctuation')
+      pushStetCSSLexicalToken(tokens, valueStart + i, 1, 'operator', 'value.function.punctuation')
       i++
       continue
     }
 
     if (char === '+' || char === '*' || char === '-') {
-      pushMasterCSSLexicalToken(tokens, valueStart + i, 1, 'operator', 'value.operator')
+      pushStetCSSLexicalToken(tokens, valueStart + i, 1, 'operator', 'value.operator')
       i++
       continue
     }
 
     if (char === '!') {
-      pushMasterCSSLexicalToken(tokens, valueStart + i, 1, 'operator', 'value.important', ['important'])
+      pushStetCSSLexicalToken(tokens, valueStart + i, 1, 'operator', 'value.important', ['important'])
       i++
       continue
     }
 
-    pushMasterCSSLexicalToken(tokens, valueStart + i, 1, 'enumMember', 'value.keyword')
+    pushStetCSSLexicalToken(tokens, valueStart + i, 1, 'enumMember', 'value.keyword')
     i++
   }
 
@@ -497,9 +497,9 @@ function startsAtFeatureOperator(value: string) {
     || value[0] === '='
 }
 
-function pushAtWord(tokens: MasterCSSLexicalTokenItem[], start: number, value: string, next: string) {
+function pushAtWord(tokens: StetCSSLexicalTokenItem[], start: number, value: string, next: string) {
   if (startsAtFeatureOperator(next)) {
-    pushMasterCSSLexicalToken(tokens, start, value.length, 'property', 'query.feature', ['query'])
+    pushStetCSSLexicalToken(tokens, start, value.length, 'property', 'query.feature', ['query'])
   } else {
     pushQueryNumberOrValue(tokens, start, value)
   }
@@ -509,45 +509,45 @@ function startsNamedQueryRange(value: string) {
   return value[0] === '&' || value[0] === ','
 }
 
-export function tokenizeMasterCSSAtQuery(queryText: string, queryStart: number): MasterCSSLexicalTokenItem[] {
-  const tokens: MasterCSSLexicalTokenItem[] = []
+export function tokenizeStetCSSAtQuery(queryText: string, queryStart: number): StetCSSLexicalTokenItem[] {
+  const tokens: StetCSSLexicalTokenItem[] = []
   let i = 0
   const keyword = queryText.match(/^@[A-Za-z0-9-]+/)
   if (keyword) {
     const [keywordText] = keyword
     if (startsNamedQueryRange(queryText.slice(keywordText.length))) {
-      pushMasterCSSLexicalToken(tokens, queryStart, 1, 'keyword', 'query.keyword', ['query'])
+      pushStetCSSLexicalToken(tokens, queryStart, 1, 'keyword', 'query.keyword', ['query'])
       pushQueryNumberOrValue(tokens, queryStart + 1, keywordText.slice(1))
     } else {
-      pushMasterCSSLexicalToken(tokens, queryStart, keywordText.length, 'keyword', 'query.keyword', ['query'])
+      pushStetCSSLexicalToken(tokens, queryStart, keywordText.length, 'keyword', 'query.keyword', ['query'])
     }
     i += keyword[0].length
   } else if (queryText[i] === '@') {
-    pushMasterCSSLexicalToken(tokens, queryStart, 1, 'keyword', 'query.keyword', ['query'])
+    pushStetCSSLexicalToken(tokens, queryStart, 1, 'keyword', 'query.keyword', ['query'])
     i++
   }
 
   while (i < queryText.length) {
     const twoChars = queryText.slice(i, i + 2)
     if (twoChars === '>=' || twoChars === '<=') {
-      pushMasterCSSLexicalToken(tokens, queryStart + i, 2, 'operator', 'query.operator', ['query'])
+      pushStetCSSLexicalToken(tokens, queryStart + i, 2, 'operator', 'query.operator', ['query'])
       i += 2
       continue
     }
 
     const char = queryText[i]
     if (char === '(' || char === ')') {
-      pushMasterCSSLexicalToken(tokens, queryStart + i, 1, 'operator', 'query.punctuation', ['query'])
+      pushStetCSSLexicalToken(tokens, queryStart + i, 1, 'operator', 'query.punctuation', ['query'])
       i++
       continue
     }
     if (char === ',' || char === ':') {
-      pushMasterCSSLexicalToken(tokens, queryStart + i, 1, 'operator', 'query.punctuation', ['query'])
+      pushStetCSSLexicalToken(tokens, queryStart + i, 1, 'operator', 'query.punctuation', ['query'])
       i++
       continue
     }
     if (char === '&' || char === '!' || char === '>' || char === '<' || char === '=') {
-      pushMasterCSSLexicalToken(tokens, queryStart + i, 1, 'operator', 'query.operator', ['query'])
+      pushStetCSSLexicalToken(tokens, queryStart + i, 1, 'operator', 'query.operator', ['query'])
       i++
       continue
     }
@@ -569,58 +569,58 @@ export function tokenizeMasterCSSAtQuery(queryText: string, queryStart: number):
   return tokens
 }
 
-export function tokenizeMasterCSSState(token: string, stateStart: number, offset: number): MasterCSSLexicalTokenItem[] {
-  const tokens: MasterCSSLexicalTokenItem[] = []
+export function tokenizeStetCSSState(token: string, stateStart: number, offset: number): StetCSSLexicalTokenItem[] {
+  const tokens: StetCSSLexicalTokenItem[] = []
   for (let i = stateStart; i < token.length;) {
     const char = token[i]
     if (char === '!') {
-      pushMasterCSSLexicalToken(tokens, offset + i, 1, 'operator', 'value.important', ['important'])
+      pushStetCSSLexicalToken(tokens, offset + i, 1, 'operator', 'value.important', ['important'])
       i++
     } else if (char === '_' || char === '>' || char === '+' || char === '~') {
-      pushMasterCSSLexicalToken(tokens, offset + i, 1, 'operator', 'selector.combinator', ['selector'])
+      pushStetCSSLexicalToken(tokens, offset + i, 1, 'operator', 'selector.combinator', ['selector'])
       i++
       const match = token.slice(i).match(/^\*?[A-Za-z][\w-]*/)
       if (match) {
-        pushMasterCSSLexicalToken(tokens, offset + i, match[0].length, 'type', 'selector.type', ['selector'])
+        pushStetCSSLexicalToken(tokens, offset + i, match[0].length, 'type', 'selector.type', ['selector'])
         i += match[0].length
       }
     } else if (char === '.' || char === '#') {
       const role = char === '.' ? 'selector.class' : 'selector.id'
-      pushMasterCSSLexicalToken(tokens, offset + i, 1, 'operator', 'selector.punctuation', ['selector'])
+      pushStetCSSLexicalToken(tokens, offset + i, 1, 'operator', 'selector.punctuation', ['selector'])
       const nameStart = i + 1
       const match = token.slice(nameStart).match(/^[\w-]+/)
       if (match) {
-        pushMasterCSSLexicalToken(tokens, offset + nameStart, match[0].length, char === '.' ? 'class' : 'variable', role, ['selector'])
+        pushStetCSSLexicalToken(tokens, offset + nameStart, match[0].length, char === '.' ? 'class' : 'variable', role, ['selector'])
         i = nameStart + match[0].length
       } else {
         i = nameStart
       }
     } else if (char === '(' || char === ',') {
-      pushMasterCSSLexicalToken(tokens, offset + i, 1, 'operator', 'selector.punctuation', ['selector'])
+      pushStetCSSLexicalToken(tokens, offset + i, 1, 'operator', 'selector.punctuation', ['selector'])
       i++
       const match = token.slice(i).match(/^\*?[A-Za-z][\w-]*/)
       if (match) {
-        pushMasterCSSLexicalToken(tokens, offset + i, match[0].length, 'type', 'selector.type', ['selector'])
+        pushStetCSSLexicalToken(tokens, offset + i, match[0].length, 'type', 'selector.type', ['selector'])
         i += match[0].length
       }
     } else if (char === ')' || char === '[' || char === ']') {
-      pushMasterCSSLexicalToken(tokens, offset + i, 1, 'operator', 'selector.punctuation', ['selector'])
+      pushStetCSSLexicalToken(tokens, offset + i, 1, 'operator', 'selector.punctuation', ['selector'])
       i++
     } else if (char === '@') {
       const nextAt = token.indexOf('@', i + 1)
       const end = nextAt >= 0 ? nextAt : token.length
-      tokens.push(...tokenizeMasterCSSAtQuery(token.slice(i, end), offset + i))
+      tokens.push(...tokenizeStetCSSAtQuery(token.slice(i, end), offset + i))
       i = end
     } else if (char === ':') {
       const colonLength = token[i + 1] === ':' ? 2 : 1
       const pseudoModifier = colonLength === 2 ? 'pseudoElement' : 'pseudoClass'
       const delimiterRole = colonLength === 2 ? 'selector.pseudoElement.delimiter' : 'selector.pseudoClass.delimiter'
       const nameRole = colonLength === 2 ? 'selector.pseudoElement.name' : 'selector.pseudoClass.name'
-      pushMasterCSSLexicalToken(tokens, offset + i, colonLength, 'operator', delimiterRole, ['selector', pseudoModifier])
+      pushStetCSSLexicalToken(tokens, offset + i, colonLength, 'operator', delimiterRole, ['selector', pseudoModifier])
       const nameStart = i + colonLength
       const match = token.slice(nameStart).match(/^[\w-]+/)
       if (match) {
-        pushMasterCSSLexicalToken(tokens, offset + nameStart, match[0].length, 'modifier', nameRole, [pseudoModifier])
+        pushStetCSSLexicalToken(tokens, offset + nameStart, match[0].length, 'modifier', nameRole, [pseudoModifier])
         i = nameStart + match[0].length
       } else {
         i = nameStart
@@ -632,7 +632,7 @@ export function tokenizeMasterCSSState(token: string, stateStart: number, offset
   return tokens
 }
 
-function findMasterCSSGroupedClassClose(token: string) {
+function findStetCSSGroupedClassClose(token: string) {
   let quote = ''
   let depth = 0
   for (let i = 1; i < token.length; i++) {
@@ -661,33 +661,33 @@ function findMasterCSSGroupedClassClose(token: string) {
   }
 }
 
-export function tokenizeMasterCSSGroupedClassToken(
+export function tokenizeStetCSSGroupedClassToken(
   token: string,
   offset: number,
-  tokenizeClassToken: (token: string, offset: number) => MasterCSSLexicalTokenItem[]
-): MasterCSSLexicalTokenItem[] | undefined {
+  tokenizeClassToken: (token: string, offset: number) => StetCSSLexicalTokenItem[]
+): StetCSSLexicalTokenItem[] | undefined {
   const startsWithGroup = token.startsWith('{')
-  const groupClose = startsWithGroup ? findMasterCSSGroupedClassClose(token) : undefined
+  const groupClose = startsWithGroup ? findStetCSSGroupedClassClose(token) : undefined
   const bodyStart = startsWithGroup ? 1 : 0
   const bodyEnd = groupClose ?? token.length
   const body = token.slice(bodyStart, bodyEnd)
   if (!startsWithGroup && !body.includes(';')) return
 
-  const tokens: MasterCSSLexicalTokenItem[] = []
-  if (startsWithGroup) pushMasterCSSLexicalToken(tokens, offset, 1, 'operator', 'block.brace')
-  for (const part of splitMasterCSSTopLevel(body, ';')) {
+  const tokens: StetCSSLexicalTokenItem[] = []
+  if (startsWithGroup) pushStetCSSLexicalToken(tokens, offset, 1, 'operator', 'block.brace')
+  for (const part of splitStetCSSTopLevel(body, ';')) {
     const partText = body.slice(part.start, part.end).trim()
     if (partText) {
       const leadingWhitespace = body.slice(part.start, part.end).search(/\S/)
       tokens.push(...tokenizeClassToken(partText, offset + bodyStart + part.start + Math.max(0, leadingWhitespace)))
     }
     if (part.separatorStart !== undefined) {
-      pushMasterCSSLexicalToken(tokens, offset + bodyStart + part.separatorStart, 1, 'operator', 'declaration.terminator')
+      pushStetCSSLexicalToken(tokens, offset + bodyStart + part.separatorStart, 1, 'operator', 'declaration.terminator')
     }
   }
   if (groupClose !== undefined) {
-    pushMasterCSSLexicalToken(tokens, offset + groupClose, 1, 'operator', 'block.brace')
-    tokens.push(...tokenizeMasterCSSState(token, groupClose + 1, offset))
+    pushStetCSSLexicalToken(tokens, offset + groupClose, 1, 'operator', 'block.brace')
+    tokens.push(...tokenizeStetCSSState(token, groupClose + 1, offset))
   }
   return tokens
 }

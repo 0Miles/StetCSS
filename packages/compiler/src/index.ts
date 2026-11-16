@@ -55,7 +55,7 @@ interface CSSPackageJSON {
 }
 
 export interface InspectCSSResult {
-  hasMasterCSSImport: boolean
+  hasStetCSSImport: boolean
   hasMasterEntry: boolean
 }
 
@@ -221,11 +221,11 @@ export function resolveMasterCSSPackageEntryFile(importSource: string, fromFile 
 
 /** A stylesheet entry is recognised by its `@stet-css/core` import alone. */
 export function inspectCSS(source: string): InspectCSSResult {
-  const hasMasterCSSImport = findCSSImportStatements(source)
+  const hasStetCSSImport = findCSSImportStatements(source)
     .some((statement) => statement.source === MASTER_CSS_PACKAGE_ID)
   return {
-    hasMasterCSSImport,
-    hasMasterEntry: hasMasterCSSImport
+    hasStetCSSImport,
+    hasMasterEntry: hasStetCSSImport
   }
 }
 

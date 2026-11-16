@@ -3,7 +3,7 @@ import type { Position } from 'vscode-languageserver-protocol'
 import findMatchingPairs from './find-matching-brackets'
 import escapeRegexp from 'lodash.escaperegexp'
 import { visitorKeys } from 'oxc-parser'
-import { collectCSSDirectiveRanges, parseMasterCSSClassList } from '@stet-css/lexer'
+import { collectCSSDirectiveRanges, parseStetCSSClassList } from '@stet-css/lexer'
 import { parseOxcOnSourceStack } from './oxc-stack'
 
 export interface ClassPosition {
@@ -237,7 +237,7 @@ function collectClassPositions(
   }
 ) {
   const classPositions: ClassPosition[] = []
-  for (const item of parseMasterCSSClassList(className, {
+  for (const item of parseStetCSSClassList(className, {
     includeEmpty,
     unescape: escapeCharacter || false
   })) {

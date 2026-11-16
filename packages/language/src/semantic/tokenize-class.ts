@@ -1,31 +1,31 @@
 import { isLanguageClassEmitted, UtilityType, type MasterCSS } from '../master-css'
 import { inspectMasterCSSClass } from '@stet-css/engine/inspect'
 import {
-  collectMasterCSSClassListTokenRanges,
-  tokenizeMasterCSSAtQuery,
-  tokenizeMasterCSSGroupedClassToken,
-  tokenizeMasterCSSState,
-  tokenizeMasterCSSValue,
-  type MasterCSSLexicalTokenItem
+  collectStetCSSClassListTokenRanges,
+  tokenizeStetCSSAtQuery,
+  tokenizeStetCSSGroupedClassToken,
+  tokenizeStetCSSState,
+  tokenizeStetCSSValue,
+  type StetCSSLexicalTokenItem
 } from '@stet-css/lexer'
 import { pushHighlightToken, toSemanticTokenItems, type HighlightTokenItem } from './highlight'
 
-function toHighlightTokenItems(tokens: MasterCSSLexicalTokenItem[]): HighlightTokenItem[] {
+function toHighlightTokenItems(tokens: StetCSSLexicalTokenItem[]): HighlightTokenItem[] {
   return tokens as HighlightTokenItem[]
 }
 
 export function tokenizeUtilityValue(valueText: string, valueStart: number, css?: MasterCSS): HighlightTokenItem[] {
-  return toHighlightTokenItems(tokenizeMasterCSSValue(valueText, valueStart, {
+  return toHighlightTokenItems(tokenizeStetCSSValue(valueText, valueStart, {
     isKnownVariable: (name) => css?.variables.has(name) ?? false
   }))
 }
 
 export function tokenizeAtQuery(queryText: string, queryStart: number): HighlightTokenItem[] {
-  return toHighlightTokenItems(tokenizeMasterCSSAtQuery(queryText, queryStart))
+  return toHighlightTokenItems(tokenizeStetCSSAtQuery(queryText, queryStart))
 }
 
 export function tokenizeState(token: string, stateStart: number, offset: number): HighlightTokenItem[] {
-  return toHighlightTokenItems(tokenizeMasterCSSState(token, stateStart, offset))
+  return toHighlightTokenItems(tokenizeStetCSSState(token, stateStart, offset))
 }
 
 function tokenizeKey(tokens: HighlightTokenItem[], token: string, offset: number, keyToken?: string) {
@@ -38,10 +38,10 @@ function tokenizeKey(tokens: HighlightTokenItem[], token: string, offset: number
 }
 
 function tokenizeGroupedClassToken(css: MasterCSS, token: string, offset: number): HighlightTokenItem[] | undefined {
-  const tokens = tokenizeMasterCSSGroupedClassToken(
+  const tokens = tokenizeStetCSSGroupedClassToken(
     token,
     offset,
-    (partText, partOffset) => tokenizeClassToken(css, partText, partOffset) as MasterCSSLexicalTokenItem[]
+    (partText, partOffset) => tokenizeClassToken(css, partText, partOffset) as StetCSSLexicalTokenItem[]
   )
   return tokens && toHighlightTokenItems(tokens)
 }
@@ -101,7 +101,7 @@ export function tokenizeClassToken(css: MasterCSS, token: string, offset: number
 
 export function collectClassListHighlightTokenItems(css: MasterCSS, classList: string, offset = 0): HighlightTokenItem[] {
   const tokens: HighlightTokenItem[] = []
-  for (const range of collectMasterCSSClassListTokenRanges(classList)) {
+  for (const range of collectStetCSSClassListTokenRanges(classList)) {
     tokens.push(...tokenizeClassToken(css, range.token, offset + range.start))
   }
   return tokens

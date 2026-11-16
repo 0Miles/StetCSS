@@ -6,11 +6,11 @@ import {
   resolveMasterCSSPackageEntryFile
 } from '@stet-css/compiler'
 import {
-  createMasterCSSManifestEntryPattern,
+  createStetCSSManifestEntryPattern,
   findMasterAtRule,
-  hasMasterCSSManifestEntrypoint as hasMasterCSSManifestEntrypointFallback,
-  isMasterCSSModuleId,
-  normalizeMasterCSSModuleIds
+  hasStetCSSManifestEntrypoint as hasMasterCSSManifestEntrypointFallback,
+  isStetCSSModuleId,
+  normalizeStetCSSModuleIds
 } from '@stet-css/lexer'
 import { stripResourceQuery } from '@stet-css/integration/manifest-module'
 import { isIgnoredProjectDirectory } from './sources'
@@ -49,13 +49,13 @@ export function isCSSManifestRequest(id: string) {
 }
 
 export {
-  createMasterCSSManifestEntryPattern,
-  isMasterCSSModuleId,
-  normalizeMasterCSSModuleIds,
+  createStetCSSManifestEntryPattern,
+  isStetCSSModuleId,
+  normalizeStetCSSModuleIds,
   resolveMasterCSSPackageEntryFile
 }
 
-export function hasMasterCSSManifestEntrypoint(source: string) {
+export function hasStetCSSManifestEntrypoint(source: string) {
   try {
     return inspectCSS(source).hasMasterEntry
   } catch {
@@ -70,7 +70,7 @@ export function hasMasterCSSManifestEntrypoint(source: string) {
  * the compiler's replacement message instead of silently finding no entries.
  */
 function isDiscoveredCSSManifestEntry(source: string) {
-  return hasMasterCSSManifestEntrypoint(source) || Boolean(findMasterAtRule(source))
+  return hasStetCSSManifestEntrypoint(source) || Boolean(findMasterAtRule(source))
 }
 
 async function collectCSSManifestEntryFiles(root: string, directory: string, entries: string[], extensions: readonly string[]) {

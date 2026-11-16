@@ -7,7 +7,7 @@ import {
   findCSSManifestEntryFiles,
   findCSSManifestEntryFilesSync,
   findMasterCSSWorkspaceDirectories,
-  hasMasterCSSManifestEntrypoint,
+  hasStetCSSManifestEntrypoint,
   resolveMasterCSSPackageEntryFile
 } from '../src/entries'
 import {
@@ -206,9 +206,9 @@ test('loads project-level CSS manifest entries', async () => {
       }
     `)
 
-    expect(hasMasterCSSManifestEntrypoint('@master entry;')).toBe(false)
-    expect(hasMasterCSSManifestEntrypoint('@source "./page.tsx";')).toBe(false)
-    expect(hasMasterCSSManifestEntrypoint('@import "@stet-css/core/index.css";')).toBe(false)
+    expect(hasStetCSSManifestEntrypoint('@master entry;')).toBe(false)
+    expect(hasStetCSSManifestEntrypoint('@source "./page.tsx";')).toBe(false)
+    expect(hasStetCSSManifestEntrypoint('@import "@stet-css/core/index.css";')).toBe(false)
     await expect(findCSSManifestEntryFiles(cwd)).resolves.toStrictEqual([entry])
 
     const result = await loadProjectManifest(cwd)

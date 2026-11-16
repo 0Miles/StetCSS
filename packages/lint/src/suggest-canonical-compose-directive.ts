@@ -1,6 +1,6 @@
 import type { MasterCSS } from '@stet-css/engine'
 import { inspectMasterCSSClass } from '@stet-css/engine/inspect'
-import { parseMasterCSSClassList, splitMasterCSSTopLevel } from '@stet-css/lexer'
+import { parseStetCSSClassList, splitStetCSSTopLevel } from '@stet-css/lexer'
 import UtilityType from '@stet-css/schema/utility-type'
 import {
   replaceClassGroupInClassList,
@@ -55,7 +55,7 @@ function createBucket(): ComposeBucket {
 }
 
 function classValues(classList: string) {
-  return parseMasterCSSClassList(classList)
+  return parseStetCSSClassList(classList)
     .filter((item) => item.type === 'class')
     .map((item) => item.token)
 }
@@ -149,7 +149,7 @@ function blockText(header: string, body: string, indent: string) {
 }
 
 function parseVariantToken(token: string) {
-  const parts = splitMasterCSSTopLevel(token, '@')
+  const parts = splitStetCSSTopLevel(token, '@')
   const selectorPart = parts[0]
   const selector = selectorPart ? token.slice(selectorPart.start, selectorPart.end) : ''
   const condition = parts
