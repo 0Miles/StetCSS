@@ -28,9 +28,7 @@ describe('CSSScanner public API', () => {
     expect(scanner.validClasses.has('block')).toBe(false)
   })
 
-  test('names the build placeholder rule #stet-css-slot', async () => {
-    const scanner = await new CSSScanner({}).init()
-
-    expect(scanner.slotCSSRule).toBe('#stet-css-slot{--slot:0}')
+  test('names the build placeholder rule #stet-css-slot', () => {
+    expect(new CSSScanner({}).slotCSSRule).toBe('#stet-css-slot{--slot:0}')
   })
 })

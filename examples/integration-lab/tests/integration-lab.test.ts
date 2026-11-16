@@ -53,11 +53,6 @@ function readOutputFiles(root: string, matches: (path: string) => boolean) {
   return readOutputFileContents(root, matches).join('\n')
 }
 
-function count(source: string, pattern: string | RegExp) {
-  if (pattern instanceof RegExp) return source.match(pattern)?.length ?? 0
-  return source.split(pattern).length - 1
-}
-
 /** Ignores formatting: the bundler's CSS pipeline decides whether the output is minified. */
 function expectStaticCSS(css: string) {
   const compactCSS = css.replace(/\s+/g, '').replace(/;}/g, '}')
@@ -73,7 +68,7 @@ function expectStaticCSS(css: string) {
  */
 function expectNoRuntime(output: string) {
   expect(output).not.toContain('stetCSSRuntime')
-  expect(count(output, /id="stet-css"/g)).toBe(0)
+  expect(output).not.toContain('id="stet-css"')
 }
 
 function commonPackageJSON() {
@@ -506,9 +501,6 @@ describe('TanStack Start with @stet-css/vite', () => {
         .join('\n')
       const css = outputRoots
         .map((outputRoot) => readOutputFiles(outputRoot, (path) => path.endsWith('.css')))
-        .join('\n')
-      const html = outputRoots
-        .map((outputRoot) => readOutputFiles(outputRoot, (path) => path.endsWith('.html')))
         .join('\n')
       const serverOutput = [
         join(root, '.output/server'),
