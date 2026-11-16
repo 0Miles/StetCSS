@@ -1,36 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
-import { readFileSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const RUNTIME_ASSET_BASE_URL = 'http://master-css-runtime.test'
-const RUNTIME_SCRIPT_URL = `${RUNTIME_ASSET_BASE_URL}/css-runtime@rc`
-const DEFAULT_MANIFEST_URL = `${RUNTIME_ASSET_BASE_URL}/css-runtime@rc/default-manifest.json`
-
-type RuntimeAssetRouteOptions = {
-  onDefaultManifestRequest?: () => void
-}
-
-async function routeRuntimeAssets(page: Page, options: RuntimeAssetRouteOptions = {}) {
-  await page.route(RUNTIME_SCRIPT_URL, (route) => {
-    route.fulfill({
-      contentType: 'text/javascript',
-      body: readFileSync(resolve(__dirname, '../dist/global.min.js'), 'utf8')
-    })
-  })
-  await page.route(DEFAULT_MANIFEST_URL, (route) => {
-    options.onDefaultManifestRequest?.()
-    route.fulfill({
-      contentType: 'application/json',
-      headers: {
-        'access-control-allow-origin': '*'
-      },
-      body: readFileSync(resolve(__dirname, '../dist/default-manifest.json'), 'utf8')
-    })
-  })
-}
+import { DEFAULT_MANIFEST_URL, RUNTIME_SCRIPT_URL, routeRuntimeAssets } from './init'
 
 async function startGlobalRuntime(page: Page) {
   await routeRuntimeAssets(page)
