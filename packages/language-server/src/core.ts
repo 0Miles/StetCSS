@@ -1,4 +1,4 @@
-import { createConnection, TextDocuments, InitializeParams, InitializeResult, WorkspaceFolder, Disposable, Connection, ClientCapabilities, TextDocumentChangeEvent, DidChangeConfigurationParams, HoverParams, CompletionParams, DocumentColorParams, ColorPresentationParams, DocumentFormattingParams, DocumentRangeFormattingParams, RemoteConsole, SemanticTokensParams, TextDocumentPositionParams, DiagnosticSeverity, TextDocumentSyncKind, type Diagnostic, type DiagnosticRelatedInformation, type Range, type ServerCapabilities, type TextEdit } from 'vscode-languageserver/node'
+import { createConnection, TextDocuments, InitializeParams, InitializeResult, WorkspaceFolder, Disposable, Connection, ClientCapabilities, TextDocumentChangeEvent, DidChangeConfigurationParams, HoverParams, CompletionParams, DocumentColorParams, ColorPresentationParams, DocumentFormattingParams, DocumentRangeFormattingParams, RemoteConsole, SemanticTokensParams, TextDocumentPositionParams, DiagnosticSeverity, TextDocumentSyncKind, type ColorInformation, type ColorPresentation, type CompletionItem, type Diagnostic, type DiagnosticRelatedInformation, type Hover, type SemanticTokens, type Range, type ServerCapabilities, type TextEdit } from 'vscode-languageserver/node'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import path from 'node:path'
 import { readFile } from 'node:fs/promises'
@@ -255,7 +255,7 @@ export default class CSSLanguageServer {
     }
   }
 
-  async onHover(params: HoverParams) {
+  async onHover(params: HoverParams): Promise<Hover | undefined> {
     await this.init()
     const workspace = this.findClosestWorkspace(params.textDocument.uri)
     if (workspace?.languageService) {
@@ -264,7 +264,7 @@ export default class CSSLanguageServer {
     }
   }
 
-  async onCompletion(params: CompletionParams) {
+  async onCompletion(params: CompletionParams): Promise<CompletionItem[] | undefined> {
     await this.init()
     const workspace = this.findClosestWorkspace(params.textDocument.uri)
     if (workspace?.languageService) {
@@ -273,7 +273,7 @@ export default class CSSLanguageServer {
     }
   }
 
-  async onDocumentColor(params: DocumentColorParams) {
+  async onDocumentColor(params: DocumentColorParams): Promise<ColorInformation[]> {
     await this.init()
     const workspace = this.findClosestWorkspace(params.textDocument.uri)
     if (workspace?.languageService) {
@@ -283,7 +283,7 @@ export default class CSSLanguageServer {
     return []
   }
 
-  async onColorPresentation(params: ColorPresentationParams) {
+  async onColorPresentation(params: ColorPresentationParams): Promise<ColorPresentation[]> {
     await this.init()
     const workspace = this.findClosestWorkspace(params.textDocument.uri)
     if (workspace?.languageService) {
@@ -317,18 +317,18 @@ export default class CSSLanguageServer {
     return context?.workspace.languageService?.formatDirectives(context.document, params.range) ?? []
   }
 
-  async onSemanticTokens(params: SemanticTokensParams) {
+  async onSemanticTokens(params: SemanticTokensParams): Promise<SemanticTokens> {
     await this.init()
     const context = this.getWorkspaceDocument(params.textDocument.uri)
     if (context) return context.workspace.languageService?.renderSemanticTokens(context.document) ?? { data: [] }
     return { data: [] }
   }
 
-  async onDocumentSemanticTokens(params: SemanticTokensParams) {
+  async onDocumentSemanticTokens(params: SemanticTokensParams): Promise<SemanticTokens> {
     return this.onSemanticTokens(params)
   }
 
-  async onActiveSemanticTokens(params: TextDocumentPositionParams) {
+  async onActiveSemanticTokens(params: TextDocumentPositionParams): Promise<SemanticTokens> {
     await this.init()
     const context = this.getWorkspaceDocument(params.textDocument.uri)
     if (context) return context.workspace.languageService?.renderSemanticTokensAtPosition(context.document, params.position) ?? { data: [] }
