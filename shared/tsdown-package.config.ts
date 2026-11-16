@@ -20,7 +20,7 @@ const externalLanguageSyntaxJSON: TsdownPlugin = {
   resolveId: {
     order: 'pre',
     handler(source) {
-      if (/^\.\.\/(?:\.\.\/)?syntaxes\/master-css\.tmLanguage\.json$/.test(source)) {
+      if (/^\.\.\/(?:\.\.\/)?syntaxes\/stet-css\.tmLanguage\.json$/.test(source)) {
         return {
           id: source,
           external: true

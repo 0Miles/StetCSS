@@ -1,10 +1,10 @@
 {
-  "name": "Master CSS Directive Injection",
-  "scopeName": "master-css.directive.injection",
+  "name": "StetCSS Directive Injection",
+  "scopeName": "stet-css.directive.injection",
   "injectionSelector": "L:source.css -comment -string, L:source.css.scss -comment -string, L:source.css.less -comment -string, L:source.css.postcss -comment -string",
   "patterns": [
     {
-      "include": "#master-directive"
+      "include": "#stet-directive"
     }
   ],
   "repository": {
@@ -17,27 +17,27 @@
         }
       ]
     },
-    "master-directive": {
+    "stet-directive": {
       "patterns": [
         {
           "begin": "(@)(source)\\b",
           "beginCaptures": {
             "1": {
-              "name": "punctuation.definition.keyword.master-css"
+              "name": "punctuation.definition.keyword.stet-css"
             },
             "2": {
-              "name": "keyword.control.at-rule.master-css"
+              "name": "keyword.control.at-rule.stet-css"
             }
           },
           "end": "(;)|$",
           "endCaptures": {
             "1": {
-              "name": "punctuation.section.master-css"
+              "name": "punctuation.section.stet-css"
             }
           },
           "patterns": [
             {
-              "include": "#master-source-prelude"
+              "include": "#stet-source-prelude"
             }
           ]
         },
@@ -45,25 +45,25 @@
           "begin": "(@)(reference|blocklist)\\b",
           "beginCaptures": {
             "1": {
-              "name": "punctuation.definition.keyword.master-css"
+              "name": "punctuation.definition.keyword.stet-css"
             },
             "2": {
-              "name": "keyword.control.at-rule.master-css"
+              "name": "keyword.control.at-rule.stet-css"
             }
           },
           "end": "(;)|$",
           "endCaptures": {
             "1": {
-              "name": "punctuation.section.master-css"
+              "name": "punctuation.section.stet-css"
             }
           },
           "patterns": [
             {
-              "include": "#master-plain-string"
+              "include": "#stet-plain-string"
             },
             {
               "match": "[;{}]",
-              "name": "punctuation.section.master-css"
+              "name": "punctuation.section.stet-css"
             }
           ]
         },
@@ -71,24 +71,24 @@
           "begin": "(@)(theme)\\b",
           "beginCaptures": {
             "1": {
-              "name": "punctuation.definition.keyword.master-css"
+              "name": "punctuation.definition.keyword.stet-css"
             },
             "2": {
-              "name": "keyword.control.at-rule.master-css"
+              "name": "keyword.control.at-rule.stet-css"
             }
           },
           "end": "(;)|(?<=\\})|$",
           "endCaptures": {
             "1": {
-              "name": "punctuation.section.master-css"
+              "name": "punctuation.section.stet-css"
             }
           },
           "patterns": [
             {
-              "include": "#master-theme-block"
+              "include": "#stet-theme-block"
             },
             {
-              "include": "#master-theme-prelude"
+              "include": "#stet-theme-prelude"
             }
           ]
         },
@@ -96,25 +96,25 @@
           "begin": "(@)(settings)\\b",
           "beginCaptures": {
             "1": {
-              "name": "punctuation.definition.keyword.master-css"
+              "name": "punctuation.definition.keyword.stet-css"
             },
             "2": {
-              "name": "keyword.control.at-rule.master-css"
+              "name": "keyword.control.at-rule.stet-css"
             }
           },
           "end": "(;)|(?<=\\})|$",
           "endCaptures": {
             "1": {
-              "name": "punctuation.section.master-css"
+              "name": "punctuation.section.stet-css"
             }
           },
           "patterns": [
             {
-              "include": "#master-settings-block"
+              "include": "#stet-settings-block"
             },
             {
               "match": "[;{}]",
-              "name": "punctuation.section.master-css"
+              "name": "punctuation.section.stet-css"
             }
           ]
         },
@@ -122,25 +122,25 @@
           "begin": "(@)(safelist)\\b",
           "beginCaptures": {
             "1": {
-              "name": "punctuation.definition.keyword.master-css"
+              "name": "punctuation.definition.keyword.stet-css"
             },
             "2": {
-              "name": "keyword.control.at-rule.master-css"
+              "name": "keyword.control.at-rule.stet-css"
             }
           },
           "end": "(;)|$",
           "endCaptures": {
             "1": {
-              "name": "punctuation.section.master-css"
+              "name": "punctuation.section.stet-css"
             }
           },
           "patterns": [
             {
-              "include": "#master-string"
+              "include": "#stet-string"
             },
             {
               "match": "[;{}]",
-              "name": "punctuation.section.master-css"
+              "name": "punctuation.section.stet-css"
             }
           ]
         },
@@ -148,25 +148,25 @@
           "begin": "(@)(defaults|components|utilities)\\b",
           "beginCaptures": {
             "1": {
-              "name": "punctuation.definition.keyword.master-css"
+              "name": "punctuation.definition.keyword.stet-css"
             },
             "2": {
-              "name": "keyword.control.at-rule.master-css"
+              "name": "keyword.control.at-rule.stet-css"
             }
           },
           "end": "(;)|(?<=\\})|$",
           "endCaptures": {
             "1": {
-              "name": "punctuation.section.master-css"
+              "name": "punctuation.section.stet-css"
             }
           },
           "patterns": [
             {
-              "include": "#master-managed-block"
+              "include": "#stet-managed-block"
             },
             {
               "match": "[;{}]",
-              "name": "punctuation.section.master-css"
+              "name": "punctuation.section.stet-css"
             }
           ]
         },
@@ -174,24 +174,24 @@
           "begin": "(@)(custom-variant)\\b",
           "beginCaptures": {
             "1": {
-              "name": "punctuation.definition.keyword.master-css"
+              "name": "punctuation.definition.keyword.stet-css"
             },
             "2": {
-              "name": "keyword.control.at-rule.master-css"
+              "name": "keyword.control.at-rule.stet-css"
             }
           },
           "end": "(;)|(?<=\\})|$",
           "endCaptures": {
             "1": {
-              "name": "punctuation.section.master-css"
+              "name": "punctuation.section.stet-css"
             }
           },
           "patterns": [
             {
-              "include": "#master-block"
+              "include": "#stet-block"
             },
             {
-              "include": "#master-custom-variant-prelude"
+              "include": "#stet-custom-variant-prelude"
             }
           ]
         },
@@ -199,21 +199,21 @@
           "begin": "(@)(compose)\\b",
           "beginCaptures": {
             "1": {
-              "name": "punctuation.definition.keyword.master-css"
+              "name": "punctuation.definition.keyword.stet-css"
             },
             "2": {
-              "name": "keyword.control.at-rule.master-css"
+              "name": "keyword.control.at-rule.stet-css"
             }
           },
           "end": "(;)|$",
           "endCaptures": {
             "1": {
-              "name": "punctuation.section.master-css"
+              "name": "punctuation.section.stet-css"
             }
           },
           "patterns": [
             {
-              "include": "#master-compose-prelude"
+              "include": "#stet-compose-prelude"
             }
           ]
         },
@@ -221,24 +221,24 @@
           "begin": "(@)(variant)\\b",
           "beginCaptures": {
             "1": {
-              "name": "punctuation.definition.keyword.master-css"
+              "name": "punctuation.definition.keyword.stet-css"
             },
             "2": {
-              "name": "keyword.control.at-rule.master-css"
+              "name": "keyword.control.at-rule.stet-css"
             }
           },
           "end": "(;)|(?<=\\})|$",
           "endCaptures": {
             "1": {
-              "name": "punctuation.section.master-css"
+              "name": "punctuation.section.stet-css"
             }
           },
           "patterns": [
             {
-              "include": "#master-block"
+              "include": "#stet-block"
             },
             {
-              "include": "#master-variant-prelude"
+              "include": "#stet-variant-prelude"
             }
           ]
         },
@@ -246,103 +246,103 @@
           "begin": "(@)(slot)\\b",
           "beginCaptures": {
             "1": {
-              "name": "punctuation.definition.keyword.master-css"
+              "name": "punctuation.definition.keyword.stet-css"
             },
             "2": {
-              "name": "keyword.control.at-rule.master-css"
+              "name": "keyword.control.at-rule.stet-css"
             }
           },
           "end": "(;)|(?<=\\})|$",
           "endCaptures": {
             "1": {
-              "name": "punctuation.section.master-css"
+              "name": "punctuation.section.stet-css"
             }
           },
           "patterns": [
             {
-              "include": "#master-block"
+              "include": "#stet-block"
             },
             {
               "match": "[;{}]",
-              "name": "punctuation.section.master-css"
+              "name": "punctuation.section.stet-css"
             }
           ]
         }
       ]
     },
-    "master-compose-prelude": {
+    "stet-compose-prelude": {
       "patterns": [
         {
-          "include": "#master-string"
+          "include": "#stet-string"
         },
         {
-          "include": "#master-query"
+          "include": "#stet-query"
         },
         {
-          "include": "#master-selector"
+          "include": "#stet-selector"
         },
         {
-          "include": "#master-class-fragment"
+          "include": "#stet-class-fragment"
         },
         {
           "match": "[;{}]",
-          "name": "punctuation.section.master-css"
+          "name": "punctuation.section.stet-css"
         }
       ]
     },
-    "master-custom-variant-prelude": {
+    "stet-custom-variant-prelude": {
       "patterns": [
         {
-          "include": "#master-query"
+          "include": "#stet-query"
         },
         {
           "match": "(?<![:@._a-zA-Z0-9-])[_a-zA-Z-][_a-zA-Z0-9-]*(?![-_a-zA-Z0-9])",
-          "name": "variable.parameter.master-css"
+          "name": "variable.parameter.stet-css"
         },
         {
           "match": "[;{}]",
-          "name": "punctuation.section.master-css"
+          "name": "punctuation.section.stet-css"
         }
       ]
     },
-    "master-variant-prelude": {
+    "stet-variant-prelude": {
       "patterns": [
         {
-          "include": "#master-query"
+          "include": "#stet-query"
         },
         {
           "match": "[;{}]",
-          "name": "punctuation.section.master-css"
+          "name": "punctuation.section.stet-css"
         }
       ]
     },
-    "master-prelude": {
+    "stet-prelude": {
       "patterns": [
         {
-          "include": "#master-string"
+          "include": "#stet-string"
         },
         {
-          "include": "#master-query"
+          "include": "#stet-query"
         },
         {
-          "include": "#master-selector"
+          "include": "#stet-selector"
         },
         {
-          "include": "#master-class-fragment"
+          "include": "#stet-class-fragment"
         },
         {
           "match": "[;{}]",
-          "name": "punctuation.section.master-css"
+          "name": "punctuation.section.stet-css"
         }
       ]
     },
-    "master-native-declaration": {
+    "stet-native-declaration": {
       "patterns": [
         {
           "begin": "(^|(?<=[{;]))(\\s*)([_a-zA-Z-][_a-zA-Z0-9-]*)(\\s*)(:)",
           "beginCaptures": {
             "3": {
-              "name": "support.type.property-name.master-css"
+              "name": "support.type.property-name.stet-css"
             },
             "5": {
               "name": "punctuation.separator.key-value.css"
@@ -357,7 +357,7 @@
           },
           "patterns": [
             {
-              "include": "#master-value"
+              "include": "#stet-value"
             },
             {
               "include": "source.css#property-values"
@@ -366,56 +366,56 @@
         }
       ]
     },
-    "master-source-prelude": {
+    "stet-source-prelude": {
       "patterns": [
         {
-          "include": "#master-plain-string"
+          "include": "#stet-plain-string"
         },
         {
           "match": "\\bnot\\b(?!-)",
-          "name": "storage.modifier.master-css"
+          "name": "storage.modifier.stet-css"
         },
         {
           "match": "[;{}]",
-          "name": "punctuation.section.master-css"
+          "name": "punctuation.section.stet-css"
         }
       ]
     },
-    "master-theme-prelude": {
+    "stet-theme-prelude": {
       "patterns": [
         {
           "match": "\\b(?:inline|static)\\b(?!-)",
-          "name": "storage.modifier.master-css"
+          "name": "storage.modifier.stet-css"
         },
         {
           "match": "(?<![-_a-zA-Z0-9])[_a-zA-Z-][_a-zA-Z0-9-]*(?![-_a-zA-Z0-9])",
-          "name": "support.constant.property-value.master-css"
+          "name": "support.constant.property-value.stet-css"
         },
         {
           "match": "[;{}]",
-          "name": "punctuation.section.master-css"
+          "name": "punctuation.section.stet-css"
         }
       ]
     },
-    "master-theme-value": {
+    "stet-theme-value": {
       "patterns": [
         {
           "match": "--value(?=\\()",
-          "name": "support.function.misc.master-css"
+          "name": "support.function.misc.stet-css"
         },
         {
           "match": "--alpha(?=\\()",
-          "name": "support.function.misc.master-css"
+          "name": "support.function.misc.stet-css"
         }
       ]
     },
-    "master-theme-declaration": {
+    "stet-theme-declaration": {
       "patterns": [
         {
           "begin": "(--[_a-zA-Z-][_a-zA-Z0-9-]*)(\\s*)(:)",
           "beginCaptures": {
             "1": {
-              "name": "variable.css.custom-property.master-css"
+              "name": "variable.css.custom-property.stet-css"
             },
             "3": {
               "name": "punctuation.separator.key-value.css"
@@ -430,7 +430,7 @@
           },
           "patterns": [
             {
-              "include": "#master-theme-value"
+              "include": "#stet-theme-value"
             },
             {
               "include": "source.css#property-values"
@@ -439,7 +439,7 @@
         }
       ]
     },
-    "master-keyframes": {
+    "stet-keyframes": {
       "patterns": [
         {
           "begin": "(?i)(?=@(?:-(?:webkit|moz|o|ms)-)?keyframes([\"';{\\s]|/\\*|$))",
@@ -520,35 +520,35 @@
         }
       ]
     },
-    "master-managed-pattern": {
+    "stet-managed-pattern": {
       "patterns": [
         {
           "begin": "(^|(?<=[{;]))(\\s*)([_a-zA-Z-][_a-zA-Z0-9-]*)(:)(<)",
           "beginCaptures": {
             "3": {
-              "name": "support.type.property-name.master-css"
+              "name": "support.type.property-name.stet-css"
             },
             "4": {
-              "name": "keyword.operator.master-css"
+              "name": "keyword.operator.stet-css"
             },
             "5": {
-              "name": "punctuation.definition.generic.begin.master-css"
+              "name": "punctuation.definition.generic.begin.stet-css"
             }
           },
           "end": "(>)",
           "endCaptures": {
             "1": {
-              "name": "punctuation.definition.generic.end.master-css"
+              "name": "punctuation.definition.generic.end.stet-css"
             }
           },
           "patterns": [
             {
               "match": "[~|=*]",
-              "name": "keyword.operator.master-css"
+              "name": "keyword.operator.stet-css"
             },
             {
               "match": "[_a-zA-Z-][_a-zA-Z0-9-]*",
-              "name": "variable.parameter.master-css"
+              "name": "variable.parameter.stet-css"
             }
           ]
         },
@@ -556,44 +556,44 @@
           "begin": "(^|(?<=[{;]))(\\s*)([_a-zA-Z-][_a-zA-Z0-9-]*)(<)",
           "beginCaptures": {
             "3": {
-              "name": "entity.other.attribute-name.class.master-css"
+              "name": "entity.other.attribute-name.class.stet-css"
             },
             "4": {
-              "name": "punctuation.definition.generic.begin.master-css"
+              "name": "punctuation.definition.generic.begin.stet-css"
             }
           },
           "end": "(>)",
           "endCaptures": {
             "1": {
-              "name": "punctuation.definition.generic.end.master-css"
+              "name": "punctuation.definition.generic.end.stet-css"
             }
           },
           "patterns": [
             {
               "match": "\\|",
-              "name": "keyword.operator.master-css"
+              "name": "keyword.operator.stet-css"
             },
             {
               "match": "[_a-zA-Z-][_a-zA-Z0-9-]*",
-              "name": "support.constant.property-value.master-css"
+              "name": "support.constant.property-value.stet-css"
             }
           ]
         }
       ]
     },
-    "master-theme-block": {
+    "stet-theme-block": {
       "patterns": [
         {
           "begin": "\\{",
           "beginCaptures": {
             "0": {
-              "name": "punctuation.section.master-css"
+              "name": "punctuation.section.stet-css"
             }
           },
           "end": "\\}",
           "endCaptures": {
             "0": {
-              "name": "punctuation.section.master-css"
+              "name": "punctuation.section.stet-css"
             }
           },
           "patterns": [
@@ -601,34 +601,34 @@
               "include": "source.css#comment-block"
             },
             {
-              "include": "#master-theme-declaration"
+              "include": "#stet-theme-declaration"
             },
             {
-              "include": "#master-keyframes"
+              "include": "#stet-keyframes"
             },
             {
-              "include": "#master-directive"
+              "include": "#stet-directive"
             },
             {
-              "include": "#master-block"
+              "include": "#stet-block"
             }
           ]
         }
       ]
     },
-    "master-settings-block": {
+    "stet-settings-block": {
       "patterns": [
         {
           "begin": "\\{",
           "beginCaptures": {
             "0": {
-              "name": "punctuation.section.master-css"
+              "name": "punctuation.section.stet-css"
             }
           },
           "end": "\\}",
           "endCaptures": {
             "0": {
-              "name": "punctuation.section.master-css"
+              "name": "punctuation.section.stet-css"
             }
           },
           "patterns": [
@@ -636,31 +636,31 @@
               "include": "source.css#comment-block"
             },
             {
-              "include": "#master-native-declaration"
+              "include": "#stet-native-declaration"
             },
             {
-              "include": "#master-directive"
+              "include": "#stet-directive"
             },
             {
-              "include": "#master-block"
+              "include": "#stet-block"
             }
           ]
         }
       ]
     },
-    "master-managed-block": {
+    "stet-managed-block": {
       "patterns": [
         {
           "begin": "\\{",
           "beginCaptures": {
             "0": {
-              "name": "punctuation.section.master-css"
+              "name": "punctuation.section.stet-css"
             }
           },
           "end": "\\}",
           "endCaptures": {
             "0": {
-              "name": "punctuation.section.master-css"
+              "name": "punctuation.section.stet-css"
             }
           },
           "patterns": [
@@ -668,43 +668,43 @@
               "include": "#comment"
             },
             {
-              "include": "#master-string"
+              "include": "#stet-string"
             },
             {
-              "include": "#master-directive"
+              "include": "#stet-directive"
             },
             {
-              "include": "#master-managed-pattern"
+              "include": "#stet-managed-pattern"
             },
             {
-              "include": "#master-managed-entry-selector"
+              "include": "#stet-managed-entry-selector"
             },
             {
-              "include": "#master-native-declaration"
+              "include": "#stet-native-declaration"
             },
             {
-              "include": "#master-query"
+              "include": "#stet-query"
             },
             {
-              "include": "#master-selector"
+              "include": "#stet-selector"
             },
             {
-              "include": "#master-value"
+              "include": "#stet-value"
             },
             {
-              "include": "#master-managed-block"
+              "include": "#stet-managed-block"
             }
           ]
         }
       ]
     },
-    "master-managed-entry-selector": {
+    "stet-managed-entry-selector": {
       "patterns": [
         {
           "match": "(^|(?<=[{;]))(\\s*)([_a-zA-Z-][_a-zA-Z0-9-]*)(?=:{1,2}[_a-zA-Z-][_a-zA-Z0-9-]*\\s*\\{)",
           "captures": {
             "3": {
-              "name": "entity.other.attribute-name.class.master-css"
+              "name": "entity.other.attribute-name.class.stet-css"
             }
           }
         },
@@ -712,10 +712,10 @@
           "match": "(:{1,2})([_a-zA-Z-][_a-zA-Z0-9-]*)(?=\\s*\\{)",
           "captures": {
             "1": {
-              "name": "punctuation.definition.entity.master-css"
+              "name": "punctuation.definition.entity.stet-css"
             },
             "2": {
-              "name": "entity.other.attribute-name.pseudo-class.master-css"
+              "name": "entity.other.attribute-name.pseudo-class.stet-css"
             }
           }
         },
@@ -723,25 +723,25 @@
           "match": "(^|(?<=[{;]))(\\s*)([_a-zA-Z-][_a-zA-Z0-9-]*)(?=\\s*\\{)",
           "captures": {
             "3": {
-              "name": "entity.other.attribute-name.class.master-css"
+              "name": "entity.other.attribute-name.class.stet-css"
             }
           }
         }
       ]
     },
-    "master-block": {
+    "stet-block": {
       "patterns": [
         {
           "begin": "\\{",
           "beginCaptures": {
             "0": {
-              "name": "punctuation.section.master-css"
+              "name": "punctuation.section.stet-css"
             }
           },
           "end": "\\}",
           "endCaptures": {
             "0": {
-              "name": "punctuation.section.master-css"
+              "name": "punctuation.section.stet-css"
             }
           },
           "patterns": [
@@ -749,49 +749,49 @@
               "include": "#comment"
             },
             {
-              "include": "#master-string"
+              "include": "#stet-string"
             },
             {
-              "include": "#master-directive"
+              "include": "#stet-directive"
             },
             {
-              "include": "#master-managed-pattern"
+              "include": "#stet-managed-pattern"
             },
             {
-              "include": "#master-managed-entry-selector"
+              "include": "#stet-managed-entry-selector"
             },
             {
-              "include": "#master-native-declaration"
+              "include": "#stet-native-declaration"
             },
             {
-              "include": "#master-query"
+              "include": "#stet-query"
             },
             {
-              "include": "#master-selector"
+              "include": "#stet-selector"
             },
             {
-              "include": "#master-value"
+              "include": "#stet-value"
             },
             {
-              "include": "#master-block"
+              "include": "#stet-block"
             }
           ]
         }
       ]
     },
-    "master-class-fragment": {
+    "stet-class-fragment": {
       "patterns": [
         {
           "match": "(?<![:@._a-zA-Z0-9-])([_a-zA-Z-][_a-zA-Z0-9-]*)(?=:{1,2}[_a-zA-Z-][_a-zA-Z0-9-]*\\s*\\{)",
-          "name": "entity.other.attribute-name.class.master-css"
+          "name": "entity.other.attribute-name.class.stet-css"
         },
         {
           "match": "\\$[_a-zA-Z-][_a-zA-Z0-9-]*",
-          "name": "variable.other.master-css"
+          "name": "variable.other.stet-css"
         },
         {
           "match": "(?<=:)(?![_a-zA-Z-][_a-zA-Z0-9-]*\\s*\\{)([_a-zA-Z-][_a-zA-Z0-9-]*)(?=[:@!_\\s;'\")]|$)",
-          "name": "support.constant.property-value.master-css"
+          "name": "support.constant.property-value.stet-css"
         },
         {
           "match": "!(?=[:@_>+~\\s;'\")]|$)",
@@ -799,16 +799,16 @@
         },
         {
           "match": "(?<=:)([_a-zA-Z-][_a-zA-Z0-9-]*)(?=@|\\s|[;'\"])",
-          "name": "entity.other.attribute-name.pseudo-class.master-css"
+          "name": "entity.other.attribute-name.pseudo-class.stet-css"
         },
         {
           "match": "(?<![:@._a-zA-Z0-9-])([_a-zA-Z-][_a-zA-Z0-9-]*)(:)(?![_a-zA-Z-][_a-zA-Z0-9-]*\\s*\\{)",
           "captures": {
             "1": {
-              "name": "support.type.property-name.master-css"
+              "name": "support.type.property-name.stet-css"
             },
             "2": {
-              "name": "keyword.operator.master-css"
+              "name": "keyword.operator.stet-css"
             }
           }
         },
@@ -816,41 +816,41 @@
           "match": "(:{1,2})([_a-zA-Z-][_a-zA-Z0-9-]*)",
           "captures": {
             "1": {
-              "name": "punctuation.definition.entity.master-css"
+              "name": "punctuation.definition.entity.stet-css"
             },
             "2": {
-              "name": "entity.other.attribute-name.pseudo-class.master-css"
+              "name": "entity.other.attribute-name.pseudo-class.stet-css"
             }
           }
         },
         {
           "match": "(@[_a-zA-Z-][_a-zA-Z0-9-]*)",
-          "name": "keyword.control.at-rule.master-css.query"
+          "name": "keyword.control.at-rule.stet-css.query"
         },
         {
           "match": "(?<![:@._a-zA-Z0-9-])[_a-zA-Z-][_a-zA-Z0-9-]*(?!\\s*:)",
-          "name": "entity.other.attribute-name.class.master-css"
+          "name": "entity.other.attribute-name.class.stet-css"
         }
       ]
     },
-    "master-selector": {
+    "stet-selector": {
       "patterns": [
         {
           "match": "(&|[>+~(),\\[\\]])",
-          "name": "keyword.operator.selector.master-css"
+          "name": "keyword.operator.selector.stet-css"
         },
         {
           "match": "(?<![.#:_a-zA-Z0-9-])([a-zA-Z][_a-zA-Z0-9-]*)(?=\\s*(?:[,)>+~{]|$))",
-          "name": "entity.name.tag.master-css"
+          "name": "entity.name.tag.stet-css"
         },
         {
           "match": "(\\.)([_a-zA-Z-][_a-zA-Z0-9-]*)",
           "captures": {
             "1": {
-              "name": "punctuation.definition.entity.master-css"
+              "name": "punctuation.definition.entity.stet-css"
             },
             "2": {
-              "name": "entity.other.attribute-name.class.master-css"
+              "name": "entity.other.attribute-name.class.stet-css"
             }
           }
         },
@@ -858,10 +858,10 @@
           "match": "(#)([_a-zA-Z-][_a-zA-Z0-9-]*)",
           "captures": {
             "1": {
-              "name": "punctuation.definition.entity.master-css"
+              "name": "punctuation.definition.entity.stet-css"
             },
             "2": {
-              "name": "variable.other.master-css"
+              "name": "variable.other.stet-css"
             }
           }
         },
@@ -869,31 +869,31 @@
           "match": "(:{1,2})([_a-zA-Z-][_a-zA-Z0-9-]*)",
           "captures": {
             "1": {
-              "name": "punctuation.definition.entity.master-css"
+              "name": "punctuation.definition.entity.stet-css"
             },
             "2": {
-              "name": "entity.other.attribute-name.pseudo-class.master-css"
+              "name": "entity.other.attribute-name.pseudo-class.stet-css"
             }
           }
         }
       ]
     },
-    "master-query": {
+    "stet-query": {
       "patterns": [
         {
           "match": "(@)([a-zA-Z])?(>=|<=|>|<|=)([_a-zA-Z-][_a-zA-Z0-9-]*)",
           "captures": {
             "1": {
-              "name": "punctuation.definition.keyword.master-css"
+              "name": "punctuation.definition.keyword.stet-css"
             },
             "2": {
-              "name": "keyword.control.at-rule.master-css.query"
+              "name": "keyword.control.at-rule.stet-css.query"
             },
             "3": {
-              "name": "keyword.operator.master-css.query"
+              "name": "keyword.operator.stet-css.query"
             },
             "4": {
-              "name": "support.constant.property-value.master-css.query"
+              "name": "support.constant.property-value.stet-css.query"
             }
           }
         },
@@ -901,10 +901,10 @@
           "match": "(@)(media|container|supports|layer|starting-style|[_a-zA-Z-][_a-zA-Z0-9-]*)\\b",
           "captures": {
             "1": {
-              "name": "punctuation.definition.keyword.master-css"
+              "name": "punctuation.definition.keyword.stet-css"
             },
             "2": {
-              "name": "keyword.control.at-rule.master-css.query"
+              "name": "keyword.control.at-rule.stet-css.query"
             }
           }
         },
@@ -912,42 +912,42 @@
           "match": "\\b([a-zA-Z])?(>=|<=|>|<|=)([_a-zA-Z-][_a-zA-Z0-9-]*)",
           "captures": {
             "1": {
-              "name": "keyword.control.at-rule.master-css.query"
+              "name": "keyword.control.at-rule.stet-css.query"
             },
             "2": {
-              "name": "keyword.operator.master-css.query"
+              "name": "keyword.operator.stet-css.query"
             },
             "3": {
-              "name": "support.constant.property-value.master-css.query"
+              "name": "support.constant.property-value.stet-css.query"
             }
           }
         },
         {
           "match": "(>=|<=|>|<|=)",
-          "name": "keyword.operator.master-css.query"
+          "name": "keyword.operator.stet-css.query"
         }
       ]
     },
-    "master-plain-string": {
+    "stet-plain-string": {
       "patterns": [
         {
           "begin": "\"",
           "beginCaptures": {
             "0": {
-              "name": "punctuation.definition.string.begin.master-css"
+              "name": "punctuation.definition.string.begin.stet-css"
             }
           },
           "end": "\"",
           "endCaptures": {
             "0": {
-              "name": "punctuation.definition.string.end.master-css"
+              "name": "punctuation.definition.string.end.stet-css"
             }
           },
-          "name": "string.quoted.double.master-css",
+          "name": "string.quoted.double.stet-css",
           "patterns": [
             {
               "match": "\\\\.",
-              "name": "constant.character.escape.master-css"
+              "name": "constant.character.escape.stet-css"
             }
           ]
         },
@@ -955,48 +955,48 @@
           "begin": "'",
           "beginCaptures": {
             "0": {
-              "name": "punctuation.definition.string.begin.master-css"
+              "name": "punctuation.definition.string.begin.stet-css"
             }
           },
           "end": "'",
           "endCaptures": {
             "0": {
-              "name": "punctuation.definition.string.end.master-css"
+              "name": "punctuation.definition.string.end.stet-css"
             }
           },
-          "name": "string.quoted.single.master-css",
+          "name": "string.quoted.single.stet-css",
           "patterns": [
             {
               "match": "\\\\.",
-              "name": "constant.character.escape.master-css"
+              "name": "constant.character.escape.stet-css"
             }
           ]
         }
       ]
     },
-    "master-string": {
+    "stet-string": {
       "patterns": [
         {
           "begin": "\"",
           "beginCaptures": {
             "0": {
-              "name": "punctuation.definition.string.begin.master-css"
+              "name": "punctuation.definition.string.begin.stet-css"
             }
           },
           "end": "\"",
           "endCaptures": {
             "0": {
-              "name": "punctuation.definition.string.end.master-css"
+              "name": "punctuation.definition.string.end.stet-css"
             }
           },
-          "name": "string.quoted.double.master-css",
+          "name": "string.quoted.double.stet-css",
           "patterns": [
             {
               "match": "\\\\.",
-              "name": "constant.character.escape.master-css"
+              "name": "constant.character.escape.stet-css"
             },
             {
-              "include": "#master-class-fragment"
+              "include": "#stet-class-fragment"
             }
           ]
         },
@@ -1004,41 +1004,41 @@
           "begin": "'",
           "beginCaptures": {
             "0": {
-              "name": "punctuation.definition.string.begin.master-css"
+              "name": "punctuation.definition.string.begin.stet-css"
             }
           },
           "end": "'",
           "endCaptures": {
             "0": {
-              "name": "punctuation.definition.string.end.master-css"
+              "name": "punctuation.definition.string.end.stet-css"
             }
           },
-          "name": "string.quoted.single.master-css",
+          "name": "string.quoted.single.stet-css",
           "patterns": [
             {
               "match": "\\\\.",
-              "name": "constant.character.escape.master-css"
+              "name": "constant.character.escape.stet-css"
             },
             {
-              "include": "#master-class-fragment"
+              "include": "#stet-class-fragment"
             }
           ]
         }
       ]
     },
-    "master-value": {
+    "stet-value": {
       "patterns": [
         {
           "match": "--value(?=\\()",
-          "name": "support.function.misc.master-css"
+          "name": "support.function.misc.stet-css"
         },
         {
           "match": "--alpha(?=\\()",
-          "name": "support.function.misc.master-css"
+          "name": "support.function.misc.stet-css"
         },
         {
           "match": "--[_a-zA-Z-][_a-zA-Z0-9-]*",
-          "name": "variable.css.custom-property.master-css"
+          "name": "variable.css.custom-property.stet-css"
         }
       ]
     }

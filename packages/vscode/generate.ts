@@ -14,7 +14,7 @@ import { cpSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 const packageJSONPath = fileURLToPath(new URL('./package.json', import.meta.url))
 const pkg = editJsonFile(packageJSONPath, { stringify_width: 2 })
 const compilerRequire = createRequire(fileURLToPath(new URL('../compiler/package.json', import.meta.url)))
-const MASTER_CSS_GRAMMAR_PATH = './node_modules/@stet-css/language/syntaxes/master-css.tmLanguage.json'
+const MASTER_CSS_GRAMMAR_PATH = './node_modules/@stet-css/language/syntaxes/stet-css.tmLanguage.json'
 
 pkg.unset('contributes.languages')
 pkg.unset('contributes.css')

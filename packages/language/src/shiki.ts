@@ -1,5 +1,5 @@
 import { SEMANTIC_TOKEN_MODIFIERS } from './common'
-import masterCSSTextMateGrammar from '../syntaxes/master-css.tmLanguage.json' with { type: 'json' }
+import masterCSSTextMateGrammar from '../syntaxes/stet-css.tmLanguage.json' with { type: 'json' }
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import languageSettings, { type LanguageSettings } from './settings'
 import { collectHighlightTokenItems } from './render-semantic-tokens'
@@ -12,7 +12,7 @@ import {
   getMasterCSSSemanticTokenScopeKeys
 } from './semantic/scopes'
 
-export const MASTER_CSS_SHIKI_SCOPE_NAME = 'master-css.directive.injection'
+export const MASTER_CSS_SHIKI_SCOPE_NAME = 'stet-css.directive.injection'
 export const MASTER_CSS_SHIKI_INJECT_TO = [
   'source.css',
   'source.css.scss',
@@ -214,7 +214,7 @@ const languageServiceLanguageIds: Record<string, string> = {
   markdown: 'markdown',
   mdx: 'mdx'
 }
-const masterCSSClassListLanguageIds = new Set(['mcss', 'master-css'])
+const masterCSSClassListLanguageIds = new Set(['mcss', 'stet-css'])
 const masterCSSShikiSupportedLanguageIds = new Set([
   ...Object.keys(shikiLanguageIds),
   ...Object.values(shikiLanguageIds)
@@ -238,7 +238,7 @@ function createShikiDocument(code: string, lang?: string) {
   const languageId = lang ? languageServiceLanguageIds[lang] ?? lang : undefined
   if (!languageId) return
   const uriLang = lang?.replace(/[^\w.-]/g, '-') || 'txt'
-  return TextDocument.create(`file:///master-css-shiki.${uriLang}`, languageId, 0, code)
+  return TextDocument.create(`file:///stet-css-shiki.${uriLang}`, languageId, 0, code)
 }
 
 function createShikiCSS(options: MasterCSSShikiOptions) {
@@ -430,10 +430,10 @@ const SEMANTIC_SCOPE_STYLE_PROBE = [
 
 function normalizeScope(scope: string) {
   let normalizedScope = scope
-  while (normalizedScope.endsWith('.css') || normalizedScope.endsWith('.master-css')) {
+  while (normalizedScope.endsWith('.css') || normalizedScope.endsWith('.stet-css')) {
     normalizedScope = normalizedScope
       .replace(/\.css$/, '')
-      .replace(/\.master-css$/, '')
+      .replace(/\.stet-css$/, '')
   }
   return normalizedScope
 }
@@ -442,7 +442,7 @@ function getScopeCandidates(scope: string) {
   return [...new Set([
     scope,
     scope.replace(/\.css$/, ''),
-    scope.replace(/\.master-css$/, ''),
+    scope.replace(/\.stet-css$/, ''),
     normalizeScope(scope)
   ])]
 }
@@ -452,7 +452,7 @@ function getScopePrefixes(scope: string) {
   const bases = [
     scope,
     scope.replace(/\.css$/, ''),
-    scope.replace(/\.master-css$/, ''),
+    scope.replace(/\.stet-css$/, ''),
     normalizeScope(scope)
   ]
   for (const base of bases) {
@@ -582,7 +582,7 @@ export function transformerMasterCSS(
   options: MasterCSSShikiOptions = {}
 ): ShikiTransformer {
   return {
-    name: 'master-css',
+    name: 'stet-css',
     enforce: 'post',
     tokens(this: ShikiTransformerContext, tokens) {
       const lang = options.lang ?? this.options.lang
