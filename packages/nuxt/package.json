@@ -51,11 +51,6 @@
     "provenance": true
   },
   "dependencies": {
-    "@stet-css/integration": "workspace:^",
-    "@stet-css/project": "workspace:^",
-    "@stet-css/runtime": "workspace:^",
-    "@stet-css/server": "workspace:^",
-    "@stet-css/stylesheet": "workspace:^",
     "@stet-css/vite": "workspace:^",
     "@nuxt/kit": "^4.4.8"
   },
