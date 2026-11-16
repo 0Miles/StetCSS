@@ -1,8 +1,4 @@
 import type { PluginOptions } from '@stet-css/vite'
 
-export interface ModuleOptions {
-  /**
-   * Scanner options passed through to `@stet-css/vite`.
-   */
-  scanner?: PluginOptions['scanner']
-}
+/** Options of the module, passed to `@stet-css/vite`: only `adapters`. */
+export type ModuleOptions = PluginOptions

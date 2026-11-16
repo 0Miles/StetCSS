@@ -9,7 +9,7 @@ export default function ScannerPlugin(options: PluginOptions, context: PluginCon
     name: 'master-css:scanner',
     enforce: 'pre',
     async configResolved(config) {
-      const scanner = new CSSScanner(options.scanner, getProjectDir(context) ?? config.root)
+      const scanner = new CSSScanner(options, getProjectDir(context) ?? config.root)
       context.scanner = scanner
       await scanner.init()
     },
