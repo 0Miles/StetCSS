@@ -141,32 +141,32 @@
                 "description": "Cold child-process module import timing for startup diagnostics."
             },
             {
-                "id": "vite-master-command-overhead-ms",
-                "label": "Vite Master Command Overhead Ms",
+                "id": "vite-stet-command-overhead-ms",
+                "label": "Vite StetCSS Command Overhead Ms",
                 "unit": "ms",
                 "description": "Full child-process command timing measured by the benchmark parent process."
             },
             {
-                "id": "master-vite-import-ms",
-                "label": "Master Vite Import Ms",
+                "id": "stet-vite-import-ms",
+                "label": "StetCSS Vite Import Ms",
                 "unit": "ms",
                 "description": "Cold child-process module import timing for startup diagnostics."
             },
             {
-                "id": "master-vite-core-module-import-ms",
-                "label": "Master Vite Core Module Import Ms",
+                "id": "stet-vite-core-module-import-ms",
+                "label": "StetCSS Vite Core Module Import Ms",
                 "unit": "ms",
                 "description": "Cold child-process module import timing for startup diagnostics."
             },
             {
-                "id": "vite-master-scanner-init-ms",
-                "label": "Vite Master Scanner Init Ms",
+                "id": "vite-stet-scanner-init-ms",
+                "label": "Vite StetCSS Scanner Init Ms",
                 "unit": "ms",
-                "description": "Instrumented Master CSS Vite plugin startup or hook timing."
+                "description": "Instrumented StetCSS Vite plugin startup or hook timing."
             },
             {
-                "id": "vite-build-with-master-ms",
-                "label": "Vite Build With Master Ms",
+                "id": "vite-build-with-stet-ms",
+                "label": "Vite Build With StetCSS Ms",
                 "unit": "ms",
                 "description": "Startup diagnostic metric."
             }
@@ -182,28 +182,28 @@
                 "id": "cli-css-extraction-ms",
                 "label": "CLI CSS extraction",
                 "unit": "ms",
-                "description": "Time spent creating extracted Master CSS."
+                "description": "Time spent creating extracted StetCSS."
             },
             {
                 "id": "vite-baseline-build-ms",
                 "label": "Vite baseline build",
                 "unit": "ms",
-                "description": "Vite production build time for the fixture without Master CSS plugin work."
+                "description": "Vite production build time for the fixture without StetCSS plugin work."
             },
             {
                 "id": "vite-total-build-ms",
                 "label": "Vite total build",
                 "unit": "ms",
-                "description": "Total Vite production build time with instrumented Master CSS plugin work."
+                "description": "Total Vite production build time with instrumented StetCSS plugin work."
             },
             {
-                "id": "vite-master-scanner-init-ms",
+                "id": "vite-stet-scanner-init-ms",
                 "label": "Vite scanner init",
                 "unit": "ms",
-                "description": "Time spent initializing the Master CSS scanner during Vite config resolution."
+                "description": "Time spent initializing the StetCSS scanner during Vite config resolution."
             },
             {
-                "id": "vite-master-generate-bundle-ms",
+                "id": "vite-stet-generate-bundle-ms",
                 "label": "Vite bundle CSS extraction",
                 "unit": "ms",
                 "description": "Time spent extracting generated CSS and splicing it into the final CSS bundle."
@@ -276,7 +276,7 @@
                 "id": "generated-css-brotli-bytes",
                 "label": "Generated CSS brotli bytes",
                 "unit": "B",
-                "description": "Brotli bytes of generated Master CSS."
+                "description": "Brotli bytes of generated StetCSS."
             },
             {
                 "id": "final-css-brotli-bytes",
@@ -291,7 +291,7 @@
             "fixtureId": "minimal",
             "cli": {
                 "startup": {
-                    "variantId": "minimal-master-cli-startup-diagnostic",
+                    "variantId": "minimal-stet-cli-startup-diagnostic",
                     "metrics": {
                         "cli-command-elapsed-ms": {
                             "min": 189.53,
@@ -320,7 +320,7 @@
                     }
                 },
                 "build": {
-                    "variantId": "minimal-master-cli-diagnostic",
+                    "variantId": "minimal-stet-cli-diagnostic",
                     "metrics": {
                         "cli-source-scan-ms": {
                             "min": 12.09,
@@ -343,9 +343,9 @@
             },
             "vite": {
                 "startup": {
-                    "variantId": "minimal-master-vite-startup-diagnostic",
+                    "variantId": "minimal-stet-vite-startup-diagnostic",
                     "metrics": {
-                        "vite-master-command-overhead-ms": {
+                        "vite-stet-command-overhead-ms": {
                             "min": 143.36,
                             "median": 145.78,
                             "mean": 170.49,
@@ -353,7 +353,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "master-vite-import-ms": {
+                        "stet-vite-import-ms": {
                             "min": 71.06,
                             "median": 72.5,
                             "mean": 72.37,
@@ -361,7 +361,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "master-vite-core-module-import-ms": {
+                        "stet-vite-core-module-import-ms": {
                             "min": 97.2,
                             "median": 104.63,
                             "mean": 105.59,
@@ -369,7 +369,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "vite-master-scanner-init-ms": {
+                        "vite-stet-scanner-init-ms": {
                             "min": 5.5,
                             "median": 5.69,
                             "mean": 5.66,
@@ -377,7 +377,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "vite-build-with-master-ms": {
+                        "vite-build-with-stet-ms": {
                             "min": 99.97,
                             "median": 100.09,
                             "mean": 100.32,
@@ -388,7 +388,7 @@
                     }
                 },
                 "build": {
-                    "variantId": "minimal-master-vite-diagnostic",
+                    "variantId": "minimal-stet-vite-diagnostic",
                     "metrics": {
                         "vite-baseline-build-ms": {
                             "min": 335.99,
@@ -406,7 +406,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "vite-master-scanner-init-ms": {
+                        "vite-stet-scanner-init-ms": {
                             "min": 5.08,
                             "median": 5.19,
                             "mean": 5.21,
@@ -414,7 +414,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "vite-master-generate-bundle-ms": {
+                        "vite-stet-generate-bundle-ms": {
                             "min": 14.19,
                             "median": 14.24,
                             "mean": 14.4,
@@ -426,7 +426,7 @@
                 }
             },
             "compiler": {
-                "variantId": "minimal-master-static-compiler",
+                "variantId": "minimal-stet-static-compiler",
                 "metrics": {
                     "production-create-extracted-css-ms": {
                         "min": 14.76,
@@ -471,7 +471,7 @@
                 }
             },
             "extraction": {
-                "variantId": "minimal-master-static-extraction",
+                "variantId": "minimal-stet-static-extraction",
                 "metrics": {
                     "production-create-extracted-css-ms": {
                         "min": 14.2,
@@ -536,7 +536,7 @@
             "fixtureId": "docs",
             "cli": {
                 "startup": {
-                    "variantId": "docs-master-cli-startup-diagnostic",
+                    "variantId": "docs-stet-cli-startup-diagnostic",
                     "metrics": {
                         "cli-command-elapsed-ms": {
                             "min": 196.15,
@@ -565,7 +565,7 @@
                     }
                 },
                 "build": {
-                    "variantId": "docs-master-cli-diagnostic",
+                    "variantId": "docs-stet-cli-diagnostic",
                     "metrics": {
                         "cli-source-scan-ms": {
                             "min": 17.49,
@@ -588,9 +588,9 @@
             },
             "vite": {
                 "startup": {
-                    "variantId": "docs-master-vite-startup-diagnostic",
+                    "variantId": "docs-stet-vite-startup-diagnostic",
                     "metrics": {
-                        "vite-master-command-overhead-ms": {
+                        "vite-stet-command-overhead-ms": {
                             "min": 139.66,
                             "median": 145.79,
                             "mean": 145.44,
@@ -598,7 +598,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "master-vite-import-ms": {
+                        "stet-vite-import-ms": {
                             "min": 72.21,
                             "median": 75.99,
                             "mean": 74.73,
@@ -606,7 +606,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "master-vite-core-module-import-ms": {
+                        "stet-vite-core-module-import-ms": {
                             "min": 98.33,
                             "median": 105.31,
                             "mean": 104.41,
@@ -614,7 +614,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "vite-master-scanner-init-ms": {
+                        "vite-stet-scanner-init-ms": {
                             "min": 5.09,
                             "median": 5.33,
                             "mean": 5.27,
@@ -622,7 +622,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "vite-build-with-master-ms": {
+                        "vite-build-with-stet-ms": {
                             "min": 103.41,
                             "median": 105.94,
                             "mean": 106.73,
@@ -633,7 +633,7 @@
                     }
                 },
                 "build": {
-                    "variantId": "docs-master-vite-diagnostic",
+                    "variantId": "docs-stet-vite-diagnostic",
                     "metrics": {
                         "vite-baseline-build-ms": {
                             "min": 317.99,
@@ -651,7 +651,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "vite-master-scanner-init-ms": {
+                        "vite-stet-scanner-init-ms": {
                             "min": 5.12,
                             "median": 5.82,
                             "mean": 5.65,
@@ -659,7 +659,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "vite-master-generate-bundle-ms": {
+                        "vite-stet-generate-bundle-ms": {
                             "min": 14.8,
                             "median": 16.17,
                             "mean": 16.88,
@@ -671,7 +671,7 @@
                 }
             },
             "compiler": {
-                "variantId": "docs-master-static-compiler",
+                "variantId": "docs-stet-static-compiler",
                 "metrics": {
                     "production-create-extracted-css-ms": {
                         "min": 15.6,
@@ -716,7 +716,7 @@
                 }
             },
             "extraction": {
-                "variantId": "docs-master-static-extraction",
+                "variantId": "docs-stet-static-extraction",
                 "metrics": {
                     "production-create-extracted-css-ms": {
                         "min": 15.67,
@@ -781,7 +781,7 @@
             "fixtureId": "dashboard",
             "cli": {
                 "startup": {
-                    "variantId": "dashboard-master-cli-startup-diagnostic",
+                    "variantId": "dashboard-stet-cli-startup-diagnostic",
                     "metrics": {
                         "cli-command-elapsed-ms": {
                             "min": 190.72,
@@ -810,7 +810,7 @@
                     }
                 },
                 "build": {
-                    "variantId": "dashboard-master-cli-diagnostic",
+                    "variantId": "dashboard-stet-cli-diagnostic",
                     "metrics": {
                         "cli-source-scan-ms": {
                             "min": 18.3,
@@ -833,9 +833,9 @@
             },
             "vite": {
                 "startup": {
-                    "variantId": "dashboard-master-vite-startup-diagnostic",
+                    "variantId": "dashboard-stet-vite-startup-diagnostic",
                     "metrics": {
-                        "vite-master-command-overhead-ms": {
+                        "vite-stet-command-overhead-ms": {
                             "min": 144.44,
                             "median": 150.58,
                             "mean": 150.06,
@@ -843,7 +843,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "master-vite-import-ms": {
+                        "stet-vite-import-ms": {
                             "min": 68.43,
                             "median": 71.65,
                             "mean": 70.67,
@@ -851,7 +851,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "master-vite-core-module-import-ms": {
+                        "stet-vite-core-module-import-ms": {
                             "min": 99.14,
                             "median": 105.87,
                             "mean": 104,
@@ -859,7 +859,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "vite-master-scanner-init-ms": {
+                        "vite-stet-scanner-init-ms": {
                             "min": 5.09,
                             "median": 5.11,
                             "mean": 5.27,
@@ -867,7 +867,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "vite-build-with-master-ms": {
+                        "vite-build-with-stet-ms": {
                             "min": 104.74,
                             "median": 107.57,
                             "mean": 106.8,
@@ -878,7 +878,7 @@
                     }
                 },
                 "build": {
-                    "variantId": "dashboard-master-vite-diagnostic",
+                    "variantId": "dashboard-stet-vite-diagnostic",
                     "metrics": {
                         "vite-baseline-build-ms": {
                             "min": 323.68,
@@ -896,7 +896,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "vite-master-scanner-init-ms": {
+                        "vite-stet-scanner-init-ms": {
                             "min": 5.18,
                             "median": 5.58,
                             "mean": 5.61,
@@ -904,7 +904,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "vite-master-generate-bundle-ms": {
+                        "vite-stet-generate-bundle-ms": {
                             "min": 14.96,
                             "median": 15.36,
                             "mean": 15.62,
@@ -916,7 +916,7 @@
                 }
             },
             "compiler": {
-                "variantId": "dashboard-master-static-compiler",
+                "variantId": "dashboard-stet-static-compiler",
                 "metrics": {
                     "production-create-extracted-css-ms": {
                         "min": 16.04,
@@ -961,7 +961,7 @@
                 }
             },
             "extraction": {
-                "variantId": "dashboard-master-static-extraction",
+                "variantId": "dashboard-stet-static-extraction",
                 "metrics": {
                     "production-create-extracted-css-ms": {
                         "min": 16,
@@ -1026,7 +1026,7 @@
             "fixtureId": "stress-css",
             "cli": {
                 "startup": {
-                    "variantId": "stress-css-master-cli-startup-diagnostic",
+                    "variantId": "stress-css-stet-cli-startup-diagnostic",
                     "metrics": {
                         "cli-command-elapsed-ms": {
                             "min": 208.15,
@@ -1055,7 +1055,7 @@
                     }
                 },
                 "build": {
-                    "variantId": "stress-css-master-cli-diagnostic",
+                    "variantId": "stress-css-stet-cli-diagnostic",
                     "metrics": {
                         "cli-source-scan-ms": {
                             "min": 24.43,
@@ -1078,9 +1078,9 @@
             },
             "vite": {
                 "startup": {
-                    "variantId": "stress-css-master-vite-startup-diagnostic",
+                    "variantId": "stress-css-stet-vite-startup-diagnostic",
                     "metrics": {
-                        "vite-master-command-overhead-ms": {
+                        "vite-stet-command-overhead-ms": {
                             "min": 159.03,
                             "median": 163.74,
                             "mean": 166.38,
@@ -1088,7 +1088,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "master-vite-import-ms": {
+                        "stet-vite-import-ms": {
                             "min": 74.97,
                             "median": 79.5,
                             "mean": 79.39,
@@ -1096,7 +1096,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "master-vite-core-module-import-ms": {
+                        "stet-vite-core-module-import-ms": {
                             "min": 97.27,
                             "median": 104.75,
                             "mean": 105.71,
@@ -1104,7 +1104,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "vite-master-scanner-init-ms": {
+                        "vite-stet-scanner-init-ms": {
                             "min": 5.55,
                             "median": 6.11,
                             "mean": 6.08,
@@ -1112,7 +1112,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "vite-build-with-master-ms": {
+                        "vite-build-with-stet-ms": {
                             "min": 121.74,
                             "median": 123.87,
                             "mean": 124.75,
@@ -1123,7 +1123,7 @@
                     }
                 },
                 "build": {
-                    "variantId": "stress-css-master-vite-diagnostic",
+                    "variantId": "stress-css-stet-vite-diagnostic",
                     "metrics": {
                         "vite-baseline-build-ms": {
                             "min": 317.78,
@@ -1141,7 +1141,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "vite-master-scanner-init-ms": {
+                        "vite-stet-scanner-init-ms": {
                             "min": 5.06,
                             "median": 5.2,
                             "mean": 6.11,
@@ -1149,7 +1149,7 @@
                             "sampleCount": 3,
                             "unit": "ms"
                         },
-                        "vite-master-generate-bundle-ms": {
+                        "vite-stet-generate-bundle-ms": {
                             "min": 19.06,
                             "median": 19.38,
                             "mean": 20.01,
@@ -1161,7 +1161,7 @@
                 }
             },
             "compiler": {
-                "variantId": "stress-css-master-static-compiler",
+                "variantId": "stress-css-stet-static-compiler",
                 "metrics": {
                     "production-create-extracted-css-ms": {
                         "min": 20.9,
@@ -1206,7 +1206,7 @@
                 }
             },
             "extraction": {
-                "variantId": "stress-css-master-static-extraction",
+                "variantId": "stress-css-stet-static-extraction",
                 "metrics": {
                     "production-create-extracted-css-ms": {
                         "min": 20.54,
@@ -1269,7 +1269,7 @@
         }
     ],
     "limits": [
-        "This snapshot summarizes Master CSS build-path diagnostics only; it is not a cross-framework build benchmark.",
+        "This snapshot summarizes StetCSS build-path diagnostics only; it is not a cross-framework build benchmark.",
         "Startup diagnostics run child-process probes, so import timings are directional and are not additive flamegraphs.",
         "Build diagnostics instrument CLI and Vite paths but do not replace full production command timing.",
         "Compiler and extraction diagnostics require unchanged output hashes before their timings are useful.",

@@ -28,8 +28,8 @@ import type {
 } from './types'
 
 export type DeliveryModeId =
-  | 'master-static'
-  | 'master-runtime'
+  | 'stet-static'
+  | 'stet-runtime'
   | 'tailwind-static'
 
 interface ChromeTraceEvent {
@@ -40,7 +40,7 @@ interface ChromeTraceEvent {
 
 interface DeliveryModeDescriptor {
   id: DeliveryModeId
-  adapterId: 'master-static' | 'master-runtime' | 'tailwind-cli'
+  adapterId: 'stet-static' | 'stet-runtime' | 'tailwind-cli'
   label: string
 }
 
@@ -81,14 +81,14 @@ export const stetDeliveryModeFixtureIds = staticFixtureIds
 
 export const deliveryModeDescriptors = [
   {
-    id: 'master-static',
-    adapterId: 'master-static',
-    label: 'Master CSS static'
+    id: 'stet-static',
+    adapterId: 'stet-static',
+    label: 'StetCSS static'
   },
   {
-    id: 'master-runtime',
-    adapterId: 'master-runtime',
-    label: 'Master CSS runtime'
+    id: 'stet-runtime',
+    adapterId: 'stet-runtime',
+    label: 'StetCSS runtime'
   },
   {
     id: 'tailwind-static',
@@ -138,19 +138,19 @@ export const stetDeliveryModeMetrics = [
     id: 'runtime-js-raw-bytes',
     label: 'Runtime JS raw bytes',
     unit: 'B',
-    description: 'Raw bytes for the Master CSS browser runtime bundle.'
+    description: 'Raw bytes for the StetCSS browser runtime bundle.'
   },
   {
     id: 'runtime-js-gzip-bytes',
     label: 'Runtime JS gzip bytes',
     unit: 'B',
-    description: 'Gzip bytes for the Master CSS browser runtime bundle.'
+    description: 'Gzip bytes for the StetCSS browser runtime bundle.'
   },
   {
     id: 'runtime-js-brotli-bytes',
     label: 'Runtime JS brotli bytes',
     unit: 'B',
-    description: 'Brotli bytes for the Master CSS browser runtime bundle.'
+    description: 'Brotli bytes for the StetCSS browser runtime bundle.'
   },
   {
     id: 'delivered-style-rule-count',
@@ -216,7 +216,7 @@ export const stetDeliveryModeMetrics = [
     id: 'runtime-ready-ms',
     label: 'Runtime ready',
     unit: 'ms',
-    description: 'Browser performance timestamp when Master CSS runtime finished observe.'
+    description: 'Browser performance timestamp when StetCSS runtime finished observe.'
   },
   {
     id: 'runtime-bootstrap-ms',
@@ -267,10 +267,10 @@ export async function createStetDeliveryModePage(options: {
   modeId: DeliveryModeId
   variantId: string
 }): Promise<DeliveryModePage> {
-  if (options.modeId === 'master-static') {
+  if (options.modeId === 'stet-static') {
     return createStaticDeliveryModePage({
       ...options,
-      toolId: 'master-static-cli'
+      toolId: 'stet-static-cli'
     })
   }
 
@@ -302,7 +302,7 @@ export async function measureStetDeliveryMode(options: {
     const consoleWarnings = collectConsoleWarnings(page)
 
     try {
-      const artifactRoot = resolve(benchmarkRoot, '.results', 'master-delivery-modes', 'artifacts', options.variantId, `round-${options.round}`)
+      const artifactRoot = resolve(benchmarkRoot, '.results', 'stet-delivery-modes', 'artifacts', options.variantId, `round-${options.round}`)
       await resetDirectory(artifactRoot)
 
       const traceFile = resolve(artifactRoot, 'trace.json')
@@ -344,13 +344,13 @@ async function createStaticDeliveryModePage(options: {
   fixtureId: BenchmarkFixtureId
   modeId: DeliveryModeId
   variantId: string
-  toolId: Extract<StaticBuildToolId, 'master-static-cli' | 'tailwind-cli'>
+  toolId: Extract<StaticBuildToolId, 'stet-static-cli' | 'tailwind-cli'>
 }): Promise<DeliveryModePage> {
   const tool = staticBuildTools.find((candidate) => candidate.id === options.toolId)
   if (!tool) throw new Error(`Missing static build tool: ${options.toolId}`)
 
   const buildResult = await runStaticBuild({
-    suite: 'master-delivery-modes',
+    suite: 'stet-delivery-modes',
     fixtureId: options.fixtureId,
     tool,
     round: 0,
@@ -358,7 +358,7 @@ async function createStaticDeliveryModePage(options: {
   })
   const css = (await readFiles(buildResult.cssFiles)).toString('utf8')
   const fixture = getStaticFixtureSource(options.fixtureId)
-  const sourceHtml = tool.family === 'master' ? fixture.stetHtml : fixture.tailwindHtml
+  const sourceHtml = tool.family === 'stet' ? fixture.stetHtml : fixture.tailwindHtml
   const html = addStaticHarness(sourceHtml)
 
   return writeDeliveryModePage({
@@ -390,7 +390,7 @@ async function writeDeliveryModePage(options: {
   runtimeJS?: Buffer
   buildArtifacts?: BenchmarkArtifact[]
 }): Promise<DeliveryModePage> {
-  const root = resolve(benchmarkRoot, '.results', 'master-delivery-modes', 'pages', options.variantId)
+  const root = resolve(benchmarkRoot, '.results', 'stet-delivery-modes', 'pages', options.variantId)
   await resetDirectory(root)
 
   const files: Record<string, string> = {
@@ -828,9 +828,9 @@ async function assertDeliveryModeCorrect(page: Page, modeId: DeliveryModeId) {
     throw new Error(`Expected style probe text-align:center, received ${state.textAlign}.`)
   }
 
-  if (modeId === 'master-runtime') {
+  if (modeId === 'stet-runtime') {
     if (!state.runtimeAvailable) throw new Error(`${modeId} did not expose globalThis.stetCSSRuntime.`)
-    if (state.htmlHidden) throw new Error('Master runtime variant did not reveal the hidden html element.')
+    if (state.htmlHidden) throw new Error('StetCSS runtime variant did not reveal the hidden html element.')
   }
 }
 
@@ -962,7 +962,7 @@ function getContentType(file: string) {
 
 async function readRuntimeBundle() {
   const file = resolveBenchmarkPackageFile('@stet-css/runtime', 'dist/global.min.js')
-  assertExistingFile(file, 'Run `bun run --filter @stet-css/runtime build` before `bench:master-delivery-modes`.')
+  assertExistingFile(file, 'Run `bun run --filter @stet-css/runtime build` before `bench:stet-delivery-modes`.')
   return readFile(file)
 }
 

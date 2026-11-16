@@ -31,7 +31,7 @@ import type {
   ByteSummary
 } from './types'
 
-export type DiagnosticToolId = 'master-cli-diagnostic' | 'master-vite-diagnostic'
+export type DiagnosticToolId = 'stet-cli-diagnostic' | 'stet-vite-diagnostic'
 type VitePlugin = {
   name?: string
   transformIndexHtml?: unknown
@@ -97,25 +97,25 @@ export const buildDiagnosticMetricIds = [
   'cli-file-write-ms',
   'vite-baseline-build-ms',
   'vite-total-build-ms',
-  'vite-master-scanner-init-ms',
-  'vite-master-style-entry-ms',
-  'vite-master-generate-bundle-ms'
+  'vite-stet-scanner-init-ms',
+  'vite-stet-style-entry-ms',
+  'vite-stet-generate-bundle-ms'
 ] as const
 
 export function createBuildDiagnosticVariants(fixtureIds: BenchmarkFixtureId[]): BenchmarkVariant[] {
   return fixtureIds.flatMap((fixtureId) => [
     {
-      id: createBuildDiagnosticVariantId(fixtureId, 'master-cli-diagnostic'),
+      id: createBuildDiagnosticVariantId(fixtureId, 'stet-cli-diagnostic'),
       fixtureId,
-      adapterId: 'master-static',
-      label: `${fixtureId} / Master CSS CLI diagnostic`,
+      adapterId: 'stet-static',
+      label: `${fixtureId} / StetCSS CLI diagnostic`,
       limits: ['Diagnostic timings mirror CLI internals and are not identical to full child-process command timings.']
     },
     {
-      id: createBuildDiagnosticVariantId(fixtureId, 'master-vite-diagnostic'),
+      id: createBuildDiagnosticVariantId(fixtureId, 'stet-vite-diagnostic'),
       fixtureId,
-      adapterId: 'master-static',
-      label: `${fixtureId} / Master CSS Vite diagnostic`,
+      adapterId: 'stet-static',
+      label: `${fixtureId} / StetCSS Vite diagnostic`,
       limits: ['Diagnostic timings instrument Vite plugin hooks and are not identical to full child-process command timings.']
     }
   ])
@@ -132,7 +132,7 @@ export async function runBuildDiagnostic(options: {
   variantId: string
   round: number
 }): Promise<BuildDiagnosticResult> {
-  const result = options.toolId === 'master-cli-diagnostic'
+  const result = options.toolId === 'stet-cli-diagnostic'
     ? await runStetCLIDiagnostic(options.workspace, options.fixtureId)
     : await runStetViteDiagnostic(options.workspace, options.fixtureId)
 
@@ -143,8 +143,8 @@ export async function runBuildDiagnostic(options: {
 }
 
 async function runStetCLIDiagnostic(workspace: string, fixtureId: BenchmarkFixtureId): Promise<DiagnosticRunResult> {
-  const tool = staticBuildTools.find((candidate) => candidate.id === 'master-static-cli')
-  if (!tool) throw new Error('Missing Master CSS static CLI tool.')
+  const tool = staticBuildTools.find((candidate) => candidate.id === 'stet-static-cli')
+  if (!tool) throw new Error('Missing StetCSS static CLI tool.')
 
   await prepareStaticWorkspace(workspace, fixtureId, tool)
 
@@ -201,8 +201,8 @@ async function runStetCLIDiagnostic(workspace: string, fixtureId: BenchmarkFixtu
 }
 
 async function runStetViteDiagnostic(workspace: string, fixtureId: BenchmarkFixtureId): Promise<DiagnosticRunResult> {
-  const tool = staticBuildTools.find((candidate) => candidate.id === 'master-static-vite')
-  if (!tool) throw new Error('Missing Master CSS static Vite tool.')
+  const tool = staticBuildTools.find((candidate) => candidate.id === 'stet-static-vite')
+  if (!tool) throw new Error('Missing StetCSS static Vite tool.')
 
   await prepareStaticWorkspace(workspace, fixtureId, tool)
 
@@ -273,16 +273,16 @@ function instrumentStetVitePlugins(plugins: VitePlugin[], recorder: DiagnosticRe
     const next = { ...plugin } as VitePlugin
 
     if (plugin.name === 'stet-css:scanner') {
-      wrapPluginHook(next, 'configResolved', 'vite-master-scanner-init-ms', recorder)
+      wrapPluginHook(next, 'configResolved', 'vite-stet-scanner-init-ms', recorder)
     }
 
     if (plugin.name === 'stet-css:style-entry') {
-      wrapPluginHook(next, 'load', 'vite-master-style-entry-ms', recorder)
-      wrapPluginHook(next, 'transform', 'vite-master-style-entry-ms', recorder)
+      wrapPluginHook(next, 'load', 'vite-stet-style-entry-ms', recorder)
+      wrapPluginHook(next, 'transform', 'vite-stet-style-entry-ms', recorder)
     }
 
     if (plugin.name === 'stet-css:style-entry:build') {
-      wrapPluginHook(next, 'generateBundle', 'vite-master-generate-bundle-ms', recorder)
+      wrapPluginHook(next, 'generateBundle', 'vite-stet-generate-bundle-ms', recorder)
     }
 
     return next

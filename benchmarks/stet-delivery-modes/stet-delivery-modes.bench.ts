@@ -22,7 +22,7 @@ async function writeStetDeliveryModeReportOnce() {
         [
           '--import',
           'tsx',
-          resolve('master-delivery-modes', 'run-report.ts')
+          resolve('stet-delivery-modes', 'run-report.ts')
         ],
         benchmarkRoot
       )
@@ -37,8 +37,8 @@ async function writeStetDeliveryModeReportOnce() {
   return reportPromise
 }
 
-describe('Master delivery modes', () => {
-  bench('write Master delivery modes report', async () => {
+describe('StetCSS delivery modes', () => {
+  bench('write StetCSS delivery modes report', async () => {
     await writeStetDeliveryModeReportOnce()
   }, benchOptions)
 })

@@ -23,17 +23,17 @@ import type {
 } from './types'
 
 export type StaticBuildToolId =
-  | 'master-static-cli'
-  | 'master-static-vite'
+  | 'stet-static-cli'
+  | 'stet-static-vite'
   | 'tailwind-cli'
   | 'tailwind-vite'
 
 export interface StaticBuildTool {
   id: StaticBuildToolId
-  adapterId: 'master-static' | 'tailwind-cli' | 'tailwind-vite'
+  adapterId: 'stet-static' | 'tailwind-cli' | 'tailwind-vite'
   label: string
-  family: 'master' | 'tailwind'
-  command: 'master-cli' | 'tailwind-cli' | 'master-vite' | 'tailwind-vite'
+  family: 'stet' | 'tailwind'
+  command: 'stet-cli' | 'tailwind-cli' | 'stet-vite' | 'tailwind-vite'
 }
 
 export interface StaticBuildResult {
@@ -46,18 +46,18 @@ export interface StaticBuildResult {
 
 export const staticBuildTools = [
   {
-    id: 'master-static-cli',
-    adapterId: 'master-static',
-    label: 'Master CSS static CLI',
-    family: 'master',
-    command: 'master-cli'
+    id: 'stet-static-cli',
+    adapterId: 'stet-static',
+    label: 'StetCSS static CLI',
+    family: 'stet',
+    command: 'stet-cli'
   },
   {
-    id: 'master-static-vite',
-    adapterId: 'master-static',
-    label: 'Master CSS static Vite',
-    family: 'master',
-    command: 'master-vite'
+    id: 'stet-static-vite',
+    adapterId: 'stet-static',
+    label: 'StetCSS static Vite',
+    family: 'stet',
+    command: 'stet-vite'
   },
   {
     id: 'tailwind-cli',
@@ -77,9 +77,9 @@ export const staticBuildTools = [
 
 export const staticBenchmarkAdapters = [
   {
-    id: 'master-static',
-    name: 'Master CSS static',
-    family: 'master-css'
+    id: 'stet-static',
+    name: 'StetCSS static',
+    family: 'stet-css'
   },
   {
     id: 'tailwind-cli',
@@ -115,7 +115,7 @@ export function getStaticBenchmarkFixtures(fixtures: BenchmarkFixture[]) {
 }
 
 export async function runStaticBuild(options: {
-  suite: 'css-output-size' | 'css-structure' | 'build-performance' | 'build-diagnostics' | 'master-delivery-modes'
+  suite: 'css-output-size' | 'css-structure' | 'build-performance' | 'build-diagnostics' | 'stet-delivery-modes'
   fixtureId: BenchmarkFixtureId
   tool: StaticBuildTool
   round: number
@@ -201,9 +201,9 @@ export function createByteSamples(variantId: string, result: StaticBuildResult):
 
 export async function writeStaticWorkspace(workspace: string, fixtureId: BenchmarkFixtureId, tool: StaticBuildTool) {
   const fixture = getStaticFixtureSource(fixtureId)
-  const sourceHtml = tool.family === 'master' ? fixture.stetHtml : fixture.tailwindHtml
+  const sourceHtml = tool.family === 'stet' ? fixture.stetHtml : fixture.tailwindHtml
   const html = isViteTool(tool) ? addViteEntryScript(sourceHtml) : sourceHtml
-  const css = tool.family === 'master'
+  const css = tool.family === 'stet'
     ? '@import "@stet-css/core";\n@source "./index.html";\n.benchmark-root{box-sizing:border-box}\n'
     : '@import "tailwindcss";\n@source "./index.html";\n.benchmark-root{box-sizing:border-box}\n'
 
@@ -227,7 +227,7 @@ export async function writeStaticWorkspace(workspace: string, fixtureId: Benchma
 }
 
 function isViteTool(tool: StaticBuildTool) {
-  return tool.command === 'master-vite' || tool.command === 'tailwind-vite'
+  return tool.command === 'stet-vite' || tool.command === 'tailwind-vite'
 }
 
 export function addViteEntryScript(html: string) {
@@ -239,7 +239,7 @@ function resolveBuildCommand(tool: StaticBuildTool) {
 }
 
 export function resolveBuildArgs(tool: StaticBuildTool) {
-  if (tool.command === 'master-cli') {
+  if (tool.command === 'stet-cli') {
     return [
       resolveBenchmarkPackageFile('@stet-css/cli', 'dist/bin/index.js'),
       'index.html',
@@ -273,10 +273,10 @@ export function resolveBuildArgs(tool: StaticBuildTool) {
 }
 
 function renderViteConfig(tool: StaticBuildTool) {
-  const pluginImport = tool.command === 'master-vite'
+  const pluginImport = tool.command === 'stet-vite'
     ? 'import stetCSS from "@stet-css/vite"'
     : 'import tailwindcss from "@tailwindcss/vite"'
-  const plugin = tool.command === 'master-vite'
+  const plugin = tool.command === 'stet-vite'
     ? 'stetCSS()'
     : 'tailwindcss()'
 

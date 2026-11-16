@@ -37,18 +37,18 @@ const metricMetadata: Record<typeof extractionDiagnosticMetricIds[number], Omit<
     unit: 'ms',
     description: 'Total elapsed time for the benchmark-local diagnostic extraction decomposition.'
   },
-  'master-import-graph-resolution-ms': {
-    label: 'Master package import graph',
+  'stet-import-graph-resolution-ms': {
+    label: 'StetCSS package import graph',
     unit: 'ms',
     description: 'Time spent resolving the @stet-css/core package CSS import graph.'
   },
-  'master-package-artifact-read-ms': {
-    label: 'Master package artifact read',
+  'stet-package-artifact-read-ms': {
+    label: 'StetCSS package artifact read',
     unit: 'ms',
     description: 'Time spent reading the generated default preset manifest and native CSS artifact.'
   },
-  'master-package-css-compilation-ms': {
-    label: 'Master package CSS compilation',
+  'stet-package-css-compilation-ms': {
+    label: 'StetCSS package CSS compilation',
     unit: 'ms',
     description: 'Time spent compiling the @stet-css/core package stylesheet source.'
   },
@@ -75,7 +75,7 @@ const metricMetadata: Record<typeof extractionDiagnosticMetricIds[number], Omit<
   'engine-css-creation-ms': {
     label: 'Engine CSS creation',
     unit: 'ms',
-    description: 'Time spent creating the Master CSS engine instance used for rendering.'
+    description: 'Time spent creating the StetCSS engine instance used for rendering.'
   },
   'engine-rule-generation-ms': {
     label: 'Engine rule generation',
@@ -132,13 +132,13 @@ const metricMetadata: Record<typeof extractionDiagnosticMetricIds[number], Omit<
     unit: 'count',
     description: 'Final class count passed to the diagnostic engine render path.'
   },
-  'master-package-shortcut-hit-count': {
-    label: 'Master package shortcut hits',
+  'stet-package-shortcut-hit-count': {
+    label: 'StetCSS package shortcut hits',
     unit: 'count',
     description: 'Whether the default preset artifact shortcut was used for the @stet-css/core package source.'
   },
-  'master-package-shortcut-fallback-count': {
-    label: 'Master package shortcut fallbacks',
+  'stet-package-shortcut-fallback-count': {
+    label: 'StetCSS package shortcut fallbacks',
     unit: 'count',
     description: 'Whether the diagnostic extraction path fell back to compiling the @stet-css/core package source.'
   },
@@ -155,17 +155,17 @@ const metricMetadata: Record<typeof extractionDiagnosticMetricIds[number], Omit<
   'generated-css-raw-bytes': {
     label: 'Generated CSS raw bytes',
     unit: 'B',
-    description: 'Raw bytes of generated Master CSS.'
+    description: 'Raw bytes of generated StetCSS.'
   },
   'generated-css-gzip-bytes': {
     label: 'Generated CSS gzip bytes',
     unit: 'B',
-    description: 'Gzip bytes of generated Master CSS.'
+    description: 'Gzip bytes of generated StetCSS.'
   },
   'generated-css-brotli-bytes': {
     label: 'Generated CSS brotli bytes',
     unit: 'B',
-    description: 'Brotli bytes of generated Master CSS.'
+    description: 'Brotli bytes of generated StetCSS.'
   },
   'final-css-raw-bytes': {
     label: 'Final CSS raw bytes',

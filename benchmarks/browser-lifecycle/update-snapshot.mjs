@@ -71,7 +71,7 @@ const scenarios = uniqueBy(report.variants.map((variant) => ({
 const modes = uniqueBy(report.variants.map((variant) => ({
   id: variant.modeId,
   label: formatModeLabel(variant.modeId),
-  family: variant.modeId === 'tailwind-static' ? 'tailwind-css' : 'master-css'
+  family: variant.modeId === 'tailwind-static' ? 'tailwind-css' : 'stet-css'
 })), (mode) => mode.id)
 const details = uniqueBy(report.variants.map((variant) => ({
   id: variant.detailId,
@@ -279,8 +279,8 @@ function formatLabel(id) {
 }
 
 function formatModeLabel(modeId) {
-  if (modeId === 'master-static') return 'Master CSS static'
-  if (modeId === 'master-runtime') return 'Master CSS runtime'
+  if (modeId === 'stet-static') return 'StetCSS static'
+  if (modeId === 'stet-runtime') return 'StetCSS runtime'
   if (modeId === 'tailwind-static') return 'Tailwind CSS static'
   return modeId
 }

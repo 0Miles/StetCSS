@@ -72,14 +72,14 @@
   ],
   "modes": [
     {
-      "id": "master-static",
-      "label": "Master CSS static",
-      "family": "master-css"
+      "id": "stet-static",
+      "label": "StetCSS static",
+      "family": "stet-css"
     },
     {
-      "id": "master-runtime",
-      "label": "Master CSS runtime",
-      "family": "master-css"
+      "id": "stet-runtime",
+      "label": "StetCSS runtime",
+      "family": "stet-css"
     },
     {
       "id": "tailwind-static",
@@ -115,104 +115,104 @@
   ],
   "variants": [
     {
-      "id": "dynamic-master-static-existing-class-toggle",
+      "id": "dynamic-stet-static-existing-class-toggle",
       "fixtureId": "dynamic",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "existing-class-toggle",
-      "adapterId": "master-static",
-      "label": "dynamic / Master CSS static / Existing class toggle",
+      "adapterId": "stet-static",
+      "label": "dynamic / StetCSS static / Existing class toggle",
       "limits": []
     },
     {
-      "id": "dynamic-master-static-dom-append-remove",
+      "id": "dynamic-stet-static-dom-append-remove",
       "fixtureId": "dynamic",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "dom-append-remove",
-      "adapterId": "master-static",
-      "label": "dynamic / Master CSS static / DOM append/remove",
+      "adapterId": "stet-static",
+      "label": "dynamic / StetCSS static / DOM append/remove",
       "limits": []
     },
     {
-      "id": "dynamic-master-static-theme-switch",
+      "id": "dynamic-stet-static-theme-switch",
       "fixtureId": "dynamic",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "theme-switch",
-      "adapterId": "master-static",
-      "label": "dynamic / Master CSS static / Theme switch",
+      "adapterId": "stet-static",
+      "label": "dynamic / StetCSS static / Theme switch",
       "limits": []
     },
     {
-      "id": "dynamic-master-static-viewport-resize",
+      "id": "dynamic-stet-static-viewport-resize",
       "fixtureId": "dynamic",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "viewport-resize",
-      "adapterId": "master-static",
-      "label": "dynamic / Master CSS static / Viewport resize",
+      "adapterId": "stet-static",
+      "label": "dynamic / StetCSS static / Viewport resize",
       "limits": []
     },
     {
-      "id": "dynamic-master-static-mutation-cleanup-cycle",
+      "id": "dynamic-stet-static-mutation-cleanup-cycle",
       "fixtureId": "dynamic",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "mutation-cleanup-cycle",
-      "adapterId": "master-static",
-      "label": "dynamic / Master CSS static / Mutation cleanup cycle",
+      "adapterId": "stet-static",
+      "label": "dynamic / StetCSS static / Mutation cleanup cycle",
       "limits": []
     },
     {
-      "id": "dynamic-master-runtime-existing-class-toggle",
+      "id": "dynamic-stet-runtime-existing-class-toggle",
       "fixtureId": "dynamic",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "existing-class-toggle",
-      "adapterId": "master-runtime",
-      "label": "dynamic / Master CSS runtime / Existing class toggle",
+      "adapterId": "stet-runtime",
+      "label": "dynamic / StetCSS runtime / Existing class toggle",
       "limits": []
     },
     {
-      "id": "dynamic-master-runtime-new-class-toggle",
+      "id": "dynamic-stet-runtime-new-class-toggle",
       "fixtureId": "dynamic",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "new-class-toggle",
-      "adapterId": "master-runtime",
-      "label": "dynamic / Master CSS runtime / New class toggle",
+      "adapterId": "stet-runtime",
+      "label": "dynamic / StetCSS runtime / New class toggle",
       "limits": [
-        "Static variants are intentionally excluded because this scenario measures Master runtime rule generation."
+        "Static variants are intentionally excluded because this scenario measures StetCSS runtime rule generation."
       ]
     },
     {
-      "id": "dynamic-master-runtime-dom-append-remove",
+      "id": "dynamic-stet-runtime-dom-append-remove",
       "fixtureId": "dynamic",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "dom-append-remove",
-      "adapterId": "master-runtime",
-      "label": "dynamic / Master CSS runtime / DOM append/remove",
+      "adapterId": "stet-runtime",
+      "label": "dynamic / StetCSS runtime / DOM append/remove",
       "limits": []
     },
     {
-      "id": "dynamic-master-runtime-theme-switch",
+      "id": "dynamic-stet-runtime-theme-switch",
       "fixtureId": "dynamic",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "theme-switch",
-      "adapterId": "master-runtime",
-      "label": "dynamic / Master CSS runtime / Theme switch",
+      "adapterId": "stet-runtime",
+      "label": "dynamic / StetCSS runtime / Theme switch",
       "limits": []
     },
     {
-      "id": "dynamic-master-runtime-viewport-resize",
+      "id": "dynamic-stet-runtime-viewport-resize",
       "fixtureId": "dynamic",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "viewport-resize",
-      "adapterId": "master-runtime",
-      "label": "dynamic / Master CSS runtime / Viewport resize",
+      "adapterId": "stet-runtime",
+      "label": "dynamic / StetCSS runtime / Viewport resize",
       "limits": []
     },
     {
-      "id": "dynamic-master-runtime-mutation-cleanup-cycle",
+      "id": "dynamic-stet-runtime-mutation-cleanup-cycle",
       "fixtureId": "dynamic",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "mutation-cleanup-cycle",
-      "adapterId": "master-runtime",
-      "label": "dynamic / Master CSS runtime / Mutation cleanup cycle",
+      "adapterId": "stet-runtime",
+      "label": "dynamic / StetCSS runtime / Mutation cleanup cycle",
       "limits": []
     },
     {
@@ -261,75 +261,75 @@
       "limits": []
     },
     {
-      "id": "dashboard-master-static-existing-class-toggle",
+      "id": "dashboard-stet-static-existing-class-toggle",
       "fixtureId": "dashboard",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "existing-class-toggle",
-      "adapterId": "master-static",
-      "label": "dashboard / Master CSS static / Existing class toggle",
+      "adapterId": "stet-static",
+      "label": "dashboard / StetCSS static / Existing class toggle",
       "limits": []
     },
     {
-      "id": "dashboard-master-static-dom-append-remove",
+      "id": "dashboard-stet-static-dom-append-remove",
       "fixtureId": "dashboard",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "dom-append-remove",
-      "adapterId": "master-static",
-      "label": "dashboard / Master CSS static / DOM append/remove",
+      "adapterId": "stet-static",
+      "label": "dashboard / StetCSS static / DOM append/remove",
       "limits": []
     },
     {
-      "id": "dashboard-master-static-theme-switch",
+      "id": "dashboard-stet-static-theme-switch",
       "fixtureId": "dashboard",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "theme-switch",
-      "adapterId": "master-static",
-      "label": "dashboard / Master CSS static / Theme switch",
+      "adapterId": "stet-static",
+      "label": "dashboard / StetCSS static / Theme switch",
       "limits": []
     },
     {
-      "id": "dashboard-master-static-viewport-resize",
+      "id": "dashboard-stet-static-viewport-resize",
       "fixtureId": "dashboard",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "viewport-resize",
-      "adapterId": "master-static",
-      "label": "dashboard / Master CSS static / Viewport resize",
+      "adapterId": "stet-static",
+      "label": "dashboard / StetCSS static / Viewport resize",
       "limits": []
     },
     {
-      "id": "dashboard-master-runtime-existing-class-toggle",
+      "id": "dashboard-stet-runtime-existing-class-toggle",
       "fixtureId": "dashboard",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "existing-class-toggle",
-      "adapterId": "master-runtime",
-      "label": "dashboard / Master CSS runtime / Existing class toggle",
+      "adapterId": "stet-runtime",
+      "label": "dashboard / StetCSS runtime / Existing class toggle",
       "limits": []
     },
     {
-      "id": "dashboard-master-runtime-dom-append-remove",
+      "id": "dashboard-stet-runtime-dom-append-remove",
       "fixtureId": "dashboard",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "dom-append-remove",
-      "adapterId": "master-runtime",
-      "label": "dashboard / Master CSS runtime / DOM append/remove",
+      "adapterId": "stet-runtime",
+      "label": "dashboard / StetCSS runtime / DOM append/remove",
       "limits": []
     },
     {
-      "id": "dashboard-master-runtime-theme-switch",
+      "id": "dashboard-stet-runtime-theme-switch",
       "fixtureId": "dashboard",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "theme-switch",
-      "adapterId": "master-runtime",
-      "label": "dashboard / Master CSS runtime / Theme switch",
+      "adapterId": "stet-runtime",
+      "label": "dashboard / StetCSS runtime / Theme switch",
       "limits": []
     },
     {
-      "id": "dashboard-master-runtime-viewport-resize",
+      "id": "dashboard-stet-runtime-viewport-resize",
       "fixtureId": "dashboard",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "viewport-resize",
-      "adapterId": "master-runtime",
-      "label": "dashboard / Master CSS runtime / Viewport resize",
+      "adapterId": "stet-runtime",
+      "label": "dashboard / StetCSS runtime / Viewport resize",
       "limits": []
     },
     {
@@ -369,75 +369,75 @@
       "limits": []
     },
     {
-      "id": "stress-dom-master-static-existing-class-toggle",
+      "id": "stress-dom-stet-static-existing-class-toggle",
       "fixtureId": "stress-dom",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "existing-class-toggle",
-      "adapterId": "master-static",
-      "label": "stress-dom / Master CSS static / Existing class toggle",
+      "adapterId": "stet-static",
+      "label": "stress-dom / StetCSS static / Existing class toggle",
       "limits": []
     },
     {
-      "id": "stress-dom-master-static-dom-append-remove",
+      "id": "stress-dom-stet-static-dom-append-remove",
       "fixtureId": "stress-dom",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "dom-append-remove",
-      "adapterId": "master-static",
-      "label": "stress-dom / Master CSS static / DOM append/remove",
+      "adapterId": "stet-static",
+      "label": "stress-dom / StetCSS static / DOM append/remove",
       "limits": []
     },
     {
-      "id": "stress-dom-master-static-viewport-resize",
+      "id": "stress-dom-stet-static-viewport-resize",
       "fixtureId": "stress-dom",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "viewport-resize",
-      "adapterId": "master-static",
-      "label": "stress-dom / Master CSS static / Viewport resize",
+      "adapterId": "stet-static",
+      "label": "stress-dom / StetCSS static / Viewport resize",
       "limits": []
     },
     {
-      "id": "stress-dom-master-static-mutation-cleanup-cycle",
+      "id": "stress-dom-stet-static-mutation-cleanup-cycle",
       "fixtureId": "stress-dom",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "mutation-cleanup-cycle",
-      "adapterId": "master-static",
-      "label": "stress-dom / Master CSS static / Mutation cleanup cycle",
+      "adapterId": "stet-static",
+      "label": "stress-dom / StetCSS static / Mutation cleanup cycle",
       "limits": []
     },
     {
-      "id": "stress-dom-master-runtime-existing-class-toggle",
+      "id": "stress-dom-stet-runtime-existing-class-toggle",
       "fixtureId": "stress-dom",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "existing-class-toggle",
-      "adapterId": "master-runtime",
-      "label": "stress-dom / Master CSS runtime / Existing class toggle",
+      "adapterId": "stet-runtime",
+      "label": "stress-dom / StetCSS runtime / Existing class toggle",
       "limits": []
     },
     {
-      "id": "stress-dom-master-runtime-dom-append-remove",
+      "id": "stress-dom-stet-runtime-dom-append-remove",
       "fixtureId": "stress-dom",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "dom-append-remove",
-      "adapterId": "master-runtime",
-      "label": "stress-dom / Master CSS runtime / DOM append/remove",
+      "adapterId": "stet-runtime",
+      "label": "stress-dom / StetCSS runtime / DOM append/remove",
       "limits": []
     },
     {
-      "id": "stress-dom-master-runtime-viewport-resize",
+      "id": "stress-dom-stet-runtime-viewport-resize",
       "fixtureId": "stress-dom",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "viewport-resize",
-      "adapterId": "master-runtime",
-      "label": "stress-dom / Master CSS runtime / Viewport resize",
+      "adapterId": "stet-runtime",
+      "label": "stress-dom / StetCSS runtime / Viewport resize",
       "limits": []
     },
     {
-      "id": "stress-dom-master-runtime-mutation-cleanup-cycle",
+      "id": "stress-dom-stet-runtime-mutation-cleanup-cycle",
       "fixtureId": "stress-dom",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "mutation-cleanup-cycle",
-      "adapterId": "master-runtime",
-      "label": "stress-dom / Master CSS runtime / Mutation cleanup cycle",
+      "adapterId": "stet-runtime",
+      "label": "stress-dom / StetCSS runtime / Mutation cleanup cycle",
       "limits": []
     },
     {
@@ -488,7 +488,7 @@
       "id": "runtime-mutation-ms",
       "label": "Runtime rule update",
       "unit": "ms",
-      "description": "Instrumented Master CSS runtime ensure/delete class-rules time during the measured interaction, where a runtime exists."
+      "description": "Instrumented StetCSS runtime ensure/delete class-rules time during the measured interaction, where a runtime exists."
     },
     {
       "id": "runtime-generated-rule-count-delta",
@@ -556,8 +556,8 @@
       "fixtureId": "dynamic",
       "scenarios": {
         "existing-class-toggle": {
-          "master-static": {
-            "variantId": "dynamic-master-static-existing-class-toggle",
+          "stet-static": {
+            "variantId": "dynamic-stet-static-existing-class-toggle",
             "interaction": {
               "readyMs": {
                 "min": 45.1,
@@ -663,8 +663,8 @@
               }
             }
           },
-          "master-runtime": {
-            "variantId": "dynamic-master-runtime-existing-class-toggle",
+          "stet-runtime": {
+            "variantId": "dynamic-stet-runtime-existing-class-toggle",
             "interaction": {
               "readyMs": {
                 "min": 61.7,
@@ -879,8 +879,8 @@
           }
         },
         "new-class-toggle": {
-          "master-runtime": {
-            "variantId": "dynamic-master-runtime-new-class-toggle",
+          "stet-runtime": {
+            "variantId": "dynamic-stet-runtime-new-class-toggle",
             "interaction": {
               "readyMs": {
                 "min": 62,
@@ -988,8 +988,8 @@
           }
         },
         "dom-append-remove": {
-          "master-static": {
-            "variantId": "dynamic-master-static-dom-append-remove",
+          "stet-static": {
+            "variantId": "dynamic-stet-static-dom-append-remove",
             "interaction": {
               "readyMs": {
                 "min": 60.3,
@@ -1095,8 +1095,8 @@
               }
             }
           },
-          "master-runtime": {
-            "variantId": "dynamic-master-runtime-dom-append-remove",
+          "stet-runtime": {
+            "variantId": "dynamic-stet-runtime-dom-append-remove",
             "interaction": {
               "readyMs": {
                 "min": 64.2,
@@ -1311,8 +1311,8 @@
           }
         },
         "theme-switch": {
-          "master-static": {
-            "variantId": "dynamic-master-static-theme-switch",
+          "stet-static": {
+            "variantId": "dynamic-stet-static-theme-switch",
             "interaction": {
               "readyMs": {
                 "min": 62.5,
@@ -1418,8 +1418,8 @@
               }
             }
           },
-          "master-runtime": {
-            "variantId": "dynamic-master-runtime-theme-switch",
+          "stet-runtime": {
+            "variantId": "dynamic-stet-runtime-theme-switch",
             "interaction": {
               "readyMs": {
                 "min": 60.5,
@@ -1634,8 +1634,8 @@
           }
         },
         "viewport-resize": {
-          "master-static": {
-            "variantId": "dynamic-master-static-viewport-resize",
+          "stet-static": {
+            "variantId": "dynamic-stet-static-viewport-resize",
             "interaction": {
               "readyMs": {
                 "min": 110.4,
@@ -1741,8 +1741,8 @@
               }
             }
           },
-          "master-runtime": {
-            "variantId": "dynamic-master-runtime-viewport-resize",
+          "stet-runtime": {
+            "variantId": "dynamic-stet-runtime-viewport-resize",
             "interaction": {
               "readyMs": {
                 "min": 113.5,
@@ -1957,8 +1957,8 @@
           }
         },
         "mutation-cleanup-cycle": {
-          "master-static": {
-            "variantId": "dynamic-master-static-mutation-cleanup-cycle",
+          "stet-static": {
+            "variantId": "dynamic-stet-static-mutation-cleanup-cycle",
             "interaction": {
               "readyMs": {
                 "min": 329.8,
@@ -2064,8 +2064,8 @@
               }
             }
           },
-          "master-runtime": {
-            "variantId": "dynamic-master-runtime-mutation-cleanup-cycle",
+          "stet-runtime": {
+            "variantId": "dynamic-stet-runtime-mutation-cleanup-cycle",
             "interaction": {
               "readyMs": {
                 "min": 324.6,
@@ -2285,8 +2285,8 @@
       "fixtureId": "dashboard",
       "scenarios": {
         "existing-class-toggle": {
-          "master-static": {
-            "variantId": "dashboard-master-static-existing-class-toggle",
+          "stet-static": {
+            "variantId": "dashboard-stet-static-existing-class-toggle",
             "interaction": {
               "readyMs": {
                 "min": 62.4,
@@ -2392,8 +2392,8 @@
               }
             }
           },
-          "master-runtime": {
-            "variantId": "dashboard-master-runtime-existing-class-toggle",
+          "stet-runtime": {
+            "variantId": "dashboard-stet-runtime-existing-class-toggle",
             "interaction": {
               "readyMs": {
                 "min": 63.2,
@@ -2609,8 +2609,8 @@
         },
         "new-class-toggle": {},
         "dom-append-remove": {
-          "master-static": {
-            "variantId": "dashboard-master-static-dom-append-remove",
+          "stet-static": {
+            "variantId": "dashboard-stet-static-dom-append-remove",
             "interaction": {
               "readyMs": {
                 "min": 62.9,
@@ -2716,8 +2716,8 @@
               }
             }
           },
-          "master-runtime": {
-            "variantId": "dashboard-master-runtime-dom-append-remove",
+          "stet-runtime": {
+            "variantId": "dashboard-stet-runtime-dom-append-remove",
             "interaction": {
               "readyMs": {
                 "min": 65.2,
@@ -2932,8 +2932,8 @@
           }
         },
         "theme-switch": {
-          "master-static": {
-            "variantId": "dashboard-master-static-theme-switch",
+          "stet-static": {
+            "variantId": "dashboard-stet-static-theme-switch",
             "interaction": {
               "readyMs": {
                 "min": 63,
@@ -3039,8 +3039,8 @@
               }
             }
           },
-          "master-runtime": {
-            "variantId": "dashboard-master-runtime-theme-switch",
+          "stet-runtime": {
+            "variantId": "dashboard-stet-runtime-theme-switch",
             "interaction": {
               "readyMs": {
                 "min": 62.9,
@@ -3255,8 +3255,8 @@
           }
         },
         "viewport-resize": {
-          "master-static": {
-            "variantId": "dashboard-master-static-viewport-resize",
+          "stet-static": {
+            "variantId": "dashboard-stet-static-viewport-resize",
             "interaction": {
               "readyMs": {
                 "min": 111.9,
@@ -3362,8 +3362,8 @@
               }
             }
           },
-          "master-runtime": {
-            "variantId": "dashboard-master-runtime-viewport-resize",
+          "stet-runtime": {
+            "variantId": "dashboard-stet-runtime-viewport-resize",
             "interaction": {
               "readyMs": {
                 "min": 112.1,
@@ -3584,8 +3584,8 @@
       "fixtureId": "stress-dom",
       "scenarios": {
         "existing-class-toggle": {
-          "master-static": {
-            "variantId": "stress-dom-master-static-existing-class-toggle",
+          "stet-static": {
+            "variantId": "stress-dom-stet-static-existing-class-toggle",
             "interaction": {
               "readyMs": {
                 "min": 62.8,
@@ -3691,8 +3691,8 @@
               }
             }
           },
-          "master-runtime": {
-            "variantId": "stress-dom-master-runtime-existing-class-toggle",
+          "stet-runtime": {
+            "variantId": "stress-dom-stet-runtime-existing-class-toggle",
             "interaction": {
               "readyMs": {
                 "min": 66.6,
@@ -3908,8 +3908,8 @@
         },
         "new-class-toggle": {},
         "dom-append-remove": {
-          "master-static": {
-            "variantId": "stress-dom-master-static-dom-append-remove",
+          "stet-static": {
+            "variantId": "stress-dom-stet-static-dom-append-remove",
             "interaction": {
               "readyMs": {
                 "min": 63,
@@ -4015,8 +4015,8 @@
               }
             }
           },
-          "master-runtime": {
-            "variantId": "stress-dom-master-runtime-dom-append-remove",
+          "stet-runtime": {
+            "variantId": "stress-dom-stet-runtime-dom-append-remove",
             "interaction": {
               "readyMs": {
                 "min": 52.8,
@@ -4232,8 +4232,8 @@
         },
         "theme-switch": {},
         "viewport-resize": {
-          "master-static": {
-            "variantId": "stress-dom-master-static-viewport-resize",
+          "stet-static": {
+            "variantId": "stress-dom-stet-static-viewport-resize",
             "interaction": {
               "readyMs": {
                 "min": 112.7,
@@ -4339,8 +4339,8 @@
               }
             }
           },
-          "master-runtime": {
-            "variantId": "stress-dom-master-runtime-viewport-resize",
+          "stet-runtime": {
+            "variantId": "stress-dom-stet-runtime-viewport-resize",
             "interaction": {
               "readyMs": {
                 "min": 118.4,
@@ -4555,8 +4555,8 @@
           }
         },
         "mutation-cleanup-cycle": {
-          "master-static": {
-            "variantId": "stress-dom-master-static-mutation-cleanup-cycle",
+          "stet-static": {
+            "variantId": "stress-dom-stet-static-mutation-cleanup-cycle",
             "interaction": {
               "readyMs": {
                 "min": 262.5,
@@ -4662,8 +4662,8 @@
               }
             }
           },
-          "master-runtime": {
-            "variantId": "stress-dom-master-runtime-mutation-cleanup-cycle",
+          "stet-runtime": {
+            "variantId": "stress-dom-stet-runtime-mutation-cleanup-cycle",
             "interaction": {
               "readyMs": {
                 "min": 256.6,
@@ -4883,9 +4883,9 @@
   "limits": [
     "This suite measures local Chromium post-load interaction cost only; it does not publish public result tables yet.",
     "The default command is a fast internal pass with one measured round and no warmup; use INTERACTION_COST_ROUNDS and INTERACTION_COST_WARMUP_ROUNDS for review-grade repeated samples.",
-    "Master runtime variants use the built global runtime bundle and default manifest JSON.",
-    "Master static and Tailwind static variants are static-CSS browser controls; Tailwind CSS has no runtime rule-generation equivalent.",
-    "The new-class scenario is limited to Master runtime variants because it measures client-side rule generation.",
+    "StetCSS runtime variants use the built global runtime bundle and default manifest JSON.",
+    "StetCSS static and Tailwind static variants are static-CSS browser controls; Tailwind CSS has no runtime rule-generation equivalent.",
+    "The new-class scenario is limited to StetCSS runtime variants because it measures client-side rule generation.",
     "Trace-derived event names can change across Chromium versions, so raw trace artifacts are kept for review before publishing public conclusions.",
     "Browser scheduling, hardware, memory pressure, and unrelated local load can affect interaction timing."
   ]

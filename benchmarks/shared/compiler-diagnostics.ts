@@ -144,17 +144,17 @@ const prefixedDiagnosticMetricIds = [
   ...lowerDiagnosticMetricIds,
   ...manifestDiagnosticMetricIds
 ].flatMap((id) => [
-  `master-internal-${id}`,
+  `stet-internal-${id}`,
   `outer-${id}`
 ])
 
 export const compilerDiagnosticMetricIds = [
   'production-create-extracted-css-ms',
   'diagnostic-compiler-total-ms',
-  'master-import-graph-resolution-ms',
-  'master-package-artifact-read-ms',
-  'master-package-compile-css-ms',
-  'master-package-internal-manifest-finalization-ms',
+  'stet-import-graph-resolution-ms',
+  'stet-package-artifact-read-ms',
+  'stet-package-compile-css-ms',
+  'stet-package-internal-manifest-finalization-ms',
   'entry-compile-css-ms',
   'entry-internal-manifest-finalization-ms',
   'outer-manifest-finalization-ms',
@@ -164,8 +164,8 @@ export const compilerDiagnosticMetricIds = [
   'latent-class-count',
   'valid-class-count',
   'generated-class-count',
-  'master-package-shortcut-hit-count',
-  'master-package-shortcut-fallback-count',
+  'stet-package-shortcut-hit-count',
+  'stet-package-shortcut-fallback-count',
   'native-css-source-count',
   'generated-css-raw-bytes',
   'generated-css-gzip-bytes',
@@ -200,14 +200,14 @@ export function createCompilerDiagnosticVariants(fixtureIds: BenchmarkFixtureId[
   return fixtureIds.map((fixtureId) => ({
     id: createCompilerDiagnosticVariantId(fixtureId),
     fixtureId,
-    adapterId: 'master-static',
-    label: `${fixtureId} / Master CSS compiler diagnostic`,
+    adapterId: 'stet-static',
+    label: `${fixtureId} / StetCSS compiler diagnostic`,
     limits: ['Diagnostic timings decompose compiler lowering and are not end-user command timings.']
   }))
 }
 
 export function createCompilerDiagnosticVariantId(fixtureId: BenchmarkFixtureId) {
-  return `${fixtureId}-master-static-compiler`
+  return `${fixtureId}-stet-static-compiler`
 }
 
 export async function runCompilerDiagnostic(options: {
@@ -285,8 +285,8 @@ class DiagnosticRecorder implements CompilerDiagnosticRecorder {
 }
 
 async function runStetCompilerDiagnostic(workspace: string, fixtureId: BenchmarkFixtureId): Promise<DiagnosticRunResult> {
-  const tool = staticBuildTools.find((candidate) => candidate.id === 'master-static-cli')
-  if (!tool) throw new Error('Missing Master CSS static CLI tool.')
+  const tool = staticBuildTools.find((candidate) => candidate.id === 'stet-static-cli')
+  if (!tool) throw new Error('Missing StetCSS static CLI tool.')
 
   await prepareStaticWorkspace(workspace, fixtureId, tool)
   const setup = await prepareScannerWorkspace(workspace)
@@ -445,11 +445,11 @@ async function createDiagnosticExtractedCSS(options: {
 }
 
 async function compileStetCSSPackage(projectDir: string, recorder: DiagnosticRecorder) {
-  recorder.setCount('master-package-shortcut-fallback-count', 1)
-  const graph = recorder.time('master-import-graph-resolution-ms', () => resolveStetCSSPackageCompileSource(projectDir))
+  recorder.setCount('stet-package-shortcut-fallback-count', 1)
+  const graph = recorder.time('stet-import-graph-resolution-ms', () => resolveStetCSSPackageCompileSource(projectDir))
   const result = await compileDiagnosticStyleCSS(graph.dependencies[0] || '@stet-css/core', graph.source, {
     projectDir
-  }, recorder, 'master-package')
+  }, recorder, 'stet-package')
   return {
     ...result,
     dependencies: graph.dependencies
@@ -461,7 +461,7 @@ async function compileDiagnosticStyleCSS(
   source: string,
   options: CompileStyleCSSOptions,
   recorder: DiagnosticRecorder,
-  prefix: 'master-package' | 'entry'
+  prefix: 'stet-package' | 'entry'
 ): Promise<DiagnosticStyleCSSResult> {
   const { projectDir, loadSass: _loadSass, baseManifest, ...compileOptions } = options
   const filename = cleanStyleRequest(id)
@@ -475,8 +475,8 @@ async function compileDiagnosticStyleCSS(
     baseManifest,
     root: projectDir,
     from: filename,
-    diagnostics: prefix === 'master-package'
-      ? recorder.withPrefix('master-internal-')
+    diagnostics: prefix === 'stet-package'
+      ? recorder.withPrefix('stet-internal-')
       : undefined
   }))
 
@@ -498,16 +498,16 @@ function resolveStetCSSPackageCompileSource(projectDir: string) {
 }
 
 function readDefaultStetCSSPackageArtifact(projectDir: string, recorder: DiagnosticRecorder): DefaultStetCSSPackageArtifact | undefined {
-  const graph = recorder.time('master-import-graph-resolution-ms', () => resolveStetCSSPackageImportGraph(projectDir))
+  const graph = recorder.time('stet-import-graph-resolution-ms', () => resolveStetCSSPackageImportGraph(projectDir))
   const artifactFiles = findDefaultPresetArtifactFiles(graph.dependencies)
   if (!artifactFiles) {
-    recorder.setCount('master-package-shortcut-hit-count', 0)
+    recorder.setCount('stet-package-shortcut-hit-count', 0)
     return
   }
 
-  recorder.setCount('master-package-shortcut-hit-count', 1)
-  recorder.setCount('master-package-shortcut-fallback-count', 0)
-  return recorder.time('master-package-artifact-read-ms', () => ({
+  recorder.setCount('stet-package-shortcut-hit-count', 1)
+  recorder.setCount('stet-package-shortcut-fallback-count', 0)
+  return recorder.time('stet-package-artifact-read-ms', () => ({
     manifest: JSON.parse(readFileSync(artifactFiles.manifestFile, 'utf8')) as StetCSSManifest,
     nativeCSS: readFileSync(artifactFiles.nativeCSSFile, 'utf8')
   }))

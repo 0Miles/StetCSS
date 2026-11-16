@@ -11,7 +11,7 @@ Advisory measurement suites and report helpers: CSS output size and structure, b
 
 - **Correctness first**: validate the affected product package before reporting numbers. A product change made for a better number needs that package's tests and an intentional behaviour review.
 - **Noise**: local values are not deterministic pass/fail signals. `BENCHMARK_ROUNDS`, suite-specific round variables and `BENCHMARK_COMMAND_TIMEOUT_MS` tune collection only, never hide failures.
-- **Comparable runs**: keep fixture intent fixed when presenting before/after numbers. Master CSS and Tailwind CSS fixtures share rendered UI intent, not source code.
+- **Comparable runs**: keep fixture intent fixed when presenting before/after numbers. StetCSS and Tailwind CSS fixtures share rendered UI intent, not source code.
 - **Report IDs**: change `BenchmarkSuiteId`, fixture coverage, adapter metadata, metrics, package scripts and report schema usage together, with every consumer including `ci/`.
 - **Limits stay visible**: each suite answers a known hot path or diagnostic question, and its report carries `environment`, package and browser versions, metric units, sample counts, useful artifacts, and limits (machine noise, Chromium trace event naming, cold vs warm cache, static vs runtime delivery, Tailwind equivalence).
 - **Generated output** stays in `benchmarks/.results/**`, never reused as checked-in fixture data; workspaces, traces, screenshots and downloaded history stay uncommitted too.

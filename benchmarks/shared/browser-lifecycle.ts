@@ -35,8 +35,8 @@ import type {
 } from './types'
 
 export type BrowserLifecycleModeId =
-  | 'master-static'
-  | 'master-runtime'
+  | 'stet-static'
+  | 'stet-runtime'
   | 'tailwind-static'
 
 export type BrowserLifecycleScenarioId =
@@ -48,7 +48,7 @@ export type BrowserLifecycleScenarioId =
   | 'route-navigation'
   | 'long-session'
 
-type LifecycleFamily = 'master' | 'tailwind'
+type LifecycleFamily = 'stet' | 'tailwind'
 type ThemeModel = 'class-swap' | 'data-attribute' | 'css-variable'
 type AppendRuleState = 'existing-rule' | 'new-rule'
 type BrowserLifecycleTraceArtifactMode = 'filtered' | 'raw' | 'off'
@@ -72,7 +72,7 @@ interface BrowserLifecycleTraceArtifact {
 
 interface BrowserLifecycleModeDescriptor {
   id: BrowserLifecycleModeId
-  adapterId: 'master-static' | 'master-runtime' | 'tailwind-cli'
+  adapterId: 'stet-static' | 'stet-runtime' | 'tailwind-cli'
   label: string
 }
 
@@ -243,14 +243,14 @@ const paintTraceNames = new Set(['PrePaint', 'Paint'])
 
 const lifecycleModes = [
   {
-    id: 'master-static',
-    adapterId: 'master-static',
-    label: 'Master CSS static'
+    id: 'stet-static',
+    adapterId: 'stet-static',
+    label: 'StetCSS static'
   },
   {
-    id: 'master-runtime',
-    adapterId: 'master-runtime',
-    label: 'Master CSS runtime'
+    id: 'stet-runtime',
+    adapterId: 'stet-runtime',
+    label: 'StetCSS runtime'
   },
   {
     id: 'tailwind-static',
@@ -291,7 +291,7 @@ export const browserLifecycleScenarios = [
 ] satisfies BrowserLifecycleScenarioDescriptor[]
 
 const stetClasses = {
-  family: 'master',
+  family: 'stet',
   body: ['benchmark-root', 'm:0', 'min-h:100vh', 'bg:gray-5', 'fg:slate-90', 'font:14px', 'font:system'],
   shell: ['max-w:1180px', 'mx:auto', 'p:6x', 'grid', 'gap:5x'],
   header: ['p:5x', 'r:12px', 'bg:white', 'border:1px|solid|gray-20', 'grid', 'gap:2x'],
@@ -377,19 +377,19 @@ export const browserLifecycleMetrics = [
     id: 'runtime-js-raw-bytes',
     label: 'Runtime JS raw bytes',
     unit: 'B',
-    description: 'Raw bytes for the Master CSS browser runtime bundle.'
+    description: 'Raw bytes for the StetCSS browser runtime bundle.'
   },
   {
     id: 'runtime-js-gzip-bytes',
     label: 'Runtime JS gzip bytes',
     unit: 'B',
-    description: 'Gzip bytes for the Master CSS browser runtime bundle.'
+    description: 'Gzip bytes for the StetCSS browser runtime bundle.'
   },
   {
     id: 'runtime-js-brotli-bytes',
     label: 'Runtime JS brotli bytes',
     unit: 'B',
-    description: 'Brotli bytes for the Master CSS browser runtime bundle.'
+    description: 'Brotli bytes for the StetCSS browser runtime bundle.'
   },
   {
     id: 'delivered-style-rule-count',
@@ -503,7 +503,7 @@ export const browserLifecycleMetrics = [
     id: 'runtime-ready-ms',
     label: 'Runtime ready',
     unit: 'ms',
-    description: 'Browser performance timestamp when Master CSS runtime finished observe.'
+    description: 'Browser performance timestamp when StetCSS runtime finished observe.'
   },
   {
     id: 'runtime-bootstrap-ms',
@@ -521,7 +521,7 @@ export const browserLifecycleMetrics = [
     id: 'runtime-mutation-ms',
     label: 'Runtime mutation work',
     unit: 'ms',
-    description: 'Instrumented Master CSS runtime ensure/delete class-rules duration during the measured scenario.'
+    description: 'Instrumented StetCSS runtime ensure/delete class-rules duration during the measured scenario.'
   },
   {
     id: 'runtime-generated-rule-count',
@@ -757,7 +757,7 @@ async function createBrowserLifecyclePage(variant: BrowserLifecycleVariant): Pro
   const spec = getSpecForVariant(variant)
   const mode = getModeForVariant(variant)
   const classes = mode.id === 'tailwind-static' ? tailwindClasses : stetClasses
-  const isStatic = mode.id !== 'master-runtime'
+  const isStatic = mode.id !== 'stet-runtime'
   const sourceHtml = renderLifecycleDocument({
     spec,
     modeId: mode.id,
@@ -797,13 +797,13 @@ async function buildLifecycleStaticCSS(options: {
   await writeWorkspaceFiles(workspace, {
     'package.json': `${JSON.stringify({ private: true, type: 'module' }, null, 2)}\n`,
     'index.html': options.html,
-    'input.css': options.family === 'master'
+    'input.css': options.family === 'stet'
       ? '@import "@stet-css/core";\n@source "./index.html";\n.benchmark-root{box-sizing:border-box}\n'
       : '@import "tailwindcss";\n@source "./index.html";\n.benchmark-root{box-sizing:border-box}\n'
   })
   await mkdir(resolve(workspace, 'dist'), { recursive: true })
 
-  if (options.family === 'master') {
+  if (options.family === 'stet') {
     await runCommand(
       process.execPath,
       [
@@ -1153,7 +1153,7 @@ function renderLifecycleDocument(options: {
     '    <meta name="viewport" content="width=device-width, initial-scale=1">',
     `    <title>${escapeHTML(options.spec.detailLabel)} lifecycle benchmark</title>`,
     renderLifecycleHeadStyle(),
-    renderLifecycleMetricsScript({ autoReady: options.modeId === 'master-static' || options.modeId === 'tailwind-static' }),
+    renderLifecycleMetricsScript({ autoReady: options.modeId === 'stet-static' || options.modeId === 'tailwind-static' }),
     '</head>',
     `<body class="${classAttribute(options.classes.body)}">`,
     '    <span id="benchmark-style-probe" class="text-center" hidden>style probe</span>',
@@ -1613,7 +1613,7 @@ function createVariantLimits(spec: BrowserLifecycleVariantSpec, modeId: BrowserL
     limits.push('10,000-node target is a stress fixture and may be noisy on local machines.')
   }
   if (spec.scenarioId === 'large-append' && spec.appendRuleState === 'new-rule') {
-    limits.push('Static variants include the new classes up front and are browser controls, while Master runtime generates them during interaction.')
+    limits.push('Static variants include the new classes up front and are browser controls, while StetCSS runtime generates them during interaction.')
   }
   if (spec.scenarioId === 'long-session') {
     limits.push('Default long-session duration is short unless BROWSER_LIFECYCLE_LONG_SESSION_MS is set.')

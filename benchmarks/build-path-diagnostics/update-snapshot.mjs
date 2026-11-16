@@ -33,11 +33,11 @@ const selectedMetrics = {
     'cli-scanner-import-ms'
   ],
   startupVite: [
-    'vite-master-command-overhead-ms',
-    'master-vite-import-ms',
-    'master-vite-core-module-import-ms',
-    'vite-master-scanner-init-ms',
-    'vite-build-with-master-ms'
+    'vite-stet-command-overhead-ms',
+    'stet-vite-import-ms',
+    'stet-vite-core-module-import-ms',
+    'vite-stet-scanner-init-ms',
+    'vite-build-with-stet-ms'
   ],
   buildCli: [
     'cli-source-scan-ms',
@@ -46,8 +46,8 @@ const selectedMetrics = {
   buildVite: [
     'vite-baseline-build-ms',
     'vite-total-build-ms',
-    'vite-master-scanner-init-ms',
-    'vite-master-generate-bundle-ms'
+    'vite-stet-scanner-init-ms',
+    'vite-stet-generate-bundle-ms'
   ],
   'compiler-diagnostics': [
     'production-create-extracted-css-ms',
@@ -102,7 +102,7 @@ const snapshot = {
   ])),
   results: fixtureIds.map(createFixtureResult),
   limits: [
-    'This snapshot summarizes Master CSS build-path diagnostics only; it is not a cross-framework build benchmark.',
+    'This snapshot summarizes StetCSS build-path diagnostics only; it is not a cross-framework build benchmark.',
     'Startup diagnostics run child-process probes, so import timings are directional and are not additive flamegraphs.',
     'Build diagnostics instrument CLI and Vite paths but do not replace full production command timing.',
     'Compiler and extraction diagnostics require unchanged output hashes before their timings are useful.',
@@ -145,12 +145,12 @@ function validateReports() {
   }
 
   for (const fixtureId of fixtureIds) {
-    validateVariant('startup-diagnostics', `${fixtureId}-master-cli-startup-diagnostic`, selectedMetrics.startupCli)
-    validateVariant('startup-diagnostics', `${fixtureId}-master-vite-startup-diagnostic`, selectedMetrics.startupVite)
-    validateVariant('build-diagnostics', `${fixtureId}-master-cli-diagnostic`, selectedMetrics.buildCli)
-    validateVariant('build-diagnostics', `${fixtureId}-master-vite-diagnostic`, selectedMetrics.buildVite)
-    validateVariant('compiler-diagnostics', `${fixtureId}-master-static-compiler`)
-    validateVariant('extraction-diagnostics', `${fixtureId}-master-static-extraction`)
+    validateVariant('startup-diagnostics', `${fixtureId}-stet-cli-startup-diagnostic`, selectedMetrics.startupCli)
+    validateVariant('startup-diagnostics', `${fixtureId}-stet-vite-startup-diagnostic`, selectedMetrics.startupVite)
+    validateVariant('build-diagnostics', `${fixtureId}-stet-cli-diagnostic`, selectedMetrics.buildCli)
+    validateVariant('build-diagnostics', `${fixtureId}-stet-vite-diagnostic`, selectedMetrics.buildVite)
+    validateVariant('compiler-diagnostics', `${fixtureId}-stet-static-compiler`)
+    validateVariant('extraction-diagnostics', `${fixtureId}-stet-static-extraction`)
   }
 }
 
@@ -169,15 +169,15 @@ function createFixtureResult(fixtureId) {
   return {
     fixtureId,
     cli: {
-      startup: createMetricGroup('startup-diagnostics', `${fixtureId}-master-cli-startup-diagnostic`, selectedMetrics.startupCli),
-      build: createMetricGroup('build-diagnostics', `${fixtureId}-master-cli-diagnostic`, selectedMetrics.buildCli)
+      startup: createMetricGroup('startup-diagnostics', `${fixtureId}-stet-cli-startup-diagnostic`, selectedMetrics.startupCli),
+      build: createMetricGroup('build-diagnostics', `${fixtureId}-stet-cli-diagnostic`, selectedMetrics.buildCli)
     },
     vite: {
-      startup: createMetricGroup('startup-diagnostics', `${fixtureId}-master-vite-startup-diagnostic`, selectedMetrics.startupVite),
-      build: createMetricGroup('build-diagnostics', `${fixtureId}-master-vite-diagnostic`, selectedMetrics.buildVite)
+      startup: createMetricGroup('startup-diagnostics', `${fixtureId}-stet-vite-startup-diagnostic`, selectedMetrics.startupVite),
+      build: createMetricGroup('build-diagnostics', `${fixtureId}-stet-vite-diagnostic`, selectedMetrics.buildVite)
     },
-    compiler: createMetricGroup('compiler-diagnostics', `${fixtureId}-master-static-compiler`),
-    extraction: createMetricGroup('extraction-diagnostics', `${fixtureId}-master-static-extraction`)
+    compiler: createMetricGroup('compiler-diagnostics', `${fixtureId}-stet-static-compiler`),
+    extraction: createMetricGroup('extraction-diagnostics', `${fixtureId}-stet-static-extraction`)
   }
 }
 

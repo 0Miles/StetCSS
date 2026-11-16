@@ -141,7 +141,7 @@ const runtimeMutationDiagnosticFixtureIds = [
 ] satisfies BenchmarkFixtureId[]
 
 const runtimeMutationDiagnosticModeIds = [
-  'master-runtime'
+  'stet-runtime'
 ] satisfies InteractionModeId[]
 
 const runtimeMutationDiagnosticTraceWindows = [
@@ -205,7 +205,7 @@ export const runtimeMutationDiagnosticMetrics = [
     id: 'runtime-mutation-ms',
     label: 'Runtime ensure/delete total',
     unit: 'ms',
-    description: 'Instrumented Master CSS runtime ensure/delete class-rules duration during cleanup cycles.'
+    description: 'Instrumented StetCSS runtime ensure/delete class-rules duration during cleanup cycles.'
   },
   {
     id: 'runtime-ensure-class-rules-duration-ms',
@@ -605,7 +605,7 @@ async function createRuntimeMutationDiagnosticsReport(): Promise<BenchmarkReport
     samples,
     summary: summarizeReportSamples(samples, metricUnits),
     limits: [
-      'This suite is diagnostic-only and measures Master CSS runtime mutation cleanup internals.',
+      'This suite is diagnostic-only and measures StetCSS runtime mutation cleanup internals.',
       'Only the dynamic and stress-dom fixtures are measured, using the interaction-cost mutation-cleanup-cycle scenario.',
       'The trace-window axis compares ending trace collection before the deferred product cleanup flush with keeping the current post-interaction settle window.',
       'The rule-state axis compares first-time temporary rule generation with preseeded temporary runtime rules.',
@@ -1236,7 +1236,7 @@ async function assertRuntimeModeReady(page: Page, modeId: InteractionModeId) {
   }
 
   if (state.htmlHidden) {
-    throw new Error('Master runtime diagnostic page did not reveal the hidden html element.')
+    throw new Error('StetCSS runtime diagnostic page did not reveal the hidden html element.')
   }
 }
 

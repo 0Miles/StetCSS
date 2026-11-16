@@ -77,14 +77,14 @@
   ],
   "modes": [
     {
-      "id": "master-static",
-      "label": "Master CSS static",
-      "family": "master-css"
+      "id": "stet-static",
+      "label": "StetCSS static",
+      "family": "stet-css"
     },
     {
-      "id": "master-runtime",
-      "label": "Master CSS runtime",
-      "family": "master-css"
+      "id": "stet-runtime",
+      "label": "StetCSS runtime",
+      "family": "stet-css"
     },
     {
       "id": "tailwind-static",
@@ -206,23 +206,23 @@
   ],
   "variants": [
     {
-      "id": "initial-load-master-static-docs",
+      "id": "initial-load-stet-static-docs",
       "fixtureId": "docs",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "initial-load",
       "detailId": "docs",
-      "adapterId": "master-static",
-      "label": "Docs initial load / Master CSS static",
+      "adapterId": "stet-static",
+      "label": "Docs initial load / StetCSS static",
       "limits": []
     },
     {
-      "id": "initial-load-master-runtime-docs",
+      "id": "initial-load-stet-runtime-docs",
       "fixtureId": "docs",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "initial-load",
       "detailId": "docs",
-      "adapterId": "master-runtime",
-      "label": "Docs initial load / Master CSS runtime",
+      "adapterId": "stet-runtime",
+      "label": "Docs initial load / StetCSS runtime",
       "limits": []
     },
     {
@@ -238,23 +238,23 @@
       ]
     },
     {
-      "id": "large-dom-master-static-nodes-1000",
+      "id": "large-dom-stet-static-nodes-1000",
       "fixtureId": "stress-dom",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "large-dom",
       "detailId": "nodes-1000",
-      "adapterId": "master-static",
-      "label": "Large DOM 1000 node target / Master CSS static",
+      "adapterId": "stet-static",
+      "label": "Large DOM 1000 node target / StetCSS static",
       "limits": []
     },
     {
-      "id": "large-dom-master-runtime-nodes-1000",
+      "id": "large-dom-stet-runtime-nodes-1000",
       "fixtureId": "stress-dom",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "large-dom",
       "detailId": "nodes-1000",
-      "adapterId": "master-runtime",
-      "label": "Large DOM 1000 node target / Master CSS runtime",
+      "adapterId": "stet-runtime",
+      "label": "Large DOM 1000 node target / StetCSS runtime",
       "limits": []
     },
     {
@@ -270,23 +270,23 @@
       ]
     },
     {
-      "id": "large-dom-master-static-nodes-5000",
+      "id": "large-dom-stet-static-nodes-5000",
       "fixtureId": "stress-dom",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "large-dom",
       "detailId": "nodes-5000",
-      "adapterId": "master-static",
-      "label": "Large DOM 5000 node target / Master CSS static",
+      "adapterId": "stet-static",
+      "label": "Large DOM 5000 node target / StetCSS static",
       "limits": []
     },
     {
-      "id": "large-dom-master-runtime-nodes-5000",
+      "id": "large-dom-stet-runtime-nodes-5000",
       "fixtureId": "stress-dom",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "large-dom",
       "detailId": "nodes-5000",
-      "adapterId": "master-runtime",
-      "label": "Large DOM 5000 node target / Master CSS runtime",
+      "adapterId": "stet-runtime",
+      "label": "Large DOM 5000 node target / StetCSS runtime",
       "limits": []
     },
     {
@@ -302,25 +302,25 @@
       ]
     },
     {
-      "id": "large-dom-master-static-nodes-10000",
+      "id": "large-dom-stet-static-nodes-10000",
       "fixtureId": "stress-dom",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "large-dom",
       "detailId": "nodes-10000",
-      "adapterId": "master-static",
-      "label": "Large DOM 10000 node target / Master CSS static",
+      "adapterId": "stet-static",
+      "label": "Large DOM 10000 node target / StetCSS static",
       "limits": [
         "10,000-node target is a stress fixture and may be noisy on local machines."
       ]
     },
     {
-      "id": "large-dom-master-runtime-nodes-10000",
+      "id": "large-dom-stet-runtime-nodes-10000",
       "fixtureId": "stress-dom",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "large-dom",
       "detailId": "nodes-10000",
-      "adapterId": "master-runtime",
-      "label": "Large DOM 10000 node target / Master CSS runtime",
+      "adapterId": "stet-runtime",
+      "label": "Large DOM 10000 node target / StetCSS runtime",
       "limits": [
         "10,000-node target is a stress fixture and may be noisy on local machines."
       ]
@@ -339,23 +339,23 @@
       ]
     },
     {
-      "id": "large-append-master-static-existing-rule-100",
+      "id": "large-append-stet-static-existing-rule-100",
       "fixtureId": "dynamic",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "large-append",
       "detailId": "existing-rule-100",
-      "adapterId": "master-static",
-      "label": "Append 100 elements (existing-rule) / Master CSS static",
+      "adapterId": "stet-static",
+      "label": "Append 100 elements (existing-rule) / StetCSS static",
       "limits": []
     },
     {
-      "id": "large-append-master-runtime-existing-rule-100",
+      "id": "large-append-stet-runtime-existing-rule-100",
       "fixtureId": "dynamic",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "large-append",
       "detailId": "existing-rule-100",
-      "adapterId": "master-runtime",
-      "label": "Append 100 elements (existing-rule) / Master CSS runtime",
+      "adapterId": "stet-runtime",
+      "label": "Append 100 elements (existing-rule) / StetCSS runtime",
       "limits": []
     },
     {
@@ -371,27 +371,27 @@
       ]
     },
     {
-      "id": "large-append-master-static-new-rule-100",
+      "id": "large-append-stet-static-new-rule-100",
       "fixtureId": "dynamic",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "large-append",
       "detailId": "new-rule-100",
-      "adapterId": "master-static",
-      "label": "Append 100 elements (new-rule) / Master CSS static",
+      "adapterId": "stet-static",
+      "label": "Append 100 elements (new-rule) / StetCSS static",
       "limits": [
-        "Static variants include the new classes up front and are browser controls, while Master runtime generates them during interaction."
+        "Static variants include the new classes up front and are browser controls, while StetCSS runtime generates them during interaction."
       ]
     },
     {
-      "id": "large-append-master-runtime-new-rule-100",
+      "id": "large-append-stet-runtime-new-rule-100",
       "fixtureId": "dynamic",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "large-append",
       "detailId": "new-rule-100",
-      "adapterId": "master-runtime",
-      "label": "Append 100 elements (new-rule) / Master CSS runtime",
+      "adapterId": "stet-runtime",
+      "label": "Append 100 elements (new-rule) / StetCSS runtime",
       "limits": [
-        "Static variants include the new classes up front and are browser controls, while Master runtime generates them during interaction."
+        "Static variants include the new classes up front and are browser controls, while StetCSS runtime generates them during interaction."
       ]
     },
     {
@@ -403,28 +403,28 @@
       "adapterId": "tailwind-cli",
       "label": "Append 100 elements (new-rule) / Tailwind CSS static",
       "limits": [
-        "Static variants include the new classes up front and are browser controls, while Master runtime generates them during interaction.",
+        "Static variants include the new classes up front and are browser controls, while StetCSS runtime generates them during interaction.",
         "Tailwind CSS is measured as a static browser-control variant, not as a runtime-equivalent implementation."
       ]
     },
     {
-      "id": "large-append-master-static-existing-rule-500",
+      "id": "large-append-stet-static-existing-rule-500",
       "fixtureId": "dynamic",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "large-append",
       "detailId": "existing-rule-500",
-      "adapterId": "master-static",
-      "label": "Append 500 elements (existing-rule) / Master CSS static",
+      "adapterId": "stet-static",
+      "label": "Append 500 elements (existing-rule) / StetCSS static",
       "limits": []
     },
     {
-      "id": "large-append-master-runtime-existing-rule-500",
+      "id": "large-append-stet-runtime-existing-rule-500",
       "fixtureId": "dynamic",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "large-append",
       "detailId": "existing-rule-500",
-      "adapterId": "master-runtime",
-      "label": "Append 500 elements (existing-rule) / Master CSS runtime",
+      "adapterId": "stet-runtime",
+      "label": "Append 500 elements (existing-rule) / StetCSS runtime",
       "limits": []
     },
     {
@@ -440,27 +440,27 @@
       ]
     },
     {
-      "id": "large-append-master-static-new-rule-500",
+      "id": "large-append-stet-static-new-rule-500",
       "fixtureId": "dynamic",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "large-append",
       "detailId": "new-rule-500",
-      "adapterId": "master-static",
-      "label": "Append 500 elements (new-rule) / Master CSS static",
+      "adapterId": "stet-static",
+      "label": "Append 500 elements (new-rule) / StetCSS static",
       "limits": [
-        "Static variants include the new classes up front and are browser controls, while Master runtime generates them during interaction."
+        "Static variants include the new classes up front and are browser controls, while StetCSS runtime generates them during interaction."
       ]
     },
     {
-      "id": "large-append-master-runtime-new-rule-500",
+      "id": "large-append-stet-runtime-new-rule-500",
       "fixtureId": "dynamic",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "large-append",
       "detailId": "new-rule-500",
-      "adapterId": "master-runtime",
-      "label": "Append 500 elements (new-rule) / Master CSS runtime",
+      "adapterId": "stet-runtime",
+      "label": "Append 500 elements (new-rule) / StetCSS runtime",
       "limits": [
-        "Static variants include the new classes up front and are browser controls, while Master runtime generates them during interaction."
+        "Static variants include the new classes up front and are browser controls, while StetCSS runtime generates them during interaction."
       ]
     },
     {
@@ -472,28 +472,28 @@
       "adapterId": "tailwind-cli",
       "label": "Append 500 elements (new-rule) / Tailwind CSS static",
       "limits": [
-        "Static variants include the new classes up front and are browser controls, while Master runtime generates them during interaction.",
+        "Static variants include the new classes up front and are browser controls, while StetCSS runtime generates them during interaction.",
         "Tailwind CSS is measured as a static browser-control variant, not as a runtime-equivalent implementation."
       ]
     },
     {
-      "id": "large-append-master-static-existing-rule-1000",
+      "id": "large-append-stet-static-existing-rule-1000",
       "fixtureId": "dynamic",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "large-append",
       "detailId": "existing-rule-1000",
-      "adapterId": "master-static",
-      "label": "Append 1000 elements (existing-rule) / Master CSS static",
+      "adapterId": "stet-static",
+      "label": "Append 1000 elements (existing-rule) / StetCSS static",
       "limits": []
     },
     {
-      "id": "large-append-master-runtime-existing-rule-1000",
+      "id": "large-append-stet-runtime-existing-rule-1000",
       "fixtureId": "dynamic",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "large-append",
       "detailId": "existing-rule-1000",
-      "adapterId": "master-runtime",
-      "label": "Append 1000 elements (existing-rule) / Master CSS runtime",
+      "adapterId": "stet-runtime",
+      "label": "Append 1000 elements (existing-rule) / StetCSS runtime",
       "limits": []
     },
     {
@@ -509,27 +509,27 @@
       ]
     },
     {
-      "id": "large-append-master-static-new-rule-1000",
+      "id": "large-append-stet-static-new-rule-1000",
       "fixtureId": "dynamic",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "large-append",
       "detailId": "new-rule-1000",
-      "adapterId": "master-static",
-      "label": "Append 1000 elements (new-rule) / Master CSS static",
+      "adapterId": "stet-static",
+      "label": "Append 1000 elements (new-rule) / StetCSS static",
       "limits": [
-        "Static variants include the new classes up front and are browser controls, while Master runtime generates them during interaction."
+        "Static variants include the new classes up front and are browser controls, while StetCSS runtime generates them during interaction."
       ]
     },
     {
-      "id": "large-append-master-runtime-new-rule-1000",
+      "id": "large-append-stet-runtime-new-rule-1000",
       "fixtureId": "dynamic",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "large-append",
       "detailId": "new-rule-1000",
-      "adapterId": "master-runtime",
-      "label": "Append 1000 elements (new-rule) / Master CSS runtime",
+      "adapterId": "stet-runtime",
+      "label": "Append 1000 elements (new-rule) / StetCSS runtime",
       "limits": [
-        "Static variants include the new classes up front and are browser controls, while Master runtime generates them during interaction."
+        "Static variants include the new classes up front and are browser controls, while StetCSS runtime generates them during interaction."
       ]
     },
     {
@@ -541,28 +541,28 @@
       "adapterId": "tailwind-cli",
       "label": "Append 1000 elements (new-rule) / Tailwind CSS static",
       "limits": [
-        "Static variants include the new classes up front and are browser controls, while Master runtime generates them during interaction.",
+        "Static variants include the new classes up front and are browser controls, while StetCSS runtime generates them during interaction.",
         "Tailwind CSS is measured as a static browser-control variant, not as a runtime-equivalent implementation."
       ]
     },
     {
-      "id": "repeated-toggle-master-static-toggle-1200x6",
+      "id": "repeated-toggle-stet-static-toggle-1200x6",
       "fixtureId": "dynamic",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "repeated-toggle",
       "detailId": "toggle-1200x6",
-      "adapterId": "master-static",
-      "label": "Repeated toggles across 1200 items / Master CSS static",
+      "adapterId": "stet-static",
+      "label": "Repeated toggles across 1200 items / StetCSS static",
       "limits": []
     },
     {
-      "id": "repeated-toggle-master-runtime-toggle-1200x6",
+      "id": "repeated-toggle-stet-runtime-toggle-1200x6",
       "fixtureId": "dynamic",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "repeated-toggle",
       "detailId": "toggle-1200x6",
-      "adapterId": "master-runtime",
-      "label": "Repeated toggles across 1200 items / Master CSS runtime",
+      "adapterId": "stet-runtime",
+      "label": "Repeated toggles across 1200 items / StetCSS runtime",
       "limits": []
     },
     {
@@ -578,23 +578,23 @@
       ]
     },
     {
-      "id": "theme-switch-master-static-class-swap",
+      "id": "theme-switch-stet-static-class-swap",
       "fixtureId": "dashboard",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "theme-switch",
       "detailId": "class-swap",
-      "adapterId": "master-static",
-      "label": "Theme switch (class-swap) / Master CSS static",
+      "adapterId": "stet-static",
+      "label": "Theme switch (class-swap) / StetCSS static",
       "limits": []
     },
     {
-      "id": "theme-switch-master-runtime-class-swap",
+      "id": "theme-switch-stet-runtime-class-swap",
       "fixtureId": "dashboard",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "theme-switch",
       "detailId": "class-swap",
-      "adapterId": "master-runtime",
-      "label": "Theme switch (class-swap) / Master CSS runtime",
+      "adapterId": "stet-runtime",
+      "label": "Theme switch (class-swap) / StetCSS runtime",
       "limits": []
     },
     {
@@ -610,23 +610,23 @@
       ]
     },
     {
-      "id": "theme-switch-master-static-data-attribute",
+      "id": "theme-switch-stet-static-data-attribute",
       "fixtureId": "dashboard",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "theme-switch",
       "detailId": "data-attribute",
-      "adapterId": "master-static",
-      "label": "Theme switch (data-attribute) / Master CSS static",
+      "adapterId": "stet-static",
+      "label": "Theme switch (data-attribute) / StetCSS static",
       "limits": []
     },
     {
-      "id": "theme-switch-master-runtime-data-attribute",
+      "id": "theme-switch-stet-runtime-data-attribute",
       "fixtureId": "dashboard",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "theme-switch",
       "detailId": "data-attribute",
-      "adapterId": "master-runtime",
-      "label": "Theme switch (data-attribute) / Master CSS runtime",
+      "adapterId": "stet-runtime",
+      "label": "Theme switch (data-attribute) / StetCSS runtime",
       "limits": []
     },
     {
@@ -642,23 +642,23 @@
       ]
     },
     {
-      "id": "theme-switch-master-static-css-variable",
+      "id": "theme-switch-stet-static-css-variable",
       "fixtureId": "dashboard",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "theme-switch",
       "detailId": "css-variable",
-      "adapterId": "master-static",
-      "label": "Theme switch (css-variable) / Master CSS static",
+      "adapterId": "stet-static",
+      "label": "Theme switch (css-variable) / StetCSS static",
       "limits": []
     },
     {
-      "id": "theme-switch-master-runtime-css-variable",
+      "id": "theme-switch-stet-runtime-css-variable",
       "fixtureId": "dashboard",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "theme-switch",
       "detailId": "css-variable",
-      "adapterId": "master-runtime",
-      "label": "Theme switch (css-variable) / Master CSS runtime",
+      "adapterId": "stet-runtime",
+      "label": "Theme switch (css-variable) / StetCSS runtime",
       "limits": []
     },
     {
@@ -674,23 +674,23 @@
       ]
     },
     {
-      "id": "route-navigation-master-static-home-dashboard-settings-dashboard",
+      "id": "route-navigation-stet-static-home-dashboard-settings-dashboard",
       "fixtureId": "dashboard",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "route-navigation",
       "detailId": "home-dashboard-settings-dashboard",
-      "adapterId": "master-static",
-      "label": "Route navigation / Master CSS static",
+      "adapterId": "stet-static",
+      "label": "Route navigation / StetCSS static",
       "limits": []
     },
     {
-      "id": "route-navigation-master-runtime-home-dashboard-settings-dashboard",
+      "id": "route-navigation-stet-runtime-home-dashboard-settings-dashboard",
       "fixtureId": "dashboard",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "route-navigation",
       "detailId": "home-dashboard-settings-dashboard",
-      "adapterId": "master-runtime",
-      "label": "Route navigation / Master CSS runtime",
+      "adapterId": "stet-runtime",
+      "label": "Route navigation / StetCSS runtime",
       "limits": []
     },
     {
@@ -706,25 +706,25 @@
       ]
     },
     {
-      "id": "long-session-master-static-mixed-operations",
+      "id": "long-session-stet-static-mixed-operations",
       "fixtureId": "dynamic",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "long-session",
       "detailId": "mixed-operations",
-      "adapterId": "master-static",
-      "label": "Long session mixed operations / Master CSS static",
+      "adapterId": "stet-static",
+      "label": "Long session mixed operations / StetCSS static",
       "limits": [
         "Default long-session duration is short unless BROWSER_LIFECYCLE_LONG_SESSION_MS is set."
       ]
     },
     {
-      "id": "long-session-master-runtime-mixed-operations",
+      "id": "long-session-stet-runtime-mixed-operations",
       "fixtureId": "dynamic",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "long-session",
       "detailId": "mixed-operations",
-      "adapterId": "master-runtime",
-      "label": "Long session mixed operations / Master CSS runtime",
+      "adapterId": "stet-runtime",
+      "label": "Long session mixed operations / StetCSS runtime",
       "limits": [
         "Default long-session duration is short unless BROWSER_LIFECYCLE_LONG_SESSION_MS is set."
       ]
@@ -745,10 +745,10 @@
   ],
   "variantSummaries": [
     {
-      "variantId": "initial-load-master-static-docs",
+      "variantId": "initial-load-stet-static-docs",
       "fixtureId": "docs",
-      "adapterId": "master-static",
-      "modeId": "master-static",
+      "adapterId": "stet-static",
+      "modeId": "stet-static",
       "scenarioId": "initial-load",
       "detailId": "docs",
       "metrics": {
@@ -1083,10 +1083,10 @@
       }
     },
     {
-      "variantId": "initial-load-master-runtime-docs",
+      "variantId": "initial-load-stet-runtime-docs",
       "fixtureId": "docs",
-      "adapterId": "master-runtime",
-      "modeId": "master-runtime",
+      "adapterId": "stet-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "initial-load",
       "detailId": "docs",
       "metrics": {
@@ -1759,10 +1759,10 @@
       }
     },
     {
-      "variantId": "large-dom-master-static-nodes-1000",
+      "variantId": "large-dom-stet-static-nodes-1000",
       "fixtureId": "stress-dom",
-      "adapterId": "master-static",
-      "modeId": "master-static",
+      "adapterId": "stet-static",
+      "modeId": "stet-static",
       "scenarioId": "large-dom",
       "detailId": "nodes-1000",
       "metrics": {
@@ -2097,10 +2097,10 @@
       }
     },
     {
-      "variantId": "large-dom-master-runtime-nodes-1000",
+      "variantId": "large-dom-stet-runtime-nodes-1000",
       "fixtureId": "stress-dom",
-      "adapterId": "master-runtime",
-      "modeId": "master-runtime",
+      "adapterId": "stet-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "large-dom",
       "detailId": "nodes-1000",
       "metrics": {
@@ -2773,10 +2773,10 @@
       }
     },
     {
-      "variantId": "large-dom-master-static-nodes-5000",
+      "variantId": "large-dom-stet-static-nodes-5000",
       "fixtureId": "stress-dom",
-      "adapterId": "master-static",
-      "modeId": "master-static",
+      "adapterId": "stet-static",
+      "modeId": "stet-static",
       "scenarioId": "large-dom",
       "detailId": "nodes-5000",
       "metrics": {
@@ -3111,10 +3111,10 @@
       }
     },
     {
-      "variantId": "large-dom-master-runtime-nodes-5000",
+      "variantId": "large-dom-stet-runtime-nodes-5000",
       "fixtureId": "stress-dom",
-      "adapterId": "master-runtime",
-      "modeId": "master-runtime",
+      "adapterId": "stet-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "large-dom",
       "detailId": "nodes-5000",
       "metrics": {
@@ -3787,10 +3787,10 @@
       }
     },
     {
-      "variantId": "large-dom-master-static-nodes-10000",
+      "variantId": "large-dom-stet-static-nodes-10000",
       "fixtureId": "stress-dom",
-      "adapterId": "master-static",
-      "modeId": "master-static",
+      "adapterId": "stet-static",
+      "modeId": "stet-static",
       "scenarioId": "large-dom",
       "detailId": "nodes-10000",
       "metrics": {
@@ -4125,10 +4125,10 @@
       }
     },
     {
-      "variantId": "large-dom-master-runtime-nodes-10000",
+      "variantId": "large-dom-stet-runtime-nodes-10000",
       "fixtureId": "stress-dom",
-      "adapterId": "master-runtime",
-      "modeId": "master-runtime",
+      "adapterId": "stet-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "large-dom",
       "detailId": "nodes-10000",
       "metrics": {
@@ -4801,10 +4801,10 @@
       }
     },
     {
-      "variantId": "large-append-master-static-existing-rule-100",
+      "variantId": "large-append-stet-static-existing-rule-100",
       "fixtureId": "dynamic",
-      "adapterId": "master-static",
-      "modeId": "master-static",
+      "adapterId": "stet-static",
+      "modeId": "stet-static",
       "scenarioId": "large-append",
       "detailId": "existing-rule-100",
       "metrics": {
@@ -5139,10 +5139,10 @@
       }
     },
     {
-      "variantId": "large-append-master-runtime-existing-rule-100",
+      "variantId": "large-append-stet-runtime-existing-rule-100",
       "fixtureId": "dynamic",
-      "adapterId": "master-runtime",
-      "modeId": "master-runtime",
+      "adapterId": "stet-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "large-append",
       "detailId": "existing-rule-100",
       "metrics": {
@@ -5815,10 +5815,10 @@
       }
     },
     {
-      "variantId": "large-append-master-static-new-rule-100",
+      "variantId": "large-append-stet-static-new-rule-100",
       "fixtureId": "dynamic",
-      "adapterId": "master-static",
-      "modeId": "master-static",
+      "adapterId": "stet-static",
+      "modeId": "stet-static",
       "scenarioId": "large-append",
       "detailId": "new-rule-100",
       "metrics": {
@@ -6153,10 +6153,10 @@
       }
     },
     {
-      "variantId": "large-append-master-runtime-new-rule-100",
+      "variantId": "large-append-stet-runtime-new-rule-100",
       "fixtureId": "dynamic",
-      "adapterId": "master-runtime",
-      "modeId": "master-runtime",
+      "adapterId": "stet-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "large-append",
       "detailId": "new-rule-100",
       "metrics": {
@@ -6829,10 +6829,10 @@
       }
     },
     {
-      "variantId": "large-append-master-static-existing-rule-500",
+      "variantId": "large-append-stet-static-existing-rule-500",
       "fixtureId": "dynamic",
-      "adapterId": "master-static",
-      "modeId": "master-static",
+      "adapterId": "stet-static",
+      "modeId": "stet-static",
       "scenarioId": "large-append",
       "detailId": "existing-rule-500",
       "metrics": {
@@ -7167,10 +7167,10 @@
       }
     },
     {
-      "variantId": "large-append-master-runtime-existing-rule-500",
+      "variantId": "large-append-stet-runtime-existing-rule-500",
       "fixtureId": "dynamic",
-      "adapterId": "master-runtime",
-      "modeId": "master-runtime",
+      "adapterId": "stet-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "large-append",
       "detailId": "existing-rule-500",
       "metrics": {
@@ -7843,10 +7843,10 @@
       }
     },
     {
-      "variantId": "large-append-master-static-new-rule-500",
+      "variantId": "large-append-stet-static-new-rule-500",
       "fixtureId": "dynamic",
-      "adapterId": "master-static",
-      "modeId": "master-static",
+      "adapterId": "stet-static",
+      "modeId": "stet-static",
       "scenarioId": "large-append",
       "detailId": "new-rule-500",
       "metrics": {
@@ -8181,10 +8181,10 @@
       }
     },
     {
-      "variantId": "large-append-master-runtime-new-rule-500",
+      "variantId": "large-append-stet-runtime-new-rule-500",
       "fixtureId": "dynamic",
-      "adapterId": "master-runtime",
-      "modeId": "master-runtime",
+      "adapterId": "stet-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "large-append",
       "detailId": "new-rule-500",
       "metrics": {
@@ -8857,10 +8857,10 @@
       }
     },
     {
-      "variantId": "large-append-master-static-existing-rule-1000",
+      "variantId": "large-append-stet-static-existing-rule-1000",
       "fixtureId": "dynamic",
-      "adapterId": "master-static",
-      "modeId": "master-static",
+      "adapterId": "stet-static",
+      "modeId": "stet-static",
       "scenarioId": "large-append",
       "detailId": "existing-rule-1000",
       "metrics": {
@@ -9195,10 +9195,10 @@
       }
     },
     {
-      "variantId": "large-append-master-runtime-existing-rule-1000",
+      "variantId": "large-append-stet-runtime-existing-rule-1000",
       "fixtureId": "dynamic",
-      "adapterId": "master-runtime",
-      "modeId": "master-runtime",
+      "adapterId": "stet-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "large-append",
       "detailId": "existing-rule-1000",
       "metrics": {
@@ -9871,10 +9871,10 @@
       }
     },
     {
-      "variantId": "large-append-master-static-new-rule-1000",
+      "variantId": "large-append-stet-static-new-rule-1000",
       "fixtureId": "dynamic",
-      "adapterId": "master-static",
-      "modeId": "master-static",
+      "adapterId": "stet-static",
+      "modeId": "stet-static",
       "scenarioId": "large-append",
       "detailId": "new-rule-1000",
       "metrics": {
@@ -10209,10 +10209,10 @@
       }
     },
     {
-      "variantId": "large-append-master-runtime-new-rule-1000",
+      "variantId": "large-append-stet-runtime-new-rule-1000",
       "fixtureId": "dynamic",
-      "adapterId": "master-runtime",
-      "modeId": "master-runtime",
+      "adapterId": "stet-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "large-append",
       "detailId": "new-rule-1000",
       "metrics": {
@@ -10885,10 +10885,10 @@
       }
     },
     {
-      "variantId": "repeated-toggle-master-static-toggle-1200x6",
+      "variantId": "repeated-toggle-stet-static-toggle-1200x6",
       "fixtureId": "dynamic",
-      "adapterId": "master-static",
-      "modeId": "master-static",
+      "adapterId": "stet-static",
+      "modeId": "stet-static",
       "scenarioId": "repeated-toggle",
       "detailId": "toggle-1200x6",
       "metrics": {
@@ -11223,10 +11223,10 @@
       }
     },
     {
-      "variantId": "repeated-toggle-master-runtime-toggle-1200x6",
+      "variantId": "repeated-toggle-stet-runtime-toggle-1200x6",
       "fixtureId": "dynamic",
-      "adapterId": "master-runtime",
-      "modeId": "master-runtime",
+      "adapterId": "stet-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "repeated-toggle",
       "detailId": "toggle-1200x6",
       "metrics": {
@@ -11899,10 +11899,10 @@
       }
     },
     {
-      "variantId": "theme-switch-master-static-class-swap",
+      "variantId": "theme-switch-stet-static-class-swap",
       "fixtureId": "dashboard",
-      "adapterId": "master-static",
-      "modeId": "master-static",
+      "adapterId": "stet-static",
+      "modeId": "stet-static",
       "scenarioId": "theme-switch",
       "detailId": "class-swap",
       "metrics": {
@@ -12237,10 +12237,10 @@
       }
     },
     {
-      "variantId": "theme-switch-master-runtime-class-swap",
+      "variantId": "theme-switch-stet-runtime-class-swap",
       "fixtureId": "dashboard",
-      "adapterId": "master-runtime",
-      "modeId": "master-runtime",
+      "adapterId": "stet-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "theme-switch",
       "detailId": "class-swap",
       "metrics": {
@@ -12913,10 +12913,10 @@
       }
     },
     {
-      "variantId": "theme-switch-master-static-data-attribute",
+      "variantId": "theme-switch-stet-static-data-attribute",
       "fixtureId": "dashboard",
-      "adapterId": "master-static",
-      "modeId": "master-static",
+      "adapterId": "stet-static",
+      "modeId": "stet-static",
       "scenarioId": "theme-switch",
       "detailId": "data-attribute",
       "metrics": {
@@ -13251,10 +13251,10 @@
       }
     },
     {
-      "variantId": "theme-switch-master-runtime-data-attribute",
+      "variantId": "theme-switch-stet-runtime-data-attribute",
       "fixtureId": "dashboard",
-      "adapterId": "master-runtime",
-      "modeId": "master-runtime",
+      "adapterId": "stet-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "theme-switch",
       "detailId": "data-attribute",
       "metrics": {
@@ -13927,10 +13927,10 @@
       }
     },
     {
-      "variantId": "theme-switch-master-static-css-variable",
+      "variantId": "theme-switch-stet-static-css-variable",
       "fixtureId": "dashboard",
-      "adapterId": "master-static",
-      "modeId": "master-static",
+      "adapterId": "stet-static",
+      "modeId": "stet-static",
       "scenarioId": "theme-switch",
       "detailId": "css-variable",
       "metrics": {
@@ -14265,10 +14265,10 @@
       }
     },
     {
-      "variantId": "theme-switch-master-runtime-css-variable",
+      "variantId": "theme-switch-stet-runtime-css-variable",
       "fixtureId": "dashboard",
-      "adapterId": "master-runtime",
-      "modeId": "master-runtime",
+      "adapterId": "stet-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "theme-switch",
       "detailId": "css-variable",
       "metrics": {
@@ -14941,10 +14941,10 @@
       }
     },
     {
-      "variantId": "route-navigation-master-static-home-dashboard-settings-dashboard",
+      "variantId": "route-navigation-stet-static-home-dashboard-settings-dashboard",
       "fixtureId": "dashboard",
-      "adapterId": "master-static",
-      "modeId": "master-static",
+      "adapterId": "stet-static",
+      "modeId": "stet-static",
       "scenarioId": "route-navigation",
       "detailId": "home-dashboard-settings-dashboard",
       "metrics": {
@@ -15279,10 +15279,10 @@
       }
     },
     {
-      "variantId": "route-navigation-master-runtime-home-dashboard-settings-dashboard",
+      "variantId": "route-navigation-stet-runtime-home-dashboard-settings-dashboard",
       "fixtureId": "dashboard",
-      "adapterId": "master-runtime",
-      "modeId": "master-runtime",
+      "adapterId": "stet-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "route-navigation",
       "detailId": "home-dashboard-settings-dashboard",
       "metrics": {
@@ -15955,10 +15955,10 @@
       }
     },
     {
-      "variantId": "long-session-master-static-mixed-operations",
+      "variantId": "long-session-stet-static-mixed-operations",
       "fixtureId": "dynamic",
-      "adapterId": "master-static",
-      "modeId": "master-static",
+      "adapterId": "stet-static",
+      "modeId": "stet-static",
       "scenarioId": "long-session",
       "detailId": "mixed-operations",
       "metrics": {
@@ -16293,10 +16293,10 @@
       }
     },
     {
-      "variantId": "long-session-master-runtime-mixed-operations",
+      "variantId": "long-session-stet-runtime-mixed-operations",
       "fixtureId": "dynamic",
-      "adapterId": "master-runtime",
-      "modeId": "master-runtime",
+      "adapterId": "stet-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "long-session",
       "detailId": "mixed-operations",
       "metrics": {
@@ -17010,19 +17010,19 @@
       "id": "runtime-js-raw-bytes",
       "label": "Runtime JS raw bytes",
       "unit": "B",
-      "description": "Raw bytes for the Master CSS browser runtime bundle."
+      "description": "Raw bytes for the StetCSS browser runtime bundle."
     },
     {
       "id": "runtime-js-gzip-bytes",
       "label": "Runtime JS gzip bytes",
       "unit": "B",
-      "description": "Gzip bytes for the Master CSS browser runtime bundle."
+      "description": "Gzip bytes for the StetCSS browser runtime bundle."
     },
     {
       "id": "runtime-js-brotli-bytes",
       "label": "Runtime JS brotli bytes",
       "unit": "B",
-      "description": "Brotli bytes for the Master CSS browser runtime bundle."
+      "description": "Brotli bytes for the StetCSS browser runtime bundle."
     },
     {
       "id": "delivered-style-rule-count",
@@ -17136,7 +17136,7 @@
       "id": "runtime-ready-ms",
       "label": "Runtime ready",
       "unit": "ms",
-      "description": "Browser performance timestamp when Master CSS runtime finished observe."
+      "description": "Browser performance timestamp when StetCSS runtime finished observe."
     },
     {
       "id": "runtime-bootstrap-ms",
@@ -17154,7 +17154,7 @@
       "id": "runtime-mutation-ms",
       "label": "Runtime mutation work",
       "unit": "ms",
-      "description": "Instrumented Master CSS runtime ensure/delete class-rules duration during the measured scenario."
+      "description": "Instrumented StetCSS runtime ensure/delete class-rules duration during the measured scenario."
     },
     {
       "id": "runtime-generated-rule-count",
@@ -17224,8 +17224,8 @@
         {
           "detailId": "docs",
           "modes": {
-            "master-static": {
-              "variantId": "initial-load-master-static-docs",
+            "stet-static": {
+              "variantId": "initial-load-stet-static-docs",
               "payload": {
                 "html": {
                   "rawBytes": 67138,
@@ -17491,8 +17491,8 @@
                 }
               }
             },
-            "master-runtime": {
-              "variantId": "initial-load-master-runtime-docs",
+            "stet-runtime": {
+              "variantId": "initial-load-stet-runtime-docs",
               "payload": {
                 "html": {
                   "rawBytes": 69459,
@@ -18035,8 +18035,8 @@
         {
           "detailId": "nodes-1000",
           "modes": {
-            "master-static": {
-              "variantId": "large-dom-master-static-nodes-1000",
+            "stet-static": {
+              "variantId": "large-dom-stet-static-nodes-1000",
               "payload": {
                 "html": {
                   "rawBytes": 123598,
@@ -18302,8 +18302,8 @@
                 }
               }
             },
-            "master-runtime": {
-              "variantId": "large-dom-master-runtime-nodes-1000",
+            "stet-runtime": {
+              "variantId": "large-dom-stet-runtime-nodes-1000",
               "payload": {
                 "html": {
                   "rawBytes": 125919,
@@ -18841,8 +18841,8 @@
         {
           "detailId": "nodes-5000",
           "modes": {
-            "master-static": {
-              "variantId": "large-dom-master-static-nodes-5000",
+            "stet-static": {
+              "variantId": "large-dom-stet-static-nodes-5000",
               "payload": {
                 "html": {
                   "rawBytes": 559822,
@@ -19108,8 +19108,8 @@
                 }
               }
             },
-            "master-runtime": {
-              "variantId": "large-dom-master-runtime-nodes-5000",
+            "stet-runtime": {
+              "variantId": "large-dom-stet-runtime-nodes-5000",
               "payload": {
                 "html": {
                   "rawBytes": 562143,
@@ -19647,8 +19647,8 @@
         {
           "detailId": "nodes-10000",
           "modes": {
-            "master-static": {
-              "variantId": "large-dom-master-static-nodes-10000",
+            "stet-static": {
+              "variantId": "large-dom-stet-static-nodes-10000",
               "payload": {
                 "html": {
                   "rawBytes": 1107018,
@@ -19914,8 +19914,8 @@
                 }
               }
             },
-            "master-runtime": {
-              "variantId": "large-dom-master-runtime-nodes-10000",
+            "stet-runtime": {
+              "variantId": "large-dom-stet-runtime-nodes-10000",
               "payload": {
                 "html": {
                   "rawBytes": 1109339,
@@ -20458,8 +20458,8 @@
         {
           "detailId": "existing-rule-100",
           "modes": {
-            "master-static": {
-              "variantId": "large-append-master-static-existing-rule-100",
+            "stet-static": {
+              "variantId": "large-append-stet-static-existing-rule-100",
               "payload": {
                 "html": {
                   "rawBytes": 67189,
@@ -20725,8 +20725,8 @@
                 }
               }
             },
-            "master-runtime": {
-              "variantId": "large-append-master-runtime-existing-rule-100",
+            "stet-runtime": {
+              "variantId": "large-append-stet-runtime-existing-rule-100",
               "payload": {
                 "html": {
                   "rawBytes": 69510,
@@ -21264,8 +21264,8 @@
         {
           "detailId": "new-rule-100",
           "modes": {
-            "master-static": {
-              "variantId": "large-append-master-static-new-rule-100",
+            "stet-static": {
+              "variantId": "large-append-stet-static-new-rule-100",
               "payload": {
                 "html": {
                   "rawBytes": 67169,
@@ -21531,8 +21531,8 @@
                 }
               }
             },
-            "master-runtime": {
-              "variantId": "large-append-master-runtime-new-rule-100",
+            "stet-runtime": {
+              "variantId": "large-append-stet-runtime-new-rule-100",
               "payload": {
                 "html": {
                   "rawBytes": 69490,
@@ -22070,8 +22070,8 @@
         {
           "detailId": "existing-rule-500",
           "modes": {
-            "master-static": {
-              "variantId": "large-append-master-static-existing-rule-500",
+            "stet-static": {
+              "variantId": "large-append-stet-static-existing-rule-500",
               "payload": {
                 "html": {
                   "rawBytes": 67189,
@@ -22337,8 +22337,8 @@
                 }
               }
             },
-            "master-runtime": {
-              "variantId": "large-append-master-runtime-existing-rule-500",
+            "stet-runtime": {
+              "variantId": "large-append-stet-runtime-existing-rule-500",
               "payload": {
                 "html": {
                   "rawBytes": 69510,
@@ -22876,8 +22876,8 @@
         {
           "detailId": "new-rule-500",
           "modes": {
-            "master-static": {
-              "variantId": "large-append-master-static-new-rule-500",
+            "stet-static": {
+              "variantId": "large-append-stet-static-new-rule-500",
               "payload": {
                 "html": {
                   "rawBytes": 67169,
@@ -23143,8 +23143,8 @@
                 }
               }
             },
-            "master-runtime": {
-              "variantId": "large-append-master-runtime-new-rule-500",
+            "stet-runtime": {
+              "variantId": "large-append-stet-runtime-new-rule-500",
               "payload": {
                 "html": {
                   "rawBytes": 69490,
@@ -23682,8 +23682,8 @@
         {
           "detailId": "existing-rule-1000",
           "modes": {
-            "master-static": {
-              "variantId": "large-append-master-static-existing-rule-1000",
+            "stet-static": {
+              "variantId": "large-append-stet-static-existing-rule-1000",
               "payload": {
                 "html": {
                   "rawBytes": 67193,
@@ -23949,8 +23949,8 @@
                 }
               }
             },
-            "master-runtime": {
-              "variantId": "large-append-master-runtime-existing-rule-1000",
+            "stet-runtime": {
+              "variantId": "large-append-stet-runtime-existing-rule-1000",
               "payload": {
                 "html": {
                   "rawBytes": 69514,
@@ -24488,8 +24488,8 @@
         {
           "detailId": "new-rule-1000",
           "modes": {
-            "master-static": {
-              "variantId": "large-append-master-static-new-rule-1000",
+            "stet-static": {
+              "variantId": "large-append-stet-static-new-rule-1000",
               "payload": {
                 "html": {
                   "rawBytes": 67173,
@@ -24755,8 +24755,8 @@
                 }
               }
             },
-            "master-runtime": {
-              "variantId": "large-append-master-runtime-new-rule-1000",
+            "stet-runtime": {
+              "variantId": "large-append-stet-runtime-new-rule-1000",
               "payload": {
                 "html": {
                   "rawBytes": 69494,
@@ -25299,8 +25299,8 @@
         {
           "detailId": "toggle-1200x6",
           "modes": {
-            "master-static": {
-              "variantId": "repeated-toggle-master-static-toggle-1200x6",
+            "stet-static": {
+              "variantId": "repeated-toggle-stet-static-toggle-1200x6",
               "payload": {
                 "html": {
                   "rawBytes": 406888,
@@ -25566,8 +25566,8 @@
                 }
               }
             },
-            "master-runtime": {
-              "variantId": "repeated-toggle-master-runtime-toggle-1200x6",
+            "stet-runtime": {
+              "variantId": "repeated-toggle-stet-runtime-toggle-1200x6",
               "payload": {
                 "html": {
                   "rawBytes": 409209,
@@ -26110,8 +26110,8 @@
         {
           "detailId": "class-swap",
           "modes": {
-            "master-static": {
-              "variantId": "theme-switch-master-static-class-swap",
+            "stet-static": {
+              "variantId": "theme-switch-stet-static-class-swap",
               "payload": {
                 "html": {
                   "rawBytes": 119360,
@@ -26377,8 +26377,8 @@
                 }
               }
             },
-            "master-runtime": {
-              "variantId": "theme-switch-master-runtime-class-swap",
+            "stet-runtime": {
+              "variantId": "theme-switch-stet-runtime-class-swap",
               "payload": {
                 "html": {
                   "rawBytes": 121681,
@@ -26916,8 +26916,8 @@
         {
           "detailId": "data-attribute",
           "modes": {
-            "master-static": {
-              "variantId": "theme-switch-master-static-data-attribute",
+            "stet-static": {
+              "variantId": "theme-switch-stet-static-data-attribute",
               "payload": {
                 "html": {
                   "rawBytes": 119376,
@@ -27183,8 +27183,8 @@
                 }
               }
             },
-            "master-runtime": {
-              "variantId": "theme-switch-master-runtime-data-attribute",
+            "stet-runtime": {
+              "variantId": "theme-switch-stet-runtime-data-attribute",
               "payload": {
                 "html": {
                   "rawBytes": 121697,
@@ -27722,8 +27722,8 @@
         {
           "detailId": "css-variable",
           "modes": {
-            "master-static": {
-              "variantId": "theme-switch-master-static-css-variable",
+            "stet-static": {
+              "variantId": "theme-switch-stet-static-css-variable",
               "payload": {
                 "html": {
                   "rawBytes": 119368,
@@ -27989,8 +27989,8 @@
                 }
               }
             },
-            "master-runtime": {
-              "variantId": "theme-switch-master-runtime-css-variable",
+            "stet-runtime": {
+              "variantId": "theme-switch-stet-runtime-css-variable",
               "payload": {
                 "html": {
                   "rawBytes": 121689,
@@ -28533,8 +28533,8 @@
         {
           "detailId": "home-dashboard-settings-dashboard",
           "modes": {
-            "master-static": {
-              "variantId": "route-navigation-master-static-home-dashboard-settings-dashboard",
+            "stet-static": {
+              "variantId": "route-navigation-stet-static-home-dashboard-settings-dashboard",
               "payload": {
                 "html": {
                   "rawBytes": 46300,
@@ -28800,8 +28800,8 @@
                 }
               }
             },
-            "master-runtime": {
-              "variantId": "route-navigation-master-runtime-home-dashboard-settings-dashboard",
+            "stet-runtime": {
+              "variantId": "route-navigation-stet-runtime-home-dashboard-settings-dashboard",
               "payload": {
                 "html": {
                   "rawBytes": 48621,
@@ -29344,8 +29344,8 @@
         {
           "detailId": "mixed-operations",
           "modes": {
-            "master-static": {
-              "variantId": "long-session-master-static-mixed-operations",
+            "stet-static": {
+              "variantId": "long-session-stet-static-mixed-operations",
               "payload": {
                 "html": {
                   "rawBytes": 93274,
@@ -29611,8 +29611,8 @@
                 }
               }
             },
-            "master-runtime": {
-              "variantId": "long-session-master-runtime-mixed-operations",
+            "stet-runtime": {
+              "variantId": "long-session-stet-runtime-mixed-operations",
               "payload": {
                 "html": {
                   "rawBytes": 95595,

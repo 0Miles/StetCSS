@@ -9,7 +9,7 @@ const currentFile = requiredArg(args, 'current')
 const outputFile = args.get('output')
 const limit = Number(args.get('limit') || 50)
 const current = JSON.parse(await readFile(currentFile, 'utf8'))
-const artifactPrefix = args.get('artifact-prefix') || `master-css-benchmark-${current.branchSlug}-${current.packageSlug}-`
+const artifactPrefix = args.get('artifact-prefix') || `stet-css-benchmark-${current.branchSlug}-${current.packageSlug}-`
 
 let markdown
 
@@ -78,7 +78,7 @@ async function listArtifacts(repository, token) {
 
 async function readArtifactReport(artifact, token) {
   const response = await githubFetch(artifact.archive_download_url, token)
-  const directory = await mkdtemp(join(tmpdir(), 'master-css-benchmark-'))
+  const directory = await mkdtemp(join(tmpdir(), 'stet-css-benchmark-'))
   const zipFile = join(directory, `${artifact.id}.zip`)
   await writeFile(zipFile, Buffer.from(await response.arrayBuffer()))
 

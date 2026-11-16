@@ -32,9 +32,9 @@ const metrics: BenchmarkMetric[] = [
 ]
 
 const variants: BenchmarkVariant[] = [
-  { id: 'minimal-master-runtime', fixtureId: 'minimal', adapterId: 'master-runtime', label: 'Minimal / Master runtime' },
-  { id: 'docs-master-static', fixtureId: 'docs', adapterId: 'master-static', label: 'Docs / Master static' },
-  { id: 'dashboard-master-runtime', fixtureId: 'dashboard', adapterId: 'master-runtime', label: 'Dashboard / Master runtime' },
+  { id: 'minimal-stet-runtime', fixtureId: 'minimal', adapterId: 'stet-runtime', label: 'Minimal / StetCSS runtime' },
+  { id: 'docs-stet-static', fixtureId: 'docs', adapterId: 'stet-static', label: 'Docs / StetCSS static' },
+  { id: 'dashboard-stet-runtime', fixtureId: 'dashboard', adapterId: 'stet-runtime', label: 'Dashboard / StetCSS runtime' },
   { id: 'dynamic-tailwind-cli', fixtureId: 'dynamic', adapterId: 'tailwind-cli', label: 'Dynamic / Tailwind CLI' },
   { id: 'stress-css-tailwind-vite', fixtureId: 'stress-css', adapterId: 'tailwind-vite', label: 'Stress CSS / Tailwind Vite' },
   { id: 'stress-css-browser-css', fixtureId: 'stress-css', adapterId: 'browser-css', label: 'Stress CSS / Browser CSS' },

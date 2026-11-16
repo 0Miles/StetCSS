@@ -33,11 +33,11 @@ import type {
 } from './types'
 
 export type InteractionModeId =
-  | 'master-static'
-  | 'master-runtime'
+  | 'stet-static'
+  | 'stet-runtime'
   | 'tailwind-static'
 
-type StaticInteractionModeId = Extract<InteractionModeId, 'master-static' | 'tailwind-static'>
+type StaticInteractionModeId = Extract<InteractionModeId, 'stet-static' | 'tailwind-static'>
 
 export type InteractionScenarioId =
   | 'existing-class-toggle'
@@ -60,7 +60,7 @@ interface ChromeTraceEvent {
 
 interface InteractionModeDescriptor {
   id: InteractionModeId
-  adapterId: 'master-static' | 'master-runtime' | 'tailwind-cli'
+  adapterId: 'stet-static' | 'stet-runtime' | 'tailwind-cli'
   label: string
 }
 
@@ -118,7 +118,7 @@ export interface RuntimeState {
 }
 
 interface InteractionClassModel {
-  family: 'master' | 'tailwind'
+  family: 'stet' | 'tailwind'
   body: string[]
   shell: string[]
   header: string[]
@@ -150,14 +150,14 @@ export const interactionFixtureIds = [
 
 export const interactionModes = [
   {
-    id: 'master-static',
-    adapterId: 'master-static',
-    label: 'Master CSS static'
+    id: 'stet-static',
+    adapterId: 'stet-static',
+    label: 'StetCSS static'
   },
   {
-    id: 'master-runtime',
-    adapterId: 'master-runtime',
-    label: 'Master CSS runtime'
+    id: 'stet-runtime',
+    adapterId: 'stet-runtime',
+    label: 'StetCSS runtime'
   },
   {
     id: 'tailwind-static',
@@ -181,7 +181,7 @@ export const interactionScenarios = [
   {
     id: 'new-class-toggle',
     label: 'New class toggle',
-    description: 'Toggle a class absent from initial CSS so Master runtime has to generate a rule.'
+    description: 'Toggle a class absent from initial CSS so StetCSS runtime has to generate a rule.'
   },
   {
     id: 'dom-append-remove',
@@ -216,7 +216,7 @@ export const interactionCostMetrics = [
     id: 'runtime-mutation-ms',
     label: 'Runtime rule update',
     unit: 'ms',
-    description: 'Instrumented Master CSS runtime ensure/delete class-rules time during the measured interaction, where a runtime exists.'
+    description: 'Instrumented StetCSS runtime ensure/delete class-rules time during the measured interaction, where a runtime exists.'
   },
   {
     id: 'runtime-generated-rule-count-delta',
@@ -281,7 +281,7 @@ export const interactionCostMetrics = [
 ] satisfies BenchmarkMetric[]
 
 const stetClasses = {
-  family: 'master',
+  family: 'stet',
   body: ['m:0', 'min-h:100vh', 'bg:gray-5', 'fg:slate-90', 'font:14px', 'font:system'],
   shell: ['max-w:1180px', 'mx:auto', 'p:6x', 'grid', 'gap:5x'],
   header: ['p:5x', 'r:12px', 'bg:white', 'border:1px|solid|gray-20', 'grid', 'gap:2x'],
@@ -338,7 +338,7 @@ export function createInteractionVariants(): BenchmarkVariant[] {
         adapterId: mode.adapterId,
         label: `${fixtureId} / ${mode.label} / ${scenario.label}`,
         limits: scenario.id === 'new-class-toggle'
-          ? ['Static variants are intentionally excluded because this scenario measures Master runtime rule generation.']
+          ? ['Static variants are intentionally excluded because this scenario measures StetCSS runtime rule generation.']
           : undefined
       }))
   )))
@@ -427,9 +427,9 @@ async function createInteractionCostReport(): Promise<BenchmarkReport> {
     limits: [
       'This suite measures local Chromium post-load interaction cost only; it does not publish public result tables yet.',
       'The default command is a fast internal pass with one measured round and no warmup; use INTERACTION_COST_ROUNDS and INTERACTION_COST_WARMUP_ROUNDS for review-grade repeated samples.',
-      'Master runtime variants use the built global runtime bundle and default manifest JSON.',
-      'Master static and Tailwind static variants are static-CSS browser controls; Tailwind CSS has no runtime rule-generation equivalent.',
-      'The new-class scenario is limited to Master runtime variants because it measures client-side rule generation.',
+      'StetCSS runtime variants use the built global runtime bundle and default manifest JSON.',
+      'StetCSS static and Tailwind static variants are static-CSS browser controls; Tailwind CSS has no runtime rule-generation equivalent.',
+      'The new-class scenario is limited to StetCSS runtime variants because it measures client-side rule generation.',
       'Trace-derived event names can change across Chromium versions, so raw trace artifacts are kept for review before publishing public conclusions.',
       'Browser scheduling, hardware, memory pressure, and unrelated local load can affect interaction timing.'
     ],
@@ -508,17 +508,17 @@ export async function createInteractionPage(options: {
     modeId: options.modeId,
     scenarioId: options.scenarioId,
     classes: stetClasses,
-    includeStaticClassSource: options.modeId === 'master-static',
+    includeStaticClassSource: options.modeId === 'stet-static',
     runtimeMutationStrategy: options.runtimeMutationStrategy,
     postInteractionSettleFrames: options.postInteractionSettleFrames
   })
 
-  if (options.modeId === 'master-static') {
+  if (options.modeId === 'stet-static') {
     return writeInteractionPage({
       pageSuite: options.pageSuite,
       variantId: options.variantId,
       html: addStaticHarness(sourceHtml),
-      externalCSS: await readStaticCSS(options.fixtureId, 'master-static')
+      externalCSS: await readStaticCSS(options.fixtureId, 'stet-static')
     })
   }
 
@@ -1237,8 +1237,8 @@ function readStaticCSS(fixtureId: BenchmarkFixtureId, modeId: StaticInteractionM
 }
 
 async function buildStaticCSS(fixtureId: BenchmarkFixtureId, modeId: StaticInteractionModeId) {
-  const isStet = modeId === 'master-static'
-  const toolId = isStet ? 'master-static-cli' : 'tailwind-cli'
+  const isStet = modeId === 'stet-static'
+  const toolId = isStet ? 'stet-static-cli' : 'tailwind-cli'
   const tool = staticBuildTools.find((candidate) => candidate.id === toolId)
   if (!tool) throw new Error(`Unknown static build tool: ${toolId}`)
 
@@ -1532,9 +1532,9 @@ async function assertInteractionPageReady(page: Page, modeId: InteractionModeId)
     throw new Error(`Expected interaction style probe text-align:center, received ${state.textAlign}.`)
   }
 
-  if (modeId === 'master-runtime') {
+  if (modeId === 'stet-runtime') {
     if (!state.runtimeAvailable) throw new Error(`${modeId} did not expose globalThis.stetCSSRuntime.`)
-    if (state.htmlHidden) throw new Error('Master runtime interaction page did not reveal the hidden html element.')
+    if (state.htmlHidden) throw new Error('StetCSS runtime interaction page did not reveal the hidden html element.')
   }
 }
 
@@ -1695,7 +1695,7 @@ function getInteractionFixtureShape(fixtureId: BenchmarkFixtureId) {
 
 function isScenarioSupported(fixtureId: BenchmarkFixtureId, modeId: InteractionModeId, scenarioId: InteractionScenarioId) {
   if (scenarioId === 'new-class-toggle') {
-    return fixtureId === 'dynamic' && modeId === 'master-runtime'
+    return fixtureId === 'dynamic' && modeId === 'stet-runtime'
   }
 
   if (fixtureId === 'dashboard') {
