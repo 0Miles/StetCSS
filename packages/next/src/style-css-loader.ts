@@ -116,7 +116,8 @@ export default function masterCSSStyleCSSLoader(this: LoaderContext, source: str
   }
   transformStyleSource(this.resourcePath, source, options, projectDir)
     .then((result) => {
-      // A new source file changes the class set without touching any dependency.
+      // Under webpack the entry writes the generated CSS: rerun it on every build so a new
+      // source file, which touches no dependency, still reaches the CSS.
       if ('entry' in result && options.writeOutput) this.cacheable?.(false)
       for (const dependency of new Set(result.dependencies)) {
         if (dependencies.has(dependency)) continue
