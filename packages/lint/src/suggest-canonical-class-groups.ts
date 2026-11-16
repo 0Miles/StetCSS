@@ -1,4 +1,4 @@
-import generateRules from './generate-rules'
+import { tryGenerate } from '@stet-css/engine'
 import type { GeneratedRule, MasterCSS } from '@stet-css/engine'
 import { inspectMasterCSSClass } from '@stet-css/engine/inspect'
 import {
@@ -53,7 +53,7 @@ function resolveOptions(options: CanonicalClassNameOptions): ResolvedCanonicalCl
 
 function getEntry(className: string, index: number, css: MasterCSS, options: ResolvedCanonicalClassNameOptions): ClassGroupEntry | undefined {
   const canonicalClassName = suggestCanonicalClassName(className, css, options) || className
-  const rules = generateRules(css, canonicalClassName)
+  const rules = tryGenerate(css, canonicalClassName).rules
   if (rules.length !== 1) return
 
   const rule = rules[0]
@@ -124,7 +124,7 @@ function getCompositionSuggestion(entries: ClassGroupEntry[], recipe: Compositio
 
   for (const candidateClassName of getCandidateClassNames(entries, recipe, css, options)) {
     if (entries.some((entry) => entry.canonicalClassName === candidateClassName)) continue
-    const candidateRules = generateRules(css, candidateClassName)
+    const candidateRules = tryGenerate(css, candidateClassName).rules
     if (candidateRules.length !== 1) continue
 
     const candidateRule = candidateRules[0]

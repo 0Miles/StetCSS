@@ -14,6 +14,7 @@ import type {
 } from '@stet-css/schema/manifest'
 import { flattenMasterCSSManifestVariables } from '@stet-css/schema/manifest'
 import UtilityType from '@stet-css/schema/utility-type'
+import { collectCSSVariableReferences } from '@stet-css/lexer'
 import { MATCH_NAME_BOUNDARY } from './common'
 import builtinKeyAliases from './key-aliases'
 import builtinNativeValueNamespaces, { type MasterCSSBuiltinNativeValueNamespace } from './native-value-namespaces'
@@ -252,14 +253,15 @@ function scopeVariableToDeclaredModes(definition: ManifestVariableEntry, setting
     delete scoped.modes
   }
   if (scoped.value === undefined) {
-    const fallback = definition.modes[settings?.defaultMode || ''] || definition.modes.light || entries[0][1]
+    const fallback = definition.modes[settings?.defaultMode || ''] || definition.modes[PRESET_MODES[0]] || entries[0][1]
     scoped.type = fallback.type
     scoped.value = fallback.value
     if (fallback.numeric) scoped.numeric = fallback.numeric
   }
-  const values = [scoped.value, ...kept.map(([, each]) => each.value)].map(String)
   if (scoped.dependencies) {
-    scoped.dependencies = scoped.dependencies.filter((name) => values.some((value) => new RegExp(`--${name}(?![-\\w])`).test(value)))
+    const referenced = new Set([scoped.value, ...kept.map(([, each]) => each.value)]
+      .flatMap((value) => [...collectCSSVariableReferences(String(value))]))
+    scoped.dependencies = scoped.dependencies.filter((name) => referenced.has(name))
   }
   return scoped
 }

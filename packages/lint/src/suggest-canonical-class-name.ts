@@ -1,4 +1,4 @@
-import generateRules from './generate-rules'
+import { tryGenerate } from '@stet-css/engine'
 import {
   builtinKeyAliases,
   builtinNativeValueNamespaces,
@@ -114,7 +114,7 @@ function getUtilityPropertySignatures(css: MasterCSS, utility: MasterCSS['define
   const variableKeys = utility.variables ? [...utility.variables.keys()] : []
   const sampleKey = variableKeys[0]
   if (!sampleKey) return []
-  const rules = generateRules(css, `${key}:${sampleKey}`)
+  const rules = tryGenerate(css, `${key}:${sampleKey}`).rules
   if (!rules.length) return []
   return [...new Set(rules.map(getDeclarationPropertySignature).filter(Boolean))]
 }
@@ -137,7 +137,7 @@ function buildRecommendationIndex(css: MasterCSS): RecommendationIndex {
     if (utility.type === UtilityType.Semantic && utility.layer === 'utilities') {
       for (const name of getMatcherNames(utility)) {
         if (name.includes(':')) continue
-        const rules = generateRules(css, name)
+        const rules = tryGenerate(css, name).rules
         if (!rules.length || rules.some((rule) => rule.layerName !== 'utilities')) continue
         pushMapValue(staticCandidatesBySignature, getRulesSignature(rules), name)
       }
@@ -406,7 +406,7 @@ export default function suggestCanonicalClassName(
 
   for (const candidate of uniqueCandidates) {
     if (candidate.className === className) continue
-    const candidateRules = generateRules(css, candidate.className)
+    const candidateRules = tryGenerate(css, candidate.className).rules
     if (!candidateRules.length || !hasSameCanonicalRuleShape(sourceRules, candidateRules)) continue
     return candidate.className
   }

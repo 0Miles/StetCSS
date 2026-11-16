@@ -3,7 +3,7 @@ import type { MasterCSS } from '@stet-css/core'
 import defaultManifest from './default-manifest'
 import validateCSS from './validate-css'
 import { createCSSWithNativeDeclarations } from './native-declaration'
-import { isUndeclaredModeError } from '@stet-css/core'
+import { tryGenerate } from '@stet-css/core'
 
 /**
  * @description Report errors for a given class. For pure validity, use the more performant `isClassValid()`.
@@ -17,18 +17,11 @@ export default function validate(
   matched: boolean,
   errors: SyntaxError[]
 } {
-  let rules
-  try {
-    rules = css.generate(syntax)
-  } catch (error) {
-    if (!isUndeclaredModeError(error)) throw error
+  const { rules, error } = tryGenerate(css, syntax)
+  if (error) {
     return {
       matched: false,
-      errors: [{
-        class: syntax,
-        message: error.message,
-        rawMessage: 'UndeclaredMode'
-      }]
+      errors: [{ class: syntax, message: error.message, rawMessage: 'UndeclaredMode', code: 'undeclared-mode' }]
     }
   }
   if (rules.length) {

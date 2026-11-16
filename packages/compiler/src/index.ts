@@ -1,3 +1,4 @@
+import parseThemePrelude from './theme-prelude'
 import { existsSync, readFileSync, realpathSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, extname, isAbsolute, resolve } from 'node:path'
@@ -73,11 +74,10 @@ interface ResolveCSSImportGraphFileOptions extends ResolveCSSImportGraphOptions 
 }
 
 function collectThemeModeNames(source: string, target: Set<string>) {
+  if (!source.includes('@theme')) return
   for (const range of collectCSSDirectiveRanges(source)) {
     if (range.name !== 'theme') continue
-    const mode = source.slice(range.preludeRange.start, range.preludeRange.end)
-      .split(/\s+/)
-      .find((part) => part && part !== 'inline' && part !== 'static')
+    const { mode } = parseThemePrelude(source.slice(range.preludeRange.start, range.preludeRange.end).trim())
     if (mode) target.add(mode)
   }
 }
@@ -307,7 +307,7 @@ function resolveCSSImportGraphWithReader(
       options.onReference?.(reference, fromFile)
     },
     onSource(fileSource, inPackage) {
-      if (fileSource.includes('@theme')) collectThemeModeNames(fileSource, inPackage ? packageModes : ownModes)
+      collectThemeModeNames(fileSource, inPackage ? packageModes : ownModes)
     }
   })
   const implicitModes = [...packageModes].filter((mode) => !ownModes.has(mode))

@@ -8,9 +8,6 @@ export const PRESET_MODES: readonly string[] = ['light', 'dark']
  * catch it with {@link isUndeclaredModeError} and report the class instead.
  */
 export class UndeclaredModeError extends Error {
-  readonly mode: string
-  readonly declaredModes: readonly string[]
-
   constructor(subject: string, mode: string, declaredModes: readonly string[]) {
     const declared = declaredModes.length
       ? `declared modes: ${declaredModes.map((each) => `"${each}"`).join(', ')}`
@@ -18,14 +15,25 @@ export class UndeclaredModeError extends Error {
     super(`${subject} uses mode "${mode}", which is not declared (${declared}). `
       + `Declaring any @theme <mode> {} replaces the default light and dark modes; add @theme ${mode} {} to use @${mode}.`)
     this.name = 'UndeclaredModeError'
-    this.mode = mode
-    this.declaredModes = [...declaredModes]
   }
 }
 
 /** Matches by name so a second copy of the engine (bundled tooling) still recognizes the error. */
 export function isUndeclaredModeError(error: unknown): error is UndeclaredModeError {
   return error instanceof Error && error.name === 'UndeclaredModeError'
+}
+
+/**
+ * `css.generate()` for tooling and the runtime: a class naming an undeclared mode yields no rules
+ * plus the error to report, instead of throwing. Build paths call `generate()` and fail.
+ */
+export function tryGenerate<R>(css: { generate(className: string): R[] }, className: string): { rules: R[], error?: UndeclaredModeError } {
+  try {
+    return { rules: css.generate(className) }
+  } catch (error) {
+    if (!isUndeclaredModeError(error)) throw error
+    return { rules: [], error }
+  }
 }
 
 /**
