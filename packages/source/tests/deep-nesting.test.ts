@@ -98,9 +98,10 @@ function extractOnWorkerInChild(file: string, content: string) {
  * Guards: a JS/TS file nested deeper than oxc-parser's native stack allows
  * (generated data, minified bundles) kills the whole build or dev server with
  * a signal no try/catch can catch, so the file must never reach oxc. The class
- * must still come back through the text-extraction fallback. Reverse check:
- * removing the prescan from `extractOxcClasses` turns only these six cases
- * red, each child killed by SIGILL.
+ * must still come back. Reverse check: removing the prescan from
+ * `parseOxcOnSourceStack` keeps these green, because the stack sized to the
+ * source now carries them; language's dense-brackets case guards the prescan
+ * in the shared module.
  */
 describe.concurrent('JavaScript and TypeScript nested 20,000 deep', () => {
   test.each(shapes)('%s survive extraction and keep their classes', async (_, file, nest) => {
