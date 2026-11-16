@@ -1,4 +1,4 @@
-import { compareRulePriority, layerOrder, type GeneratedRule, type MasterCSS } from '@stet-css/engine'
+import { compareRulePriority, getLayerRank, layerOrder, type GeneratedRule, type MasterCSS } from '@stet-css/engine'
 import UtilityType from '@stet-css/schema/utility-type'
 
 const UNKNOWN_PROPERTY_GROUP_ORDER = 99
@@ -21,8 +21,7 @@ interface ClassSortDescriptor extends ReadablePropertyOrder {
 }
 
 function getLayerOrder(layerName?: string) {
-  const index = layerOrder.indexOf(layerName || 'utilities')
-  return index === -1 ? layerOrder.length : index
+  return getLayerRank(layerName || 'utilities')
 }
 
 function getConditionGroupOrder(rule: { conditions?: unknown, mode?: unknown, selectorNodes?: unknown[] }) {
