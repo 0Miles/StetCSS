@@ -242,9 +242,9 @@ async function resolveCSSEntryFiles(cwd: string, resolver?: CreateMasterCSSInspe
 
 /**
  * The manifest the build compiles from the project's entries, with their tokens, modes and
- * utilities, so the scanner judges classes the way the build does. A broken entry fails the
+ * utilities, so the scanner judges classes the way the build does. Any broken entry fails the
  * build and is reported per entry by `registerManagedCSSEntries`; until it is fixed, classes
- * fall back to the preset manifest.
+ * from every entry fall back to the preset manifest.
  */
 async function loadEntryManifest(cwd: string, entryFiles: string[]) {
   if (!entryFiles.length) return undefined
@@ -423,11 +423,14 @@ export async function createMasterCSSInspectionReport(options: CreateMasterCSSIn
 
   try {
     const entryFiles = await resolveCSSEntryFiles(cwd, options.resolveExistingFile)
-    const scanner = new CSSScanner({ manifest: await loadEntryManifest(cwd, entryFiles) }, cwd)
+    const scanner = new CSSScanner({}, cwd)
     scanner.on('init', (scannerOptions: ScannerOptions) => {
       scannerOptions.verbose = 0
     })
-    await scanner.init()
+    // The entry manifest goes to `init` only, not to the constructor's options: as an explicit
+    // plan it would make `createExtractedCSSResult` recompile core instead of reusing the
+    // prebuilt artifact, the way the root command does.
+    await scanner.init({ manifest: await loadEntryManifest(cwd, entryFiles) })
     const stylesheetInspection = await registerManagedCSSEntries(scanner, styleCSSSources, entryFiles)
     diagnostics.push(...stylesheetInspection.entries.flatMap((entry) => entry.warnings.map((warning) => ({
       code: 'stylesheet-warning' as const,
