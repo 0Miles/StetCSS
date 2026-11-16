@@ -99,7 +99,6 @@ test('loads CSS manifest resources', async () => {
         entry,
         tokens
       ],
-      nativeClassNames: [],
       nativeCSS: '',
       css: '',
       generatedCSS: ''
@@ -193,7 +192,7 @@ test('loads project-level CSS manifest entries', async () => {
   try {
     const { entry } = writeCSSFixture(cwd)
     writeFileSync(join(cwd, 'ignored.css'), `
-      @preserve native;
+      @source "./ignored.tsx";
       @layer components {
         .ignored {
           color: red;
@@ -204,7 +203,7 @@ test('loads project-level CSS manifest entries', async () => {
     expect(hasMasterCSSManifestEntrypoint('@master entry;')).toBe(true)
     expect(hasMasterCSSManifestEntrypoint('@master;')).toBe(false)
     expect(hasMasterCSSManifestEntrypoint('@master global;')).toBe(false)
-    expect(hasMasterCSSManifestEntrypoint('@preserve native;')).toBe(false)
+    expect(hasMasterCSSManifestEntrypoint('@source "./page.tsx";')).toBe(false)
     expect(hasMasterCSSManifestEntrypoint('@import "@stet-css/core/index.css";')).toBe(false)
     await expect(findCSSManifestEntryFiles(cwd)).resolves.toStrictEqual([entry])
 

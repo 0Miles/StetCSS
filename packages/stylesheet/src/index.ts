@@ -71,6 +71,11 @@ export interface CompileStyleCSSOptions extends CompileCSSOptions {
   loadSass?: (projectDir?: string) => SassModule
 }
 
+export interface CompileRenderedStyleCSSOptions extends CompileStyleCSSOptions {
+  /** Classes whose generated rules are rendered; native CSS is always kept. */
+  classes?: string[]
+}
+
 export interface CompileRenderedStyleCSSResult extends CompileCSSResult {
   emittedGlobals: Required<MasterCSSEmittedGlobals>
   manifest: MasterCSSManifest
@@ -151,14 +156,11 @@ export interface ScannerState {
   css: StylesheetCSS
   latentClasses: Set<string>
   validClasses: Set<string>
-  usedNativeClasses: Set<string>
-  nativeClassNames: Set<string>
   emit?: (event: 'change') => unknown
 }
 
 export interface StyleCSSSource {
   source: string
-  pruneNativeCSS: boolean
   masterCSS: boolean
   directives: StylesheetDirectives
   dependencies: string[]
@@ -493,7 +495,6 @@ export function createStyleCSSHostSource(source: string, options: CreateStyleCSS
 
 function canUseDefaultMasterCSSPackageArtifact(options: CompileStyleCSSOptions = {}) {
   return !options.baseManifest
-    && !options.classes?.length
     && !options.loadSass
     && !options.onWarning
     && options.preserveNativeCSS !== false
@@ -583,11 +584,6 @@ export function hasMasterEntryDirective(source: string) {
   return findStylesheetDirectiveStatements(source).some((statement) => statement.name === MASTER_CSS_ENTRY_DIRECTIVE_NAME)
 }
 
-export function hasPreserveNativeDirective(source: string) {
-  return findStylesheetDirectiveStatements(source)
-    .some((statement) => statement.atRuleName === 'preserve' && statement.modifiers.includes('native'))
-}
-
 export function isMasterStyleSource(source: string) {
   return hasMasterStyleEntrypoint(source)
 }
@@ -649,13 +645,14 @@ async function compileStyleCSSResult(
 export async function compileRenderedStyleCSS(
   id: string,
   source: string,
-  options: CompileStyleCSSOptions = {}
+  options: CompileRenderedStyleCSSOptions = {}
 ): Promise<CompileRenderedStyleCSSResult> {
-  const { compileOptions, finalizedResult, result } = await compileStyleCSSResult(id, source, options)
+  const { classes, ...compileOptions } = options
+  const { finalizedResult, result } = await compileStyleCSSResult(id, source, compileOptions)
   const renderedCSS = renderCompiledManifestCSS({
     manifest: finalizedResult.manifest,
     nativeCSS: result.nativeCSS,
-    classNames: compileOptions.classes
+    classNames: classes
   })
   return {
     ...result,
@@ -797,7 +794,6 @@ export function getScannerClasses(scanner: ScannerState) {
   return filterExcludedClasses([...new Set([
     ...(scanner.latentClasses || []),
     ...(scanner.validClasses || []),
-    ...(scanner.usedNativeClasses || []),
     ...(scanner.options.safelist || [])
   ])], scanner.options.blocklist)
 }
@@ -842,23 +838,6 @@ export function isStylesheetSourceFile(file: string, context: StylesheetSourceCo
   return isStylesheetScopeFile(file, createStylesheetSourceScope(context))
 }
 
-export function refreshScannerNativeClasses(scanner: ScannerState, nativeClassNames: string[]) {
-  let changed = false
-  for (const className of nativeClassNames) {
-    if (!scanner.nativeClassNames.has(className)) {
-      scanner.nativeClassNames.add(className)
-      changed = true
-    }
-    if (scanner.latentClasses.has(className) && !scanner.usedNativeClasses.has(className)) {
-      scanner.usedNativeClasses.add(className)
-      changed = true
-    }
-  }
-  if (changed) {
-    scanner.emit?.('change')
-  }
-}
-
 export async function registerStyleCSSSource(
   scanner: ScannerState,
   styleCSSSources: StyleCSSSources,
@@ -884,7 +863,6 @@ export async function registerStyleCSSSource(
       dependencies: []
     }
   const masterCSS = hasMasterCSSImport(resolvedSource.source)
-  const pruneNativeCSS = !collectedDirectives.directives.preserveNative && isMasterStyleSource(resolvedSource.source)
   const sourceWithoutImports = removeCSSImportStatements(resolvedSource.source)
   const cleanSource = removeMasterStyleDirectives(sourceWithoutImports).code
   const defaultArtifact = masterCSS
@@ -909,15 +887,11 @@ export async function registerStyleCSSSource(
   ])]
   styleCSSSources.set(filename, {
     source: cleanSource,
-    pruneNativeCSS,
     masterCSS,
     directives: collectedDirectives.directives,
     dependencies: result.dependencies || [],
     sourceDependencies
   })
-  if (pruneNativeCSS) {
-    refreshScannerNativeClasses(scanner, result.nativeClassNames)
-  }
   return result
 }
 
@@ -1012,6 +986,7 @@ export async function createExtractedCSSResult(options: CreateExtractedCSSOption
     includeMasterBaseCSS = true,
     sources,
     ignorePaths,
+    classes: callerClasses,
     ...compileOptions
   } = options
   const sourceContext: StylesheetSourceContext = {
@@ -1023,15 +998,15 @@ export async function createExtractedCSSResult(options: CreateExtractedCSSOption
   }
   // Classes a build integration collected from its own module graph; the project's class
   // set is added on top until every integration reads only the project's files.
-  const moduleClasses = compileOptions.classes ?? getScannerClasses(scanner)
+  const moduleClasses = callerClasses ?? getScannerClasses(scanner)
 
   // No stylesheet entry, manifest or caller classes: the integration serves the scanner's
   // own CSS from its module scan. A caller that scans no modules passes `classes: []`.
-  if (!planOption && !compileOptions.classes && !styleCSSSources?.size) {
+  if (!planOption && !callerClasses && !styleCSSSources?.size) {
     return createEmptyExtractedCSSResult(includeGeneratedCSS ? scanner.css.text : '')
   }
 
-  // One class set for generated rules and every entry's native CSS pruning.
+  // One class set for every entry's generated rules; native CSS is kept as written.
   const classes = await collectStylesheetScopeClasses(createStylesheetSourceScope(sourceContext), moduleClasses)
 
   const hasMasterCSS = hasMasterCSSPackageSource(styleCSSSources)
@@ -1060,10 +1035,7 @@ export async function createExtractedCSSResult(options: CreateExtractedCSSOption
     Array.from(styleCSSSources || [])
       .map(([id, styleSource]) => compileStyleCSS(id, styleSource.source, {
         ...compileOptions,
-        baseManifest: styleSource.masterCSS ? masterCSSManifest : compileOptions.baseManifest,
-        classes: styleSource.pruneNativeCSS
-          ? classes
-          : undefined
+        baseManifest: styleSource.masterCSS ? masterCSSManifest : compileOptions.baseManifest
       }))
   )
   for (const result of entryStyleResults) finalize(result)

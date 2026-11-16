@@ -6,7 +6,7 @@
 
 - Source adapters and raw candidate extraction (`extractClassCandidates`) → `@stet-css/source`.
 - File watching, output writing and build lifecycle → the CLI and build plugins.
-- Stylesheet entries, CSS-first compilation, native CSS pruning, extraction directives, generated CSS composition and emittedGlobals output → `@stet-css/stylesheet`.
+- Stylesheet entries, CSS-first compilation, extraction directives, generated CSS composition and emittedGlobals output → `@stet-css/stylesheet`.
 - Manifest discovery and loading → `@stet-css/project`.
 
 ## Risks
