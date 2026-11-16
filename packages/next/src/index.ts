@@ -29,7 +29,10 @@ type TurbopackRuleConfigCollection = TurbopackRules[string]
 const MASTER_CSS_MANIFEST_RESOURCE_QUERY = new RegExp(MASTER_CSS_MANIFEST_QUERY.slice(1))
 const MASTER_CSS_MANIFEST_IMPORT_CONTENT_PATTERN = new RegExp(`\\${MASTER_CSS_MANIFEST_QUERY}`)
 const MASTER_CSS_VIRTUAL_MANIFEST_PATH_PATTERN = createVirtualDefaultManifestModulePathPattern()
-/** Stylesheet entries and local stylesheets that use directives the style loader lowers. */
+/**
+ * Stylesheet entries, and local stylesheets with directives the style loader lowers or
+ * rejects (`@dark` and `@light` were folded into `@variant`).
+ */
 const MASTER_CSS_STYLE_CONTENT_PATTERN = new RegExp(`${createMasterCSSManifestEntryPattern().source}|@(compose|variant|reference|dark|light)\\b`)
 const STYLE_FILE_PATTERN = /\.(css|scss|sass)$/
 
@@ -224,8 +227,8 @@ function applyMasterCSSTurbopackConfig(turbopack: TurbopackConfig = {}, setup: M
 /**
  * Adds StetCSS to a Next.js config. Stylesheet entries (`@import '@stet-css/core'`) import
  * one generated CSS module whose content is computed from the project's files, for both
- * Turbopack and `--webpack`. Returns the config itself, so other `withX` wrappers compose
- * on either side.
+ * Turbopack and `--webpack`. Returns a plain config object synchronously, so other `withX`
+ * wrappers compose on either side.
  */
 export function withMasterCSS<T extends NextConfig>(nextConfig: T = {} as T, options: Options = {}): T {
   const projectDir = process.cwd()
