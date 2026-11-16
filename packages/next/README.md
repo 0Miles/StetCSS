@@ -59,10 +59,25 @@ Use these virtual modules when application code should receive the same manifest
 
 ## Options
 
-The `options` object is passed to `withMasterCSS(nextConfig, options)`.
+```js
+export default withMasterCSS(nextConfig, {
+  adapters: [{
+    name: 'markdown-attributes',
+    test: /\.md$/,
+    async extract({ content }) {
+      // `{.fg:red .bold}` attribute lists
+      return [...content.matchAll(/\{\.([^}]*)\}/g)].flatMap((match) => match[1].split(/\s+\.?/))
+    }
+  }]
+})
+```
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `scannerOptions` | `ScannerOptions` | `{}` | Scanner options; the only key is `adapters`, and any other key throws. Use `@safelist`, `@blocklist` and `@source not` in the CSS entry. |
+| `adapters` | `SourceAdapter[]` | `[]` | Custom source adapters. For each file the class set reads, the first adapter whose `test` matches extracts its classes, custom ones before the built-in ones. |
+
+`adapters` is the only option. Any other key throws and names `adapters`; a removed key such as `mode`, `injectRuntime` or `scanner` names its replacement, and class rules (`@safelist`, `@blocklist`, `@source`, `@source not`) go in the CSS entry. An adapter sees the files the class set reads: the project's source files and the entry's `@source` files.
+
+Custom adapters need webpack: run `next dev --webpack` and `next build --webpack`. Turbopack passes loader options to its workers as JSON, which drops the adapter functions, so `withMasterCSS` throws when Turbopack runs with custom adapters.
 
 See the [Next.js installation guide](https://rc.css.master.co/guide/installation/nextjs) for a full setup.
