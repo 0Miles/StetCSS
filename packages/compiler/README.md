@@ -42,7 +42,7 @@ Compiler results include the compiled manifest, dependency paths, warnings, nati
 
 Every stylesheet an import graph reads, the entry included, must be a regular file of at most 16 MiB. One import graph inlines at most 10,000 stylesheets and 64 MiB, counting each repeated import of the same file; past these limits compilation fails with an error naming the file.
 
-Each `@reference` compiles the referenced stylesheet, so one compile expands at most 256 `@reference` directives across its whole reference tree, counting each repeated reference of the same file. The stylesheets referenced files import count toward the compile's 10,000-stylesheet and 64 MiB limits. Past these limits compilation fails with an error naming the file before any referenced stylesheet is compiled.
+Each `@reference` compiles the referenced stylesheet, so one compile expands at most 256 `@reference` directives across its whole reference tree, counting each repeated reference of the same file; `compileProjectManifest()` gives each entry stylesheet its own budget. The stylesheets referenced files import count toward the compile's 10,000-stylesheet and 64 MiB limits. Past these limits compilation fails before any referenced stylesheet is compiled, with an error naming the file (the reference chain that reached it, for the `@reference` limit).
 
 ### Browser entry
 
