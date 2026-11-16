@@ -1,4 +1,3 @@
-import { EventEmitter } from 'node:events'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -49,7 +48,7 @@ export function createProjectContext({
   writeFileSync(join(root, 'index.html'), html)
   return {
     config: { command, root },
-    scanner: Object.assign(new EventEmitter(), {
+    scanner: {
       cwd: root,
       options: { safelist: [] },
       slotCSSRule: SLOT_CSS_RULE,
@@ -57,7 +56,7 @@ export function createProjectContext({
       config: {},
       latentClasses: new Set(),
       validClasses: new Set()
-    })
+    }
   } as any
 }
 

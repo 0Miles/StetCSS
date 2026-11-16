@@ -196,8 +196,8 @@ describe('LocalComposePlugin', () => {
 
   /**
    * Guards dev updates of a CSS entry that local compose modules depend on: the compose modules
-   * reload, and the edited entry still takes its own update.
-   * Reverse check: returning `[]` once the compose modules reloaded in `local-compose.ts` turns
+   * reload, and the hook returns nothing so the edited entry still takes its own update.
+   * Reverse check: returning `[]` after the compose modules reload in `local-compose.ts` turns
    * only this test red.
    */
   test('reloads local compose modules without forcing a full reload when project manifest dependencies change', async () => {
@@ -233,7 +233,7 @@ describe('LocalComposePlugin', () => {
       expect(invalidateModule).toHaveBeenCalledWith(module)
       expect(reloadModule).toHaveBeenCalledWith(module)
       expect(send).not.toHaveBeenCalled()
-      expect(result).toEqual([changedModule])
+      expect(result).toBeUndefined()
     } finally {
       rmSync(root, { recursive: true, force: true })
     }
