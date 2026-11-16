@@ -15,7 +15,7 @@ import {
 import { toUniversalManifestFacadeModule } from '@stet-css/integration/manifest-facade'
 import { collectStyleCSSDependencies } from '@stet-css/stylesheet'
 
-const MASTER_CSS_MANIFEST_IMPORT_PATTERN = /(\bimport\s+(?:[^'"]*?\s+from\s*)?|\bexport\s+[^'"]*?\s+from\s*|\bimport\s*\(\s*)(['"])([^'"]+)\2/g
+const STET_CSS_MANIFEST_IMPORT_PATTERN = /(\bimport\s+(?:[^'"]*?\s+from\s*)?|\bexport\s+[^'"]*?\s+from\s*|\bimport\s*\(\s*)(['"])([^'"]+)\2/g
 
 interface LoaderContext {
   resourcePath: string
@@ -98,7 +98,7 @@ async function transformManifestImports(context: LoaderContext, source: string) 
   let lastIndex = 0
   let matched = false
 
-  for (const match of source.matchAll(MASTER_CSS_MANIFEST_IMPORT_PATTERN)) {
+  for (const match of source.matchAll(STET_CSS_MANIFEST_IMPORT_PATTERN)) {
     const [fullMatch, prefix, quote, request] = match
     if (!isStetCSSManifestRequest(request)) continue
     if (match.index === undefined) continue
@@ -115,7 +115,7 @@ async function transformManifestImports(context: LoaderContext, source: string) 
   return result + source.slice(lastIndex)
 }
 
-export default function masterCSSManifestImportLoader(this: LoaderContext, source: string) {
+export default function stetCSSManifestImportLoader(this: LoaderContext, source: string) {
   const callback = this.async?.()
   if (!callback) {
     throw new Error('[@stet-css/next] CSS manifest import loader requires an async loader context.')

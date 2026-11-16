@@ -10,7 +10,7 @@ import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
 import { VIRTUAL_EMITTED_GLOBALS_ID } from '@stet-css/integration/emitted-globals-module'
 import { createStylesheetDirectives } from '@stet-css/stylesheet'
 import { transformStyleSource } from '../src/utils/transform-style-source'
-import masterCSSStyleCSSLoader from '../src/style-css-loader'
+import stetCSSStyleCSSLoader from '../src/style-css-loader'
 import { addFileDependency } from '../src/utils/file-dependencies'
 import path from 'node:path'
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
@@ -125,7 +125,7 @@ function makePlugin(options: Record<string, unknown> = {}, cwd = process.cwd()) 
 function runStyleCSSLoader(root: string, resourcePath: string, source: string) {
   const dependencies: string[] = []
   return new Promise<string>((resolve, reject) => {
-    masterCSSStyleCSSLoader.call({
+    stetCSSStyleCSSLoader.call({
       resourcePath,
       rootContext: root,
       addDependency: (dependency) => dependencies.push(dependency),

@@ -95,7 +95,7 @@ async function transformStyleSource(resourcePath: string, source: string, option
   return { code: source, dependencies: [] }
 }
 
-export default function masterCSSStyleCSSLoader(this: LoaderContext, source: string) {
+export default function stetCSSStyleCSSLoader(this: LoaderContext, source: string) {
   const callback = this.async?.()
   if (!callback) {
     throw new Error('[@stet-css/next] Style CSS loader requires an async loader context.')

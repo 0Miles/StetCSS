@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSyn
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import masterCSSManifestLoader from '../src/css-manifest-loader'
+import stetCSSManifestLoader from '../src/css-manifest-loader'
 
 let fixtureDir: string | undefined
 
@@ -18,7 +18,7 @@ function runManifestLoader(context: {
   addDependency?: (dependency: string) => void
 }) {
   return new Promise<string>((resolve, reject) => {
-    masterCSSManifestLoader.call({
+    stetCSSManifestLoader.call({
       ...context,
       async: () => (error: Error | null, result?: string) => {
         if (error) {
@@ -119,7 +119,7 @@ describe('css manifest loader', () => {
 
       expect(source).toMatch(/^export default \{"version":1/)
       expect(source).toContain('#123')
-      expect(source).not.toContain('loadMasterCSSManifestFromImport')
+      expect(source).not.toContain('loadStetCSSManifestFromImport')
     } finally {
       if (originalNodeEnv === undefined) {
         delete env.NODE_ENV

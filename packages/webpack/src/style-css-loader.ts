@@ -40,7 +40,7 @@ function shouldAddStyleDependencies(resourcePath: string, source: string, projec
   }
 }
 
-export default function masterCSSStyleCSSLoader(this: LoaderContext, source: string) {
+export default function stetCSSStyleCSSLoader(this: LoaderContext, source: string) {
   const callback = this.async?.()
   if (!callback) {
     throw new Error('[@stet-css/webpack] Style CSS loader requires an async loader context.')

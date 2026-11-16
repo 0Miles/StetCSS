@@ -58,9 +58,9 @@ function writeFixture(fixtureDir: string, compose = 'inline-flex') {
   }, null, 2))
   const nextIntegrationURL = pathToFileURL(join(packageDir, 'dist/index.js')).href
   writeFileSync(join(fixtureDir, 'next.config.js'), [
-    `import { withMasterCSS } from ${JSON.stringify(nextIntegrationURL)}`,
+    `import { withStetCSS } from ${JSON.stringify(nextIntegrationURL)}`,
     '',
-    `export default withMasterCSS({ reactStrictMode: true })`,
+    `export default withStetCSS({ reactStrictMode: true })`,
     ''
   ].join('\n'))
   writeFileSync(join(fixtureDir, 'app/layout.jsx'), [

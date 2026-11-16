@@ -1,4 +1,4 @@
-import manifest from './master-css-manifest'
+import manifest from './stet-css-manifest'
 
 function getVariable(namespace, key) {
   return manifest.variables?.[namespace]?.find((variable) =>

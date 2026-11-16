@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { NextConfig } from 'next'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import withMasterCSS from '../src'
+import withStetCSS from '../src'
 import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
 
 type WebpackConfig = Parameters<NonNullable<NextConfig['webpack']>>[0]
@@ -44,15 +44,15 @@ function findLoaders(rules: unknown[], file: string) {
     .filter((loader) => loader.loader?.endsWith(file))
 }
 
-describe('withMasterCSS', () => {
+describe('withStetCSS', () => {
   /**
    * Guards #57: an outer wrapper cannot spread a Promise, as static mode used to return, and
-   * must still reach the Turbopack rules and webpack hook withMasterCSS added.
-   * Reverse check: making withMasterCSS return `Promise.resolve(config)` turns it red.
+   * must still reach the Turbopack rules and webpack hook withStetCSS added.
+   * Reverse check: making withStetCSS return `Promise.resolve(config)` turns it red.
    */
   it('composes inside another wrapper and keeps both webpack hooks', () => {
     const onWebpack = vi.fn()
-    const nextConfig = withX(withMasterCSS({ reactStrictMode: true }), onWebpack)
+    const nextConfig = withX(withStetCSS({ reactStrictMode: true }), onWebpack)
 
     expect(nextConfig).not.toBeInstanceOf(Promise)
     expect(nextConfig.reactStrictMode).toBe(true)
@@ -74,7 +74,7 @@ describe('withMasterCSS', () => {
    * Reverse check: removing `master` from the content pattern turns only this test red.
    */
   it('sends stylesheets with removed @master at-rules to the style loader under Turbopack', () => {
-    const nextConfig = withMasterCSS({} as NextConfig)
+    const nextConfig = withStetCSS({} as NextConfig)
     const styleRule = (nextConfig.turbopack!.rules!['*'] as any[])
       .find((rule) => findLoaders([rule], 'style-css-loader.js').length)
     const content = styleRule.condition.all.find((condition: { content?: RegExp }) => condition.content).content as RegExp
@@ -85,13 +85,13 @@ describe('withMasterCSS', () => {
   })
 
   /**
-   * Guards the reverse order: withMasterCSS must chain the inner wrapper's webpack hook, or that
+   * Guards the reverse order: withStetCSS must chain the inner wrapper's webpack hook, or that
    * wrapper's loaders and aliases silently disappear.
-   * Reverse check: not calling the user's `webpack` from withMasterCSS turns it red.
+   * Reverse check: not calling the user's `webpack` from withStetCSS turns it red.
    */
   it('wraps another wrapper and still runs its webpack hook', () => {
     const onWebpack = vi.fn()
-    const nextConfig = withMasterCSS(withX({}, onWebpack))
+    const nextConfig = withStetCSS(withX({}, onWebpack))
 
     const webpackConfig = runWebpack(nextConfig)
 
@@ -101,12 +101,12 @@ describe('withMasterCSS', () => {
   })
 
   /**
-   * Guards that withMasterCSS adds to the user's Turbopack config instead of replacing it.
+   * Guards that withStetCSS adds to the user's Turbopack config instead of replacing it.
    * Reverse check: dropping the user's `'*'` rules from the merged list turns it red.
    */
   it('keeps the user Turbopack rules and aliases', () => {
     const userStarRule = { loaders: ['user-loader'] }
-    const nextConfig = withMasterCSS({
+    const nextConfig = withStetCSS({
       turbopack: {
         rules: {
           '*.svg': { type: 'asset' },
@@ -129,11 +129,11 @@ describe('withMasterCSS', () => {
    * Reverse check: re-adding an `adapterPath` to the returned config turns it red.
    */
   it('exports no adapter and adds no adapter or instrumentation client', async () => {
-    const nextConfig = withMasterCSS({}) as NextConfig & { adapterPath?: string }
+    const nextConfig = withStetCSS({}) as NextConfig & { adapterPath?: string }
     const webpackConfig = runWebpack(nextConfig)
 
     const exports = Object.keys(await import('../src'))
-    expect(exports).toContain('withMasterCSS')
+    expect(exports).toContain('withStetCSS')
     expect(exports.filter((name) => /adapter|renderNextBuildOutputs/i.test(name))).toEqual([])
     expect(nextConfig.adapterPath).toBeUndefined()
     expect(Object.keys(nextConfig.turbopack!.resolveAlias!).filter((id) => id.includes('instrumentation'))).toEqual([])
@@ -147,11 +147,11 @@ describe('withMasterCSS', () => {
    * test red.
    */
   it('rejects removed and unknown options', () => {
-    expect(() => withMasterCSS({}, { scannerOptions: { adapters: [] } } as never))
+    expect(() => withStetCSS({}, { scannerOptions: { adapters: [] } } as never))
       .toThrow('@stet-css/next option "scannerOptions" was removed; pass "adapters" directly.')
-    expect(() => withMasterCSS({}, { mode: 'progressive' } as never))
+    expect(() => withStetCSS({}, { mode: 'progressive' } as never))
       .toThrow('@stet-css/next option "mode" was removed; static CSS is the only output')
-    expect(() => withMasterCSS({}, { adapter: [] } as never))
+    expect(() => withStetCSS({}, { adapter: [] } as never))
       .toThrow('Unknown @stet-css/next option "adapter"; the only option is "adapters".')
   })
 
@@ -166,9 +166,9 @@ describe('withMasterCSS', () => {
     vi.stubEnv('TURBOPACK', 'auto')
     try {
       const adapters = [{ name: 'probe', test: /\.md$/, extract: async () => [] }]
-      expect(() => withMasterCSS({}, { adapters }))
+      expect(() => withStetCSS({}, { adapters }))
         .toThrow('[@stet-css/next] Custom adapters need webpack')
-      expect(() => withMasterCSS({}, { adapters: [] })).not.toThrow()
+      expect(() => withStetCSS({}, { adapters: [] })).not.toThrow()
     } finally {
       vi.unstubAllEnvs()
     }
