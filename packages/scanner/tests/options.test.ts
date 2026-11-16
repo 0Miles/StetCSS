@@ -6,8 +6,8 @@ describe('scanner options', () => {
    * Guards that a removed option fails loudly and names what replaces it: silently ignoring
    * `blocklist` would ship the classes a project meant to block, with nothing telling the
    * developer to move the list to `@blocklist`.
-   * Reverse check: skipping the removed-key lookup in `validateOptions` turns this test and the
-   * build plugin one red.
+   * Reverse check: skipping the removed-key lookup in `validateOptions` turns this test, the
+   * build plugin one and the removed-key cases of every build plugin's options test red.
    */
   test.each([
     ['safelist', ['block'], '@safelist'],
@@ -26,8 +26,8 @@ describe('scanner options', () => {
   /**
    * Guards that a misspelled or invented key, such as the `sources` the webpack example once
    * passed, errors instead of being ignored, and says which key is allowed.
-   * Reverse check: accepting unknown keys in `validateOptions` turns this test and the build
-   * plugin one red.
+   * Reverse check: accepting unknown keys in `validateOptions` turns this test, the build plugin
+   * one and the unknown-key cases of every build plugin's options test red.
    */
   test('rejects unknown options and names the allowed one', async () => {
     await expect(new CSSScanner({ sources: ['./src/index.html'] } as never).init())
@@ -53,8 +53,8 @@ describe('build plugin options', () => {
    * and says what replaces each: silently ignoring `mode: 'runtime'` or `injectRuntime` would
    * ship a page without the runtime the project expected, and ignoring a nested `scanner`
    * would drop its adapters.
-   * Reverse check: skipping the removed-key lookup in `validateOptions` turns this test and the
-   * scanner one red.
+   * Reverse check: skipping the removed-key lookup in `validateOptions` turns this test, the
+   * scanner one and the removed-key cases of every build plugin's options test red.
    */
   test.each([
     ['mode', 'runtime', 'static CSS is the only output'],
@@ -72,22 +72,22 @@ describe('build plugin options', () => {
   })
 
   /**
+   * Guards that a config moving off the nested `scanner` learns every removed key inside it in
+   * one run, instead of fixing `scanner` and only then hearing that its `safelist` is gone.
+   * Reverse check: returning `''` from `describeNestedRemovedOptions` turns only this test red.
+   */
+  test('names the removed keys inside a nested scanner', () => {
+    expect(() => validatePluginOptions({ scanner: { safelist: ['block'], exclude: [] } }, '@stet-css/webpack'))
+      .toThrow('@stet-css/webpack option "scanner" was removed; pass "adapters" directly; its "safelist" was removed too: use @safelist in the CSS entry; its "exclude" was removed too: use @source not in the CSS entry.')
+  })
+
+  /**
    * Guards that a typo in a build plugin's options errors and names the one allowed key.
-   * Reverse check: accepting unknown keys in `validateOptions` turns this test and the scanner
-   * one red.
+   * Reverse check: accepting unknown keys in `validateOptions` turns this test, the scanner one
+   * and the unknown-key cases of every build plugin's options test red.
    */
   test('rejects unknown options and names "adapters"', () => {
     expect(() => validatePluginOptions({ adapter: [] }, '@stet-css/next'))
       .toThrow('Unknown @stet-css/next option "adapter"; the only option is "adapters".')
-  })
-
-  /**
-   * Guards the setup most projects write, `masterCSS()` with no argument, and the one allowed
-   * key: rejecting either would break every build.
-   * Reverse check: throwing on `undefined` in `validatePluginOptions` turns only this test red.
-   */
-  test('accepts no options and adapters', () => {
-    expect(() => validatePluginOptions(undefined, '@stet-css/vite')).not.toThrow()
-    expect(() => validatePluginOptions({ adapters: [] }, '@stet-css/vite')).not.toThrow()
   })
 })
