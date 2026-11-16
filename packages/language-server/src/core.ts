@@ -9,10 +9,10 @@ import { cssTreeNativeDeclarationMatcher, generateValidRules } from '@stet-css/v
 import { Settings } from './settings'
 import {
   findCSSManifestEntryFiles,
-  findMasterCSSWorkspaceDirectories
+  findStetCSSWorkspaceDirectories
 } from '@stet-css/project/entries'
 import { loadProjectManifest } from '@stet-css/project/manifest'
-import { resolveMasterCSSWorkspacePackages, type MasterCSSWorkspacePackageResolution } from '@stet-css/project/workspace'
+import { resolveStetCSSWorkspacePackages, type StetCSSWorkspacePackageResolution } from '@stet-css/project/workspace'
 import { defu } from 'defu'
 import settings from './settings'
 import type { StetCSSManifest } from '@stet-css/schema/manifest'
@@ -40,7 +40,7 @@ export declare interface Workspace {
   languageService?: CSSLanguageService
   languageServiceSettings: Settings
   languageRuntime?: CSSLanguageRuntime
-  languageRuntimeResolution?: MasterCSSWorkspacePackageResolution
+  languageRuntimeResolution?: StetCSSWorkspacePackageResolution
   languageRuntimeSource?: 'workspace' | 'bundled'
   manifestErrors?: unknown[]
   planEntries?: string[]
@@ -433,7 +433,7 @@ export default class CSSLanguageServer {
       this.console.info(`Registered global workspace folder`)
     }
     if (workspaces === 'auto') {
-      for (const workspaceDir of await findMasterCSSWorkspaceDirectories(workspaceFolderCWD)) {
+      for (const workspaceDir of await findStetCSSWorkspaceDirectories(workspaceFolderCWD)) {
         resolvedWorkspaceDirectories.add(workspaceDir)
       }
     } else if (workspaces?.length) {
@@ -496,9 +496,9 @@ export default class CSSLanguageServer {
     }
 
     const cwd = URI.parse(workspace.uri).fsPath
-    let resolution: MasterCSSWorkspacePackageResolution | undefined
+    let resolution: StetCSSWorkspacePackageResolution | undefined
     try {
-      resolution = resolveMasterCSSWorkspacePackages(cwd)
+      resolution = resolveStetCSSWorkspacePackages(cwd)
       workspace.languageRuntimeResolution = resolution
       const missingPackages = [
         !resolution.css && '@stet-css/core',

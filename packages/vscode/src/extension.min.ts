@@ -3,7 +3,7 @@ import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } f
 import { commands, Disposable, EventEmitter, ExtensionContext, languages, ProgressLocation, Range, SemanticTokens, SemanticTokensLegend, TextEdit, window, workspace, type CancellationToken, type FormattingOptions, type LogOutputChannel, type Position, type ProviderResult, type TextDocument } from 'vscode'
 import { ACTIVE_SEMANTIC_TOKENS_REQUEST, DOCUMENT_SEMANTIC_TOKENS_REQUEST, settings, type Settings } from '@stet-css/language-server'
 import { applyMasterCSSDirectiveFormatEdits, formatMasterCSSDirectives, SEMANTIC_TOKENS_LEGEND } from '@stet-css/language'
-import { isCompatibleMasterCSSPackageVersion, resolveMasterCSSWorkspacePackages } from '@stet-css/project/workspace'
+import { isCompatibleStetCSSPackageVersion, resolveStetCSSWorkspacePackages } from '@stet-css/project/workspace'
 
 let client: LanguageClient
 let outputChannel: LogOutputChannel
@@ -62,14 +62,14 @@ function resolveWorkspaceServerModule(context: ExtensionContext, bundledServerMo
   const bundledVersion = getBundledLanguageServerVersion(context)
   const resolvedServers: string[] = []
   for (const workspaceFolder of workspaceFolders) {
-    const resolution = resolveMasterCSSWorkspacePackages(workspaceFolder.uri.fsPath)
+    const resolution = resolveStetCSSWorkspacePackages(workspaceFolder.uri.fsPath)
     const languageServer = resolution.languageServer
     if (!languageServer) {
       log(`Using bundled language server because ${workspaceFolder.uri.fsPath} does not resolve @stet-css/language-server/server.`)
       resolution.errors.forEach(({ name, message }) => log(`Workspace package resolution warning for ${name}: ${message}`))
       return bundledServerModule
     }
-    if (!isCompatibleMasterCSSPackageVersion(languageServer.version, bundledVersion)) {
+    if (!isCompatibleStetCSSPackageVersion(languageServer.version, bundledVersion)) {
       log(`Using bundled language server because ${workspaceFolder.uri.fsPath} resolves incompatible @stet-css/language-server ${languageServer.version ?? '(unknown version)'}.`)
       return bundledServerModule
     }

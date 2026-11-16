@@ -6,13 +6,13 @@ import {
   STYLE_ENTRY_EXTENSIONS,
   findCSSManifestEntryFiles,
   findCSSManifestEntryFilesSync,
-  findMasterCSSWorkspaceDirectories,
+  findStetCSSWorkspaceDirectories,
   hasStetCSSManifestEntrypoint,
   resolveStetCSSPackageEntryFile
 } from '../src/entries'
 import {
-  isCompatibleMasterCSSPackageVersion,
-  resolveMasterCSSWorkspacePackages
+  isCompatibleStetCSSPackageVersion,
+  resolveStetCSSWorkspacePackages
 } from '../src/workspace'
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { isAbsolute, join, relative, sep } from 'node:path'
@@ -294,7 +294,7 @@ test('finds Master CSS workspace directories from package and CSS entries', asyn
     writeFileSync(join(cwd, 'packages', 'app', 'index.css'), '@import "@stet-css/core";')
     writeFileSync(join(cwd, 'docs', 'styles', 'global.css'), '@import "@stet-css/core";')
 
-    await expect(findMasterCSSWorkspaceDirectories(cwd)).resolves.toStrictEqual([
+    await expect(findStetCSSWorkspaceDirectories(cwd)).resolves.toStrictEqual([
       cwd,
       join(cwd, 'docs', 'styles'),
       join(cwd, 'packages', 'app')
@@ -316,7 +316,7 @@ test('does not match sibling workspace path prefixes', async () => {
     }))
     writeFileSync(join(cwd, 'packages', 'app-kit', 'index.css'), '@import "@stet-css/core";')
 
-    await expect(findMasterCSSWorkspaceDirectories(cwd)).resolves.toStrictEqual([
+    await expect(findStetCSSWorkspaceDirectories(cwd)).resolves.toStrictEqual([
       cwd,
       join(cwd, 'packages', 'app'),
       join(cwd, 'packages', 'app-kit')
@@ -370,7 +370,7 @@ test('resolves Master CSS workspace packages and optional language server', () =
       'server.js': 'export {}'
     })
 
-    const resolution = resolveMasterCSSWorkspacePackages(cwd)
+    const resolution = resolveStetCSSWorkspacePackages(cwd)
 
     expect(realpathSync(resolution.css?.directory || '')).toBe(realpathSync(cssDir))
     expect(realpathSync(resolution.engine?.directory || '')).toBe(realpathSync(engineDir))
@@ -403,7 +403,7 @@ test('reports missing workspace runtime packages without throwing', () => {
       }
     }, {})
 
-    const resolution = resolveMasterCSSWorkspacePackages(cwd)
+    const resolution = resolveStetCSSWorkspacePackages(cwd)
 
     expect(realpathSync(resolution.css?.directory || '')).toBe(realpathSync(cssDir))
     expect(resolution.engine).toBeUndefined()
@@ -434,7 +434,7 @@ test('reports invalid package exports as resolution errors', () => {
       }
     }, {})
 
-    const resolution = resolveMasterCSSWorkspacePackages(cwd)
+    const resolution = resolveStetCSSWorkspacePackages(cwd)
 
     expect(resolution.css).toBeUndefined()
     expect(resolution.errors[0]).toMatchObject({
@@ -446,10 +446,10 @@ test('reports invalid package exports as resolution errors', () => {
 })
 
 test('checks compatible package majors when versions are known', () => {
-  expect(isCompatibleMasterCSSPackageVersion('2.1.0', '^2.0.0')).toBe(true)
-  expect(isCompatibleMasterCSSPackageVersion('3.0.0', '^2.0.0')).toBe(false)
-  expect(isCompatibleMasterCSSPackageVersion(undefined, '^2.0.0')).toBe(true)
-  expect(isCompatibleMasterCSSPackageVersion('3.0.0', undefined)).toBe(true)
+  expect(isCompatibleStetCSSPackageVersion('2.1.0', '^2.0.0')).toBe(true)
+  expect(isCompatibleStetCSSPackageVersion('3.0.0', '^2.0.0')).toBe(false)
+  expect(isCompatibleStetCSSPackageVersion(undefined, '^2.0.0')).toBe(true)
+  expect(isCompatibleStetCSSPackageVersion('3.0.0', undefined)).toBe(true)
 })
 
 test('turns CSS manifest results into JSON sources', async () => {
