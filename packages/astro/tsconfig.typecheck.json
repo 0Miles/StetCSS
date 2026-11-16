@@ -16,9 +16,6 @@
       "path": "../core/tsconfig.typecheck.json"
     },
     {
-      "path": "../source/tsconfig.typecheck.json"
-    },
-    {
       "path": "../vite/tsconfig.typecheck.json"
     }
   ]
