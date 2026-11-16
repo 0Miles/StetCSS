@@ -21,9 +21,14 @@ export type StandaloneMasterDirectiveStatement = StandaloneCSSDirectiveStatement
 
 /**
  * `@preserve` is still located so an entry that keeps `@preserve native;` fails loudly instead
- * of carrying a directive that no longer does anything.
+ * of carrying a directive that no longer does anything. The error names the entry when the caller
+ * knows it; callers pass sources with local imports already expanded, so the directive may sit
+ * in the entry or in any stylesheet it imports.
  */
-const REMOVED_PRESERVE_DIRECTIVE_MESSAGE = '@preserve native was removed; stylesheet entries keep all native CSS, so delete this line'
+function createRemovedPreserveDirectiveError(statement: StandaloneCSSDirectiveStatement, filename?: string) {
+  const location = filename ? ` (in ${filename} or a stylesheet it imports)` : ''
+  return new Error(`@preserve was removed; stylesheet entries keep all native CSS, so delete "${statement.statement.trim()}"${location}`)
+}
 
 const STANDALONE_CSS_DIRECTIVE_NAMES = new Set<StandaloneCSSDirectiveName>([
   'master',
@@ -242,15 +247,16 @@ export function findStandaloneMasterDirectiveStatements(source: string, filename
 }
 
 /** Rejects an `@source` pattern whose braces would make glob matching expand it without bound. */
-function assertSourcePatternsExpandable(patterns: string[], directive: string, filename: string) {
+function assertSourcePatternsExpandable(patterns: string[], directive: string, filename?: string) {
+  const location = filename ? ` (in ${filename})` : ''
   for (const pattern of patterns) {
     if (countSourcePatternExpansions(pattern) > MAX_SOURCE_PATTERN_EXPANSIONS) {
-      throw new Error(`${directive} '${pattern}' expands its braces into more than ${MAX_SOURCE_PATTERN_EXPANSIONS} patterns (in ${filename})`)
+      throw new Error(`${directive} '${pattern}' expands its braces into more than ${MAX_SOURCE_PATTERN_EXPANSIONS} patterns${location}`)
     }
   }
 }
 
-export function collectStandaloneCSSDirectiveExtractionPolicy(source: string, filename = 'master.css') {
+export function collectStandaloneCSSDirectiveExtractionPolicy(source: string, filename?: string) {
   const policy = createCSSDirectiveExtractionPolicy()
   for (const statement of findStandaloneCSSDirectiveStatements(source, filename)) {
     switch (statement.atRuleName) {
@@ -269,7 +275,7 @@ export function collectStandaloneCSSDirectiveExtractionPolicy(source: string, fi
           .map(normalizeBlocklistPattern))
         break
       case 'preserve':
-        throw new Error(REMOVED_PRESERVE_DIRECTIVE_MESSAGE)
+        throw createRemovedPreserveDirectiveError(statement, filename)
     }
   }
   return policy

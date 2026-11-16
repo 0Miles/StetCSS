@@ -894,7 +894,7 @@ describe('style CSS extraction helpers', () => {
     await expect(registerStyleCSSSource(scanner, new Map(), join(root, 'app/globals.css'), `
       @import "@stet-css/core";
       @import "./styles/btn.css";
-    `)).rejects.toThrow('@preserve native was removed; stylesheet entries keep all native CSS, so delete this line')
+    `)).rejects.toThrow(/@preserve was removed; .* delete "@preserve native;" \(in .*app\/globals\.css or a stylesheet it imports\)/)
   })
 
   it('can emit native CSS without generated Master CSS', async () => {
