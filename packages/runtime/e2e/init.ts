@@ -195,11 +195,11 @@ async function createHydrationManifestForPage(page: Page, manifest: MasterCSSMan
   return createHydrationManifest(css)
 }
 
-export const RUNTIME_ASSET_BASE_URL = 'http://master-css-runtime.test'
+const RUNTIME_ASSET_BASE_URL = 'http://master-css-runtime.test'
 export const RUNTIME_SCRIPT_URL = `${RUNTIME_ASSET_BASE_URL}/css-runtime@rc`
 export const DEFAULT_MANIFEST_URL = `${RUNTIME_ASSET_BASE_URL}/css-runtime@rc/default-manifest.json`
 
-export type RuntimeAssetRouteOptions = {
+type RuntimeAssetRouteOptions = {
   onDefaultManifestRequest?: () => void
 }
 
