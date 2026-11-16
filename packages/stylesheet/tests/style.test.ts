@@ -703,7 +703,7 @@ describe('style CSS extraction helpers', () => {
 
       @theme sepia {}
     `)
-    await scanner.scan(join(root, 'app/page.tsx'), '<main class="fg:red@dark"></main>')
+    writeFileSync(join(root, 'app/page.tsx'), '<main class="fg:red@dark"></main>')
 
     await expect(createExtractedCSS({
       scanner,
