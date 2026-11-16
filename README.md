@@ -31,7 +31,6 @@ StetCSS is a fork of [Master CSS](https://github.com/master-co/css), branched fr
 | `@stet-css/compiler` | `packages/compiler` | Stylesheet directive compiler |
 | `@stet-css/stylesheet` | `packages/stylesheet` | Stylesheet entry pipeline for static rendering |
 | `@stet-css/scanner` | `packages/scanner` | Source scanner for static rendering |
-| `@stet-css/server` | `packages/server` | Server-side HTML renderer |
 | `@stet-css/runtime` | `packages/runtime` | Browser runtime |
 | `@stet-css/core` | `packages/core` | Public facade over engine and preset |
 

@@ -51,7 +51,7 @@ shared / external data
   -> source
   -> engine / preset / integration
   -> compiler / project
-  -> validator / server / scanner / runtime / language / language-service / stylesheet
+  -> validator / scanner / runtime / language / language-service / stylesheet
   -> build plugins / CLI / ESLint / language-server
   -> framework integrations / VS Code / examples
 ```
