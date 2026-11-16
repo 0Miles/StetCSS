@@ -59,5 +59,8 @@
   "dependencies": {
     "@stet-css/core": "workspace:^",
     "@stet-css/vite": "workspace:^"
+  },
+  "devDependencies": {
+    "astro": "^6.4.8"
   }
 }
