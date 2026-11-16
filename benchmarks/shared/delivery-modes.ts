@@ -152,24 +152,6 @@ export const masterDeliveryModeMetrics = [
     description: 'Brotli bytes for the Master CSS browser runtime bundle.'
   },
   {
-    id: 'manifest-json-raw-bytes',
-    label: 'Manifest JSON raw bytes',
-    unit: 'B',
-    description: 'Raw bytes for the runtime default manifest JSON payload.'
-  },
-  {
-    id: 'manifest-json-gzip-bytes',
-    label: 'Manifest JSON gzip bytes',
-    unit: 'B',
-    description: 'Gzip bytes for the runtime default manifest JSON payload.'
-  },
-  {
-    id: 'manifest-json-brotli-bytes',
-    label: 'Manifest JSON brotli bytes',
-    unit: 'B',
-    description: 'Brotli bytes for the runtime default manifest JSON payload.'
-  },
-  {
     id: 'delivered-style-rule-count',
     label: 'Delivered style rules',
     unit: 'count',
@@ -240,12 +222,6 @@ export const masterDeliveryModeMetrics = [
     label: 'Runtime bootstrap',
     unit: 'ms',
     description: 'Time from browser runtime script execution to runtime observe completion.'
-  },
-  {
-    id: 'manifest-load-ms',
-    label: 'Manifest load',
-    unit: 'ms',
-    description: 'Resource timing duration for the default manifest JSON fetch.'
   },
   {
     id: 'runtime-observe-ms',
@@ -411,7 +387,6 @@ async function writeDeliveryModePage(options: {
   html: string
   externalCSS?: string
   runtimeJS?: Buffer
-  manifestJSON?: Buffer
   buildArtifacts?: BenchmarkArtifact[]
 }): Promise<DeliveryModePage> {
   const root = resolve(benchmarkRoot, '.results', 'master-delivery-modes', 'pages', options.variantId)
@@ -423,7 +398,6 @@ async function writeDeliveryModePage(options: {
 
   if (options.externalCSS !== undefined) files['style.css'] = options.externalCSS
   if (options.runtimeJS) files['global.min.js'] = options.runtimeJS.toString('utf8')
-  if (options.manifestJSON) files['default-manifest.json'] = options.manifestJSON.toString('utf8')
 
   await writeWorkspaceFiles(root, files)
 
@@ -435,8 +409,7 @@ async function writeDeliveryModePage(options: {
       ...createPayloadSamples(options.variantId, {
         html: Buffer.from(options.html),
         externalCSS: Buffer.from(options.externalCSS || ''),
-        runtimeJS: options.runtimeJS || Buffer.alloc(0),
-        manifestJSON: options.manifestJSON || Buffer.alloc(0)
+        runtimeJS: options.runtimeJS || Buffer.alloc(0)
       }),
       ...createDeliveredCSSStructureSamples(options.variantId, options.externalCSS ?? '')
     ],
@@ -451,13 +424,11 @@ function createPayloadSamples(variantId: string, payload: {
   html: Buffer
   externalCSS: Buffer
   runtimeJS: Buffer
-  manifestJSON: Buffer
 }): BenchmarkSample[] {
   return [
     ...createByteSamples(variantId, 'html', payload.html),
     ...createByteSamples(variantId, 'external-css', payload.externalCSS),
-    ...createByteSamples(variantId, 'runtime-js', payload.runtimeJS),
-    ...createByteSamples(variantId, 'manifest-json', payload.manifestJSON)
+    ...createByteSamples(variantId, 'runtime-js', payload.runtimeJS)
   ]
 }
 
@@ -526,7 +497,6 @@ function createBrowserSamples(variantId: string, round: number, metrics: {
   requestCount: number
   runtimeReadyMs: number
   runtimeBootstrapMs: number
-  manifestLoadMs: number
   runtimeObserveMs: number
   runtimeGeneratedRuleCount: number
   runtimeStyleRawBytes: number
@@ -585,12 +555,6 @@ function createBrowserSamples(variantId: string, round: number, metrics: {
       variantId,
       round,
       value: metrics.runtimeBootstrapMs
-    },
-    {
-      metricId: 'manifest-load-ms',
-      variantId,
-      round,
-      value: metrics.manifestLoadMs
     },
     {
       metricId: 'runtime-observe-ms',
@@ -886,14 +850,12 @@ async function assertDeliveryModeCorrect(page: Page, modeId: DeliveryModeId) {
 async function readDeliveryMetrics(page: Page) {
   return page.evaluate(() => {
     const resources = performance.getEntriesByType('resource') as PerformanceResourceTiming[]
-    const manifestEntry = resources.find((entry) => entry.name.endsWith('/default-manifest.json'))
     const metrics = globalThis.__deliveryMetrics || {}
 
     return {
       requestCount: resources.filter((entry) => entry.name.startsWith(location.origin)).length + 1,
       runtimeReadyMs: metrics.runtimeReadyMs || 0,
       runtimeBootstrapMs: metrics.runtimeBootstrapMs || 0,
-      manifestLoadMs: manifestEntry?.duration || 0,
       runtimeObserveMs: metrics.runtimeObserveMs || 0,
       runtimeGeneratedRuleCount: metrics.runtimeGeneratedRuleCount || 0,
       runtimeStyleRawBytes: metrics.runtimeStyleRawBytes || 0
@@ -1014,12 +976,6 @@ function getContentType(file: string) {
 async function readRuntimeBundle() {
   const file = resolveBenchmarkPackageFile('@stet-css/runtime', 'dist/global.min.js')
   assertExistingFile(file, 'Run `bun run --filter @stet-css/runtime build` before `bench:master-delivery-modes`.')
-  return readFile(file)
-}
-
-async function readDefaultManifestJSON() {
-  const file = resolveBenchmarkPackageFile('@stet-css/preset', 'src/default-manifest.json')
-  assertExistingFile(file, 'Expected @stet-css/preset default manifest to exist.')
   return readFile(file)
 }
 
