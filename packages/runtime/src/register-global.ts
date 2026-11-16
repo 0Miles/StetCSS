@@ -10,7 +10,7 @@ declare global {
  * Browsers expose elements with a matching `id` or `name` as globals, so the name may
  * already hold page content. Only another runtime class counts as registered.
  */
-function isRuntimeClass(value: unknown): value is typeof Core {
+export function isRuntimeClass(value: unknown): value is typeof Core {
   return typeof value === 'function' && (value as Partial<typeof Core>).instances instanceof WeakMap
 }
 
