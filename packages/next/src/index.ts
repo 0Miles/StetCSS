@@ -72,6 +72,11 @@ function toTurbopackLoader(loader: { loader: string, options: object }) {
   }
 }
 
+/** A loader for the webpack rules, whose options may carry the adapters' functions. */
+function withAdapters<T extends { loader: string, options: object }>(loader: T, adapters: MasterCSSNextSetup['adapters'], options: object = {}) {
+  return { ...loader, options: { ...loader.options, adapters, ...options } }
+}
+
 function createExactPathPattern(file: string) {
   return new RegExp(`^${escapeRegExp(file)}$`)
 }
@@ -107,10 +112,7 @@ function applyMasterCSSWebpackConfig(config: WebpackConfig, setup: MasterCSSNext
     // `test` or `include` matches `.css` files.
     {
       resource: createExactPathPattern(setup.outputPath),
-      use: [{
-        ...setup.generatedCSSLoader,
-        options: { ...setup.generatedCSSLoader.options, adapters: setup.adapters }
-      }]
+      use: [withAdapters(setup.generatedCSSLoader, setup.adapters)]
     },
     {
       resource: {
@@ -118,10 +120,7 @@ function applyMasterCSSWebpackConfig(config: WebpackConfig, setup: MasterCSSNext
         not: [createExactPathPattern(setup.outputPath)]
       },
       resourceQuery: { not: [MASTER_CSS_MANIFEST_RESOURCE_QUERY] },
-      use: [{
-        ...setup.styleCSSLoader,
-        options: { ...setup.styleCSSLoader.options, adapters: setup.adapters, writeOutput: true }
-      }]
+      use: [withAdapters(setup.styleCSSLoader, setup.adapters, { writeOutput: true })]
     }
   )
   config.resolve ??= {}
