@@ -3,6 +3,6 @@ import CSSRuntime, { type MasterCSSManifest } from '../src'
 
 const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
 
-export function startCSSRuntime(options: { manifest?: MasterCSSManifest } = {}) {
-  return CSSRuntime.create({ manifest: options.manifest || defaultManifest }).observe()
+export function startCSSRuntime(options: { manifest?: MasterCSSManifest, root?: Document | ShadowRoot } = {}) {
+  return CSSRuntime.create({ manifest: options.manifest || defaultManifest, root: options.root }).observe()
 }
