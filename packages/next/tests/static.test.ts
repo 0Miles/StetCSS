@@ -180,13 +180,18 @@ describe('Next static CSS', () => {
   })
 
   /**
-   * Known gap until #58 lands on static13/static: project entry discovery only finds `.css`,
-   * so a `.scss` entry is rewritten to the generated module but its `@theme` never reaches
-   * it. `it.fails` turns red once discovery finds Sass entries; switch it to `it` then.
+   * Guards Sass entries: a `.scss` entry is rewritten to the generated module, so its `@theme`
+   * must reach that module or the app silently gets the default theme. Sass is stubbed with a
+   * pass-through: it is the project's own dependency.
+   * Reverse check: discovering `.css` entries only turns only this test red.
    */
-  it.fails('carries the theme of a Sass entry into the generated CSS', async () => {
+  it('carries the theme of a Sass entry into the generated CSS', async () => {
     const root = createFixture('')
     const globals = '@import "@stet-css/core";\n@theme { --color-brand: #123456; }'
+    mkdirSync(join(root, 'node_modules/sass'), { recursive: true })
+    writeFileSync(join(root, 'package.json'), '{ "private": true }')
+    writeFileSync(join(root, 'node_modules/sass/package.json'), '{ "name": "sass", "main": "index.js" }')
+    writeFileSync(join(root, 'node_modules/sass/index.js'), 'exports.compileStringAsync = async (source) => ({ css: source })\n')
     writeFileSync(join(root, 'app/globals.scss'), globals)
     writeFileSync(join(root, 'app/page.tsx'), 'export default () => <main className="fg:brand" />')
 
