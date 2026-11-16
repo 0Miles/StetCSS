@@ -17,6 +17,10 @@ export function readDocument<K extends keyof Document>(document: Document, key: 
   return Reflect.get(Document.prototype, key, document)
 }
 
+export function ownerDocumentOf(root: Document | ShadowRoot): Document {
+  return isDocumentRoot(root) ? root : root.ownerDocument
+}
+
 export function querySelectorAllIn(root: Document | ShadowRoot, selectors: string): NodeListOf<Element> {
   return isDocumentRoot(root)
     ? readDocument(root, 'querySelectorAll').call(root, selectors)

@@ -9,7 +9,7 @@ import {
 } from '@stet-css/schema/hydration-manifest'
 import { MASTER_CSS_RUNTIME_STYLE_ID } from '@stet-css/schema/runtime-style'
 import registerGlobal, { isRuntimeClass } from './register-global'
-import { isDocumentRoot, readDocument } from './document'
+import { isDocumentRoot, ownerDocumentOf, readDocument } from './document'
 import { HydrateResult } from './types'
 import RuntimeUtilityLayer, { RuntimeUtilityLayerInstance } from './utility-layer'
 import RuntimeThemeLayer from './theme-layer'
@@ -95,8 +95,7 @@ function readExternalHydrationManifestSource(root: Document | ShadowRoot) {
 }
 
 function resolveExternalHydrationManifestURL(root: Document | ShadowRoot, source: string) {
-  const baseURI = isDocumentRoot(root) ? readDocument(root, 'baseURI') : root.ownerDocument.baseURI
-  return new URL(source, baseURI).href
+  return new URL(source, readDocument(ownerDocumentOf(root), 'baseURI')).href
 }
 
 async function importHydrationManifest(url: string): Promise<MasterCSSHydrationManifest | undefined> {
@@ -231,7 +230,7 @@ export default class CSSRuntime extends MasterCSS {
   }
 
   private createRuntimeStyle() {
-    const ownerDocument = isDocumentRoot(this.root) ? this.root : this.root.ownerDocument
+    const ownerDocument = ownerDocumentOf(this.root)
     // `.call` drops the tag-name overload, so restate the element type.
     const style = readDocument(ownerDocument, 'createElement').call(ownerDocument, 'style') as HTMLStyleElement
     style.id = MASTER_CSS_RUNTIME_STYLE_ID
@@ -296,9 +295,7 @@ export default class CSSRuntime extends MasterCSS {
   }
 
   private getAnimationFrameWindow() {
-    const ownerDocument = isDocumentRoot(this.root)
-      ? this.root
-      : this.root.ownerDocument
+    const ownerDocument = ownerDocumentOf(this.root)
     return (ownerDocument && readDocument(ownerDocument, 'defaultView')) || globalThis
   }
 
