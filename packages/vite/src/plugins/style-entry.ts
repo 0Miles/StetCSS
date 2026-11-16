@@ -13,8 +13,14 @@ import {
 } from '@stet-css/stylesheet'
 import { registerStyleCSSSource } from '../utils/register-style-source'
 import { getScanner } from '../utils/scanner-context'
+import { getEnvironmentName } from '../utils/environment'
 
 const RESOLVED_VIRTUAL_CSS_ID = '\0' + VIRTUAL_CSS_ID
+
+function markPlaceholderEmitted(context: PluginContext, pluginContext: unknown) {
+  context.virtualCSSPlaceholderEnvironments ??= new Set()
+  context.virtualCSSPlaceholderEnvironments.add(getEnvironmentName(pluginContext))
+}
 
 export default function StyleEntryPlugin(_options: PluginOptions, context: PluginContext): Plugin {
   return {
@@ -35,7 +41,7 @@ export default function StyleEntryPlugin(_options: PluginOptions, context: Plugi
         return await getExtractedCSS(context)
       }
 
-      context.virtualCSSPlaceholderEmitted = true
+      markPlaceholderEmitted(context, this)
       return getScanner(context).slotCSSRule
     },
     async transform(code, id) {
@@ -80,7 +86,7 @@ export default function StyleEntryPlugin(_options: PluginOptions, context: Plugi
         context.virtualCSSImporters ??= new Set()
         context.virtualCSSImporters.add(id)
       } else {
-        context.virtualCSSPlaceholderEmitted = true
+        markPlaceholderEmitted(context, this)
       }
 
       return {
