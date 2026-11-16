@@ -25,6 +25,20 @@ const PACKAGE_JSON_DEPENDENCY_FIELDS = [
 
 type PackageJSON = Partial<Record<typeof PACKAGE_JSON_DEPENDENCY_FIELDS[number], unknown>>
 
+/** Extensions manifest discovery reads: manifests load from plain CSS only. */
+export const CSS_MANIFEST_ENTRY_EXTENSIONS: readonly string[] = ['.css']
+
+/**
+ * Extensions a stylesheet entry may have: a Sass file importing `@stet-css/core` is an entry
+ * for static CSS too, compiled with the project's own `sass`.
+ */
+export const STYLE_ENTRY_EXTENSIONS: readonly string[] = ['.css', '.scss', '.sass']
+
+export interface FindCSSManifestEntryFilesOptions {
+  /** File extensions that can be entries; defaults to `CSS_MANIFEST_ENTRY_EXTENSIONS`. */
+  extensions?: readonly string[]
+}
+
 export function cleanCSSManifestRequest(id: string) {
   return stripResourceQuery(id)
 }
@@ -48,16 +62,16 @@ export function hasMasterCSSManifestEntrypoint(source: string) {
   }
 }
 
-async function collectCSSManifestEntryFiles(root: string, directory: string, entries: string[]) {
+async function collectCSSManifestEntryFiles(root: string, directory: string, entries: string[], extensions: readonly string[]) {
   try {
     for (const dirent of await readdir(directory, { withFileTypes: true })) {
       const file = join(directory, dirent.name)
       if (dirent.isDirectory()) {
         if (isIgnoredProjectDirectory(relative(root, file))) continue
-        await collectCSSManifestEntryFiles(root, file, entries)
+        await collectCSSManifestEntryFiles(root, file, entries, extensions)
         continue
       }
-      if (!dirent.isFile() || extname(dirent.name) !== '.css') continue
+      if (!dirent.isFile() || !extensions.includes(extname(dirent.name))) continue
       try {
         if (hasMasterCSSManifestEntrypoint(await readFile(file, 'utf8'))) {
           entries.push(file)
@@ -71,16 +85,16 @@ async function collectCSSManifestEntryFiles(root: string, directory: string, ent
   }
 }
 
-function collectCSSManifestEntryFilesSync(root: string, directory: string, entries: string[]) {
+function collectCSSManifestEntryFilesSync(root: string, directory: string, entries: string[], extensions: readonly string[]) {
   try {
     for (const dirent of readdirSync(directory, { withFileTypes: true })) {
       const file = join(directory, dirent.name)
       if (dirent.isDirectory()) {
         if (isIgnoredProjectDirectory(relative(root, file))) continue
-        collectCSSManifestEntryFilesSync(root, file, entries)
+        collectCSSManifestEntryFilesSync(root, file, entries, extensions)
         continue
       }
-      if (!dirent.isFile() || extname(dirent.name) !== '.css') continue
+      if (!dirent.isFile() || !extensions.includes(extname(dirent.name))) continue
       try {
         if (hasMasterCSSManifestEntrypoint(readFileSync(file, 'utf8'))) {
           entries.push(file)
@@ -94,17 +108,17 @@ function collectCSSManifestEntryFilesSync(root: string, directory: string, entri
   }
 }
 
-export async function findCSSManifestEntryFiles(projectDir = process.cwd()) {
+export async function findCSSManifestEntryFiles(projectDir = process.cwd(), options: FindCSSManifestEntryFilesOptions = {}) {
   const entries: string[] = []
   const root = resolve(projectDir)
-  await collectCSSManifestEntryFiles(root, root, entries)
+  await collectCSSManifestEntryFiles(root, root, entries, options.extensions ?? CSS_MANIFEST_ENTRY_EXTENSIONS)
   return entries.sort()
 }
 
-export function findCSSManifestEntryFilesSync(projectDir = process.cwd()) {
+export function findCSSManifestEntryFilesSync(projectDir = process.cwd(), options: FindCSSManifestEntryFilesOptions = {}) {
   const entries: string[] = []
   const root = resolve(projectDir)
-  collectCSSManifestEntryFilesSync(root, root, entries)
+  collectCSSManifestEntryFilesSync(root, root, entries, options.extensions ?? CSS_MANIFEST_ENTRY_EXTENSIONS)
   return entries.sort()
 }
 
