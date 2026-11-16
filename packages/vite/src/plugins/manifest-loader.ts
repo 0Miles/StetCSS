@@ -22,7 +22,7 @@ export default function ManifestLoaderPlugin(context: PluginContext): Plugin {
     addServerAllow(context, dependencies)
   }
   return {
-    name: 'master-css:manifest-loader',
+    name: 'stet-css:manifest-loader',
     enforce: 'pre',
     async resolveId(id, importer) {
       if (!isMasterCSSManifestRequest(id)) return

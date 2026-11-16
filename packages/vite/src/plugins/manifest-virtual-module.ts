@@ -35,7 +35,7 @@ export default function ManifestVirtualModulePlugin(context: PluginContext): Plu
     return result
   }
   return {
-    name: 'master-css:virtual-module:manifest',
+    name: 'stet-css:virtual-module:manifest',
     enforce: 'pre',
     async buildStart() {
       if (isProductionBuild(context)) return

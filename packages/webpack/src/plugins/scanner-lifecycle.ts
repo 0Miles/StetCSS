@@ -23,7 +23,7 @@ export default function ScannerLifecyclePlugin(context: MasterCSSWebpackContext)
 
       context.on('reset', () => {
         context.writeDefaultManifestModule().catch((error: unknown) => {
-          console.error('[master-css.webpack] manifest module update failed:', error)
+          console.error('[stet-css.webpack] manifest module update failed:', error)
         })
       })
 
