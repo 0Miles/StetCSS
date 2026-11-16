@@ -1,78 +1,28 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { MASTER_CSS_HYDRATION_MANIFEST_ATTR } from '@stet-css/schema/hydration-manifest'
-import execBunSync from './helpers/bun-command'
+import { collectFiles, readBuiltCSS, runFixtureScript } from './helpers/next-build'
 
 const packageDir = dirname(fileURLToPath(new URL('../package.json', import.meta.url)))
 const fixtureDir = join(packageDir, 'e2e/static-export')
 const outDir = join(fixtureDir, 'out')
 
-function buildFixture() {
-  try {
-    execBunSync(['run', 'build'], {
-      cwd: fixtureDir,
-      encoding: 'utf-8',
-      env: {
-        ...process.env,
-        NEXT_TELEMETRY_DISABLED: '1'
-      },
-      stdio: 'pipe',
-      timeout: 120000
-    })
-  } catch (error) {
-    const buildError = error as Error & { stdout?: string | Buffer, stderr?: string | Buffer }
-    throw new Error([
-      buildError.message,
-      buildError.stdout?.toString(),
-      buildError.stderr?.toString()
-    ].filter(Boolean).join('\n'))
-  }
-}
-
-function collectHTMLFiles(dir: string): string[] {
-  const files: string[] = []
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const filePath = join(dir, entry.name)
-    if (entry.isDirectory()) {
-      files.push(...collectHTMLFiles(filePath))
-    } else if (entry.isFile() && entry.name.endsWith('.html')) {
-      files.push(filePath)
-    }
-  }
-  return files
-}
-
-function collectHydrationManifestSources(html: string) {
-  return [...html.matchAll(new RegExp(`${MASTER_CSS_HYDRATION_MANIFEST_ATTR}="([^"]+)"`, 'g'))]
-    .map((match) => match[1])
-}
-
 describe('static export e2e', () => {
-  it('emits every referenced hydration manifest directly into the export output', () => {
-    buildFixture()
+  /** Guards #57: `output: 'export'` serves every page's Server Component classes from the CSS asset. */
+  it('exports the Server Component classes of every page into the CSS asset', () => {
+    runFixtureScript(fixtureDir)
 
-    const htmlFiles = collectHTMLFiles(outDir)
-    const manifestSources = htmlFiles.flatMap((htmlFile) =>
-      collectHydrationManifestSources(readFileSync(htmlFile, 'utf-8'))
-    )
+    const htmlFiles = collectFiles(outDir, (file) => file.endsWith('.html'))
+      .map((file) => relative(outDir, file).replaceAll('\\', '/'))
+    const css = readBuiltCSS(join(outDir, '_next/static'))
 
-    expect(htmlFiles.map((file) => relative(outDir, file).replaceAll('\\', '/'))).toEqual(expect.arrayContaining([
-      'index.html',
-      'nested.html'
-    ]))
-    expect(manifestSources.length).toBeGreaterThan(0)
-    expect(existsSync(join(fixtureDir, '.next/static/master-css/hydration'))).toBe(false)
-
-    for (const source of manifestSources) {
-      const pathname = new URL(source, 'http://localhost').pathname
-      const manifestFile = join(outDir, ...pathname.split('/').filter(Boolean))
-      expect(pathname).toMatch(/^\/_next\/static\/master-css\/hydration\/master-css-hydration\.[0-9a-f]{8}\.json$/)
-      expect(existsSync(manifestFile), `${source} should exist in the static export`).toBe(true)
-      const manifest = JSON.parse(readFileSync(manifestFile, 'utf-8'))
-      expect(manifest.version).toBe(1)
-      expect(manifest.rules.length).toBeGreaterThan(0)
-    }
+    expect(htmlFiles).toEqual(expect.arrayContaining(['index.html', 'nested.html']))
+    expect(css).toContain('.fg\\:red{color:var(--color-red)}')
+    expect(css).toContain('.font\\:40px{font-size:40px}')
+    expect(css).toContain('.fg\\:blue{color:var(--color-blue)}')
+    expect(css).toContain('.font\\:32px{font-size:32px}')
+    expect(existsSync(join(outDir, '_next/static/master-css'))).toBe(false)
+    expect(readFileSync(join(outDir, 'index.html'), 'utf-8')).not.toContain('<style id="master-css"')
   })
 })
