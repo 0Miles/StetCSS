@@ -38,7 +38,7 @@ type VitePlugin = {
   [key: string]: unknown
 }
 type ViteBuild = (options: Record<string, unknown>) => Promise<unknown>
-type MasterCSSVite = (options: Record<string, unknown>) => VitePlugin[]
+type MasterCSSVite = () => VitePlugin[]
 
 const dynamicImport = new Function('specifier', 'return import(specifier)') as <T>(specifier: string) => Promise<T>
 
@@ -70,10 +70,6 @@ class DiagnosticRecorder {
     this.timings[metricId] = (this.timings[metricId] || 0) + value
   }
 
-  addCount(metricId: string, value = 1) {
-    this.counts[metricId] = (this.counts[metricId] || 0) + value
-  }
-
   setCount(metricId: string, value: number) {
     this.counts[metricId] = value
   }
@@ -102,8 +98,6 @@ export const buildDiagnosticMetricIds = [
   'vite-baseline-build-ms',
   'vite-total-build-ms',
   'vite-master-scanner-init-ms',
-  'vite-master-html-scan-ms',
-  'vite-master-module-scan-ms',
   'vite-master-style-entry-ms',
   'vite-master-generate-bundle-ms'
 ] as const
@@ -220,7 +214,7 @@ async function runMasterViteDiagnostic(workspace: string, fixtureId: BenchmarkFi
 
   const totalStartedAt = performance.now()
   const masterCSS = await loadMasterCSSVite()
-  const plugins = instrumentMasterVitePlugins(masterCSS({ mode: 'static' }), recorder)
+  const plugins = instrumentMasterVitePlugins(masterCSS(), recorder)
 
   const build = await loadViteBuild()
   await recorder.time('vite-total-build-ms', () => build({
@@ -238,7 +232,6 @@ async function runMasterViteDiagnostic(workspace: string, fixtureId: BenchmarkFi
   }))
 
   recorder.addTiming('total-diagnostic-ms', performance.now() - totalStartedAt)
-  recorder.setCount('source-file-count', (recorder.counts['vite-html-scan-count'] || 0) + (recorder.counts['vite-module-scan-count'] || 0))
 
   return collectDiagnosticOutput(workspace, fixtureId, recorder)
 }
@@ -282,13 +275,6 @@ function instrumentMasterVitePlugins(plugins: VitePlugin[], recorder: Diagnostic
       wrapPluginHook(next, 'configResolved', 'vite-master-scanner-init-ms', recorder)
     }
 
-    if (plugin.name === 'master-css:usage-graph') {
-      wrapPluginHook(next, 'transform', 'vite-master-module-scan-ms', recorder, () => {
-        recorder.addCount('vite-module-scan-count')
-      })
-      wrapTransformIndexHtml(next, recorder)
-    }
-
     if (plugin.name === 'master-css:style-entry') {
       wrapPluginHook(next, 'load', 'vite-master-style-entry-ms', recorder)
       wrapPluginHook(next, 'transform', 'vite-master-style-entry-ms', recorder)
@@ -302,42 +288,15 @@ function instrumentMasterVitePlugins(plugins: VitePlugin[], recorder: Diagnostic
   })
 }
 
-function wrapPluginHook(plugin: VitePlugin, hookName: string, metricId: string, recorder: DiagnosticRecorder, before?: () => void) {
+function wrapPluginHook(plugin: VitePlugin, hookName: string, metricId: string, recorder: DiagnosticRecorder) {
   const original = plugin[hookName]
   if (typeof original !== 'function') return
 
   Object.assign(plugin, {
     [hookName]: async function wrappedPluginHook(this: unknown, ...args: unknown[]) {
-      before?.()
       return recorder.time(metricId, () => original.apply(this, args))
     }
   })
-}
-
-function wrapTransformIndexHtml(plugin: VitePlugin, recorder: DiagnosticRecorder) {
-  const original = plugin.transformIndexHtml
-  if (!original || typeof original === 'string') return
-
-  if (typeof original === 'function') {
-    plugin.transformIndexHtml = async function wrappedTransformIndexHtml(this: unknown, ...args: unknown[]) {
-      recorder.addCount('vite-html-scan-count')
-      return recorder.time('vite-master-html-scan-ms', () => original.apply(this, args))
-    }
-    return
-  }
-
-  if (!isHookObject(original) || typeof original.handler !== 'function') return
-  plugin.transformIndexHtml = {
-    ...original,
-    async handler(this: unknown, ...args: unknown[]) {
-      recorder.addCount('vite-html-scan-count')
-      return recorder.time('vite-master-html-scan-ms', () => original.handler.apply(this, args))
-    }
-  }
-}
-
-function isHookObject(value: unknown): value is { handler: (...args: unknown[]) => unknown } & Record<string, unknown> {
-  return !!value && typeof value === 'object'
 }
 
 async function collectDiagnosticOutput(workspace: string, fixtureId: BenchmarkFixtureId, recorder: DiagnosticRecorder): Promise<DiagnosticRunResult> {
