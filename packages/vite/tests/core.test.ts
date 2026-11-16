@@ -11,13 +11,11 @@ describe('masterCSS plugin composition', () => {
     const names = pluginNames({ mode })
 
     expect(names.filter((name) => name === 'master-css:scanner')).toHaveLength(1)
-    expect(names.filter((name) => name === 'master-css:usage-graph')).toHaveLength(1)
     expect(names.filter((name) => name === 'master-css:style-entry')).toHaveLength(1)
     expect(names.filter((name) => name === 'master-css:style-entry:hmr')).toHaveLength(1)
     expect(names.filter((name) => name === 'master-css:style-entry:build')).toHaveLength(1)
     expect(names).toEqual(expect.arrayContaining([
       'master-css:scanner',
-      'master-css:usage-graph',
       'master-css:style-entry',
       'master-css:style-entry:hmr',
       'master-css:style-entry:build'
