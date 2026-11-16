@@ -16,7 +16,7 @@ let scannerModulePromise: Promise<CSSScannerConstructor> | undefined
 let stylesheetModulePromise: Promise<StylesheetModule> | undefined
 let projectEntriesModulePromise: Promise<ProjectEntriesModule> | undefined
 let chokidarModulePromise: Promise<Chokidar> | undefined
-let loggerPromise: Promise<Logger> | undefined
+const loggerPromises = new Map<NodeJS.WriteStream, Promise<Logger>>()
 let bytesPromise: Promise<Bytes> | undefined
 
 export interface ScanOptions {
@@ -89,6 +89,7 @@ export default async function runScan(specifiedSourcePaths: string[] = [], optio
   const CSSScanner = await loadCSSScanner()
   const { watch, output, cwd } = options
   const verbose = options.verbose === undefined ? 1 : Number(options.verbose) || 0
+  const logStream = options.export ? process.stdout : process.stderr
   const scanner = new CSSScanner({}, cwd)
   const styleCSSSources: StyleCSSSources = new Map()
   const sources = normalizeSourcePatterns(specifiedSourcePaths)
@@ -110,7 +111,7 @@ export default async function runScan(specifiedSourcePaths: string[] = [], optio
       sources
     })
     if (verbose > 1) {
-      const logger = await loadLogger()
+      const logger = await loadLogger(logStream)
       for (const file of await resolveSourceFiles()) {
         logger.info(`read ${formatWatchedPath(scanner.cwd, file)}`)
       }
@@ -158,7 +159,7 @@ export default async function runScan(specifiedSourcePaths: string[] = [], optio
           restarting = true
           try {
             if (verbose) {
-              const logger = await loadLogger()
+              const logger = await loadLogger(logStream)
               logger.log('')
               logger.info(`[change] ${formatWatchedPath(scanner.cwd, resetDependency)}`)
             }
@@ -167,7 +168,7 @@ export default async function runScan(specifiedSourcePaths: string[] = [], optio
             await registerManagedCSSEntries(scanner, styleCSSSources)
             await queueWrite()
             await startWatchers()
-            const logger = await loadLogger()
+            const logger = await loadLogger(logStream)
             logger.log('')
             logger.info('Restart watching source changes')
             scanner.emit('resetDependencyChange')
@@ -198,7 +199,7 @@ export default async function runScan(specifiedSourcePaths: string[] = [], optio
     await registerManagedCSSEntries(scanner, styleCSSSources)
     await queueWrite()
     await startWatchers()
-    const logger = await loadLogger()
+    const logger = await loadLogger(logStream)
     logger.log('')
     logger.info('Start watching source changes')
   } else {
@@ -228,8 +229,13 @@ function loadChokidar() {
   return chokidarModulePromise
 }
 
-function loadLogger() {
-  loggerPromise ||= import('consola').then(({ createConsola }) => createConsola({ level: 3 }))
+/** A logger writing to `stream`; `--no-export` logs to stderr so stdout stays pure CSS. */
+function loadLogger(stream: NodeJS.WriteStream = process.stdout) {
+  let loggerPromise = loggerPromises.get(stream)
+  if (!loggerPromise) {
+    loggerPromise = import('consola').then(({ createConsola }) => createConsola({ level: 3, stdout: stream }))
+    loggerPromises.set(stream, loggerPromise)
+  }
   return loggerPromise
 }
 

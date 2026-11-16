@@ -98,7 +98,7 @@ function runCLI(cwd: string, args: string[] = []) {
     encoding: 'utf8'
   })
   expect(result.status).toBe(0)
-  return result.stdout + result.stderr
+  return result
 }
 
 /**
@@ -111,13 +111,32 @@ it('logs by its own -v level', async () => {
   const cwd = fs.mkdtempSync(join(os.tmpdir(), 'master-css-cli-verbose-'))
   try {
     fs.writeFileSync(join(cwd, 'page.html'), '<h1 class="text-center">Hello World</h1>')
-    const defaultLog = runCLI(cwd)
+    const defaultLog = runCLI(cwd).stdout
     expect(defaultLog).toContain('master.css exported')
     expect(defaultLog).not.toContain('page.html')
-    const detailedLog = runCLI(cwd, ['-v', '2'])
+    const detailedLog = runCLI(cwd, ['-v', '2']).stdout
     expect(detailedLog).toContain('master.css exported')
     expect(detailedLog).toContain('page.html')
-    expect(runCLI(cwd, ['-v', '0'])).not.toContain('exported')
+    const silent = runCLI(cwd, ['-v', '0'])
+    expect(silent.stdout + silent.stderr).not.toContain('exported')
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true })
+  }
+})
+
+/**
+ * Guards `--no-export` piping: its stdout is the CSS alone, so `stet-css --no-export > a.css`
+ * stays valid CSS at any `-v` level; the log goes to stderr.
+ * Reverse check: logging to stdout under `--no-export` turns only this test red.
+ */
+it('keeps stdout pure CSS with --no-export and logs to stderr', async () => {
+  const cwd = fs.mkdtempSync(join(os.tmpdir(), 'master-css-cli-no-export-log-'))
+  try {
+    fs.writeFileSync(join(cwd, 'page.html'), '<h1 class="text-center">Hello World</h1>')
+    const { stdout, stderr } = runCLI(cwd, ['--no-export', '-v', '2'])
+    expect(stdout).toContain('.text-center{')
+    expect(stdout).not.toContain('page.html')
+    expect(stderr).toContain('read page.html')
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true })
   }
