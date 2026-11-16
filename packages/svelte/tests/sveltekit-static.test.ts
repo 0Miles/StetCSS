@@ -1,5 +1,5 @@
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { basename, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { build, createServer } from 'vite'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
@@ -30,17 +30,43 @@ const projectFiles: Record<string, string> = {
     '',
     '{@render children()}'
   ].join('\n'),
-  'src/routes/+page.svelte': '<h1 class="mx:auto max-w:50%">Hello</h1>\n'
+  // A class that exists only in server load data: no client module spells it out in markup.
+  'src/routes/+page.server.js': 'export const load = () => ({ cls: \'pt:77px\' })\n',
+  'src/routes/+page.svelte': [
+    '<script>',
+    '  let { data } = $props()',
+    '</script>',
+    '',
+    '<h1 class="mx:auto max-w:50%">Hello</h1>',
+    '<p class={data.cls}>From the server</p>'
+  ].join('\n'),
+  // A component only the server renders: its route ships no client JavaScript.
+  'src/lib/ServerOnly.svelte': '<p class="ml:55px">Server only</p>\n',
+  'src/routes/server-only/+page.js': 'export const csr = false\nexport const prerender = true\n',
+  'src/routes/server-only/+page.svelte': [
+    '<script>',
+    '  import ServerOnly from \'$lib/ServerOnly.svelte\'',
+    '</script>',
+    '',
+    '<ServerOnly />'
+  ].join('\n')
 }
-const UTILITY_RULES = ['.mx\\:auto{margin-inline:auto}', '.max-w\\:50\\%{max-width:50%}']
+const UTILITY_RULES = [
+  '.mx\\:auto{margin-inline:auto}',
+  '.max-w\\:50\\%{max-width:50%}',
+  '.pt\\:77px{padding-top:77px}',
+  '.ml\\:55px{margin-left:55px}'
+]
 
 let root: string
 let previousCwd: string
 
 /**
  * A SvelteKit project set up as the README describes: `sveltekit()` and `masterCSS()` with no
- * options, a stylesheet that imports `@stet-css/core`, classes only in `.svelte` files, and no
- * `hooks.server`. SvelteKit reads its config from the working directory when
+ * options, a stylesheet that imports `@stet-css/core`, and no `hooks.server`. Besides classes in
+ * a page's markup it has the two cases only the server renders, which the removed hook used to
+ * cover: a class that arrives in server load data, and a component on a route without client
+ * JavaScript. SvelteKit reads its config from the working directory when
  * `@sveltejs/kit/vite` is first imported, so the tests run from the project root.
  */
 beforeAll(() => {
@@ -60,30 +86,33 @@ afterAll(() => {
 
 describe('SvelteKit project with masterCSS() and no hooks.server', () => {
   /**
-   * Guards: `vite build` writes the rules for the classes in `.svelte` files into the client CSS
-   * without a server hook. If the wrapper went back to a mode that leaves rule generation to a
-   * server hook or the runtime, the built stylesheet would ship without them.
+   * Guards: `vite build` writes the rules for the project's classes into the stylesheet a built
+   * page links, without a server hook. If the wrapper went back to a mode that leaves rule
+   * generation to a server hook or the runtime, the linked stylesheet would ship without them,
+   * and the server-only page, which runs no script, would stay unstyled.
    *
    * Reverse check: passing `mode: 'progressive'` from `src/lib/vite.ts` fails this test.
    */
-  test('build writes the utilities into the client CSS', async () => {
+  test('build writes the utilities into the stylesheet the built page links', async () => {
     await build({ root, logLevel: 'silent' })
-    const assetsDir = join(root, '.svelte-kit/output/client/_app/immutable/assets')
-    const css = readdirSync(assetsDir)
-      .filter((file) => file.endsWith('.css'))
-      .map((file) => readFileSync(join(assetsDir, file), 'utf-8'))
+    const outputDir = join(root, '.svelte-kit/output')
+    const html = readFileSync(join(outputDir, 'prerendered/pages/server-only.html'), 'utf-8')
+    const css = [...html.matchAll(/<link\b[^>]*\bhref="([^"]+\.css)"[^>]*\brel="stylesheet"/g)]
+      .map(([, href]) => readFileSync(join(outputDir, 'client/_app/immutable/assets', basename(href)), 'utf-8'))
       .join('\n')
 
+    expect(html).not.toMatch(/<script\b/)
     for (const rule of UTILITY_RULES) expect(css).toContain(rule)
   }, 60000)
 
   /**
    * Guards: the dev server's first response carries the utilities in the CSS SvelteKit inlines
-   * into the page, so the page is styled before any script runs.
+   * into the page, so the page is styled before any script runs, on the page that reads its class
+   * from server load data and on the page only the server renders.
    *
    * Reverse check: passing `mode: 'progressive'` from `src/lib/vite.ts` fails this test.
    */
-  test('dev serves the utilities in the server-rendered page', async () => {
+  test('dev serves the utilities in the server-rendered pages', async () => {
     const server = await createServer({
       root,
       logLevel: 'silent',
@@ -91,9 +120,12 @@ describe('SvelteKit project with masterCSS() and no hooks.server', () => {
     })
     try {
       await server.listen()
-      const html = await (await fetch(server.resolvedUrls!.local[0])).text()
+      const origin = server.resolvedUrls!.local[0]
 
-      for (const rule of UTILITY_RULES) expect(html).toContain(rule)
+      for (const path of ['', 'server-only']) {
+        const html = await (await fetch(origin + path)).text()
+        for (const rule of UTILITY_RULES) expect(html, `/${path}`).toContain(rule)
+      }
     } finally {
       await server.close()
     }
