@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs'
-import { extname, resolve } from 'node:path'
+import { existsSync, readFileSync } from 'node:fs'
+import { dirname, extname, resolve } from 'node:path'
 import { defineConfig, type TsdownInputOption, type TsdownPlugin } from 'tsdown'
 
 interface PackageJSON {
@@ -48,9 +48,16 @@ const externalVirtualModules: TsdownPlugin = {
 const relativeImportSpecifierPattern = /((?:\bfrom\s*|\bimport\s*)['"])(\.{1,2}\/[^'"]+)(['"])/g
 const dynamicImportSpecifierPattern = /(\bimport\(['"])(\.{1,2}\/[^'"]+)(['"]\))/g
 
-function addJSExtensionToRelativeSpecifier(match: string, prefix: string, specifier: string, suffix: string) {
-  if (/[?#]/.test(specifier) || extname(specifier)) return match
-  return `${prefix}${specifier}.js${suffix}`
+// dist mirrors src (`unbundle` with `root: 'src'`), so a specifier that names a
+// directory in src names the same directory in dist and needs its index file:
+// `./options` -> `./options/index.js`, never `./options.js`.
+function addJSExtensionToRelativeSpecifier(chunkFileName: string) {
+  const sourceDir = resolve(packageRoot, 'src', dirname(chunkFileName))
+  return (match: string, prefix: string, specifier: string, suffix: string) => {
+    if (/[?#]/.test(specifier) || extname(specifier)) return match
+    const isDirectory = !existsSync(resolve(sourceDir, `${specifier}.ts`)) && existsSync(resolve(sourceDir, specifier, 'index.ts'))
+    return `${prefix}${specifier}${isDirectory ? '/index' : ''}.js${suffix}`
+  }
 }
 
 const preserveDeclarationRelativeImports: TsdownPlugin = {
@@ -59,9 +66,10 @@ const preserveDeclarationRelativeImports: TsdownPlugin = {
     order: 'post',
     handler(code, chunk) {
       if (!chunk.fileName.endsWith('.d.ts')) return
+      const addJSExtension = addJSExtensionToRelativeSpecifier(chunk.fileName)
       return code
-        .replace(relativeImportSpecifierPattern, addJSExtensionToRelativeSpecifier)
-        .replace(dynamicImportSpecifierPattern, addJSExtensionToRelativeSpecifier)
+        .replace(relativeImportSpecifierPattern, addJSExtension)
+        .replace(dynamicImportSpecifierPattern, addJSExtension)
     }
   }
 }
