@@ -4,10 +4,18 @@
  */
 const MAX_CLASS_NESTING = 64
 
-/** Whether `(`, `[`, and `{` outside quoted strings nest deeper than `MAX_CLASS_NESTING`. */
+const CLOSERS: Record<string, string> = { '(': ')', '[': ']', '{': '}' }
+
+/**
+ * Whether `(`, `[`, and `{` outside quoted strings nest deeper than `MAX_CLASS_NESTING`.
+ *
+ * A closer only unwinds the bracket it matches, as the engine's parsers do, so a stray `]` in
+ * `calc(]calc(]…` cannot hide nesting. Backslash escapes are honoured inside quotes only; escaped
+ * brackets outside quotes still count.
+ */
 export default function exceedsClassNesting(className: string) {
   let quote = ''
-  let depth = 0
+  const expectedClosers: string[] = []
   for (let index = 0; index < className.length; index++) {
     const char = className[index]
     if (quote) {
@@ -18,10 +26,10 @@ export default function exceedsClassNesting(className: string) {
       }
     } else if (char === '"' || char === '\'') {
       quote = char
-    } else if (char === '(' || char === '[' || char === '{') {
-      if (++depth > MAX_CLASS_NESTING) return true
-    } else if ((char === ')' || char === ']' || char === '}') && depth > 0) {
-      depth--
+    } else if (char in CLOSERS) {
+      if (expectedClosers.push(CLOSERS[char]) > MAX_CLASS_NESTING) return true
+    } else if (char === expectedClosers[expectedClosers.length - 1]) {
+      expectedClosers.pop()
     }
   }
   return false

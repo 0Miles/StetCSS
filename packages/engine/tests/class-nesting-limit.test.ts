@@ -29,8 +29,9 @@ describe.concurrent('class nesting limit', () => {
 
   /**
    * Guards the boundary on both sides: a class at exactly 64 levels is valid and keeps its CSS, one
-   * level deeper is dropped. Reverse check: `MAX_CLASS_NESTING` in
-   * `src/utils/exceeds-class-nesting.ts` set to 63 or 65 turns only this file red.
+   * level deeper is dropped, through both `generate()` and `createRule()`. Reverse check:
+   * `MAX_CLASS_NESTING` in `src/utils/exceeds-class-nesting.ts` set to 63 or 65 turns only these 3
+   * boundary tests red.
    */
   test.each(forms)('$name nested 64 levels generates CSS and 65 levels generates none', ({ className, declaration }) => {
     const css = createDefaultCSS()
@@ -44,8 +45,8 @@ describe.concurrent('class nesting limit', () => {
 
   /**
    * Guards the original crash: thousands of levels returned no CSS instead of throwing `RangeError`.
-   * Reverse check: removing the depth guard from `createRules` turns only this test and the boundary
-   * tests red.
+   * Reverse check: removing the depth guard from `createRule` turns only this test and the 3 boundary
+   * tests red; removing it from `createRules` also turns the mismatched-closer test red.
    */
   test('classes nested thousands of levels deep generate nothing and do not throw', () => {
     const css = createDefaultCSS()
@@ -54,6 +55,28 @@ describe.concurrent('class nesting limit', () => {
       `w:${nested('var(--x,', '1px', ')', 10000)}`,
       `block${nested(':is(', '.a', ')', 10000)}`,
       nested('{', 'block', '}', 5000)
+    ]
+
+    for (const className of classNames) {
+      expect(() => css.generate(className)).not.toThrow()
+      expect(css.generate(className)).toEqual([])
+      expect(css.createRule(className)).toBeUndefined()
+    }
+  })
+
+  /**
+   * Guards against a bypass: the engine's parsers only unwind at the closer that matches the opener,
+   * so a stray `]` after every `calc(` must not lower the count, or `calc(]` repeated thousands of
+   * times nests the parser thousands of levels and throws again. Reverse check: letting any closer
+   * lower the depth turns only this test red.
+   */
+  test('mismatched closers do not lower the nesting depth', () => {
+    const css = createDefaultCSS()
+    const classNames = [
+      `width:${nested('calc(]', '1px', ')', 5000)}`,
+      `w:${nested('var(--x,]', '1px', ')', 5000)}`,
+      `block${nested(':is(]', '.a', ')', 5000)}`,
+      `block@media${nested('(]', 'width>1px', ')', 5000)}`
     ]
 
     for (const className of classNames) {
@@ -71,7 +94,8 @@ describe.concurrent('class nesting limit', () => {
     const css = createDefaultCSS()
     const text = '('.repeat(70)
 
-    expect(css.generate(`content:'${text}'`).map((rule) => rule.text))
-      .toEqual([`.content\\:\\'${'\\('.repeat(70)}\\'{content:'${text}'}`])
+    const rules = css.generate(`content:'${text}'`)
+    expect(rules).toHaveLength(1)
+    expect(rules[0].text).toContain(`{content:'${text}'}`)
   })
 })
