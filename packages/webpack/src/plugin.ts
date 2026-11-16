@@ -110,7 +110,7 @@ export class MasterCSSPlugin {
   defaultManifestDependencies: string[] = []
   emittedGlobals: MasterCSSEmittedGlobals = {}
   /** The project manifest the manifest module last loaded; static CSS renders with it. */
-  projectManifest?: MasterCSSManifest
+  private projectManifest?: MasterCSSManifest
   styleCSSSources: StyleCSSSources = new Map()
   /** Entries the style loader reported that discovery may miss, e.g. outside the root. */
   loadedStyleEntries = new Set<string>()
