@@ -81,12 +81,11 @@ Use the CDN runtime when a page only needs the default preset and zero configura
 
 ```html
 <link rel="preload" as="style" href="https://cdn.master.co/css@rc/base.css">
-<link rel="modulepreload" as="json" crossorigin href="https://cdn.master.co/css-runtime@rc/default-manifest.json">
 <link rel="stylesheet" href="https://cdn.master.co/css@rc/base.css">
 <script src="https://cdn.master.co/css-runtime@rc"></script>
 ```
 
-The IIFE imports `default-manifest.json` next to the runtime script as a JSON module, starts automatically, and registers the document runtime as `globalThis.masterCSSRuntime`. The CDN must serve the manifest with `application/json`, and the browser must support JSON modules and import attributes. It does not read global options or custom manifests. Use ESM `CSSRuntime.create({ manifest, emittedGlobals }).observe()` for custom theme tokens, utilities, modes, emitted globals, or hydration inputs.
+The IIFE carries the default manifest inside the script, so it makes no other request and works from a package's short CDN URL. It starts as soon as it runs and registers the document runtime as `globalThis.masterCSSRuntime`. It does not read global options or custom manifests. Use ESM `CSSRuntime.create({ manifest, emittedGlobals }).observe()` for custom theme tokens, utilities, modes, emitted globals, or hydration inputs.
 
 ## API
 
