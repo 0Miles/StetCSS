@@ -121,7 +121,7 @@ function compareFeatureTuples(
   return 0
 }
 
-function getRuleSortTier(rule: Partial<Pick<Utility, 'conditions' | 'mode' | 'selectorNodes'>>): number {
+function getRuleSortTier(rule: ComparableRule): number {
   const hasSelector = rule.selectorNodes?.length
   const hasConditions = !!rule.conditions
   const hasMode = !!rule.mode
