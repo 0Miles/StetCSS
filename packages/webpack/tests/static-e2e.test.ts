@@ -222,6 +222,43 @@ describe('Webpack static CSS', () => {
   }, 180000)
 
   /**
+   * Guards that custom `adapters` reach the class set of a real webpack build: a project whose
+   * templates only its adapter can read would otherwise ship without those rules.
+   * Reverse check: creating the scanner with `{}` in `src/plugin.ts` turns only this test red.
+   */
+  it('ships the classes custom adapters find', async () => {
+    const MasterCSSPlugin = await importPlugin()
+    const { default: webpackModule } = await import('webpack')
+    const root = createFixture('adapters', {
+      'src/index.js': 'import "./app.css"\n',
+      'src/app.css': '@import "@stet-css/core";\n',
+      'adapter-probe.md': 'Read only by the custom adapter.\n'
+    })
+
+    try {
+      await runWebpack(webpackModule, {
+        mode: 'production',
+        context: root,
+        entry: './src/index.js',
+        ...extractedCSSConfig,
+        output: { path: join(root, 'dist'), filename: '[name].js', cssFilename: '[name].css' },
+        plugins: [new MasterCSSPlugin({
+          adapters: [{
+            // Finds a class no built-in adapter can: the class is in the adapter, not in the file.
+            name: 'probe',
+            test: /adapter-probe\.md$/,
+            extract: async () => ['m:13px']
+          }]
+        }, root)]
+      })
+
+      expect(readOutput(join(root, 'dist'), '.css')).toMatch(/\.m\\:13px\s*\{\s*margin:\s*13px/)
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  }, 180000)
+
+  /**
    * Guards entries other than a `.css` file in the project root: a Sass entry and an entry
    * the app imports from outside the root must keep their `@theme` and `@safelist`, or users
    * silently get the default theme and lose forced classes. Sass is stubbed in the fixture:
