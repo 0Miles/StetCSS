@@ -616,11 +616,6 @@
       "name": "@stet-css/nuxt",
       "dependencies": {
         "@nuxt/kit": "^4.4.8",
-        "@stet-css/integration": "workspace:^",
-        "@stet-css/project": "workspace:^",
-        "@stet-css/runtime": "workspace:^",
-        "@stet-css/server": "workspace:^",
-        "@stet-css/stylesheet": "workspace:^",
         "@stet-css/vite": "workspace:^",
       },
       "devDependencies": {

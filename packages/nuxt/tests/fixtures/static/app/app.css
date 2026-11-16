@@ -1,5 +1,4 @@
 @import '@stet-css/core';
-@source './app.vue';
 
 @layer components {
   .box {
