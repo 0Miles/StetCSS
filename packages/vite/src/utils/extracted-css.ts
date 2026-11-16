@@ -15,12 +15,9 @@ export function getStylesheetSourceContext(context: PluginContext): StylesheetSo
 }
 
 export async function getExtractedCSSResult(context: PluginContext) {
-  const result = await createExtractedCSSResult({
-    ...getStylesheetSourceContext(context),
-    // The plugin scans no modules: every class comes from the stylesheet's class set, so
-    // templates that only an SSR or prerender build compiles still get their rules.
-    classes: []
-  })
+  // Every class comes from the stylesheet's class set, so templates that only an SSR or
+  // prerender build compiles still get their rules.
+  const result = await createExtractedCSSResult(getStylesheetSourceContext(context))
   context.emittedGlobals = result.emittedGlobals
   context.extractedCSS = result.css
   return result

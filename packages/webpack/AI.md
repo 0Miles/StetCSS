@@ -4,7 +4,7 @@ Owns the Webpack plugin. It only builds static CSS: before each compilation it g
 
 ## Boundaries
 
-- Which classes static CSS contains is the stylesheet class set's rule; this package passes `classes: []` and never scans compiled modules. Entries come from `@stet-css/project` entry discovery with `STYLE_ENTRY_EXTENSIONS` (`.css`, `.scss`, `.sass`), plus entries the style loader reports (`src/utils/hosts.ts`), such as ones outside the project root.
+- Which classes static CSS contains is the stylesheet class set's rule; this package never scans compiled modules, and renders with the project manifest its manifest module last loaded. Entries come from `@stet-css/project` entry discovery with `STYLE_ENTRY_EXTENSIONS` (`.css`, `.scss`, `.sass`), plus entries the style loader reports (`src/utils/hosts.ts`), such as ones outside the project root.
 - Manifest discovery and loading live in `@stet-css/project`.
 - No runtime injection: no runtime entry, no HTML asset rewriting, no `mode` or `injectRuntime` option.
 
