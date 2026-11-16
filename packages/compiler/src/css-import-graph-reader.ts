@@ -29,8 +29,9 @@ export type CSSImportGraphReader = (file: string, source?: string) => string
 
 /**
  * Creates the reader one CSS import graph inlines every stylesheet through, so every `@import`
- * expansion applies the same file checks and limits. Create one per graph: each file is read from
- * disk once per reader.
+ * expansion applies the same file checks and limits. Create one per compile entry: the entry's graph
+ * and the graphs of every stylesheet its `@reference` tree compiles share it, so their imports count
+ * toward the same limits. Each file is read from disk once per reader.
  */
 export function createCSSImportGraphReader(): CSSImportGraphReader {
   const sources = new Map<string, string>()
