@@ -874,13 +874,13 @@ export async function registerStyleCSSSource(
   const pruneNativeCSS = !collectedDirectives.directives.preserveNative && isMasterStyleSource(resolvedSource.source)
   const sourceWithoutImports = removeCSSImportStatements(resolvedSource.source)
   const cleanSource = removeMasterStyleDirectives(sourceWithoutImports).code
-  const compileOptions = masterCSS && !options.baseManifest
-    ? { ...options, baseManifest: await resolveMasterCSSPackageManifest(options.projectDir ?? scanner.cwd, options) }
-    : options
-  const result = await compileStyleCSS(filename, cleanSource, compileOptions)
   const defaultArtifact = masterCSS
     ? readDefaultMasterCSSPackageArtifact(options.projectDir ?? scanner.cwd, options)
     : undefined
+  const compileOptions = masterCSS && !options.baseManifest
+    ? { ...options, baseManifest: await resolveMasterCSSPackageManifest(options.projectDir ?? scanner.cwd, options, defaultArtifact) }
+    : options
+  const result = await compileStyleCSS(filename, cleanSource, compileOptions)
   const sourceDependencies = resolveStylesheetIncludedFiles({
     projectDir: scanner.cwd,
     include: collectedDirectives.directives.include,
@@ -921,8 +921,11 @@ function hasMasterCSSPackageSource(styleCSSSources?: StyleCSSSources) {
  * without that import, so without it `@compose inline-flex` cannot see the package's
  * static utilities.
  */
-async function resolveMasterCSSPackageManifest(projectDir: string | undefined, options: CompileStyleCSSOptions) {
-  const defaultArtifact = readDefaultMasterCSSPackageArtifact(projectDir, options)
+async function resolveMasterCSSPackageManifest(
+  projectDir: string | undefined,
+  options: CompileStyleCSSOptions,
+  defaultArtifact = readDefaultMasterCSSPackageArtifact(projectDir, options)
+) {
   if (defaultArtifact) return defaultArtifact.manifest
   const graph = resolveMasterCSSPackageCompileSource(projectDir)
   const { finalizedResult } = await compileStyleCSSResult(graph.dependencies[0] || '@stet-css/core', graph.source, options)
@@ -1026,14 +1029,16 @@ export async function createExtractedCSSResult(options: CreateExtractedCSSOption
     : undefined
   let mergedPlan = defaultArtifact?.manifest ?? compileOptions.baseManifest ?? explicitPlan ?? scanner.css.manifest
   const finalizedStyleResults = new Map<CompileCSSResult, ReturnType<typeof createManifestFromCSSResult>>()
-  if (masterCSSResult && hasCompiledStyleManifestInput(masterCSSResult)) {
-    const finalizedResult = createManifestFromCSSResult(masterCSSResult, {
+  const finalize = (result: CompileCSSResult) => {
+    if (!hasCompiledStyleManifestInput(result)) return
+    const finalizedResult = createManifestFromCSSResult(result, {
       ...compileOptions,
       baseManifest: mergedPlan
     })
     mergedPlan = finalizedResult.manifest
-    finalizedStyleResults.set(masterCSSResult, finalizedResult)
+    finalizedStyleResults.set(result, finalizedResult)
   }
+  if (masterCSSResult) finalize(masterCSSResult)
   // Entries that import the package resolve `@compose` against the package's manifest.
   const masterCSSManifest = compileOptions.baseManifest ?? (hasMasterCSS ? mergedPlan : undefined)
   const entryStyleResults = await Promise.all(
@@ -1046,15 +1051,7 @@ export async function createExtractedCSSResult(options: CreateExtractedCSSOption
           : undefined
       }))
   )
-  for (const result of entryStyleResults) {
-    if (!hasCompiledStyleManifestInput(result)) continue
-    const finalizedResult = createManifestFromCSSResult(result, {
-      ...compileOptions,
-      baseManifest: mergedPlan
-    })
-    mergedPlan = finalizedResult.manifest
-    finalizedStyleResults.set(result, finalizedResult)
-  }
+  for (const result of entryStyleResults) finalize(result)
   const nativeCSS = [
     ...(includeMasterBaseCSS
       ? [
