@@ -12,7 +12,6 @@ export default function ScannerPlugin(options: PluginOptions, context: PluginCon
       const scanner = new CSSScanner(options.scanner, getProjectDir(context) ?? config.root)
       context.scanner = scanner
       await scanner.init()
-      scanner.options.verbose = 0
     },
   }
 }
