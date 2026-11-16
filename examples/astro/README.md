@@ -1,13 +1,12 @@
 # Master CSS Astro example
 
-This example uses `@stet-css/astro` with its default `progressive` mode.
+This example uses `@stet-css/astro` in `static` mode.
 
 The integration:
 
-- pre-renders initial page CSS into `<style id="master-css">`
-- injects the Master CSS runtime
-- hydrates the pre-rendered stylesheet in the browser
-- generates CSS for class names that appear after the initial HTML
+- reads classes from the project's files, including `.astro` templates that only the server build compiles
+- emits their rules into one CSS file at build time
+- ships no runtime to the browser
 
 ## Project structure
 
@@ -20,22 +19,24 @@ The integration:
 │   │   └── Card.astro
 │   ├── layouts/
 │   │   └── Layout.astro
-│   └── pages/
-│       └── index.astro
+│   ├── pages/
+│   │   └── index.astro
+│   └── styles/
+│       └── global.css
 └── package.json
 ```
 
-`astro.config.js` registers `masterCSS()` with no options because progressive rendering is the default.
+`astro.config.js` registers `masterCSS({ mode: 'static' })`.
 
-`src/layouts/Layout.astro` imports the Master CSS default stylesheet globally:
+`src/styles/global.css` imports the Master CSS default stylesheet, and `src/layouts/Layout.astro` imports that file:
 
-```astro
-<style is:global>
-  @import '@stet-css/core';
-</style>
+```css
+@import '@stet-css/core';
 ```
 
-`src/pages/index.astro` includes a small runtime hydration demo. The built HTML contains the initial classes, and the client runtime handles the class added by the button interaction.
+Import the stylesheet from a CSS file rather than an inline `<style>` block: Astro inlines `@import` in `<style>` blocks before Vite plugins see them.
+
+`src/pages/index.astro` toggles classes from a client script. They are written in the file, so the static CSS already has their rules.
 
 ## Commands
 
