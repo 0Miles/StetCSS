@@ -1,34 +1,10 @@
 import { defineNuxtModule } from '@nuxt/kit'
+import { resolve } from 'node:path'
 import { name } from '../package.json'
-import masterCSS from '@stet-css/vite'
-import type { Plugin, ResolvedConfig } from 'vite'
+import masterCSS, { type PluginHost } from '@stet-css/vite'
 import type { ModuleOptions } from './options'
 
 export type { ModuleOptions } from './options'
-
-/**
- * Hands each plugin's `configResolved` a Vite config whose `root` is the Nuxt project root.
- * Nuxt sets Vite's root to `srcDir` (`app/`), and the plugin chain reads its project root,
- * and so the class set's files, from `config.root`: without this, classes in `layers/`,
- * `server/` and every other directory beside `app/` would be missing.
- */
-function withProjectRoot(plugins: Plugin[], projectRoot: string): Plugin[] {
-  return plugins.map((plugin) => {
-    const hook = plugin.configResolved
-    if (!hook) return plugin
-    const handler = typeof hook === 'function' ? hook : hook.handler
-    function configResolved(this: unknown, config: ResolvedConfig) {
-      const projectConfig = new Proxy(config, {
-        get: (target, key, receiver) => key === 'root' ? projectRoot : Reflect.get(target, key, receiver)
-      })
-      return handler.call(this as ThisParameterType<typeof handler>, projectConfig)
-    }
-    return {
-      ...plugin,
-      configResolved: typeof hook === 'function' ? configResolved : { ...hook, handler: configResolved }
-    }
-  })
-}
 
 export default defineNuxtModule<ModuleOptions>({
   meta: {
@@ -40,8 +16,18 @@ export default defineNuxtModule<ModuleOptions>({
     // Fix: [plugin ssr-styles] Cannot inline generated static CSS during SSR.
     if (nuxt.options.features?.inlineStyles)
       nuxt.options.features.inlineStyles = false
+    const { rootDir } = nuxt.options
+    // Nuxt sets Vite's root to `srcDir` (`app/`): the class set reads the Nuxt root instead,
+    // plus every layer, which `extends` can place outside the root or under `node_modules`.
+    const host: PluginHost = {
+      projectDir: rootDir,
+      extraProjectDirs: [...new Set(nuxt.options._layers.flatMap((layer) => [layer.config.rootDir, layer.config.srcDir]))]
+        .filter((dir) => dir && resolve(dir) !== resolve(rootDir)),
+      // A custom `buildDir` would feed built bundles back; `.output` is ignored by default.
+      ignorePaths: [nuxt.options.buildDir]
+    }
     nuxt.hook('vite:extendConfig', (viteConfig) => {
-      const plugins = withProjectRoot(masterCSS({ scanner: options.scanner }) as unknown as Plugin[], nuxt.options.rootDir)
+      const plugins = masterCSS({ scanner: options.scanner }, host)
       if (viteConfig.plugins) viteConfig.plugins.push(...plugins as never[])
       else Object.assign(viteConfig, { plugins })
     })

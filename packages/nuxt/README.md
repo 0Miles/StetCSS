@@ -76,7 +76,7 @@ Import the default stylesheet from a global Vue style block:
 </style>
 ```
 
-The module builds static CSS for every Nuxt build: `nuxt build`, `nuxt generate`, and `ssr: false` apps. Classes come from the project's files under the Nuxt root, including server components (`.server.vue`) and `layers/`. Layers outside the project root need an `@source` in your stylesheet.
+The module builds static CSS for every Nuxt build: `nuxt build`, `nuxt generate`, and `ssr: false` apps. Classes come from the project's files under the Nuxt root and from every layer, including server components (`.server.vue`), `layers/`, and layers added with `extends`. Add other directories with `@source` in your stylesheet.
 
 ## Options
 
