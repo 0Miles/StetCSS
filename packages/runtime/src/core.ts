@@ -147,7 +147,7 @@ export default class CSSRuntime extends MasterCSS {
     const resolvedHydrationManifest = hydrationManifest === undefined
       ? readInlineHydrationManifest(root)
       : hydrationManifest
-    const current = globalThis.MasterCSSRuntime.instances.get(root)
+    const current = CSSRuntime.instances.get(root)
     if (current) {
       current.registerEmittedGlobals(emittedGlobals)
       if (resolvedHydrationManifest !== undefined) current.setHydrationManifest(resolvedHydrationManifest)
@@ -178,8 +178,8 @@ export default class CSSRuntime extends MasterCSS {
   }
 
   register(): this {
-    const registered = globalThis.MasterCSSRuntime.instances.get(this.root) === this
-    globalThis.MasterCSSRuntime.instances.set(this.root, this)
+    const registered = CSSRuntime.instances.get(this.root) === this
+    CSSRuntime.instances.set(this.root, this)
     if (isDocumentRoot(this.root)) {
       this.root.defaultView!.globalThis.masterCSSRuntime = this
     }
@@ -190,7 +190,7 @@ export default class CSSRuntime extends MasterCSS {
   }
 
   unregister(): this {
-    globalThis.MasterCSSRuntime.instances.delete(this.root)
+    CSSRuntime.instances.delete(this.root)
     if (isDocumentRoot(this.root) && this.root.defaultView!.globalThis.masterCSSRuntime === this) {
       this.root.defaultView!.globalThis.masterCSSRuntime = undefined as unknown as CSSRuntime
     }
