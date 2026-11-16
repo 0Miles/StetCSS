@@ -16,6 +16,9 @@ const expectedScenarioIds = [
   'long-session'
 ]
 
+// Scenario details per mode: every lifecycle scenario detail runs once for each mode.
+const lifecycleDetailCount = 16
+
 const expectedModeIds = [
   'master-static',
   'master-runtime',
@@ -210,8 +213,9 @@ function validateSnapshotShape(snapshot, errors) {
     }
   }
 
-  if (Array.isArray(snapshot?.variants) && snapshot.variants.length !== 64) {
-    errors.push(`Committed snapshot variants count (${snapshot.variants.length}) must be 64.`)
+  const expectedVariantCount = lifecycleDetailCount * expectedModeIds.length
+  if (Array.isArray(snapshot?.variants) && snapshot.variants.length !== expectedVariantCount) {
+    errors.push(`Committed snapshot variants count (${snapshot.variants.length}) must be ${expectedVariantCount}.`)
   }
 
   if (Array.isArray(snapshot?.variants) && Array.isArray(snapshot?.variantSummaries) && snapshot.variants.length !== snapshot.variantSummaries.length) {
