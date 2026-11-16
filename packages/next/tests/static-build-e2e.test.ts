@@ -10,7 +10,7 @@ const fixtureDir = join(packageDir, 'e2e/static-build')
  * Guards #57: the CSS is computed from the project's files, so a class used only in a Server
  * Component reaches the CSS asset however the bundler orders its server and client work.
  * Reverse check: removing the Turbopack generated CSS rule turns the Turbopack case red; not
- * writing `.master/next.css` from the entry loader leaves webpack's CSS asset empty.
+ * writing `.stet/next.css` from the entry loader leaves webpack's CSS asset empty.
  */
 describe('static build e2e', () => {
   it.each([
