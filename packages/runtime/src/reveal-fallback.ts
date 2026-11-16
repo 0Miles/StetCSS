@@ -1,4 +1,4 @@
-import { readDocument } from './document'
+import { hostOf } from './document'
 
 /**
  * The CDN bundle imports this module first, so the timer is set before any other bundled module
@@ -8,7 +8,7 @@ import { readDocument } from './document'
  * hides `<html>` until the runtime renders. Upstream waits 3 s because its runtime fetches the
  * manifest asynchronously; this bundle embeds it, so any delay would only keep the page blank.
  */
-const timer = setTimeout(() => readDocument(document, 'documentElement').removeAttribute('hidden'))
+const timer = setTimeout(() => hostOf(document).removeAttribute('hidden'))
 
 export function cancelRevealFallback() {
   clearTimeout(timer)
