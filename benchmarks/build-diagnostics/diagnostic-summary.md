@@ -2,6 +2,8 @@
 
 Status: internal diagnostic, not a public benchmark result.
 
+Superseded in part by #59: the Vite plugin no longer has modes, so the mode and mode-only plugin probes and the lazy mode-shell change below no longer exist.
+
 Captured from:
 
 - `pnpm --filter ./benchmarks bench:startup-diagnostics`
