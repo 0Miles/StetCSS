@@ -24,9 +24,9 @@ function createProject(files: Record<string, string>) {
   return root
 }
 
-/** Registers `src/index.css` with a scanner that has scanned no module, as a static build sees it. */
+/** Registers `src/index.css` and extracts the CSS of the project's class set, as a static build does. */
 async function extract(root: string, entry: string) {
-  const scanner = new CSSScanner({ verbose: 0 }, root)
+  const scanner = new CSSScanner({}, root)
   await scanner.init()
   const styleCSSSources: StyleCSSSources = new Map()
   writeFileSync(join(root, 'src/index.css'), entry)
@@ -131,33 +131,48 @@ describe('static class set', () => {
   })
 
   /**
-   * Guards that `@blocklist` wins over every way a class is detected, including the module
-   * scan a build integration still runs, and that `@safelist` classes are generated with no
-   * file using them.
+   * Guards that `@blocklist` removes a class the project's files use, and that `@safelist`
+   * classes are generated with no file using them.
    * Reverse check: returning the scope's classes without the `@blocklist` filter turns this test,
    * the multi-entry test and the imported-directives test in `directives.test.ts` red.
    */
-  it('blocks @blocklist classes from every detection path and always generates @safelist', async () => {
+  it('blocks @blocklist classes and always generates @safelist', async () => {
     const root = createProject({
       'src/app.tsx': 'export const App = () => <main class="fg:red block"></main>'
     })
-    const scanner = new CSSScanner({ verbose: 0 }, root)
-    await scanner.init()
-    await scanner.scanModule(join(root, 'src/widget.tsx'), 'export const widget = "fg:red m:4x"')
-    const entry = `
+
+    const css = await extract(root, `
       @import "@stet-css/core";
       @blocklist 'fg:red';
       @safelist 'p:2x';
-    `
-    const styleCSSSources: StyleCSSSources = new Map()
-    await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'src/index.css'), entry, { projectDir: root })
-
-    const css = await createExtractedCSS({ scanner, styleCSSSources, projectDir: root })
+    `)
 
     expect(css).not.toContain(rule('fg:red'))
     expect(css).toContain(rule('block'))
-    expect(css).toContain(rule('m:4x'))
     expect(css).toContain(rule('p:2x'))
+  })
+
+  /**
+   * Guards that the class set is the only source of generated classes: text a caller ran
+   * through the scanner (an inspection, a module a bundler compiled) must not add classes
+   * that no project file or `@source` file uses, or two builds of the same files differ.
+   * Reverse check: adding the scanner's valid classes to the class set turns only this test red.
+   */
+  it('ignores classes the scanner validated outside the class set', async () => {
+    const root = createProject({
+      'src/app.tsx': 'export const App = () => <main class="block"></main>'
+    })
+    const scanner = new CSSScanner({}, root)
+    await scanner.init()
+    await scanner.scan(join(root, 'node_modules/widget/index.js'), 'export const widget = "m:4x"')
+    const styleCSSSources: StyleCSSSources = new Map()
+    await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'src/index.css'), '@import "@stet-css/core";', { projectDir: root })
+
+    const css = await createExtractedCSS({ scanner, styleCSSSources, projectDir: root })
+
+    expect(scanner.validClasses.has('m:4x')).toBe(true)
+    expect(css).toContain(rule('block'))
+    expect(css).not.toContain(rule('m:4x'))
   })
 
   /**
@@ -172,7 +187,7 @@ describe('static class set', () => {
       'src/app.tsx': 'export const App = () => <main class="fg:red block"></main>',
       'src/legacy/page.html': '<div class="m:4x legacy-card"></div>'
     })
-    const scanner = new CSSScanner({ verbose: 0 }, root)
+    const scanner = new CSSScanner({}, root)
     await scanner.init()
     const styleCSSSources: StyleCSSSources = new Map()
     await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'src/a.css'), `
@@ -229,10 +244,10 @@ describe('static class set', () => {
       'index.html': '<h1 class="font:heavy"></h1>',
       'dist/index.html': '<h1 class="m:4x"></h1>'
     })
-    const scanner = new CSSScanner({ verbose: 0 }, root)
+    const scanner = new CSSScanner({}, root)
     await scanner.init()
 
-    const css = await createExtractedCSS({ scanner, styleCSSSources: new Map(), projectDir: root, classes: [] })
+    const css = await createExtractedCSS({ scanner, styleCSSSources: new Map(), projectDir: root })
 
     expect(css).toContain(rule('font:heavy'))
     expect(css).not.toContain(rule('m:4x'))
@@ -252,7 +267,7 @@ describe('static class set', () => {
     const loadSass = () => ({
       compileStringAsync: async (source: string) => ({ css: source.replace(/\$brand/g, '#123456') })
     })
-    const scanner = new CSSScanner({ verbose: 0 }, root)
+    const scanner = new CSSScanner({}, root)
     await scanner.init()
     const styleCSSSources: StyleCSSSources = new Map()
     await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'src/index.scss'), `
@@ -262,7 +277,7 @@ describe('static class set', () => {
       @theme { --color-brand: $brand; }
     `, { projectDir: root, loadSass })
 
-    const css = await createExtractedCSS({ scanner, styleCSSSources, projectDir: root, classes: [], loadSass })
+    const css = await createExtractedCSS({ scanner, styleCSSSources, projectDir: root, loadSass })
 
     expect(css).toContain(rule('fg:brand'))
     expect(css).toContain('--color-brand:#123456')
@@ -282,7 +297,7 @@ describe('static class set', () => {
       'src/app.html': '<div class="block"></div>',
       'www/main.js': 'document.body.className = "m:4x"'
     })
-    const scanner = new CSSScanner({ verbose: 0 }, root)
+    const scanner = new CSSScanner({}, root)
     await scanner.init()
     const styleCSSSources: StyleCSSSources = new Map()
     await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'src/index.css'), `
@@ -291,7 +306,7 @@ describe('static class set', () => {
     `, { projectDir: root })
     const context = { scanner, styleCSSSources, projectDir: root, ignorePaths: [join(root, 'www')] }
 
-    const css = await createExtractedCSS({ ...context, classes: [] })
+    const css = await createExtractedCSS(context)
 
     expect(css).toContain(rule('block'))
     expect(css).not.toContain(rule('m:4x'))
@@ -309,7 +324,6 @@ describe('static class set', () => {
       'src/page.html': '<div data-classes="m:4x"></div>'
     })
     const scanner = new CSSScanner({
-      verbose: 0,
       adapters: [{
         name: 'data-classes',
         test: /\.html$/,
@@ -341,14 +355,14 @@ describe('static class set', () => {
     ['a compiled package', { onWarning: () => {} }]
   ])('composes preset static utilities from an entry with %s', async (_, compileOptions) => {
     const root = createProject({ 'src/page.html': '<div class="probe"></div>' })
-    const scanner = new CSSScanner({ verbose: 0 }, root)
+    const scanner = new CSSScanner({}, root)
     await scanner.init()
     const entry = '@import "@stet-css/core";\n@components { probe { @compose inline-flex; width: 40px; } }'
     const styleCSSSources: StyleCSSSources = new Map()
     writeFileSync(join(root, 'src/index.css'), entry)
     await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'src/index.css'), entry, { projectDir: root })
 
-    const css = await createExtractedCSS({ scanner, styleCSSSources, projectDir: root, classes: [], ...compileOptions })
+    const css = await createExtractedCSS({ scanner, styleCSSSources, projectDir: root, ...compileOptions })
 
     expect(css).toMatch(/\.probe\{[^}]*display:inline-flex/)
   })
@@ -375,7 +389,7 @@ describe('static source files', () => {
       'shared/Button.stories.ts': ''
     })
     const root = join(workspace, 'app')
-    const scanner = new CSSScanner({ verbose: 0 }, root)
+    const scanner = new CSSScanner({}, root)
     await scanner.init()
     const entry = `
       @import "@stet-css/core";
@@ -429,7 +443,7 @@ describe('static source files', () => {
       'app/node_modules/layer/node_modules/dep/index.js': 'const c = "p:6x"'
     })
     const root = join(workspace, 'app')
-    const scanner = new CSSScanner({ verbose: 0 }, root)
+    const scanner = new CSSScanner({}, root)
     await scanner.init()
     const styleCSSSources: StyleCSSSources = new Map()
     await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'src/index.css'), '@import "@stet-css/core";', { projectDir: root })
@@ -440,7 +454,7 @@ describe('static source files', () => {
       extraProjectDirs: [join(workspace, 'base'), join(root, 'node_modules/layer')]
     }
 
-    const css = await createExtractedCSS({ ...context, classes: [] })
+    const css = await createExtractedCSS(context)
     const files = await resolveStylesheetSourceFiles(context)
 
     for (const className of ['block', 'm:4x', 'm:5x']) expect(css).toContain(rule(className))
