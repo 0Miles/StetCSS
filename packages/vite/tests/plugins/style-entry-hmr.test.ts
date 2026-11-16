@@ -11,14 +11,13 @@
  */
 import { afterEach, describe, test, expect, vi } from 'vitest'
 import { EventEmitter } from 'node:events'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
-import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 import StyleEntryHMRPlugin from '../../src/plugins/style-entry-hmr'
 import StyleEntryPlugin from '../../src/plugins/style-entry'
 import getExtractedCSS from '../../src/utils/extracted-css'
+import { createProjectContext, removeProjects } from '../plugin-test-helper'
 
 function makeScanner() {
   const scanner = new EventEmitter() as unknown as Record<string, unknown> & EventEmitter
@@ -128,36 +127,15 @@ describe('StyleEntryHMRPlugin update queue', () => {
   })
 })
 
-const roots: string[] = []
-
-afterEach(() => {
-  for (const root of roots.splice(0)) {
-    rmSync(root, { recursive: true, force: true })
-  }
-})
+afterEach(removeProjects)
 
 /**
  * A served dev project: `index.html` is a project source file, and the virtual CSS module
  * was loaded once, as the browser's first request does.
  */
 async function serveProject(html: string) {
-  const root = mkdtempSync(join(tmpdir(), 'master-css-vite-hmr-'))
-  roots.push(root)
-  const page = join(root, 'index.html')
-  writeFileSync(page, html)
-  const context: any = {
-    config: { command: 'serve', root },
-    includeGeneratedCSS: true,
-    scanner: Object.assign(new EventEmitter(), {
-      cwd: root,
-      options: {},
-      css: { text: '', manifest: defaultManifestJSON },
-      latentClasses: new Set(),
-      validClasses: new Set(),
-      nativeClassNames: new Set(),
-      usedNativeClasses: new Set()
-    })
-  }
+  const context = createProjectContext({ command: 'serve', html, includeGeneratedCSS: true })
+  const page = join(context.config.root, 'index.html')
   await (StyleEntryPlugin({} as any, context) as any).load.call({}, '\0' + VIRTUAL_CSS_ID)
   const server = makeServer()
   const cssModule = { id: '\0' + VIRTUAL_CSS_ID }
@@ -215,4 +193,24 @@ describe('StyleEntryHMRPlugin source file changes', () => {
 
     await vi.waitFor(() => expect(server.reloadModule).toHaveBeenCalledTimes(2))
   })
+
+  /**
+   * Guards bursts of file events (a checkout, save-all): they share one pending update
+   * instead of extracting and reloading the stylesheet once per file.
+   * Reverse check: dropping the pending-update check in `style-entry-hmr.ts` turns only this
+   * test red.
+   */
+  test('reloads once for a burst of changes', async () => {
+    const { page, server } = await serveProject('<div class="block"></div>')
+
+    writeFileSync(page, '<div class="block italic"></div>')
+    server.watcher.emit('change', page)
+    server.watcher.emit('change', page)
+    server.watcher.emit('add', page)
+    await vi.waitFor(() => expect(server.reloadModule).toHaveBeenCalledTimes(1))
+    await new Promise((r) => setTimeout(r, 200))
+
+    expect(server.reloadModule).toHaveBeenCalledTimes(1)
+  })
 })
+
