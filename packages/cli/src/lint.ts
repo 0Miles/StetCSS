@@ -85,7 +85,7 @@ function createManifestDiagnostic(cwd: string, error: unknown): MasterCSSLintSou
       start: { line: 1, column: 1 },
       end: { line: 1, column: 1 }
     },
-    source: 'Master CSS',
+    source: 'StetCSS',
     sourceKind: 'manifest',
     data: {
       cwd

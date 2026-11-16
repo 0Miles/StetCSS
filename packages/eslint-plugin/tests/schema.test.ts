@@ -85,3 +85,21 @@ test('provides an opt-in stylesheet config', async () => {
   expect(diagnosticResult.messages[0].ruleId).toBe('@stet-css/prefer-canonical-classes')
   expect(fixResult.output).toBe('.btn { contain: content; }')
 })
+
+/**
+ * Prevents: the recommended config enabling rules or registering the plugin under a namespace
+ * other than `@stet-css`, so user configs that write `@stet-css/<rule>` (as the README does)
+ * fail with "rule not found" or silently run nothing, and rule help naming another product.
+ * Gate 4 trade-off: descriptions are only checked for the absence of the old product name, so
+ * copy edits stay green.
+ * Reverse check: the `sort-classes` description in `src/rules/sort-classes.ts` written as
+ * `'Sort Master CSS classes'` turns only this test red; renaming a recommended rule id to
+ * `@master-css/` also reds the two recommended-autofix tests, which load the same config.
+ */
+test('names StetCSS in the public rule ids, configs and rule descriptions', () => {
+  expect(Object.keys(plugin.configs.recommended.rules ?? {}).every((ruleId) => ruleId.startsWith('@stet-css/'))).toBe(true)
+  expect(Object.keys(plugin.configs.recommended.plugins ?? {})).toEqual(['@stet-css'])
+  for (const rule of Object.values(plugin.rules ?? {})) {
+    expect(rule.meta?.docs?.description).not.toMatch(/Master/)
+  }
+})

@@ -13,7 +13,7 @@ export default createRule({
   meta: {
     type: 'suggestion',
     docs: {
-      description: 'Disallow unapproved raw values in token-backed Master CSS classes'
+      description: 'Disallow unapproved raw values in token-backed StetCSS classes'
     },
     messages: {
       unapprovedRawValue: '{{message}}',

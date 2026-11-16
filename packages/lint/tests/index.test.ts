@@ -355,6 +355,7 @@ describe('source content linting', () => {
 
     expect(result.languageId).toBe('html')
     expect(result.sourceKind).toBe('source')
+    expect(result.diagnostics.every((diagnostic) => diagnostic.source === 'StetCSS')).toBe(true)
     expect(result.diagnostics).toContainEqual(expect.objectContaining({
       code: 'invalid-class-order',
       sourceKind: 'class-attribute',

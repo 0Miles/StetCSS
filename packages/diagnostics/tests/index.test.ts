@@ -165,6 +165,7 @@ describe('@stet-css/diagnostics', () => {
       expect(report.diagnostics).toContainEqual(expect.objectContaining({
         code: 'stylesheet-warning',
         severity: 'warning',
+        source: 'StetCSS',
         sourceKind: 'stylesheet',
         filePath: resolve(cwd, 'index.css'),
         message: expect.stringContaining('default-mode')
