@@ -25,7 +25,7 @@ function markPlaceholderEmitted(context: PluginContext, pluginContext: unknown) 
 }
 
 /** The generated CSS in dev; in a build, the placeholder `generateBundle` swaps it into. */
-async function createMasterSource(context: PluginContext) {
+async function createStetSource(context: PluginContext) {
   if (context.config?.command === 'serve') return await getExtractedCSS(context)
   return createSlotCSSRule(getScanner(context).slotCSSRule, await createBuildDigest(context))
 }
@@ -45,7 +45,7 @@ export default function StyleEntryPlugin(context: PluginContext): Plugin {
       context.virtualCSSImporters ??= new Set()
       context.virtualCSSImporters.add(RESOLVED_VIRTUAL_CSS_ID)
 
-      const stetSource = await createMasterSource(context)
+      const stetSource = await createStetSource(context)
       if (context.config?.command !== 'serve') markPlaceholderEmitted(context, this)
       return stetSource
     },
@@ -84,7 +84,7 @@ export default function StyleEntryPlugin(context: PluginContext): Plugin {
         this.addWatchFile?.(dependency)
       }
 
-      const stetSource = await createMasterSource(context)
+      const stetSource = await createStetSource(context)
 
       if (context.config?.command === 'serve') {
         context.virtualCSSImporters ??= new Set()

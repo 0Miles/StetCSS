@@ -89,7 +89,7 @@ describe('ManifestVirtualModulePlugin', () => {
     const { context } = createContext(root)
     context.config.command = 'build'
     const plugin = ManifestVirtualModulePlugin(context)
-    const emitFile = vi.fn(() => 'master_css_manifest_ref')
+    const emitFile = vi.fn(() => 'stet_css_manifest_ref')
 
     const code = await (plugin.load as any).call({ emitFile }, RESOLVED_VIRTUAL_MANIFEST_ID)
 
@@ -98,7 +98,7 @@ describe('ManifestVirtualModulePlugin', () => {
       name: 'stet-css-manifest.json',
       source: expect.stringContaining('"version":1')
     }))
-    expect(code).toContain('const stetCSSManifestURL = import.meta.ROLLUP_FILE_URL_master_css_manifest_ref;')
+    expect(code).toContain('const stetCSSManifestURL = import.meta.ROLLUP_FILE_URL_stet_css_manifest_ref;')
     expect(code).toContain(`const stetCSSManifestResponse = await fetch(typeof stetCSSManifestURL === 'string' ? stetCSSManifestURL : stetCSSManifestURL.href);`)
     expect(code).toContain('export default await stetCSSManifestResponse.json();')
     expect(code).not.toContain('font-weight-bold')
@@ -121,11 +121,11 @@ describe('ManifestVirtualModulePlugin', () => {
     context.config.command = 'build'
     context.config.build.ssr = true
     const plugin = ManifestVirtualModulePlugin(context)
-    const emitFile = vi.fn(() => 'master_css_manifest_ref')
+    const emitFile = vi.fn(() => 'stet_css_manifest_ref')
 
     const code = await (plugin.load as any).call({ emitFile }, RESOLVED_VIRTUAL_MANIFEST_ID)
 
-    expect(code).toContain('const stetCSSManifestURL = import.meta.ROLLUP_FILE_URL_master_css_manifest_ref;')
+    expect(code).toContain('const stetCSSManifestURL = import.meta.ROLLUP_FILE_URL_stet_css_manifest_ref;')
     expect(code).toContain('loadStetCSSManifestFromFile')
     expect(code).toContain('loadStetCSSManifestFromFetch')
     expect(code).toContain(`with: { type: 'json' }`)

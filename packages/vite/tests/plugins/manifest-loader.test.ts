@@ -122,7 +122,7 @@ describe('ManifestLoaderPlugin', () => {
     const plugin = ManifestLoaderPlugin(context)
     const importer = path.join(FIXTURE_DIR, 'entry.ts')
     const addWatchFile = vi.fn()
-    const emitFile = vi.fn(() => 'master_css_query_manifest_ref')
+    const emitFile = vi.fn(() => 'stet_css_query_manifest_ref')
     const resolve = vi.fn(async (id: string) => ({ id: path.resolve(FIXTURE_DIR, id) }))
 
     const resolvedId = await (plugin.resolveId as any).call(
@@ -137,7 +137,7 @@ describe('ManifestLoaderPlugin', () => {
       name: 'stet-css-manifest.json',
       source: expect.stringContaining('#456')
     }))
-    expect(code).toContain('const stetCSSManifestURL = import.meta.ROLLUP_FILE_URL_master_css_query_manifest_ref;')
+    expect(code).toContain('const stetCSSManifestURL = import.meta.ROLLUP_FILE_URL_stet_css_query_manifest_ref;')
     expect(code).toContain(`const stetCSSManifestResponse = await fetch(typeof stetCSSManifestURL === 'string' ? stetCSSManifestURL : stetCSSManifestURL.href);`)
     expect(code).toContain('export default await stetCSSManifestResponse.json();')
     expect(code).not.toContain('#456')
@@ -150,7 +150,7 @@ describe('ManifestLoaderPlugin', () => {
     const plugin = ManifestLoaderPlugin(context)
     const importer = path.join(FIXTURE_DIR, 'entry.ts')
     const addWatchFile = vi.fn()
-    const emitFile = vi.fn(() => 'master_css_query_manifest_ref')
+    const emitFile = vi.fn(() => 'stet_css_query_manifest_ref')
     const resolve = vi.fn(async (id: string) => ({ id: path.resolve(FIXTURE_DIR, id) }))
 
     const resolvedId = await (plugin.resolveId as any).call(
@@ -160,7 +160,7 @@ describe('ManifestLoaderPlugin', () => {
     )
     const code = await (plugin.load as any).call({ addWatchFile, emitFile }, resolvedId)
 
-    expect(code).toContain('const stetCSSManifestURL = import.meta.ROLLUP_FILE_URL_master_css_query_manifest_ref;')
+    expect(code).toContain('const stetCSSManifestURL = import.meta.ROLLUP_FILE_URL_stet_css_query_manifest_ref;')
     expect(code).toContain('loadStetCSSManifestFromFile')
     expect(code).toContain('loadStetCSSManifestFromFetch')
     expect(code).toContain(`with: { type: 'json' }`)

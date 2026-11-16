@@ -4,7 +4,7 @@ import { describe, expect, test } from 'vitest'
 import stetCSS from '../../src/core'
 import { buildProject } from '../plugin-test-helper'
 
-function expectMasterBaseCSS(css: string) {
+function expectStetBaseCSS(css: string) {
   expect(css).toContain('@layer base')
   expect(css).toMatch(/text-rendering:\s*geometricprecision/)
   expect(css).toMatch(/font-family:\s*var\(--font-family-sans\)/)
@@ -54,7 +54,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
       ].join('\n')
     })
 
-    expectMasterBaseCSS(css)
+    expectStetBaseCSS(css)
     expect(css).toContain('.block{display:block}')
     expect(css).not.toContain('@stet-css/core')
     expect(css).not.toContain('#stet-css-slot')
@@ -76,7 +76,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
       ].join('\n')
     })
 
-    expectMasterBaseCSS(css)
+    expectStetBaseCSS(css)
     expect(css).toMatch(/body\s*\{\s*margin:\s*0/)
     expect(css).not.toContain('@stet-css/core/base.css')
     expect(css).not.toContain('#stet-css-slot')
