@@ -62,7 +62,6 @@ For CSS, SCSS, and LESS document formatting, the extension delegates to VS Code'
 `masterCSS.workspaces` defaults to `auto`. In auto mode, the language server always creates a root workspace and also detects:
 
 - CSS files importing `@stet-css/core`
-- CSS files containing the lightweight `@master entry;` marker
 - `package.json` files that declare Master CSS package dependencies such as `@stet-css/core`, `@stet-css/runtime`, or official integration packages matching `@stet-css/core*`
 
 Each detected workspace gets its own language service and project manifest. In monorepos, this lets each package use its nearest Master CSS manifest while still keeping the root workspace available.

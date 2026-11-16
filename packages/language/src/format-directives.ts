@@ -92,7 +92,9 @@ function formatDirectivePrelude(source: string, directive: CSSDirectiveRuleRange
       return formatSafelistPrelude(source, directive)
     case 'dark':
     case 'light':
-      // Removed in favour of `@variant dark` / `@variant light`; the compiler rejects them.
+    case 'master':
+      // Removed in favour of `@variant dark` / `@variant light`, and of `@import '@stet-css/core'`
+      // and `@settings` for `@master`; the compiler rejects them.
       return
     default:
       return normalizePreludeText(source, directive)
