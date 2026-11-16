@@ -14,7 +14,7 @@ Owns the Next.js integration behind `withMasterCSS`: static CSS only, for Turbop
 - **webpack**: css-loader requests `@import`ed files with `-!`, which skips configured loaders, so under webpack the entry loader also writes the generated CSS to `.master/next.css` (atomically; client and server compilers write it in parallel). Use `resource`, not `test`/`include`, for CSS rules: Next disables its built-in CSS when a user rule's `test` or `include` matches `.css`.
 - **Turbopack loader options** are serialized to JSON for its workers; anything in `scannerOptions` that is not plain data is lost.
 - **Turbopack JS loader rules** stay guarded by the `?master-css-manifest` content pattern and limited to manifest-import handling; broader rules break Next client component classification for linked workspace packages.
-- **Cross-integration parity**: audit mode-default, class-set and cascade-layer changes against Vite, Webpack, Nuxt and Astro so integration behaviour does not drift.
+- **Cross-integration parity**: audit class-set, output-path and cascade-layer changes against Vite, Webpack, Nuxt and Astro so integration behaviour does not drift.
 
 ## Validation
 
