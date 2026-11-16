@@ -1,45 +1,15 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import StyleEntryPlugin from '../../src/plugins/style-entry'
 import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
-import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import { createProjectContext, removeProjects, SLOT_CSS_RULE as SLOT } from '../plugin-test-helper'
 
-const SLOT = '#master-css-slot{--slot:0}'
 const RESOLVED_VIRTUAL_CSS_ID = '\0' + VIRTUAL_CSS_ID
-const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
 
-const roots: string[] = []
+afterEach(removeProjects)
 
-afterEach(() => {
-  for (const root of roots.splice(0)) {
-    rmSync(root, { recursive: true, force: true })
-  }
-})
-
-/** A project whose only source file uses `fg:red`; the plugin reads classes from its files. */
+/** A project whose only source file uses `fg:red`. */
 function makeContext(command: 'serve' | 'build', includeGeneratedCSS = true) {
-  const root = mkdtempSync(join(tmpdir(), 'master-css-vite-style-entry-'))
-  roots.push(root)
-  writeFileSync(join(root, 'index.html'), '<div class="fg:red"></div>')
-  return {
-    config: { command, root },
-    includeGeneratedCSS,
-    scanner: {
-      cwd: root,
-      options: { safelist: [] },
-      slotCSSRule: SLOT,
-      css: { text: '', manifest: defaultManifest },
-      config: {},
-      latentClasses: new Set(),
-      validClasses: new Set(),
-      nativeClassNames: new Set(),
-      usedNativeClasses: new Set(),
-      emit: () => undefined,
-    },
-  } as any
+  return createProjectContext({ command, html: '<div class="fg:red"></div>', includeGeneratedCSS })
 }
 
 describe('StyleEntryPlugin', () => {
