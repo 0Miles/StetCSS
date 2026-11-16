@@ -133,4 +133,28 @@ describe('StyleEntryPlugin Vite build integration', () => {
     expect(css).toContain('.block{display:block}')
     expect(css).not.toContain('#master-css-slot')
   })
+
+  /**
+   * Guards long-lived caches: `/assets/` and the frameworks' immutable asset paths are served
+   * with a year-long cache, so a CSS asset whose file name ignores the generated CSS keeps
+   * returning the old rules after a deploy that adds a class or edits the entry's native CSS.
+   * The same inputs must keep the same name, or every deploy busts the cache.
+   * Reverse check: putting a constant in the build placeholder instead of the digest of the
+   * generated CSS turns this test red, plus the `style-entry-build.test.ts` tests that expect
+   * no warning: a constant never matches the spliced CSS, so the stale-name warning fires.
+   */
+  test('names the CSS asset after the generated CSS', async () => {
+    const buildCSSFiles = async (appClass: string, nativeCSS = '') => (await buildProject({
+      appClass,
+      plugins: [masterCSS()],
+      prefix: 'master-css-vite-asset-hash-',
+      styleCSS: `@import "@stet-css/core";\n${nativeCSS}`
+    })).cssFiles
+
+    const first = await buildCSSFiles('block')
+    expect(first).toHaveLength(1)
+    expect(await buildCSSFiles('block')).toEqual(first)
+    expect(await buildCSSFiles('block pt:41px')).not.toEqual(first)
+    expect(await buildCSSFiles('block', '.card { color: red; }')).not.toEqual(first)
+  })
 })
