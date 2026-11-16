@@ -1,5 +1,5 @@
 import { defineConfig } from 'astro/config'
-import masterCSS from '@stet-css/astro'
+import stetCSS from '@stet-css/astro'
 import sitemap from '@astrojs/sitemap'
 
 // https://astro.build/config
@@ -8,6 +8,6 @@ export default defineConfig({
   trailingSlash: 'never',
   integrations: [
     sitemap(),
-    masterCSS()
+    stetCSS()
   ]
 })

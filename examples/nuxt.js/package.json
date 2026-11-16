@@ -1,5 +1,5 @@
 {
-  "name": "master-css-nuxtjs-example",
+  "name": "stet-css-nuxtjs-example",
   "private": true,
   "scripts": {
     "build": "nuxt prepare && nuxt build",

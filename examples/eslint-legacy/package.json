@@ -1,5 +1,5 @@
 {
-  "name": "master-css-eslint-legacy-example",
+  "name": "stet-css-eslint-legacy-example",
   "scripts": {
     "lint": "ESLINT_USE_FLAT_CONFIG=false eslint \"*.html\""
   },

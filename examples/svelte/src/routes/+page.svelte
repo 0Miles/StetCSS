@@ -5,7 +5,7 @@
 </script>
 
 <svelte:head>
-  <title>Svelte Kit + Master CSS</title>
+  <title>Svelte Kit + StetCSS</title>
   <meta name="description" content="Svelte demo app" />
 </svelte:head>
 
@@ -17,8 +17,8 @@
         <img src={welcome_fallback} alt="Welcome" />
       </picture>
     </span>
-    <img src="/master-css.logotype@light.svg" alt="Master Logo" class="block max-w:50% mx:auto mt:-2vw" width="300" height="35" />
-    <span class="sr-only">Svelte Kit and Master CSS</span>
+    <img src="/logotype@light.svg" alt="Logo" class="block max-w:50% mx:auto mt:-2vw" width="300" height="35" />
+    <span class="sr-only">Svelte Kit and StetCSS</span>
   </h1>
 
   <h2>

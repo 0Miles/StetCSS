@@ -1,5 +1,5 @@
 {
-  "name": "master-css-eslint-example",
+  "name": "stet-css-eslint-example",
   "type": "module",
   "scripts": {
     "lint": "eslint"

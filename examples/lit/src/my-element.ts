@@ -1,6 +1,6 @@
 import { LitElement, css, html } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
-import masterLogo from './assets/master.svg'
+import logo from './assets/logo.svg'
 import litLogo from './assets/lit.svg'
 import { cssRuntime } from '@stet-css/runtime'
 import type CSSRuntime from '@stet-css/runtime'
@@ -37,8 +37,8 @@ export class MyElement extends LitElement {
         <a href="https://vitejs.dev" target="_blank">
           <img src=${litLogo} class="logo" alt="Vite logo" />
         </a>
-        <a href="https://css.master.co" target="_blank">
-          <img src=${masterLogo} class="logo size:172px" alt="Master logo" />
+        <a href="https://github.com/0Miles/StetCSS" target="_blank">
+          <img src=${logo} class="logo size:172px" alt="Logo" />
         </a>
       </div>
       <slot></slot>
