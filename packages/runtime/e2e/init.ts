@@ -143,7 +143,7 @@ function normalizeUtility(utility: RuntimeProjectManifestUtilityInput, order: nu
   }
 }
 
-function createRuntimeProjectManifest(manifest: RuntimeProjectManifestInput) {
+export function createRuntimeProjectManifest(manifest: RuntimeProjectManifestInput) {
   const defaultUtilities = defaultManifest.utilities || []
   const { rootSize, baseUnit, defaultMode, modeTrigger, modes, ...rest } = manifest
   const variables = createRuntimeVariables(flattenMasterCSSManifestVariables(defaultManifest.variables), rest.variables)
