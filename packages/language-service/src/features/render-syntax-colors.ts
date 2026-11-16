@@ -4,7 +4,6 @@ import CSSLanguageService from '../core'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import Color from 'colorjs.io'
 import { generateLanguageRules, type ValueComponent, type Variable } from '@stet-css/language'
-import { isUndeclaredModeError } from '@stet-css/core'
 
 function resolveVariableColorValue(variable: Variable | undefined, variables: Map<string, Variable>): string | undefined {
   let current = variable
@@ -27,13 +26,7 @@ export default async function renderSyntaxColors(this: CSSLanguageService, docum
       if (instanceMatch.index === undefined) break
       const instanceStartIndex = instanceMatch.index
       const syntax = instanceMatch[0]
-      let rule
-      try {
-        rule = generateLanguageRules(this.css, syntax)[0]
-      } catch (error) {
-        if (isUndeclaredModeError(error)) continue
-        throw error
-      }
+      const rule = generateLanguageRules(this.css, syntax)[0]
       if (rule && rule.type !== this.runtime.UtilityType.Semantic) {
         const keyTokenLength = rule.keyToken?.length ?? 0
         let currentLength = 0

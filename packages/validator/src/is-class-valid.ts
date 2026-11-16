@@ -2,7 +2,7 @@ import type { MasterCSS } from '@stet-css/core'
 import defaultManifest from './default-manifest'
 import validateCSS from './validate-css'
 import { createCSSWithNativeDeclarations } from './native-declaration'
-import { isUndeclaredModeError } from '@stet-css/core'
+import { tryGenerate } from '@stet-css/core'
 
 /**
  * Validates that the string is valid Master CSS class syntax.
@@ -13,13 +13,7 @@ export default function isClassValid(
   syntax: string,
   css: MasterCSS = createCSSWithNativeDeclarations(defaultManifest)
 ): boolean {
-  let rules
-  try {
-    rules = css.generate(syntax)
-  } catch (error) {
-    if (isUndeclaredModeError(error)) return false
-    throw error
-  }
+  const { rules } = tryGenerate(css, syntax)
   if (rules.length) {
     for (const eachRule of rules) {
       if (validateCSS(eachRule.text).length) {

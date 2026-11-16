@@ -2,6 +2,7 @@ import type { MasterCSS, GeneratedRule } from '@stet-css/core'
 import defaultManifest from './default-manifest'
 import validateCSS from './validate-css'
 import { createCSSWithNativeDeclarations } from './native-declaration'
+import { tryGenerate } from '@stet-css/core'
 
 type Declarations = NonNullable<GeneratedRule['declarations']>
 
@@ -37,7 +38,7 @@ export default function generateValidRules(
   syntax: string,
   css: MasterCSS = createCSSWithNativeDeclarations(defaultManifest)
 ): GeneratedRule[] {
-  const rules = css.generate(syntax)
+  const { rules } = tryGenerate(css, syntax)
   for (const eachRule of rules) {
     const errors = validateCSS(eachRule.text)
     if (!errors.length) continue
