@@ -1,5 +1,6 @@
 import { test, it, expect } from 'vitest'
-import { generateValidRules, validate } from '../src'
+import { createCSSWithNativeDeclarations, generateValidRules, isClassValid, validate } from '../src'
+import defaultManifest from '../src/default-manifest'
 import expectClassWithErrors from './utils/expect-class-with-errors'
 import expectClassWithoutErrors from './utils/expect-class-without-errors'
 import expectClassInvalid from './utils/expect-class-invalid'
@@ -123,4 +124,21 @@ it('drops a non-group rule with one invalid declaration whole', () => {
 
 it('fairly irregular classes can be ignored very well', () => {
   expect(generateValidRules('shadow:rgba(45,43,37,0.05)|0|-1|0|0|inset,rgba(15,14,12,')).toHaveLength(0)
+})
+
+/**
+ * Prevents (#69): `validate()` and `isClassValid()` throwing on a class that names a mode the
+ * project did not declare, which crashed ESLint `no-invalid-classes` and editor hovers instead
+ * of reporting the class. They report it as an unmatched class carrying the engine's message.
+ * Reverse-checked: removing the catch in `validate.ts` reds the `validate` assertion; removing
+ * the catch in `is-class-valid.ts` reds the `isClassValid` assertion.
+ */
+it('reports a class using an undeclared mode instead of throwing', () => {
+  const css = createCSSWithNativeDeclarations({ ...defaultManifest, settings: { modes: ['sepia'] } })
+
+  expect(validate('fg:red@dark', css)).toEqual({
+    matched: false,
+    errors: [expect.objectContaining({ class: 'fg:red@dark', rawMessage: 'UndeclaredMode', message: expect.stringContaining('mode "dark"') })]
+  })
+  expect(isClassValid('fg:red@dark', css)).toBe(false)
 })

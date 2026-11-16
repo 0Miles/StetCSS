@@ -267,6 +267,24 @@ describe('lint diagnostics', () => {
       .toBe('Class "text-decoration:bad()" emits invalid CSS: Invalid value for `text-decoration-color` property.')
   })
 
+  /**
+   * Prevents (#69): a class naming a mode the project did not declare crashing the report (and
+   * with it ESLint `no-invalid-classes`), or being reported only when `disallowUnknownClass` is
+   * on, as if it were an unknown class rather than a misconfigured one.
+   * Reverse-checked: removing the `UndeclaredMode` branch in `getClassValidationIssues` reds this
+   * test only (the class falls into the unknown-class gate and is not reported).
+   */
+  test('reports a class using an undeclared mode without the unknown-class gate', () => {
+    const sepiaCSS = createCSSWithNativeDeclarations(createPresetManifest({ settings: { modes: ['sepia'] } }))
+    const [diagnostic, ...rest] = createInvalidClassesReport('fg:red@dark fg:blue', sepiaCSS).diagnostics
+
+    expect(rest).toEqual([])
+    expect(diagnostic?.range).toEqual({ start: 0, end: 11 })
+    expect(diagnostic?.message).toContain('"fg:red@dark"')
+    expect(diagnostic?.message).toContain('mode "dark"')
+    expect(diagnostic?.message).toContain('@theme dark {}')
+  })
+
   test('reports canonical diagnostics with explicit replacements', () => {
     expect(createCanonicalClassesReport('font:16px w:md h:md', css).diagnostics.map(({ message }) => message))
       .toEqual([

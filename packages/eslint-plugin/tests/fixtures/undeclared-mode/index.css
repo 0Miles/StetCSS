@@ -1,0 +1,4 @@
+@import '@stet-css/core';
+
+/* Declares only sepia, so the preset light and dark modes do not exist (#69). */
+@theme sepia {}
