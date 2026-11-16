@@ -1,4 +1,4 @@
-import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
+import { findCSSManifestEntryFiles, STYLE_ENTRY_EXTENSIONS } from '@stet-css/project/entries'
 import { collectStyleCSSDependencies } from '@stet-css/stylesheet'
 import { createStaticCSS, type StaticCSSOptions } from './static'
 
@@ -38,7 +38,7 @@ export default function masterCSSNextGeneratedCSSLoader(this: LoaderContext) {
     .catch(async (error: Error) => {
       // Keep watching the stylesheet entries so fixing an invalid one recompiles the CSS.
       try {
-        for (const entry of await findCSSManifestEntryFiles(options.projectDir)) {
+        for (const entry of await findCSSManifestEntryFiles(options.projectDir, { extensions: STYLE_ENTRY_EXTENSIONS })) {
           for (const dependency of collectStyleCSSDependencies(entry, undefined, options.projectDir)) {
             this.addDependency?.(dependency)
           }
