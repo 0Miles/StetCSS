@@ -1,5 +1,5 @@
 import { generateValidRules } from '@stet-css/validator'
-import type { MasterCSS } from '@stet-css/engine'
+import type { StetCSS } from '@stet-css/engine'
 import { equalDeclarations, equalVariants } from './rule-signatures'
 
 export interface ClassConflict {
@@ -7,7 +7,7 @@ export interface ClassConflict {
   conflicts: string[]
 }
 
-export default function findClassConflicts(classNames: string[], css: MasterCSS): ClassConflict[] {
+export default function findClassConflicts(classNames: string[], css: StetCSS): ClassConflict[] {
   const validRules = classNames
     .map((className) => {
       const rule = generateValidRules(className, css)[0]

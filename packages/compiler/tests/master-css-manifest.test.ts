@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createMasterCSSManifest } from '../src/master-css-manifest'
 import UtilityType from '@stet-css/schema/utility-type'
 import { flattenStetCSSManifestVariables, type StetCSSManifest } from '@stet-css/schema/manifest'
-import { MasterCSS } from '@stet-css/engine'
+import { StetCSS } from '@stet-css/engine'
 
 function variablesOf(manifest: StetCSSManifest) {
   return flattenStetCSSManifestVariables(manifest.variables)
@@ -226,6 +226,6 @@ describe.concurrent('createMasterCSSManifest', () => {
       }]
     })
     expect(utility?.matchers).toContainEqual({ type: 'static', name: 'card' })
-    expect(MasterCSS.create({ manifest }).createRule('card')?.text).toBe('.card{display:grid;color:var(--color-primary)}')
+    expect(StetCSS.create({ manifest }).createRule('card')?.text).toBe('.card{display:grid;color:var(--color-primary)}')
   })
 })

@@ -1,4 +1,4 @@
-import { MasterCSS, createDefaultCSS, generateCSS } from '@stet-css/language'
+import { StetCSS, createDefaultCSS, generateCSS } from '@stet-css/language'
 import { type CompletionItem, CompletionItemKind } from 'vscode-languageserver-protocol'
 import sortCompletionItems from './sort-completion-items'
 import createCSSMarkdownDocumentation from './create-css-markdown-documentation'
@@ -6,7 +6,7 @@ import { createCompletionIndex, type CompletionIndex } from './completion-index'
 
 const kind = CompletionItemKind.Function
 
-export default function getPseudoElementCompletionItems(css: MasterCSS = createDefaultCSS(), syntax: string, completionIndex: CompletionIndex = createCompletionIndex(css)): CompletionItem[] {
+export default function getPseudoElementCompletionItems(css: StetCSS = createDefaultCSS(), syntax: string, completionIndex: CompletionIndex = createCompletionIndex(css)): CompletionItem[] {
   const completionItems = completionIndex.pseudoElementNames
     .map((pseudoElementName) => {
       const name = /::(?:part|slotted)/.test(pseudoElementName) ? pseudoElementName + '()' : pseudoElementName

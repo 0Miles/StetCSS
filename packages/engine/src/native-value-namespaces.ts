@@ -1,13 +1,13 @@
-import { builtinNamespaceRef, type MasterCSSBuiltinNamespaceRef } from './namespaces'
+import { builtinNamespaceRef, type StetCSSBuiltinNamespaceRef } from './namespaces'
 
-export interface MasterCSSBuiltinNativeValueNamespace {
+export interface StetCSSBuiltinNativeValueNamespace {
   readonly properties: readonly string[]
-  readonly variableAliasRefs: readonly MasterCSSBuiltinNamespaceRef[]
+  readonly variableAliasRefs: readonly StetCSSBuiltinNamespaceRef[]
 }
 
-export type MasterCSSBuiltinNativeValueNamespaces = readonly MasterCSSBuiltinNativeValueNamespace[]
+export type StetCSSBuiltinNativeValueNamespaces = readonly StetCSSBuiltinNativeValueNamespace[]
 
-function freezeNamespace<T extends MasterCSSBuiltinNativeValueNamespace>(namespace: T): T {
+function freezeNamespace<T extends StetCSSBuiltinNativeValueNamespace>(namespace: T): T {
   Object.freeze(namespace.properties)
   Object.freeze(namespace.variableAliasRefs)
   return Object.freeze(namespace)
@@ -154,7 +154,7 @@ const borderColorProperties = Object.freeze([
   'outline-color'
 ] as const)
 
-const nativeValueNamespaces: MasterCSSBuiltinNativeValueNamespaces = Object.freeze([
+const nativeValueNamespaces: StetCSSBuiltinNativeValueNamespaces = Object.freeze([
   freezeNamespace({
     properties: spacingProperties,
     variableAliasRefs: [builtinNamespaceRef('spacing')]

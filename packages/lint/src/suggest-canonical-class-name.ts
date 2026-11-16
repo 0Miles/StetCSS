@@ -3,12 +3,12 @@ import {
   builtinKeyAliases,
   builtinNativeValueNamespaces,
   type GeneratedRule,
-  type MasterCSS
+  type StetCSS
 } from '@stet-css/engine'
 import {
-  inspectMasterCSSClass,
-  normalizeMasterCSSNumericValue,
-  type MasterCSSClassInspection
+  inspectStetCSSClass,
+  normalizeStetCSSNumericValue,
+  type StetCSSClassInspection
 } from '@stet-css/engine/inspect'
 import { splitStetCSSTopLevel } from '@stet-css/lexer'
 import UtilityType from '@stet-css/schema/utility-type'
@@ -45,7 +45,7 @@ export const defaultCanonicalClassNameOptions: ResolvedCanonicalClassNameOptions
   preferVariantBlocksInCompose: true
 }
 
-export type ClassParts = Pick<MasterCSSClassInspection, 'base' | 'suffix' | 'key' | 'value'>
+export type ClassParts = Pick<StetCSSClassInspection, 'base' | 'suffix' | 'key' | 'value'>
 
 interface ClassPartsWithVariables extends ClassParts {
   variables: Map<string, Variable>
@@ -74,7 +74,7 @@ interface RecommendationIndex {
   variableKeysByPropertySignature: Map<string, string[]>
 }
 
-const recommendationIndexes = new WeakMap<MasterCSS, RecommendationIndex>()
+const recommendationIndexes = new WeakMap<StetCSS, RecommendationIndex>()
 
 const EPSILON = 0.000001
 
@@ -87,7 +87,7 @@ function pushMapValue(map: Map<string, string[]>, key: string, value: string) {
   map.set(key, [value])
 }
 
-function getMatcherNames(utility: MasterCSS['definedUtilities'][number]) {
+function getMatcherNames(utility: StetCSS['definedUtilities'][number]) {
   return utility.matchers.flatMap((matcher) => {
     if (matcher.type === 'static') return [matcher.name]
     if (matcher.type === 'pattern') return matcher.values.map((value) => matcher.prefix + value)
@@ -95,7 +95,7 @@ function getMatcherNames(utility: MasterCSS['definedUtilities'][number]) {
   })
 }
 
-function getVariableMatcherKeys(utility: MasterCSS['definedUtilities'][number]) {
+function getVariableMatcherKeys(utility: StetCSS['definedUtilities'][number]) {
   return utility.matchers.flatMap((matcher) => matcher.type === 'variable' ? matcher.keys : [])
 }
 
@@ -110,7 +110,7 @@ function buildPreferredAliasesByProperty() {
   return aliasesByProperty
 }
 
-function getUtilityPropertySignatures(css: MasterCSS, utility: MasterCSS['definedUtilities'][number], key: string) {
+function getUtilityPropertySignatures(css: StetCSS, utility: StetCSS['definedUtilities'][number], key: string) {
   const variableKeys = utility.variables ? [...utility.variables.keys()] : []
   const sampleKey = variableKeys[0]
   if (!sampleKey) return []
@@ -119,7 +119,7 @@ function getUtilityPropertySignatures(css: MasterCSS, utility: MasterCSS['define
   return [...new Set(rules.map(getDeclarationPropertySignature).filter(Boolean))]
 }
 
-function buildRecommendationIndex(css: MasterCSS): RecommendationIndex {
+function buildRecommendationIndex(css: StetCSS): RecommendationIndex {
   const staticCandidatesBySignature = new Map<string, string[]>()
   const preferredAliasesByProperty = buildPreferredAliasesByProperty()
   const variableKeysByPropertySignature = new Map<string, string[]>()
@@ -166,7 +166,7 @@ function buildRecommendationIndex(css: MasterCSS): RecommendationIndex {
   }
 }
 
-function getRecommendationIndex(css: MasterCSS) {
+function getRecommendationIndex(css: StetCSS) {
   let index = recommendationIndexes.get(css)
   if (!index) {
     index = buildRecommendationIndex(css)
@@ -183,17 +183,17 @@ function splitTopLevelValueSegments(value: string) {
   return values
 }
 
-function getVariableNumericValue(variable: Variable, css: MasterCSS) {
+function getVariableNumericValue(variable: Variable, css: StetCSS) {
   if (variable.numeric) {
-    return normalizeMasterCSSNumericValue(
+    return normalizeStetCSSNumericValue(
       css,
       `${variable.numeric.value}${variable.numeric.unit || ''}`,
     )
   }
-  if (variable.value !== undefined) return normalizeMasterCSSNumericValue(css, variable.value)
+  if (variable.value !== undefined) return normalizeStetCSSNumericValue(css, variable.value)
 }
 
-function valuesMatch(a: ReturnType<typeof normalizeMasterCSSNumericValue>, b: ReturnType<typeof normalizeMasterCSSNumericValue>) {
+function valuesMatch(a: ReturnType<typeof normalizeStetCSSNumericValue>, b: ReturnType<typeof normalizeStetCSSNumericValue>) {
   return Boolean(a && b && a.kind === b.kind && Math.abs(a.value - b.value) < EPSILON)
 }
 
@@ -204,10 +204,10 @@ function getVariableReferenceName(value: string) {
 function getMatchingVariableKeys(
   variables: Map<string, Variable>,
   rawValue: string,
-  css: MasterCSS,
+  css: StetCSS,
   options: ResolvedCanonicalClassNameOptions
 ) {
-  const sourceValue = normalizeMasterCSSNumericValue(css, rawValue)
+  const sourceValue = normalizeStetCSSNumericValue(css, rawValue)
   const variableReferenceName = options.preferVariableReferences ? getVariableReferenceName(rawValue) : undefined
   const tokenKeys = new Set<string>()
   const numericKeys = new Set<string>()
@@ -232,7 +232,7 @@ function getMatchingVariableKeys(
 function getMatchingMultiValueVariableKeys(
   variables: Map<string, Variable>,
   rawValue: string,
-  css: MasterCSS,
+  css: StetCSS,
   options: ResolvedCanonicalClassNameOptions
 ): MatchingVariableKeys | undefined {
   if (!options.preferMultiValueTokens) return
@@ -291,7 +291,7 @@ function hasSameCanonicalRuleShape(sourceRules: GeneratedRule[], candidateRules:
   return true
 }
 
-function getSafeBreakpointTokenName(token: string, css: MasterCSS) {
+function getSafeBreakpointTokenName(token: string, css: StetCSS) {
   const match = /^(?:[<>]=?)?([A-Za-z0-9_-]+)$/.exec(token)
   if (!match) return
   const name = match[1]
@@ -299,7 +299,7 @@ function getSafeBreakpointTokenName(token: string, css: MasterCSS) {
   return name
 }
 
-function getCanonicalConditionStateToken(stateToken: string | undefined, css: MasterCSS) {
+function getCanonicalConditionStateToken(stateToken: string | undefined, css: StetCSS) {
   if (!stateToken?.includes('@')) return
 
   const parts = splitStetCSSTopLevel(stateToken, '@')
@@ -331,7 +331,7 @@ function getCanonicalConditionStateToken(stateToken: string | undefined, css: Ma
   return canonicalStateToken
 }
 
-function getCanonicalConditionSuffix(parts: MasterCSSClassInspection, css: MasterCSS, options: ResolvedCanonicalClassNameOptions) {
+function getCanonicalConditionSuffix(parts: StetCSSClassInspection, css: StetCSS, options: ResolvedCanonicalClassNameOptions) {
   if (!options.preferConditionOrder) return parts.suffix
   if (parts.rules.some((rule) => rule.layerName !== 'utilities')) return parts.suffix
   const canonicalStateToken = getCanonicalConditionStateToken(parts.stateToken, css)
@@ -349,14 +349,14 @@ function createCandidate(candidateBase: string, parts: ClassParts, order: number
 
 export default function suggestCanonicalClassName(
   className: string,
-  css: MasterCSS,
+  css: StetCSS,
   options: CanonicalClassNameOptions = defaultCanonicalClassNameOptions
 ) {
   const resolvedOptions: ResolvedCanonicalClassNameOptions = {
     ...defaultCanonicalClassNameOptions,
     ...options
   }
-  const sourceInspection = inspectMasterCSSClass(css, className)
+  const sourceInspection = inspectStetCSSClass(css, className)
   const sourceRules = sourceInspection.rules
   if (!sourceRules.length) return
 

@@ -22,11 +22,11 @@ export const builtinNamespaces = Object.freeze([
   'tracking'
 ] as const)
 
-export type MasterCSSBuiltinNamespace = typeof builtinNamespaces[number]
-export type MasterCSSBuiltinNamespaceRef = `~${MasterCSSBuiltinNamespace}` | `=${MasterCSSBuiltinNamespace}`
+export type StetCSSBuiltinNamespace = typeof builtinNamespaces[number]
+export type StetCSSBuiltinNamespaceRef = `~${StetCSSBuiltinNamespace}` | `=${StetCSSBuiltinNamespace}`
 
-export function builtinNamespaceRef(namespace: MasterCSSBuiltinNamespace, exact = false): MasterCSSBuiltinNamespaceRef {
-  return `${exact ? '=' : '~'}${namespace}` as MasterCSSBuiltinNamespaceRef
+export function builtinNamespaceRef(namespace: StetCSSBuiltinNamespace, exact = false): StetCSSBuiltinNamespaceRef {
+  return `${exact ? '=' : '~'}${namespace}` as StetCSSBuiltinNamespaceRef
 }
 
 export const builtinNamespaceSet: ReadonlySet<string> = new Set<string>(builtinNamespaces)

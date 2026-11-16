@@ -3,7 +3,7 @@ import {
   SEMANTIC_TOKEN_TYPES,
   SEMANTIC_TOKENS_LEGEND
 } from './common'
-import { defaultManifest, MasterCSS, matchesLanguageServiceNativeDeclaration } from './master-css'
+import { defaultManifest, StetCSS, matchesLanguageServiceNativeDeclaration } from './master-css'
 import { collectClassListHighlightTokenItems } from './semantic/tokenize-class'
 import { collectCSSHighlightTokenItems, isCSSSemanticTokenDocument } from './semantic/tokenize-css'
 import { toSemanticTokenItems, type HighlightTokenItem } from './semantic/highlight'
@@ -18,7 +18,7 @@ export {
 export type { HighlightTokenItem, SemanticTokenItem }
 
 export interface BrowserSemanticTokenOptions {
-  css?: MasterCSS
+  css?: StetCSS
   manifest?: StetCSSManifest
   classAttributes?: string[]
 }
@@ -41,7 +41,7 @@ const tokenTypeIndex = new Map(SEMANTIC_TOKEN_TYPES.map((type, index) => [type, 
 const tokenModifierIndex = new Map(SEMANTIC_TOKEN_MODIFIERS.map((modifier, index) => [modifier, index]))
 
 function createBrowserCSS(options: BrowserSemanticTokenOptions = {}) {
-  return options.css || MasterCSS.create({
+  return options.css || StetCSS.create({
     manifest: options.manifest || defaultManifest,
     nativeDeclarationMatcher: matchesLanguageServiceNativeDeclaration
   })

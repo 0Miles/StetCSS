@@ -6,8 +6,8 @@ import {
   builtinKeyAliases,
   builtinNamespaceSet,
   builtinNativeValueNamespaces,
-  MasterCSS,
-  type MasterCSSCreateOptions
+  StetCSS,
+  type StetCSSCreateOptions
 } from '@stet-css/engine'
 import UtilityType from '@stet-css/schema/utility-type'
 import {
@@ -19,8 +19,8 @@ import { flattenStetCSSManifestVariables, type StetCSSManifest } from '@stet-css
 
 const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
 
-function createTestCSS(manifest: StetCSSManifest, options: Omit<MasterCSSCreateOptions, 'manifest'> = {}) {
-  return MasterCSS.create({ manifest, ...options })
+function createTestCSS(manifest: StetCSSManifest, options: Omit<StetCSSCreateOptions, 'manifest'> = {}) {
+  return StetCSS.create({ manifest, ...options })
 }
 function variablesOf(manifest: StetCSSManifest) {
   return flattenStetCSSManifestVariables(manifest.variables)

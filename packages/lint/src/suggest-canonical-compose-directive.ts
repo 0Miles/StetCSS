@@ -1,5 +1,5 @@
-import type { MasterCSS } from '@stet-css/engine'
-import { inspectMasterCSSClass } from '@stet-css/engine/inspect'
+import type { StetCSS } from '@stet-css/engine'
+import { inspectStetCSSClass } from '@stet-css/engine/inspect'
 import { parseStetCSSClassList, splitStetCSSTopLevel } from '@stet-css/lexer'
 import UtilityType from '@stet-css/schema/utility-type'
 import {
@@ -62,7 +62,7 @@ function classValues(classList: string) {
 
 function canonicalizeClassList(
   classList: string,
-  css: MasterCSS,
+  css: StetCSS,
   options: ResolvedCanonicalClassNameOptions
 ) {
   const values = classValues(classList)
@@ -97,8 +97,8 @@ function canonicalizeClassList(
   return { replacement, suggestions }
 }
 
-function getNativeDeclaration(className: string, css: MasterCSS): NativeDeclaration | undefined {
-  const inspection = inspectMasterCSSClass(css, className)
+function getNativeDeclaration(className: string, css: StetCSS): NativeDeclaration | undefined {
+  const inspection = inspectStetCSSClass(css, className)
   if (inspection.stateToken) return
   if (inspection.variableEntries.length) return
   if (!inspection.key || !inspection.value) return
@@ -206,7 +206,7 @@ function hasDuplicateNativeDeclarationProperties(bucket: ComposeBucket): boolean
 function processLeafClass(
   bucket: ComposeBucket,
   className: string,
-  css: MasterCSS,
+  css: StetCSS,
   options: ResolvedCanonicalClassNameOptions,
   suggestions: CanonicalComposeDirectiveSuggestion[],
   reportNativeDeclaration: boolean
@@ -234,12 +234,12 @@ function processLeafClass(
 function processClass(
   bucket: ComposeBucket,
   className: string,
-  css: MasterCSS,
+  css: StetCSS,
   options: ResolvedCanonicalClassNameOptions,
   suggestions: CanonicalComposeDirectiveSuggestion[],
   canonicalRecommendations: Set<string>
 ): boolean {
-  const inspection = inspectMasterCSSClass(css, className)
+  const inspection = inspectStetCSSClass(css, className)
   if (
     options.preferVariantBlocksInCompose
     && inspection.stateToken
@@ -268,7 +268,7 @@ function processClass(
 
 export default function suggestCanonicalComposeDirective(
   classList: string,
-  css: MasterCSS,
+  css: StetCSS,
   options: CanonicalClassNameOptions = defaultCanonicalClassNameOptions
 ): CanonicalComposeDirectiveResult | undefined {
   const resolvedOptions = resolveOptions(options)

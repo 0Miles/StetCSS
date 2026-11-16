@@ -3,7 +3,7 @@ import {
   defaultCSSLanguageRuntime,
   type Condition,
   type CSSLanguageRuntime,
-  type MasterCSS,
+  type StetCSS,
   createDefaultCSS
 } from '@stet-css/language'
 import type { Variable } from '@stet-css/language'
@@ -55,7 +55,7 @@ export interface CompletionIndex {
   conditions: [string, Condition][]
 }
 
-function utilityMayReferenceAnimations(utility: MasterCSS['definedUtilities'][number]) {
+function utilityMayReferenceAnimations(utility: StetCSS['definedUtilities'][number]) {
   const emit = utility.emit
   switch (emit.type) {
     case 'declarations':
@@ -73,7 +73,7 @@ function utilityMayReferenceAnimations(utility: MasterCSS['definedUtilities'][nu
   }
 }
 
-function isPureNativePropertyUtility(utility: MasterCSS['definedUtilities'][number]) {
+function isPureNativePropertyUtility(utility: StetCSS['definedUtilities'][number]) {
   return utility.emit.type === 'property'
     && utility.id === utility.emit.property
     && utility.name === utility.emit.property
@@ -88,7 +88,7 @@ function addMapValue<Key, Value>(map: Map<Key, Value[]>, key: Key, value: Value)
   }
 }
 
-function collectClassEntries(css: MasterCSS, runtime: CSSLanguageRuntime) {
+function collectClassEntries(css: StetCSS, runtime: CSSLanguageRuntime) {
   const completionItems: ClassCompletionEntry[] = []
   const addedKeys = new Set<string>()
   const addedCompletionLabels = new Set<string>()
@@ -184,7 +184,7 @@ function collectClassEntries(css: MasterCSS, runtime: CSSLanguageRuntime) {
   return sortCompletionItems(completionItems)
 }
 
-function createPseudoClassSelectors(css: MasterCSS) {
+function createPseudoClassSelectors(css: StetCSS) {
   const selectors = new Map<string, string>([[':of', ':of']])
   for (const [token, nodes] of css.selectors) {
     if (token.startsWith(':') && !token.startsWith('::')) {
@@ -194,7 +194,7 @@ function createPseudoClassSelectors(css: MasterCSS) {
   return Array.from(selectors, ([token, selector]) => ({ token, selector }))
 }
 
-function createPseudoElementSelectors(css: MasterCSS) {
+function createPseudoElementSelectors(css: StetCSS) {
   const selectors: SelectorVariantCandidate[] = []
   for (const [token, nodes] of css.selectors) {
     if (token.startsWith('::')) {
@@ -224,7 +224,7 @@ function createNativeVariableNamespacesByProperty(runtime: CSSLanguageRuntime) {
 }
 
 export function createCompletionIndex(
-  css: MasterCSS = createDefaultCSS(),
+  css: StetCSS = createDefaultCSS(),
   runtime: CSSLanguageRuntime = defaultCSSLanguageRuntime
 ): CompletionIndex {
   const componentNames: string[] = []

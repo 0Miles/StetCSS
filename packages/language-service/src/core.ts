@@ -3,7 +3,7 @@ import {
   defaultCSSLanguageRuntime,
   getClassPositions,
   type CSSLanguageRuntime,
-  type MasterCSS,
+  type StetCSS,
   type ClassPosition,
   ClassPositionCache
 } from '@stet-css/language'
@@ -28,7 +28,7 @@ export interface CSSLanguageServiceOptions {
 }
 
 export default class CSSLanguageService extends EventEmitter {
-  css: MasterCSS
+  css: StetCSS
   runtime: CSSLanguageRuntime
   settings: Settings
   private completionIndex?: CompletionIndex

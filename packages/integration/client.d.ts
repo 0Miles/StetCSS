@@ -16,8 +16,8 @@ declare module 'virtual:stet-css-manifest' {
 }
 
 declare module 'virtual:stet-css-emitted-globals' {
-  import type { MasterCSSEmittedGlobals } from '@stet-css/engine'
+  import type { StetCSSEmittedGlobals } from '@stet-css/engine'
 
-  const emittedGlobals: MasterCSSEmittedGlobals
+  const emittedGlobals: StetCSSEmittedGlobals
   export default emittedGlobals
 }

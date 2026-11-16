@@ -1,4 +1,4 @@
-import type { MasterCSS } from '@stet-css/core'
+import type { StetCSS } from '@stet-css/core'
 import defaultManifest from './default-manifest'
 import validateCSS from './validate-css'
 import { createCSSWithNativeDeclarations } from './native-declaration'
@@ -11,7 +11,7 @@ import { tryGenerate } from '@stet-css/core'
  */
 export default function isClassValid(
   syntax: string,
-  css: MasterCSS = createCSSWithNativeDeclarations(defaultManifest)
+  css: StetCSS = createCSSWithNativeDeclarations(defaultManifest)
 ): boolean {
   const { rules } = tryGenerate(css, syntax)
   if (rules.length) {

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { MasterCSS } from '@stet-css/engine'
+import { StetCSS } from '@stet-css/engine'
 import defaultManifestJSON from '../src/default-manifest.json' with { type: 'json' }
 import {
   flattenStetCSSManifestVariables,
@@ -10,7 +10,7 @@ import {
 const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
 
 function createTestCSS(manifest: StetCSSManifest) {
-  return MasterCSS.create({ manifest })
+  return StetCSS.create({ manifest })
 }
 
 function findVariable(name: string) {

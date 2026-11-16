@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 import mdnSelectors from 'mdn-data/css/selectors.json' with { type: 'json' }
-import { MasterCSS, type NativeCSSDeclarationMatcher } from '../src'
+import { StetCSS, type NativeCSSDeclarationMatcher } from '../src'
 import builtinPseudoClasses from '../src/pseudo-classes'
 
 const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
@@ -25,10 +25,10 @@ const nativeDeclarationMatcher: NativeCSSDeclarationMatcher = ({ property, value
   nativeValues[property]?.includes(value) ?? false
 
 function createCSS(manifest = defaultManifest) {
-  return MasterCSS.create({ manifest, nativeDeclarationMatcher })
+  return StetCSS.create({ manifest, nativeDeclarationMatcher })
 }
 
-function generateText(css: MasterCSS, className: string) {
+function generateText(css: StetCSS, className: string) {
   return css.generate(className).map((rule) => rule.text).join('')
 }
 

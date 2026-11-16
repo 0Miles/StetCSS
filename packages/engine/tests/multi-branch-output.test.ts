@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { StetCSSManifest } from '@stet-css/schema/manifest'
-import { MasterCSS } from '../src'
+import { StetCSS } from '../src'
 import { cloneManifest } from './helpers/css-tester'
 
 type ModeTrigger = NonNullable<StetCSSManifest['settings']>['modeTrigger']
@@ -15,7 +15,7 @@ const createCSS = (modeTrigger: ModeTrigger) => {
     { token: '@lay', branches: [{ layer: 'components' }, { conditions: ['media(print)'], layer: 'base' }] },
     { token: '@condsel', branches: [{ selector: '.touch &', conditions: ['media(hover:none)'] }, { selector: '&:active' }] }
   ]
-  return MasterCSS.create({ manifest })
+  return StetCSS.create({ manifest })
 }
 
 /**

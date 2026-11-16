@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { MasterCSS } from '../src'
+import { StetCSS } from '../src'
 import {
   createCSSWithSemanticUtilities,
   createCSSWithVariables,
@@ -58,7 +58,7 @@ describe.concurrent('default manifest utility parity', () => {
   })
 
   test('resolves native value namespaces with aliases tokens and validation', () => {
-    const css = MasterCSS.create({
+    const css = StetCSS.create({
       manifest: defaultManifest,
       nativeDeclarationMatcher: ({ property, value }) =>
         property === 'width' && (value === '1rem' || value === 'var(--container-sm)')
@@ -98,8 +98,8 @@ describe.concurrent('default manifest utility parity', () => {
   })
 
   test('drops colliding shorthand token aliases', () => {
-    const css = MasterCSS.create({ manifest: defaultManifest })
-    const nativeCSS = MasterCSS.create({
+    const css = StetCSS.create({ manifest: defaultManifest })
+    const nativeCSS = StetCSS.create({
       manifest: defaultManifest,
       nativeDeclarationMatcher: ({ property }) =>
         property === 'background'
@@ -357,9 +357,9 @@ describe.concurrent('default manifest utility parity', () => {
       important: true
     }
 
-    expect(MasterCSS.create({ manifest: manifest }).createRule('{color:black!;bb:2px|solid}')?.declarations)
+    expect(StetCSS.create({ manifest: manifest }).createRule('{color:black!;bb:2px|solid}')?.declarations)
       .toStrictEqual({ color: 'oklch(0% 0 none)!important', 'border-bottom': '2px solid!important' })
-    expect(MasterCSS.create({ manifest: manifest }).createRule('{color:black!;bb:2px|solid}')?.text)
+    expect(StetCSS.create({ manifest: manifest }).createRule('{color:black!;bb:2px|solid}')?.text)
       .toContain('border-bottom:2px solid!important')
   })
 
@@ -409,14 +409,14 @@ describe.concurrent('default manifest utility parity', () => {
   })
 
   test('removes legacy css variable assignment shorthand while keeping native custom property fallback opt-in', () => {
-    const css = MasterCSS.create({ manifest: defaultManifest })
+    const css = StetCSS.create({ manifest: defaultManifest })
 
     expect(css.createRule('$foo:123')).toBeUndefined()
     expect(css.createRule('$foo:123:hover')).toBeUndefined()
     expect(css.createRule('$foo:123@sm')).toBeUndefined()
     expect(css.createRule('--foo:123')).toBeUndefined()
 
-    const nativeCSS = MasterCSS.create({
+    const nativeCSS = StetCSS.create({
       manifest: defaultManifest,
       nativeDeclarationMatcher: () => false
     })
@@ -427,7 +427,7 @@ describe.concurrent('default manifest utility parity', () => {
   })
 
   test('uses injected native declaration matcher after manifest misses and rejects removed aliases', () => {
-    const css = MasterCSS.create({
+    const css = StetCSS.create({
       manifest: defaultManifest,
       nativeDeclarationMatcher: ({ property, value }) =>
         property === 'float' && value === 'left'
@@ -459,7 +459,7 @@ describe.concurrent('default manifest utility parity', () => {
 
   test('uses native declaration fast path without bypassing aliases and smart utilities', () => {
     const calls: string[] = []
-    const css = MasterCSS.create({
+    const css = StetCSS.create({
       manifest: defaultManifest,
       nativeDeclarationMatcher: ({ property, value }) => {
         calls.push(property + ':' + value)
@@ -494,7 +494,7 @@ describe.concurrent('default manifest utility parity', () => {
   })
 
   test('classifies native shorthand declarations for priority sorting', () => {
-    const css = MasterCSS.create({
+    const css = StetCSS.create({
       manifest: defaultManifest,
       nativeDeclarationMatcher: ({ property }) =>
         property === 'margin' || property === 'margin-left' || property === 'margin-inline'
@@ -526,7 +526,7 @@ describe.concurrent('manifest-driven layer and lifecycle parity', () => {
   })
 
   test('does not duplicate emittedGlobals variables', () => {
-    const css = MasterCSS.create({
+    const css = StetCSS.create({
       manifest: defaultManifest,
       emittedGlobals: {
         variables: {
@@ -549,7 +549,7 @@ describe.concurrent('manifest-driven layer and lifecycle parity', () => {
   })
 
   test('does not duplicate emittedGlobals animations', () => {
-    const css = MasterCSS.create({
+    const css = StetCSS.create({
       manifest: defaultManifest,
       emittedGlobals: {
         animations: {
@@ -586,7 +586,7 @@ describe.concurrent('manifest-driven layer and lifecycle parity', () => {
   })
 
   test('keeps semantic utility declarations in their configured layer', () => {
-    const css = MasterCSS.create({
+    const css = StetCSS.create({
       manifest: createManifestWithSemanticUtilities([
       {
         name: 'prose',
@@ -666,7 +666,7 @@ describe.concurrent('manifest-driven layer and lifecycle parity', () => {
       modeTrigger: 'class',
       modes: ['dark']
     }
-    const scopedCSS = MasterCSS.create({ manifest: scopedManifest })
+    const scopedCSS = StetCSS.create({ manifest: scopedManifest })
     const rule = scopedCSS.createRule('block:hover@dark')
     expect(rule?.selectorText).toBe('.dark #app .block\\:hover\\@dark:hover')
     expect(scopedCSS.createRulesFromSelectorText(rule!.selectorText)?.[0]).toMatchObject({

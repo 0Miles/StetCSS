@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { MasterCSS } from '../src'
+import { StetCSS } from '../src'
 import { generateCondition, generateSelector, parseCondition, parseSelector } from '../src/compiler'
 import { cloneManifest, createDefaultCSS } from './helpers/css-tester'
 
@@ -50,7 +50,7 @@ describe.concurrent('compiled condition parser parity', () => {
         }]
       }
     }
-    const css = MasterCSS.create({ manifest: manifest })
+    const css = StetCSS.create({ manifest: manifest })
 
     expect(generateCondition(parseCondition('supports-backdrop', css))).toBe('@supports (backdrop-filter:blur(0px))')
     expect(generateCondition(parseCondition('container(sm)', css))).toBe('@container (width>=24rem)')

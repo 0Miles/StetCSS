@@ -11,7 +11,7 @@ import {
   resolveMasterCSSPackageImportGraph,
   type CSSImportGraphReader
 } from '@stet-css/compiler'
-import type { MasterCSSEmittedGlobals } from '@stet-css/core'
+import type { StetCSSEmittedGlobals } from '@stet-css/core'
 import type { createCSSWithNativeDeclarations } from '@stet-css/validator/native-declaration'
 import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import { renderCompiledManifestCSS, type RenderCompiledManifestCSSResult } from './render'
@@ -75,7 +75,7 @@ export interface CompileRenderedStyleCSSOptions extends CompileStyleCSSOptions {
 }
 
 export interface CompileRenderedStyleCSSResult extends CompileCSSResult {
-  emittedGlobals: Required<MasterCSSEmittedGlobals>
+  emittedGlobals: Required<StetCSSEmittedGlobals>
   manifest: StetCSSManifest
   renderedCSS: RenderCompiledManifestCSSResult
 }
@@ -88,7 +88,7 @@ export interface TransformLocalStyleCSSResult {
 }
 
 export interface TransformLocalStyleCSSOptions extends CompileStyleCSSOptions {
-  emittedGlobals?: MasterCSSEmittedGlobals
+  emittedGlobals?: StetCSSEmittedGlobals
 }
 
 export type RegisterStyleCSSSourceOptions = CompileStyleCSSOptions
@@ -96,7 +96,7 @@ export type RegisterStyleCSSSourceOptions = CompileStyleCSSOptions
 export type CreateStyleEntryEmittedGlobalsOptions = CompileStyleCSSOptions
 
 export interface CreateStyleEntryEmittedGlobalsResult {
-  emittedGlobals: Required<MasterCSSEmittedGlobals>
+  emittedGlobals: Required<StetCSSEmittedGlobals>
   dependencies: string[]
 }
 
@@ -136,7 +136,7 @@ export interface CreateExtractedCSSOptions extends CompileStyleCSSOptions, Style
 
 export interface CreateExtractedCSSResult {
   css: string
-  emittedGlobals: Required<MasterCSSEmittedGlobals>
+  emittedGlobals: Required<StetCSSEmittedGlobals>
 }
 
 export type StylesheetCSS = ReturnType<typeof createCSSWithNativeDeclarations>
@@ -672,14 +672,14 @@ export async function compileLocalStyleCSS(
   })
 }
 
-function createEmptyStyleEntryEmittedGlobals(): Required<MasterCSSEmittedGlobals> {
+function createEmptyStyleEntryEmittedGlobals(): Required<StetCSSEmittedGlobals> {
   return {
     variables: {},
     animations: {}
   }
 }
 
-function hasEmittedGlobals(emittedGlobals: MasterCSSEmittedGlobals | undefined) {
+function hasEmittedGlobals(emittedGlobals: StetCSSEmittedGlobals | undefined) {
   return Boolean(
     Object.keys(emittedGlobals?.variables || {}).length
     || Object.keys(emittedGlobals?.animations || {}).length

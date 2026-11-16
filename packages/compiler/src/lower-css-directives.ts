@@ -24,7 +24,7 @@ import {
   parseSelector,
   splitModeConjuncts,
   type GeneratedRule,
-  type MasterCSS
+  type StetCSS
 } from '@stet-css/engine/compiler'
 import type { StetCSSManifest, StetCSSManifestUtilityLayerName } from '@stet-css/schema/manifest'
 import { createMasterCSSManifest, createVariableNameResolver, type CSSDirectiveVariableNameResolver } from './master-css-manifest'
@@ -300,7 +300,7 @@ function validateTokenConflicts(input: CSSDirectiveManifestInput, resolveVariabl
   }
 }
 
-function assertDeclaredDefaultMode(input: CSSDirectiveManifestInput, css: MasterCSS) {
+function assertDeclaredDefaultMode(input: CSSDirectiveManifestInput, css: StetCSS) {
   if (!isNamedDefaultMode(input.defaultMode) || css.modes.includes(input.defaultMode)) return
   throw new UndeclaredModeError('default-mode', input.defaultMode, css.modes)
 }
@@ -310,7 +310,7 @@ function assertDeclaredDefaultMode(input: CSSDirectiveManifestInput, css: Master
  * the base manifest warn like an explicit `mode-trigger: media`. Runs after
  * `assertDeclaredDefaultMode`, which throws unless a named `default-mode` is in `css.modes`.
  */
-function warnMediaTriggerModes(input: CSSDirectiveManifestInput, css: MasterCSS, options: LowerCSSDirectivesOptions, warnings: string[]) {
+function warnMediaTriggerModes(input: CSSDirectiveManifestInput, css: StetCSS, options: LowerCSSDirectivesOptions, warnings: string[]) {
   if (css.settings.modeTrigger !== 'media') return
 
   const customModes = css.modes.filter((mode) => !MEDIA_MODE_NAMES.has(mode))
@@ -347,7 +347,7 @@ function getUtilityConditionDefinitions(utility: GeneratedRule) {
   return conditions
 }
 
-function getComposedUtilitySelector(utility: GeneratedRule, css: MasterCSS) {
+function getComposedUtilitySelector(utility: GeneratedRule, css: StetCSS) {
   let selector = utility.selectorTemplate
     ? '&'
     : utility.selectorNodes
@@ -375,7 +375,7 @@ function cloneDeclarations(declarations: PropertiesHyphen, important?: boolean) 
   return result
 }
 
-function createStyleDefinitionsFromCompose(definition: Extract<CSSDirectiveStyleDefinition, { type: 'compose' }>, css: MasterCSS): ComposedStyleDefinition[] {
+function createStyleDefinitionsFromCompose(definition: Extract<CSSDirectiveStyleDefinition, { type: 'compose' }>, css: StetCSS): ComposedStyleDefinition[] {
   const utilities = css.createRules(definition.className)
   if (!utilities.length) {
     throw new CSSDirectiveError(
@@ -405,7 +405,7 @@ function combineSelectorWrapper(selector: string, wrapper: string) {
   return wrapper.replace(/&/g, selector)
 }
 
-function resolveSelectorAliases(selector: string, css: MasterCSS) {
+function resolveSelectorAliases(selector: string, css: StetCSS) {
   const selectorTokens = [...css.selectors.keys()]
     .filter((token) => token.startsWith(':'))
     .sort((a, b) => b.length - a.length)
@@ -496,7 +496,7 @@ function mergeResolvedVariantReferenceBranch(
   }
 }
 
-function cloneConfiguredVariantBranches(token: string, css: MasterCSS): ResolvedVariantReferenceBranch[] | undefined {
+function cloneConfiguredVariantBranches(token: string, css: StetCSS): ResolvedVariantReferenceBranch[] | undefined {
   const configuredVariant = css.resolveVariant(token as any)
   if (configuredVariant) {
     return configuredVariant.map((branch) => ({
@@ -511,13 +511,13 @@ function cloneConfiguredVariantBranches(token: string, css: MasterCSS): Resolved
   }
 }
 
-function resolveSelectorVariantReference(token: string, css: MasterCSS): ResolvedVariantReferenceBranch[] {
+function resolveSelectorVariantReference(token: string, css: StetCSS): ResolvedVariantReferenceBranch[] {
   const configuredVariant = cloneConfiguredVariantBranches(token, css)
   if (configuredVariant) return configuredVariant
   return [{ selector: generateSelector(parseSelector(token, css), '&') }]
 }
 
-function resolveConditionVariantReference(token: string, css: MasterCSS): ResolvedVariantReferenceBranch[] {
+function resolveConditionVariantReference(token: string, css: StetCSS): ResolvedVariantReferenceBranch[] {
   const configuredVariant = cloneConfiguredVariantBranches(token, css)
   if (configuredVariant) return configuredVariant
   const conditionToken = token.slice(1)
@@ -544,7 +544,7 @@ function resolveConditionVariantReference(token: string, css: MasterCSS): Resolv
   return [{ conditions: [generateCondition({ id: condition.id, nodes })] }]
 }
 
-function resolveMasterVariantReference(token: string, css: MasterCSS): ResolvedVariantReferenceBranch[] {
+function resolveMasterVariantReference(token: string, css: StetCSS): ResolvedVariantReferenceBranch[] {
   if (!token.startsWith('@')) {
     throw new Error(`@variant requires a full variant token: ${token}`)
   }
@@ -567,7 +567,7 @@ function resolveMasterVariantReference(token: string, css: MasterCSS): ResolvedV
   return branches
 }
 
-function resolveConfiguredBranches(conditionPath: CSSDirectiveConditionPath | undefined, css: MasterCSS, selector = '&', layer?: StetCSSManifestUtilityLayerName): ResolvedStyleBranch[] {
+function resolveConfiguredBranches(conditionPath: CSSDirectiveConditionPath | undefined, css: StetCSS, selector = '&', layer?: StetCSSManifestUtilityLayerName): ResolvedStyleBranch[] {
   let branches: ResolvedStyleBranch[] = [{ selector, ...(layer ? { layer } : {}) }]
   if (!conditionPath?.length) {
     return branches.map((branch) => ({
@@ -632,7 +632,7 @@ function ensureUtilityRules(definition: CSSDirectiveUtilityDefinition) {
   })
 }
 
-function finalizeUtilityDefinitions(input: CSSDirectiveManifestInput, css: MasterCSS, options: LowerCSSDirectivesOptions) {
+function finalizeUtilityDefinitions(input: CSSDirectiveManifestInput, css: StetCSS, options: LowerCSSDirectivesOptions) {
   const utilities = input.utilities
   if (!utilities?.length) return
 
@@ -820,7 +820,7 @@ function compareStyleMergeBuckets(a: StyleMergeBucket, b: StyleMergeBucket) {
   return a.order - b.order
 }
 
-function createMergedStyleDefinitions(definitions: CSSDirectiveStyleDefinition[], css: MasterCSS, targetLayer?: StetCSSManifestUtilityLayerName) {
+function createMergedStyleDefinitions(definitions: CSSDirectiveStyleDefinition[], css: StetCSS, targetLayer?: StetCSSManifestUtilityLayerName) {
   const buckets = new Map<string, StyleMergeBucket>()
   for (const definition of definitions) {
     if (definition.type === 'compose') {
@@ -1025,7 +1025,7 @@ function hasUnrefreshedDependencies(dependencies: Set<string> | undefined, unref
 
 function refreshManagedStyleContext(
   input: CSSDirectiveManifestInput,
-  css: MasterCSS,
+  css: StetCSS,
   options: LowerCSSDirectivesOptions
 ) {
   const diagnostics = options.diagnostics
@@ -1040,7 +1040,7 @@ function refreshManagedStyleContext(
 function finalizeStyleDefinitions(
   input: CSSDirectiveManifestInput,
   styleDefinitions: CSSDirectiveStyleDefinition[] | undefined,
-  css: MasterCSS,
+  css: StetCSS,
   options: LowerCSSDirectivesOptions
 ) {
   if (!styleDefinitions?.length) return ''

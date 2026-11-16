@@ -1,9 +1,9 @@
-import type { MasterCSS } from '@stet-css/language'
+import type { StetCSS } from '@stet-css/language'
 import type { ColorPresentationParams } from 'vscode-languageserver-protocol'
 import Color from 'colorjs.io'
 import { tryGenerate } from '@stet-css/core'
 
-export default function convertColorByToken(color: ColorPresentationParams['color'], colorToken: string, css: MasterCSS) {
+export default function convertColorByToken(color: ColorPresentationParams['color'], colorToken: string, css: StetCSS) {
   const valueComponent = tryGenerate(css, 'color:' + colorToken).rules[0]?.valueComponents[0]
   let outputSpace = 'srgb'
   switch (valueComponent?.type) {

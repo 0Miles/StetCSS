@@ -1,4 +1,4 @@
-import { MasterCSS, createDefaultCSS, generateCSS } from '@stet-css/language'
+import { StetCSS, createDefaultCSS, generateCSS } from '@stet-css/language'
 import { type CompletionItem, CompletionItemKind } from 'vscode-languageserver-protocol'
 import sortCompletionItems from './sort-completion-items'
 import createCSSMarkdownDocumentation from './create-css-markdown-documentation'
@@ -31,7 +31,7 @@ function normalizeFunctionalPseudoClass(name: string): string {
   return functionalPseudoClassNames.has(name) ? name + '()' : name
 }
 
-export default function getPseudoClassCompletionItems(css: MasterCSS = createDefaultCSS(), syntax: string, completionIndex: CompletionIndex = createCompletionIndex(css)): CompletionItem[] {
+export default function getPseudoClassCompletionItems(css: StetCSS = createDefaultCSS(), syntax: string, completionIndex: CompletionIndex = createCompletionIndex(css)): CompletionItem[] {
   const completionItems = completionIndex.pseudoClassNames
     .map((pseudoClassName) => {
       const name = normalizeFunctionalPseudoClass(pseudoClassName)

@@ -3,7 +3,7 @@ import {
   initCSSCompiler,
   type CompileCSSManifestResult
 } from '@stet-css/compiler/browser'
-import type { MasterCSSEmittedGlobals } from '@stet-css/core'
+import type { StetCSSEmittedGlobals } from '@stet-css/core'
 import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import { renderCompiledManifestCSS } from './render'
 
@@ -21,7 +21,7 @@ export interface CompileBrowserStyleCSSResult {
   generatedCSS: string
   manifest: StetCSSManifest
   warnings: string[]
-  emittedGlobals: Required<MasterCSSEmittedGlobals>
+  emittedGlobals: Required<StetCSSEmittedGlobals>
   result: CompileCSSManifestResult
 }
 

@@ -44,7 +44,7 @@ describe('@stet-css/integration/client', () => {
       )
       writeFileSync(
         path.join(cssPackageDir, 'emitted-globals.d.ts'),
-        'export interface MasterCSSEmittedGlobals { variables?: Record<string, number>; animations?: Record<string, number> }\n'
+        'export interface StetCSSEmittedGlobals { variables?: Record<string, number>; animations?: Record<string, number> }\n'
       )
       writeFileSync(
         path.join(enginePackageDir, 'package.json'),
@@ -62,7 +62,7 @@ describe('@stet-css/integration/client', () => {
         path.join(enginePackageDir, 'index.d.ts'),
         [
           'export interface StetCSSManifest { version: 1 }',
-          'export interface MasterCSSEmittedGlobals { variables?: Record<string, number>; animations?: Record<string, number> }',
+          'export interface StetCSSEmittedGlobals { variables?: Record<string, number>; animations?: Record<string, number> }',
           ''
         ].join('\n')
       )
@@ -92,7 +92,7 @@ import virtualEmittedGlobals from 'virtual:stet-css-emitted-globals'
 import localManifest from './app.css?stet-css-manifest'
 
 virtualManifest satisfies import('@stet-css/engine').StetCSSManifest
-virtualEmittedGlobals satisfies import('@stet-css/core/emitted-globals').MasterCSSEmittedGlobals
+virtualEmittedGlobals satisfies import('@stet-css/core/emitted-globals').StetCSSEmittedGlobals
 localManifest satisfies import('@stet-css/engine').StetCSSManifest
 `.trimStart()
       )

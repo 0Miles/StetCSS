@@ -8,7 +8,7 @@ Runs the engine in the browser. `CSSRuntime` observes DOM class changes, keeps p
 
 ## Risks
 
-- **Inheritance**: `CSSRuntime` extends engine `MasterCSS`, so every `MasterCSS` method ships to browsers. Keep tooling-only methods off `MasterCSS` (runtime surface in `AGENTS.md`).
+- **Inheritance**: `CSSRuntime` extends engine `StetCSS`, so every `StetCSS` method ships to browsers. Keep tooling-only methods off `StetCSS` (runtime surface in `AGENTS.md`).
 - **Bundle audit**: `dist/global.min.js` stays free of devtools hook globals, generic listener maps, and event emit callsites. Debug helpers in `src/debuggers` run only under `process.env.NODE_ENV === 'development'`.
 - **Usage counts**: a class keeps its rules while its `classCounts` entry lives. Pair every increment with its decrement across `MutationObserver` diffs, for Document and ShadowRoot roots alike.
 - **Emitted globals**: emittedGlobals variable and keyframe counts stop duplicate global insertion and leave utility insertion untouched.

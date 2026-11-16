@@ -1,5 +1,5 @@
 import scannerOptions, { validateScannerOptions, type ScannerOptions } from './options'
-import { MasterCSS } from '@stet-css/core'
+import { StetCSS } from '@stet-css/core'
 import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import { createRequire } from 'node:module'
 import {
@@ -215,6 +215,6 @@ export default class CSSScanner extends EventEmitter {
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export default interface CSSScanner {
-  css: MasterCSS
+  css: StetCSS
   options: ScannerOptions
 }

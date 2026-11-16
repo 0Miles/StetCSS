@@ -1,5 +1,5 @@
-import { MasterCSS } from '@stet-css/core'
-import type { MasterCSSOptions, StetCSSManifest, MasterCSSEmittedGlobals, NativeCSSDeclarationMatcher } from '@stet-css/core'
+import { StetCSS } from '@stet-css/core'
+import type { StetCSSOptions, StetCSSManifest, StetCSSEmittedGlobals, NativeCSSDeclarationMatcher } from '@stet-css/core'
 import { lexer, parse, property as propertyName } from 'css-tree'
 import { isTargetError } from './validate-css'
 
@@ -29,10 +29,10 @@ export const cssTreeNativeDeclarationMatcher: NativeCSSDeclarationMatcher = ({ p
 
 export function createCSSWithNativeDeclarations(
   manifest: StetCSSManifest,
-  emittedGlobals?: MasterCSSEmittedGlobals,
-  options: MasterCSSOptions = {}
+  emittedGlobals?: StetCSSEmittedGlobals,
+  options: StetCSSOptions = {}
 ) {
-  return MasterCSS.create({
+  return StetCSS.create({
     manifest,
     emittedGlobals,
     ...options,

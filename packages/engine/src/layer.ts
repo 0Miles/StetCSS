@@ -1,5 +1,5 @@
 import { Rule } from './rule'
-import MasterCSS from './core'
+import StetCSS from './core'
 import VariableRule from './variable-rule'
 
 type RuleHost = { rules: (Rule | VariableRule)[] }
@@ -41,7 +41,7 @@ export default class Layer {
 
   constructor(
     public name: string,
-    public css: MasterCSS
+    public css: StetCSS
   ) { }
 
   attach() {

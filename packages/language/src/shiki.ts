@@ -6,7 +6,7 @@ import { collectHighlightTokenItems } from './render-semantic-tokens'
 import type { HighlightTokenItem, HighlightTokenRole } from './semantic/highlight'
 import { collectClassListHighlightTokenItems } from './semantic/tokenize-class'
 import getClassPositions from './utils/get-class-positions'
-import { createLanguageCSS, defaultManifest, type MasterCSS } from './master-css'
+import { createLanguageCSS, defaultManifest, type StetCSS } from './master-css'
 import {
   MASTER_CSS_SEMANTIC_TOKEN_SCOPE_MAP,
   getMasterCSSSemanticTokenScopeKeys
@@ -111,7 +111,7 @@ export interface MasterCSSShikiOptions {
    * Reuse an existing Master CSS instance when the caller already owns a
    * configured language engine.
    */
-  css?: MasterCSS
+  css?: StetCSS
   /**
    * Class-position and manifest settings used when collecting embedded utilities.
    */

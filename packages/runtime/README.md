@@ -176,7 +176,7 @@ const cssRuntime = CSSRuntime.create({ manifest })
 cssRuntime.observe()
 ```
 
-`CSSRuntime` runs in the browser and extends the manifest-driven `MasterCSS` engine. Use `CSSRuntime.create({ manifest })` when the runtime should reuse an existing runtime for the same root.
+`CSSRuntime` runs in the browser and extends the manifest-driven `StetCSS` engine. Use `CSSRuntime.create({ manifest })` when the runtime should reuse an existing runtime for the same root.
 
 | API | Type | Description |
 | --- | --- | --- |

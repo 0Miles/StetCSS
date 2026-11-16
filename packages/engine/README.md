@@ -16,12 +16,12 @@ This package does not discover project files, resolve CSS imports, compile CSS d
 
 ## API
 
-### `MasterCSS`
+### `StetCSS`
 
 ```ts
-import { MasterCSS } from '@stet-css/engine'
+import { StetCSS } from '@stet-css/engine'
 
-const css = MasterCSS.create({ manifest })
+const css = StetCSS.create({ manifest })
 
 css.ensureClassRules('text:center', 'font:semibold')
 console.log(css.text)
@@ -29,7 +29,7 @@ console.log(css.text)
 
 | API | Description |
 | --- | --- |
-| `MasterCSS.create({ manifest, emittedGlobals })` | Creates a `MasterCSS` instance. |
+| `StetCSS.create({ manifest, emittedGlobals })` | Creates a `StetCSS` instance. |
 | `css.ensureClassRules(...classNames)` | Ensures class names have generated rules. |
 | `css.deleteClassRules(...classNames)` | Deletes generated rules for class names. |
 | `css.createRule(className)` | Creates one generated rule without inserting it. |
@@ -52,12 +52,12 @@ import {
 
 ### Inspection helpers
 
-`@stet-css/engine/inspect` exposes tooling-only class inspection helpers for lint and language tooling without adding those methods to the runtime-covered `MasterCSS` prototype.
+`@stet-css/engine/inspect` exposes tooling-only class inspection helpers for lint and language tooling without adding those methods to the runtime-covered `StetCSS` prototype.
 
 ```ts
-import { inspectMasterCSSClass } from '@stet-css/engine/inspect'
+import { inspectStetCSSClass } from '@stet-css/engine/inspect'
 
-const inspection = inspectMasterCSSClass(css, 'fg:red:hover')
+const inspection = inspectStetCSSClass(css, 'fg:red:hover')
 ```
 
 ## Related packages

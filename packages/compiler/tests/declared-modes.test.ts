@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, test } from 'vitest'
-import { MasterCSS } from '@stet-css/engine'
+import { StetCSS } from '@stet-css/engine'
 import { compileProjectManifest } from '../src'
 
 function compileEntry(source: string) {
@@ -37,6 +37,6 @@ test.each([
 
   expect(manifest.settings?.modes && [...manifest.settings.modes].sort()).toEqual(modes && [...modes].sort())
   if (modes && !modes.includes('dark')) {
-    expect(() => MasterCSS.create({ manifest }).generate('fg:red@dark')).toThrow('mode "dark"')
+    expect(() => StetCSS.create({ manifest }).generate('fg:red@dark')).toThrow('mode "dark"')
   }
 })

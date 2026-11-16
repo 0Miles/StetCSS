@@ -1,5 +1,5 @@
 import { validatePluginOptions, type CSSScanner } from '@stet-css/scanner'
-import type { MasterCSSEmittedGlobals } from '@stet-css/core'
+import type { StetCSSEmittedGlobals } from '@stet-css/core'
 import type { StyleCSSSources } from '@stet-css/stylesheet'
 import type { Plugin, ResolvedConfig } from 'vite'
 import ManifestLoaderPlugin from './plugins/manifest-loader'
@@ -37,7 +37,7 @@ export interface PluginContext {
   /** Vite environments whose managed CSS imports emitted the slot placeholder. */
   virtualCSSPlaceholderEnvironments?: Set<string>
   styleCSSSources?: StyleCSSSources
-  emittedGlobals?: MasterCSSEmittedGlobals
+  emittedGlobals?: StetCSSEmittedGlobals
   /** The last extracted CSS, compared on source file changes to skip no-op HMR updates. */
   extractedCSS?: string
 }

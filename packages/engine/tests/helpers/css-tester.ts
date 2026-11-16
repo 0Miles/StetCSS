@@ -8,7 +8,7 @@ import type {
   StetCSSManifestUtilityRule
 } from '@stet-css/schema/manifest'
 import { flattenStetCSSManifestVariables, groupStetCSSManifestVariables } from '@stet-css/schema/manifest'
-import { builtinNativeValueNamespaces, MasterCSS } from '../../src'
+import { builtinNativeValueNamespaces, StetCSS } from '../../src'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 
 const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
@@ -173,7 +173,7 @@ export function cloneManifest(manifest: StetCSSManifest = defaultManifest): Stet
 }
 
 export function createDefaultCSS() {
-  return MasterCSS.create({
+  return StetCSS.create({
     manifest: defaultManifest,
     nativeDeclarationMatcher: ({ property }) => nativeFallbackProperties.has(property)
   })
@@ -190,7 +190,7 @@ export function createManifestWithVariables(variables: StetCSSManifestVariable[]
 }
 
 export function createCSSWithVariables(variables: StetCSSManifestVariable[], baseManifest = defaultManifest) {
-  return MasterCSS.create({ manifest: createManifestWithVariables(variables, baseManifest) })
+  return StetCSS.create({ manifest: createManifestWithVariables(variables, baseManifest) })
 }
 
 export function createManifestWithSemanticUtilities(utilities: SemanticUtilityInput[], baseManifest = defaultManifest): StetCSSManifest {
@@ -221,14 +221,14 @@ export function createManifestWithSemanticUtilities(utilities: SemanticUtilityIn
 }
 
 export function createCSSWithSemanticUtilities(utilities: SemanticUtilityInput[]) {
-  return MasterCSS.create({ manifest: createManifestWithSemanticUtilities(utilities) })
+  return StetCSS.create({ manifest: createManifestWithSemanticUtilities(utilities) })
 }
 
-export function expectClassText(css: MasterCSS, className: string, expected: string) {
+export function expectClassText(css: StetCSS, className: string, expected: string) {
   expect(css.createRule(className)?.text).toContain(expected)
 }
 
-export function expectLayerText(css: MasterCSS, classNames: string | string[], layer: keyof Pick<MasterCSS, 'themeLayer' | 'baseLayer' | 'defaultsLayer' | 'componentsLayer' | 'utilitiesLayer' | 'animationsNonLayer'>, expected: string) {
+export function expectLayerText(css: StetCSS, classNames: string | string[], layer: keyof Pick<StetCSS, 'themeLayer' | 'baseLayer' | 'defaultsLayer' | 'componentsLayer' | 'utilitiesLayer' | 'animationsNonLayer'>, expected: string) {
   css.ensureClassRules(...(Array.isArray(classNames) ? classNames : [classNames]))
   expect(css[layer].text).toContain(expected)
   css.deleteClassRules(...(Array.isArray(classNames) ? classNames : [classNames]))

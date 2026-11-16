@@ -1,6 +1,6 @@
-export type MasterCSSBuiltinKeyAliases = Readonly<Record<string, string>>
+export type StetCSSBuiltinKeyAliases = Readonly<Record<string, string>>
 
-const keyAliases: MasterCSSBuiltinKeyAliases = Object.freeze({
+const keyAliases: StetCSSBuiltinKeyAliases = Object.freeze({
   'fg': 'color',
   'bg': 'background',
   'gap-x': 'column-gap',

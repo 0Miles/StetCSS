@@ -1,6 +1,6 @@
 import { tryGenerate } from '@stet-css/engine'
-import type { GeneratedRule, MasterCSS } from '@stet-css/engine'
-import { inspectMasterCSSClass } from '@stet-css/engine/inspect'
+import type { GeneratedRule, StetCSS } from '@stet-css/engine'
+import { inspectStetCSSClass } from '@stet-css/engine/inspect'
 import {
   equalVariants,
   getDeclarationSignature
@@ -51,7 +51,7 @@ function resolveOptions(options: CanonicalClassNameOptions): ResolvedCanonicalCl
   }
 }
 
-function getEntry(className: string, index: number, css: MasterCSS, options: ResolvedCanonicalClassNameOptions): ClassGroupEntry | undefined {
+function getEntry(className: string, index: number, css: StetCSS, options: ResolvedCanonicalClassNameOptions): ClassGroupEntry | undefined {
   const canonicalClassName = suggestCanonicalClassName(className, css, options) || className
   const rules = tryGenerate(css, canonicalClassName).rules
   if (rules.length !== 1) return
@@ -60,7 +60,7 @@ function getEntry(className: string, index: number, css: MasterCSS, options: Res
   const declarationKeys = Object.keys(rule.declarations || {})
   if (declarationKeys.length !== 1) return
 
-  const parts = inspectMasterCSSClass(css, canonicalClassName)
+  const parts = inspectStetCSSClass(css, canonicalClassName)
   if (!parts.key || !parts.value) return
 
   return {
@@ -105,7 +105,7 @@ function isSameVariantScope(entries: ClassGroupEntry[]) {
   return entries.every((entry) => equalVariants(entry.rule, entries[0].rule))
 }
 
-function getCandidateClassNames(entries: ClassGroupEntry[], recipe: CompositionRecipe, css: MasterCSS, options: ResolvedCanonicalClassNameOptions) {
+function getCandidateClassNames(entries: ClassGroupEntry[], recipe: CompositionRecipe, css: StetCSS, options: ResolvedCanonicalClassNameOptions) {
   const candidates = new Set<string>()
   for (const entry of entries) {
     const candidate = `${recipe.targetKey}:${entry.value}${entry.suffix}`
@@ -114,7 +114,7 @@ function getCandidateClassNames(entries: ClassGroupEntry[], recipe: CompositionR
   return [...candidates].sort((a, b) => a.length - b.length || a.localeCompare(b))
 }
 
-function getCompositionSuggestion(entries: ClassGroupEntry[], recipe: CompositionRecipe, css: MasterCSS, options: ResolvedCanonicalClassNameOptions): CanonicalClassGroupSuggestion | undefined {
+function getCompositionSuggestion(entries: ClassGroupEntry[], recipe: CompositionRecipe, css: StetCSS, options: ResolvedCanonicalClassNameOptions): CanonicalClassGroupSuggestion | undefined {
   if (entries[0].suffix !== entries[1].suffix) return
   if (!isSameVariantScope(entries)) return
 
@@ -149,7 +149,7 @@ function getMatchingRecipe(entries: ClassGroupEntry[]) {
 
 export default function suggestCanonicalClassGroups(
   classNames: string[],
-  css: MasterCSS,
+  css: StetCSS,
   options: CanonicalClassNameOptions = defaultCanonicalClassNameOptions
 ) {
   const resolvedOptions = resolveOptions(options)

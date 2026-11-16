@@ -1,6 +1,6 @@
 import { generateValidRules } from '@stet-css/validator'
-import type { MasterCSS } from '@stet-css/engine'
-import { inspectMasterCSSClass } from '@stet-css/engine/inspect'
+import type { StetCSS } from '@stet-css/engine'
+import { inspectStetCSSClass } from '@stet-css/engine/inspect'
 import { splitStetCSSTopLevel } from '@stet-css/lexer'
 
 export interface RawValuePolicyOptions {
@@ -41,7 +41,7 @@ function isAllowedProperty(key: string, properties: string[], allowProperties: s
 
 export default function findUnapprovedRawValueClasses(
   classNames: string[],
-  css: MasterCSS,
+  css: StetCSS,
   options: RawValuePolicyOptions = {}
 ): UnapprovedRawValueClass[] {
   if (options.allowRawValues) return []
@@ -51,7 +51,7 @@ export default function findUnapprovedRawValueClasses(
   const issues: UnapprovedRawValueClass[] = []
 
   for (const className of classNames) {
-    const parts = inspectMasterCSSClass(css, className)
+    const parts = inspectStetCSSClass(css, className)
     if (!parts.key || !parts.value) continue
 
     const rules = generateValidRules(className, css)

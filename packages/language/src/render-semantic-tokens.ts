@@ -5,7 +5,7 @@ import { toSemanticTokenItems, type HighlightTokenItem } from './semantic/highli
 import { collectCSSHighlightTokenItems, isCSSSemanticTokenDocument } from './semantic/tokenize-css'
 import { tokenizeClassToken } from './semantic/tokenize-class'
 import type { SemanticTokenItem } from './semantic/types'
-import type { MasterCSS } from './master-css'
+import type { StetCSS } from './master-css'
 import type { ClassPosition } from './utils/get-class-positions'
 
 export { encodeSemanticTokens }
@@ -20,7 +20,7 @@ function encodeHighlightTokens(document: TextDocument, highlightTokens: Highligh
   return encodeSemanticTokens(document, toSemanticTokenItems(highlightTokens))
 }
 
-export function collectEmbeddedHighlightTokenItems(css: MasterCSS, classPositions: ClassPosition[]): HighlightTokenItem[] {
+export function collectEmbeddedHighlightTokenItems(css: StetCSS, classPositions: ClassPosition[]): HighlightTokenItem[] {
   const semanticTokens: HighlightTokenItem[] = []
   for (const classPosition of classPositions) {
     if (!classPosition.raw) continue
@@ -29,11 +29,11 @@ export function collectEmbeddedHighlightTokenItems(css: MasterCSS, classPosition
   return semanticTokens
 }
 
-export function collectCSSDocumentHighlightTokenItems(css: MasterCSS, document: TextDocument, options: Parameters<typeof collectCSSHighlightTokenItems>[3] = {}): HighlightTokenItem[] {
+export function collectCSSDocumentHighlightTokenItems(css: StetCSS, document: TextDocument, options: Parameters<typeof collectCSSHighlightTokenItems>[3] = {}): HighlightTokenItem[] {
   return collectCSSHighlightTokenItems(document.getText(), css, document.languageId, options)
 }
 
-export function collectHighlightTokenItems(css: MasterCSS, document: TextDocument, classPositions: ClassPosition[]): HighlightTokenItem[] {
+export function collectHighlightTokenItems(css: StetCSS, document: TextDocument, classPositions: ClassPosition[]): HighlightTokenItem[] {
   if (isCSSSemanticTokenDocument(document.languageId)) {
     return collectCSSDocumentHighlightTokenItems(css, document)
   }
@@ -44,11 +44,11 @@ export function collectHighlightTokenItems(css: MasterCSS, document: TextDocumen
   ]
 }
 
-export function collectSemanticTokenItems(css: MasterCSS, document: TextDocument, classPositions: ClassPosition[]): SemanticTokenItem[] {
+export function collectSemanticTokenItems(css: StetCSS, document: TextDocument, classPositions: ClassPosition[]): SemanticTokenItem[] {
   return toSemanticTokenItems(collectHighlightTokenItems(css, document, classPositions))
 }
 
-export function collectDocumentHighlightTokenItems(css: MasterCSS, document: TextDocument, classPositions: ClassPosition[], options: RenderSemanticTokenOptions = {}): HighlightTokenItem[] {
+export function collectDocumentHighlightTokenItems(css: StetCSS, document: TextDocument, classPositions: ClassPosition[], options: RenderSemanticTokenOptions = {}): HighlightTokenItem[] {
   const semanticTokens = collectCSSDocumentHighlightTokenItems(css, document)
   if (options.embeddedSyntaxHighlighting === 'always' && !isCSSSemanticTokenDocument(document.languageId)) {
     semanticTokens.push(...collectEmbeddedHighlightTokenItems(css, classPositions))
@@ -56,11 +56,11 @@ export function collectDocumentHighlightTokenItems(css: MasterCSS, document: Tex
   return semanticTokens
 }
 
-export function collectDocumentSemanticTokenItems(css: MasterCSS, document: TextDocument, classPositions: ClassPosition[], options: RenderSemanticTokenOptions = {}): SemanticTokenItem[] {
+export function collectDocumentSemanticTokenItems(css: StetCSS, document: TextDocument, classPositions: ClassPosition[], options: RenderSemanticTokenOptions = {}): SemanticTokenItem[] {
   return toSemanticTokenItems(collectDocumentHighlightTokenItems(css, document, classPositions, options))
 }
 
-export function collectActiveHighlightTokenItems(css: MasterCSS, document: TextDocument, classPositions: ClassPosition[], position: Parameters<TextDocument['offsetAt']>[0], options: RenderSemanticTokenOptions = {}): HighlightTokenItem[] {
+export function collectActiveHighlightTokenItems(css: StetCSS, document: TextDocument, classPositions: ClassPosition[], position: Parameters<TextDocument['offsetAt']>[0], options: RenderSemanticTokenOptions = {}): HighlightTokenItem[] {
   if (options.embeddedSyntaxHighlighting !== 'off' && !isCSSSemanticTokenDocument(document.languageId) && classPositions.length) {
     return collectEmbeddedHighlightTokenItems(css, classPositions)
   }
@@ -69,10 +69,10 @@ export function collectActiveHighlightTokenItems(css: MasterCSS, document: TextD
   })
 }
 
-export function renderSemanticTokensAtPosition(css: MasterCSS, document: TextDocument, classPositions: ClassPosition[], position: Parameters<TextDocument['offsetAt']>[0], options: RenderSemanticTokenOptions = {}): SemanticTokens | undefined {
+export function renderSemanticTokensAtPosition(css: StetCSS, document: TextDocument, classPositions: ClassPosition[], position: Parameters<TextDocument['offsetAt']>[0], options: RenderSemanticTokenOptions = {}): SemanticTokens | undefined {
   return encodeHighlightTokens(document, collectActiveHighlightTokenItems(css, document, classPositions, position, options))
 }
 
-export default function renderSemanticTokens(css: MasterCSS, document: TextDocument, classPositions: ClassPosition[], options: RenderSemanticTokenOptions = {}): SemanticTokens | undefined {
+export default function renderSemanticTokens(css: StetCSS, document: TextDocument, classPositions: ClassPosition[], options: RenderSemanticTokenOptions = {}): SemanticTokens | undefined {
   return encodeHighlightTokens(document, collectDocumentHighlightTokenItems(css, document, classPositions, options))
 }

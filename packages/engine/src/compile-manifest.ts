@@ -17,7 +17,7 @@ import UtilityType from '@stet-css/schema/utility-type'
 import { collectCSSVariableReferences } from '@stet-css/lexer'
 import { MATCH_NAME_BOUNDARY } from './common'
 import builtinKeyAliases from './key-aliases'
-import builtinNativeValueNamespaces, { type MasterCSSBuiltinNativeValueNamespace } from './native-value-namespaces'
+import builtinNativeValueNamespaces, { type StetCSSBuiltinNativeValueNamespace } from './native-value-namespaces'
 import builtinSelectorAliases from './selector-aliases'
 import { assertBaseUnit } from './utils/base-unit'
 import { PRESET_MODES } from './utils/undeclared-mode'
@@ -75,7 +75,7 @@ export interface CompiledManifest {
 // Manifests are compiled by object identity. Mutating a manifest after first use is unsupported.
 const compiledManifestCache = new WeakMap<StetCSSManifest, CompiledManifest>()
 
-function assertMasterCSSManifest(manifest: StetCSSManifest): asserts manifest is StetCSSManifest {
+function assertStetCSSManifest(manifest: StetCSSManifest): asserts manifest is StetCSSManifest {
   if (!manifest || manifest.version !== 1) {
     throw new TypeError('Unsupported StetCSSManifest version. Expected version 1.')
   }
@@ -408,7 +408,7 @@ function compileUtilityDefinition(
 
 function createNativeValueNamespaceUtility(
   property: string,
-  namespace: Pick<MasterCSSBuiltinNativeValueNamespace, 'variableAliasRefs'>
+  namespace: Pick<StetCSSBuiltinNativeValueNamespace, 'variableAliasRefs'>
 ): StetCSSManifestUtility {
   return {
     id: property,
@@ -549,7 +549,7 @@ function compileUtilities(
 }
 
 export function compileManifest(manifest: StetCSSManifest): CompiledManifest {
-  assertMasterCSSManifest(manifest)
+  assertStetCSSManifest(manifest)
   const settings = createCompiledSettings(manifest)
   const variables = compileVariables(manifest)
   const animations = compileAnimations(manifest)

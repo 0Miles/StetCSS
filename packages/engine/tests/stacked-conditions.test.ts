@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { StetCSSManifestModeTrigger } from '@stet-css/schema/manifest'
-import { MasterCSS, UndeclaredModeError } from '../src'
+import { StetCSS, UndeclaredModeError } from '../src'
 import { cloneManifest } from './helpers/css-tester'
 
 function createCSS(modeTrigger?: StetCSSManifestModeTrigger, modes?: string[]) {
@@ -10,10 +10,10 @@ function createCSS(modeTrigger?: StetCSSManifestModeTrigger, modes?: string[]) {
     ...(manifest.variants || []),
     { token: '@touch', branches: [{ conditions: ['media(hover:none)'] }, { conditions: ['media(pointer:coarse)'] }] }
   ]
-  return MasterCSS.create({ manifest })
+  return StetCSS.create({ manifest })
 }
 
-function texts(css: MasterCSS, className: string) {
+function texts(css: StetCSS, className: string) {
   return css.generate(className).map(({ text }) => text)
 }
 

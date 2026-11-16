@@ -3,7 +3,7 @@ import {
   type StetCSSClassListItem,
   type StetCSSClassListParseOptions
 } from '@stet-css/lexer'
-import type { MasterCSS } from '@stet-css/engine'
+import type { StetCSS } from '@stet-css/engine'
 import sortClassNames from './sort-class-names'
 
 export type MasterCSSClassListEditOptions = Pick<StetCSSClassListParseOptions, 'unescape'>
@@ -73,7 +73,7 @@ function getRawQueuesByToken(items: StetCSSClassListItem[]) {
   return rawQueues
 }
 
-export function sortClassList(classList: string, css: MasterCSS, options: MasterCSSClassListEditOptions = {}) {
+export function sortClassList(classList: string, css: StetCSS, options: MasterCSSClassListEditOptions = {}) {
   const items = parseClassList(classList, options)
   const classItems = items.filter((item) => item.type === 'class' && item.token)
   if (classItems.length <= 1) return classList

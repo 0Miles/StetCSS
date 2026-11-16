@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { MasterCSS } from '../src'
+import { StetCSS } from '../src'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import {
@@ -44,7 +44,7 @@ describe.concurrent('migrated cascade and layer parity', () => {
     css.ensureClassRules('text-center', 'text-center')
     expect(css.utilitiesLayer.rules).toHaveLength(1)
 
-    const emittedGlobalsVariableCSS = MasterCSS.create({
+    const emittedGlobalsVariableCSS = StetCSS.create({
       manifest: defaultManifest,
       emittedGlobals: {
         variables: {
@@ -63,7 +63,7 @@ describe.concurrent('migrated cascade and layer parity', () => {
       'color-red-60': 1
     })
 
-    const emittedGlobalsAnimationCSS = MasterCSS.create({
+    const emittedGlobalsAnimationCSS = StetCSS.create({
       manifest: defaultManifest,
       emittedGlobals: {
         animations: {
@@ -131,7 +131,7 @@ describe.concurrent('migrated cascade and layer parity', () => {
         static: true
       }
     }
-    const css = MasterCSS.create({ manifest: manifest })
+    const css = StetCSS.create({ manifest: manifest })
 
     expect(css.text).toContain('@layer theme{')
     expect(css.text).toContain('--color-static-alias:var(--color-static-base)')
@@ -178,7 +178,7 @@ describe.concurrent('migrated cascade and layer parity', () => {
         static: true
       }
     }
-    const css = MasterCSS.create({
+    const css = StetCSS.create({
       manifest,
       emittedGlobals: {
         variables: {
@@ -223,7 +223,7 @@ describe.concurrent('migrated cascade and layer parity', () => {
   })
 
   test('keeps at-rules authored on semantic component rules within the component layer', () => {
-    const css = MasterCSS.create({
+    const css = StetCSS.create({
       manifest: createManifestWithSemanticUtilities([
       {
         name: 'btn',
@@ -284,7 +284,7 @@ describe.concurrent('migrated cascade and layer parity', () => {
     const manifest = cloneManifest()
     manifest.conditions = { ...(manifest.conditions || {}), tablet: tabletCondition, desktop: desktopCondition }
     manifest.breakpointConditions = { ...(manifest.breakpointConditions || {}), tablet: tabletCondition, desktop: desktopCondition }
-    const mediaCSS = MasterCSS.create({
+    const mediaCSS = StetCSS.create({
       manifest,
       nativeDeclarationMatcher: ({ property }) => property === 'justify-content' || property === 'min-width'
     })

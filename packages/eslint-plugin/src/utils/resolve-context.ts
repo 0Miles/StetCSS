@@ -1,13 +1,13 @@
 import type { RuleContext } from '@typescript-eslint/utils/ts-eslint'
 import settings, { Settings } from '../settings'
-import { MasterCSS, createCSSWithNativeDeclarations, defaultManifest } from './master-css'
+import { StetCSS, createCSSWithNativeDeclarations, defaultManifest } from './master-css'
 import { findMasterCSSWorkspaceDirectoriesSync } from '@stet-css/project/entries'
 import { loadProjectManifestSync } from '@stet-css/project/manifest-sync'
 import path from 'node:path'
 import { existsSync } from 'node:fs'
 import isSameOrChildPath from './is-same-or-child-path'
 
-const cssByWorkspaceDirectory = new Map<string, MasterCSS>()
+const cssByWorkspaceDirectory = new Map<string, StetCSS>()
 const workspaceDirectoriesByCwd = new Map<string, string[]>()
 
 function getContextFilename(context: RuleContext<any, any[]>) {
@@ -68,7 +68,7 @@ function getWorkspaceCSS(workspaceDir: string) {
 }
 
 // Text without a file on disk has no workspace, so it never shares the per-workspace cache.
-let defaultCSS: MasterCSS | undefined
+let defaultCSS: StetCSS | undefined
 function getDefaultCSS() {
   defaultCSS ??= createCSSWithNativeDeclarations(defaultManifest)
   return defaultCSS

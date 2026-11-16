@@ -1,4 +1,4 @@
-import MasterCSS from './core'
+import StetCSS from './core'
 import collectVariableNames from './utils/collect-variable-names'
 import type { PropertiesHyphen } from 'csstype'
 import type { StetCSSManifestAnimations } from '@stet-css/schema/manifest'
@@ -10,7 +10,7 @@ export default class AnimationRule {
   constructor(
     public readonly name: string,
     public readonly keyframes: StetCSSManifestAnimations[string],
-    public readonly css: MasterCSS,
+    public readonly css: StetCSS,
   ) {
     for (const declarations of Object.values(keyframes)) {
       const variableNames = collectVariableNames(declarations as PropertiesHyphen, css.variables)
