@@ -1,2 +1,2 @@
-export { MasterCSSPlugin as default } from './plugin'
+export { StetCSSPlugin as default } from './plugin'
 export type { PluginOptions } from './options'

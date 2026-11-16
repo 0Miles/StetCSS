@@ -1,7 +1,7 @@
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
-import MasterCSSPlugin from '@stet-css/webpack'
+import StetCSSPlugin from '@stet-css/webpack'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -17,7 +17,7 @@ export default {
     new HtmlWebpackPlugin({
       template: join(__dirname, 'src/index.html')
     }),
-    new MasterCSSPlugin()
+    new StetCSSPlugin()
   ],
   devServer: {
     watchFiles: ['src/**/*']

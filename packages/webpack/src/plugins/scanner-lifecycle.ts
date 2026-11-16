@@ -1,5 +1,5 @@
 import type { Compiler } from 'webpack'
-import type { MasterCSSWebpackContext, WebpackSubPlugin } from '../plugin'
+import type { StetCSSWebpackContext, WebpackSubPlugin } from '../plugin'
 import { normalizePath } from '../utils/path'
 
 type WatchingCompiler = Compiler & {
@@ -16,7 +16,7 @@ function getChangedFiles(compiler: WatchingCompiler) {
  * Generates the static CSS before every compilation, so the virtual CSS module already holds
  * it when webpack builds the module; while watching, only changes that can alter it count.
  */
-export default function ScannerLifecyclePlugin(context: MasterCSSWebpackContext): WebpackSubPlugin {
+export default function ScannerLifecyclePlugin(context: StetCSSWebpackContext): WebpackSubPlugin {
   return {
     apply(compiler: Compiler) {
       if (context.getPluginInitialized()) return

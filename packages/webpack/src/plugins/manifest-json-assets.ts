@@ -1,7 +1,7 @@
 import type { Compiler, Compilation } from 'webpack'
-import type { MasterCSSWebpackContext, WebpackSubPlugin } from '../plugin'
+import type { StetCSSWebpackContext, WebpackSubPlugin } from '../plugin'
 
-export default function ManifestJSONAssetsPlugin(context: MasterCSSWebpackContext): WebpackSubPlugin {
+export default function ManifestJSONAssetsPlugin(context: StetCSSWebpackContext): WebpackSubPlugin {
   return {
     apply(compiler: Compiler) {
       compiler.hooks.thisCompilation.tap(context.name, (compilation: Compilation) => {

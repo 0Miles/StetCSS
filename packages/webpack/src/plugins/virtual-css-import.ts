@@ -1,8 +1,8 @@
 import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
 import type { Compiler } from 'webpack'
-import type { MasterCSSWebpackContext, WebpackSubPlugin } from '../plugin'
+import type { StetCSSWebpackContext, WebpackSubPlugin } from '../plugin'
 
-export default function VirtualCSSImportPlugin(context: MasterCSSWebpackContext): WebpackSubPlugin {
+export default function VirtualCSSImportPlugin(context: StetCSSWebpackContext): WebpackSubPlugin {
   return {
     apply(compiler: Compiler) {
       compiler.hooks.normalModuleFactory.tap(context.name, (normalModuleFactory) => {

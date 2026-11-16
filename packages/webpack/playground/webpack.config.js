@@ -1,7 +1,7 @@
 import path from 'node:path'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import MasterCSSPlugin from '@stet-css/webpack'
+import StetCSSPlugin from '@stet-css/webpack'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -30,7 +30,7 @@ export default {
     clean: true
   },
   plugins: [
-    new MasterCSSPlugin({}, __dirname),
+    new StetCSSPlugin({}, __dirname),
     new EmitHTMLPlugin()
   ],
   devServer: {

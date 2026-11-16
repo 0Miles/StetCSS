@@ -1,12 +1,12 @@
 import { fileURLToPath } from 'node:url'
 import type { Compiler } from 'webpack'
-import type { MasterCSSWebpackContext, WebpackSubPlugin } from '../plugin'
+import type { StetCSSWebpackContext, WebpackSubPlugin } from '../plugin'
 
 function resolveStyleCSSLoaderPath() {
   return fileURLToPath(new URL('../style-css-loader.js', import.meta.url))
 }
 
-export default function StyleEntryPlugin(context: MasterCSSWebpackContext): WebpackSubPlugin {
+export default function StyleEntryPlugin(context: StetCSSWebpackContext): WebpackSubPlugin {
   return {
     apply(compiler: Compiler) {
       compiler.options.module.rules.push({
