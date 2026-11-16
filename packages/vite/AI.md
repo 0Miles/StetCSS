@@ -19,7 +19,7 @@ Owns the Vite plugin chain that builds static CSS: the style entry pipeline, the
 - **`handleHotUpdate` results replace Vite's update list**: a hook that adds modules (the manifest modules, the local compose modules) returns the changed file's own `modules` too, or the edited stylesheet never reaches the page.
 - **`virtual:master-css-manifest`** is the project-level manifest API; keep stylesheet output and scanner usage out of it. **`virtual:master-css-emitted-globals`** describes only the generated variables and keyframes the runtime treats as already present.
 - **Virtual module IDs** are defined in `@stet-css/integration` and imported across integrations; keep them stable.
-- **Option defaults** in `src/options.ts` are spread by every wrapper; change them only as a stated behaviour change.
+- **Options**: `PluginOptions` holds only `scanner` and the defaults in `src/options.ts` are empty; #65/#66 reshape the public options.
 - **One plugin per file**: each `src/plugins/*.ts` defines one plugin and default-exports it.
 
 ## Validation
