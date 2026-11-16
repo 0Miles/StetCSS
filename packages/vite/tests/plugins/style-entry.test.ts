@@ -126,25 +126,23 @@ describe('StyleEntryPlugin', () => {
     expect(context.virtualCSSPlaceholderEnvironments).toBeUndefined()
   })
 
-  test('treats @master stylesheets as managed entries', async () => {
+  /**
+   * Prevents: a stylesheet still marked with the removed `@master entry;` passing the build
+   * untouched. It is no longer an entry, so the transform itself must fail and name
+   * `@import '@stet-css/core'`, or the developer gets no CSS and no error.
+   */
+  test('fails the build for stylesheets still marked with @master entry', async () => {
     const context = makeContext('build')
     const plugin = StyleEntryPlugin({}, context)
 
-    const result = await (plugin as any).transform.call(
+    await expect((plugin as any).transform.call(
       {},
       '@master entry;\n.card{color:red}',
       '/project/src/style.css'
-    )
-
-    expect(result.code).toBe(SLOT)
-    expect(context.styleCSSSources.get('/project/src/style.css')).toMatchObject({
-      source: expect.stringContaining('.card')
-    })
-    expect(context.styleCSSSources.get('/project/src/style.css').source).not.toContain('@master entry;')
-    expect(context.virtualCSSPlaceholderEnvironments).toEqual(new Set(['client']))
+    )).rejects.toThrow(`@master entry; was removed; mark stylesheet entries with @import '@stet-css/core'; instead`)
   })
 
-  test('ignores standalone @master stylesheets without @stet-css/core imports', async () => {
+  test('ignores stylesheets without @stet-css/core imports', async () => {
     const context = makeContext('build')
     const plugin = StyleEntryPlugin({}, context)
 

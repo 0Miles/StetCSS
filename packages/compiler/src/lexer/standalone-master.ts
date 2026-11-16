@@ -1,8 +1,8 @@
 import type { CSSDirectiveExtractionPolicy } from '@stet-css/schema/css-directives'
-import { escapeRegExp, MASTER_CSS_ENTRY_DIRECTIVE_NAME } from '@stet-css/lexer'
+import { collectCSSDirectiveRanges, escapeRegExp, type CSSDirectiveRuleRange } from '@stet-css/lexer'
 import { findAtRuleStatementEnd, removeSourceRanges } from './source'
 
-export type StandaloneCSSDirectiveName = 'master' | 'source' | 'safelist' | 'blocklist' | 'preserve'
+export type StandaloneCSSDirectiveName = 'source' | 'safelist' | 'blocklist' | 'preserve'
 
 export interface StandaloneCSSDirectiveStatement {
   start: number
@@ -14,10 +14,6 @@ export interface StandaloneCSSDirectiveStatement {
   modifiers: string[]
 }
 
-export type StandaloneMasterDirectiveStatement = StandaloneCSSDirectiveStatement & {
-  atRuleName: 'master'
-}
-
 /**
  * `@preserve` is still located so an entry that keeps `@preserve native;` fails loudly instead
  * of carrying a directive that no longer does anything. The error names the entry when the caller
@@ -25,12 +21,42 @@ export type StandaloneMasterDirectiveStatement = StandaloneCSSDirectiveStatement
  * in the entry or in any stylesheet it imports.
  */
 function createRemovedPreserveDirectiveError(statement: StandaloneCSSDirectiveStatement, filename?: string) {
-  const location = filename ? ` (in ${filename} or a stylesheet it imports)` : ''
+  const location = describeErrorLocation(filename)
   return new Error(`@preserve was removed; stylesheet entries keep all native CSS, so delete "${statement.statement.trim()}"${location}`)
 }
 
+function describeErrorLocation(filename?: string) {
+  return filename ? ` (in ${filename} or a stylesheet it imports)` : ''
+}
+
+function formatMasterAtRule(source: string, range: CSSDirectiveRuleRange) {
+  const prelude = source.slice(range.preludeRange.start, range.preludeRange.end).trim()
+  const head = prelude ? `@master ${prelude}` : '@master'
+  return range.blockRange ? `${head} { … }` : `${head};`
+}
+
+/**
+ * Every `@master` at-rule was removed: `@master entry;` gave way to `@import '@stet-css/core'`,
+ * and `@master { … }` blocks never had an effect (settings live in `@settings`). Each one fails
+ * with the replacement instead of passing through as an unknown at-rule.
+ */
+function createRemovedMasterAtRuleError(source: string, range: CSSDirectiveRuleRange, filename?: string) {
+  const statement = formatMasterAtRule(source, range)
+  const location = describeErrorLocation(filename)
+  if (statement === '@master entry;') {
+    return new Error(`@master entry; was removed; mark stylesheet entries with @import '@stet-css/core'; instead${location}`)
+  }
+  return new Error(`@master at-rules were removed; mark stylesheet entries with @import '@stet-css/core'; and put settings in @settings, so delete "${statement}"${location}`)
+}
+
+/** Throws on the first `@master` at-rule in `source`, which may hold an expanded import graph. */
+export function assertNoMasterAtRules(source: string, filename?: string) {
+  if (!source.includes('@master')) return
+  const range = collectCSSDirectiveRanges(source).find((directive) => directive.name === 'master')
+  if (range) throw createRemovedMasterAtRuleError(source, range, filename)
+}
+
 const STANDALONE_CSS_DIRECTIVE_NAMES = new Set<StandaloneCSSDirectiveName>([
-  'master',
   'source',
   'safelist',
   'blocklist',
@@ -173,13 +199,11 @@ function parseStandaloneCSSDirectiveStatement(
   const prelude = statement
     .replace(new RegExp(`^@${atRuleName}\\b`), '')
     .replace(/;$/, '')
-  const name = atRuleName === 'master' ? MASTER_CSS_ENTRY_DIRECTIVE_NAME : atRuleName
-  if (atRuleName === 'master' && prelude.trim() !== MASTER_CSS_ENTRY_DIRECTIVE_NAME) return
   return {
     start,
     end,
     atRuleName,
-    name,
+    name: atRuleName,
     statement,
     args: parseQuotedStrings(prelude),
     modifiers: parseUnquotedWords(prelude)
@@ -240,12 +264,8 @@ export function findStandaloneCSSDirectiveStatements(source: string, filename = 
   return statements
 }
 
-export function findStandaloneMasterDirectiveStatements(source: string, filename = 'master.css') {
-  return findStandaloneCSSDirectiveStatements(source, filename)
-    .filter((statement): statement is StandaloneMasterDirectiveStatement => statement.atRuleName === 'master')
-}
-
 export function collectStandaloneCSSDirectiveExtractionPolicy(source: string, filename?: string) {
+  assertNoMasterAtRules(source, filename)
   const policy = createCSSDirectiveExtractionPolicy()
   for (const statement of findStandaloneCSSDirectiveStatements(source, filename)) {
     switch (statement.atRuleName) {
@@ -273,8 +293,4 @@ export function collectStandaloneCSSDirectiveExtractionPolicy(source: string, fi
 
 export function removeStandaloneCSSDirectives(source: string, filename = 'master.css') {
   return removeSourceRanges(source, findStandaloneCSSDirectiveStatements(source, filename))
-}
-
-export function removeStandaloneMasterDirectives(source: string, filename = 'master.css') {
-  return removeSourceRanges(source, findStandaloneMasterDirectiveStatements(source, filename))
 }

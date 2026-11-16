@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import CSSScanner from '@stet-css/scanner'
-import { collectStylesheetDirectives, removeStylesheetDirectiveStatements } from '../src/directives'
+import { collectStylesheetDirectives } from '../src/directives'
 import {
   createExtractedCSS,
   registerStyleCSSSource
@@ -33,28 +33,18 @@ describe('stylesheet CSS directives', () => {
     expect((directives.blocklist[0] as RegExp).test('legacy-card')).toBe(true)
   })
 
-  it('does not collect non-entry @master at-rules as extraction directives', () => {
-    const source = `
-      @master source './src/**/*.tsx';
-      @master source exclude './src/**/*.test.tsx';
-      @master source force './src/generated.tsx';
-      @master class 'not-exclude';
-      @master class exclude 'legacy-*';
-      @master no-shake;
-    `
-    const directives = collectStylesheetDirectives(source)
-    const result = removeStylesheetDirectiveStatements(source)
+  /**
+   * Prevents: removed `@master` at-rules in an entry graph being skipped by directive collection
+   * and left in the CSS, where they do nothing. Directive collection runs for every registered
+   * entry, so it must fail with the replacement.
+   */
+  it('rejects @master at-rules while collecting extraction directives', () => {
+    const root = createFixture()
 
-    expect(directives).toEqual({
-      include: [],
-      exclude: [],
-      safelist: [],
-      blocklist: []
-    })
-    expect(result.removed).toBe(false)
-    expect(result.code).toContain('@master source')
-    expect(result.code).toContain('@master class')
-    expect(result.code).toContain('@master no-shake')
+    expect(() => collectStylesheetDirectives(`
+      @source './src/**/*.tsx';
+      @master source './legacy/**/*.tsx';
+    `, join(root, 'app/entry.css'), root)).toThrow(`so delete "@master source './legacy/**/*.tsx';"`)
   })
 
   it('loads scanner directives from a managed CSS entry graph', async () => {
