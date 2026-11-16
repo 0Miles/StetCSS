@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises'
 import { pathToFileURL } from 'node:url'
 import CSSLanguageService from '@stet-css/language-service'
 import { compileCSSManifest } from '@stet-css/compiler'
+import { cssTreeNativeDeclarationMatcher, generateValidRules } from '@stet-css/validator'
 import { Settings } from './settings'
 import {
   findCSSManifestEntryFiles,
@@ -26,7 +27,6 @@ import {
 } from '@stet-css/language-service/common'
 import {
   defaultCSSLanguageRuntime,
-  matchesLanguageServiceNativeDeclaration,
   SEMANTIC_TOKENS_LEGEND,
   type CSSLanguageRuntime
 } from '@stet-css/language'
@@ -79,6 +79,21 @@ const SERVER_CAPABILITIES: ServerCapabilities = {
       supported: true,
     },
   }
+}
+
+/**
+ * What every runtime the server builds shares with the build: css-tree judges
+ * native `property:value` classes, and the validator's rule filter decides
+ * which rules a class emits, so hover and highlighting show the build's output.
+ */
+const buildValidity: Pick<CSSLanguageRuntime, 'nativeDeclarationMatcher' | 'generateRules'> = {
+  nativeDeclarationMatcher: cssTreeNativeDeclarationMatcher,
+  generateRules: (css, className) => generateValidRules(className, css)
+}
+
+const bundledLanguageRuntime: CSSLanguageRuntime = {
+  ...defaultCSSLanguageRuntime,
+  ...buildValidity
 }
 
 const CSS_DIAGNOSTIC_LANGUAGE_IDS = new Set(['css', 'scss', 'less'])
@@ -171,7 +186,7 @@ export default class CSSLanguageServer {
     uri: '',
     openedTextDocuments: [],
     languageServiceSettings: this.settings as Settings,
-    languageRuntime: defaultCSSLanguageRuntime,
+    languageRuntime: bundledLanguageRuntime,
     languageRuntimeSource: 'bundled'
   }
   documents: TextDocuments<TextDocument>
@@ -477,7 +492,7 @@ export default class CSSLanguageServer {
   private async loadWorkspaceLanguageRuntime(workspace: Workspace): Promise<CSSLanguageRuntime> {
     if (workspace === this.globalWorkspace || !workspace.uri) {
       workspace.languageRuntimeSource = 'bundled'
-      return defaultCSSLanguageRuntime
+      return bundledLanguageRuntime
     }
 
     const cwd = URI.parse(workspace.uri).fsPath
@@ -524,7 +539,7 @@ export default class CSSLanguageServer {
         defaultManifest: manifest,
         builtinKeyAliases,
         builtinNativeValueNamespaces,
-        nativeDeclarationMatcher: matchesLanguageServiceNativeDeclaration
+        ...buildValidity
       }
     } catch (error) {
       workspace.languageRuntimeSource = 'bundled'
@@ -533,7 +548,7 @@ export default class CSSLanguageServer {
         this.console.info(`Workspace Master CSS package resolution errors: ${resolution.errors.map(({ name, message }) => `${name}: ${message}`).join('; ')}`)
       }
       this.console.error(error instanceof Error ? error.stack || error.message : String(error))
-      return defaultCSSLanguageRuntime
+      return bundledLanguageRuntime
     }
   }
 
