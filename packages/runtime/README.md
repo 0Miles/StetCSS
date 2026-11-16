@@ -202,7 +202,7 @@ cssRuntime.observe()
 
 MutationObserver additions update `classCounts` immediately. Existing and retained generated rules are reused immediately, while first-time rules discovered by the observer are batched into the next pre-paint flush. MutationObserver removals also update `classCounts` immediately, but generated CSS rules may be retained briefly to avoid CSSOM deletion during interaction-heavy updates. Re-adding a retained class reuses the existing generated rule. Direct `cssRuntime.ensureClassRules(...)`, `cssRuntime.deleteClassRules(...)`, `refresh()`, `disconnect()`, and `destroy()` stay synchronous.
 
-Remove any runtime `<style>` element an older build left in your HTML, whatever its id. The runtime never reads or removes it and renders into its own `style#stet-css` instead; on a page that does not load `base.css` first, an `@layer` statement inside the old sheet can fix a different layer order before the runtime's own sheet loads.
+Remove any runtime `<style>` element an older build left in your HTML, such as the `style#master-css` that upstream Master CSS builds render. The runtime never reads or removes it and renders into its own `style#stet-css` instead; on a page that does not load `base.css` first, an `@layer` statement inside the old sheet can fix a different layer order before the runtime's own sheet loads.
 
 ### Emitted Globals
 
