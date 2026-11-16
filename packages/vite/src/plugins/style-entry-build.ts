@@ -29,6 +29,13 @@ export default function StyleEntryBuildPlugin(_options: PluginOptions, context: 
     enforce: 'pre',
     apply: 'build',
     async generateBundle(_options, bundle) {
+      // No environment built so far registered a managed CSS entry. Frameworks that build
+      // several environments share one context, so a later environment without CSS (Astro's
+      // client build after its server build) stays quiet once any entry was seen.
+      if (!context.virtualCSSPlaceholderEnvironments?.size && !warnedNoStyleEntry) {
+        warnedNoStyleEntry = true
+        this.warn(NO_STYLE_ENTRY_WARNING)
+      }
       const slotCSSRule = getScanner(context).slotCSSRule
       const realCSS = await getExtractedCSS(context)
       const cssFileNames = Object.keys(bundle).filter(eachFileName => eachFileName.endsWith('.css'))
@@ -54,13 +61,6 @@ export default function StyleEntryBuildPlugin(_options: PluginOptions, context: 
       // Each environment is checked against its own placeholder only: Astro
       // and other multi-environment builds bundle prerender, server and
       // client separately.
-      // No environment built so far registered a managed CSS entry. Frameworks that build
-      // several environments share one context, so a later environment without CSS (Astro's
-      // client build after its server build) stays quiet once any entry was seen.
-      if (!context.virtualCSSPlaceholderEnvironments?.size && !warnedNoStyleEntry) {
-        warnedNoStyleEntry = true
-        this.warn(NO_STYLE_ENTRY_WARNING)
-      }
       const placeholderEmitted = context.virtualCSSPlaceholderEnvironments?.has(getEnvironmentName(this))
       if (placeholderEmitted && !replacedAny && realCSS.length > 0) {
         this.warn(
