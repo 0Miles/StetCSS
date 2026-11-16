@@ -178,4 +178,42 @@ describe('Vite dev HMR', () => {
     expect(await page.evaluate(() => (window as Window & { __MASTER_CSS_HMR_MARKER?: string }).__MASTER_CSS_HMR_MARKER))
       .toBe('preserve')
   })
+
+  /**
+   * Guards dev mode for templates no client module imports, such as Astro pages: their
+   * classes must be styled on the first request and after an edit. The module scan this
+   * replaced only saw modules the browser requested, so an Astro page's classes never
+   * reached the dev CSS.
+   * Reverse check: returning early from the watcher handler in `style-entry-hmr.ts` turns
+   * only this test red.
+   */
+  it('styles and updates classes from a template no module imports in static mode', async () => {
+    mkdirSync(fixtureRoot, { recursive: true })
+    fixtureDir = mkdtempSync(path.join(fixtureRoot, 'static-template-'))
+    mkdirSync(path.join(fixtureDir, 'src/pages'), { recursive: true })
+    writeFileSync(path.join(fixtureDir, 'index.html'), '<script type="module" src="/src/main.ts"></script>')
+    writeFileSync(path.join(fixtureDir, 'src/main.ts'), 'import "./style.css"')
+    writeFileSync(path.join(fixtureDir, 'src/style.css'), '@import "@stet-css/core";')
+    const page = path.join(fixtureDir, 'src/pages/index.astro')
+    writeFileSync(page, '<h1 class="font:heavy">Home</h1>')
+
+    server = await createServer({
+      root: fixtureDir,
+      logLevel: 'silent',
+      server: {
+        host: '127.0.0.1',
+        port: 0
+      },
+      plugins: masterCSS({ mode: 'static' })
+    })
+    await server.listen()
+    const url = server.resolvedUrls?.local[0]
+    if (!url) throw new Error('Expected Vite dev server URL.')
+    const fetchCSS = async () => (await fetch(new URL('src/style.css?direct', url))).text()
+
+    expect(await fetchCSS()).toContain('.font\\:heavy')
+
+    writeFileSync(page, '<h1 class="font:heavy">Home</h1><p class="italic">Intro</p>')
+    await expect.poll(fetchCSS, { timeout: 5000 }).toContain('.italic')
+  })
 })
