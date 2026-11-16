@@ -601,10 +601,7 @@
         "@stet-css/integration": "workspace:^",
         "@stet-css/lexer": "workspace:^",
         "@stet-css/project": "workspace:^",
-        "@stet-css/runtime": "workspace:^",
         "@stet-css/scanner": "workspace:^",
-        "@stet-css/schema": "workspace:^",
-        "@stet-css/server": "workspace:^",
         "@stet-css/stylesheet": "workspace:^",
       },
       "devDependencies": {

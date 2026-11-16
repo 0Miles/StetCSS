@@ -16,6 +16,7 @@ function runStyleCSSLoader(root: string, resourcePath: string, source: string) {
     const context: ThisParameterType<typeof masterCSSStyleCSSLoader> = {
       resourcePath,
       rootContext: root,
+      getOptions: () => ({ outputPath: join(root, '.master/next.css') }),
       addDependency: (dependency) => dependencies.push(dependency),
       async: () => (error, content) => {
         if (error) {
@@ -33,55 +34,6 @@ function runStyleCSSLoader(root: string, resourcePath: string, source: string) {
 }
 
 describe('Next style CSS loader', () => {
-  it('derives native CSS from @stet-css/core instead of hardcoding a package subpath', async () => {
-    const root = createFixture()
-    const entryPath = join(root, 'app/globals.css')
-    const result = await runStyleCSSLoader(root, entryPath, '@import "@stet-css/core";')
-
-    expect(result.content).toContain('@layer base')
-    expect(result.content).toContain('text-rendering: geometricprecision')
-    expect(result.content).not.toContain('@stet-css/core/base.css')
-    expect(result.content).not.toContain('@import "@stet-css/core"')
-    expect(result.content).not.toContain('virtual:master-utilities.css')
-    expect(result.dependencies).toContain(entryPath)
-    expect(result.dependencies.length).toBeGreaterThan(0)
-  })
-
-  it('derives native CSS from @master entry directives', async () => {
-    const root = createFixture()
-    const entryPath = join(root, 'app/globals.css')
-    const result = await runStyleCSSLoader(root, entryPath, '@master entry;')
-
-    expect(result.content).toContain('@layer base')
-    expect(result.content).not.toContain('@master entry;')
-    expect(result.dependencies).toContain(entryPath)
-  })
-
-  it('preserves native CSS and keyframes from imported Master entry graphs', async () => {
-    const root = createFixture()
-    const entryPath = join(root, 'app/globals.css')
-    const homePath = join(root, 'app/home.css')
-    writeFileSync(homePath, [
-      '@theme { --color-active: #ff0000; }',
-      '@components { active-card { animation: active-spin 1s infinite; } }',
-      '@keyframes active-spin { to { opacity: .5; } }',
-      '.native-card { color: var(--color-active); }'
-    ].join('\n'))
-
-    const result = await runStyleCSSLoader(root, entryPath, [
-      '@import "@stet-css/core";',
-      '@import "./home.css";'
-    ].join('\n'))
-
-    expect(result.content).toContain('@keyframes active-spin')
-    expect(result.content).toContain('.native-card')
-    expect(result.content).toContain('--color-active:red')
-    expect(result.content).not.toContain('@components')
-    expect(result.content).not.toContain('@import "./home.css"')
-    expect(result.dependencies).toContain(entryPath)
-    expect(result.dependencies).toContain(homePath)
-  })
-
   it('leaves ordinary CSS unchanged', async () => {
     const root = createFixture()
     const source = '.card { color: red; }'
