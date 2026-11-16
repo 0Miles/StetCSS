@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { existsSync, readFileSync, readdirSync, rmSync } from 'node:fs'
+import { readFileSync, readdirSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { build } from 'astro'
@@ -29,7 +29,6 @@ const stubAdapter: AstroIntegration = {
 }
 
 function readFiles(dir: string, extension: string): string[] {
-  if (!existsSync(dir)) return []
   return readdirSync(dir, { recursive: true, withFileTypes: true })
     .filter((entry) => entry.isFile() && entry.name.endsWith(extension))
     .map((entry) => readFileSync(join(entry.parentPath, entry.name), 'utf8'))
