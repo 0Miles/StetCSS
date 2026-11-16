@@ -24,7 +24,7 @@ import type {
   Token,
   TokenOrValue
 } from 'lightningcss'
-import { parseBaseUnit } from '@stet-css/engine/compiler'
+import { ROOT_FONT_SIZE, parseBaseUnit } from '@stet-css/engine/compiler'
 import { decodeCSS, encodeCSS, getCSSTransform, setCSSTransform, type CSSTransform } from './css-transform'
 import {
   collectCSSDirectiveRanges,
@@ -315,7 +315,7 @@ function defineThemeVariable(manifestInput: CSSDirectiveManifestInput, property:
 function parseMasterOption(manifestInput: CSSDirectiveManifestInput, property: string, value: string) {
   switch (property) {
     case 'root-size':
-      throw new Error('@settings root-size was removed; rem conversion always uses 16px')
+      throw new Error(`@settings root-size was removed; rem conversion always uses ${ROOT_FONT_SIZE}px`)
     case 'base-unit':
       if (!parseBaseUnit(value)) throw new Error('base-unit must be a CSS length such as 0.25rem or 4px')
       manifestInput.baseUnit = value

@@ -6,7 +6,7 @@ export interface BaseUnit {
   unit: string
 }
 
-const BASE_UNIT_REGEX = new RegExp(`^(\\d+(?:\\.\\d+)?|\\.\\d+)(${MASTER_CSS_LENGTH_UNITS.join('|')})$`, 'i')
+const BASE_UNIT_SETTING_REGEX = new RegExp(`^(\\d+(?:\\.\\d+)?|\\.\\d+)(${MASTER_CSS_LENGTH_UNITS.join('|')})$`, 'i')
 const parsedBaseUnits = new Map<string, BaseUnit | undefined>()
 
 /**
@@ -17,7 +17,7 @@ const parsedBaseUnits = new Map<string, BaseUnit | undefined>()
 export function parseBaseUnit(value: unknown): BaseUnit | undefined {
   if (typeof value !== 'string') return
   if (parsedBaseUnits.has(value)) return parsedBaseUnits.get(value)
-  const matches = BASE_UNIT_REGEX.exec(value.trim())
+  const matches = BASE_UNIT_SETTING_REGEX.exec(value.trim())
   const baseUnit = matches ? { value: Number(matches[1]), unit: matches[2].toLowerCase() } : undefined
   parsedBaseUnits.set(value, baseUnit)
   return baseUnit
