@@ -6,7 +6,7 @@ import { escapeRegExp } from '@stet-css/lexer'
 import { validatePluginOptions } from '@stet-css/scanner'
 import { createStetCSSManifestEntryPattern } from '@stet-css/project/entries'
 import {
-  MASTER_CSS_MANIFEST_QUERY,
+  STET_CSS_MANIFEST_QUERY,
   VIRTUAL_MANIFEST_ID
 } from '@stet-css/integration/manifest-module'
 import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
@@ -27,8 +27,8 @@ type TurbopackConfig = NonNullable<NextConfig['turbopack']>
 type TurbopackRules = NonNullable<TurbopackConfig['rules']>
 type TurbopackRuleConfigCollection = TurbopackRules[string]
 
-const MASTER_CSS_MANIFEST_RESOURCE_QUERY = new RegExp(MASTER_CSS_MANIFEST_QUERY.slice(1))
-const MASTER_CSS_MANIFEST_IMPORT_CONTENT_PATTERN = new RegExp(`\\${MASTER_CSS_MANIFEST_QUERY}`)
+const MASTER_CSS_MANIFEST_RESOURCE_QUERY = new RegExp(STET_CSS_MANIFEST_QUERY.slice(1))
+const MASTER_CSS_MANIFEST_IMPORT_CONTENT_PATTERN = new RegExp(`\\${STET_CSS_MANIFEST_QUERY}`)
 const MASTER_CSS_VIRTUAL_MANIFEST_PATH_PATTERN = createVirtualDefaultManifestModulePathPattern()
 /**
  * Stylesheet entries, and local stylesheets with directives the style loader lowers or

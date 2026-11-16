@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 import { loadManifest, loadManifestJSON, loadProjectManifest } from '../src/manifest'
 import { loadManifestJSONSync, loadManifestSync, loadProjectManifestSync } from '../src/manifest-sync'
-import { MASTER_CSS_MANIFEST_QUERY } from '@stet-css/integration/manifest-module'
+import { STET_CSS_MANIFEST_QUERY } from '@stet-css/integration/manifest-module'
 import {
   STYLE_ENTRY_EXTENSIONS,
   findCSSManifestEntryFiles,
@@ -457,7 +457,7 @@ test('turns CSS manifest results into JSON sources', async () => {
   try {
     const { entry } = writeCSSFixture(cwd)
     const result = await loadManifestJSON(entry)
-    const syncResult = loadManifestJSONSync(entry + MASTER_CSS_MANIFEST_QUERY)
+    const syncResult = loadManifestJSONSync(entry + STET_CSS_MANIFEST_QUERY)
 
     expect(result.json).toContain('"version":1')
     expect(JSON.parse(result.json).version).toBe(1)

@@ -139,7 +139,7 @@ The module utilities define the manifest import contract used by official integr
 | --- | --- |
 | `VIRTUAL_MANIFEST_ID` | Default manifest JS facade module id, `virtual:stet-css-manifest`. |
 | `VIRTUAL_EMITTED_GLOBALS_ID` | Default emittedGlobals module id, `virtual:stet-css-emitted-globals`. |
-| `MASTER_CSS_MANIFEST_QUERY` | Query suffix, `?stet-css-manifest`, used to compile one explicit CSS resource. |
+| `STET_CSS_MANIFEST_QUERY` | Query suffix, `?stet-css-manifest`, used to compile one explicit CSS resource. |
 | `toManifestJSON(manifest)` | Serializes a manifest object into normalized JSON source. |
 | `toEmittedGlobalsModule(emittedGlobals)` | Serializes emittedGlobals variable and animation counts into an ESM default export. |
 | `toVirtualDefaultManifestModulePath(context)` | Creates the virtual path for the default manifest module. |

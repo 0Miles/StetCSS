@@ -11,7 +11,7 @@ import {
   VIRTUAL_EMITTED_GLOBALS_FILE
 } from './emitted-globals-module'
 
-export const RESOLVED_MASTER_CSS_MANIFEST_QUERY_PREFIX = '\0stet-css-manifest:'
+export const RESOLVED_STET_CSS_MANIFEST_QUERY_PREFIX = '\0stet-css-manifest:'
 const VIRTUAL_MODULE_DIR_SEGMENTS = ['node_modules', '.stet-css'] as const
 export const VIRTUAL_MODULE_DIR = VIRTUAL_MODULE_DIR_SEGMENTS.join('/')
 const VIRTUAL_MODULE_PACKAGE_JSON_SOURCE = '{\n    "type": "module"\n}\n'
@@ -21,13 +21,13 @@ export function toHashedManifestAssetFileName(json: string) {
   return `stet-css-manifest.${hash}.json`
 }
 
-export function toResolvedMasterCSSManifestId(file: string) {
-  return RESOLVED_MASTER_CSS_MANIFEST_QUERY_PREFIX + Buffer.from(file).toString('base64url')
+export function toResolvedStetCSSManifestId(file: string) {
+  return RESOLVED_STET_CSS_MANIFEST_QUERY_PREFIX + Buffer.from(file).toString('base64url')
 }
 
-export function fromResolvedMasterCSSManifestId(id: string) {
-  return id.startsWith(RESOLVED_MASTER_CSS_MANIFEST_QUERY_PREFIX)
-    ? Buffer.from(id.slice(RESOLVED_MASTER_CSS_MANIFEST_QUERY_PREFIX.length), 'base64url').toString()
+export function fromResolvedStetCSSManifestId(id: string) {
+  return id.startsWith(RESOLVED_STET_CSS_MANIFEST_QUERY_PREFIX)
+    ? Buffer.from(id.slice(RESOLVED_STET_CSS_MANIFEST_QUERY_PREFIX.length), 'base64url').toString()
     : undefined
 }
 

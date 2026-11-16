@@ -98,9 +98,9 @@ describe('ManifestVirtualModulePlugin', () => {
       name: 'stet-css-manifest.json',
       source: expect.stringContaining('"version":1')
     }))
-    expect(code).toContain('const masterCSSManifestURL = import.meta.ROLLUP_FILE_URL_master_css_manifest_ref;')
-    expect(code).toContain(`const masterCSSManifestResponse = await fetch(typeof masterCSSManifestURL === 'string' ? masterCSSManifestURL : masterCSSManifestURL.href);`)
-    expect(code).toContain('export default await masterCSSManifestResponse.json();')
+    expect(code).toContain('const stetCSSManifestURL = import.meta.ROLLUP_FILE_URL_master_css_manifest_ref;')
+    expect(code).toContain(`const stetCSSManifestResponse = await fetch(typeof stetCSSManifestURL === 'string' ? stetCSSManifestURL : stetCSSManifestURL.href);`)
+    expect(code).toContain('export default await stetCSSManifestResponse.json();')
     expect(code).not.toContain('font-weight-bold')
   })
 
@@ -125,9 +125,9 @@ describe('ManifestVirtualModulePlugin', () => {
 
     const code = await (plugin.load as any).call({ emitFile }, RESOLVED_VIRTUAL_MANIFEST_ID)
 
-    expect(code).toContain('const masterCSSManifestURL = import.meta.ROLLUP_FILE_URL_master_css_manifest_ref;')
-    expect(code).toContain('loadMasterCSSManifestFromFile')
-    expect(code).toContain('loadMasterCSSManifestFromFetch')
+    expect(code).toContain('const stetCSSManifestURL = import.meta.ROLLUP_FILE_URL_master_css_manifest_ref;')
+    expect(code).toContain('loadStetCSSManifestFromFile')
+    expect(code).toContain('loadStetCSSManifestFromFetch')
     expect(code).toContain(`with: { type: 'json' }`)
     expect(code).toContain('await fetch(specifier)')
     expect(code).not.toContain(`import { readFile } from 'node:fs/promises';`)

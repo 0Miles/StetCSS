@@ -5,7 +5,7 @@
 import { describe, test, expect, vi } from 'vitest'
 import { SyncHook, AsyncSeriesHook } from 'tapable'
 import MasterCSSPlugin from '../src'
-import { VIRTUAL_MANIFEST_ID, MASTER_CSS_MANIFEST_QUERY } from '@stet-css/integration/manifest-module'
+import { VIRTUAL_MANIFEST_ID, STET_CSS_MANIFEST_QUERY } from '@stet-css/integration/manifest-module'
 import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
 import { VIRTUAL_EMITTED_GLOBALS_ID } from '@stet-css/integration/emitted-globals-module'
 import { createStylesheetDirectives } from '@stet-css/stylesheet'
@@ -435,9 +435,9 @@ describe('MasterCSSPlugin', () => {
 
     expect(resolveData.request).toContain(path.join('node_modules', '.stet-css', 'stet-css-manifest.js'))
     expect((compiler.inputFileSystem._writeVirtualFile as any).mock.calls.at(-1)?.[2])
-      .toContain('const masterCSSManifestResponse = await fetch(typeof masterCSSManifestURL === \'string\' ? masterCSSManifestURL : masterCSSManifestURL.href);')
+      .toContain('const stetCSSManifestResponse = await fetch(typeof stetCSSManifestURL === \'string\' ? stetCSSManifestURL : stetCSSManifestURL.href);')
     expect((compiler.inputFileSystem._writeVirtualFile as any).mock.calls.at(-1)?.[2])
-      .toContain('export default await masterCSSManifestResponse.json();')
+      .toContain('export default await stetCSSManifestResponse.json();')
     expect((compiler.inputFileSystem._writeVirtualFile as any).mock.calls.at(-1)?.[2])
       .not.toContain('font-weight-bold')
     expect([...(plugin as any).manifestJSONAssets.values()].at(-1))
@@ -518,7 +518,7 @@ describe('MasterCSSPlugin', () => {
 
       await resolveBefore(normalModuleFactory, resolveData)
       expect((compiler.inputFileSystem._writeVirtualFile as any).mock.calls.at(-1)?.[2])
-        .toContain('masterCSSManifestURL')
+        .toContain('stetCSSManifestURL')
     } finally {
       rmSync(root, { recursive: true, force: true })
     }
@@ -561,7 +561,7 @@ describe('MasterCSSPlugin', () => {
     const normalModuleFactory = makeNormalModuleFactory(fixturePath)
     compiler.hooks.normalModuleFactory.call(normalModuleFactory)
     const resolveData = {
-      request: './theme.css' + MASTER_CSS_MANIFEST_QUERY,
+      request: './theme.css' + STET_CSS_MANIFEST_QUERY,
       context: path.dirname(fixturePath),
       contextInfo: {},
       fileDependencies: new Set<string>()
@@ -573,9 +573,9 @@ describe('MasterCSSPlugin', () => {
     expect(resolveData.request).toContain('.manifest.js')
     expect(resolveData.fileDependencies.has(fixturePath)).toBe(true)
     expect((compiler.inputFileSystem._writeVirtualFile as any).mock.calls.at(-1)?.[2])
-      .toContain('const masterCSSManifestResponse = await fetch(typeof masterCSSManifestURL === \'string\' ? masterCSSManifestURL : masterCSSManifestURL.href);')
+      .toContain('const stetCSSManifestResponse = await fetch(typeof stetCSSManifestURL === \'string\' ? stetCSSManifestURL : stetCSSManifestURL.href);')
     expect((compiler.inputFileSystem._writeVirtualFile as any).mock.calls.at(-1)?.[2])
-      .toContain('export default await masterCSSManifestResponse.json();')
+      .toContain('export default await stetCSSManifestResponse.json();')
     expect((compiler.inputFileSystem._writeVirtualFile as any).mock.calls.at(-1)?.[2])
       .not.toContain('#456')
     expect([...(plugin as any).manifestJSONAssets.values()].at(-1))
@@ -594,7 +594,7 @@ describe('MasterCSSPlugin', () => {
     const normalModuleFactory = makeNormalModuleFactory(fixturePath)
     compiler.hooks.normalModuleFactory.call(normalModuleFactory)
     const resolveData = {
-      request: './theme.css' + MASTER_CSS_MANIFEST_QUERY,
+      request: './theme.css' + STET_CSS_MANIFEST_QUERY,
       context: path.dirname(fixturePath),
       contextInfo: {},
       fileDependencies: new Set<string>()
@@ -626,7 +626,7 @@ describe('MasterCSSPlugin', () => {
       const normalModuleFactory = makeNormalModuleFactory(manifestPath)
       compiler.hooks.normalModuleFactory.call(normalModuleFactory)
       const resolveData = {
-        request: './theme.css' + MASTER_CSS_MANIFEST_QUERY,
+        request: './theme.css' + STET_CSS_MANIFEST_QUERY,
         context: root,
         contextInfo: {},
         fileDependencies: new Set<string>()

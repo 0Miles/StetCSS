@@ -6,9 +6,9 @@ import {
   createVirtualDefaultManifestModulePathPattern,
   ensureVirtualManifestModulePath,
   ensureVirtualEmittedGlobalsModulePath,
-  fromResolvedMasterCSSManifestId,
+  fromResolvedStetCSSManifestId,
   toHashedManifestAssetFileName,
-  toResolvedMasterCSSManifestId,
+  toResolvedStetCSSManifestId,
   toVirtualCSSModulePath,
   toVirtualCSSManifestAssetPath,
   toVirtualCSSManifestModulePath,
@@ -38,11 +38,11 @@ describe('@stet-css/integration/node', () => {
   it('encodes resolved and filesystem virtual module paths', () => {
     const root = path.resolve('/project')
     const file = path.join(root, 'src', 'theme.css')
-    const id = toResolvedMasterCSSManifestId(file)
+    const id = toResolvedStetCSSManifestId(file)
 
     expect(id).not.toContain('.css')
     expect(id).not.toContain('%2Ecss')
-    expect(fromResolvedMasterCSSManifestId(id)).toBe(file)
+    expect(fromResolvedStetCSSManifestId(id)).toBe(file)
     expect(toVirtualDefaultManifestModulePath(root)).toBe(path.join(root, 'node_modules', '.stet-css', 'stet-css-manifest.js'))
     expect(toVirtualCSSManifestModulePath(root, file)).toMatch(/node_modules[/\\]\.stet-css[/\\].+\.manifest\.js$/)
     expect(toVirtualCSSManifestAssetPath(root, file)).toMatch(/node_modules[/\\]\.stet-css[/\\].+\.manifest\.json$/)

@@ -4,8 +4,8 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import CSSScanner from '@stet-css/scanner'
 import ManifestLoaderPlugin from '../../src/plugins/manifest-loader'
-import { MASTER_CSS_MANIFEST_QUERY } from '@stet-css/integration/manifest-module'
-import { fromResolvedMasterCSSManifestId, toResolvedMasterCSSManifestId } from '@stet-css/integration/node'
+import { STET_CSS_MANIFEST_QUERY } from '@stet-css/integration/manifest-module'
+import { fromResolvedStetCSSManifestId, toResolvedStetCSSManifestId } from '@stet-css/integration/node'
 
 const FIXTURE_DIR = path.resolve(__dirname, '../fixtures/manifest-virtual-module')
 
@@ -32,11 +32,11 @@ async function createContext(root = FIXTURE_DIR) {
 describe('ManifestLoaderPlugin', () => {
   it('encodes per-file CSS manifest ids without a .css suffix for Vite dev', () => {
     const file = path.join(FIXTURE_DIR, 'theme.css')
-    const id = toResolvedMasterCSSManifestId(file)
+    const id = toResolvedStetCSSManifestId(file)
 
     expect(id).not.toContain('.css')
     expect(id).not.toContain('%2Ecss')
-    expect(fromResolvedMasterCSSManifestId(id)).toBe(file)
+    expect(fromResolvedStetCSSManifestId(id)).toBe(file)
   })
 
   it('resolves and loads per-file CSS manifests with ?stet-css-manifest', async () => {
@@ -48,13 +48,13 @@ describe('ManifestLoaderPlugin', () => {
 
     const resolvedId = await (plugin.resolveId as any).call(
       { resolve },
-      './theme.css' + MASTER_CSS_MANIFEST_QUERY,
+      './theme.css' + STET_CSS_MANIFEST_QUERY,
       importer
     )
     const code = await (plugin.load as any).call({ addWatchFile }, resolvedId)
     const themeComponentsPath = path.join(FIXTURE_DIR, 'styles/theme-components.css')
 
-    expect(resolvedId).toBe(toResolvedMasterCSSManifestId(path.join(FIXTURE_DIR, 'theme.css')))
+    expect(resolvedId).toBe(toResolvedStetCSSManifestId(path.join(FIXTURE_DIR, 'theme.css')))
     expect(addWatchFile).toHaveBeenCalledWith(path.join(FIXTURE_DIR, 'theme.css'))
     expect(addWatchFile).toHaveBeenCalledWith(themeComponentsPath)
     expect(context.config.server.fs.allow).toContain(path.join(FIXTURE_DIR, 'theme.css'))
@@ -77,7 +77,7 @@ describe('ManifestLoaderPlugin', () => {
       ].join('\n'))
       const context = await createContext(root)
       const plugin = ManifestLoaderPlugin(context)
-      const resolvedId = toResolvedMasterCSSManifestId(manifestPath)
+      const resolvedId = toResolvedStetCSSManifestId(manifestPath)
       const addWatchFile = vi.fn()
 
       await expect((plugin.load as any).call({ addWatchFile }, resolvedId))
@@ -108,7 +108,7 @@ describe('ManifestLoaderPlugin', () => {
 
     const resolvedId = await (plugin.resolveId as any).call(
       { resolve },
-      './missing.css' + MASTER_CSS_MANIFEST_QUERY,
+      './missing.css' + STET_CSS_MANIFEST_QUERY,
       importer
     )
 
@@ -127,7 +127,7 @@ describe('ManifestLoaderPlugin', () => {
 
     const resolvedId = await (plugin.resolveId as any).call(
       { resolve },
-      './theme.css' + MASTER_CSS_MANIFEST_QUERY,
+      './theme.css' + STET_CSS_MANIFEST_QUERY,
       importer
     )
     const code = await (plugin.load as any).call({ addWatchFile, emitFile }, resolvedId)
@@ -137,9 +137,9 @@ describe('ManifestLoaderPlugin', () => {
       name: 'stet-css-manifest.json',
       source: expect.stringContaining('#456')
     }))
-    expect(code).toContain('const masterCSSManifestURL = import.meta.ROLLUP_FILE_URL_master_css_query_manifest_ref;')
-    expect(code).toContain(`const masterCSSManifestResponse = await fetch(typeof masterCSSManifestURL === 'string' ? masterCSSManifestURL : masterCSSManifestURL.href);`)
-    expect(code).toContain('export default await masterCSSManifestResponse.json();')
+    expect(code).toContain('const stetCSSManifestURL = import.meta.ROLLUP_FILE_URL_master_css_query_manifest_ref;')
+    expect(code).toContain(`const stetCSSManifestResponse = await fetch(typeof stetCSSManifestURL === 'string' ? stetCSSManifestURL : stetCSSManifestURL.href);`)
+    expect(code).toContain('export default await stetCSSManifestResponse.json();')
     expect(code).not.toContain('#456')
   })
 
@@ -155,14 +155,14 @@ describe('ManifestLoaderPlugin', () => {
 
     const resolvedId = await (plugin.resolveId as any).call(
       { resolve },
-      './theme.css' + MASTER_CSS_MANIFEST_QUERY,
+      './theme.css' + STET_CSS_MANIFEST_QUERY,
       importer
     )
     const code = await (plugin.load as any).call({ addWatchFile, emitFile }, resolvedId)
 
-    expect(code).toContain('const masterCSSManifestURL = import.meta.ROLLUP_FILE_URL_master_css_query_manifest_ref;')
-    expect(code).toContain('loadMasterCSSManifestFromFile')
-    expect(code).toContain('loadMasterCSSManifestFromFetch')
+    expect(code).toContain('const stetCSSManifestURL = import.meta.ROLLUP_FILE_URL_master_css_query_manifest_ref;')
+    expect(code).toContain('loadStetCSSManifestFromFile')
+    expect(code).toContain('loadStetCSSManifestFromFetch')
     expect(code).toContain(`with: { type: 'json' }`)
     expect(code).toContain('await fetch(specifier)')
     expect(code).not.toContain(`import { readFile } from 'node:fs/promises';`)
@@ -178,7 +178,7 @@ describe('ManifestLoaderPlugin', () => {
     const context = await createContext()
     const plugin = ManifestLoaderPlugin(context)
     const manifestPath = path.join(FIXTURE_DIR, 'theme.css')
-    const resolvedId = toResolvedMasterCSSManifestId(manifestPath)
+    const resolvedId = toResolvedStetCSSManifestId(manifestPath)
     const importer = {}
     const module = { importers: new Set([importer]) }
     const invalidateModule = vi.fn()

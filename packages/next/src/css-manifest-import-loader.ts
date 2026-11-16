@@ -4,8 +4,8 @@ import { dirname, isAbsolute, relative, resolve } from 'node:path'
 import { isCSSManifestRequest } from '@stet-css/project/entries'
 import { loadManifestJSONSync } from '@stet-css/project/manifest-sync'
 import {
-  isMasterCSSManifestRequest,
-  stripMasterCSSManifestQuery
+  isStetCSSManifestRequest,
+  stripStetCSSManifestQuery
 } from '@stet-css/integration/manifest-module'
 import {
   ensureVirtualModulePackageJSONPath,
@@ -100,11 +100,11 @@ async function transformManifestImports(context: LoaderContext, source: string) 
 
   for (const match of source.matchAll(MASTER_CSS_MANIFEST_IMPORT_PATTERN)) {
     const [fullMatch, prefix, quote, request] = match
-    if (!isMasterCSSManifestRequest(request)) continue
+    if (!isStetCSSManifestRequest(request)) continue
     if (match.index === undefined) continue
 
     matched = true
-    const manifestPath = await resolveRequest(context, stripMasterCSSManifestQuery(request))
+    const manifestPath = await resolveRequest(context, stripStetCSSManifestQuery(request))
     const virtualManifestPath = writeCSSManifestModule(context, manifestPath)
     result += source.slice(lastIndex, match.index)
     result += `${prefix}${quote}${toModuleSpecifier(context.resourcePath, virtualManifestPath)}${quote}`

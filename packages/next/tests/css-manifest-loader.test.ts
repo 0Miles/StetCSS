@@ -89,10 +89,10 @@ describe('css manifest loader', () => {
     const assetFile = readdirSync(assetDir).find((file) => file.endsWith('.json'))
 
     expect(source).toContain('/_next/static/media/stet-css-manifest.')
-    expect(source).toContain('loadMasterCSSManifestFromFetch')
-    expect(source).toContain('async function loadMasterCSSManifestFromFetch(url)')
+    expect(source).toContain('loadStetCSSManifestFromFetch')
+    expect(source).toContain('async function loadStetCSSManifestFromFetch(url)')
     expect(source).toContain('const response = await fetch(specifier);')
-    expect(source).toContain(': await loadMasterCSSManifestFromFetch(masterCSSManifestURL);')
+    expect(source).toContain(': await loadStetCSSManifestFromFetch(stetCSSManifestURL);')
     expect(source).toContain(`with: { type: 'json' }`)
     expect(source).toContain('fetch(')
     expect(source).not.toContain('#123')
