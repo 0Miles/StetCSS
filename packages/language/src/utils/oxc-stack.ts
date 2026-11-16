@@ -9,7 +9,7 @@ import type { MessagePort, Worker } from 'node:worker_threads'
 // they drift apart.
 const PACKAGE_NAME = '@stet-css/language'
 
-type OxcParseResult = Pick<ReturnType<typeof parseSync>, 'program' | 'errors'>
+type OxcProgram = ReturnType<typeof parseSync>['program']
 type WorkerThreads = typeof import('node:worker_threads')
 
 interface StackWorker {
@@ -76,9 +76,11 @@ import('node:worker_threads').then(({ workerData }) => {
 `
 
 let workerThreads: WorkerThreads | undefined
+let bindingsURL: string | undefined
 let stackWorker: StackWorker | undefined
 let stackWorkerUnavailable = false
-let idleTimer: ReturnType<typeof setTimeout> | undefined
+// Only armed on the worker path, so it is a Node.js timer.
+let idleTimer: NodeJS.Timeout | undefined
 const warnedMessages = new Set<string>()
 
 function warnOnce(message: string) {
@@ -99,9 +101,12 @@ function dropStackWorker() {
 }
 
 function scheduleIdleDrop() {
-  clearTimeout(idleTimer)
-  idleTimer = setTimeout(dropStackWorker, IDLE_MS)
-  ;(idleTimer as { unref?: () => void }).unref?.()
+  if (idleTimer) {
+    idleTimer.refresh()
+    return
+  }
+  idleTimer = setTimeout(dropStackWorker, IDLE_MS) as unknown as NodeJS.Timeout
+  idleTimer.unref()
 }
 
 function startStackWorker(stackSizeMb: number): StackWorker | undefined {
@@ -117,8 +122,10 @@ function startStackWorker(stackSizeMb: number): StackWorker | undefined {
   try {
     // The binding hands the program back as JSON, so the AST crosses threads
     // as one string, and `JSON.parse` builds it without recursing.
-    const oxcEntry = getBuiltinModule('node:module').createRequire(import.meta.url).resolve('oxc-parser')
-    const bindingsURL = new URL('bindings.js', getBuiltinModule('node:url').pathToFileURL(oxcEntry)).href
+    if (!bindingsURL) {
+      const oxcEntry = getBuiltinModule('node:module').createRequire(import.meta.url).resolve('oxc-parser')
+      bindingsURL = new URL('bindings.js', getBuiltinModule('node:url').pathToFileURL(oxcEntry)).href
+    }
     const { port1, port2 } = new MessageChannel()
     const signal = new Int32Array(new SharedArrayBuffer(4))
     worker = new Worker(WORKER_SOURCE, {
@@ -150,22 +157,24 @@ function getStackWorker(stackSizeMb: number) {
   if (started) {
     dropStackWorker()
     stackWorker = started
-  } else if (stackWorkerUnavailable) {
-    // No worker threads in this host.
-  } else if (stackSizeMb === MIN_STACK_MB) {
-    stackWorkerUnavailable = true
-    warnOnce('Could not start the thread that parses JS/TS on a large stack; parsing inline, where deeply nested files can crash the process.')
-  } else {
-    warnOnce(`Could not start a thread with a ${stackSizeMb} MiB stack to parse a large JS/TS file; falling back to text extraction for files that need one.`)
+  } else if (!stackWorkerUnavailable) {
+    if (stackSizeMb === MIN_STACK_MB) {
+      stackWorkerUnavailable = true
+      warnOnce('Could not start the thread that parses JS/TS on a large stack; parsing inline, where deeply nested files can crash the process.')
+    } else {
+      warnOnce(`Could not start a thread with a ${stackSizeMb} MiB stack to parse a large JS/TS file; falling back to text extraction for files that need one.`)
+    }
   }
   return started
 }
 
-// The binding's JSON cannot carry BigInt or RegExp literal values, which
-// oxc's own wrapper fills in afterwards; they stay `null` here, since only
-// string literals are read.
-function parseProgramJSON(json: string): OxcParseResult['program'] {
-  return (JSON.parse(json) as { node: OxcParseResult['program'] }).node
+function parseInline(filename: string, sourceText: string, options: ParserOptions): OxcProgram | undefined {
+  try {
+    const result = parseSync(filename, sourceText, options)
+    return result.errors.length ? undefined : result.program
+  } catch {
+    return
+  }
 }
 
 function parseOnStackWorker(
@@ -173,36 +182,34 @@ function parseOnStackWorker(
   filename: string,
   sourceText: string,
   options: ParserOptions
-): OxcParseResult | undefined {
+): OxcProgram | undefined {
   const { port, signal } = current
   Atomics.store(signal, 0, PENDING)
   port.postMessage({ filename, sourceText, options })
   Atomics.wait(signal, 0, PENDING, PARSE_TIMEOUT_MS + PARSE_TIMEOUT_MS_PER_KIB * (sourceText.length >> 10))
   const state = Atomics.load(signal, 0)
   const reply = workerThreads?.receiveMessageOnPort(port)?.message as
-    | { program: string, errors: OxcParseResult['errors'] }
+    | { program: string, errors: unknown[] }
     | undefined
   if (state !== DONE || !reply) {
     if (state === PENDING) dropStackWorker()
     return
   }
-  let program: OxcParseResult['program'] | undefined
-  return {
-    errors: reply.errors,
-    get program() {
-      program ??= parseProgramJSON(reply.program)
-      return program
-    }
-  }
+  if (reply.errors.length) return
+  // The binding's JSON cannot carry BigInt or RegExp literal values, which
+  // oxc's own wrapper fills in afterwards; they stay `null` here, since only
+  // string literals are read.
+  return (JSON.parse(reply.program) as { node: OxcProgram }).node
 }
 
 /**
  * `parseSync` from oxc-parser, run on a thread whose stack grows with the
  * source. oxc recurses once per nesting level, and overflowing the native stack
- * kills the host process, which no try/catch can stop. Returns `undefined`,
- * which callers treat as a parse failure, for sources nested past
- * `exceedsScriptNestingLimit` or longer than `MAX_PARSE_LENGTH`, and when a
- * parse thread fails, times out, or cannot get the stack it needs. Where no
+ * kills the host process, which no try/catch can stop. Returns the program,
+ * or `undefined` for callers to fall back on: when the source has syntax
+ * errors, nests past `exceedsScriptNestingLimit` or is longer than
+ * `MAX_PARSE_LENGTH`, or when a parse thread fails, times out, or cannot get
+ * the stack it needs. Where no
  * parse thread can start at all (browsers, hosts without worker threads) it
  * parses inline.
  *
@@ -214,16 +221,18 @@ export function parseOxcOnSourceStack(
   filename: string,
   sourceText: string,
   options: ParserOptions
-): OxcParseResult | undefined {
+): OxcProgram | undefined {
   if (sourceText.length > MAX_PARSE_LENGTH || exceedsScriptNestingLimit(sourceText)) return
-  if (sourceText.length <= INLINE_LENGTH || stackWorkerUnavailable) {
-    return parseSync(filename, sourceText, options)
-  }
-  const current = getStackWorker(getStackSizeMb(sourceText.length))
+  const current = sourceText.length > INLINE_LENGTH && !stackWorkerUnavailable
+    ? getStackWorker(getStackSizeMb(sourceText.length))
+    : undefined
   if (!current) {
-    return stackWorkerUnavailable ? parseSync(filename, sourceText, options) : undefined
+    // Short sources, and hosts where no parse thread can start, parse inline.
+    return sourceText.length <= INLINE_LENGTH || stackWorkerUnavailable
+      ? parseInline(filename, sourceText, options)
+      : undefined
   }
-  const result = parseOnStackWorker(current, filename, sourceText, options)
+  const program = parseOnStackWorker(current, filename, sourceText, options)
   scheduleIdleDrop()
-  return result
+  return program
 }
