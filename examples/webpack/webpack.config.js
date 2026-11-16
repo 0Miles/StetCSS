@@ -17,7 +17,7 @@ export default {
     new HtmlWebpackPlugin({
       template: join(__dirname, 'src/index.html')
     }),
-    new MasterCSSPlugin({ sources: ['./src/index.html'] })
+    new MasterCSSPlugin()
   ],
   devServer: {
     watchFiles: ['src/**/*']
