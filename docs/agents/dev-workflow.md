@@ -114,22 +114,26 @@
 同一個 workflow 在 release-please 建立 release 之後，接著跑兩個 job。沒有建立 release 的執行不會發佈。
 
 - `pack`：checkout release 的 tag，安裝、跑 `check:release` 與 `check:packages`（含建置），再用 `bun pm pack` 把每個要發佈的套件打包成 tarball。套件版號和 tag 的版號不同時直接失敗，所以 `0.0.0` 發不出去。
-- `publish`：只下載 tarball，用 `npm publish <tarball> --access public --provenance` 上傳。只有這個 job 有 `id-token: write`，它不安裝依賴。
+- `publish`：只下載 tarball，確認每個都是 `@stet-css/*`、版號和 tag 相同，再用 `npm publish <tarball> --access public --provenance --ignore-scripts` 上傳。`--ignore-scripts` 讓 npm 不跑任何 lifecycle script，tarball 原樣上傳。只有這個 job 有 `id-token: write`，它不安裝依賴。
 - 用 npm 上傳而不是 `bun publish`：Bun 1.4.4 的 `bun publish` 不支援 npm trusted publishing（OIDC），也產生不了 provenance；`bun pm pack` 負責把 `workspace:^` 改寫成實際版號。
 - 順序與中斷：npm 沒有跨套件的交易。腳本（`scripts/publish-packages.mjs`）先問 registry 每個版號在不在，再照依賴順序上傳缺的，已經在 npm 上的跳過，任何一個失敗就停。先發被依賴的套件，所以中斷時 npm 上不會有套件依賴還沒發佈的版號。
-- 中斷後補發：在那次執行按「Re-run failed jobs」；超過重跑期限時，手動執行 workflow（`workflow_dispatch`），`tag` 填那次 release 的任一個 tag，例如 `core-v0.1.0`。兩種都只補還沒發佈的套件。
+- 中斷後補發，兩種都只補還沒發佈的套件：
+  - `publish` 失敗後 7 天內：在那次執行按「Re-run failed jobs」。tarball 的 artifact 只留 7 天，過期後這個做法會在下載 artifact 時失敗。
+  - 其他情況：從 main 手動執行 workflow（`workflow_dispatch`），`tag` 填那次 release 的任一個 tag，例如 `core-v0.1.0`。包括 artifact 過期、`pack` 回報 release-please 沒有給 tag、release-please 建立 release 到一半就失敗。從其他分支執行會被拒絕。
+  - 「Re-run all jobs」沒有用：release 已經存在，release-please 第二次不會回報建立了 release，`pack` 會被跳過。
 - 開關：repo 變數 `NPM_PUBLISH_ENABLED` 是 `true` 才會跑，沒設時兩個 job 都跳過。首次發佈（#96）前保持不設。
-- 認證：npm 要等套件存在才能設定 trusted publisher，所以首次發佈用 repo secret `NPM_TOKEN`（granular token，只給 `@stet-css` scope 的讀寫權限）。之後每個套件在 npm 設定 trusted publisher：repository `0Miles/StetCSS`、workflow `release-please.yml`、不填 environment，再刪掉 `NPM_TOKEN`。workflow 改檔名時，28 個套件的設定都要跟著改。
+- 認證：npm 要等套件存在才能設定 trusted publisher，所以首次發佈用 repo secret `NPM_TOKEN`（granular token，只給 `@stet-css` scope 的讀寫權限，有效期設最短）。之後每個套件在 npm 設定 trusted publisher：repository `0Miles/StetCSS`、workflow `release-please.yml`、不填 environment，再刪掉 `NPM_TOKEN`。workflow 改檔名時，28 個套件的設定都要跟著改。
+- `publish` 沒有掛 GitHub environment。npm 的 trusted publisher 只比對 repo 與 workflow 檔名，不比對分支，所以有寫入權限的人可以在別的分支改這個 workflow 來取得發佈身分。目前只有維護者有寫入權限；加入協作者之前，替 `publish` 加上限定 main 的 environment，並在 npm 的 trusted publisher 填同一個 environment。
 - 代理不設定變數與 secret、不碰 npm、不手動觸發發佈；這些都是維護者的事，見 #84 與 #96。
 
 維護者首次發佈的步驟（#84 完成、改名 #18 合併之後）：
 
-1. 確認 npm 上的 `@stet-css` organization 屬於自己，建立 granular token，存成 repo secret `NPM_TOKEN`。
+1. 確認 npm 上的 `@stet-css` organization 屬於自己，建立 granular token（`@stet-css` scope 讀寫、有效期最短），存成 repo secret `NPM_TOKEN`。CI 沒辦法輸入 2FA 驗證碼，token 可能要勾選「Bypass two-factor authentication」，否則第一個套件就會以 `EOTP` 失敗；這一點沒有實測過，以 npm 建立 token 頁面的選項為準。
 2. 確認 `RELEASE_PLEASE_ENABLED` 是 `true`、`RELEASE_PLEASE_TOKEN` 已存在，release PR 已經開出來。
 3. 檢查 release PR：版號是 `0.1.0`，每個套件有 `CHANGELOG.md`，`bun.lock` 的 workspace 版號已同步，`required` 是 success。
 4. 把 repo 變數 `NPM_PUBLISH_ENABLED` 設成 `true`，再合併 release PR。
 5. 看那次 `Release Please` 執行：`release-please` 建立 28 個 release，`pack`、`publish` 成功，npm 上 28 個套件都是 `0.1.0` 並帶 provenance。`publish` 中途失敗就照上面補發。
-6. 在 npm 替 28 個套件設定 trusted publisher，撤銷並刪除 `NPM_TOKEN`。下一次 release 走 OIDC。
+6. 在 npm 替 28 個套件設定 trusted publisher，撤銷並刪除 `NPM_TOKEN`，再把每個套件的 publishing access 改成「Require two-factor authentication and disallow tokens」，之後外流的 token 也發佈不了。下一次 release 走 OIDC。
 
 ## 實機驗收
 
