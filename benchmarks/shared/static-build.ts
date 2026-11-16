@@ -238,7 +238,7 @@ function resolveBuildCommand(tool: StaticBuildTool) {
   return process.execPath
 }
 
-function resolveBuildArgs(tool: StaticBuildTool) {
+export function resolveBuildArgs(tool: StaticBuildTool) {
   if (tool.command === 'master-cli') {
     return [
       resolveBenchmarkPackageFile('@stet-css/cli', 'dist/bin/index.js'),
