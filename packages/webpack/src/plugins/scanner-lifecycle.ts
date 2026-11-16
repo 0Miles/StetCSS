@@ -1,6 +1,6 @@
 import type { Compiler } from 'webpack'
 import type { MasterCSSWebpackContext, WebpackSubPlugin } from '../plugin'
-import { hasModifiedFile } from '../utils/path'
+import { normalizePath } from '../utils/path'
 
 type WatchingCompiler = Compiler & {
   modifiedFiles?: ReadonlySet<string>
@@ -35,13 +35,11 @@ export default function ScannerLifecyclePlugin(context: MasterCSSWebpackContext)
       compiler.hooks.watchRun.tapPromise(context.name, async (watchingCompiler) => {
         await context.init()
         const changedFiles = getChangedFiles(watchingCompiler as WatchingCompiler)
-        const resetDependencies = context.getResetDependencyPaths()
-        if (resetDependencies.some((dependency) => hasModifiedFile(changedFiles && new Set(changedFiles), dependency))) {
-          await context.reset(context.getOptions())
-          await context.writeGeneratedCSSModule()
-          return
-        }
-        await context.writeGeneratedCSSModule(changedFiles)
+        const changed = new Set(changedFiles?.map(normalizePath))
+        const needsReset = context.getResetDependencyPaths().some((dependency) => changed.has(normalizePath(dependency)))
+        if (needsReset) await context.reset(context.getOptions())
+        // After a reset every generation input may differ, so regenerate unconditionally.
+        await context.writeGeneratedCSSModule(needsReset ? undefined : changedFiles)
       })
 
       context.setPluginInitialized(true)
