@@ -3,6 +3,7 @@ import type { PluginContext } from '../core'
 import type { PluginOptions } from '../options'
 import getExtractedCSS from '../utils/extracted-css'
 import { getScanner } from '../utils/scanner-context'
+import { getEnvironmentName } from '../utils/environment'
 
 function replaceSlotCSSRule(source: string, slotCSSRule: string, realCSS: string): { source: string, replaced: boolean } {
   let replaced = false
@@ -40,10 +41,14 @@ export default function StyleEntryBuildPlugin(_options: PluginOptions, context: 
           }
         }
       }
-      // The placeholder was emitted by a managed CSS import but no CSS
-      // chunk in the final bundle still contained it. A downstream CSS
+      // A managed CSS import in this environment emitted the placeholder but
+      // no CSS chunk in its bundle still contained it. A downstream CSS
       // plugin or minifier likely rewrote or dropped the internal slot.
-      if (context.virtualCSSPlaceholderEmitted && !replacedAny && realCSS.length > 0) {
+      // Each environment is checked against its own placeholder only: Astro
+      // and other multi-environment builds bundle prerender, server and
+      // client separately.
+      const placeholderEmitted = context.virtualCSSPlaceholderEnvironments?.has(getEnvironmentName(this))
+      if (placeholderEmitted && !replacedAny && realCSS.length > 0) {
         this.warn(
           `[master-css.vite] Could not splice managed style CSS into any bundle asset. ` +
           `The placeholder "${slotCSSRule}" was emitted but no CSS chunk in the final ` +

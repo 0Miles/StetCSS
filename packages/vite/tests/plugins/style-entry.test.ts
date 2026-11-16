@@ -37,7 +37,7 @@ describe('StyleEntryPlugin', () => {
 
     expect(result).toBe(SLOT)
     expect(context.virtualCSSImporters).toEqual(new Set([RESOLVED_VIRTUAL_CSS_ID]))
-    expect(context.virtualCSSPlaceholderEmitted).toBe(true)
+    expect(context.virtualCSSPlaceholderEnvironments).toEqual(new Set(['client']))
   })
 
   test('serve load inlines current extracted CSS and tracks the virtual CSS module for HMR', async () => {
@@ -48,7 +48,7 @@ describe('StyleEntryPlugin', () => {
 
     expect(result).toContain('.fg\\:red')
     expect(context.virtualCSSImporters).toEqual(new Set([RESOLVED_VIRTUAL_CSS_ID]))
-    expect(context.virtualCSSPlaceholderEmitted).toBeUndefined()
+    expect(context.virtualCSSPlaceholderEnvironments).toBeUndefined()
   })
 
   test('treats @stet-css/core import stylesheets as managed native CSS pruning entries', async () => {
@@ -68,7 +68,7 @@ describe('StyleEntryPlugin', () => {
     })
     expect(context.styleCSSSources.get('/project/src/style.css').source).not.toContain('@stet-css/core')
     expect(context.virtualCSSImporters).toBeUndefined()
-    expect(context.virtualCSSPlaceholderEmitted).toBe(true)
+    expect(context.virtualCSSPlaceholderEnvironments).toEqual(new Set(['client']))
   })
 
   test('build transform keeps native imports before the slot when @stet-css/core comes first', async () => {
@@ -87,7 +87,7 @@ describe('StyleEntryPlugin', () => {
       source: expect.stringContaining('.card')
     })
     expect(context.styleCSSSources.get('/project/src/style.css').source).not.toContain('@stet-css/core')
-    expect(context.virtualCSSPlaceholderEmitted).toBe(true)
+    expect(context.virtualCSSPlaceholderEnvironments).toEqual(new Set(['client']))
   })
 
   test('serve transform emits current CSS and reloads the managed stylesheet for HMR', async () => {
@@ -103,7 +103,7 @@ describe('StyleEntryPlugin', () => {
     expect(result.code).toContain('.fg\\:red')
     expect(result.code).not.toBe(SLOT)
     expect(context.virtualCSSImporters).toEqual(new Set(['/project/src/style.css']))
-    expect(context.virtualCSSPlaceholderEmitted).toBeUndefined()
+    expect(context.virtualCSSPlaceholderEnvironments).toBeUndefined()
   })
 
   test('keeps managed style dependencies registered after invalid CSS', async () => {
@@ -140,7 +140,7 @@ describe('StyleEntryPlugin', () => {
     expect(result.code.indexOf('@import "@fontsource/fira-mono";')).toBe(0)
     expect(result.code.match(/@fontsource\/fira-mono/g)).toHaveLength(1)
     expect(context.virtualCSSImporters).toEqual(new Set(['/project/src/style.css']))
-    expect(context.virtualCSSPlaceholderEmitted).toBeUndefined()
+    expect(context.virtualCSSPlaceholderEnvironments).toBeUndefined()
   })
 
   test('non-generated modes emit package base CSS for Master imports without generated utilities', async () => {
@@ -199,7 +199,7 @@ describe('StyleEntryPlugin', () => {
       source: expect.stringContaining('.card')
     })
     expect(context.styleCSSSources.get('/project/src/style.css').source).not.toContain('@master entry;')
-    expect(context.virtualCSSPlaceholderEmitted).toBe(true)
+    expect(context.virtualCSSPlaceholderEnvironments).toEqual(new Set(['client']))
   })
 
   test('ignores standalone @master stylesheets without @stet-css/core imports', async () => {
@@ -214,7 +214,7 @@ describe('StyleEntryPlugin', () => {
 
     expect(result).toBeUndefined()
     expect(context.virtualCSSImporters).toBeUndefined()
-    expect(context.virtualCSSPlaceholderEmitted).toBeUndefined()
+    expect(context.virtualCSSPlaceholderEnvironments).toBeUndefined()
   })
 
   test('ignores non-CSS modules and unrelated CSS imports', async () => {
