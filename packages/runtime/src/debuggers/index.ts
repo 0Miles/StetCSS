@@ -4,7 +4,6 @@ export {
   debugRuntimeCreated,
   debugRuntimeDestroyed,
   debugRuntimeDisconnected,
-  debugRuntimeHydrated,
   debugRuntimeObserved,
   debugRuntimeRefreshed
 } from './lifecycle'
