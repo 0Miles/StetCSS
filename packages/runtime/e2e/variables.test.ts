@@ -26,7 +26,7 @@ const variables = [
 const modes = ['light', 'dark']
 
 test.beforeEach(async ({ page }) => {
-  await init(page, '', { variables, modes, modeTrigger: 'class' })
+  await init(page, { variables, modes, modeTrigger: 'class' })
 })
 
 async function waitForRuntimeRemovalFlush(page: Page) {

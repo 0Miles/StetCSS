@@ -31,8 +31,8 @@ test('does not install the removed devtools hook global', async ({ page }) => {
   await expect(page.evaluate(() => ['__MASTER', 'CSS', 'DEVTOOLS', 'HOOK__'].join('_') in globalThis)).resolves.toBe(false)
 })
 
-test('destroy on progressive', async ({ page }) => {
-  await init(page, '@layer utilities{}')
+test('destroy clears the rules and a registered runtime observes again', async ({ page }) => {
+  await init(page)
   await page.evaluate(() => {
     document.body.classList.add('text-center')
   })
@@ -61,7 +61,7 @@ test('destroy on progressive', async ({ page }) => {
 })
 
 test('prevent attach layer twice', async ({ page }) => {
-  await init(page, '@layer components{}', {
+  await init(page, {
     utilities: [
       {
         name: 'app-wrapper',
@@ -90,7 +90,7 @@ test('insert semantic utility with multiple native rules into existing layer', a
   await page.evaluate(() => {
     document.body.innerHTML = '<div class="block multi-rule"></div>'
   })
-  await init(page, '', {
+  await init(page, {
     utilities: [
       {
         name: 'multi-rule',
@@ -146,7 +146,7 @@ test('refresh clears stale native keyframes', async ({ page }) => {
 })
 
 test('observes static theme variables and keyframes without class references', async ({ page }) => {
-  await init(page, undefined, {
+  await init(page, {
     variables: [
       {
         name: 'color-static',
@@ -216,44 +216,6 @@ test('generates browser native declarations through CSS.supports fallback', asyn
   expect(result.classUtilities).not.toContain('made-up:left')
   expect(result.classUtilities).not.toContain('float:banana')
   expect(result.classUtilities).not.toContain('display:banana')
-})
-
-test('hydrates progressive static theme variables and keyframes', async ({ page }) => {
-  await page.evaluate(() => {
-    document.body.innerHTML = '<div class="block"></div>'
-  })
-  await init(page, [
-    '@layer theme{:root{--color-static:#123}}',
-    '@layer utilities{.block{display:block}}',
-    '@keyframes static-fade{to{opacity:1}}'
-  ].join(''), {
-    variables: [
-      {
-        name: 'color-static',
-        key: 'static',
-        namespace: 'color',
-        type: 'string',
-        value: '#123',
-        static: true
-      }
-    ],
-    animations: {
-      'static-fade': {
-        to: {
-          opacity: '1'
-        }
-      }
-    },
-    animationOptions: {
-      'static-fade': {
-        static: true
-      }
-    }
-  }, 'auto')
-
-  expect(await page.evaluate(() => globalThis.masterCSSRuntime.progressive)).toBe(true)
-  expect(await page.evaluate(() => globalThis.masterCSSRuntime.themeLayer.rules.map((rule) => rule.name))).toEqual(['color-static'])
-  expect(await page.evaluate(() => globalThis.masterCSSRuntime.animationsNonLayer.rules.map((rule) => rule.name))).toEqual(['static-fade'])
 })
 
 test('registers emittedGlobals counts on an existing runtime', () => {
