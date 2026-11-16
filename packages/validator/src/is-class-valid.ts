@@ -1,3 +1,4 @@
+import type { MasterCSS } from '@stet-css/core'
 import defaultManifest from './default-manifest'
 import validateCSS from './validate-css'
 import { createCSSWithNativeDeclarations } from './native-declaration'
@@ -9,7 +10,7 @@ import { createCSSWithNativeDeclarations } from './native-declaration'
  */
 export default function isClassValid(
   syntax: string,
-  css = createCSSWithNativeDeclarations(defaultManifest)
+  css: MasterCSS = createCSSWithNativeDeclarations(defaultManifest)
 ): boolean {
   const rules = css.generate(syntax)
   if (rules.length) {

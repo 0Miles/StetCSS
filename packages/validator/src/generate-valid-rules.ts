@@ -1,4 +1,4 @@
-import type { GeneratedRule } from '@stet-css/core'
+import type { MasterCSS, GeneratedRule } from '@stet-css/core'
 import defaultManifest from './default-manifest'
 import validateCSS from './validate-css'
 import { createCSSWithNativeDeclarations } from './native-declaration'
@@ -35,8 +35,8 @@ function getValidGroupDeclarations(
  */
 export default function generateValidRules(
   syntax: string,
-  css = createCSSWithNativeDeclarations(defaultManifest)
-) {
+  css: MasterCSS = createCSSWithNativeDeclarations(defaultManifest)
+): GeneratedRule[] {
   const rules = css.generate(syntax)
   for (const eachRule of rules) {
     const errors = validateCSS(eachRule.text)
