@@ -12,6 +12,8 @@ export default defineNuxtModule<ModuleOptions>({
     configKey: 'mastercss'
   },
   setup(options, nuxt) {
+    // Creating the plugins checks the options, so `nuxi prepare` also reports a bad key.
+    masterCSS(options, { name })
     if (nuxt.options._prepare) return
     // Fix: [plugin ssr-styles] Cannot inline generated static CSS during SSR.
     if (nuxt.options.features?.inlineStyles)
