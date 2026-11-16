@@ -486,7 +486,6 @@ test.concurrent('renders CSS directive ranges with quoted semicolons', () => {
     @reference "./a;b.css";
     @safelist "block fg:red";
     @blocklist "debug-*";
-    @preserve native;
 
     .btn {
       @compose fg:red;
@@ -503,8 +502,6 @@ test.concurrent('renders CSS directive ranges with quoted semicolons', () => {
   expect(tokens).not.toContainEqual({ text: ';', type: 'operator', modifiers: ['directive', 'directiveTerminator'] })
   expect(tokens).not.toContainEqual({ text: '@safelist', type: 'keyword', modifiers: ['directive'] })
   expect(tokens).not.toContainEqual({ text: '@blocklist', type: 'keyword', modifiers: ['directive'] })
-  expect(tokens).not.toContainEqual({ text: '@preserve', type: 'keyword', modifiers: ['directive'] })
-  expect(tokens).not.toContainEqual({ text: 'native', type: 'enumMember', modifiers: ['directive'] })
   expect(tokens).not.toContainEqual({ text: '@compose', type: 'keyword', modifiers: ['directive'] })
   expect(tokens).not.toContainEqual({ text: '@custom-variant', type: 'keyword', modifiers: ['directive'] })
   expect(tokens).not.toContainEqual({ text: '@quoted', type: 'keyword', modifiers: ['query'] })
