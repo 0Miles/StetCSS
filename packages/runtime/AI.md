@@ -17,8 +17,9 @@ Runs the engine in the browser. `CSSRuntime` observes DOM class changes, keeps p
 - **Hydration** adopts a prerendered sheet only when its layers (`CSSLayerBlockRule`), theme and keyframes (`CSSKeyframesRule`) match the hydration manifest; every mismatch goes through `failHydration` to a runtime rebuild. Keep each check.
 - **FOUC**: `@stet-css/vite` `avoidFOUC` adds `hidden` to `<html>`, and runtime removes it after a non-hydrating render. Validate a change on either side through the integration.
 - **Global names** `MasterCSSRuntime` (the class, holding `instances`) and `masterCSSRuntime` (the document instance) are public; rename them only on request.
+- **Named access**: page elements with an `id` or `name` occupy same-named `window` globals, and `name`d `img`/`form`/`embed`/`object`/`iframe` elements shadow `document` members. Read the runtime's own class directly, accept a `MasterCSSRuntime` global only when `isRuntimeClass` passes, and read `document` members through `src/document.ts`.
 
 ## Validation
 
-- `e2e` (Playwright) is the test suite and covers `e2e/**` and `tests/issues/**`. Extend `e2e/lifecycle.test.ts`, `e2e/class-usages.test.ts` or `e2e/progressive/**`, or add an issue regression under `tests/issues/`.
+- `e2e` (Playwright) is the test suite and covers `e2e/**` and `tests/issues/**`. Extend `e2e/lifecycle.test.ts`, `e2e/class-usages.test.ts`, `e2e/dom-clobbering.test.ts` (named access) or `e2e/progressive/**`, or add an issue regression under `tests/issues/`.
 - Run `bench` when changing DOM observation, class tracking, lifecycle, hydration, CSSOM insertion or deletion, or the global bundle. e2e asserts browser correctness; timing belongs to `bench`. Report bench status, global bundle impact, memory / cold-start / CPU / CSSOM trade-offs, and whether CSS output, progressive hydration or fallback hydration changed.
