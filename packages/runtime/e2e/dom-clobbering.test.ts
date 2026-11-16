@@ -4,8 +4,9 @@ import { DEFAULT_MANIFEST_URL, RUNTIME_SCRIPT_URL, getRuntimeLoaderURL, routeRun
 
 /**
  * Browsers expose elements with an `id` or `name` as same-named globals (named access on
- * `window`), so page content such as CMS output can occupy the runtime's global names before
- * it loads.
+ * `window`), and `name`d `img`/`form`/`embed`/`object`/`iframe` elements as same-named
+ * properties of `document` that shadow its built-in members. Page content such as CMS output
+ * can therefore occupy the names the runtime reads before it loads.
  */
 
 type ClobberingCase = { label: string, markup: string, selector: string }
@@ -32,6 +33,29 @@ const WINDOW_CONFIRMATION_CASES: ClobberingCase[] = [
   { label: 'an element with id="master-css"', markup: '<div id="master-css"></div>', selector: 'div[id="master-css"]' }
 ]
 
+/**
+ * Guards: the runtime reading a `document` member that a `name`d `<img>` shadows, which stops
+ * startup. Reading these members through `document` instead of `Document.prototype`
+ * (`src/document.ts`) turns 14 of these 18 tests red. `nodeType` and `head` stay green then:
+ * the reverted `isDocumentRoot` does not read `nodeType`, and a shadowed `head` does not stop
+ * Firefox. They guard against a `root.nodeType` check and engines that do break on `head`.
+ */
+const DOCUMENT_GUARD_CASES: ClobberingCase[] = [
+  'getElementById',
+  'constructor',
+  'nodeType',
+  'documentElement',
+  'head',
+  'defaultView',
+  'createElement',
+  'styleSheets',
+  'querySelectorAll'
+].map(name => ({
+  label: `an image with name="${name}"`,
+  markup: `<img name="${name}" alt="">`,
+  selector: `img[name="${name}"]`
+}))
+
 function collectMessages(page: Page) {
   const messages: string[] = []
   page.on('console', (message) => {
@@ -54,7 +78,8 @@ async function startModuleRuntime(page: Page) {
 
 async function readRuntimeState(page: Page, selector: string) {
   return page.evaluate(({ selector, styleId }) => {
-    const query = (selectors: string) => document.querySelectorAll(selectors)
+    // The page's own elements may shadow `document` members, so read them from the prototype.
+    const query = (selectors: string) => Document.prototype.querySelectorAll.call(document, selectors)
     const Runtime = globalThis.MasterCSSRuntime
     return {
       runtimeIsClass: typeof Runtime === 'function',
@@ -79,7 +104,7 @@ const expectedState = {
   clobberingElementKept: true
 }
 
-for (const { label, markup, selector } of [...WINDOW_GUARD_CASES, ...WINDOW_CONFIRMATION_CASES]) {
+for (const { label, markup, selector } of [...WINDOW_GUARD_CASES, ...WINDOW_CONFIRMATION_CASES, ...DOCUMENT_GUARD_CASES]) {
   test(`global runtime starts when ${label} precedes it`, async ({ page }) => {
     const messages = collectMessages(page)
     await routeRuntimeAssets(page)
@@ -119,6 +144,31 @@ for (const { label, markup, selector } of [...WINDOW_GUARD_CASES, ...WINDOW_CONF
     expect(messages).toEqual([])
   })
 }
+
+/**
+ * Guards: the CDN script's `document.currentScript` read, shadowed by a `name`d `<img>`, which
+ * stops the CDN bundle before it creates a runtime. Reading `document.currentScript` directly
+ * in `global.min.ts` turns this test red.
+ */
+test('global runtime starts when an image with name="currentScript" precedes it', async ({ page }) => {
+  const messages = collectMessages(page)
+  await routeRuntimeAssets(page)
+  await page.setContent(`
+    <!doctype html>
+    <html hidden>
+    <head></head>
+    <body>
+      <img name="currentScript" alt="">
+      <p class="display:flex"></p>
+      <script src="${RUNTIME_SCRIPT_URL}"></script>
+    </body>
+    </html>
+  `)
+  await waitForRuntime(page)
+
+  expect(await readRuntimeState(page, 'img[name="currentScript"]')).toEqual(expectedState)
+  expect(messages).toEqual([])
+})
 
 async function readCopyState(page: Page) {
   return page.evaluate(({ styleId }) => ({
