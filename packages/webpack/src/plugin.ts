@@ -1,5 +1,5 @@
 import { CSSScanner, type ScannerOptions } from '@stet-css/scanner'
-import type { MasterCSSEmittedGlobals } from '@stet-css/core'
+import type { MasterCSS, MasterCSSEmittedGlobals, MasterCSSManifest } from '@stet-css/core'
 import { toManifestJSON } from '@stet-css/integration/manifest-module'
 import {
   toBrowserManifestFacadeModule,
@@ -131,11 +131,11 @@ export class MasterCSSPlugin {
     return this.scanner.options
   }
 
-  get css() {
+  get css(): MasterCSS {
     return this.scanner.css
   }
 
-  get manifest() {
+  get manifest(): MasterCSSManifest {
     return this.scanner.manifest
   }
 
