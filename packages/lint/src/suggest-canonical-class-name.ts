@@ -1,3 +1,4 @@
+import generateRules from './generate-rules'
 import {
   builtinKeyAliases,
   builtinNativeValueNamespaces,
@@ -113,7 +114,7 @@ function getUtilityPropertySignatures(css: MasterCSS, utility: MasterCSS['define
   const variableKeys = utility.variables ? [...utility.variables.keys()] : []
   const sampleKey = variableKeys[0]
   if (!sampleKey) return []
-  const rules = css.generate(`${key}:${sampleKey}`)
+  const rules = generateRules(css, `${key}:${sampleKey}`)
   if (!rules.length) return []
   return [...new Set(rules.map(getDeclarationPropertySignature).filter(Boolean))]
 }
@@ -136,7 +137,7 @@ function buildRecommendationIndex(css: MasterCSS): RecommendationIndex {
     if (utility.type === UtilityType.Semantic && utility.layer === 'utilities') {
       for (const name of getMatcherNames(utility)) {
         if (name.includes(':')) continue
-        const rules = css.generate(name)
+        const rules = generateRules(css, name)
         if (!rules.length || rules.some((rule) => rule.layerName !== 'utilities')) continue
         pushMapValue(staticCandidatesBySignature, getRulesSignature(rules), name)
       }
@@ -405,7 +406,7 @@ export default function suggestCanonicalClassName(
 
   for (const candidate of uniqueCandidates) {
     if (candidate.className === className) continue
-    const candidateRules = css.generate(candidate.className)
+    const candidateRules = generateRules(css, candidate.className)
     if (!candidateRules.length || !hasSameCanonicalRuleShape(sourceRules, candidateRules)) continue
     return candidate.className
   }
