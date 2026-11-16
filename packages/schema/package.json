@@ -13,13 +13,13 @@
   "description": "Public Master CSS schema and wire-format contracts.",
   "author": "Aoyue Design LLC.",
   "funding": "https://rc.css.master.co/sponsor",
-  "homepage": "https://css.master.co",
+  "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/schema#readme",
   "bugs": {
-    "url": "https://github.com/master-co/css/issues"
+    "url": "https://github.com/0Miles/StetCSS/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/master-co/css.git",
+    "url": "git+https://github.com/0Miles/StetCSS.git",
     "directory": "packages/schema"
   },
   "keywords": [
