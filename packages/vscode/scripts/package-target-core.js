@@ -71,8 +71,8 @@ const STATIC_EXTENSION_PATHS = [
   'README.md',
   'icon.png'
 ]
-const MASTER_CSS_SOURCE_GRAMMAR_PATH = './node_modules/@stet-css/language/syntaxes/stet-css.tmLanguage.json'
-const MASTER_CSS_STAGED_GRAMMAR_PATH = './dist/node_modules/@stet-css/language/syntaxes/stet-css.tmLanguage.json'
+const STET_CSS_SOURCE_GRAMMAR_PATH = './node_modules/@stet-css/language/syntaxes/stet-css.tmLanguage.json'
+const STET_CSS_STAGED_GRAMMAR_PATH = './dist/node_modules/@stet-css/language/syntaxes/stet-css.tmLanguage.json'
 
 const BASE_RUNTIME_PACKAGES = [
   'lightningcss',
@@ -261,10 +261,10 @@ async function copyRuntimePackage(stagingDir, packageName) {
 
 async function copyTextMateGrammar(stagingDir) {
   const sourcePath = packageRequire.resolve('@stet-css/language/syntaxes/stet-css.tmLanguage.json')
-  const destinationPath = join(stagingDir, MASTER_CSS_STAGED_GRAMMAR_PATH)
+  const destinationPath = join(stagingDir, STET_CSS_STAGED_GRAMMAR_PATH)
   await mkdir(dirname(destinationPath), { recursive: true })
   await cp(sourcePath, destinationPath, { force: true })
-  return MASTER_CSS_STAGED_GRAMMAR_PATH.slice(2)
+  return STET_CSS_STAGED_GRAMMAR_PATH.slice(2)
 }
 
 export async function createStagedExtension(target = getCurrentTarget(), options = {}) {
@@ -290,8 +290,8 @@ export async function createStagedExtension(target = getCurrentTarget(), options
   }
 
   for (const grammar of manifest.contributes?.grammars ?? []) {
-    if (grammar.path === MASTER_CSS_SOURCE_GRAMMAR_PATH) {
-      grammar.path = MASTER_CSS_STAGED_GRAMMAR_PATH
+    if (grammar.path === STET_CSS_SOURCE_GRAMMAR_PATH) {
+      grammar.path = STET_CSS_STAGED_GRAMMAR_PATH
     }
   }
 
