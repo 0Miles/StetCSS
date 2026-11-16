@@ -45,10 +45,6 @@ type ResolvedVariableAlias = {
  */
 const MAX_STATE_BRANCHES = 4096
 
-function exceedsStateBranches(branches: readonly unknown[], variantBranches: readonly unknown[]) {
-  return branches.length * variantBranches.length > MAX_STATE_BRANCHES
-}
-
 function isVariantToken(value: string): value is MasterCSSManifestVariantToken {
   return /^:{1,2}[-_a-zA-Z][-_a-zA-Z0-9]*$/.test(value) || /^@[-_a-zA-Z][-_a-zA-Z0-9]*$/.test(value)
 }
@@ -719,7 +715,13 @@ export class Utility {
   /** The branches a state token selects; `undefined`, leaving the class invalid, past `MAX_STATE_BRANCHES`. */
   resolveStateBranches(stateToken: string): UtilityStateBranch[] | undefined {
     const [selectorToken = '', ...conditionTokens] = stateToken.split('@')
-    let branches = this.applySelectorTokenBranches([{ key: '' }], selectorToken)
+    const conditionBranchCounts: number[] = []
+    for (const conditionToken of conditionTokens) {
+      if (this.css.modes.includes(conditionToken)) continue
+      const variantBranches = this.css.resolveVariant(`@${conditionToken}` as MasterCSSManifestVariantToken)
+      if (variantBranches) conditionBranchCounts.push(variantBranches.length)
+    }
+    let branches = this.applySelectorTokenBranches([{ key: '' }], selectorToken, conditionBranchCounts)
     if (!branches) return
 
     for (const conditionToken of conditionTokens) {
@@ -735,7 +737,6 @@ export class Utility {
       const variantToken = `@${conditionToken}` as MasterCSSManifestVariantToken
       const variantBranches = this.css.resolveVariant(variantToken)
       if (variantBranches) {
-        if (exceedsStateBranches(branches, variantBranches)) return
         branches = branches.flatMap((branch) =>
           variantBranches.map((variantBranch, index) =>
             mergeBranch(branch, variantBranch, this.css, `${variantToken}#${index}`)
@@ -759,29 +760,68 @@ export class Utility {
     return branches.length ? branches : [{ key: '' }]
   }
 
-  /** The branches after a selector token; `undefined` past `MAX_STATE_BRANCHES`. */
-  applySelectorTokenBranches(branches: UtilityStateBranch[], selectorToken: string): UtilityStateBranch[] | undefined {
-    if (!selectorToken) return branches
+  /**
+   * The branches after a selector token. `undefined` when its variants, followed by variants of
+   * `laterBranchCounts` branches, expand past `MAX_STATE_BRANCHES`; the count comes first, so an
+   * over-limit class builds no branch.
+   */
+  applySelectorTokenBranches(branches: UtilityStateBranch[], selectorToken: string, laterBranchCounts: readonly number[] = []): UtilityStateBranch[] | undefined {
+    const segments = selectorToken ? this.splitSelectorToken(selectorToken) : []
+    let branchCount = branches.length
+    for (const segment of segments) {
+      if (typeof segment !== 'string' && (branchCount *= segment.variantBranches.length) > MAX_STATE_BRANCHES) return
+    }
+    for (const count of laterBranchCounts) {
+      if ((branchCount *= count) > MAX_STATE_BRANCHES) return
+    }
 
+    for (const segment of segments) {
+      if (typeof segment === 'string') {
+        const rawNodes = parseSelector(segment, this.css)
+        const rawSelector = generateSelector(rawNodes, '&')
+        const unknownPseudoClass = hasUnknownPseudoClass(rawNodes, this.css)
+        branches = branches.map((branch) => ({
+          ...branch,
+          ...(unknownPseudoClass ? { valid: false } : {}),
+          key: branch.key + segment,
+          selectorTemplate: composeSelectorTemplate(branch.selectorTemplate, rawSelector),
+          selectorNodes: parseSelector((branch.selectorTemplate
+            ? composeSelectorTemplate(branch.selectorTemplate, rawSelector)?.replace(/&/g, '') || ''
+            : segment), this.css)
+        }))
+        continue
+      }
+
+      const { token, variantBranches, suffix } = segment
+      branches = branches.flatMap((branch) =>
+        variantBranches.map((variantBranch, branchIndex) => {
+          const selector = variantBranch.selector && suffix
+            ? variantBranch.selector + suffix
+            : variantBranch.selector
+          const merged = mergeBranch(branch, { ...variantBranch, ...(selector ? { selector } : {}) }, this.css, `${token}#${branchIndex}${suffix}`)
+          const selectorTemplate = merged.selectorTemplate
+          return {
+            ...merged,
+            ...(selectorTemplate
+              ? { selectorNodes: parseSelector(selectorTemplate.replace(/&/g, ''), this.css) }
+              : {})
+          }
+        })
+      )
+    }
+    return branches
+  }
+
+  /** A selector token as its raw selector text and its `:` variants, in order. */
+  private splitSelectorToken(selectorToken: string) {
+    const segments: (string | { token: MasterCSSManifestVariantToken, variantBranches: MasterCSSManifestVariantBranch[], suffix: string })[] = []
     const selectorVariantTokens = [...this.css.variants.keys()]
       .filter((token) => token.startsWith(':'))
       .sort((a, b) => b.length - a.length)
     let index = 0
     let raw = ''
     const flushRaw = () => {
-      if (!raw) return
-      const rawNodes = parseSelector(raw, this.css)
-      const rawSelector = generateSelector(rawNodes, '&')
-      const unknownPseudoClass = hasUnknownPseudoClass(rawNodes, this.css)
-      branches = branches.map((branch) => ({
-        ...branch,
-        ...(unknownPseudoClass ? { valid: false } : {}),
-        key: branch.key + raw,
-        selectorTemplate: composeSelectorTemplate(branch.selectorTemplate, rawSelector),
-        selectorNodes: parseSelector((branch.selectorTemplate
-          ? composeSelectorTemplate(branch.selectorTemplate, rawSelector)?.replace(/&/g, '') || ''
-          : raw), this.css)
-      }))
+      if (raw) segments.push(raw)
       raw = ''
     }
 
@@ -821,26 +861,11 @@ export class Utility {
           index = end + 1
         }
       }
-      if (exceedsStateBranches(branches, variantBranches)) return
-      branches = branches.flatMap((branch) =>
-        variantBranches.map((variantBranch, branchIndex) => {
-          const selector = variantBranch.selector && suffix
-            ? variantBranch.selector + suffix
-            : variantBranch.selector
-          const merged = mergeBranch(branch, { ...variantBranch, ...(selector ? { selector } : {}) }, this.css, `${matchedToken}#${branchIndex}${suffix}`)
-          const selectorTemplate = merged.selectorTemplate
-          return {
-            ...merged,
-            ...(selectorTemplate
-              ? { selectorNodes: parseSelector(selectorTemplate.replace(/&/g, ''), this.css) }
-              : {})
-          }
-        })
-      )
+      segments.push({ token: matchedToken, variantBranches, suffix })
     }
 
     flushRaw()
-    return branches
+    return segments
   }
 
   get text() {
