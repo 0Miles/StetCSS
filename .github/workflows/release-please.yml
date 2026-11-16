@@ -1,21 +1,37 @@
 name: Release Please
 
 # Opens or updates the release PR that bumps every published @stet-css/*
-# package to one shared version and writes their changelogs. It publishes
-# nothing to npm. Once the release PR is merged, the next run creates one
-# GitHub release and tag per package (`core-v0.1.0`, ...); publishing to npm
-# is a separate step.
+# package to one shared version and writes their changelogs. Once the release
+# PR is merged, the next run creates one GitHub release and tag per package
+# (`core-v0.1.0`, ...), and the `pack` and `publish` jobs then put that
+# release on npm.
 #
 # Repository settings this workflow reads (set by a maintainer):
-# - variable RELEASE_PLEASE_ENABLED: the job runs only when it is `true`, so
-#   main gets no failed runs before Actions may create pull requests.
+# - variable RELEASE_PLEASE_ENABLED: the release-please job runs only when it
+#   is `true`, so main gets no failed runs before Actions may create pull
+#   requests.
 # - secret RELEASE_PLEASE_TOKEN: a GitHub App token or fine-grained PAT. PRs
 #   and pushes made with GITHUB_TOKEN start no other workflow, so without it
 #   the release PR gets no CI run and no `required` check.
+# - variable NPM_PUBLISH_ENABLED: nothing is packed or published unless it is
+#   `true`. Leave it unset until the first publish.
+# - secret NPM_TOKEN (optional): npm lets a package trust this workflow only
+#   after the package exists, so the first publish needs a granular token.
+#   Later publishes authenticate through trusted publishing (OIDC): each
+#   package on npm trusts `0Miles/StetCSS`, workflow `release-please.yml`.
+#   Renaming this file breaks that trust.
 
 on:
   push:
     branches: [main]
+  # Finishes a publish that stopped halfway, when rerunning the failed job is
+  # no longer possible. Versions already on npm are skipped.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to publish to npm, such as core-v0.1.0
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -28,13 +44,18 @@ concurrency:
 jobs:
   release-please:
     name: release-please
-    if: ${{ vars.RELEASE_PLEASE_ENABLED == 'true' }}
+    if: ${{ vars.RELEASE_PLEASE_ENABLED == 'true' && github.event_name == 'push' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: write
       issues: write
       pull-requests: write
+    outputs:
+      releases_created: ${{ steps.release.outputs.releases_created }}
+      # The 28 packages share one version and one release commit, so core's
+      # tag names the commit to publish.
+      tag: ${{ steps.release.outputs['packages/core--tag_name'] }}
     steps:
       - name: Open or update the release PR
         id: release
@@ -80,3 +101,93 @@ jobs:
           git add bun.lock
           git commit -m 'chore: sync bun.lock with the release versions'
           git push origin "HEAD:refs/heads/$BRANCH"
+
+  # Builds the released commit and packs the tarballs. Dependencies are
+  # installed and built here, in a job that cannot publish.
+  pack:
+    name: pack
+    needs: release-please
+    # !cancelled() lets a manual run through, where release-please is skipped.
+    if: >-
+      ${{
+        !cancelled() &&
+        vars.NPM_PUBLISH_ENABLED == 'true' &&
+        (github.event_name == 'workflow_dispatch' || needs.release-please.outputs.releases_created == 'true')
+      }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RELEASE_TAG: ${{ inputs.tag || needs.release-please.outputs.tag }}
+    outputs:
+      tag: ${{ env.RELEASE_TAG }}
+    steps:
+      # The tag, not the pushed commit: by the time this run creates the
+      # releases, main may already be ahead of the release commit.
+      - uses: actions/checkout@v7
+        with:
+          ref: refs/tags/${{ env.RELEASE_TAG }}
+          persist-credentials: false
+
+      - name: Set up toolchain and install dependencies
+        uses: ./.github/actions/install
+
+      - name: Check release manifest
+        run: bun run check:release
+
+      # Builds, then inspects the same tarballs the next step packs.
+      - name: Check package contents
+        run: bun run check:packages
+
+      - name: Pack the released packages
+        run: node scripts/publish-packages.mjs pack --tag "$RELEASE_TAG" --out "$RUNNER_TEMP/tarballs"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: npm-tarballs
+          path: ${{ runner.temp }}/tarballs/*.tgz
+          if-no-files-found: error
+          retention-days: 7
+
+  # Uploads the tarballs with npm, because `bun publish` (1.4.4) supports
+  # neither trusted publishing nor provenance. It is the only job that can
+  # mint an npm identity, and it runs nothing from node_modules.
+  publish:
+    name: publish
+    needs: pack
+    if: ${{ !cancelled() && needs.pack.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: refs/tags/${{ needs.pack.outputs.tag }}
+          persist-credentials: false
+          sparse-checkout: |
+            .nvmrc
+            scripts/publish-packages.mjs
+          sparse-checkout-cone-mode: false
+
+      # registry-url writes the .npmrc that npm's OIDC exchange and the
+      # NPM_TOKEN fallback both authenticate through.
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          registry-url: https://registry.npmjs.org
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: npm-tarballs
+          path: ${{ runner.temp }}/tarballs
+
+      # Dependency order, skipping versions npm already has; a failure stops
+      # here and a rerun publishes the rest.
+      # NPM_TOKEN is empty unless the secret exists; the script passes it to
+      # npm as NODE_AUTH_TOKEN only then, so trusted publishing runs with the
+      # .npmrc exactly as setup-node left it.
+      - name: Publish to npm
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: node scripts/publish-packages.mjs publish --dir "$RUNNER_TEMP/tarballs"
