@@ -1,49 +1,24 @@
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { build } from 'vite'
-import { afterAll, beforeAll, describe, expect, test } from 'vitest'
+import { beforeAll, describe, expect, test } from 'vitest'
 import masterCSS from '../src'
+import { buildProject } from './plugin-test-helper'
 
-let root: string
 let html: string
 let css: string
 
 beforeAll(async () => {
-  const tmpRoot = join(process.cwd(), 'tmp')
-  mkdirSync(tmpRoot, { recursive: true })
-  root = mkdtempSync(join(tmpRoot, 'master-css-vite-default-options-'))
-  mkdirSync(join(root, 'src'), { recursive: true })
-  writeFileSync(join(root, 'index.html'), [
-    '<!DOCTYPE html>',
-    '<html lang="en">',
-    '<head><link rel="stylesheet" href="/src/style.css" /></head>',
-    '<body><h1 class="block">Hello World</h1></body>',
-    '</html>'
-  ].join('\n'))
-  writeFileSync(join(root, 'src/style.css'), '@import "@stet-css/core";\n')
-
-  await build({
-    root,
-    configFile: false,
-    logLevel: 'silent',
+  ({ css, html } = await buildProject({
     plugins: [masterCSS()],
-    build: {
-      outDir: 'dist',
-      emptyOutDir: true
-    }
-  })
-
-  html = readFileSync(join(root, 'dist/index.html'), 'utf8')
-  const assetsDir = join(root, 'dist/assets')
-  css = readdirSync(assetsDir)
-    .filter((file) => file.endsWith('.css'))
-    .map((file) => readFileSync(join(assetsDir, file), 'utf8'))
-    .join('\n')
+    prefix: 'master-css-vite-default-options-',
+    html: [
+      '<!DOCTYPE html>',
+      '<html lang="en">',
+      '<head><link rel="stylesheet" href="/src/style.css" /></head>',
+      '<body><h1 class="block">Hello World</h1></body>',
+      '</html>'
+    ].join('\n'),
+    styleCSS: '@import "@stet-css/core";\n'
+  }))
 }, 30000)
-
-afterAll(() => {
-  if (root) rmSync(root, { recursive: true, force: true })
-})
 
 describe('masterCSS() without options', () => {
   /**
