@@ -22,7 +22,8 @@ export interface StyleCSSLoaderOptions {
    * `@import`ed files with `-!`, which skips the generated CSS loader rule.
    */
   writeOutput?: boolean
-  scannerOptions?: ScannerOptions
+  /** Custom source adapters, read when the entry writes the CSS itself (webpack). */
+  adapters?: ScannerOptions['adapters']
 }
 
 interface LoaderContext {
@@ -84,7 +85,7 @@ async function transformStyleSource(resourcePath: string, source: string, option
   if (resolveMasterStyleSource(resourcePath, source, projectDir)) {
     const code = createStyleCSSHostSource(source, { masterImport: toCSSImportPath(resourcePath, options.outputPath) })
     if (!options.writeOutput) return { code, dependencies: [], entry: true }
-    const result = await createStaticCSS({ projectDir, scannerOptions: options.scannerOptions })
+    const result = await createStaticCSS({ projectDir, adapters: options.adapters })
     await writeStaticOutputFile(options.outputPath, result.css)
     return { code, dependencies: result.dependencies, entry: true }
   }
