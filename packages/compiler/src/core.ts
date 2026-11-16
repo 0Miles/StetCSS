@@ -89,7 +89,6 @@ export {
 export type { CSSTransform, StandaloneCSSDirectiveStatement, StandaloneMasterDirectiveStatement }
 
 export interface CompileCSSOptions {
-  classes?: string[]
   from?: string
   preserveNativeCSS?: boolean
   onWarning?: (warning: string) => void
@@ -109,7 +108,7 @@ export interface ResolvedCSSImportGraph {
 
 type ParsedStyleDefinition = CSSDirectiveStyleDefinition
 
-export interface ParsedDirectives extends Pick<CompileCSSResult, 'manifestInput' | 'extractionPolicy' | 'classNames' | 'nativeClassNames' | 'warnings'> {
+export interface ParsedDirectives extends Pick<CompileCSSResult, 'manifestInput' | 'extractionPolicy' | 'classNames' | 'warnings'> {
   styleDefinitions?: ParsedStyleDefinition[]
   styleOrder?: number
   source?: string
@@ -388,98 +387,6 @@ function formatSelectors(selectors: Selector[]) {
   const output = decodeCSS(result.code)
 
   return output.slice(0, output.indexOf('{')).trim()
-}
-
-function collectSelectorClassNames(value: unknown, classNames = new Set<string>()) {
-  if (!value || typeof value !== 'object') return classNames
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      collectSelectorClassNames(item, classNames)
-    }
-    return classNames
-  }
-
-  const node = value as Record<string, unknown>
-  if (node.type === 'class' && typeof node.name === 'string') {
-    classNames.add(node.name)
-  }
-  for (const key of Object.keys(node)) {
-    collectSelectorClassNames(node[key], classNames)
-  }
-  return classNames
-}
-
-function getSelectorClassNames(selector: Selector) {
-  return [...collectSelectorClassNames(selector)]
-}
-
-function recordNativeClassNames(parsed: ParsedDirectives, classNames: string[]) {
-  for (const className of classNames) {
-    if (!parsed.nativeClassNames.includes(className)) {
-      parsed.nativeClassNames.push(className)
-    }
-  }
-}
-
-function getNativeStyleSelectorFilters(rule: any, parsed: ParsedDirectives, classFilter?: Set<string>) {
-  const selectors = rule.value.selectors as Selector[]
-  if (!selectors?.length) return
-
-  const selectorEntries = selectors.map((selector) => ({
-    selector,
-    classNames: getSelectorClassNames(selector)
-  }))
-  recordNativeClassNames(parsed, selectorEntries.flatMap((entry) => entry.classNames))
-
-  if (!classFilter) return
-
-  const selectorFilters = selectorEntries
-    .map(({ classNames }) => !classNames.length || classNames.some((className) => classFilter.has(className)))
-
-  if (selectorFilters.every(Boolean)) return
-  return selectorFilters
-}
-
-function removeEmptyRuleBlock(rule: any) {
-  return rule.value?.rules?.length ? undefined : []
-}
-
-function pruneEmptyRuleBlocks(code: Uint8Array, filename: string) {
-  return getCSSTransform()({
-    filename,
-    code,
-    visitor: {
-      Rule: {
-        media: removeEmptyRuleBlock,
-        supports: removeEmptyRuleBlock,
-        container: removeEmptyRuleBlock,
-        'starting-style': removeEmptyRuleBlock,
-        'layer-block': removeEmptyRuleBlock
-      }
-    }
-  }).code
-}
-
-function filterNativeCSS(code: Uint8Array, filename: string, parsed: ParsedDirectives, classFilter?: Set<string>) {
-  const selectorFilters: boolean[] = []
-  return getCSSTransform()({
-    filename,
-    code,
-    visitor: {
-      Rule: {
-        style(rule) {
-          const filters = getNativeStyleSelectorFilters(rule, parsed, classFilter)
-          if (!filters) return
-          if (!filters.some(Boolean)) return []
-          selectorFilters.push(...filters)
-        }
-      },
-      Selector() {
-        if (!selectorFilters.length) return
-        if (!selectorFilters.shift()) return []
-      }
-    }
-  }).code
 }
 
 function formatDeclarationValue(declaration: Declaration) {
@@ -2417,7 +2324,6 @@ export function compileCSS(source: string, options: CompileCSSOptions = {}): Com
     manifestInput: {},
     extractionPolicy: createCSSDirectiveExtractionPolicy(),
     classNames: [],
-    nativeClassNames: [],
     warnings: [],
     source,
     filename,
@@ -2425,9 +2331,6 @@ export function compileCSS(source: string, options: CompileCSSOptions = {}): Com
     composeRangeIndex: 0,
     sourceLocationResolver: createSourceLocationResolver(source)
   }
-  const classFilter = options.classes === undefined
-    ? undefined
-    : new Set(options.classes)
   parsed.extractionPolicy = collectStandaloneCSSDirectiveExtractionPolicy(sourceWithoutReferences, filename)
   validateComposeRanges(parsed)
   const preprocessedSource = maskManagedPatternEntryNames(removeStandaloneCSSDirectives(sourceWithoutReferences, filename))
@@ -2506,18 +2409,13 @@ export function compileCSS(source: string, options: CompileCSSOptions = {}): Com
   })
   let remainingCSS = ''
   if (options.preserveNativeCSS !== false) {
-    const filteredCode = filterNativeCSS(transformed.code, filename, parsed, classFilter)
-    const remainingCode = classFilter
-      ? pruneEmptyRuleBlocks(filteredCode, filename)
-      : filteredCode
-    remainingCSS = normalizeStylesheetValue(decodeCSS(remainingCode).trim()).value
+    remainingCSS = normalizeStylesheetValue(decodeCSS(transformed.code).trim()).value
   }
 
   return {
     manifestInput: parsed.manifestInput,
     extractionPolicy: parsed.extractionPolicy,
     classNames: parsed.classNames,
-    nativeClassNames: parsed.nativeClassNames,
     warnings: parsed.warnings,
     nativeCSS: remainingCSS,
     css: remainingCSS,
@@ -2529,12 +2427,11 @@ export function compileCSS(source: string, options: CompileCSSOptions = {}): Com
 }
 
 export function parseDirectives(source: string, options: CompileCSSOptions = {}) {
-  const { manifestInput, extractionPolicy, classNames, nativeClassNames, warnings, styleDefinitions } = compileCSS(source, options)
+  const { manifestInput, extractionPolicy, classNames, warnings, styleDefinitions } = compileCSS(source, options)
   return {
     manifestInput,
     extractionPolicy,
     classNames,
-    nativeClassNames,
     warnings,
     ...(styleDefinitions ? { styleDefinitions } : {})
   }

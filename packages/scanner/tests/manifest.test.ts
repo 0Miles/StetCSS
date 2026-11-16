@@ -57,17 +57,15 @@ test('ignores native CSS classes from unmanaged CSS files', async () => {
     `)
 
     const scanner = await new CSSScanner({}, cwd).init()
-    const changes: string[][] = []
+    let changes = 0
     scanner.on('change', () => {
-      changes.push([...scanner.usedNativeClasses])
+      changes++
     })
 
     await scanner.scan('src/index.html', '<div class="native-card btn"></div>')
 
-    expect([...scanner.nativeClassNames]).toEqual([])
-    expect([...scanner.usedNativeClasses]).toEqual([])
     expect(scanner.validClasses.has('btn')).toBe(false)
-    expect(changes).toEqual([])
+    expect(changes).toBe(0)
   } finally {
     rmSync(cwd, { recursive: true, force: true })
   }

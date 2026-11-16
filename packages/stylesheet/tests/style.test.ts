@@ -20,7 +20,6 @@ import {
   createExtractedCSSResult,
   collectStyleCSSDependencies,
   getNativeCSS,
-  hasPreserveNativeDirective,
   hasMasterStyleEntrypoint,
   hasLocalStyleDirectives,
   isMasterStyleSource,
@@ -146,13 +145,13 @@ describe('style CSS extraction helpers', () => {
     })
   })
 
-  it('detects Master CSS entrypoints and preservation directives separately', () => {
+  it('detects Master CSS entrypoints', () => {
     expect(hasMasterStyleEntrypoint('@import "@stet-css/core";')).toBe(true)
     expect(hasMasterStyleEntrypoint('@master entry;')).toBe(true)
     expect(hasMasterStyleEntrypoint('@master;')).toBe(false)
     expect(hasMasterStyleEntrypoint('@master global;')).toBe(false)
     expect(hasMasterStyleEntrypoint('@master shake;')).toBe(false)
-    expect(hasMasterStyleEntrypoint('@preserve native;')).toBe(false)
+    expect(hasMasterStyleEntrypoint('@safelist "card";')).toBe(false)
     expect(hasMasterStyleEntrypoint('@theme { --color-primary: red; }')).toBe(false)
     expect(hasMasterStyleEntrypoint('@import "./other.css";')).toBe(false)
     expect(isMasterStyleSource('@theme { --color-primary: red; }')).toBe(false)
@@ -170,10 +169,8 @@ describe('style CSS extraction helpers', () => {
     expect(isMasterStyleSource('@master global;')).toBe(false)
     expect(isMasterStyleSource('@master shake;')).toBe(false)
     expect(isMasterStyleSource('@master no-shake;')).toBe(false)
-    expect(isMasterStyleSource('@preserve native;')).toBe(false)
+    expect(isMasterStyleSource('@safelist "card";')).toBe(false)
     expect(isMasterStyleSource('@import "./other.css";')).toBe(false)
-    expect(hasPreserveNativeDirective('@preserve native;\n.card { color: red; }')).toBe(true)
-    expect(hasPreserveNativeDirective('@master no-shake;\n.card { color: red; }')).toBe(false)
   })
 
   it('detects local compose styles without treating them as Master entries', () => {
@@ -517,11 +514,10 @@ describe('style CSS extraction helpers', () => {
       '@source "./page.tsx";',
       '@safelist "card";',
       '@blocklist "debug-*";',
-      '@preserve native;',
       '@master entry;',
       '',
       '@media (min-width: 768px) {',
-      '    @preserve native;',
+      '    @source "./nested.tsx";',
       '}',
       '',
       '.card { color: red; }'
@@ -529,11 +525,11 @@ describe('style CSS extraction helpers', () => {
 
     expect(hasMasterStyleEntrypoint('@master entry;\n.card { color: red; }')).toBe(true)
     expect(result.removed).toBe(true)
-    expect(result.code).not.toContain('@source')
+    expect(result.code).not.toContain('@source "./page.tsx"')
     expect(result.code).not.toContain('@safelist')
     expect(result.code).not.toContain('@blocklist')
-    expect(result.code).not.toContain('@preserve native;\n@master')
-    expect(result.code).toContain('@media (min-width: 768px) {\n    @preserve native;\n}')
+    expect(result.code).not.toContain('@master entry')
+    expect(result.code).toContain('@media (min-width: 768px) {\n    @source "./nested.tsx";\n}')
   })
 
   it('treats an empty host source as an intentionally handled Master CSS import', () => {
@@ -639,7 +635,7 @@ describe('style CSS extraction helpers', () => {
     expect(css).toContain('@layer base')
     expect(css).toContain('text-rendering: geometricprecision')
     expect(css).toContain('.main')
-    expect(css).not.toContain('.unused')
+    expect(css).toContain('.unused')
     expect(css).toContain('--color-primary:red')
     expect(css).toContain('--color-red')
     expect(css).toContain('@keyframes fade')
@@ -810,7 +806,7 @@ describe('style CSS extraction helpers', () => {
     })
   })
 
-  it('prunes local CSS imports from Master CSS import roots by default', async () => {
+  it('keeps native CSS from local CSS imports in Master CSS import roots', async () => {
     const root = createFixture()
     mkdirSync(join(root, 'app/styles'), { recursive: true })
     writeFileSync(join(root, 'app/styles/btn.css'), `
@@ -851,80 +847,29 @@ describe('style CSS extraction helpers', () => {
     expect(result.dependencies.filter((dependency: string) => !dependency.startsWith(root)).length).toBeGreaterThan(0)
     expect(css).toContain('.card')
     expect(css).toContain('.btn-native')
-    expect(css).not.toContain('.unused')
-    expect(css).not.toContain('.btn-unused')
+    expect(css).toContain('.unused')
+    expect(css).toContain('.btn-unused')
     expect(css).not.toContain('@import "./styles/btn.css"')
   })
 
-  it('preserves native CSS when a Master CSS import root opts out of pruning', async () => {
-    const root = createFixture()
-    const scanner = new CSSScanner({}, root)
-    await scanner.init()
-
-    const styleCSSSources = new Map()
-    await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'app/globals.css'), `
-      @import "@stet-css/core";
-      @preserve native;
-
-      .card {
-        display: grid;
-      }
-
-      .unused {
-        display: block;
-      }
-    `)
-    await scanner.scan(join(root, 'app/page.html'), '<div class="card"></div>')
-
-    const css = await createExtractedCSS({
-      scanner,
-      styleCSSSources,
-      projectDir: root
-    })
-
-    expect([...scanner.nativeClassNames]).toEqual([])
-    expect([...scanner.usedNativeClasses]).toEqual([])
-    expect(css).toContain('.card')
-    expect(css).toContain('.unused')
-    expect(css).not.toContain('@preserve native')
-  })
-
-  it('preserves imported native CSS when a root graph opts out of pruning', async () => {
+  /**
+   * Prevents: a project that still carries `@preserve native;` in an imported file building as
+   * if the directive mattered. Registering the entry must fail with the delete hint.
+   */
+  it('rejects @preserve native anywhere in an entry graph', async () => {
     const root = createFixture()
     mkdirSync(join(root, 'app/styles'), { recursive: true })
-    writeFileSync(join(root, 'app/styles/btn.css'), `
-      .btn-native {
-        color: red;
-      }
-
-      .btn-unused {
-        color: blue;
-      }
-    `)
+    writeFileSync(join(root, 'app/styles/btn.css'), '@preserve native;\n.btn-native { color: red; }')
     const scanner = new CSSScanner({}, root)
     await scanner.init()
 
-    const styleCSSSources = new Map()
-    await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'app/globals.css'), `
+    await expect(registerStyleCSSSource(scanner, new Map(), join(root, 'app/globals.css'), `
       @import "@stet-css/core";
-      @preserve native;
       @import "./styles/btn.css";
-    `)
-    await scanner.scan(join(root, 'app/page.html'), '<div class="btn-native"></div>')
-
-    const css = await createExtractedCSS({
-      scanner,
-      styleCSSSources,
-      projectDir: root
-    })
-
-    expect([...scanner.nativeClassNames]).toEqual([])
-    expect(css).toContain('.btn-native')
-    expect(css).toContain('.btn-unused')
-    expect(css).not.toContain('@preserve native')
+    `)).rejects.toThrow('@preserve native was removed; stylesheet entries keep all native CSS, so delete this line')
   })
 
-  it('can emit pruned native CSS without generated Master CSS', async () => {
+  it('can emit native CSS without generated Master CSS', async () => {
     const root = createFixture()
     const scanner = new CSSScanner({}, root)
     await scanner.init()

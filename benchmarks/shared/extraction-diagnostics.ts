@@ -99,8 +99,6 @@ export const extractionDiagnosticMetricIds = [
   'source-file-count',
   'latent-class-count',
   'valid-class-count',
-  'native-class-name-count',
-  'used-native-class-count',
   'generated-class-count',
   'master-package-shortcut-hit-count',
   'master-package-shortcut-fallback-count',
@@ -287,8 +285,6 @@ async function createDiagnosticExtractedCSS(options: {
   const classes = getScannerClasses(scanner)
   recorder.setCount('latent-class-count', scanner.latentClasses.size)
   recorder.setCount('valid-class-count', scanner.validClasses.size)
-  recorder.setCount('native-class-name-count', scanner.nativeClassNames.size)
-  recorder.setCount('used-native-class-count', scanner.usedNativeClasses.size)
 
   const hasMasterCSS = hasMasterCSSPackageSource(styleCSSSources)
   const defaultArtifact = hasMasterCSS
@@ -300,11 +296,7 @@ async function createDiagnosticExtractedCSS(options: {
 
   const entryStyleResults: CompileCSSResult[] = []
   for (const [id, styleSource] of styleCSSSources) {
-    const sourceClasses = styleSource.pruneNativeCSS
-      ? getStyleSourceClasses(scanner, styleSource, classes, projectDir)
-      : undefined
     const result = await recorder.time('entry-css-compilation-ms', () => compileStyleCSS(id, styleSource.source, {
-      classes: sourceClasses,
       projectDir
     }))
     entryStyleResults.push(result)
@@ -570,7 +562,6 @@ function getScannerClasses(scanner: ScannerState) {
   return filterExcludedClasses([...new Set([
     ...(scanner.latentClasses || []),
     ...(scanner.validClasses || []),
-    ...(scanner.usedNativeClasses || []),
     ...(scanner.options.safelist || [])
   ])], scanner.options.blocklist)
 }

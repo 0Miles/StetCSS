@@ -168,7 +168,6 @@ export interface CSSDirectiveExtractionPolicy {
   exclude: string[]
   safelist: string[]
   blocklist: (string | RegExp)[]
-  preserveNative: boolean
 }
 
 export interface CSSDirectiveReference {
@@ -211,7 +210,6 @@ export interface CSSDirectiveResult {
   manifestInput: CSSDirectiveManifestInput
   extractionPolicy: CSSDirectiveExtractionPolicy
   classNames: string[]
-  nativeClassNames: string[]
   nativeCSS: string
   css: string
   generatedCSS: string

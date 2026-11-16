@@ -113,12 +113,11 @@ describe('Next static CSS', () => {
   })
 
   /**
-   * Guards the entry rewrite: the entry imports the generated module, which carries the
-   * entry's native CSS pruned to used classes; leaving the native rules in the entry would
-   * ship them twice and unpruned.
+   * Guards the entry rewrite: the entry imports the generated module, which carries all of
+   * the entry's native CSS; leaving the native rules in the entry would ship them twice.
    * Reverse check: returning the entry source unchanged from the style loader turns it red.
    */
-  it('moves entry native CSS into the generated module and prunes unused rules', async () => {
+  it('moves all entry native CSS into the generated module', async () => {
     const globals = [
       '@import "@stet-css/core";',
       '.main { color: var(--color-primary); }',
@@ -134,7 +133,7 @@ describe('Next static CSS', () => {
     expect(host).toBe('@import "../.master/next.css";')
     expect(css).toContain('color: var(--color-primary)')
     expect(css).toContain('--color-primary:red')
-    expect(css).not.toContain('.unused')
+    expect(css).toContain('.unused')
   })
 
   /**

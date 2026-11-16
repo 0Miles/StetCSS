@@ -75,7 +75,7 @@ describe('static class set', () => {
    * directory is excluded by default. `@source` naming the package directory is the form
    * users write for a component library.
    * Reverse check: dropping the `@source` files from a scope's file list turns this test and
-   * the other three `@source` tests red (server templates and pruning in `directives.test.ts`,
+   * the other three `@source` tests red (server templates and the CSS root test in `directives.test.ts`,
    * the per-path test).
    */
   it('skips dependency and build output directories unless @source names them', async () => {
@@ -164,7 +164,7 @@ describe('static class set', () => {
    * Guards that `@blocklist` and `@source not` hold for the whole output when a project has
    * several CSS entries: every entry shares one generated CSS, so an entry that does not
    * repeat the directive must not bring the blocked class or the excluded file's classes
-   * back, in generated rules or in its own native CSS.
+   * back.
    * Reverse check: merging only the last entry's directives turns only this test red.
    */
   it('applies one entry\'s @blocklist and @source not to every entry', async () => {
@@ -182,7 +182,6 @@ describe('static class set', () => {
     `, { projectDir: root })
     await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'src/b.css'), `
       @import "@stet-css/core";
-      .legacy-card { color: blue; }
     `, { projectDir: root })
 
     const css = await createExtractedCSS({ scanner, styleCSSSources, projectDir: root })
@@ -190,16 +189,15 @@ describe('static class set', () => {
     expect(css).toContain(rule('block'))
     expect(css).not.toContain(rule('fg:red'))
     expect(css).not.toContain(rule('m:4x'))
-    expect(css).not.toContain('.legacy-card')
   })
 
   /**
-   * Guards native CSS pruning when the entry only narrows the file set: a rule for a class
-   * used in the project must survive, and a rule nothing uses must still be pruned.
-   * Reverse check: pruning each entry's native CSS with the module classes only turns this test
-   * and the two pruning tests in `directives.test.ts` red.
+   * Guards that an entry keeps its native CSS like any other CSS file: a rule no markup uses,
+   * a rule for a class only an excluded file uses, and a rule nested in an at-rule all stay.
+   * Dropping them silently breaks classes added at runtime or by markup the scan cannot see.
+   * Reverse check: filtering each entry's native rules by the class set turns this test red.
    */
-  it('keeps native CSS rules used by project files when the entry only has @source not', async () => {
+  it('keeps every native rule in an entry whether or not markup uses it', async () => {
     const root = createProject({
       'src/app.html': '<div class="card"></div>',
       'src/legacy/page.html': '<div class="legacy-card"></div>'
@@ -210,10 +208,14 @@ describe('static class set', () => {
       @source not './legacy';
       .card { color: red; }
       .legacy-card { color: blue; }
+      .unused { color: green; }
+      @media (min-width: 768px) { .unused-wide { color: navy; } }
     `)
 
     expect(css).toMatch(/\.card\s*\{\s*color:\s*red/)
-    expect(css).not.toContain('.legacy-card')
+    expect(css).toMatch(/\.legacy-card\s*\{\s*color:\s*#00f/)
+    expect(css).toMatch(/\.unused\s*\{\s*color:\s*green/)
+    expect(css).toMatch(/@media \(width >= 768px\)\s*\{\s*\.unused-wide/)
   })
 
   /**
@@ -330,14 +332,14 @@ describe('static class set', () => {
    * Guards that an entry importing `@stet-css/core` can `@compose` the package's static
    * utilities: the entry is compiled without its core import, so it must resolve against the
    * package's manifest, or static builds throw `Invalid @compose class: inline-flex`.
-   * Runs once with the default package artifact (`classes: []`) and once with module classes,
-   * which compile the package instead.
+   * Runs once with the default package artifact and once with an `onWarning` callback,
+   * which compiles the package instead.
    * Reverse check: compiling the entry without the package manifest turns both cases red.
    */
   it.each([
-    ['the default package artifact', []],
-    ['a compiled package', ['probe']]
-  ])('composes preset static utilities from an entry with %s', async (_, classes) => {
+    ['the default package artifact', {}],
+    ['a compiled package', { onWarning: () => {} }]
+  ])('composes preset static utilities from an entry with %s', async (_, compileOptions) => {
     const root = createProject({ 'src/page.html': '<div class="probe"></div>' })
     const scanner = new CSSScanner({ verbose: 0 }, root)
     await scanner.init()
@@ -346,7 +348,7 @@ describe('static class set', () => {
     writeFileSync(join(root, 'src/index.css'), entry)
     await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'src/index.css'), entry, { projectDir: root })
 
-    const css = await createExtractedCSS({ scanner, styleCSSSources, projectDir: root, classes })
+    const css = await createExtractedCSS({ scanner, styleCSSSources, projectDir: root, classes: [], ...compileOptions })
 
     expect(css).toMatch(/\.probe\{[^}]*display:inline-flex/)
   })

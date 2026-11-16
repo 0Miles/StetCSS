@@ -483,7 +483,6 @@ export function compileProjectManifest(entries: string[], options: CompileCSSMan
   const dependencies: string[] = []
   let extractionPolicy = createCSSDirectiveExtractionPolicy()
   const classNames: string[] = []
-  const nativeClassNames: string[] = []
   const nativeCSS: string[] = []
   const css: string[] = []
   const generatedCSS: string[] = []
@@ -492,7 +491,6 @@ export function compileProjectManifest(entries: string[], options: CompileCSSMan
     manifestInput: {},
     extractionPolicy: createCSSDirectiveExtractionPolicy(),
     classNames: [],
-    nativeClassNames: [],
     nativeCSS: '',
     css: '',
     generatedCSS: '',
@@ -509,7 +507,6 @@ export function compileProjectManifest(entries: string[], options: CompileCSSMan
     extractionPolicy = mergeCSSDirectiveExtractionPolicy(extractionPolicy, result.extractionPolicy)
     addUnique(dependencies, result.dependencies)
     addUnique(classNames, result.classNames)
-    addUnique(nativeClassNames, result.nativeClassNames)
     addUnique(warnings, result.warnings)
     const manifestResult = toCompileCSSManifestResult(result, {
       ...options,
@@ -533,7 +530,6 @@ export function compileProjectManifest(entries: string[], options: CompileCSSMan
     dependencies,
     extractionPolicy,
     classNames,
-    nativeClassNames,
     nativeCSS: nativeCSS.join('\n'),
     css: css.join('\n'),
     generatedCSS: generatedCSS.join('\n'),

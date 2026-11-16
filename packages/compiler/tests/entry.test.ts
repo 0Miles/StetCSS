@@ -36,6 +36,16 @@ test.concurrent('strips @master entry before CSS transform', () => {
   expect(result.nativeCSS).toContain('.card')
 })
 
+/**
+ * Prevents: an entry that still says `@preserve native;` compiling as if the directive did
+ * something. Entries no longer prune native CSS, so the directive must fail and tell the
+ * developer the line can go.
+ */
+test.concurrent('rejects the removed @preserve native directive with a delete hint', () => {
+  expect(() => compileCSS('@import "@stet-css/core";\n@preserve native;\n.card { color: red; }'))
+    .toThrow('@preserve native was removed; stylesheet entries keep all native CSS, so delete this line')
+})
+
 test('resolves CSS-only preset package root to stylesheet entry', () => {
   const presetPackageJSONFile = resolve(repoRoot, 'packages/preset/package.json')
   const presetPackageJSON = JSON.parse(readFileSync(presetPackageJSONFile, 'utf8')) as {
