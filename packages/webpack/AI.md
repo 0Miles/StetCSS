@@ -1,20 +1,20 @@
 # @stet-css/webpack
 
-Owns the Webpack plugin: it feeds compiled module sources to `CSSScanner`, keeps generated CSS, manifest and emittedGlobals in **virtual modules** (`webpack-virtual-modules`), runs the style CSS loader, and injects runtime and manifest preloads into HTML assets emitted by the compilation.
+Owns the Webpack plugin. It only builds static CSS: before each compilation it generates the CSS from the project's class set (`@stet-css/stylesheet`) and the discovered stylesheet entries, writes it to the generated CSS **virtual module** (`webpack-virtual-modules`), runs the style CSS loader that points entries at that module, and serves the manifest and emittedGlobals virtual modules.
 
 ## Boundaries
 
-- Class extraction lives in `@stet-css/scanner`; `CSSScanner` stays the single source of extraction behaviour, and this package reuses it rather than duplicating scanner logic.
+- Which classes static CSS contains is the stylesheet class set's rule; this package passes `classes: []` and never scans compiled modules. Entries come from `@stet-css/project` entry discovery, as in the CLI.
 - Manifest discovery and loading live in `@stet-css/project`.
+- No runtime injection: no runtime entry, no HTML asset rewriting, no `mode` or `injectRuntime` option.
 
 ## Risks
 
-- **Module source detection** depends on Webpack internals (`_source`, `originalSource()` in `src/plugins/usage-graph.ts`).
-- **Virtual modules** drive static CSS output. Their paths come from `@stet-css/integration/node` (under `node_modules/.master-css`) and stay compatible with configured scanner options; keep id behaviour stable.
-- **Runtime injection** goes through Webpack asset and entry orchestration (`src/plugins/runtime-entry.ts`, `src/plugins/runtime-html-assets.ts`), never app source rewrites. It mutates only HTML assets in the compilation; devServer static files are out of reach.
-- **Script and preload tags** match the output type: `modulepreload` for module output, `preload as="script"` for classic output.
-- **Cross-integration parity**: audit runtime, preload, mode-default and cascade-layer changes against Vite, Next, Nuxt and Astro so integration behaviour does not drift.
+- **Generation before the compilation**: `beforeRun` and `watchRun` (`src/plugins/scanner-lifecycle.ts`) write the CSS before webpack builds the virtual module, so `style-loader` bundles and extracted CSS assets both carry it. CSS generated later would miss the module. While watching, only changed paths in the last generation's dependencies, or source files by `isStylesheetSourceFile`, regenerate it.
+- **Watched files**: `src/plugins/static-css-dependencies.ts` adds the class set's source files and the entries' import graphs to each compilation, so editing a file no module imports rebuilds. A new file only joins after the next rebuild. The compiler's output directory inside the project root goes to the class set's `ignorePaths`, so emitted bundles never feed classes back or trigger a rebuild loop.
+- **Virtual modules**: paths come from `@stet-css/integration/node` (under `node_modules/.master-css`); keep id behaviour stable. Once the virtual file is written, the disk file is only a seed dated in the past: a fresh disk write while watching would look newer than the compilation start and rebuild once more. Without `webpack-virtual-modules` support (Rspack), the disk file carries the content.
+- **Cross-integration parity**: audit mode-default and cascade-layer changes against Vite, Next, Nuxt and Astro so integration behaviour does not drift.
 
 ## Validation
 
-Build `examples/webpack` when plugin behaviour changes.
+Build `examples/webpack` when plugin behaviour changes. `tests/static-e2e.test.ts` builds it with `style-loader`, builds a native CSS (extracted) fixture, and runs watch mode with real webpack against `dist`.
