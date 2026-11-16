@@ -334,6 +334,7 @@ test('does not highlight @dark or @light as directives', () => {
 /**
  * Prevents: the editor still highlighting the removed `@master entry;` and `@master { … }` as
  * directives, which tells a developer that lines the compiler now rejects are valid.
+ * Reverse-checked: restoring the `(@)(master)\\b` rule in the grammar reds only this test.
  */
 test('does not highlight @master as a directive', () => {
   const tokens = tokenizeWith(injectedCSSGrammar, `
