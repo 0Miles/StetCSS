@@ -17,6 +17,7 @@ import {
   writeWorkspaceFiles
 } from './runner'
 import { writeBenchmarkReport } from './report'
+import { resolveBuildArgs, staticBuildTools } from './static-build'
 import { summarizeReportSamples } from './stats'
 import type {
   BenchmarkAdapter,
@@ -34,6 +35,8 @@ export type InteractionModeId =
   | 'master-static'
   | 'master-runtime'
   | 'tailwind-static'
+
+type StaticInteractionModeId = Extract<InteractionModeId, 'master-static' | 'tailwind-static'>
 
 export type InteractionScenarioId =
   | 'existing-class-toggle'
@@ -310,8 +313,7 @@ const tailwindClasses = {
   button: ['h-10', 'px-4', 'rounded-lg', 'border-0', 'bg-blue-600', 'text-white', 'text-xs', 'font-semibold']
 } satisfies InteractionClassModel
 
-const masterStaticCSSCache = new Map<BenchmarkFixtureId, Promise<string>>()
-const tailwindStaticCSSCache = new Map<BenchmarkFixtureId, Promise<string>>()
+const staticCSSCache = new Map<string, Promise<string>>()
 let runtimeBundlePromise: Promise<Buffer> | undefined
 let defaultManifestJSONPromise: Promise<Buffer> | undefined
 
@@ -491,7 +493,7 @@ export async function createInteractionPage(options: {
       pageSuite: options.pageSuite,
       variantId: options.variantId,
       html: addStaticHarness(sourceHtml),
-      externalCSS: await readTailwindStaticCSS(options.fixtureId)
+      externalCSS: await readStaticCSS(options.fixtureId, 'tailwind-static')
     })
   }
 
@@ -510,7 +512,7 @@ export async function createInteractionPage(options: {
       pageSuite: options.pageSuite,
       variantId: options.variantId,
       html: addStaticHarness(sourceHtml),
-      externalCSS: await readMasterStaticCSS(options.fixtureId)
+      externalCSS: await readStaticCSS(options.fixtureId, 'master-static')
     })
   }
 
@@ -1221,84 +1223,42 @@ async function writeInteractionDiagnostics(options: {
   if (runtimeStyleText) await writeFile(options.runtimeStyleFile, runtimeStyleText)
 }
 
-async function readMasterStaticCSS(fixtureId: BenchmarkFixtureId) {
-  let promise = masterStaticCSSCache.get(fixtureId)
+function readStaticCSS(fixtureId: BenchmarkFixtureId, modeId: StaticInteractionModeId) {
+  const key = `${fixtureId}-${modeId}`
+  let promise = staticCSSCache.get(key)
   if (!promise) {
-    promise = (async () => {
-      const workspace = resolve(benchmarkRoot, '.results', 'interaction-cost', 'workspaces', `${fixtureId}-master-static`)
-      await resetDirectory(workspace)
-      const html = renderInteractionDocument({
-        fixtureId,
-        modeId: 'master-static',
-        scenarioId: 'existing-class-toggle',
-        classes: masterClasses,
-        includeStaticClassSource: true
-      })
-      await writeWorkspaceFiles(workspace, {
-        'package.json': JSON.stringify({
-          private: true,
-          type: 'module'
-        }, null, 2) + '\n',
-        'index.html': html
-      })
-      await resetDirectory(resolve(workspace, 'dist'))
-      await runCommand(
-        process.execPath,
-        [
-          resolveBenchmarkPackageFile('@stet-css/cli', 'dist/bin/index.js'),
-          'index.html',
-          '-o',
-          'dist/output.css',
-          '-v',
-          '0'
-        ],
-        workspace
-      )
-      return (await readFile(resolve(workspace, 'dist/output.css'))).toString('utf8')
-    })()
-    masterStaticCSSCache.set(fixtureId, promise)
+    promise = buildStaticCSS(fixtureId, modeId)
+    staticCSSCache.set(key, promise)
   }
   return promise
 }
 
-async function readTailwindStaticCSS(fixtureId: BenchmarkFixtureId) {
-  let promise = tailwindStaticCSSCache.get(fixtureId)
-  if (!promise) {
-    promise = (async () => {
-      const workspace = resolve(benchmarkRoot, '.results', 'interaction-cost', 'workspaces', `${fixtureId}-tailwind-static`)
-      await resetDirectory(workspace)
-      const html = renderInteractionDocument({
-        fixtureId,
-        modeId: 'tailwind-static',
-        scenarioId: 'existing-class-toggle',
-        classes: tailwindClasses,
-        includeStaticClassSource: true
-      })
-      await writeWorkspaceFiles(workspace, {
-        'package.json': JSON.stringify({
-          private: true,
-          type: 'module'
-        }, null, 2) + '\n',
-        'index.html': html,
-        'input.css': '@import "tailwindcss";\n@source "./index.html";\n'
-      })
-      await resetDirectory(resolve(workspace, 'dist'))
-      await runCommand(
-        process.execPath,
-        [
-          resolveBenchmarkPackageFile('@tailwindcss/cli', 'dist/index.mjs'),
-          '-i',
-          'input.css',
-          '-o',
-          'dist/output.css'
-        ],
-        workspace
-      )
-      return (await readFile(resolve(workspace, 'dist/output.css'))).toString('utf8')
-    })()
-    tailwindStaticCSSCache.set(fixtureId, promise)
+async function buildStaticCSS(fixtureId: BenchmarkFixtureId, modeId: StaticInteractionModeId) {
+  const isMaster = modeId === 'master-static'
+  const toolId = isMaster ? 'master-static-cli' : 'tailwind-cli'
+  const tool = staticBuildTools.find((candidate) => candidate.id === toolId)
+  if (!tool) throw new Error(`Unknown static build tool: ${toolId}`)
+
+  const workspace = resolve(benchmarkRoot, '.results', 'interaction-cost', 'workspaces', `${fixtureId}-${modeId}`)
+  await resetDirectory(workspace)
+  const files: Record<string, string> = {
+    'package.json': JSON.stringify({
+      private: true,
+      type: 'module'
+    }, null, 2) + '\n',
+    'index.html': renderInteractionDocument({
+      fixtureId,
+      modeId,
+      scenarioId: 'existing-class-toggle',
+      classes: isMaster ? masterClasses : tailwindClasses,
+      includeStaticClassSource: true
+    })
   }
-  return promise
+  if (!isMaster) files['input.css'] = '@import "tailwindcss";\n@source "./index.html";\n'
+  await writeWorkspaceFiles(workspace, files)
+  await resetDirectory(resolve(workspace, 'dist'))
+  await runCommand(process.execPath, resolveBuildArgs(tool), workspace)
+  return (await readFile(resolve(workspace, 'dist/output.css'))).toString('utf8')
 }
 
 function addStaticHarness(html: string) {
