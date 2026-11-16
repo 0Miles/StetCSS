@@ -102,9 +102,10 @@ export default function ManifestVirtualModulePlugin(
         return createManifestModule(context, this, toManifestJSON((await loadDefaultManifest(this)).manifest))
       }
     },
-    async handleHotUpdate({ file, server }) {
+    async handleHotUpdate({ file, modules: changedModules, server }) {
       let handled = false
-      const modules: ModuleNode[] = []
+      // Vite updates only the modules a hook returns: keep the changed file's own modules.
+      const modules: ModuleNode[] = [...changedModules]
       if (includesFile(cssManifestDependencies, file)) {
         handled = true
         modules.push(...invalidateManifestModule(

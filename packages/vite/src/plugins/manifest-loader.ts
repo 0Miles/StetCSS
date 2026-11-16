@@ -93,9 +93,10 @@ export default function ManifestLoaderPlugin(context: PluginContext): Plugin {
       watchManifestDependencies(manifestPath, [...dependencies])
       return createManifestModule(context, this, result.json)
     },
-    async handleHotUpdate({ file, server }) {
+    async handleHotUpdate({ file, modules: changedModules, server }) {
       let handled = false
-      const modules: ModuleNode[] = []
+      // Vite updates only the modules a hook returns: keep the changed file's own modules.
+      const modules: ModuleNode[] = [...changedModules]
       const queryManifestPaths = new Set([file])
       for (const [manifestPath, dependencies] of cssManifestDependencies) {
         if (includesFile(dependencies, file)) queryManifestPaths.add(manifestPath)
