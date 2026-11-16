@@ -27,9 +27,8 @@ const shapes: [name: string, nest: (depth: number) => string][] = [
 /**
  * Guards: text extraction scans a token once per character, not once per
  * character pair, so a 20,000-long run without whitespace no longer stalls a
- * build or dev server for seconds to minutes; on the original code every case
- * but the class-attribute one took 1.7-104 s. The budget is far above the linear cost (a few
- * milliseconds) to stay clear of loaded CI machines. Reverse check, putting
+ * build or dev server for seconds to minutes. The budget is far above the
+ * linear cost (a few milliseconds) to stay clear of loaded CI machines. Reverse check, putting
  * back one replaced regex at a time (`src/extraction-scans.ts`):
  * `KEEP_TOKEN`'s brace alternative turns the JSX, parentheses, arrays, style
  * and comment cases red; `trimTrailing` the trailing-punctuation case;
