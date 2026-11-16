@@ -68,8 +68,6 @@ interface DeliveryModeDiagnostics {
   runtimeGeneratedRuleCount: number
   runtimeStyleRawBytes: number
   runtimeStyleText: string
-  connectedClassCount: number
-  connectedClassNames: string[]
   consoleWarnings: string[]
 }
 
@@ -390,7 +388,6 @@ async function createStaticDeliveryModePage(options: {
     variantId: options.variantId,
     html,
     externalCSS: css,
-    deliveredCSS: css,
     buildArtifacts: buildResult.artifacts
   })
 }
@@ -406,15 +403,13 @@ async function createRuntimeDeliveryModePage(options: {
     variantId: options.variantId,
     html,
     runtimeJS: await readRuntimeBundle(),
-    manifestJSON: await readDefaultManifestJSON(),
-    deliveredCSS: ''
+    manifestJSON: await readDefaultManifestJSON()
   })
 }
 
 async function writeDeliveryModePage(options: {
   variantId: string
   html: string
-  deliveredCSS: string
   externalCSS?: string
   runtimeJS?: Buffer
   manifestJSON?: Buffer
@@ -444,7 +439,7 @@ async function writeDeliveryModePage(options: {
         runtimeJS: options.runtimeJS || Buffer.alloc(0),
         manifestJSON: options.manifestJSON || Buffer.alloc(0)
       }),
-      ...createDeliveredCSSStructureSamples(options.variantId, options.deliveredCSS)
+      ...createDeliveredCSSStructureSamples(options.variantId, options.externalCSS ?? '')
     ],
     artifacts: [
       ...(options.buildArtifacts || []),
@@ -638,7 +633,6 @@ async function readDeliveryDiagnostics(page: Page, consoleWarnings: string[]): P
     const styleRules = styleElement?.sheet?.cssRules
     const runtimeStyleText = runtime?.style?.textContent || runtime?.text || ''
     const runtimeClassUtilityNames = [...(runtime?.classUtilities?.keys?.() || [])].map(String).sort()
-    const connectedClassNames = collectConnectedClassNames()
     const cssom = summarizeCSSOM(styleRules)
 
     return {
@@ -654,19 +648,7 @@ async function readDeliveryDiagnostics(page: Page, consoleWarnings: string[]): P
       runtimeClassUtilityNames,
       runtimeGeneratedRuleCount: cssom.totalRuleCount,
       runtimeStyleRawBytes: new TextEncoder().encode(runtimeStyleText).length,
-      runtimeStyleText,
-      connectedClassCount: connectedClassNames.length,
-      connectedClassNames
-    }
-
-    function collectConnectedClassNames() {
-      const names = new Set<string>()
-      for (const element of document.querySelectorAll('[class]')) {
-        for (const className of (element.getAttribute('class') || '').split(/\s+/)) {
-          if (className) names.add(className)
-        }
-      }
-      return [...names].sort()
+      runtimeStyleText
     }
 
     function summarizeCSSOM(rules?: CSSRuleList) {
@@ -887,12 +869,9 @@ async function assertDeliveryModeCorrect(page: Page, modeId: DeliveryModeId) {
     throw new Error(`Expected style probe text-align:center, received ${state.textAlign}.`)
   }
 
-  if (modeId === 'master-runtime' && !state.runtimeAvailable) {
-    throw new Error(`${modeId} did not expose globalThis.masterCSSRuntime.`)
-  }
-
-  if (modeId === 'master-runtime' && state.htmlHidden) {
-    throw new Error('Master runtime variant did not reveal the hidden html element.')
+  if (modeId === 'master-runtime') {
+    if (!state.runtimeAvailable) throw new Error(`${modeId} did not expose globalThis.masterCSSRuntime.`)
+    if (state.htmlHidden) throw new Error('Master runtime variant did not reveal the hidden html element.')
   }
 }
 
