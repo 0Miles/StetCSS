@@ -11,7 +11,7 @@
  */
 
 const WHITESPACE = /\s/
-const LINE_TERMINATORS = new Set(['\n', '\r', ' ', ' '])
+const LINE_TERMINATORS = new Set(['\n', '\r', '\u2028', '\u2029'])
 const TRIM_TRAILING_CHARS = new Set(['(', '[', '{', '\\', ':', '#', '=', '.'])
 const SENTINEL_PREFIX = 'COMPLETE-STRING--'
 const DECORATED_KEYWORDS = ['export', 'function', 'class']
