@@ -85,7 +85,7 @@ Use the CDN runtime when a page only needs the default preset and zero configura
 <script src="https://cdn.master.co/css-runtime@rc"></script>
 ```
 
-The IIFE carries the default manifest inside the script, so it makes no other request and works from a package's short CDN URL. It starts as soon as it runs and registers the document runtime as `globalThis.masterCSSRuntime`. It does not read global options or custom manifests. Use ESM `CSSRuntime.create({ manifest, emittedGlobals }).observe()` for custom theme tokens, utilities, modes, emitted globals, or hydration inputs.
+The IIFE carries the default manifest inside the script, so it makes no other request and works from a package's short CDN URL. It starts as soon as it runs and registers the document runtime as `globalThis.masterCSSRuntime`. It does not read global options or custom manifests. Use ESM `CSSRuntime.create({ manifest, emittedGlobals }).observe()` for custom theme tokens, utilities, modes, or emitted globals.
 
 ## API
 
@@ -114,10 +114,7 @@ cssRuntime.observe()
 | `cssRuntime.retainedClassNames` | `Set<string>` | Mutation-removed class names whose generated rules are temporarily retained in CSSOM. |
 | `register()` | `this` | Registers this runtime in `CSSRuntime.instances`. |
 | `unregister()` | `this` | Removes this runtime from `CSSRuntime.instances`. |
-| `needsHydrationManifest()` | `boolean` | Returns `true` when an external hydration manifest should be loaded before observation. |
-| `loadHydrationManifest()` | `Promise<this>` | Reads inline hydration data or imports the external hydration manifest URL from `style#master-css`. |
-| `setHydrationManifest(manifest?)` | `this` | Sets the hydration manifest used by progressive hydration. |
-| `observe()` | `this` | Observes class attribute changes. |
+| `observe()` | `this` | Creates the runtime's own `style#master-css`, generates rules for the classes already in the root, and observes class attribute changes. It never reads or removes a `style#master-css` that is already on the page. |
 | `ensureClassRules(...classNames)` | `this` | Synchronously ensures generated rules exist for class names. Use this to warm rules before DOM insertion. |
 | `deleteClassRules(...classNames)` | `void` | Synchronously deletes generated rules for class names. |
 | `flushRetainedClassRules()` | `number` | Synchronously removes retained mutation rules that are no longer active and returns the removed class count. |
@@ -128,21 +125,14 @@ cssRuntime.observe()
 
 MutationObserver additions update `classCounts` immediately. Existing and retained generated rules are reused immediately, while first-time rules discovered by the observer are batched into the next pre-paint flush. MutationObserver removals also update `classCounts` immediately, but generated CSS rules may be retained briefly to avoid CSSOM deletion during interaction-heavy updates. Re-adding a retained class reuses the existing generated rule. Direct `cssRuntime.ensureClassRules(...)`, `cssRuntime.deleteClassRules(...)`, `refresh()`, `disconnect()`, and `destroy()` stay synchronous.
 
-### Progressive Hydration
+### Emitted Globals
 
 ```ts
 import CSSRuntime from '@stet-css/runtime'
 import manifest from 'virtual:master-css-manifest'
 import emittedGlobals from 'virtual:master-css-emitted-globals'
 
-const cssRuntime = CSSRuntime.create({
-  manifest,
-  emittedGlobals,
-})
-if (cssRuntime.needsHydrationManifest()) {
-  await cssRuntime.loadHydrationManifest()
-}
-cssRuntime.observe()
+CSSRuntime.create({ manifest, emittedGlobals }).observe()
 ```
 
 `emittedGlobals` tells the runtime which variables and keyframes were already emitted by the project CSS entry, so future dynamic classes can reuse them without inserting duplicate global CSS.
