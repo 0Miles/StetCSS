@@ -85,6 +85,6 @@ Import the default stylesheet from your application CSS so the plugin can replac
 @import '@stet-css/core';
 ```
 
-The Webpack plugin uses `@stet-css/scanner` for source scanning and writes generated CSS through virtual modules.
+The plugin builds static CSS with no options: before each compilation it reads the classes from the project's own source files, following the entry's `@source`, `@source not`, `@safelist` and `@blocklist`, and writes the CSS through a virtual module. It works with `style-loader` and with CSS extraction. Files in `node_modules` and build output directories are not read; name them with `@source` to include them.
 
 See the [Webpack installation guide](https://rc.css.master.co/guide/installation/webpack) for a complete project setup.
