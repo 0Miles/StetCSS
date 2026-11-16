@@ -105,24 +105,9 @@ The stylesheet pipeline resolves the files a static build reads as `(project sou
 
 Bare source globs are resolved from `cwd`. Globs that start with `./` or `../` are resolved relative to the CSS file that declares the directive. `@blocklist` accepts exact strings and `*` / `?` wildcard patterns.
 
-## Native CSS pruning
+## Native CSS in stylesheet entries
 
-Prune native CSS class selector rules from a stylesheet by importing `@stet-css/core` in that stylesheet:
-
-```css
-@import "@stet-css/core";
-@import "./styles/btn.css";
-
-.card {
-  color: red;
-}
-
-.unused {
-  color: blue;
-}
-```
-
-Local relative `.css` imports are expanded, the Master import is replaced by generated CSS, and native class rules are kept only when their class names are found by the scanner. Add `@preserve native;` to preserve native CSS in a Master-managed root. See [Native CSS pruning](https://rc.css.master.co/guide/native-css-pruning) for the full model.
+A stylesheet that imports `@stet-css/core` keeps all of its native CSS, the same as any other CSS file. Rules such as `.card { color: red; }` are emitted whether or not markup uses `card`. Local relative `.css` imports are expanded and the Master import is replaced by generated CSS.
 
 ## Class candidate extraction
 
