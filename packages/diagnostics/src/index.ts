@@ -59,7 +59,7 @@ export interface MasterCSSStylesheetError {
 export interface MasterCSSMissingCSSResult {
   className: string
   status: 'present' | 'missing'
-  reason: 'generated' | 'safelist' | 'invalid' | 'blocklisted' | 'not-detected'
+  reason: 'generated' | 'native-css' | 'safelist' | 'invalid' | 'blocklisted' | 'not-detected'
 }
 
 export interface MasterCSSInspectionReport {
@@ -190,10 +190,42 @@ function createScannerClassDiagnostics(scanner: CSSScanner, firstSourceByClass: 
   }))
 }
 
-function classifyMissingCSS(scanner: CSSScanner, className: string): MasterCSSMissingCSSResult {
+const CSS_CLASS_SELECTOR_RE = /\.((?:\\.|[-_a-zA-Z\u00a0-\uffff])(?:\\.|[-\w\u00a0-\uffff])*)/g
+
+/**
+ * Class names that have a selector in an entry's native CSS. Entries keep every native rule,
+ * so such a class is styled whether or not markup uses it. Only rule preludes are read, so
+ * declaration values such as `url(a.png)` are not mistaken for selectors.
+ */
+function collectNativeCSSClassNames(css: string, classNames: Set<string>) {
+  let preludeStart = 0
+  for (let index = 0; index < css.length; index++) {
+    const char = css[index]
+    if (char === '"' || char === '\'') {
+      const close = css.indexOf(char, index + 1)
+      index = close === -1 ? css.length : close
+    } else if (char === '/' && css[index + 1] === '*') {
+      const close = css.indexOf('*/', index + 2)
+      index = close === -1 ? css.length : close + 1
+    } else if (char === ';' || char === '}') {
+      preludeStart = index + 1
+    } else if (char === '{') {
+      for (const match of css.slice(preludeStart, index).matchAll(CSS_CLASS_SELECTOR_RE)) {
+        classNames.add(match[1].replace(/\\(.)/g, '$1'))
+      }
+      preludeStart = index + 1
+    }
+  }
+  return classNames
+}
+
+function classifyMissingCSS(scanner: CSSScanner, nativeClassNames: Set<string>, className: string): MasterCSSMissingCSSResult {
   const safelist = scanner.options.safelist ?? []
   if (scanner.validClasses.has(className)) {
     return { className, status: 'present', reason: 'generated' }
+  }
+  if (nativeClassNames.has(className)) {
+    return { className, status: 'present', reason: 'native-css' }
   }
   if (safelist.includes(className)) {
     return { className, status: 'present', reason: 'safelist' }
@@ -234,6 +266,7 @@ async function registerManagedCSSEntries(
   const entries: MasterCSSStylesheetInspection[] = []
   const warnings: string[] = []
   const errors: MasterCSSStylesheetError[] = []
+  const nativeClassNames = new Set<string>()
   styleCSSSources.clear()
   for (const entry of await findCSSManifestEntryFiles(scanner.cwd)) {
     const filePath = await resolveFilePath(scanner.cwd, entry, resolveExistingFile)
@@ -251,6 +284,7 @@ async function registerManagedCSSEntries(
         errors: []
       })
       warnings.push(...(result.warnings ?? []))
+      collectNativeCSSClassNames(result.nativeCSS, nativeClassNames)
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       entries.push({
@@ -273,7 +307,8 @@ async function registerManagedCSSEntries(
   return {
     entries,
     warnings: sortedValues(warnings),
-    errors
+    errors,
+    nativeClassNames
   }
 }
 
@@ -417,7 +452,7 @@ export async function createMasterCSSInspectionReport(options: CreateMasterCSSIn
       projectDir: scanner.cwd,
       sources
     })
-    const missingResults = classChecks.map((className) => classifyMissingCSS(scanner, className))
+    const missingResults = classChecks.map((className) => classifyMissingCSS(scanner, stylesheetInspection.nativeClassNames, className))
     diagnostics.push(...createScannerClassDiagnostics(scanner, firstSourceByClass))
     diagnostics.push(...createMissingCSSDiagnostics(missingResults))
 
