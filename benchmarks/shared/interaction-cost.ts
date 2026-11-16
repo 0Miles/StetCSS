@@ -165,6 +165,12 @@ export const interactionModes = [
   }
 ] satisfies InteractionModeDescriptor[]
 
+export function formatInteractionModeLabel(modeId: InteractionModeId) {
+  const mode = interactionModes.find((candidate) => candidate.id === modeId)
+  if (!mode) throw new Error(`Unknown interaction mode: ${modeId}`)
+  return mode.label
+}
+
 export const interactionScenarios = [
   {
     id: 'existing-class-toggle',
