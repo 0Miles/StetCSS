@@ -238,9 +238,8 @@ export function findStandaloneMasterDirectiveStatements(source: string, filename
 }
 
 /** Rejects an `@source` pattern whose braces would make glob matching expand it without bound. */
-function assertSourcePatternsExpandable(statement: StandaloneCSSDirectiveStatement, filename: string) {
-  const directive = statement.modifiers.includes('not') ? '@source not' : '@source'
-  for (const pattern of statement.args) {
+function assertSourcePatternsExpandable(patterns: string[], directive: string, filename: string) {
+  for (const pattern of patterns) {
     if (countSourcePatternExpansions(pattern) > MAX_SOURCE_PATTERN_EXPANSIONS) {
       throw new Error(`${directive} '${pattern}' expands its braces into more than ${MAX_SOURCE_PATTERN_EXPANSIONS} patterns (in ${filename})`)
     }
@@ -251,14 +250,12 @@ export function collectStandaloneCSSDirectiveExtractionPolicy(source: string, fi
   const policy = createCSSDirectiveExtractionPolicy()
   for (const statement of findStandaloneCSSDirectiveStatements(source, filename)) {
     switch (statement.atRuleName) {
-      case 'source':
-        assertSourcePatternsExpandable(statement, filename)
-        if (statement.modifiers.includes('not')) {
-          policy.exclude.push(...statement.args)
-        } else {
-          policy.include.push(...statement.args)
-        }
+      case 'source': {
+        const negated = statement.modifiers.includes('not')
+        assertSourcePatternsExpandable(statement.args, negated ? '@source not' : '@source', filename)
+        policy[negated ? 'exclude' : 'include'].push(...statement.args)
         break
+      }
       case 'safelist':
         policy.safelist.push(...statement.args.flatMap((arg) => arg.split(/\s+/).filter(Boolean)))
         break
