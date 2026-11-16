@@ -1,4 +1,5 @@
 import CSSRuntime from './core'
+import { readDocument } from './document'
 import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 
 function resolveDefaultManifestURL(scriptURL: string) {
@@ -25,7 +26,7 @@ async function loadDefaultManifest(scriptURL: string): Promise<MasterCSSManifest
   }
 }
 
-const currentScript = document.currentScript as HTMLScriptElement | null
+const currentScript = readDocument(document, 'currentScript') as HTMLScriptElement | null
 
 if (currentScript?.src) {
   void loadDefaultManifest(currentScript.src)

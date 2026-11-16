@@ -1,3 +1,5 @@
+import { querySelectorAllIn } from './document'
+
 type ClassDeltaMap = Map<string, number>
 type ClassCountMap = Map<string, number>
 
@@ -33,7 +35,7 @@ export default class RuntimeClassTracker {
   collectConnected(root: Document | ShadowRoot, classCounts: ClassCountMap) {
     this.reset()
     const connectedNames = new Set<string>()
-    for (const el of root.querySelectorAll('[class]')) {
+    for (const el of querySelectorAllIn(root, '[class]')) {
       const classNames = this.snapshotElement(el)
       if (!classNames) continue
       for (const className of classNames) {

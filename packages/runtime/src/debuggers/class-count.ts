@@ -1,4 +1,5 @@
 import log from './log'
+import { isDocumentRoot } from '../document'
 import type CSSRuntime from '../core'
 
 export default function debugRuntimeMutation(
@@ -15,7 +16,7 @@ export default function debugRuntimeMutation(
       actualClassCounts[className] = 1
     }
   }
-  ((cssRuntime.root.constructor.name === 'HTMLDocument') ? cssRuntime.host : cssRuntime.container)
+  (isDocumentRoot(cssRuntime.root) ? cssRuntime.host : cssRuntime.container)
     .querySelectorAll('[class]')
     .forEach((element) => {
       element.classList.forEach(resolveClass)
