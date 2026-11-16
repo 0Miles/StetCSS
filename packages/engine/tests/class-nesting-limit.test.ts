@@ -58,7 +58,6 @@ describe.concurrent('class nesting limit', () => {
     ]
 
     for (const className of classNames) {
-      expect(() => css.generate(className)).not.toThrow()
       expect(css.generate(className)).toEqual([])
       expect(css.createRule(className)).toBeUndefined()
     }
@@ -80,7 +79,6 @@ describe.concurrent('class nesting limit', () => {
     ]
 
     for (const className of classNames) {
-      expect(() => css.generate(className)).not.toThrow()
       expect(css.generate(className)).toEqual([])
     }
   })
