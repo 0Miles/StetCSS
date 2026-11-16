@@ -15,7 +15,8 @@ export type { CSSStatementEnd, SourceLocation, SourceRange } from './source'
  * At-rule names that StetCSS tooling locates, reported as written. Whether a directive is valid
  * where it appears is decided by its consumer. `dark` and `light` are not directives any more:
  * they are located so local CSS that still uses them is sent to the compiler, which rejects them
- * in favour of `@variant dark` and `@variant light`.
+ * in favour of `@variant dark` and `@variant light`. `preserve` is located for the same reason:
+ * the compiler rejects the removed `@preserve native;`.
  */
 export type CSSDirectiveRangeName =
   | 'master'
