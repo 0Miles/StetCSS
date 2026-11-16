@@ -10,5 +10,5 @@ import { RouterOutlet } from '@angular/router';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  title = 'angular-with-progressive-rendering';
+  title = 'angular-example';
 }
