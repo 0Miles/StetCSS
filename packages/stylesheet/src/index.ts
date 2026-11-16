@@ -1003,12 +1003,12 @@ export async function createExtractedCSSResult(options: CreateExtractedCSSOption
   }
   if (masterCSSResult) finalize(masterCSSResult)
   // Entries that import the package resolve `@compose` against the package's manifest.
-  const masterCSSManifest = compileOptions.baseManifest ?? (hasMasterCSS ? mergedPlan : undefined)
+  const stetCSSManifest = compileOptions.baseManifest ?? (hasMasterCSS ? mergedPlan : undefined)
   const entryStyleResults = await Promise.all(
     Array.from(styleCSSSources || [])
       .map(([id, styleSource]) => compileStyleCSS(id, styleSource.source, {
         ...compileOptions,
-        baseManifest: styleSource.masterCSS ? masterCSSManifest : compileOptions.baseManifest
+        baseManifest: styleSource.masterCSS ? stetCSSManifest : compileOptions.baseManifest
       }))
   )
   for (const result of entryStyleResults) finalize(result)
