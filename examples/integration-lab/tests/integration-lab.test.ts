@@ -67,9 +67,13 @@ function expectStaticCSS(css: string) {
   expect(compactCSS).toContain('--color-primary:#123456')
 }
 
-function expectNoDuplicateRuntimeHTML(html: string) {
-  expect(count(html, 'master-css-runtime')).toBeLessThanOrEqual(2)
-  expect(count(html, /id="stet-css"/g)).toBeLessThanOrEqual(1)
+/**
+ * Static builds ship no runtime. The global name survives minification, so finding
+ * `stetCSSRuntime` in the output means a bundle carries `@stet-css/runtime`.
+ */
+function expectNoRuntime(output: string) {
+  expect(output).not.toContain('stetCSSRuntime')
+  expect(count(output, /id="stet-css"/g)).toBe(0)
 }
 
 function commonPackageJSON() {
@@ -461,7 +465,7 @@ describe('@stet-css/webpack with Rspack', () => {
 
       expect(html).toContain('Rspack fixture')
       expectStaticCSS(css)
-      expect(html).not.toContain('master-css-runtime')
+      expectNoRuntime(html + js)
       expect(css + js).not.toContain('stet-css-slot')
     } finally {
       cleanupFixture(root)
@@ -480,7 +484,7 @@ describe('@stet-css/webpack with Rsbuild', () => {
 
       expect(html).toContain('root')
       expectStaticCSS(css)
-      expect(html).not.toContain('master-css-runtime')
+      expectNoRuntime(html + js)
       expect(css + js).not.toContain('stet-css-slot')
     } finally {
       cleanupFixture(root)
@@ -515,13 +519,13 @@ describe('TanStack Start with @stet-css/vite', () => {
       expect(allOutput).toContain('TanStack Start fixture')
       expect(serverOutput).toContain('TanStack Start fixture')
       expectStaticCSS(css)
-      expectNoDuplicateRuntimeHTML(html)
+      expectNoRuntime(allOutput)
 
       const ssrHTML = await readTanStackSSRHTML(root)
       if (ssrHTML) {
         expect(ssrHTML).toContain('TanStack Start fixture')
         expect(ssrHTML).toContain('block fg:primary')
-        expectNoDuplicateRuntimeHTML(ssrHTML)
+        expectNoRuntime(ssrHTML)
       }
     } finally {
       cleanupFixture(root)

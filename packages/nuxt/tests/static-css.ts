@@ -8,13 +8,13 @@ export function findStylesheetHrefs(html: string) {
 
 /**
  * Checks the static fixture's page rendered its server component and both layers' components
- * without `_master-css/` references, and returns its stylesheet links.
+ * without `_stet-css/` references, and returns its stylesheet links.
  */
 export function expectStaticFixtureHTML(html: string) {
   expect(html).toContain('server component')
   expect(html).toContain('layer component')
   expect(html).toContain('extended base card')
-  expect(html).not.toContain('_master-css')
+  expect(html).not.toContain('_stet-css')
   const hrefs = findStylesheetHrefs(html)
   expect(hrefs.length).toBeGreaterThan(0)
   return hrefs
