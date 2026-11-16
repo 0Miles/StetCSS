@@ -1,64 +1,11 @@
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { build, type BuildOptions, type PluginOption } from 'vite'
 import { describe, expect, test } from 'vitest'
 import masterCSS from '../../src/core'
+import { buildProject, type BuildProjectOptions } from '../plugin-test-helper'
 
-interface BuildCSSFixtureOptions {
-  appClass?: string
-  build?: BuildOptions
-  mainTS?: string
-  plugins?: PluginOption[]
-  prefix?: string
-  setup?: (root: string) => void
-  styleCSS?: string
-}
-
-async function buildCSSFixture({
-  appClass = '',
-  build: buildOptions,
-  mainTS = 'import "./style.css"\n',
-  plugins = [masterCSS()],
-  prefix = 'master-css-vite-style-entry-',
-  setup,
-  styleCSS
-}: BuildCSSFixtureOptions) {
-  const tmpRoot = join(process.cwd(), 'tmp')
-  mkdirSync(tmpRoot, { recursive: true })
-  const root = mkdtempSync(join(tmpRoot, prefix))
-
-  try {
-    mkdirSync(join(root, 'src'), { recursive: true })
-    writeFileSync(join(root, 'index.html'), [
-      `<main${appClass ? ` class="${appClass}"` : ''}></main>`,
-      '<script type="module" src="/src/main.ts"></script>'
-    ].join('\n'))
-    writeFileSync(join(root, 'src/main.ts'), mainTS)
-    if (styleCSS !== undefined) writeFileSync(join(root, 'src/style.css'), styleCSS)
-    setup?.(root)
-
-    await build({
-      root,
-      logLevel: 'silent',
-      plugins,
-      build: {
-        outDir: 'dist',
-        emptyOutDir: true,
-        ...buildOptions
-      }
-    })
-
-    const assetsDir = join(root, 'dist/assets')
-    const cssFiles = readdirSync(assetsDir).filter((file) => file.endsWith('.css'))
-    expect(cssFiles.length).toBeGreaterThan(0)
-    if (!cssFiles.length) throw new Error('Expected Vite build to emit a CSS asset.')
-
-    return cssFiles
-      .map((file) => readFileSync(join(assetsDir, file), 'utf8'))
-      .join('\n')
-  } finally {
-    rmSync(root, { recursive: true, force: true })
-  }
+async function buildCSSFixture(options: BuildProjectOptions) {
+  return (await buildProject(options)).css
 }
 
 function expectMasterBaseCSS(css: string) {
@@ -137,6 +84,10 @@ describe('StyleEntryPlugin Vite build integration', () => {
     expect(css).not.toContain('#master-css-slot')
   })
 
+  /**
+   * Guards the explicit `@stet-css/core/base.css` subpath import in the default (static) build
+   * and in runtime mode: Vite must expand it into the preset base CSS, not ship the import.
+   */
   test.each([
     ['masterCSS()', undefined],
     ["masterCSS({ mode: 'runtime' })", { mode: 'runtime' }]
