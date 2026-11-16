@@ -110,13 +110,13 @@ describe('Vite dev HMR', () => {
     await page.goto(url)
     await page.waitForFunction(() => getComputedStyle(document.querySelector('#probe')!).display === 'inline-flex')
     await page.evaluate(() => {
-      (window as Window & { __MASTER_CSS_HMR_MARKER?: string }).__MASTER_CSS_HMR_MARKER = 'preserve'
+      (window as Window & { __STET_CSS_HMR_MARKER?: string }).__STET_CSS_HMR_MARKER = 'preserve'
     })
 
     writeStyle(fixtureDir, 'flex')
     await page.waitForFunction(() => getComputedStyle(document.querySelector('#probe')!).display === 'flex')
     expect(wsEvents).not.toContainEqual(expect.objectContaining({ type: 'full-reload' }))
-    expect(await page.evaluate(() => (window as Window & { __MASTER_CSS_HMR_MARKER?: string }).__MASTER_CSS_HMR_MARKER))
+    expect(await page.evaluate(() => (window as Window & { __STET_CSS_HMR_MARKER?: string }).__STET_CSS_HMR_MARKER))
       .toBe('preserve')
 
     writeStyle(fixtureDir, 'bg:neutral-120')
@@ -124,7 +124,7 @@ describe('Vite dev HMR', () => {
     writeStyle(fixtureDir, 'block')
     await page.waitForFunction(() => getComputedStyle(document.querySelector('#probe')!).display === 'block')
     expect(wsEvents).not.toContainEqual(expect.objectContaining({ type: 'full-reload' }))
-    expect(await page.evaluate(() => (window as Window & { __MASTER_CSS_HMR_MARKER?: string }).__MASTER_CSS_HMR_MARKER))
+    expect(await page.evaluate(() => (window as Window & { __STET_CSS_HMR_MARKER?: string }).__STET_CSS_HMR_MARKER))
       .toBe('preserve')
   })
 

@@ -168,7 +168,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
     // Simulate a downstream PostCSS plugin / minifier having mutated
     // the placeholder rule beyond recognition.
     const bundle = makeBundle({
-      'assets/index-abc.css': 'body{margin:0}#master_css_slot{--slot:0}',
+      'assets/index-abc.css': 'body{margin:0}#stet_css_slot{--slot:0}',
     })
     await (plugin as any).generateBundle.call({ warn }, {}, bundle)
 

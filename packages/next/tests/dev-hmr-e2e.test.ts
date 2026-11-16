@@ -216,8 +216,8 @@ describe('Next dev HMR', () => {
         return cascade && getComputedStyle(cascade).display === 'block'
       })
       await page.evaluate(() => {
-        const markerWindow = window as unknown as { __MASTER_CSS_HMR_MARKER?: string }
-        markerWindow.__MASTER_CSS_HMR_MARKER = 'preserve'
+        const markerWindow = window as unknown as { __STET_CSS_HMR_MARKER?: string }
+        markerWindow.__STET_CSS_HMR_MARKER = 'preserve'
       })
 
       writeFileSync(globalsPath, createGlobalsCSS('flex'))
@@ -226,7 +226,7 @@ describe('Next dev HMR', () => {
         return probe && getComputedStyle(probe).display === 'flex'
       })
       await expect(page.evaluate(() => {
-        return (window as unknown as { __MASTER_CSS_HMR_MARKER?: string }).__MASTER_CSS_HMR_MARKER
+        return (window as unknown as { __STET_CSS_HMR_MARKER?: string }).__STET_CSS_HMR_MARKER
       })).resolves.toBe('preserve')
 
       await waitForWidth(page, '#server-card', '120px')
