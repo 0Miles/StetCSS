@@ -1,4 +1,5 @@
 import { exceedsScriptNestingLimit } from '@stet-css/lexer'
+import { MAX_PARSE_LENGTH } from '../../src/utils/oxc-stack'
 import { spawn } from 'node:child_process'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
@@ -123,7 +124,7 @@ describe.concurrent('documents at the deepest nesting oxc still parses', () => {
  * language server. oxc must parse these on a stack sized to the source, and
  * the document's class positions must come back, from the regex scan when the
  * tree is too deep to walk. Reverse check: setting `INLINE_LENGTH` in
- * `oxc-stack.ts` to `Infinity` turns only these six cases red; dropping the
+ * `oxc-stack.ts` to `1 << 30` turns only these six cases red; dropping the
  * `RangeError` fallback in `createOxcClassPositions` turns only the `new`
  * chains case red.
  */
@@ -134,4 +135,21 @@ describe.concurrent('documents chained one level per line, 20,000 deep', () => {
     expect({ code, signal }, stderr).toEqual({ code: 0, signal: null })
     expect(JSON.parse(stdout)).toContain('block')
   })
+})
+
+/**
+ * Guards: a document longer than `MAX_PARSE_LENGTH` needs more stack than the
+ * parse thread can get, and 4 MB of labels overflows even that, killing the
+ * language server. It must skip oxc and keep its class positions through the
+ * regex scan. Reverse check: setting `MAX_PARSE_LENGTH` to `Infinity` turns
+ * only this case red.
+ */
+test('documents longer than the parse limit survive class position scanning and keep their classes', async () => {
+  const content = `${'a:'.repeat(2_000_000)}x= clsx('block')`
+  expect(content.length).toBeGreaterThan(MAX_PARSE_LENGTH)
+
+  const { code, signal, stdout, stderr } = await getClassTokensOnWorkerInChild('js', content)
+
+  expect({ code, signal }, stderr).toEqual({ code: 0, signal: null })
+  expect(JSON.parse(stdout)).toContain('block')
 })
