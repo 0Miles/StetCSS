@@ -62,9 +62,6 @@
       "path": "./packages/schema/tsconfig.typecheck.json"
     },
     {
-      "path": "./packages/server/tsconfig.typecheck.json"
-    },
-    {
       "path": "./packages/source/tsconfig.typecheck.json"
     },
     {
