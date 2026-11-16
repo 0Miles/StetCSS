@@ -266,7 +266,7 @@ async function createExtractionDiagnosticsReport(): Promise<BenchmarkReport> {
       'This suite is diagnostic and does not replace end-user production command timing from build-performance.',
       'Scanner setup is shared with the CLI-equivalent path, while reported extraction timings focus on createExtractedCSS and render decomposition.',
       'The benchmark-local diagnostic renderer must produce the same final CSS SHA-256 as production createExtractedCSS before numbers are reported.',
-      'Do not use diagnostic numbers as permission to change CSS output, cascade order, source detection, hydration, or public behavior.'
+      'Do not use diagnostic numbers as permission to change CSS output, cascade order, source detection, or public behavior.'
     ],
     artifacts
   }
