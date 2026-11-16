@@ -1072,17 +1072,30 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
    * say declared modes replaced the preset ones, or (for `@compose`) emitting `@container dark`.
    * Reverse-checked: removing the `isUndeclaredPresetMode` branch in `resolveConditionVariantReference`
    * reds the `@variant` row only; removing the engine throw reds the `@compose` row only.
+   * The `@variant &` and `@variant ,` rows (#72) cover a mode inside a condition list: dropping the
+   * `UndeclaredModeError` throw in `resolveMasterVariantReference` reds the `,` row only; dropping
+   * `splitModeConjuncts` there reds the `&` row (and the #72 tests below).
    */
+  test.each([
+    ['@variant', '.a { color: red; @variant dark { color: blue; } }', '@variant dark uses mode "dark", which is not declared (declared modes: "sepia")'],
+    ['@variant &', '.a { color: red; @variant sm&dark { color: blue; } }', '@variant dark uses mode "dark", which is not declared (declared modes: "sepia")'],
+    ['@variant ,', '.a { color: red; @variant sm,dark { color: blue; } }', '@variant dark uses mode "dark", which is not declared (declared modes: "sepia")'],
+    ['@compose', '.b { @compose fg:red@dark; }', 'Class "fg:red@dark" uses mode "dark", which is not declared (declared modes: "sepia")']
+  ])('rejects an undeclared mode in entry CSS: %s', (_, body, message) => {
+    expect(() => compileCSSManifest(`@theme sepia {}\n${body}`, { baseManifest: defaultManifest })).toThrow(message)
+  })
+
   /**
    * Prevents (#72): `@variant sm&dark {}` reading `dark` as part of the media query
    * (`@media (width>=52.125rem) and dark`, dropped by browsers) instead of the mode, so the block
    * never applies; it must mean what `@variant sm@dark {}` means under every trigger.
-   * Reverse-checked: dropping `splitModeConjuncts` in `resolveMasterVariantReference` reds both
-   * rows and the `@variant &` row of the undeclared-mode test below, nothing else in this file.
+   * Reverse-checked: dropping `splitModeConjuncts` in `resolveMasterVariantReference` reds these
+   * three rows and the `@variant &` row above, nothing else in this file.
    */
   test.each([
     ['media', '@media (width>=52.125rem){@media (prefers-color-scheme:dark){.card{color:red}}}'],
-    ['class', '@media (width>=52.125rem){.dark .card{color:red}}']
+    ['class', '@media (width>=52.125rem){.dark .card{color:red}}'],
+    ['host', '@media (width>=52.125rem){:host(.dark) .card{color:red}}']
   ])('@variant sm&dark is @variant sm@dark: %s trigger', (trigger, css) => {
     const compile = (variant: string) => compileCSSManifest(
       `@settings { mode-trigger: ${trigger}; } .card { @variant ${variant} { color: red; } }`,
@@ -1093,12 +1106,15 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     expect(compile('sm@dark')).toBe(css)
   })
 
-  test.each([
-    ['@variant', '.a { color: red; @variant dark { color: blue; } }', '@variant dark uses mode "dark", which is not declared (declared modes: "sepia")'],
-    ['@variant &', '.a { color: red; @variant sm&dark { color: blue; } }', '@variant dark uses mode "dark", which is not declared (declared modes: "sepia")'],
-    ['@compose', '.b { @compose fg:red@dark; }', 'Class "fg:red@dark" uses mode "dark", which is not declared (declared modes: "sepia")']
-  ])('rejects an undeclared mode in entry CSS: %s', (_, body, message) => {
-    expect(() => compileCSSManifest(`@theme sepia {}\n${body}`, { baseManifest: defaultManifest })).toThrow(message)
+  /**
+   * Prevents (#72): a declared mode inside a `,` list or after `!` (`@variant sm,md&dark {}`)
+   * compiling to `… or (width>=64rem) and dark`, a query browsers drop; no single query or
+   * selector expresses it, so the build fails and names the mode.
+   * Reverse-checked: dropping the generic throw in `resolveMasterVariantReference` reds both rows.
+   */
+  test.each(['sm,md&dark', '!dark'])('rejects a mode @variant %s cannot express', (variant) => {
+    expect(() => compileCSSManifest(`.card { @variant ${variant} { color: red; } }`, { baseManifest: defaultManifest }))
+      .toThrow('puts mode "dark" in a "," list or after "!"')
   })
 
   /**
