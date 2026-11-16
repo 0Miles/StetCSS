@@ -149,6 +149,8 @@ describe('@stet-css/diagnostics', () => {
     try {
       writeFileSync(join(cwd, 'index.css'), [
         '@import "@stet-css/core";',
+        // A custom mode needs the class trigger to apply; under media it warns (#70).
+        '@settings { mode-trigger: class; }',
         '@theme { --color-brand: #f00; --spacing-card: 1.25rem; }',
         '@theme light {}',
         '@theme sepia {}',
