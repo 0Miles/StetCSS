@@ -740,12 +740,12 @@ test.concurrent('renders CSS document semantic tokens only inside directive clas
   })
   const themeStart = content.indexOf(themeDirective)
   const themeEnd = themeStart + themeDirective.length
-  const masterRanges = [safelistDirective, utilitiesDirective].map((directive) => {
+  const stetRanges = [safelistDirective, utilitiesDirective].map((directive) => {
     const start = content.indexOf(directive)
     return { start, end: start + directive.length }
   })
-  const isInsideMasterRange = ({ start, end }: { start: number, end: number }) =>
-    masterRanges.some((range) => range.start <= start && end <= range.end)
+  const isInsideStetRange = ({ start, end }: { start: number, end: number }) =>
+    stetRanges.some((range) => range.start <= start && end <= range.end)
   const expectNoTokenOverlaps = (text: string, from = 0) => {
     const start = content.indexOf(text, from)
     expect(start).toBeGreaterThanOrEqual(0)
@@ -754,7 +754,7 @@ test.concurrent('renders CSS document semantic tokens only inside directive clas
   }
 
   expect(tokens.length).toBeGreaterThan(0)
-  expect(tokens.every(isInsideMasterRange)).toBe(true)
+  expect(tokens.every(isInsideStetRange)).toBe(true)
   expect(tokens.every((token) => classListRanges.some((range) => range.start <= token.start && token.end <= range.end))).toBe(true)
   expect(tokens.map(({ text }) => text)).toEqual(expect.arrayContaining([
     'hidden',
