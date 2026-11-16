@@ -158,6 +158,23 @@ describe('MasterCSSPlugin', () => {
     expect(MasterCSSPlugin.name).toBe('MasterCSSPlugin')
   })
 
+  /**
+   * Guards that the plugin takes only `adapters`: the second form, scanner options passed
+   * straight in (`new MasterCSSPlugin({ safelist })`), the nested `scanner` and a typo all
+   * throw when the config loads instead of being ignored, as `examples/webpack`'s `sources`
+   * once was.
+   * Reverse check: dropping the `validatePluginOptions` call in `src/plugin.ts` turns only this
+   * test red.
+   */
+  test('rejects scanner options, the nested scanner and unknown keys', () => {
+    expect(() => new MasterCSSPlugin({ safelist: ['block'] } as never))
+      .toThrow('@stet-css/webpack option "safelist" was removed; use @safelist in the CSS entry.')
+    expect(() => new MasterCSSPlugin({ scanner: { adapters: [] } } as never))
+      .toThrow('@stet-css/webpack option "scanner" was removed; pass "adapters" directly.')
+    expect(() => new MasterCSSPlugin({ sources: ['./src'] } as never))
+      .toThrow('Unknown @stet-css/webpack option "sources"; the only option is "adapters".')
+  })
+
   test('installs a pre style loader for managed CSS entries', () => {
     const plugin = makePlugin()
     const { compiler } = makeFakeCompiler()

@@ -1,4 +1,4 @@
-import { CSSScanner, type ScannerOptions } from '@stet-css/scanner'
+import { CSSScanner, validatePluginOptions, type ScannerOptions } from '@stet-css/scanner'
 import type { MasterCSS, MasterCSSEmittedGlobals, MasterCSSManifest } from '@stet-css/core'
 import { toManifestJSON } from '@stet-css/integration/manifest-module'
 import {
@@ -38,11 +38,7 @@ import VirtualCSSImportPlugin from './plugins/virtual-css-import'
 import ManifestLoaderPlugin from './plugins/manifest-loader'
 import StyleEntryPlugin from './plugins/style-entry'
 import StaticCSSDependenciesPlugin from './plugins/static-css-dependencies'
-import {
-  resolvePluginOptions,
-  type PluginOptions,
-  type ResolvedPluginOptions
-} from './options'
+import type { PluginOptions } from './options'
 
 const NAME = 'MasterCSSPlugin'
 const SEED_FILE_TIME = new Date('2000-01-01T00:00:00Z')
@@ -103,7 +99,6 @@ export interface MasterCSSWebpackContext {
 export class MasterCSSPlugin {
 
   readonly scanner: CSSScanner
-  readonly pluginOptions: ResolvedPluginOptions
   readonly hostId = `${NAME}:${hostCount++}`
   pluginInitialized = false
   manifestJSONAssets = new Map<string, string>()
@@ -128,12 +123,15 @@ export class MasterCSSPlugin {
   private compiler?: Compiler
   development = false
 
+  /**
+   * @param options - Only `adapters`; a removed or unknown key throws.
+   */
   constructor(
-    customOptions: ScannerOptions | PluginOptions = {},
+    options: PluginOptions = {},
     public cwd = process.cwd()
   ) {
-    this.pluginOptions = resolvePluginOptions(customOptions)
-    this.scanner = new CSSScanner(this.pluginOptions.scanner, cwd)
+    validatePluginOptions(options, '@stet-css/webpack')
+    this.scanner = new CSSScanner(options, cwd)
     registerHost(this.hostId, {
       addStyleEntry: (file) => this.addStyleEntry(file)
     })
@@ -144,7 +142,6 @@ export class MasterCSSPlugin {
   }
 
   set customOptions(customOptions: ScannerOptions) {
-    this.pluginOptions.scanner = customOptions
     this.scanner.customOptions = customOptions
   }
 
