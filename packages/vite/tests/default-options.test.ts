@@ -31,8 +31,11 @@ describe.each(Object.keys(builds))('%s', (label) => {
    * without utilities and the page would render unstyled, since nothing loads the runtime any
    * more. A config that still passes a removed rendering mode now throws (`options.test.ts`).
    *
-   * Reverse check: on the code before #59, where the default `mode: 'runtime'` selected the
-   * runtime plugins, both tests failed.
+   * Reverse check: giving the scanner a custom adapter that matches every file and finds no
+   * class (`src/plugins/scanner.ts`) turns the CSS test red here, along with the adapter test
+   * in `options.test.ts`. The HTML test guards the runtime injection #59 deleted, so no line is
+   * left to break; it was not re-run against the code before #53 (`237d0274e`), whose default
+   * `mode: 'runtime'` injected the runtime.
    */
   test('builds CSS that contains the rules for classes in the source', () => {
     expect(outputs[label].css).toContain('.block{display:block}')

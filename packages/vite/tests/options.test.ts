@@ -18,7 +18,7 @@ describe('masterCSS options', () => {
    * Guards that a config written for the removed rendering modes, or with a typo, fails when
    * Vite loads it instead of building without what the developer asked for.
    * Reverse check: dropping the `validatePluginOptions` call in `src/core.ts` turns only this
-   * test red.
+   * test red in this package; after a build, the astro, svelte and nuxt unknown-key tests too.
    */
   test('rejects removed and unknown keys when the config loads', () => {
     expect(() => masterCSS({ mode: 'runtime' } as never))
@@ -33,7 +33,7 @@ describe('masterCSS options', () => {
    * Guards that custom `adapters` reach the class set of a real build: a project whose
    * templates only its adapter can read would otherwise ship without those rules.
    * Reverse check: creating the scanner with `{}` in `src/plugins/scanner.ts` turns only this
-   * test red.
+   * test red in this package; after a build, the astro, svelte and nuxt adapter tests too.
    */
   test('builds the classes custom adapters find', async () => {
     const { css } = await buildProject({
