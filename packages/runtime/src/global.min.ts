@@ -4,9 +4,6 @@ import CSSRuntime from './core'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 
-try {
-  CSSRuntime.create({ manifest: defaultManifestJSON as unknown as MasterCSSManifest }).observe()
-} finally {
-  // `create` and `observe` reveal the page on success and on failure.
-  cancelRevealFallback()
-}
+// `create` and `observe` reveal the page themselves, also when they throw.
+CSSRuntime.create({ manifest: defaultManifestJSON as unknown as MasterCSSManifest }).observe()
+cancelRevealFallback()
