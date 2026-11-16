@@ -18,7 +18,7 @@ import generateSelector from './utils/generate-selector'
 import { calcRulePriority, RulePriority } from './utils/compare-rule-priority'
 import collectVariableNames from './utils/collect-variable-names'
 import wrapConditions from './utils/wrap-conditions'
-import { createAlphaColorValue, createCSSVariableReference, createNegativeNumberVariableReference, createNumberVariableReference, normalizeEngineVariableValue } from './utils/css-variables'
+import { createAlphaColorValue, createCSSVariableReference, normalizeEngineVariableValue } from './utils/css-variables'
 import collectAnimationNames from './utils/collect-animation-names'
 import { isKnownPseudoClass } from './pseudo-classes'
 
@@ -942,14 +942,8 @@ export class Utility {
           }
           const emitVariable = (variable?: Variable) => {
             if (variable?.type === 'number' && eachValueComponent.alpha === undefined) {
-              if (negative) {
-                return bypassParsing
-                  ? negateResolvedValue(createCSSVariableReference(variable.name))
-                  : createNegativeNumberVariableReference(variable)
-              }
-              if (!bypassParsing) {
-                return createNumberVariableReference(variable)
-              }
+              if (negative) return negateResolvedValue(createCSSVariableReference(variable.name))
+              if (!bypassParsing) return createCSSVariableReference(variable.name)
             }
             return createCSSVariableReference(variableName, eachValueComponent.alpha, resolveFallback())
           }

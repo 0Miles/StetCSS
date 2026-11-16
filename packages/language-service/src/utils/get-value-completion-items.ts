@@ -4,7 +4,7 @@ import createCSSMarkdownDocumentation from './create-css-markdown-documentation'
 import sortCompletionItems from './sort-completion-items'
 import { getMdnPropertySyntax, getMdnPropertyValueNames } from '@stet-css/language'
 import { createCompletionIndex, type CompletionIndex } from './completion-index'
-import { ROOT_FONT_SIZE } from '@stet-css/engine/inspect'
+import { ROOT_FONT_SIZE } from '@stet-css/engine/compiler'
 
 const SCOPED_VARIABLE_PRIORITY = 'aaaa'
 const NATIVE_PRIORITY = 'ccccc'

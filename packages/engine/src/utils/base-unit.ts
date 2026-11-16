@@ -1,4 +1,5 @@
 import { MASTER_CSS_LENGTH_UNITS } from '@stet-css/lexer'
+import { formatDimension } from './format-dimension'
 
 /** The length one `x` stands for, parsed from the `baseUnit` setting. */
 export interface BaseUnit {
@@ -7,7 +8,9 @@ export interface BaseUnit {
 }
 
 const BASE_UNIT_SETTING_REGEX = new RegExp(`^(\\d+(?:\\.\\d+)?|\\.\\d+)(${MASTER_CSS_LENGTH_UNITS.join('|')})$`, 'i')
-const parsedBaseUnits = new Map<string, BaseUnit | undefined>()
+// One engine has one base unit, so remembering the last parse spares every `x` value a regex run.
+let lastSetting: string | undefined
+let lastBaseUnit: BaseUnit | undefined
 
 /**
  * Parses a `baseUnit` setting. Only a non-negative number followed by a CSS length unit, such as
@@ -16,11 +19,11 @@ const parsedBaseUnits = new Map<string, BaseUnit | undefined>()
  */
 export function parseBaseUnit(value: unknown): BaseUnit | undefined {
   if (typeof value !== 'string') return
-  if (parsedBaseUnits.has(value)) return parsedBaseUnits.get(value)
+  if (value === lastSetting) return lastBaseUnit
   const matches = BASE_UNIT_SETTING_REGEX.exec(value.trim())
-  const baseUnit = matches ? { value: Number(matches[1]), unit: matches[2].toLowerCase() } : undefined
-  parsedBaseUnits.set(value, baseUnit)
-  return baseUnit
+  lastSetting = value
+  lastBaseUnit = matches ? { value: Number(matches[1]), unit: matches[2].toLowerCase() } : undefined
+  return lastBaseUnit
 }
 
 export function assertBaseUnit(value: unknown): BaseUnit {
@@ -36,5 +39,5 @@ export function formatBaseUnitMultiple(multiplier: number, baseUnitSetting: stri
   const baseUnit = assertBaseUnit(baseUnitSetting)
   // 15 significant digits drop binary floating-point tails: 3 × 0.1 is 0.30000000000000004.
   const resolved = Number((multiplier * baseUnit.value).toPrecision(15))
-  return String(Object.is(resolved, -0) ? 0 : resolved).replace(/^(-?)0\./, '$1.') + baseUnit.unit
+  return formatDimension(resolved, baseUnit.unit)
 }

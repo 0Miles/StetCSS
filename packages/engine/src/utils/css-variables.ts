@@ -1,8 +1,4 @@
-import type { Variable } from '@stet-css/schema/css-syntax'
-
-function formatAlphaPercentage(value: number) {
-  return String(Object.is(value, -0) ? 0 : value).replace(/^(-?)0\./, '$1.') + '%'
-}
+import { formatDimension } from './format-dimension'
 
 export function normalizeEngineVariableValue(value: string | number) {
   return typeof value === 'number'
@@ -18,13 +14,6 @@ export function createCSSVariableReference(name: string, alpha?: number, fallbac
 }
 
 export function createAlphaColorValue(value: string, alpha: number) {
-  return `color-mix(in oklab,${value} ${formatAlphaPercentage(alpha * 100)},transparent)`
+  return `color-mix(in oklab,${value} ${formatDimension(alpha * 100, '%')},transparent)`
 }
 
-export function createNumberVariableReference(variable: Variable) {
-  return createCSSVariableReference(variable.name)
-}
-
-export function createNegativeNumberVariableReference(variable: Variable) {
-  return `calc(${createCSSVariableReference(variable.name)} * -1)`
-}
