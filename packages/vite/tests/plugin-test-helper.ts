@@ -50,7 +50,7 @@ export function createProjectContext({
     config: { command, root },
     scanner: {
       cwd: root,
-      options: { safelist: [] },
+      options: { adapters: [] },
       slotCSSRule: SLOT_CSS_RULE,
       css: { text: '', manifest: defaultManifestJSON },
       config: {},
