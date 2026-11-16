@@ -1154,12 +1154,9 @@ async function assertDiagnosticPageReady(page: Page, modeId: InteractionModeId) 
     throw new Error(`Expected interaction style probe text-align:center, received ${state.textAlign}.`)
   }
 
-  if (modeId === 'master-runtime' && !state.runtimeAvailable) {
-    throw new Error(`${modeId} did not expose globalThis.masterCSSRuntime.`)
-  }
-
-  if (modeId === 'master-runtime' && state.htmlHidden) {
-    throw new Error('Master runtime diagnostic page did not reveal the hidden html element.')
+  if (modeId === 'master-runtime') {
+    if (!state.runtimeAvailable) throw new Error(`${modeId} did not expose globalThis.masterCSSRuntime.`)
+    if (state.htmlHidden) throw new Error('Master runtime diagnostic page did not reveal the hidden html element.')
   }
 }
 
