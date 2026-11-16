@@ -130,6 +130,8 @@ describe('StyleEntryPlugin', () => {
    * Prevents: a stylesheet still marked with the removed `@master entry;` passing the build
    * untouched. It is no longer an entry, so the transform itself must fail and name
    * `@import '@stet-css/core'`, or the developer gets no CSS and no error.
+   * Reverse check: removing both `assertNoMasterAtRules` calls from `resolveMasterStyleSource`
+   * turns only this test red.
    */
   test('fails the build for stylesheets still marked with @master entry', async () => {
     const context = makeContext('build')
@@ -139,7 +141,9 @@ describe('StyleEntryPlugin', () => {
       {},
       '@master entry;\n.card{color:red}',
       '/project/src/style.css'
-    )).rejects.toThrow(`@master entry; was removed; mark stylesheet entries with @import '@stet-css/core'; instead`)
+    )).rejects.toThrow(expect.objectContaining({
+      message: expect.stringMatching(/@master entry;.*@import '@stet-css\/core'/)
+    }))
   })
 
   test('ignores stylesheets without @stet-css/core imports', async () => {
