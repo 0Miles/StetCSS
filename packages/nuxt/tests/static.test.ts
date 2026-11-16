@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { $fetch } from '@nuxt/test-utils/e2e'
 import { dirname, resolve } from 'node:path'
 import { setupNuxtTest } from './setup-test'
-import { expectStaticFixtureCSS, findStylesheetHrefs } from './static-css'
+import { expectStaticFixtureCSS, expectStaticFixtureHTML } from './static-css'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const rootDir = resolve(__dirname, './fixtures/static/')
@@ -19,12 +19,7 @@ setupNuxtTest({ rootDir })
  */
 it('builds static CSS that covers server components and layers', async () => {
   const html = await $fetch<string>('/')
-  expect(html).toContain('server component')
-  expect(html).toContain('layer component')
-  expect(html).toContain('extended base card')
-  expect(html).not.toContain('_master-css')
-  const hrefs = findStylesheetHrefs(html)
-  expect(hrefs.length).toBeGreaterThan(0)
+  const hrefs = expectStaticFixtureHTML(html)
   for (const href of hrefs) expect(href).toMatch(/\/_nuxt\/.*\.css/)
   const css = (await Promise.all(hrefs.map((href) => $fetch<string>(href)))).join('\n')
   expectStaticFixtureCSS(css)
