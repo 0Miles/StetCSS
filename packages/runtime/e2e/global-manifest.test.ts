@@ -117,7 +117,7 @@ for (const { name, cdn, short } of [
 /**
  * Guards FOUC on the CDN path: the bundle now starts while `<head>` is still parsing,
  * before `<body>` exists, and must still remove `hidden` from `<html>`.
- * Reverse check: making `revealHostIfNeeded` a no-op turns this red and leaves the layout cases green.
+ * Reverse check: dropping the `hidden` removal from `observe()` turns this red and leaves the layout cases green.
  */
 test('reveals the page when started from a head script', async ({ page }) => {
   await page.setContent(renderPage(`${CDN_PACKAGE_PATHS.jsdelivr}/dist/global.min.js`))

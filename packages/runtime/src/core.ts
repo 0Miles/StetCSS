@@ -79,7 +79,13 @@ export default class CSSRuntime extends MasterCSS {
       current.registerEmittedGlobals(emittedGlobals)
       return current
     }
-    return new CSSRuntime(root, manifest, emittedGlobals).register()
+    try {
+      return new CSSRuntime(root, manifest, emittedGlobals).register()
+    } catch (error) {
+      // An invalid manifest or a broken environment must not leave a hidden page blank.
+      hostOf(root).removeAttribute('hidden')
+      throw error
+    }
   }
 
   constructor(
@@ -470,12 +476,16 @@ export default class CSSRuntime extends MasterCSS {
   observe(): this {
     if (this.observing) return this
 
-    const connectedNames = this.classTracker.collectConnected(this.root, this.classCounts)
-    this.createRuntimeStyle()
-    this.insertStaticResources()
-    connectedNames.forEach(cls => this.ensureClassRules(cls))
-    this.startMutationObserver()
-    this.host.removeAttribute('hidden')
+    try {
+      const connectedNames = this.classTracker.collectConnected(this.root, this.classCounts)
+      this.createRuntimeStyle()
+      this.insertStaticResources()
+      connectedNames.forEach(cls => this.ensureClassRules(cls))
+      this.startMutationObserver()
+    } finally {
+      // Reveal after the first render, and also when it throws, so a hidden page never stays blank.
+      this.host.removeAttribute('hidden')
+    }
     this.observing = true
     if (process.env.NODE_ENV === 'development') {
       debugRuntimeObserved(this)
