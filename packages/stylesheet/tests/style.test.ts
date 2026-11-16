@@ -653,6 +653,34 @@ describe('style CSS extraction helpers', () => {
     expect(css).not.toContain('@stet-css/core')
   })
 
+  /**
+   * Prevents (#69): the build-plugin path, an entry that declares only `@theme sepia {}` plus
+   * markup using `fg:red@dark`, shipping `@container dark{…}` without telling anyone, or the
+   * pipeline swallowing the engine's undeclared-mode error so the build passes with the class
+   * missing. Build integrations surface this rejection as a build error.
+   * Reverse-checked: removing the undeclared-mode throw in the engine's `resolveStateBranches`
+   * (and rebuilding) reds only this test.
+   */
+  it('fails extraction when markup uses a mode the entry does not declare', async () => {
+    const root = createFixture()
+    const scanner = new CSSScanner({}, root)
+    await scanner.init()
+
+    const styleCSSSources = new Map()
+    await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'app/globals.css'), `
+      @import "@stet-css/core";
+
+      @theme sepia {}
+    `)
+    await scanner.scan(join(root, 'app/page.tsx'), '<main class="fg:red@dark"></main>')
+
+    await expect(createExtractedCSS({
+      scanner,
+      styleCSSSources,
+      projectDir: root
+    })).rejects.toThrow('Class "fg:red@dark" uses mode "dark", which is not declared (declared modes: "sepia")')
+  })
+
   it('keeps non-expandable native imports out of generated managed CSS', async () => {
     const root = createFixture()
     const scanner = new CSSScanner({}, root)
