@@ -1,4 +1,4 @@
-import { ConfigurationRequest, InitializeRequest, InitializedNotification, type InitializeParams, type InitializeResult } from 'vscode-languageserver/node'
+import { ConfigurationRequest, InitializeRequest, InitializedNotification, ShutdownRequest, type InitializeParams, type InitializeResult } from 'vscode-languageserver/node'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -13,6 +13,10 @@ async function withServer(cb: (context: Context) => Promise<void>) {
   const context = connect()
   try {
     await cb({ ...context, rootUri: URI.file(cwd).toString() })
+    // Shut down like an editor client before disposing. The server handles messages in the order
+    // they arrive, so its shutdown reply also means it has received the client's replies to its
+    // own requests (`stetCSS/restart`); disposing earlier rejects those still-pending requests.
+    await context.clientConnection.sendRequest(ShutdownRequest.type)
   } finally {
     context.server.stop()
     context.clientConnection.dispose()
