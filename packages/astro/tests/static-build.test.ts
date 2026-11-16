@@ -1,9 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { readFileSync, readdirSync, rmSync } from 'node:fs'
+import { rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { build } from 'astro'
 import type { AstroIntegration } from 'astro'
+import { cleanFixture, readFiles } from './fixture-helpers'
 import masterCSS from '../src'
 
 const root = fileURLToPath(new URL('./fixtures/static-build/', import.meta.url))
@@ -29,11 +30,6 @@ const stubAdapter: AstroIntegration = {
   }
 }
 
-function readFiles(dir: string, extension: string): string[] {
-  return readdirSync(dir, { recursive: true, withFileTypes: true })
-    .filter((entry) => entry.isFile() && entry.name.endsWith(extension))
-    .map((entry) => readFileSync(join(entry.parentPath, entry.name), 'utf8'))
-}
 
 beforeAll(async () => {
   rmSync(outDir, { recursive: true, force: true })
@@ -48,11 +44,7 @@ beforeAll(async () => {
   } as Parameters<typeof build>[0])
 }, 180_000)
 
-afterAll(() => {
-  rmSync(outDir, { recursive: true, force: true })
-  rmSync(join(root, '.astro'), { recursive: true, force: true })
-  rmSync(join(root, 'node_modules'), { recursive: true, force: true })
-})
+afterAll(() => cleanFixture(root, outDir))
 
 /**
  * Guards what this package exists for: `masterCSS()` with no options must give an Astro
