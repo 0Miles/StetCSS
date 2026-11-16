@@ -58,7 +58,7 @@
 npm install @stet-css/scanner
 ```
 
-`@stet-css/scanner` is the Node.js content-scanning engine behind Master CSS static rendering. It scans supplied source text, validates possible classes, inserts generated rules, and maintains scanner state for build integrations. Source discovery, file watching, and CSS file output are owned by CLI/framework/build integrations.
+`@stet-css/scanner` validates class candidates from supplied source text, inserts the rules of the valid ones, and caches what it has seen for build integrations. Source discovery, the class set, file watching, and CSS file output are owned by `@stet-css/stylesheet` and the CLI/framework/build integrations.
 
 ## Usage
 
@@ -68,25 +68,22 @@ import { CSSScanner } from '@stet-css/scanner'
 const scanner = new CSSScanner(options, cwd)
 ```
 
-`cwd` resolves project-relative module excludes and log output.
-
 ## Options
-
-Default options are exported from the root package and the side-effect-free `./options` subpath:
-
-```js
-import { scannerOptions } from '@stet-css/scanner'
-import defaultScannerOptions from '@stet-css/scanner/options'
-```
 
 | Option | Type | Description |
 | --- | --- | --- |
-| `manifest` | `MasterCSSManifest` | Explicit compiled manifest. When omitted, integrations and CLI flows load the project CSS entry manifest from `cwd`. |
-| `exclude` | `string[]` | Module paths to exclude from integration-fed module scans. |
-| `safelist` | `string[]` | Classes generated regardless of source detection. |
-| `blocklist` | `(string \| RegExp)[]` | Classes excluded from accidental scanner matches. |
+| `adapters` | `SourceAdapter[]` | Custom source adapters, tried before the built-in ones. |
 
-Use `safelist` for classes from asynchronous data, irregular classes, or classes that are not visible in source. Use `blocklist` for false positives.
+Any other key throws. The removed options throw with their replacement:
+
+| Removed option | Replacement |
+| --- | --- |
+| `safelist` | `@safelist` in the CSS entry |
+| `blocklist` | `@blocklist` in the CSS entry |
+| `exclude` | `@source not` in the CSS entry |
+| `manifest` | a CSS entry that imports `@stet-css/core` |
+| `verbose` | the CLI's `-v` |
+| `path` | none; it had no effect |
 
 ## CSS directives
 
@@ -101,7 +98,7 @@ CLI and framework/build integrations handle ordinary project source discovery. U
 @blocklist 'debug-*';
 ```
 
-The stylesheet pipeline resolves the files a static build reads as `(project source files + @source) - @source not`. Project source files are the files under the project root with a source extension, outside dependency (`node_modules`, `vendor`), version control, build output and cache directories. Use `@source` for files outside that set, such as a component library in `node_modules` (`@source '../node_modules/ui-kit';`) or a package outside the project root, rather than restating the default app scan. A path without glob characters that names a directory covers everything under it. `@safelist` maps to `safelist`, and `@blocklist` maps to `blocklist`; `@blocklist` also removes classes found by an integration's module scan.
+The stylesheet pipeline resolves the files a static build reads as `(project source files + @source) - @source not`. Project source files are the files under the project root with a source extension, outside dependency (`node_modules`, `vendor`), version control, build output and cache directories. Use `@source` for files outside that set, such as a component library in `node_modules` (`@source '../node_modules/ui-kit';`) or a package outside the project root, rather than restating the default app scan. A path without glob characters that names a directory covers everything under it.
 
 Bare source globs are resolved from `cwd`. Globs that start with `./` or `../` are resolved relative to the CSS file that declares the directive. `@blocklist` accepts exact strings and `*` / `?` wildcard patterns.
 
