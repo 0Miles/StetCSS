@@ -1,10 +1,9 @@
 # @stet-css/runtime
 
-Runs the engine in the browser. `CSSRuntime` observes DOM class changes, keeps per-class **usage counts**, and inserts or deletes native rules in `style#master-css`; when that style arrives prerendered, it **hydrates** the sheet from a hydration manifest instead of regenerating it.
+Runs the engine in the browser. `CSSRuntime` observes DOM class changes, keeps per-class **usage counts**, and inserts or deletes native rules in its own `style#master-css`. It never reads or adopts rules already on the page: static CSS from a build and the runtime's sheet are independent.
 
 ## Boundaries
 
-- Hydration manifest: engine `createHydrationManifest` builds it; the format → `@stet-css/schema/hydration-manifest`.
 - Framework provider lifecycle → the framework packages. No build plugin injects the runtime: a project imports it itself with the two Vite virtual modules, `virtual:master-css-manifest` and `virtual:master-css-emitted-globals` (`examples/lit`).
 
 ## Risks
@@ -14,12 +13,11 @@ Runs the engine in the browser. `CSSRuntime` observes DOM class changes, keeps p
 - **Usage counts**: a class keeps its rules while its `classCounts` entry lives. Pair every increment with its decrement across `MutationObserver` diffs, for Document and ShadowRoot roots alike.
 - **Emitted globals**: emittedGlobals variable and keyframe counts stop duplicate global insertion and leave utility insertion untouched.
 - **Native indexes**: locate a native rule by identity (`findNativeCSSRuleIndex`) before deleting it; a guessed index deletes the wrong rule.
-- **Hydration** adopts a prerendered sheet only when its layers (`CSSLayerBlockRule`), theme and keyframes (`CSSKeyframesRule`) match the hydration manifest; every mismatch goes through `failHydration` to a runtime rebuild. Keep each check.
-- **FOUC**: runtime removes `hidden` from `<html>` after a non-hydrating render, for pages that hide the root until it runs; no build integration adds `hidden` any more.
+- **FOUC**: runtime removes `hidden` from `<html>` after its first render, for pages that hide the root until it runs; no build integration adds `hidden` any more.
 - **Global names** `MasterCSSRuntime` (the class, holding `instances`) and `masterCSSRuntime` (the document instance) are public; rename them only on request.
 - **Named access**: page elements with an `id` or `name` occupy same-named `window` globals, and `name`d `img`/`form`/`embed`/`object`/`iframe` elements shadow `document` members. Read the runtime's own class directly, accept a `MasterCSSRuntime` global only when `isRuntimeClass` passes, and read `document` members through `src/document.ts`.
 
 ## Validation
 
-- `e2e` (Playwright) is the test suite and covers `e2e/**` and `tests/issues/**`. Extend `e2e/lifecycle.test.ts`, `e2e/class-usages.test.ts`, `e2e/dom-clobbering.test.ts` (named access) or `e2e/progressive/**`, or add an issue regression under `tests/issues/`.
-- Run `bench` when changing DOM observation, class tracking, lifecycle, hydration, CSSOM insertion or deletion, or the global bundle. e2e asserts browser correctness; timing belongs to `bench`. Report bench status, global bundle impact, memory / cold-start / CPU / CSSOM trade-offs, and whether CSS output, progressive hydration or fallback hydration changed.
+- `e2e` (Playwright) is the test suite and covers `e2e/**` and `tests/issues/**`. Extend `e2e/lifecycle.test.ts`, `e2e/class-usages.test.ts`, or `e2e/dom-clobbering.test.ts` (named access), or add an issue regression under `tests/issues/`.
+- Run `bench` when changing DOM observation, class tracking, lifecycle, CSSOM insertion or deletion, or the global bundle. e2e asserts browser correctness; timing belongs to `bench`. Report bench status, global bundle impact, memory / cold-start / CPU / CSSOM trade-offs, and whether CSS output changed.
