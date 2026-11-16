@@ -125,6 +125,38 @@ it('change html file class attr and update', async () => {
   expect(fileCSSText).toContain(cssEscape('underline'))
 })
 
+async function waitForOutput(doesMatch: (output: string) => boolean) {
+  const deadline = Date.now() + 60000
+  while (Date.now() < deadline) {
+    if (doesMatch(subprocessOutput)) return subprocessOutput
+    await new Promise((resolve) => setTimeout(resolve, 100))
+  }
+  throw new Error(`Timed out waiting for process output.\n\nProcess output:\n${subprocessOutput}`)
+}
+
+/**
+ * Guards watch mode against an entry the user breaks while it runs, such as one rewritten with
+ * the removed `@master` at-rule: the restart closed every watcher and then crashed with a
+ * stack trace, so fixing the file never recovered. It must print the one-line message, keep
+ * running, and rebuild once the file is fixed.
+ * Reverse check: rethrowing `StylesheetEntryError` in `handlePlanChange` turns only this test
+ * red.
+ */
+it('reports an entry that turns invalid and recovers once it is fixed', async () => {
+  const outputBefore = subprocessOutput.length
+  fs.writeFileSync(configFilepath, '@master entry;\n')
+  const output = (await waitForOutput((text) => text.slice(outputBefore).includes('@master entry; was removed'))).slice(outputBefore)
+  expect(output).not.toMatch(/^\s+at /m)
+  expect(subprocess.exitCode).toBeNull()
+
+  const recoveredFrom = subprocessOutput.length
+  fs.writeFileSync(configFilepath, originConfigText)
+  await waitForOutput((text) => text.slice(recoveredFrom).includes('Restart watching source changes'))
+  const fileCSSText = await waitForCSSContent((css) => css.includes('.btn{background-color:oklch(63.7% .237 25.331)'))
+  expect(fileCSSText).toContain('.btn{background-color:oklch(63.7% .237 25.331)')
+  expect(subprocess.exitCode).toBeNull()
+})
+
 afterAll(async () => {
   subprocess.kill()
   await subprocess.catch(() => undefined)
