@@ -197,28 +197,12 @@ async function createHydrationManifestForPage(page: Page, manifest: MasterCSSMan
 
 const RUNTIME_ASSET_BASE_URL = 'http://master-css-runtime.test'
 export const RUNTIME_SCRIPT_URL = `${RUNTIME_ASSET_BASE_URL}/css-runtime@rc`
-export const DEFAULT_MANIFEST_URL = `${RUNTIME_ASSET_BASE_URL}/css-runtime@rc/default-manifest.json`
-
-type RuntimeAssetRouteOptions = {
-  onDefaultManifestRequest?: () => void
-}
-
-/** Serves the built CDN bundle (`dist/global.min.js`) and its default manifest. */
-export async function routeRuntimeAssets(page: Page, options: RuntimeAssetRouteOptions = {}) {
+/** Serves the built CDN bundle (`dist/global.min.js`), which embeds its default manifest. */
+export async function routeRuntimeAssets(page: Page) {
   await page.route(RUNTIME_SCRIPT_URL, (route) => {
     route.fulfill({
       contentType: 'text/javascript',
       body: readFileSync(resolve(packageRoot, 'dist/global.min.js'), 'utf8')
-    })
-  })
-  await page.route(DEFAULT_MANIFEST_URL, (route) => {
-    options.onDefaultManifestRequest?.()
-    route.fulfill({
-      contentType: 'application/json',
-      headers: {
-        'access-control-allow-origin': '*'
-      },
-      body: readFileSync(resolve(packageRoot, 'dist/default-manifest.json'), 'utf8')
     })
   })
 }

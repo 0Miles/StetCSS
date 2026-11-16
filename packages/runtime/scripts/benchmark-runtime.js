@@ -8,7 +8,6 @@ import { chromium, firefox, webkit } from '@playwright/test'
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const distRoot = resolve(packageRoot, 'dist')
 const globalBundleFile = resolve(distRoot, 'global.min.js')
-const defaultManifestFile = resolve(distRoot, 'default-manifest.json')
 const args = parseArgs(process.argv.slice(2))
 const rounds = Number(process.env.MASTER_CSS_BENCH_ROUNDS || 5)
 const warmupRounds = Number(process.env.MASTER_CSS_BENCH_WARMUP_ROUNDS || 1)
@@ -33,7 +32,7 @@ const nativeProperties = [
   'left'
 ]
 
-if (!existsSync(globalBundleFile) || !existsSync(defaultManifestFile)) {
+if (!existsSync(globalBundleFile)) {
   console.error('Runtime benchmark requires built runtime global artifacts.')
   console.error('Run `bun run --filter @stet-css/runtime build` first.')
   process.exit(1)
@@ -118,37 +117,14 @@ function startServer() {
 
     try {
       if (path === '/') {
-        const manifestPreload = url.searchParams.get('preloadManifest') === 'true'
         response.writeHead(200, {
           'content-type': 'text/html; charset=utf-8',
           'cache-control': 'no-store'
         })
         response.end([
           '<!doctype html><html hidden><head><meta charset="utf-8">',
-          manifestPreload ? '<link rel="modulepreload" as="json" crossorigin href="/default-manifest.json">' : '',
           '</head><body></body></html>'
         ].join(''))
-        return
-      }
-
-      if (path === '/manifest-consumer') {
-        response.writeHead(200, {
-          'content-type': 'text/html; charset=utf-8',
-          'cache-control': 'no-store'
-        })
-        response.end([
-          '<!doctype html><html hidden><head><meta charset="utf-8">',
-          '<link rel="modulepreload" as="json" crossorigin href="/default-manifest.json">',
-          '<script>',
-          'globalThis.benchmarkManifestLoad = async () => {',
-          'await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));',
-          'const startedAt = performance.now();',
-          'await import("/default-manifest.json", { with: { type: "json" } });',
-          'return performance.now() - startedAt;',
-          '};',
-          '</script>',
-          '</head><body></body></html>'
-        ].join('\n'))
         return
       }
 
@@ -158,16 +134,6 @@ function startServer() {
           'cache-control': 'no-store'
         })
         response.end(await readFile(globalBundleFile))
-        return
-      }
-
-      if (path === '/default-manifest.json') {
-        response.writeHead(200, {
-          'content-type': 'application/json; charset=utf-8',
-          'cache-control': 'no-store',
-          'access-control-allow-origin': '*'
-        })
-        response.end(await readFile(defaultManifestFile))
         return
       }
 
@@ -218,11 +184,9 @@ async function loadRuntime(page, scriptURL) {
   }, scriptURL)
 }
 
-async function createPage(browser, baseURL, bodyMarkup = '', options = {}) {
+async function createPage(browser, baseURL, bodyMarkup = '') {
   const page = await createBenchmarkPage(browser)
-  const url = new URL(baseURL)
-  if (options.preloadManifest) url.searchParams.set('preloadManifest', 'true')
-  await page.goto(url.href)
+  await page.goto(baseURL)
   if (bodyMarkup) {
     await page.evaluate((html) => {
       document.body.innerHTML = html
@@ -231,25 +195,14 @@ async function createPage(browser, baseURL, bodyMarkup = '', options = {}) {
   return page
 }
 
-async function consumeManifest(browser, baseURL) {
-  const page = await createBenchmarkPage(browser)
-  const url = new URL('/manifest-consumer', baseURL)
-  await page.goto(url.href)
-  try {
-    return await page.evaluate(() => globalThis.benchmarkManifestLoad())
-  } finally {
-    await page.close()
-  }
-}
-
-async function createObservedPage(browser, baseURL, scriptURL, bodyMarkup = '', options = {}) {
-  const page = await createPage(browser, baseURL, bodyMarkup, options)
+async function createObservedPage(browser, baseURL, scriptURL, bodyMarkup = '') {
+  const page = await createPage(browser, baseURL, bodyMarkup)
   await loadRuntime(page, scriptURL)
   return page
 }
 
-async function createProgressivePage(browser, baseURL, fixture, includeManifest, options = {}) {
-  const page = await createPage(browser, baseURL, '', options)
+async function createProgressivePage(browser, baseURL, fixture, includeManifest) {
+  const page = await createPage(browser, baseURL)
   await page.evaluate(({ bodyMarkup, hydrationManifest, runtimeStyleId, styleText, withManifest }) => {
     const style = document.createElement('style')
     style.id = runtimeStyleId
@@ -382,12 +335,8 @@ try {
   const hydrationFixture = createHydrationFixture(hydrationClasses)
   const results = []
 
-  results.push(await runBenchmark('default manifest consume (modulepreload)', () => {
-    return consumeManifest(browser, server.url)
-  }))
-
-  results.push(await runBenchmark('empty DOM startup (modulepreload)', async () => {
-    const page = await createPage(browser, server.url, '', { preloadManifest: true })
+  results.push(await runBenchmark('empty DOM startup', async () => {
+    const page = await createPage(browser, server.url)
     try {
       return await loadRuntime(page, scriptURL)
     } finally {
@@ -395,7 +344,7 @@ try {
     }
   }))
 
-  results.push(await runBenchmark('initial DOM scan + unique class add (no preload)', async () => {
+  results.push(await runBenchmark('initial DOM scan + unique class add', async () => {
     const page = await createPage(browser, server.url, scanMarkup)
     try {
       const elapsed = await loadRuntime(page, scriptURL)
@@ -409,22 +358,8 @@ try {
     }
   }))
 
-  results.push(await runBenchmark('initial DOM scan + unique class add (preload)', async () => {
-    const page = await createPage(browser, server.url, scanMarkup, { preloadManifest: true })
-    try {
-      const elapsed = await loadRuntime(page, scriptURL)
-      const generatedCount = await page.evaluate(() => globalThis.masterCSSRuntime.classUtilities.size)
-      if (generatedCount !== scanClasses.length) {
-        throw new Error(`Expected ${scanClasses.length} generated classes, got ${generatedCount}.`)
-      }
-      return elapsed
-    } finally {
-      await page.close()
-    }
-  }))
-
   results.push(await runBenchmark('mutation ensure/delete class rules', async () => {
-    const page = await createObservedPage(browser, server.url, scriptURL, '', { preloadManifest: true })
+    const page = await createObservedPage(browser, server.url, scriptURL)
     try {
       const elapsed = await page.evaluate(async ({ html }) => {
         const container = document.createElement('section')
@@ -453,7 +388,7 @@ try {
   }))
 
   results.push(await runBenchmark('direct CSSOM ensure/delete generated rules', async () => {
-    const page = await createObservedPage(browser, server.url, scriptURL, '', { preloadManifest: true })
+    const page = await createObservedPage(browser, server.url, scriptURL)
     try {
       const elapsed = await page.evaluate((classes) => {
         const startedAt = performance.now()
@@ -472,7 +407,7 @@ try {
   }))
 
   results.push(await runBenchmark('progressive hydration success path', async () => {
-    const page = await createProgressivePage(browser, server.url, hydrationFixture, true, { preloadManifest: true })
+    const page = await createProgressivePage(browser, server.url, hydrationFixture, true)
     try {
       const elapsed = await loadRuntime(page, scriptURL)
       const state = await page.evaluate(() => ({
@@ -490,7 +425,7 @@ try {
   }))
 
   results.push(await runBenchmark('progressive hydration fallback path', async () => {
-    const page = await createProgressivePage(browser, server.url, hydrationFixture, false, { preloadManifest: true })
+    const page = await createProgressivePage(browser, server.url, hydrationFixture, false)
     try {
       const elapsed = await loadRuntime(page, scriptURL)
       const state = await page.evaluate(() => ({
