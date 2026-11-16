@@ -1,5 +1,5 @@
-export const MANIFEST_MODULE_FILE = 'master-css-manifest.js'
-export const MANIFEST_ASSET_FILE = 'master-css-manifest.json'
+export const MANIFEST_MODULE_FILE = 'stet-css-manifest.js'
+export const MANIFEST_ASSET_FILE = 'stet-css-manifest.json'
 export const MASTER_CSS_MANIFEST_PRELOAD_REL = 'modulepreload'
 export const MASTER_CSS_MANIFEST_PRELOAD_AS = 'json'
 

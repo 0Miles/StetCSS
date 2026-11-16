@@ -137,12 +137,12 @@ The module utilities define the manifest import contract used by official integr
 
 | API | Purpose |
 | --- | --- |
-| `VIRTUAL_MANIFEST_ID` | Default manifest JS facade module id, `virtual:master-css-manifest`. |
-| `VIRTUAL_EMITTED_GLOBALS_ID` | Default emittedGlobals module id, `virtual:master-css-emitted-globals`. |
-| `MASTER_CSS_MANIFEST_QUERY` | Query suffix, `?master-css-manifest`, used to compile one explicit CSS resource. |
+| `VIRTUAL_MANIFEST_ID` | Default manifest JS facade module id, `virtual:stet-css-manifest`. |
+| `VIRTUAL_EMITTED_GLOBALS_ID` | Default emittedGlobals module id, `virtual:stet-css-emitted-globals`. |
+| `MASTER_CSS_MANIFEST_QUERY` | Query suffix, `?stet-css-manifest`, used to compile one explicit CSS resource. |
 | `toManifestJSON(manifest)` | Serializes a manifest object into normalized JSON source. |
 | `toEmittedGlobalsModule(emittedGlobals)` | Serializes emittedGlobals variable and animation counts into an ESM default export. |
 | `toVirtualDefaultManifestModulePath(context)` | Creates the virtual path for the default manifest module. |
 | `toVirtualCSSManifestModulePath(context, file)` | Creates a virtual path for one explicit queried CSS resource. |
 
-Use `virtual:master-css-manifest` and `virtual:master-css-emitted-globals` when application code should receive an integration's canonical project-level runtime inputs. Use `./index.css?master-css-manifest` only when the code intentionally compiles one explicit CSS resource through the active integration.
+Use `virtual:stet-css-manifest` and `virtual:stet-css-emitted-globals` when application code should receive an integration's canonical project-level runtime inputs. Use `./index.css?stet-css-manifest` only when the code intentionally compiles one explicit CSS resource through the active integration.

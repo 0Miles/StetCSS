@@ -11,14 +11,14 @@ import {
   VIRTUAL_EMITTED_GLOBALS_FILE
 } from './emitted-globals-module'
 
-export const RESOLVED_MASTER_CSS_MANIFEST_QUERY_PREFIX = '\0master-css-manifest:'
-export const VIRTUAL_MODULE_DIR = 'node_modules/.master-css'
-const VIRTUAL_MODULE_DIR_SEGMENTS = ['node_modules', '.master-css'] as const
+export const RESOLVED_MASTER_CSS_MANIFEST_QUERY_PREFIX = '\0stet-css-manifest:'
+export const VIRTUAL_MODULE_DIR = 'node_modules/.stet-css'
+const VIRTUAL_MODULE_DIR_SEGMENTS = ['node_modules', '.stet-css'] as const
 const VIRTUAL_MODULE_PACKAGE_JSON_SOURCE = '{\n    "type": "module"\n}\n'
 
 export function toHashedManifestAssetFileName(json: string) {
   const hash = createHash('sha256').update(json).digest('hex').slice(0, 8)
-  return `master-css-manifest.${hash}.json`
+  return `stet-css-manifest.${hash}.json`
 }
 
 export function toResolvedMasterCSSManifestId(file: string) {
@@ -58,7 +58,7 @@ export function toVirtualCSSManifestAssetPath(context: string, file: string) {
 }
 
 export function toVirtualCSSModulePath(context: string) {
-  return join(context, ...VIRTUAL_MODULE_DIR_SEGMENTS, 'master-utilities.css')
+  return join(context, ...VIRTUAL_MODULE_DIR_SEGMENTS, 'stet-utilities.css')
 }
 
 export function toVirtualEmittedGlobalsModulePath(context: string) {

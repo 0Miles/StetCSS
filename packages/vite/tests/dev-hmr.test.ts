@@ -67,7 +67,7 @@ describe('Vite dev HMR', () => {
   /**
    * Guards editing the stylesheet entry in dev: the page must pick up the new rules through
    * HMR, keep its state, and keep updating after an edit that fails to compile. The entry also
-   * feeds `virtual:master-css-manifest`, whose hot update used to return only the manifest
+   * feeds `virtual:stet-css-manifest`, whose hot update used to return only the manifest
    * module, so the page kept the old CSS until a reload.
    * Reverse check: dropping `...changedModules` from the list `manifest-virtual-module.ts`
    * returns turns this test and its unit test red.

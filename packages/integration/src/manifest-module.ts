@@ -4,8 +4,8 @@ import { MANIFEST_ASSET_FILE, MANIFEST_MODULE_FILE } from './manifest-facade'
 
 export type { MasterCSSManifest }
 
-export const VIRTUAL_MANIFEST_ID = 'virtual:master-css-manifest'
-export const MASTER_CSS_MANIFEST_QUERY = '?master-css-manifest'
+export const VIRTUAL_MANIFEST_ID = 'virtual:stet-css-manifest'
+export const MASTER_CSS_MANIFEST_QUERY = '?stet-css-manifest'
 export const VIRTUAL_MANIFEST_FILE = MANIFEST_MODULE_FILE
 export const VIRTUAL_MANIFEST_ASSET_FILE = MANIFEST_ASSET_FILE
 export const EMPTY_MANIFEST_JSON = '{"version":1}'

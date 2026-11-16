@@ -190,7 +190,7 @@ describe('MasterCSSPlugin', () => {
           expect.objectContaining({
             loader: expect.stringContaining('style-css-loader'),
             options: expect.objectContaining({
-              virtualCSSImportModuleId: expect.stringContaining('master-utilities.css')
+              virtualCSSImportModuleId: expect.stringContaining('stet-utilities.css')
             })
           })
         ]
@@ -213,10 +213,10 @@ describe('MasterCSSPlugin', () => {
 
       const result = await transformStyleSource(entryPath, readFileSync(entryPath, 'utf-8'), {
         projectDir: root,
-        masterImport: '../node_modules/.master-css/master-utilities.css'
+        masterImport: '../node_modules/.stet-css/stet-utilities.css'
       })
 
-      expect(result.code).toBe('@import "../node_modules/.master-css/master-utilities.css";')
+      expect(result.code).toBe('@import "../node_modules/.stet-css/stet-utilities.css";')
       expect(result.dependencies).toContain(entryPath)
       expect(result.dependencies).toContain(themePath)
     } finally {
@@ -244,9 +244,9 @@ describe('MasterCSSPlugin', () => {
 
       const transformed = await transformStyleSource(entryPath, readFileSync(entryPath, 'utf-8'), {
         projectDir: root,
-        masterImport: '../node_modules/.master-css/master-utilities.css'
+        masterImport: '../node_modules/.stet-css/stet-utilities.css'
       })
-      expect(transformed.code).toBe('@import "../node_modules/.master-css/master-utilities.css";')
+      expect(transformed.code).toBe('@import "../node_modules/.stet-css/stet-utilities.css";')
 
       const plugin = makePlugin({}, root)
       const { compiler } = makeFakeCompiler({ context: root })
@@ -282,7 +282,7 @@ describe('MasterCSSPlugin', () => {
 
       const result = await transformStyleSource(modulePath, '.button { @compose inline-flex brand; color: white; }', {
         projectDir: root,
-        masterImport: '../node_modules/.master-css/master-utilities.css'
+        masterImport: '../node_modules/.stet-css/stet-utilities.css'
       })
 
       expect(result.code).toContain('.button{')
@@ -290,7 +290,7 @@ describe('MasterCSSPlugin', () => {
       expect(result.code).toContain('background-color:#123456')
       expect(result.code).toContain('color:#fff')
       expect(result.code).not.toContain('@compose')
-      expect(result.code).not.toContain('master-utilities.css')
+      expect(result.code).not.toContain('stet-utilities.css')
       expect(result.dependencies).toContain(entryPath)
       expect(result.dependencies).toContain(modulePath)
     } finally {
@@ -310,12 +310,12 @@ describe('MasterCSSPlugin', () => {
 
       const result = await transformStyleSource(modulePath, '.home { @compose py:5xl; }', {
         projectDir: root,
-        masterImport: '../node_modules/.master-css/master-utilities.css'
+        masterImport: '../node_modules/.stet-css/stet-utilities.css'
       })
 
       expect(result.code).toContain('.home{padding-block:var(--spacing-5xl)}')
       expect(result.code).not.toContain('--spacing-5xl:')
-      expect(result.code).not.toContain('master-utilities.css')
+      expect(result.code).not.toContain('stet-utilities.css')
       expect(result.dependencies).toContain(entryPath)
       expect(result.dependencies).toContain(modulePath)
     } finally {
@@ -370,7 +370,7 @@ describe('MasterCSSPlugin', () => {
 
       const result = await transformStyleSource(modulePath, '@reference "./tokens.css"; .button { @compose brand; }', {
         projectDir: root,
-        masterImport: '../node_modules/.master-css/master-utilities.css'
+        masterImport: '../node_modules/.stet-css/stet-utilities.css'
       })
 
       expect(result.code).toContain('.button{padding:var(--spacing-card);animation:1s pop}')
@@ -378,7 +378,7 @@ describe('MasterCSSPlugin', () => {
       expect(result.code).toContain('@keyframes pop')
       expect(result.code).not.toContain('@reference')
       expect(result.code).not.toContain('referenced-native')
-      expect(result.code).not.toContain('master-utilities.css')
+      expect(result.code).not.toContain('stet-utilities.css')
       expect(result.dependencies).toContain(modulePath)
       expect(result.dependencies).toContain(tokenPath)
     } finally {
@@ -393,7 +393,7 @@ describe('MasterCSSPlugin', () => {
       const source = '.button { color: red; }'
       const result = await transformStyleSource(modulePath, source, {
         projectDir: root,
-        masterImport: '../node_modules/.master-css/master-utilities.css'
+        masterImport: '../node_modules/.stet-css/stet-utilities.css'
       })
 
       expect(result.code).toBe(source)
@@ -416,7 +416,7 @@ describe('MasterCSSPlugin', () => {
     expect(result.code).toContain(':root')
   })
 
-  test('resolves virtual:master-css-manifest to a JS facade and external JSON asset', async () => {
+  test('resolves virtual:stet-css-manifest to a JS facade and external JSON asset', async () => {
     const plugin = new MasterCSSPlugin()
     const { compiler } = makeFakeCompiler()
     ;(compiler as any).webpack = { sources: { RawSource: function NoopSource(this: object) { /* stub */ } } }
@@ -433,7 +433,7 @@ describe('MasterCSSPlugin', () => {
 
     await resolveBefore(normalModuleFactory, resolveData)
 
-    expect(resolveData.request).toContain(path.join('node_modules', '.master-css', 'master-css-manifest.js'))
+    expect(resolveData.request).toContain(path.join('node_modules', '.stet-css', 'stet-css-manifest.js'))
     expect((compiler.inputFileSystem._writeVirtualFile as any).mock.calls.at(-1)?.[2])
       .toContain('const masterCSSManifestResponse = await fetch(typeof masterCSSManifestURL === \'string\' ? masterCSSManifestURL : masterCSSManifestURL.href);')
     expect((compiler.inputFileSystem._writeVirtualFile as any).mock.calls.at(-1)?.[2])
@@ -457,7 +457,7 @@ describe('MasterCSSPlugin', () => {
     expect(arrayDependencies).toEqual([dependency])
   })
 
-  test('resolves virtual:master-css-manifest to an inline module in development', async () => {
+  test('resolves virtual:stet-css-manifest to an inline module in development', async () => {
     const root = path.resolve(__dirname, 'fixtures/manifest-virtual-module/css-only')
     const plugin = makePlugin({}, root)
     const { compiler } = makeFakeCompiler({ context: root, mode: 'development' })
@@ -524,7 +524,7 @@ describe('MasterCSSPlugin', () => {
     }
   })
 
-  test('resolves virtual:master-css-emitted-globals to a JS virtual module', async () => {
+  test('resolves virtual:stet-css-emitted-globals to a JS virtual module', async () => {
     const root = mkdtempSync(path.join(tmpdir(), 'master-css-webpack-emitted-globals-'))
     try {
       const plugin = new MasterCSSPlugin({}, root)
@@ -543,7 +543,7 @@ describe('MasterCSSPlugin', () => {
 
       await resolveBefore(normalModuleFactory, resolveData)
 
-      expect(resolveData.request).toContain(path.join('node_modules', '.master-css', 'master-css-emitted-globals.js'))
+      expect(resolveData.request).toContain(path.join('node_modules', '.stet-css', 'stet-css-emitted-globals.js'))
       expect((compiler.inputFileSystem._writeVirtualFile as any).mock.calls.at(-1)?.[2])
         .toBe('export default {"variables":{},"animations":{}};')
     } finally {
@@ -551,7 +551,7 @@ describe('MasterCSSPlugin', () => {
     }
   })
 
-  test('resolves ?master-css-manifest imports to per-file JS facades and external JSON assets', async () => {
+  test('resolves ?stet-css-manifest imports to per-file JS facades and external JSON assets', async () => {
     const fixturePath = path.resolve(__dirname, 'fixtures/manifest-virtual-module/theme.css')
     const plugin = makePlugin()
     const { compiler } = makeFakeCompiler()
@@ -569,7 +569,7 @@ describe('MasterCSSPlugin', () => {
 
     await resolveBefore(normalModuleFactory, resolveData)
 
-    expect(resolveData.request).toContain(path.join('node_modules', '.master-css'))
+    expect(resolveData.request).toContain(path.join('node_modules', '.stet-css'))
     expect(resolveData.request).toContain('.manifest.js')
     expect(resolveData.fileDependencies.has(fixturePath)).toBe(true)
     expect((compiler.inputFileSystem._writeVirtualFile as any).mock.calls.at(-1)?.[2])
@@ -584,7 +584,7 @@ describe('MasterCSSPlugin', () => {
       .toContain('#456')
   })
 
-  test('resolves ?master-css-manifest imports to inline modules in development', async () => {
+  test('resolves ?stet-css-manifest imports to inline modules in development', async () => {
     const fixturePath = path.resolve(__dirname, 'fixtures/manifest-virtual-module/theme.css')
     const plugin = makePlugin()
     const { compiler } = makeFakeCompiler({ mode: 'development' })
@@ -609,7 +609,7 @@ describe('MasterCSSPlugin', () => {
     expect([...(plugin as any).manifestJSONAssets.values()]).toEqual([])
   })
 
-  test('keeps ?master-css-manifest file dependencies after invalid CSS', async () => {
+  test('keeps ?stet-css-manifest file dependencies after invalid CSS', async () => {
     const root = mkdtempSync(path.join(tmpdir(), 'master-css-webpack-invalid-query-manifest-'))
     const manifestPath = path.join(root, 'theme.css')
     try {
@@ -667,7 +667,7 @@ describe('MasterCSSPlugin', () => {
 
     await resolveBefore(normalModuleFactory, resolveData)
 
-    expect(resolveData.request).toContain(path.join('node_modules', '.master-css', 'master-utilities.css'))
+    expect(resolveData.request).toContain(path.join('node_modules', '.stet-css', 'stet-utilities.css'))
   })
 
   test('resolves CSS @import virtual utilities to the generated CSS virtual module', async () => {
@@ -689,7 +689,7 @@ describe('MasterCSSPlugin', () => {
 
     await resolveBefore(normalModuleFactory, resolveData)
 
-    expect(resolveData.request).toContain(path.join('node_modules', '.master-css', 'master-utilities.css'))
+    expect(resolveData.request).toContain(path.join('node_modules', '.stet-css', 'stet-utilities.css'))
   })
 
   test('leaves unrelated CSS @import unresolved', async () => {

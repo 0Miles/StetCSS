@@ -51,8 +51,8 @@ Add `@stet-css/integration/client` to a project environment file when TypeScript
 The integration exposes canonical project-level runtime input modules:
 
 ```ts
-import manifest from 'virtual:master-css-manifest'
-import emittedGlobals from 'virtual:master-css-emitted-globals'
+import manifest from 'virtual:stet-css-manifest'
+import emittedGlobals from 'virtual:stet-css-emitted-globals'
 ```
 
 Use these virtual modules when application code should receive the same manifest graph and emittedGlobals global CSS state discovered from the project CSS entry.

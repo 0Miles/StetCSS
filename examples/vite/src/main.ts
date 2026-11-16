@@ -1,6 +1,6 @@
 import './style.css'
 import { setupCounter } from './counter'
-// import manifest from 'virtual:master-css-manifest'
+// import manifest from 'virtual:stet-css-manifest'
 
 // console.log('manifest', manifest)
 

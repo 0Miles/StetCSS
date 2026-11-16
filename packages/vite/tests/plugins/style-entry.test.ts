@@ -203,7 +203,7 @@ describe('StyleEntryPlugin', () => {
     const plugin = StyleEntryPlugin(context)
 
     expect(await (plugin as any).transform.call({}, '@import "@stet-css/core";', '/project/src/main.ts')).toBeUndefined()
-    expect(await (plugin as any).transform.call({}, '@import "virtual:master-utilities.css";', '/project/src/style.css')).toBeUndefined()
+    expect(await (plugin as any).transform.call({}, '@import "virtual:stet-utilities.css";', '/project/src/style.css')).toBeUndefined()
     expect(await (plugin as any).transform.call({}, '@import "theme.css";', '/project/src/style.css')).toBeUndefined()
     expect(await (plugin as any).transform.call({}, '@import "./other.css";', '/project/src/style.css')).toBeUndefined()
   })

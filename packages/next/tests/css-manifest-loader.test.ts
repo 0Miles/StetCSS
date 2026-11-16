@@ -88,7 +88,7 @@ describe('css manifest loader', () => {
     const assetDir = join(projectDir, '.next/static/media')
     const assetFile = readdirSync(assetDir).find((file) => file.endsWith('.json'))
 
-    expect(source).toContain('/_next/static/media/master-css-manifest.')
+    expect(source).toContain('/_next/static/media/stet-css-manifest.')
     expect(source).toContain('loadMasterCSSManifestFromFetch')
     expect(source).toContain('async function loadMasterCSSManifestFromFetch(url)')
     expect(source).toContain('const response = await fetch(specifier);')
@@ -129,7 +129,7 @@ describe('css manifest loader', () => {
     }
   })
 
-  it('loads CSS when the loader resource includes ?master-css-manifest', async () => {
+  it('loads CSS when the loader resource includes ?stet-css-manifest', async () => {
     const projectDir = createFixtureDir()
     const manifestPath = join(projectDir, 'index.css')
     const dependencies: string[] = []
@@ -146,7 +146,7 @@ describe('css manifest loader', () => {
     ].join('\n'))
 
     const source = await runManifestLoader({
-      resourcePath: `${manifestPath}?master-css-manifest`,
+      resourcePath: `${manifestPath}?stet-css-manifest`,
       addDependency: (dependency: string) => dependencies.push(dependency)
     })
 
@@ -181,7 +181,7 @@ describe('css manifest loader', () => {
     ].join('\n'))
 
     const source = await runManifestLoader({
-      resourcePath: join(projectDir, 'node_modules/.master-css/master-css-manifest.js'),
+      resourcePath: join(projectDir, 'node_modules/.stet-css/stet-css-manifest.js'),
       rootContext: projectDir,
       getOptions: () => ({ virtual: true }),
       addDependency: (dependency: string) => dependencies.push(dependency)
@@ -199,7 +199,7 @@ describe('css manifest loader', () => {
   it('keeps virtual manifest dependencies registered after invalid CSS and recovers on the next run', async () => {
     const projectDir = createFixtureDir()
     const entryPath = join(projectDir, 'app/globals.css')
-    const virtualManifestPath = join(projectDir, 'node_modules/.master-css/master-css-manifest.js')
+    const virtualManifestPath = join(projectDir, 'node_modules/.stet-css/stet-css-manifest.js')
     const dependencies: string[] = []
     mkdirSync(join(projectDir, 'app'), { recursive: true })
     writeFileSync(entryPath, [

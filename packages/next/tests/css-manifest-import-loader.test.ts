@@ -12,7 +12,7 @@ function createFixtureDir() {
 }
 
 function readVirtualManifestSource(projectDir: string) {
-  const manifestDir = join(projectDir, 'node_modules/.master-css')
+  const manifestDir = join(projectDir, 'node_modules/.stet-css')
   const filename = readdirSync(manifestDir).find((entry) => entry.endsWith('.manifest.json'))
   if (!filename) {
     throw new Error(`Expected generated CSS manifest asset in ${manifestDir}.`)
@@ -21,7 +21,7 @@ function readVirtualManifestSource(projectDir: string) {
 }
 
 function readVirtualManifestModule(projectDir: string) {
-  const manifestDir = join(projectDir, 'node_modules/.master-css')
+  const manifestDir = join(projectDir, 'node_modules/.stet-css')
   const [filename] = readdirSync(manifestDir).filter((entry) => entry.endsWith('.manifest.js'))
   return readFileSync(join(manifestDir, filename), 'utf-8')
 }
@@ -69,13 +69,13 @@ describe('css manifest import loader', () => {
     writeFileSync(resourcePath, '')
 
     const source = await runManifestImportLoader({
-      source: 'import presetManifest from "./theme.css?master-css-manifest"\nexport default presetManifest',
+      source: 'import presetManifest from "./theme.css?stet-css-manifest"\nexport default presetManifest',
       resourcePath,
       projectDir,
       addDependency: (dependency) => dependencies.push(dependency)
     })
 
-    expect(source).toContain('import presetManifest from "../node_modules/.master-css/')
+    expect(source).toContain('import presetManifest from "../node_modules/.stet-css/')
     expect(source).toContain('.manifest.js"')
     expect(dependencies).toEqual([manifestPath])
     expect(readVirtualManifestModule(projectDir)).toContain('new URL("./')
@@ -103,12 +103,12 @@ describe('css manifest import loader', () => {
     writeFileSync(join(packageDir, 'theme.css'), '@theme { --color-package: #456; }')
 
     const source = await runManifestImportLoader({
-      source: 'import presetManifest from "@fixture/tokens/theme.css?master-css-manifest"\nexport default presetManifest',
+      source: 'import presetManifest from "@fixture/tokens/theme.css?stet-css-manifest"\nexport default presetManifest',
       resourcePath,
       projectDir
     })
 
-    expect(source).toContain('import presetManifest from "../node_modules/.master-css/')
+    expect(source).toContain('import presetManifest from "../node_modules/.stet-css/')
     expect(source).toContain('.manifest.js"')
     expect(readVirtualManifestModule(projectDir)).not.toContain('#456')
     expect(readVirtualManifestSource(projectDir)).toContain('package')
@@ -123,15 +123,15 @@ describe('css manifest import loader', () => {
 
     await expect(runManifestImportLoader({
       source: [
-        'import manifest from "virtual:master-css-manifest"',
-        'const request = "./theme.css?master-css-manifest"',
+        'import manifest from "virtual:stet-css-manifest"',
+        'const request = "./theme.css?stet-css-manifest"',
         'export default manifest'
       ].join('\n'),
       resourcePath,
       projectDir
     })).resolves.toBe([
-      'import manifest from "virtual:master-css-manifest"',
-      'const request = "./theme.css?master-css-manifest"',
+      'import manifest from "virtual:stet-css-manifest"',
+      'const request = "./theme.css?stet-css-manifest"',
       'export default manifest'
     ].join('\n'))
   })
