@@ -276,7 +276,6 @@ test('documents native CSS punctuation scopes used by semantic token mappings', 
 
 test('highlights every Master CSS directive keyword', () => {
   const tokens = tokenize(`
-    @master entry;
     @settings {}
     @source not "app.tsx";
     @safelist "block";
@@ -293,7 +292,6 @@ test('highlights every Master CSS directive keyword', () => {
   `)
 
   for (const directive of [
-    'master',
     'settings',
     'source',
     'safelist',
@@ -310,7 +308,6 @@ test('highlights every Master CSS directive keyword', () => {
   ]) {
     expectScope(tokens, directive, 'keyword.control.at-rule.master-css')
   }
-  expectScope(tokens, 'entry', 'support.constant.property-value.master-css')
 })
 
 /**
@@ -331,6 +328,23 @@ test('does not highlight @dark or @light as directives', () => {
 
   expect(directiveTokens).toEqual([
     expect.objectContaining({ text: 'variant' })
+  ])
+})
+
+/**
+ * Prevents: the editor still highlighting the removed `@master entry;` and `@master { … }` as
+ * directives, which tells a developer that lines the compiler now rejects are valid.
+ */
+test('does not highlight @master as a directive', () => {
+  const tokens = tokenizeWith(injectedCSSGrammar, `
+    @master entry;
+    @master { mode-trigger: media; }
+    @source "app.tsx";
+  `)
+  const directiveTokens = tokens.filter((token) => token.scopes.includes('keyword.control.at-rule.master-css'))
+
+  expect(directiveTokens).toEqual([
+    expect.objectContaining({ text: 'source' })
   ])
 })
 
