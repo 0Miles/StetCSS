@@ -4,8 +4,8 @@ import VariableRule from './variable-rule'
 
 type RuleHost = { rules: (Rule | VariableRule)[] }
 
-/** Cascade layer order, the same as the `@layer` statement in `@stet-css/preset/base.css`. */
-export const layerOrder: readonly string[] = ['theme', 'base', 'defaults', 'components', 'utilities']
+/** Cascade layer order, the same as the `@layer` statement in `@stet-css/preset/base.css` (checked by `packages/core/tests/facade.test.ts`). */
+export const layerOrder: readonly string[] = Object.freeze(['theme', 'base', 'defaults', 'components', 'utilities'])
 
 const ruleMaps = new WeakMap<RuleHost, Map<string, Rule | VariableRule>>()
 
