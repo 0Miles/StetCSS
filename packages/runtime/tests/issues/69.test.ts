@@ -19,7 +19,7 @@ test('69', async ({ page }) => {
   await page.evaluate(() => {
     document.body.innerHTML = '<p class="fg:red@dark"></p><p class="fg:blue"></p>'
   })
-  await init(page, '', { modes: ['sepia'] })
+  await init(page, { modes: ['sepia'] })
   await page.evaluate(() => {
     document.body.insertAdjacentHTML('beforeend', '<p class="fg:red@light fg:green"></p>')
   })
