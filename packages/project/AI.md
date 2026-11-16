@@ -7,7 +7,7 @@ Resolves a project's manifest: discovers **entry** CSS files, finds workspace ro
 - Entry discovery belongs here alone: scanner, ESLint, the language server, and individual integrations rely on this package instead of discovering entries themselves.
 - Which files are the project's own sources (`./sources`: source extensions and ignored directories) belongs here too; entry discovery skips the same directories. `@stet-css/stylesheet` builds the static class set on top of it.
 - CSS import graphs and directive parsing: `@stet-css/compiler`.
-- Virtual module ids and `?master-css-manifest` request helpers: `@stet-css/integration`.
+- Virtual module ids and `?stet-css-manifest` request helpers: `@stet-css/integration`.
 
 ## Risks
 

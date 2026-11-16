@@ -10,7 +10,7 @@ npm install @stet-css/integration
 
 ## Responsibility
 
-`@stet-css/integration` is adapter-neutral glue for official build and framework integrations. It owns virtual module IDs, `?master-css-manifest` request helpers, generated manifest and emittedGlobals module source helpers, ambient client declarations, and explicit Node helper subpaths.
+`@stet-css/integration` is adapter-neutral glue for official build and framework integrations. It owns virtual module IDs, `?stet-css-manifest` request helpers, generated manifest and emittedGlobals module source helpers, ambient client declarations, and explicit Node helper subpaths.
 
 It does not implement project manifest discovery, CSS import graph resolution, extraction, browser runtime boot code, or framework lifecycle behavior.
 
@@ -35,4 +35,4 @@ Add the client type reference when TypeScript imports Master CSS virtual modules
 /// <reference types="@stet-css/integration/client" />
 ```
 
-This declares modules such as `virtual:master-css-manifest`, `virtual:master-css-emitted-globals`, generated CSS modules, and `?master-css-manifest` imports.
+This declares modules such as `virtual:stet-css-manifest`, `virtual:stet-css-emitted-globals`, generated CSS modules, and `?stet-css-manifest` imports.

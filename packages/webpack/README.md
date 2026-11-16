@@ -71,7 +71,7 @@ export default {
 ```
 
 ## Client types
-Add the client type reference when TypeScript source files import `virtual:master-utilities.css`, `virtual:master-css-manifest`, `virtual:master-css-emitted-globals`, or `?master-css-manifest` modules:
+Add the client type reference when TypeScript source files import `virtual:stet-utilities.css`, `virtual:stet-css-manifest`, `virtual:stet-css-emitted-globals`, or `?stet-css-manifest` modules:
 
 ```ts
 /// <reference types="@stet-css/integration/client" />

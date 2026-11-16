@@ -1,21 +1,21 @@
-declare module '*?master-css-manifest' {
+declare module '*?stet-css-manifest' {
   import type { MasterCSSManifest } from '@stet-css/engine'
 
   const manifest: MasterCSSManifest
   export default manifest
 }
 
-declare module 'virtual:master-utilities.css' {
+declare module 'virtual:stet-utilities.css' {
 }
 
-declare module 'virtual:master-css-manifest' {
+declare module 'virtual:stet-css-manifest' {
   import type { MasterCSSManifest } from '@stet-css/engine'
 
   const manifest: MasterCSSManifest
   export default manifest
 }
 
-declare module 'virtual:master-css-emitted-globals' {
+declare module 'virtual:stet-css-emitted-globals' {
   import type { MasterCSSEmittedGlobals } from '@stet-css/engine'
 
   const emittedGlobals: MasterCSSEmittedGlobals

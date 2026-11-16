@@ -113,12 +113,12 @@ The runtime cannot remove `hidden` when it never runs:
 npm install @stet-css/runtime
 ```
 
-The build integrations (`@stet-css/vite`, `@stet-css/webpack`, `@stet-css/next`) provide two virtual modules for the runtime: `virtual:master-css-manifest`, the manifest built from your CSS entry, and `virtual:master-css-emitted-globals`, the variables and keyframes that entry already emitted.
+The build integrations (`@stet-css/vite`, `@stet-css/webpack`, `@stet-css/next`) provide two virtual modules for the runtime: `virtual:stet-css-manifest`, the manifest built from your CSS entry, and `virtual:stet-css-emitted-globals`, the variables and keyframes that entry already emitted.
 
 ```js
 import CSSRuntime from '@stet-css/runtime'
-import manifest from 'virtual:master-css-manifest'
-import emittedGlobals from 'virtual:master-css-emitted-globals'
+import manifest from 'virtual:stet-css-manifest'
+import emittedGlobals from 'virtual:stet-css-emitted-globals'
 
 CSSRuntime.create({ manifest, emittedGlobals }).observe()
 ```
@@ -130,8 +130,8 @@ To style a shadow root, pass it as `root`, or decorate a custom element with `cs
 ```ts
 import { LitElement } from 'lit'
 import { cssRuntime } from '@stet-css/runtime'
-import manifest from 'virtual:master-css-manifest'
-import emittedGlobals from 'virtual:master-css-emitted-globals'
+import manifest from 'virtual:stet-css-manifest'
+import emittedGlobals from 'virtual:stet-css-emitted-globals'
 
 @cssRuntime({ manifest, emittedGlobals })
 class MyElement extends LitElement { /* … */ }
@@ -170,7 +170,7 @@ The runtime keeps its own layer blocks in this order in every root. That is what
 
 ```ts
 import CSSRuntime from '@stet-css/runtime'
-import manifest from 'virtual:master-css-manifest'
+import manifest from 'virtual:stet-css-manifest'
 
 const cssRuntime = CSSRuntime.create({ manifest })
 cssRuntime.observe()
@@ -208,8 +208,8 @@ Remove any `style#master-css` left in your HTML by an older build. The runtime l
 
 ```ts
 import CSSRuntime from '@stet-css/runtime'
-import manifest from 'virtual:master-css-manifest'
-import emittedGlobals from 'virtual:master-css-emitted-globals'
+import manifest from 'virtual:stet-css-manifest'
+import emittedGlobals from 'virtual:stet-css-emitted-globals'
 
 CSSRuntime.create({ manifest, emittedGlobals }).observe()
 ```

@@ -159,7 +159,7 @@ describe('style CSS extraction helpers', () => {
       undefined,
       { expandMasterCSSPackage: false }
     ).source)).toBe(true)
-    expect(isMasterStyleSource('@import "virtual:master-utilities.css";')).toBe(false)
+    expect(isMasterStyleSource('@import "virtual:stet-utilities.css";')).toBe(false)
     expect(isMasterStyleSource('@import "master.css";')).toBe(false)
     expect(isMasterStyleSource('@master entry;')).toBe(false)
     expect(isMasterStyleSource('@safelist "card";')).toBe(false)
@@ -533,7 +533,7 @@ describe('style CSS extraction helpers', () => {
     expect(hostSource.source).toContain('--font-family-sans:var(--font-sans, ui-sans-serif)')
     expect(hostSource.source).toContain('--font-family-mono:var(--font-mono, ui-monospace)')
     expect(hostSource.source).not.toContain('@stet-css/core/base.css')
-    expect(hostSource.source).not.toContain('virtual:master-utilities.css')
+    expect(hostSource.source).not.toContain('virtual:stet-utilities.css')
   })
 
   it('tracks default package artifacts as style dependencies', async () => {
@@ -680,7 +680,7 @@ describe('style CSS extraction helpers', () => {
     expect(css).toContain('display: grid')
     expect(css).toContain('.block{display:block}')
     expect(css).toContain('.fg\\:red{color:var(--color-red)}')
-    expect(css).not.toContain('virtual:master-utilities.css')
+    expect(css).not.toContain('virtual:stet-utilities.css')
     expect(css).not.toContain('@stet-css/core')
   })
 

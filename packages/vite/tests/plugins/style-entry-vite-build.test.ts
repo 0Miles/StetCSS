@@ -127,7 +127,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
       appClass: 'block',
       plugins: [masterCSS()],
       prefix: 'master-css-vite-virtual-only-',
-      mainTS: 'import "virtual:master-utilities.css"\n'
+      mainTS: 'import "virtual:stet-utilities.css"\n'
     })
 
     expect(css).toContain('.block{display:block}')

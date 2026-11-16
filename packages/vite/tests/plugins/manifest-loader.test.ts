@@ -39,7 +39,7 @@ describe('ManifestLoaderPlugin', () => {
     expect(fromResolvedMasterCSSManifestId(id)).toBe(file)
   })
 
-  it('resolves and loads per-file CSS manifests with ?master-css-manifest', async () => {
+  it('resolves and loads per-file CSS manifests with ?stet-css-manifest', async () => {
     const context = await createContext()
     const plugin = ManifestLoaderPlugin(context)
     const importer = path.join(FIXTURE_DIR, 'entry.ts')
@@ -134,7 +134,7 @@ describe('ManifestLoaderPlugin', () => {
 
     expect(emitFile).toHaveBeenCalledWith(expect.objectContaining({
       type: 'asset',
-      name: 'master-css-manifest.json',
+      name: 'stet-css-manifest.json',
       source: expect.stringContaining('#456')
     }))
     expect(code).toContain('const masterCSSManifestURL = import.meta.ROLLUP_FILE_URL_master_css_query_manifest_ref;')
@@ -170,7 +170,7 @@ describe('ManifestLoaderPlugin', () => {
   })
 
   /**
-   * Guards dev updates of a stylesheet read through `?master-css-manifest`: the hook must return
+   * Guards dev updates of a stylesheet read through `?stet-css-manifest`: the hook must return
    * the edited file's own modules along with the manifest query module.
    * Reverse check: starting `modules` empty in `manifest-loader.ts` turns only this test red.
    */

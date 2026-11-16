@@ -22,10 +22,10 @@ import {
 
 describe('@stet-css/integration module helpers', () => {
   it('defines Master CSS virtual module ids', () => {
-    expect(VIRTUAL_MANIFEST_ID).toBe('virtual:master-css-manifest')
-    expect(VIRTUAL_CSS_ID).toBe('virtual:master-utilities.css')
-    expect(VIRTUAL_EMITTED_GLOBALS_ID).toBe('virtual:master-css-emitted-globals')
-    expect(MASTER_CSS_MANIFEST_QUERY).toBe('?master-css-manifest')
+    expect(VIRTUAL_MANIFEST_ID).toBe('virtual:stet-css-manifest')
+    expect(VIRTUAL_CSS_ID).toBe('virtual:stet-utilities.css')
+    expect(VIRTUAL_EMITTED_GLOBALS_ID).toBe('virtual:stet-css-emitted-globals')
+    expect(MASTER_CSS_MANIFEST_QUERY).toBe('?stet-css-manifest')
   })
 
   it('serializes manifest and emittedGlobals modules', () => {
@@ -48,24 +48,24 @@ describe('@stet-css/integration module helpers', () => {
   })
 
   it('matches and strips CSS manifest resource queries', () => {
-    expect(stripMasterCSSManifestQuery('./theme.css?master-css-manifest')).toBe('./theme.css')
-    expect(stripResourceQuery('./theme.css?master-css-manifest')).toBe('./theme.css')
+    expect(stripMasterCSSManifestQuery('./theme.css?stet-css-manifest')).toBe('./theme.css')
+    expect(stripResourceQuery('./theme.css?stet-css-manifest')).toBe('./theme.css')
   })
 
   it('builds manifest JSON preload link attributes and HTML', () => {
-    expect(toManifestPreloadLinkAttrs('/assets/master-css-manifest.json')).toEqual({
+    expect(toManifestPreloadLinkAttrs('/assets/stet-css-manifest.json')).toEqual({
       rel: 'modulepreload',
       as: 'json',
       crossorigin: '',
-      href: '/assets/master-css-manifest.json'
+      href: '/assets/stet-css-manifest.json'
     })
-    expect(toManifestPreloadLinkTag('/assets/master-css-manifest.json?x=1&name="main"')).toBe(
-      '<link rel="modulepreload" as="json" crossorigin href="/assets/master-css-manifest.json?x=1&amp;name=&quot;main&quot;">'
+    expect(toManifestPreloadLinkTag('/assets/stet-css-manifest.json?x=1&name="main"')).toBe(
+      '<link rel="modulepreload" as="json" crossorigin href="/assets/stet-css-manifest.json?x=1&amp;name=&quot;main&quot;">'
     )
   })
 
   it('builds a universal manifest facade that resolves Next production and dev assets', () => {
-    const source = toUniversalManifestFacadeModule('new URL("./master-css-manifest.json", import.meta.url)')
+    const source = toUniversalManifestFacadeModule('new URL("./stet-css-manifest.json", import.meta.url)')
 
     expect(source).toContain(`join(process.cwd(), '.next', value.slice('/_next/'.length))`)
     expect(source).toContain(`join(process.cwd(), '.next', 'dev', value.slice('/_next/'.length))`)
@@ -80,7 +80,7 @@ describe('@stet-css/integration module helpers', () => {
   })
 
   it('builds a browser manifest facade that avoids import attributes', () => {
-    const source = toBrowserManifestFacadeModule('new URL("./master-css-manifest.json", import.meta.url)')
+    const source = toBrowserManifestFacadeModule('new URL("./stet-css-manifest.json", import.meta.url)')
 
     // Must load the manifest with fetch, never `import(url, { with: { type: 'json' } })`.
     // Import attributes are a SyntaxError on Safari < 17.2 (all iOS 15/16), and evaluating

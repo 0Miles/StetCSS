@@ -86,10 +86,10 @@ describe('@stet-css/integration/client', () => {
         `
 /// <reference types="@stet-css/integration/client" />
 
-import 'virtual:master-utilities.css'
-import virtualManifest from 'virtual:master-css-manifest'
-import virtualEmittedGlobals from 'virtual:master-css-emitted-globals'
-import localManifest from './app.css?master-css-manifest'
+import 'virtual:stet-utilities.css'
+import virtualManifest from 'virtual:stet-css-manifest'
+import virtualEmittedGlobals from 'virtual:stet-css-emitted-globals'
+import localManifest from './app.css?stet-css-manifest'
 
 virtualManifest satisfies import('@stet-css/engine').MasterCSSManifest
 virtualEmittedGlobals satisfies import('@stet-css/core/emitted-globals').MasterCSSEmittedGlobals

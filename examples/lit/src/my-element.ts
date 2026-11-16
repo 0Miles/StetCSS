@@ -4,8 +4,8 @@ import masterLogo from './assets/master.svg'
 import litLogo from './assets/lit.svg'
 import { cssRuntime } from '@stet-css/runtime'
 import type CSSRuntime from '@stet-css/runtime'
-import manifest from 'virtual:master-css-manifest'
-import emittedGlobals from 'virtual:master-css-emitted-globals'
+import manifest from 'virtual:stet-css-manifest'
+import emittedGlobals from 'virtual:stet-css-emitted-globals'
 
 /**
  * An example element.

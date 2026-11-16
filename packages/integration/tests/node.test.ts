@@ -43,12 +43,12 @@ describe('@stet-css/integration/node', () => {
     expect(id).not.toContain('.css')
     expect(id).not.toContain('%2Ecss')
     expect(fromResolvedMasterCSSManifestId(id)).toBe(file)
-    expect(toVirtualDefaultManifestModulePath(root)).toBe(path.join(root, 'node_modules', '.master-css', 'master-css-manifest.js'))
-    expect(toVirtualCSSManifestModulePath(root, file)).toMatch(/node_modules[/\\]\.master-css[/\\].+\.manifest\.js$/)
-    expect(toVirtualCSSManifestAssetPath(root, file)).toMatch(/node_modules[/\\]\.master-css[/\\].+\.manifest\.json$/)
-    expect(toVirtualCSSModulePath(root)).toBe(path.join(root, 'node_modules', '.master-css', 'master-utilities.css'))
-    expect(toVirtualEmittedGlobalsModulePath(root)).toBe(path.join(root, 'node_modules', '.master-css', 'master-css-emitted-globals.js'))
-    expect(toVirtualModulePackageJSONPath(root)).toBe(path.join(root, 'node_modules', '.master-css', 'package.json'))
+    expect(toVirtualDefaultManifestModulePath(root)).toBe(path.join(root, 'node_modules', '.stet-css', 'stet-css-manifest.js'))
+    expect(toVirtualCSSManifestModulePath(root, file)).toMatch(/node_modules[/\\]\.stet-css[/\\].+\.manifest\.js$/)
+    expect(toVirtualCSSManifestAssetPath(root, file)).toMatch(/node_modules[/\\]\.stet-css[/\\].+\.manifest\.json$/)
+    expect(toVirtualCSSModulePath(root)).toBe(path.join(root, 'node_modules', '.stet-css', 'stet-utilities.css'))
+    expect(toVirtualEmittedGlobalsModulePath(root)).toBe(path.join(root, 'node_modules', '.stet-css', 'stet-css-emitted-globals.js'))
+    expect(toVirtualModulePackageJSONPath(root)).toBe(path.join(root, 'node_modules', '.stet-css', 'package.json'))
     expect(createVirtualDefaultManifestModulePathPattern().test(toVirtualDefaultManifestModulePath(root))).toBe(true)
   })
 
@@ -70,7 +70,7 @@ describe('@stet-css/integration/node', () => {
   })
 
   it('hashes manifest asset file names', () => {
-    expect(toHashedManifestAssetFileName('{"version":1}')).toMatch(/^master-css-manifest\.[a-f0-9]{8}\.json$/)
+    expect(toHashedManifestAssetFileName('{"version":1}')).toMatch(/^stet-css-manifest\.[a-f0-9]{8}\.json$/)
   })
 
   it('updates stale virtual module placeholders', () => {

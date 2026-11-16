@@ -10,7 +10,7 @@ import {
 } from '@stet-css/stylesheet'
 import { findCSSManifestEntryFiles, STYLE_ENTRY_EXTENSIONS } from '@stet-css/project/entries'
 
-// Not under node_modules/.master-css like the virtual modules: webpack snapshots
+// Not under node_modules/.stet-css like the virtual modules: webpack snapshots
 // node_modules as immutable (`managedPaths`), so it would not see the file being rewritten.
 const STATIC_OUTPUT_FILE = '.master/next.css'
 const STATIC_OUTPUT_PLACEHOLDER = '/* Replaced by @stet-css/next with the CSS generated from the project files. */\n'

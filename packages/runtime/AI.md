@@ -4,7 +4,7 @@ Runs the engine in the browser. `CSSRuntime` observes DOM class changes, keeps p
 
 ## Boundaries
 
-- Framework provider lifecycle → the framework packages. No build plugin injects the runtime: a project imports it itself with the two Vite virtual modules, `virtual:master-css-manifest` and `virtual:master-css-emitted-globals` (`examples/lit`).
+- Framework provider lifecycle → the framework packages. No build plugin injects the runtime: a project imports it itself with the two Vite virtual modules, `virtual:stet-css-manifest` and `virtual:stet-css-emitted-globals` (`examples/lit`).
 
 ## Risks
 

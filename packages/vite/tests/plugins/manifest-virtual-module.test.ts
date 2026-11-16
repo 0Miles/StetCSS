@@ -95,7 +95,7 @@ describe('ManifestVirtualModulePlugin', () => {
 
     expect(emitFile).toHaveBeenCalledWith(expect.objectContaining({
       type: 'asset',
-      name: 'master-css-manifest.json',
+      name: 'stet-css-manifest.json',
       source: expect.stringContaining('"version":1')
     }))
     expect(code).toContain('const masterCSSManifestURL = import.meta.ROLLUP_FILE_URL_master_css_manifest_ref;')
