@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { build, type BuildOptions, type Plugin, type PluginOption } from 'vite'
+import { build, createLogger, type BuildOptions, type Plugin, type PluginOption } from 'vite'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 
 export const SLOT_CSS_RULE = '#master-css-slot{--slot:0}'
@@ -74,8 +74,8 @@ export interface BuildProjectOptions {
 
 /**
  * Runs a real Vite build of a temp project and returns its built `index.html` (empty when the
- * build emits none, such as an SSR build), the concatenated CSS assets and their file names.
- * Fails when the build emits no CSS asset.
+ * build emits none, such as an SSR build), the concatenated CSS assets, their file names and
+ * the warnings the build logged. Fails when the build emits no CSS asset.
  */
 export async function buildProject({
   appClass = '',
@@ -101,9 +101,14 @@ export async function buildProject({
     if (styleCSS !== undefined) writeFileSync(join(root, 'src/style.css'), styleCSS)
     setup?.(root)
 
+    const warnings: string[] = []
+    const logger = createLogger('warn')
+    logger.warn = (message) => { warnings.push(message) }
+    logger.warnOnce = logger.warn
     await build({
       root,
-      logLevel: 'silent',
+      logLevel: 'warn',
+      customLogger: logger,
       plugins,
       build: {
         outDir: 'dist',
@@ -118,6 +123,7 @@ export async function buildProject({
 
     const builtHTMLPath = join(root, 'dist/index.html')
     return {
+      warnings,
       cssFiles,
       css: cssFiles
         .map((file) => readFileSync(join(assetsDir, file), 'utf8'))

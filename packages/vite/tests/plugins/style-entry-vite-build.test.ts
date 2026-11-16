@@ -139,9 +139,8 @@ describe('StyleEntryPlugin Vite build integration', () => {
    * with a year-long cache, so a CSS asset whose file name ignores the generated CSS keeps
    * returning the old rules after a deploy that adds a class or edits the entry's native CSS.
    * The same inputs must keep the same name, or every deploy busts the cache.
-   * Reverse check: putting a constant in the build placeholder instead of the digest of the
-   * generated CSS turns this test red, plus the `style-entry-build.test.ts` tests that expect
-   * no warning: a constant never matches the spliced CSS, so the stale-name warning fires.
+   * Reverse check: returning a constant from `createBuildDigest` turns this test and the
+   * lazily loaded stylesheet test red.
    */
   test('names the CSS asset after the generated CSS', async () => {
     const buildCSSFiles = async (appClass: string, nativeCSS = '') => (await buildProject({
@@ -156,5 +155,36 @@ describe('StyleEntryPlugin Vite build integration', () => {
     expect(await buildCSSFiles('block')).toEqual(first)
     expect(await buildCSSFiles('block pt:41px')).not.toEqual(first)
     expect(await buildCSSFiles('block', '.card { color: red; }')).not.toEqual(first)
+  })
+
+  /**
+   * Guards code-split stylesheets: every CSS asset gets the CSS of every entry, so editing a
+   * lazily loaded chunk's stylesheet changes the main asset too. The main stylesheet is
+   * transformed before the lazy one registers, so a digest of the CSS generated at that point
+   * left the main asset's name unchanged and warned on every build.
+   * Reverse check: building the digest from the registered entries only, without the ones
+   * discovery finds, turns this test red.
+   */
+  test('renames every CSS asset when a lazily loaded stylesheet changes', async () => {
+    const buildLazy = (color: string) => buildProject({
+      appClass: 'block',
+      plugins: [masterCSS()],
+      prefix: 'master-css-vite-asset-hash-lazy-',
+      styleCSS: '@import "@stet-css/core";\n.a { color: red; }\n',
+      mainTS: 'import "./style.css"\nimport("./lazy")\n',
+      setup(root) {
+        writeFileSync(join(root, 'src/lazy.ts'), 'import "./lazy.css"\nexport const lazy = 1\n')
+        writeFileSync(join(root, 'src/lazy.css'), `@import "@stet-css/core";\n.lazy { color: ${color}; }\n`)
+      }
+    })
+
+    const first = await buildLazy('blue')
+    const same = await buildLazy('blue')
+    const changed = await buildLazy('green')
+
+    expect(same.cssFiles).toEqual(first.cssFiles)
+    expect(changed.css).toContain('green')
+    expect(changed.cssFiles.filter((file) => first.cssFiles.includes(file))).toEqual([])
+    expect([...first.warnings, ...same.warnings, ...changed.warnings].filter((warning) => warning.includes('master-css'))).toEqual([])
   })
 })
