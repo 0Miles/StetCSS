@@ -775,14 +775,15 @@ async function createBrowserLifecyclePage(variant: BrowserLifecycleVariant): Pro
   const spec = getSpecForVariant(variant)
   const mode = getModeForVariant(variant)
   const classes = mode.id === 'tailwind-static' ? tailwindClasses : masterClasses
+  const isStatic = mode.id !== 'master-runtime'
   const sourceHtml = renderLifecycleDocument({
     spec,
     modeId: mode.id,
     classes,
-    includeStaticClassSource: mode.id === 'master-static' || mode.id === 'tailwind-static'
+    includeStaticClassSource: isStatic
   })
 
-  if (mode.id === 'master-static' || mode.id === 'tailwind-static') {
+  if (isStatic) {
     const build = await buildLifecycleStaticCSS({
       variantId: variant.id,
       family: classes.family,
@@ -793,7 +794,6 @@ async function createBrowserLifecyclePage(variant: BrowserLifecycleVariant): Pro
       variantId: variant.id,
       html: addStaticHarness(sourceHtml),
       externalCSS: build.css,
-      deliveredCSS: build.css,
       buildArtifacts: build.artifacts
     })
   }
@@ -802,8 +802,7 @@ async function createBrowserLifecyclePage(variant: BrowserLifecycleVariant): Pro
     variantId: variant.id,
     html: addRuntimeHarness(sourceHtml),
     runtimeJS: await readRuntimeBundle(),
-    manifestJSON: await readDefaultManifestJSON(),
-    deliveredCSS: ''
+    manifestJSON: await readDefaultManifestJSON()
   })
 }
 
@@ -866,7 +865,6 @@ async function buildLifecycleStaticCSS(options: {
 async function writeBrowserLifecyclePage(options: {
   variantId: string
   html: string
-  deliveredCSS: string
   externalCSS?: string
   runtimeJS?: Buffer
   manifestJSON?: Buffer
@@ -896,7 +894,7 @@ async function writeBrowserLifecyclePage(options: {
         runtimeJS: options.runtimeJS || Buffer.alloc(0),
         manifestJSON: options.manifestJSON || Buffer.alloc(0)
       }),
-      ...createDeliveredCSSStructureSamples(options.variantId, options.deliveredCSS)
+      ...createDeliveredCSSStructureSamples(options.variantId, options.externalCSS ?? '')
     ],
     artifacts: [
       ...(options.buildArtifacts || []),
