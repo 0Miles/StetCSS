@@ -114,6 +114,27 @@ describe('stylesheet CSS directives', () => {
     expect(css).toContain('.font\\:semibold{font-weight:var(--font-weight-semibold)}')
   })
 
+  /**
+   * Guards a build against an `@source` pattern whose braces expand into millions of globs:
+   * twenty `{a,b}` groups made the build spend over nine seconds and gigabytes of memory
+   * listing files, where it should stop at once with an error naming the pattern.
+   * Reverse check: raising the compiler's expansion limit turns this test and the compiler's
+   * `@source` limit tests red.
+   */
+  it('rejects an @source pattern whose braces expand past the limit before listing files', async () => {
+    const root = createFixture()
+    const pattern = `./${'{a,b}'.repeat(20)}.tsx`
+    const scanner = new CSSScanner({}, root)
+    await scanner.init()
+    const startedAt = performance.now()
+
+    await expect(registerStyleCSSSource(scanner, new Map(), join(root, 'app/entry.css'), `
+      @master entry;
+      @source '${pattern}';
+    `)).rejects.toThrow(pattern)
+    expect(performance.now() - startedAt).toBeLessThan(1000)
+  })
+
   it('unions source directives and subtracts source not directives', async () => {
     const root = createFixture()
     writeFileSync(join(root, 'app/a/page.tsx'), '<div class="block"></div>')

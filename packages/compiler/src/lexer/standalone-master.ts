@@ -1,5 +1,6 @@
 import type { CSSDirectiveExtractionPolicy } from '@stet-css/schema/css-directives'
 import { escapeRegExp, MASTER_CSS_ENTRY_DIRECTIVE_NAME } from '@stet-css/lexer'
+import { countSourcePatternExpansions, MAX_SOURCE_PATTERN_EXPANSIONS } from './source-pattern'
 import { findAtRuleStatementEnd, removeSourceRanges } from './source'
 
 export type StandaloneCSSDirectiveName = 'master' | 'source' | 'safelist' | 'blocklist' | 'preserve'
@@ -236,12 +237,23 @@ export function findStandaloneMasterDirectiveStatements(source: string, filename
     .filter((statement): statement is StandaloneMasterDirectiveStatement => statement.atRuleName === 'master')
 }
 
+/** Rejects an `@source` pattern whose braces would make glob matching expand it without bound. */
+function assertSourcePatternsExpandable(statement: StandaloneCSSDirectiveStatement) {
+  const directive = statement.modifiers.includes('not') ? '@source not' : '@source'
+  for (const pattern of statement.args) {
+    if (countSourcePatternExpansions(pattern) > MAX_SOURCE_PATTERN_EXPANSIONS) {
+      throw new Error(`${directive} '${pattern}' expands its braces into more than ${MAX_SOURCE_PATTERN_EXPANSIONS} patterns`)
+    }
+  }
+}
+
 export function collectStandaloneCSSDirectiveExtractionPolicy(source: string, filename = 'master.css') {
   void filename
   const policy = createCSSDirectiveExtractionPolicy()
   for (const statement of findStandaloneCSSDirectiveStatements(source, filename)) {
     switch (statement.atRuleName) {
       case 'source':
+        assertSourcePatternsExpandable(statement)
         if (statement.modifiers.includes('not')) {
           policy.exclude.push(...statement.args)
         } else {
