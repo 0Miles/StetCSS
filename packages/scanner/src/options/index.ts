@@ -31,11 +31,23 @@ export const REMOVED_SCANNER_OPTIONS: Readonly<Record<string, string>> = {
  */
 export const REMOVED_PLUGIN_OPTIONS: Readonly<Record<string, string>> = {
   ...REMOVED_SCANNER_OPTIONS,
-  mode: 'static CSS is the only output; import @stet-css/runtime in the app to also run the runtime',
-  injectRuntime: 'import @stet-css/runtime in the app to run the runtime',
+  mode: 'static CSS is the only output; to also run the runtime, start @stet-css/runtime in the app (CSSRuntime.create(...).observe(), see its README)',
+  injectRuntime: 'start @stet-css/runtime in the app (CSSRuntime.create(...).observe(), see its README)',
   avoidFOUC: 'static CSS is in the page before it renders',
   scanner: 'pass "adapters" directly',
   scannerOptions: 'pass "adapters" directly'
+}
+
+/** Removed plugin keys that held scanner options; their own removed keys are reported with them. */
+const NESTED_SCANNER_OPTION_KEYS = ['scanner', 'scannerOptions']
+
+/** The replacements for the removed keys inside a nested `scanner` value, so one run names them all. */
+function describeNestedRemovedOptions(value: unknown) {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return ''
+  return Object.keys(value)
+    .filter((key) => Object.hasOwn(REMOVED_SCANNER_OPTIONS, key))
+    .map((key) => `; its "${key}" was removed too: ${REMOVED_SCANNER_OPTIONS[key]}`)
+    .join('')
 }
 
 function validateOptions(options: unknown, owner: string, removedOptions: Readonly<Record<string, string>>): asserts options is ScannerOptions {
@@ -45,7 +57,10 @@ function validateOptions(options: unknown, owner: string, removedOptions: Readon
   for (const key of Object.keys(options)) {
     if (SCANNER_OPTION_KEYS.includes(key)) continue
     if (Object.hasOwn(removedOptions, key)) {
-      throw new TypeError(`${owner} option "${key}" was removed; ${removedOptions[key]}.`)
+      const nested = NESTED_SCANNER_OPTION_KEYS.includes(key)
+        ? describeNestedRemovedOptions((options as Record<string, unknown>)[key])
+        : ''
+      throw new TypeError(`${owner} option "${key}" was removed; ${removedOptions[key]}${nested}.`)
     }
     throw new TypeError(`Unknown ${owner} option "${key}"; the only option is ${SCANNER_OPTION_KEYS.map((allowed) => `"${allowed}"`).join(', ')}.`)
   }
@@ -66,10 +81,10 @@ export function validateScannerOptions(options: unknown, owner = 'CSSScanner'): 
 /**
  * The check every build plugin runs on its options when the config loads: the options are
  * `ScannerOptions` (only `adapters`), and a removed plugin or scanner key names its
- * replacement. `undefined` stands for no options. `owner` is the plugin's package name.
+ * replacement, including the removed keys inside a nested `scanner`. `owner` is the plugin's
+ * package name.
  */
-export function validatePluginOptions(options: unknown, owner: string): asserts options is ScannerOptions | undefined {
-  if (options === undefined) return
+export function validatePluginOptions(options: unknown, owner: string): asserts options is ScannerOptions {
   validateOptions(options, owner, REMOVED_PLUGIN_OPTIONS)
 }
 
