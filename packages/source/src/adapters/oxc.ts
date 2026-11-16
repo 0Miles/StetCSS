@@ -1,6 +1,7 @@
 import { exceedsScriptNestingLimit } from '@stet-css/lexer'
-import { parseSync, visitorKeys } from 'oxc-parser'
+import { visitorKeys } from 'oxc-parser'
 import { addClassString } from './class-string'
+import { parseOxcOnSourceStack } from './oxc-stack'
 import { extractClassCandidates } from '../extract-class-candidates'
 import type { SourceAdapter } from './types'
 
@@ -65,20 +66,22 @@ function getTemplateLiteralValue(node: OxcNode) {
 }
 
 export function extractOxcClasses(source: string, content: string): string[] {
-  // oxc-parser overflows its native stack on deep nesting, killing the host process.
+  // oxc-parser overflows its native stack on deep nesting, killing the host
+  // process: bracket nesting past the limit skips oxc, and the rest parses on
+  // a stack sized to the source.
   if (exceedsScriptNestingLimit(content)) {
     return extractClassCandidates(content)
   }
-  let parseResult: ReturnType<typeof parseSync>
+  let parseResult: ReturnType<typeof parseOxcOnSourceStack>
   try {
-    parseResult = parseSync(normalizeSource(source), content, {
+    parseResult = parseOxcOnSourceStack(normalizeSource(source), content, {
       range: false,
       sourceType: 'unambiguous'
     })
   } catch {
     return extractClassCandidates(content)
   }
-  if (parseResult.errors.length) {
+  if (!parseResult || parseResult.errors.length) {
     return extractClassCandidates(content)
   }
 

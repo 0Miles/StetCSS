@@ -22,6 +22,17 @@ const shapes: [name: string, file: string, nest: (depth: number) => string][] = 
   ['nested template literals', 'a.js', (depth) => `x=${'`${ '.repeat(depth)}'block'${' }`'.repeat(depth)}`]
 ]
 
+// Chains written one level per line. The prescan ends a chain at each newline
+// (or never counts the construct), so these reach oxc at full depth.
+const lineShapes: [name: string, file: string, nest: (depth: number) => string][] = [
+  ['chained conditionals', 'a.js', (depth) => `x=${'a?b:\n'.repeat(depth)}'block'`],
+  ['else-if chains', 'a.js', (depth) => `if(a){}${'else if(a){}\n'.repeat(depth)}else{x='block'}`],
+  ['assignment chains', 'a.js', (depth) => `x=${'a=\n'.repeat(depth)}'block'`],
+  ['chained arrow functions', 'a.js', (depth) => `x=${'a=>\n'.repeat(depth)}'block'`],
+  ['nested JSX elements', 'a.tsx', (depth) => `x=<a className="block">${'<a>\n'.repeat(depth - 1)}${'</a>'.repeat(depth)}`],
+  ['new chains', 'a.js', (depth) => `x=${'new\n'.repeat(depth)}A('block')`]
+]
+
 function deepestAllowed(nest: (depth: number) => string) {
   let allowed = 1
   let rejected = 1 << 16
@@ -93,6 +104,24 @@ describe.concurrent('JavaScript and TypeScript nested 20,000 deep', () => {
 describe.concurrent('JavaScript and TypeScript at the deepest nesting oxc still parses', () => {
   test.each(shapes)('%s parse without crashing', async (_, file, nest) => {
     const { code, signal, stdout, stderr } = await extractOnWorkerInChild(file, nest(deepestAllowed(nest)))
+
+    expect({ code, signal }, stderr).toEqual({ code: 0, signal: null })
+    expect(JSON.parse(stdout)).toContain('block')
+  })
+})
+
+/**
+ * Guards: a chain written one level per line passes the prescan, which cannot
+ * tell a newline that ends a statement from one inside a formatted expression,
+ * and still overflows oxc-parser's native stack at 20,000 levels, killing the
+ * build or dev server. oxc must parse these on a stack sized to the source and
+ * return the file's class. Reverse check: setting `INLINE_LENGTH` in
+ * `oxc-stack.ts` to `Infinity`, so every source parses on the caller's stack,
+ * turns only these six cases red.
+ */
+describe.concurrent('JavaScript and TypeScript chained one level per line, 20,000 deep', () => {
+  test.each(lineShapes)('%s survive extraction and keep their classes', async (_, file, nest) => {
+    const { code, signal, stdout, stderr } = await extractOnWorkerInChild(file, nest(20_000))
 
     expect({ code, signal }, stderr).toEqual({ code: 0, signal: null })
     expect(JSON.parse(stdout)).toContain('block')
