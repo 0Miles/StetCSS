@@ -10,6 +10,8 @@ import {
 } from '@stet-css/stylesheet'
 import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
 
+// Not under node_modules/.master-css like the virtual modules: webpack snapshots
+// node_modules as immutable (`managedPaths`), so it would not see the file being rewritten.
 const STATIC_OUTPUT_FILE = '.master/next.css'
 const STATIC_OUTPUT_PLACEHOLDER = '/* Replaced by @stet-css/next with the CSS generated from the project files. */\n'
 
@@ -35,9 +37,15 @@ export function resolveStaticOutputPath(projectDir: string) {
  */
 export function ensureStaticOutputFile(projectDir: string) {
   const outputPath = resolveStaticOutputPath(projectDir)
+  const outputDir = dirname(outputPath)
   if (!existsSync(outputPath)) {
-    mkdirSync(dirname(outputPath), { recursive: true })
+    mkdirSync(outputDir, { recursive: true })
     writeFileSync(outputPath, STATIC_OUTPUT_PLACEHOLDER)
+  }
+  // The directory ignores itself, so projects need no `.gitignore` entry.
+  const gitignorePath = resolve(outputDir, '.gitignore')
+  if (!existsSync(gitignorePath)) {
+    writeFileSync(gitignorePath, '*\n')
   }
   return outputPath
 }
