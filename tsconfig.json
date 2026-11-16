@@ -45,7 +45,6 @@
       "@stet-css/validator/*": [ "./node_modules/@stet-css/validator/src/*" ],
       "@stet-css/astro": [ "./node_modules/@stet-css/astro/src" ],
       "master-css-vscode": [ "./node_modules/master-css-vscode/src" ],
-      "~/*": [ "./*" ],
     },
     "target": "esnext",
     "module": "esnext",
