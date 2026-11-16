@@ -12,8 +12,8 @@ import {
 } from './emitted-globals-module'
 
 export const RESOLVED_MASTER_CSS_MANIFEST_QUERY_PREFIX = '\0stet-css-manifest:'
-export const VIRTUAL_MODULE_DIR = 'node_modules/.stet-css'
 const VIRTUAL_MODULE_DIR_SEGMENTS = ['node_modules', '.stet-css'] as const
+export const VIRTUAL_MODULE_DIR = VIRTUAL_MODULE_DIR_SEGMENTS.join('/')
 const VIRTUAL_MODULE_PACKAGE_JSON_SOURCE = '{\n    "type": "module"\n}\n'
 
 export function toHashedManifestAssetFileName(json: string) {

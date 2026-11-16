@@ -30,7 +30,7 @@ const WINDOW_GUARD_CASES: ClobberingCase[] = [
  */
 const WINDOW_CONFIRMATION_CASES: ClobberingCase[] = [
   { label: 'an element with id="stetCSSRuntime"', markup: '<div id="stetCSSRuntime"></div>', selector: 'div[id="stetCSSRuntime"]' },
-  { label: 'an element with id="stet-css"', markup: '<div id="stet-css"></div>', selector: 'div[id="stet-css"]' }
+  { label: `an element with id="${MASTER_CSS_RUNTIME_STYLE_ID}"`, markup: `<div id="${MASTER_CSS_RUNTIME_STYLE_ID}"></div>`, selector: `div[id="${MASTER_CSS_RUNTIME_STYLE_ID}"]` }
 ]
 
 /**
