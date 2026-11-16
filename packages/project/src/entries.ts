@@ -6,8 +6,8 @@ import {
   resolveMasterCSSPackageEntryFile
 } from '@stet-css/compiler'
 import {
-  collectCSSDirectiveRanges,
   createMasterCSSManifestEntryPattern,
+  findMasterAtRule,
   hasMasterCSSManifestEntrypoint as hasMasterCSSManifestEntrypointFallback,
   isMasterCSSModuleId,
   normalizeMasterCSSModuleIds
@@ -70,8 +70,7 @@ export function hasMasterCSSManifestEntrypoint(source: string) {
  * the compiler's replacement message instead of silently finding no entries.
  */
 function isDiscoveredCSSManifestEntry(source: string) {
-  return hasMasterCSSManifestEntrypoint(source)
-    || (source.includes('@master') && collectCSSDirectiveRanges(source).some((range) => range.name === 'master'))
+  return hasMasterCSSManifestEntrypoint(source) || Boolean(findMasterAtRule(source))
 }
 
 async function collectCSSManifestEntryFiles(root: string, directory: string, entries: string[], extensions: readonly string[]) {

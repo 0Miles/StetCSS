@@ -16,7 +16,7 @@ const repoRoot = resolve(__dirname, '../../..')
  * Prevents: a stylesheet still marked with the removed `@master entry;` compiling as if the marker
  * did something. Only `@import '@stet-css/core'` makes an entry now, so the build must fail and
  * name that import, and say which entry graph holds the marker.
- * Reverse check: returning early from `assertNoMasterAtRules` turns only this test, the next one
+ * Reverse check: making `assertNoMasterAtRules` return early turns only this test, the next one
  * and the located-error test red.
  */
 test.concurrent('rejects @master entry and names the @stet-css/core import that replaces it', () => {
@@ -29,7 +29,7 @@ test.concurrent('rejects @master entry and names the @stet-css/core import that 
 /**
  * Prevents: `@master { … }` blocks and other `@master` at-rules reaching the output unchanged,
  * where they do nothing. Settings such as `mode-trigger` belong in `@settings`.
- * Reverse check: as above, returning early from `assertNoMasterAtRules`.
+ * Reverse check: as above, making `assertNoMasterAtRules` return early.
  */
 test.concurrent('rejects every other @master at-rule and points settings at @settings', () => {
   expect(() => compileCSS('@import "@stet-css/core";\n@master { mode-trigger: media; }'))
@@ -76,8 +76,8 @@ test.concurrent('locates removed @master and @preserve at-rules for the editor',
 /**
  * Prevents: native CSS that merely contains the text `@master` failing the build, such as an
  * image named `logo@master.png` or a comment. Only an at-rule that starts a statement is rejected.
- * Reverse check: dropping the lexer's statement-start check for `@master` (`startsCSSStatement`)
- * turns this test red, plus the lexer range test.
+ * Reverse check: ignoring the lexer's statement-start flag for `@master` turns this test red, plus
+ * the lexer range test.
  */
 test.concurrent('keeps @master text that is not an at-rule', () => {
   const result = compileCSS('/* @master entry; */\n.logo { background: url(logo@master.png); }')
