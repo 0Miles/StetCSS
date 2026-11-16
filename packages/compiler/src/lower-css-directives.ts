@@ -13,8 +13,9 @@ import type { PropertiesHyphen } from 'csstype'
 import {
   ROOT_FONT_SIZE,
   compareRulePriority,
+  PRESET_MODES,
+  UndeclaredModeError,
   createCompilerCSS,
-  formatUndeclaredModeMessage,
   generateCondition,
   generateSelector,
   isUndeclaredPresetMode,
@@ -91,7 +92,7 @@ interface StyleMergeBucket {
 type StyleConditionFeature = [string, number, number]
 
 const STYLE_CONDITION_FEATURE_REGEX = /\(\s*(width|height|resolution)\s*(>=|<=|>|<)\s*(-?(?:\d+(?:\.\d+)?|\.\d+))([a-z%]*)\s*\)/g
-const MEDIA_MODE_NAMES = new Set(['light', 'dark'])
+const MEDIA_MODE_NAMES = new Set(PRESET_MODES)
 const DEFAULT_MODE_NONE = 'none'
 const CONDITION_VARIABLE_NAMESPACES = new Set(['breakpoint', 'container'])
 
@@ -518,8 +519,8 @@ function resolveConditionVariantReference(token: string, css: MasterCSS): Resolv
       : [{ conditions: [`@media (prefers-color-scheme:${conditionToken})`] }]
   }
 
-  if (isUndeclaredPresetMode(conditionToken, css.conditions)) {
-    throw new Error(formatUndeclaredModeMessage(`@variant ${conditionToken}`, conditionToken, css.modes))
+  if (isUndeclaredPresetMode(conditionToken, css)) {
+    throw new UndeclaredModeError(`@variant ${conditionToken}`, conditionToken, css.modes)
   }
 
   if (/^-?[_a-zA-Z][-_a-zA-Z0-9]*$/.test(conditionToken) && !css.conditions.has(conditionToken)) {

@@ -21,7 +21,7 @@ import wrapConditions from './utils/wrap-conditions'
 import { createAlphaColorValue, createCSSVariableReference, normalizeEngineVariableValue } from './utils/css-variables'
 import collectAnimationNames from './utils/collect-animation-names'
 import { isKnownPseudoClass } from './pseudo-classes'
-import { formatUndeclaredModeMessage, isUndeclaredPresetMode } from './utils/undeclared-mode'
+import { UndeclaredModeError, isUndeclaredPresetMode } from './utils/undeclared-mode'
 
 type UtilityStateBranch = {
   selectorTemplate?: string
@@ -713,8 +713,8 @@ export class Utility {
         continue
       }
 
-      if (isUndeclaredPresetMode(conditionToken, this.css.conditions)) {
-        throw new Error(formatUndeclaredModeMessage(`Class "${this.name}"`, conditionToken, this.css.modes))
+      if (isUndeclaredPresetMode(conditionToken, this.css)) {
+        throw new UndeclaredModeError(`Class "${this.name}"`, conditionToken, this.css.modes)
       }
 
       const condition = parseCondition(conditionToken, this.css)
