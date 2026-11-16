@@ -7,7 +7,6 @@ import ManifestVirtualModulePlugin from './plugins/manifest-virtual-module'
 import EmittedGlobalsVirtualModulePlugin from './plugins/emitted-globals-virtual-module'
 import ContextPlugin from './plugins/context'
 import ScannerPlugin from './plugins/scanner'
-import UsageGraphPlugin from './plugins/usage-graph'
 import LocalComposePlugin from './plugins/local-compose'
 import StyleEntryPlugin from './plugins/style-entry'
 import StyleEntryHMRPlugin from './plugins/style-entry-hmr'
@@ -23,6 +22,8 @@ export interface PluginContext {
   styleCSSSources?: StyleCSSSources
   includeGeneratedCSS?: boolean
   emittedGlobals?: MasterCSSEmittedGlobals
+  /** The last extracted CSS, compared on source file changes to skip no-op HMR updates. */
+  extractedCSS?: string
   defaultManifestAssetReferenceId?: string
   defaultManifestAssetSource?: string
 }
@@ -38,7 +39,6 @@ export default function masterCSS(options?: PluginOptions): Plugin[] {
     EmittedGlobalsVirtualModulePlugin(context),
     ManifestLoaderPlugin(context),
     ScannerPlugin(options, context),
-    UsageGraphPlugin(options, context),
     LocalComposePlugin(options, context),
     StyleEntryPlugin(options, context),
     StyleEntryHMRPlugin(options, context),

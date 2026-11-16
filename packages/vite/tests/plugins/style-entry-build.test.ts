@@ -18,6 +18,16 @@
  *     runtime against a blank page.
  */
 import { describe, test, expect, vi } from 'vitest'
+
+// The splice tests below hand the plugin a fixed extracted CSS; the managed-entry tests at
+// the end extract from real project files.
+vi.mock('../../src/utils/extracted-css', async (importActual) => {
+  const actual = await importActual<typeof import('../../src/utils/extracted-css')>()
+  return {
+    ...actual,
+    default: async (context: { stubbedExtractedCSS?: string }) => context.stubbedExtractedCSS ?? actual.default(context as never)
+  }
+})
 import StyleEntryBuildPlugin from '../../src/plugins/style-entry-build'
 import StyleEntryPlugin from '../../src/plugins/style-entry'
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
@@ -25,8 +35,9 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
 
-function makeContext(slot: string, css: string) {
+function makeContext(slot: string, css?: string) {
   return {
+    stubbedExtractedCSS: css,
     scanner: {
       slotCSSRule: slot,
       css: { text: css },
@@ -232,7 +243,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
         }
       `
       writeFileSync(entryPath, source)
-      const ctx = makeContext(SLOT, '')
+      const ctx = makeContext(SLOT)
       ctx.config = {
         command: 'build',
         root,
@@ -242,9 +253,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
           }
         }
       }
-      ctx.scanner.validClasses = new Set(['btn'])
-      ctx.scanner.usedNativeClasses = new Set(['native-card'])
-      ctx.scanner.options.safelist = []
+      writeFileSync(path.join(root, 'index.html'), '<button class="btn native-card"></button>')
       const styleEntryPlugin = StyleEntryPlugin({ mode: 'static' } as any, ctx)
       const plugin = StyleEntryBuildPlugin({} as any, ctx)
       const warn = vi.fn()
@@ -290,7 +299,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
         }
       `
       writeFileSync(entryPath, source)
-      const ctx = makeContext(SLOT, '')
+      const ctx = makeContext(SLOT)
       ctx.config = {
         command: 'build',
         root,
@@ -300,7 +309,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
           }
         }
       }
-      ctx.scanner.latentClasses = new Set(['btn', 'native-used'])
+      writeFileSync(path.join(root, 'index.html'), '<button class="btn native-used"></button>')
 
       const styleEntryPlugin = StyleEntryPlugin({ mode: 'static' } as any, ctx)
       const plugin = StyleEntryBuildPlugin({} as any, ctx)

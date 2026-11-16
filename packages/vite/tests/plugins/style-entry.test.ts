@@ -1,4 +1,7 @@
-import { describe, expect, test, vi } from 'vitest'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import StyleEntryPlugin from '../../src/plugins/style-entry'
 import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
@@ -8,17 +11,29 @@ const SLOT = '#master-css-slot{--slot:0}'
 const RESOLVED_VIRTUAL_CSS_ID = '\0' + VIRTUAL_CSS_ID
 const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
 
-function makeContext(command: 'serve' | 'build', css = '.fg\\:red{color:red}', includeGeneratedCSS = true) {
+const roots: string[] = []
+
+afterEach(() => {
+  for (const root of roots.splice(0)) {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+/** A project whose only source file uses `fg:red`; the plugin reads classes from its files. */
+function makeContext(command: 'serve' | 'build', includeGeneratedCSS = true) {
+  const root = mkdtempSync(join(tmpdir(), 'master-css-vite-style-entry-'))
+  roots.push(root)
+  writeFileSync(join(root, 'index.html'), '<div class="fg:red"></div>')
   return {
-    config: { command, root: process.cwd() },
+    config: { command, root },
     includeGeneratedCSS,
     scanner: {
-      cwd: process.cwd(),
+      cwd: root,
       options: { safelist: [] },
       slotCSSRule: SLOT,
-      css: { text: css, manifest: defaultManifest },
+      css: { text: '', manifest: defaultManifest },
       config: {},
-      latentClasses: new Set(['fg:red']),
+      latentClasses: new Set(),
       validClasses: new Set(),
       nativeClassNames: new Set(),
       usedNativeClasses: new Set(),
@@ -41,7 +56,7 @@ describe('StyleEntryPlugin', () => {
   })
 
   test('serve load inlines current extracted CSS and tracks the virtual CSS module for HMR', async () => {
-    const context = makeContext('serve', '.fg\\:red{color:red}')
+    const context = makeContext('serve')
     const plugin = StyleEntryPlugin({ mode: 'static' } as any, context)
 
     const result = await (plugin as any).load.call({}, RESOLVED_VIRTUAL_CSS_ID)
@@ -144,8 +159,7 @@ describe('StyleEntryPlugin', () => {
   })
 
   test('non-generated modes emit package base CSS for Master imports without generated utilities', async () => {
-    const context = makeContext('serve', '', false)
-    context.scanner.latentClasses = new Set()
+    const context = makeContext('serve', false)
     const plugin = StyleEntryPlugin({ mode: 'runtime' } as any, context)
 
     const result = await (plugin as any).transform.call(
@@ -166,8 +180,7 @@ describe('StyleEntryPlugin', () => {
   })
 
   test('non-generated modes preserve native imports when consuming empty Master entries', async () => {
-    const context = makeContext('serve', '', false)
-    context.scanner.latentClasses = new Set()
+    const context = makeContext('serve', false)
     const plugin = StyleEntryPlugin({ mode: 'progressive' } as any, context)
 
     const result = await (plugin as any).transform.call(
