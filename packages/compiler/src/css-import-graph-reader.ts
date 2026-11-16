@@ -1,4 +1,5 @@
 import { readFileSync, statSync } from 'node:fs'
+import { assertNoMasterAtRules } from './lexer/standalone-master'
 
 const MiB = 1024 * 1024
 /** The largest stylesheet an import graph reads. */
@@ -31,7 +32,9 @@ export type CSSImportGraphReader = (file: string, source?: string) => string
  * Creates the reader one CSS import graph inlines every stylesheet through, so every `@import`
  * expansion applies the same file checks and limits. Create one per compile entry: the entry's graph
  * and the graphs of every stylesheet its `@reference` tree compiles share it, so their imports count
- * toward the same limits. Each file is read from disk once per reader.
+ * toward the same limits. Each file is read from disk once per reader. Each stylesheet is checked for
+ * removed `@master` at-rules on its own, so the error points into the file that holds the at-rule
+ * rather than into the expanded graph.
  */
 export function createCSSImportGraphReader(): CSSImportGraphReader {
   const sources = new Map<string, string>()
@@ -47,6 +50,7 @@ export function createCSSImportGraphReader(): CSSImportGraphReader {
       text = readCSSFile(file)
       sources.set(file, text)
     }
+    assertNoMasterAtRules(text, file, true)
     bytes += Buffer.byteLength(text)
     if (bytes > MAX_CSS_IMPORT_GRAPH_BYTES) {
       throw new Error(`CSS imports inline more than ${MAX_CSS_IMPORT_GRAPH_BYTES / MiB} MiB: ${file}`)
