@@ -1,4 +1,4 @@
-import { MasterCSS, VariableRule, AnimationRule } from '@stet-css/engine'
+import { MasterCSS, VariableRule, AnimationRule, isUndeclaredModeError } from '@stet-css/engine'
 import type { MasterCSSManifest, MasterCSSManifestUtilityLayerName } from '@stet-css/schema/manifest'
 import type { MasterCSSEmittedGlobals } from '@stet-css/engine'
 import {
@@ -595,7 +595,16 @@ export default class CSSRuntime extends MasterCSS {
     this.cancelPendingAddedClassNames(classNames)
     this.cancelPendingRemovedClassNames(classNames)
     this.cancelRetainedClassNames(classNames)
-    return super.ensureClassRules(...classNames)
+    for (const className of classNames) {
+      try {
+        super.ensureClassRules(className)
+      } catch (error) {
+        // One class naming an undeclared mode must not stop CSS for the rest of the page.
+        if (!isUndeclaredModeError(error)) throw error
+        console.error(error.message)
+      }
+    }
+    return this
   }
 
   deleteClassRules(...classNames: string[]) {
