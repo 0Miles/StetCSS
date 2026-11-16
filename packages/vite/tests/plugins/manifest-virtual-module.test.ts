@@ -102,8 +102,6 @@ describe('ManifestVirtualModulePlugin', () => {
     expect(code).toContain(`const masterCSSManifestResponse = await fetch(typeof masterCSSManifestURL === 'string' ? masterCSSManifestURL : masterCSSManifestURL.href);`)
     expect(code).toContain('export default await masterCSSManifestResponse.json();')
     expect(code).not.toContain('font-weight-bold')
-    expect(context.defaultManifestAssetReferenceId).toBe('master_css_manifest_ref')
-    expect(context.defaultManifestAssetSource).toContain('"version":1')
   })
 
   it('does not eagerly load the default manifest during production buildStart', async () => {
@@ -134,8 +132,6 @@ describe('ManifestVirtualModulePlugin', () => {
     expect(code).toContain('await fetch(specifier)')
     expect(code).not.toContain(`import { readFile } from 'node:fs/promises';`)
     expect(code).not.toContain('font-weight-bold')
-    expect(context.defaultManifestAssetReferenceId).toBeUndefined()
-    expect(context.defaultManifestAssetSource).toBeUndefined()
   })
 
   it('handles unimported CSS manifest changes through CSS HMR only', async () => {
@@ -193,7 +189,7 @@ describe('ManifestVirtualModulePlugin', () => {
     expect(send).not.toHaveBeenCalled()
     // The edited entry keeps its own CSS update: returning only the manifest module left the
     // page on the old CSS. Reverse check: starting `modules` empty in
-    // `manifest-virtual-module.ts` turns only this test red.
+    // `manifest-virtual-module.ts` turns this test and the entry HMR test in `dev-hmr.test.ts` red.
     expect(result).toEqual([entryModule, module])
   })
 

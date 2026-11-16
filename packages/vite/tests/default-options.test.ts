@@ -2,48 +2,52 @@ import { beforeAll, describe, expect, test } from 'vitest'
 import masterCSS from '../src'
 import { buildProject } from './plugin-test-helper'
 
-let html: string
-let css: string
+const builds = {
+  'masterCSS()': () => masterCSS(),
+  // A JavaScript config written for the removed rendering modes; types no longer accept it.
+  "masterCSS({ mode: 'runtime', injectRuntime: true, avoidFOUC: true })": () =>
+    masterCSS({ mode: 'runtime', injectRuntime: true, avoidFOUC: true } as never)
+}
+const outputs: Record<string, { css: string, html: string }> = {}
 
 beforeAll(async () => {
-  ({ css, html } = await buildProject({
-    plugins: [masterCSS()],
-    prefix: 'master-css-vite-default-options-',
-    html: [
-      '<!DOCTYPE html>',
-      '<html lang="en">',
-      '<head><link rel="stylesheet" href="/src/style.css" /></head>',
-      '<body><h1 class="block">Hello World</h1></body>',
-      '</html>'
-    ].join('\n'),
-    styleCSS: '@import "@stet-css/core";\n'
-  }))
-}, 30000)
+  for (const [label, plugins] of Object.entries(builds)) {
+    outputs[label] = await buildProject({
+      plugins: [plugins()],
+      prefix: 'master-css-vite-default-options-',
+      html: [
+        '<!DOCTYPE html>',
+        '<html lang="en">',
+        '<head><link rel="stylesheet" href="/src/style.css" /></head>',
+        '<body><h1 class="block">Hello World</h1></body>',
+        '</html>'
+      ].join('\n'),
+      styleCSS: '@import "@stet-css/core";\n'
+    })
+  }
+}, 60000)
 
-describe('masterCSS() without options', () => {
+describe.each(Object.keys(builds))('%s', (label) => {
   /**
-   * Guards: a Vite project that registers `masterCSS()` with no options gets the rules for the
-   * classes in its source in the built CSS. If the default fell back to a mode that leaves rule
-   * generation to the browser, the stylesheet would ship without utilities and the page would
-   * render unstyled wherever the runtime is not loaded.
+   * Guards: a Vite project gets the rules for the classes in its source in the built CSS, with
+   * no options and with a JavaScript config that still passes a removed rendering mode. If the
+   * plugin left rule generation to the browser, the stylesheet would ship without utilities and
+   * the page would render unstyled, since nothing loads the runtime any more.
    *
-   * Reverse check: setting the default `mode` in `src/options.ts` to `null` fails only this test;
-   * setting it back to `'runtime'` fails this test and the HTML test below.
+   * Reverse check: on the code before #59, where `mode: 'runtime'` still selected the runtime
+   * plugins, the second row of both tests failed and the first passed.
    */
   test('builds CSS that contains the rules for classes in the source', () => {
-    expect(css).toContain('.block{display:block}')
+    expect(outputs[label].css).toContain('.block{display:block}')
   })
 
   /**
-   * Guards: the built page of a project with no options is plain HTML plus CSS. If the default
-   * injected the runtime, the page would gain a script the project never wrote and `<html hidden>`,
-   * so it stays blank until that script runs, and forever with JavaScript off.
-   *
-   * Reverse check: registering the runtime injection plugins, or the avoid-FOUC plugin, for the
-   * `'static'` case in `src/core.ts` fails only this test.
+   * Guards: the built page is plain HTML plus CSS. If the plugin injected the runtime, the page
+   * would gain a script the project never wrote and `<html hidden>`, so it stays blank until
+   * that script runs, and forever with JavaScript off.
    */
   test('builds HTML without a runtime script or a hidden root', () => {
-    expect(html).not.toMatch(/<script\b/)
-    expect(html).not.toMatch(/<html\b[^>]*\bhidden\b/)
+    expect(outputs[label].html).not.toMatch(/<script\b/)
+    expect(outputs[label].html).not.toMatch(/<html\b[^>]*\bhidden\b/)
   })
 })
