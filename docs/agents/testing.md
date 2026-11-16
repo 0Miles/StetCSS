@@ -64,7 +64,7 @@ bun run check -- --continue
 
 ## 測試分層
 
-一支測試放在**看得到那個故障的最便宜那一層**。各套件測試的放置位置與 fixture 規則，以 `packages/<name>/AI.md` 的「Validation」節為準，例如 eslint-plugin 的 `tests/issues/<n>.test.ts`、nuxt 每個模式各一個 fixture。
+一支測試放在**看得到那個故障的最便宜那一層**。各套件測試的放置位置與 fixture 規則，以 `packages/<name>/AI.md` 的「Validation」節為準，例如 eslint-plugin 的 `tests/issues/<n>.test.ts`、nuxt 每種建置情境各一個 fixture。
 
 - **單元**（Vitest，`packages/<套件>/tests/`）
   - 測什麼：engine、lexer、preset、compiler 等純邏輯，斷言產生的 CSS 字串或語法結構。
