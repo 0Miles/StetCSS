@@ -28,8 +28,6 @@
     "build tools",
     "static rendering",
     "static",
-    "runtime",
-    "css runtime",
     "css",
     "mastercss",
     "astro-plugin"
@@ -45,11 +43,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
-    },
-    "./middleware": {
-      "types": "./dist/middleware.d.ts",
-      "import": "./dist/middleware.js",
-      "default": "./dist/middleware.js"
     }
   },
   "files": [
@@ -65,12 +58,6 @@
   },
   "dependencies": {
     "@stet-css/core": "workspace:^",
-    "@stet-css/integration": "workspace:^",
-    "@stet-css/server": "workspace:^",
-    "@stet-css/vite": "workspace:^",
-    "@stet-css/schema": "workspace:^"
-  },
-  "devDependencies": {
-    "@stet-css/preset": "workspace:^"
+    "@stet-css/vite": "workspace:^"
   }
 }
