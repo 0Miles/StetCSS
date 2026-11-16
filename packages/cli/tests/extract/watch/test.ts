@@ -27,7 +27,7 @@ const originHTMLText = dedent`
   </html>
 `
 
-const originConfigText = `@master entry;
+const originConfigText = `@import "@stet-css/core";
 
 @theme {
   --color-primary: var(--color-blue);

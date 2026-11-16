@@ -54,7 +54,7 @@ test('uses project-level CSS manifest entries from the ESLint workspace', async 
 
   try {
     writeFileSync(join(cwd, 'index.css'), `
-      @master entry;
+      @import "@stet-css/core";
 
       @components {
         fixture-button {
@@ -145,7 +145,7 @@ test('keeps the CSS entry manifest for saved files after linting text without a 
 
   try {
     writeFileSync(join(cwd, 'index.css'), `
-      @master entry;
+      @import "@stet-css/core";
 
       @components {
         fixture-button {
@@ -180,7 +180,7 @@ test('gives each workspace the manifest of its own CSS entry', async () => {
     for (const app of ['web', 'admin']) {
       mkdirSync(join(cwd, 'apps', app), { recursive: true })
       writeFileSync(join(cwd, 'apps', app, 'index.css'), `
-        @master entry;
+        @import "@stet-css/core";
 
         @components {
           ${app}-button {

@@ -188,7 +188,7 @@ describe('MasterCSSPlugin', () => {
     try {
       writeFileSync(themePath, '@layer components { .card { display: grid; } }')
       writeFileSync(entryPath, [
-        '@master entry;',
+        '@import "@stet-css/core";',
         '@import "./theme.css";',
         '',
         '.native { color: red; }'
@@ -220,7 +220,7 @@ describe('MasterCSSPlugin', () => {
         '.native-card { color: var(--color-active); }'
       ].join('\n'))
       writeFileSync(entryPath, [
-        '@master entry;',
+        '@import "@stet-css/core";',
         '@import "./home.css";'
       ].join('\n'))
       writeFileSync(pagePath, '<div className="active-card native-card"></div>')
@@ -257,7 +257,7 @@ describe('MasterCSSPlugin', () => {
     const modulePath = path.join(root, 'Button.module.css')
     try {
       writeFileSync(entryPath, [
-        '@master entry;',
+        '@import "@stet-css/core";',
         '@components {',
         '  brand { background-color: #123456; }',
         '}'
@@ -471,7 +471,7 @@ describe('MasterCSSPlugin', () => {
     const entryPath = path.join(root, 'app.css')
     try {
       writeFileSync(entryPath, [
-        '@master entry;',
+        '@import "@stet-css/core";',
         '@components {',
         '  card { @compose bg:neutral-120; }',
         '}'
@@ -494,7 +494,7 @@ describe('MasterCSSPlugin', () => {
       expect(resolveData.fileDependencies.has(entryPath)).toBe(true)
 
       writeFileSync(entryPath, [
-        '@master entry;',
+        '@import "@stet-css/core";',
         '@components {',
         '  card { @compose block; }',
         '}'
@@ -770,7 +770,7 @@ describe('MasterCSSPlugin', () => {
     try {
       writeFileSync(themePath, '@components { card { color: #123456; } }')
       writeFileSync(entryPath, [
-        '@master entry;',
+        '@import "@stet-css/core";',
         '@import "./theme.css";'
       ].join('\n'))
 
@@ -807,7 +807,7 @@ describe('MasterCSSPlugin', () => {
       mkdirSync(path.join(root, 'src'), { recursive: true })
       writeFileSync(path.join(root, 'src/page.html'), '<div class="btn native-used root-native"></div>')
       writeFileSync(path.join(root, 'app.css'), [
-        '@master entry;',
+        '@import "@stet-css/core";',
         '',
         '.root-native {',
         '    color: #789;',
@@ -862,7 +862,7 @@ describe('MasterCSSPlugin', () => {
     const entryPath = path.join(root, 'app.css')
     try {
       writeFileSync(entryPath, [
-        '@master entry;',
+        '@import "@stet-css/core";',
         '@components {',
         '  card { @compose bg:neutral-120; }',
         '}'
@@ -875,7 +875,7 @@ describe('MasterCSSPlugin', () => {
       expect(failed.dependencies).toContain(entryPath)
 
       writeFileSync(entryPath, [
-        '@master entry;',
+        '@import "@stet-css/core";',
         '@components {',
         '  card { display: block; }',
         '}'
@@ -917,7 +917,7 @@ describe('MasterCSSPlugin', () => {
     const tokenPath = path.join(root, 'theme.css')
     try {
       writeFileSync(tokenPath, '@components { card { color: #123456; } }')
-      writeFileSync(configPath, '@master entry;\n@import "./theme.css";')
+      writeFileSync(configPath, '@import "@stet-css/core";\n@import "./theme.css";')
 
       const plugin = makePlugin({}, root)
       ;(plugin as any).styleCSSSources = new Map([

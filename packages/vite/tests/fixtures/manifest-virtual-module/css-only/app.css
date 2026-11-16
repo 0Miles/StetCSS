@@ -1,4 +1,4 @@
-@master entry;
+@import '@stet-css/core';
 @import './styles/button.css';
 
 @theme {
