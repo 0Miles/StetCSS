@@ -21,10 +21,10 @@ test('publish accepts Azure credential authentication', () => {
     packageArgs: [],
     targets: ['linux-x64']
   })
-  expect(createVSCEPublishArgs('/tmp/master-css-vscode.vsix', options)).toEqual([
+  expect(createVSCEPublishArgs('/tmp/stet-css-vscode.vsix', options)).toEqual([
     'publish',
     '--packagePath',
-    '/tmp/master-css-vscode.vsix',
+    '/tmp/stet-css-vscode.vsix',
     '--azure-credential'
   ])
 })
@@ -84,7 +84,7 @@ test('release stops before running any command when a target lacks its native pa
 })
 
 test('packaging a target without its native packages stops before staging and names the Bun install command', () => {
-  const outDir = mkdtempSync(join(tmpdir(), 'master-css-vscode-out-'))
+  const outDir = mkdtempSync(join(tmpdir(), 'stet-css-vscode-out-'))
   try {
     const result = runWithHiddenPackages(
       'scripts/package-targets.js',

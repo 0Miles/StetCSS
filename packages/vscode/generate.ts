@@ -41,7 +41,7 @@ pkg.set('contributes.semanticTokenModifiers', SEMANTIC_TOKEN_MODIFIERS
   .filter((modifier) => modifier !== 'declaration' && modifier !== 'defaultLibrary')
   .map((modifier) => ({
     id: modifier,
-    description: `Master CSS ${modifier} semantic token modifier.`
+    description: `StetCSS ${modifier} semantic token modifier.`
   })))
 
 pkg.set('contributes.semanticTokenScopes', [
@@ -51,7 +51,7 @@ pkg.set('contributes.semanticTokenScopes', [
 ])
 
 pkg.set('contributes.configuration', {
-  title: 'Master CSS',
+  title: 'StetCSS',
   properties: {
     'stetCSS.includedLanguages': {
       'type': 'array',
@@ -66,7 +66,7 @@ pkg.set('contributes.configuration', {
         'type': 'string'
       },
       'default': settings.exclude,
-      'description': 'Configure glob patterns to exclude from all Master Language Service features.'
+      'description': 'Configure glob patterns to exclude from all StetCSS language-service features.'
     },
     'stetCSS.classAttributes': {
       'type': 'array',
@@ -108,13 +108,13 @@ pkg.set('contributes.configuration', {
     'stetCSS.formatDirectives': {
       'type': 'boolean',
       'default': settings.formatDirectives,
-      'description': 'Enables Master CSS directive formatting in CSS-family documents.'
+      'description': 'Enables StetCSS directive formatting in CSS-family documents.'
     },
     'stetCSS.embeddedSyntaxHighlighting': {
       'type': 'string',
       'enum': ['active', 'always', 'off'],
       'default': settings.embeddedSyntaxHighlighting,
-      'description': 'Controls embedded Master CSS utility highlighting in markup and scripts. Active highlights the class context at the active editor selection, always highlights all discovered embedded utilities, and off disables embedded utility highlighting. Master CSS syntax inside CSS documents is always highlighted.'
+      'description': 'Controls embedded StetCSS utility highlighting in markup and scripts. Active highlights the class context at the active editor selection, always highlights all discovered embedded utilities, and off disables embedded utility highlighting. StetCSS syntax inside CSS documents is always highlighted.'
     },
     'stetCSS.workspaces': {
       'type': [
@@ -122,7 +122,7 @@ pkg.set('contributes.configuration', {
         'array'
       ],
       'default': settings.workspaces,
-      'description': 'Configure Master CSS workspaces. The default auto mode detects CSS files with @import "@stet-css/core" and package.json files that declare Master CSS package dependencies.'
+      'description': 'Configure StetCSS workspaces. The default auto mode detects CSS files with @import "@stet-css/core" and package.json files that declare StetCSS package dependencies.'
     }
   }
 })

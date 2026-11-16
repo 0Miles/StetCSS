@@ -97,7 +97,7 @@ jobs:
       # reaches only the vitest run and logs each test's result.
       - name: Test the VS Code extension
         if: ${{ !cancelled() }}
-        run: node scripts/with-typescript-tooling-compat.mjs node_modules/.bin/turbo run test --filter=master-css-vscode -- --reporter=verbose
+        run: node scripts/with-typescript-tooling-compat.mjs node_modules/.bin/turbo run test --filter=stet-css-vscode -- --reporter=verbose
 
       # The win32-x64 test skips instead of failing when that target's native
       # packages are missing, so a green test step does not prove the install

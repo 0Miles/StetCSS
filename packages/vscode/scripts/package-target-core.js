@@ -126,7 +126,7 @@ function findPackageDir(entry) {
   throw new Error(`Unable to find package.json for ${entry}`)
 }
 
-function resolvePackageDir(packageName, resolver, resolverName = 'master-css-vscode') {
+function resolvePackageDir(packageName, resolver, resolverName = 'stet-css-vscode') {
   try {
     return dirname(resolver.resolve(`${packageName}/package.json`))
   } catch (manifestError) {
@@ -143,7 +143,7 @@ function resolvePackageDir(packageName, resolver, resolverName = 'master-css-vsc
   }
 }
 
-function createPackageResolver(packageName, resolver = packageRequire, resolverName = 'master-css-vscode') {
+function createPackageResolver(packageName, resolver = packageRequire, resolverName = 'stet-css-vscode') {
   const cacheKey = `${resolverName}\0${packageName}`
   if (!packageResolverCache.has(cacheKey)) {
     packageResolverCache.set(
@@ -185,7 +185,7 @@ export function getRuntimePackagesForTarget(target) {
 
 function resolveRuntimePackageDir(packageName) {
   const resolver = getRuntimePackageResolver(packageName)
-  return resolvePackageDir(packageName, resolver, getRuntimePackageOwner(packageName) ?? 'master-css-vscode')
+  return resolvePackageDir(packageName, resolver, getRuntimePackageOwner(packageName) ?? 'stet-css-vscode')
 }
 
 export function findMissingRuntimePackages(target) {
@@ -270,7 +270,7 @@ async function copyTextMateGrammar(stagingDir) {
 export async function createStagedExtension(target = getCurrentTarget(), options = {}) {
   assertRuntimePackagesResolvable([target])
 
-  const stagingRoot = options.stagingRoot ?? await mkdtemp(join(tmpdir(), 'master-css-vscode-'))
+  const stagingRoot = options.stagingRoot ?? await mkdtemp(join(tmpdir(), 'stet-css-vscode-'))
   const stagingDir = options.stagingDir ?? join(stagingRoot, target)
   const runtimePackages = getRuntimePackagesForTarget(target)
 
@@ -342,7 +342,7 @@ function runVSCE(args, cwd) {
 }
 
 export async function packageTarget(target, options = {}) {
-  const stagingRoot = await mkdtemp(join(tmpdir(), 'master-css-vscode-package-'))
+  const stagingRoot = await mkdtemp(join(tmpdir(), 'stet-css-vscode-package-'))
   const outDir = resolve(options.outDir ?? defaultOutDir)
   const packageArgs = options.packageArgs ?? []
 
@@ -371,7 +371,7 @@ export async function packageTargets(options = {}) {
   const packagePaths = []
 
   for (const target of targets) {
-    console.log(`Packaging master-css-vscode for ${target}`)
+    console.log(`Packaging stet-css-vscode for ${target}`)
     packagePaths.push(await packageTarget(target, options))
   }
 

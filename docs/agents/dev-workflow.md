@@ -36,7 +36,7 @@
 `.github/workflows/ci.yml` 在 PR 開啟、重新開啟、有新的 push 時，以及推到 main 時執行，每次全跑，不依改動範圍挑選。下面的 job 名稱就是 `gh pr checks` 列出的名稱：
 
 - `checks`：在 Linux 上跑全套的第 1 到 4 條。
-- `all-platforms`：裝齊 VS Code 擴充每個 target 的原生套件，跑 `master-css-vscode` 的測試，再確認每個 target 的原生套件都解析得到；也跑第 4 條。本機的安裝只有本機平台的原生套件，所以這個 job 只在 CI 跑。
+- `all-platforms`：裝齊 VS Code 擴充每個 target 的原生套件，跑 `stet-css-vscode` 的測試，再確認每個 target 的原生套件都解析得到；也跑第 4 條。本機的安裝只有本機平台的原生套件，所以這個 job 只在 CI 跑。
 - `required`：等其他 job 跑完，全部是 success 才是 success。合併只看它，見〈分支、commit 與合併〉。
 
 看結果：
