@@ -14,6 +14,7 @@ import {
 import { registerStyleCSSSource } from '../utils/register-style-source'
 import { getScanner } from '../utils/scanner-context'
 import { getEnvironmentName } from '../utils/environment'
+import { getProjectDir } from '../utils/project-dir'
 
 const RESOLVED_VIRTUAL_CSS_ID = '\0' + VIRTUAL_CSS_ID
 
@@ -50,9 +51,9 @@ export default function StyleEntryPlugin(_options: PluginOptions, context: Plugi
       const dependencies = new Set<string>()
       let resolvedStyleSource: ReturnType<typeof resolveMasterStyleSource>
       try {
-        resolvedStyleSource = resolveMasterStyleSource(id, code, context.config?.root)
+        resolvedStyleSource = resolveMasterStyleSource(id, code, getProjectDir(context))
       } catch (error) {
-        for (const dependency of collectStyleCSSDependencies(id, code, context.config?.root)) {
+        for (const dependency of collectStyleCSSDependencies(id, code, getProjectDir(context))) {
           dependencies.add(dependency)
           this.addWatchFile?.(dependency)
         }
@@ -60,12 +61,12 @@ export default function StyleEntryPlugin(_options: PluginOptions, context: Plugi
       }
       if (!resolvedStyleSource) return
 
-      for (const dependency of collectStyleCSSDependencies(id, code, context.config?.root)) {
+      for (const dependency of collectStyleCSSDependencies(id, code, getProjectDir(context))) {
         dependencies.add(dependency)
         this.addWatchFile?.(dependency)
       }
 
-      if (isMasterCSSPackageStyleFile(id, context.config?.root)) {
+      if (isMasterCSSPackageStyleFile(id, getProjectDir(context))) {
         return {
           code: removeMasterStyleDirectives(code).code,
           map: null

@@ -12,6 +12,7 @@ import {
 import type { PluginContext } from '../core'
 import type { PluginOptions } from '../options'
 import { includesFile } from '../utils/path'
+import { getProjectDir } from '../utils/project-dir'
 
 function invalidateModule(module: ModuleNode | undefined, server: ViteDevServer): boolean {
   if (!module) return false
@@ -36,7 +37,7 @@ export default function LocalComposePlugin(options: PluginOptions, context: Plug
 
   const loadComposeContext = async (pluginContext: { addWatchFile?: (id: string) => void }) => {
     if (projectManifest) return projectManifest
-    const root = context.config?.root
+    const root = getProjectDir(context)
     const entries = await findCSSManifestEntryFiles(root)
     projectManifestEntries = entries
     const dependencies = new Set<string>()
@@ -67,7 +68,7 @@ export default function LocalComposePlugin(options: PluginOptions, context: Plug
     const dependencies = new Set(projectManifestDependencies)
     styleEntryEmittedGlobals = await createStyleEntryEmittedGlobals(projectManifestEntries, {
       baseManifest: manifestResult.manifest,
-      projectDir: context.config?.root
+      projectDir: getProjectDir(context)
     })
     for (const dependency of styleEntryEmittedGlobals.dependencies) {
       dependencies.add(dependency)
@@ -91,9 +92,9 @@ export default function LocalComposePlugin(options: PluginOptions, context: Plug
       if (id.startsWith('\0')) return
       if (!isStyleCSSRequest(id)) return
       if (!hasLocalStyleDirectives(code)) return
-      if (resolveMasterStyleSource(id, code, context.config?.root)) return
+      if (resolveMasterStyleSource(id, code, getProjectDir(context))) return
 
-      const dependencies = new Set(collectStyleCSSDependencies(id, code, context.config?.root))
+      const dependencies = new Set(collectStyleCSSDependencies(id, code, getProjectDir(context)))
       for (const dependency of dependencies) {
         this.addWatchFile?.(dependency)
       }
@@ -101,7 +102,7 @@ export default function LocalComposePlugin(options: PluginOptions, context: Plug
       const emittedGlobalsResult = await loadStyleEntryEmittedGlobals(this)
       const result = await transformLocalStyleCSS(id, code, {
         baseManifest: manifestResult.manifest,
-        projectDir: context.config?.root,
+        projectDir: getProjectDir(context),
         emittedGlobals: emittedGlobalsResult.emittedGlobals
       })
       if (!result.transformed) return
