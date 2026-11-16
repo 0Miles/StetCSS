@@ -53,9 +53,11 @@ jobs:
       pull-requests: write
     outputs:
       releases_created: ${{ steps.release.outputs.releases_created }}
-      # The 28 packages share one version and one release commit, so core's
-      # tag names the commit to publish.
-      tag: ${{ steps.release.outputs['packages/core--tag_name'] }}
+      # The 28 packages share one version and one release commit, so the tag
+      # of any package released in this run names the commit to publish. Not
+      # a fixed package: a run that finishes releases an earlier, failed run
+      # left behind creates only the remaining ones.
+      tag: ${{ steps.release.outputs[format('{0}--tag_name', fromJSON(steps.release.outputs.paths_released || '[]')[0])] }}
     steps:
       - name: Open or update the release PR
         id: release
@@ -121,6 +123,21 @@ jobs:
     outputs:
       tag: ${{ env.RELEASE_TAG }}
     steps:
+      # A manual run from another branch would publish with that branch's
+      # copy of this workflow.
+      - name: Require a release tag and the default branch
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ] && [ "$GITHUB_REF" != "refs/heads/$DEFAULT_BRANCH" ]; then
+            echo "::error::Start this workflow from $DEFAULT_BRANCH, not $GITHUB_REF."
+            exit 1
+          fi
+          if [ -z "$RELEASE_TAG" ]; then
+            echo "::error::release-please created releases but reported no tag. Start this workflow by hand with the release tag, such as core-v0.1.0."
+            exit 1
+          fi
+
       # The tag, not the pushed commit: by the time this run creates the
       # releases, main may already be ahead of the release commit.
       - uses: actions/checkout@v7
@@ -146,6 +163,7 @@ jobs:
           name: npm-tarballs
           path: ${{ runner.temp }}/tarballs/*.tgz
           if-no-files-found: error
+          # Rerunning only the failed publish job works while this lasts.
           retention-days: 7
 
   # Uploads the tarballs with npm, because `bun publish` (1.4.4) supports
@@ -190,4 +208,5 @@ jobs:
       - name: Publish to npm
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: node scripts/publish-packages.mjs publish --dir "$RUNNER_TEMP/tarballs"
+          RELEASE_TAG: ${{ needs.pack.outputs.tag }}
+        run: node scripts/publish-packages.mjs publish --tag "$RELEASE_TAG" --dir "$RUNNER_TEMP/tarballs"
