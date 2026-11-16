@@ -70,6 +70,13 @@ const scanner = new CSSScanner(options, cwd)
 
 ## Options
 
+Default options are exported from the root package and the side-effect-free `./options` subpath:
+
+```js
+import { scannerOptions, validateScannerOptions } from '@stet-css/scanner'
+import defaultScannerOptions from '@stet-css/scanner/options'
+```
+
 | Option | Type | Description |
 | --- | --- | --- |
 | `adapters` | `SourceAdapter[]` | Custom source adapters, tried before the built-in ones. |
@@ -84,6 +91,8 @@ Any other key throws. The removed options throw with their replacement:
 | `manifest` | a CSS entry that imports `@stet-css/core` |
 | `verbose` | the CLI's `-v` |
 | `path` | none; it had no effect |
+
+`validateScannerOptions(options, owner?)` runs this check for any options object and names `owner` (default `CSSScanner`) in its errors; `SCANNER_OPTION_KEYS` lists the allowed keys and `REMOVED_SCANNER_OPTIONS` maps each removed key to its replacement. Build integrations use them to check their own options the same way.
 
 ## CSS directives
 
