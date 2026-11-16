@@ -9,7 +9,7 @@ export default function masterCSS(options: IntegrationOptions = {}): AstroIntegr
       'astro:config:setup': ({ updateConfig }) => {
         updateConfig({
           vite: {
-            plugins: [vitePlugin(options) as never]
+            plugins: [vitePlugin(options, { name: '@stet-css/astro' }) as never]
           }
         })
       }

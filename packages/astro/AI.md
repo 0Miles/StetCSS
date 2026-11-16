@@ -16,4 +16,4 @@ Owns the Astro integration: it registers `@stet-css/vite` through `astro:config:
 
 ## Validation
 
-`tests/static-build.test.ts` builds `tests/fixtures/static-build` (prerendered page, `prerender = false` page, server island) with a stub adapter. Also build `examples/astro` when Astro behaviour changes, and check that every class in its `.astro` files that generates a rule appears in `dist/_astro/*.css`.
+`tests/static-build.test.ts` builds `tests/fixtures/static-build` (prerendered page, `prerender = false` page, server island) with a stub adapter; `tests/options.test.ts` builds `tests/fixtures/adapters` with a custom source adapter. Also build `examples/astro` when Astro behaviour changes, and check that every class in its `.astro` files that generates a rule appears in `dist/_astro/*.css`.

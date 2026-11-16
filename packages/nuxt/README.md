@@ -84,14 +84,25 @@ The module builds static CSS for every Nuxt build: `nuxt build`, `nuxt generate`
 export default defineNuxtConfig({
   modules: [
     ['@stet-css/nuxt', {
-      scanner: {}
+      adapters: [{
+        name: 'markdown-attributes',
+        test: /\.md$/,
+        async extract({ content }) {
+          // `{.fg:red .bold}` attribute lists
+          return [...content.matchAll(/\{\.([^}]*)\}/g)].flatMap((match) => match[1].split(/\s+\.?/))
+        }
+      }]
     }]
   ]
 })
 ```
 
-| Option | Default | Description |
-| --- | --- | --- |
-| `scanner` | `undefined` | Scanner options passed through to `@stet-css/vite`. |
+The module also reads these options from the `mastercss` key of the Nuxt config.
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `adapters` | `SourceAdapter[]` | `[]` | Custom source adapters. For each file the class set reads, the first adapter whose `test` matches extracts its classes, custom ones before the built-in ones. |
+
+`adapters` is the only option. Any other key throws and names `adapters`; a removed key such as `mode`, `injectRuntime` or `scanner` names its replacement, and class rules (`@safelist`, `@blocklist`, `@source`, `@source not`) go in the CSS entry. An adapter sees the files the class set reads: the project's source files and the entry's `@source` files.
 
 See the [Nuxt installation guide](https://rc.css.master.co/guide/installation/nuxtjs) for a full project setup.
