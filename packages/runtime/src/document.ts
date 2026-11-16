@@ -26,3 +26,11 @@ export function querySelectorAllIn(root: Document | ShadowRoot, selectors: strin
     ? readDocument(root, 'querySelectorAll').call(root, selectors)
     : root.querySelectorAll(selectors)
 }
+
+/**
+ * The element a page hides until the runtime renders: `<html>` for a document, the host for a
+ * shadow root.
+ */
+export function hostOf(root: Document | ShadowRoot): Element {
+  return isDocumentRoot(root) ? readDocument(root, 'documentElement') : root.host
+}

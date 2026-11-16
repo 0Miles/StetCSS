@@ -3,7 +3,7 @@ import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 import type { MasterCSSEmittedGlobals } from '@stet-css/engine'
 import { MASTER_CSS_RUNTIME_STYLE_ID } from '@stet-css/schema/runtime-style'
 import registerGlobal, { isRuntimeClass } from './register-global'
-import { isDocumentRoot, ownerDocumentOf, readDocument } from './document'
+import { hostOf, isDocumentRoot, ownerDocumentOf, readDocument } from './document'
 import RuntimeUtilityLayer from './utility-layer'
 import RuntimeThemeLayer from './theme-layer'
 import RuntimeClassTracker from './class-tracker'
@@ -90,13 +90,8 @@ export default class CSSRuntime extends MasterCSS {
     super(manifest, emittedGlobals, {
       nativeDeclarationMatcher: browserNativeDeclarationMatcher
     })
-    if (isDocumentRoot(root)) {
-      this.container = readDocument(root, 'head')
-      this.host = readDocument(root, 'documentElement')
-    } else {
-      this.container = this.root as CSSRuntime['container']
-      this.host = (this.root as ShadowRoot).host
-    }
+    this.container = isDocumentRoot(root) ? readDocument(root, 'head') : root
+    this.host = hostOf(root)
     this.applyEmittedGlobalsCounts({
       variables: this.emittedGlobals.variables
     })
@@ -131,16 +126,6 @@ export default class CSSRuntime extends MasterCSS {
     style.setAttribute('blocking', 'render')
     this.style = style
     this.container.append(style)
-  }
-
-  private collectConnectedClasses() {
-    return this.classTracker.collectConnected(this.root, this.classCounts)
-  }
-
-  private renderRuntimeStyle(connectedNames: Set<string>) {
-    this.createRuntimeStyle()
-    this.insertStaticResources()
-    connectedNames.forEach(cls => this.ensureClassRules(cls))
   }
 
   private getAnimationFrameWindow() {
@@ -485,7 +470,10 @@ export default class CSSRuntime extends MasterCSS {
   observe(): this {
     if (this.observing) return this
 
-    this.renderRuntimeStyle(this.collectConnectedClasses())
+    const connectedNames = this.classTracker.collectConnected(this.root, this.classCounts)
+    this.createRuntimeStyle()
+    this.insertStaticResources()
+    connectedNames.forEach(cls => this.ensureClassRules(cls))
     this.startMutationObserver()
     this.host.removeAttribute('hidden')
     this.observing = true
