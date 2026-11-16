@@ -1,4 +1,4 @@
 import './style.css'
 // import stetCSSManifest from 'virtual:stet-css-manifest'
 
-// console.log('Master CSS Vite playground ready', stetCSSManifest)
+// console.log('StetCSS Vite playground ready', stetCSSManifest)
