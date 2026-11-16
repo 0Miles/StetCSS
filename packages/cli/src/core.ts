@@ -25,7 +25,7 @@ export default async function runProgram(argv: string[] = process.argv) {
     .argument('[source paths...]', 'The glob pattern paths to scan sources')
     .option('-w, --watch', 'Watch file changes and generate CSS rules.')
     .option('-o, --output <path>', 'Specify your CSS file output path', DEFAULT_SCAN_OUTPUT)
-    .option('-v, --verbose <level>', 'Verbose logging 0~N', '1')
+    .option('-v, --verbose <level>', 'Logging: 0 silent, 1 written file and config changes, 2 also each file read.', '1')
     .option('--no-export', 'Print only CSS results.')
     .action(async (sourcePaths: string[], options: ScanOptions) => {
       const removedCommand = sourcePaths[0]
