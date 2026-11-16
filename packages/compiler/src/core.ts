@@ -25,6 +25,7 @@ import type {
   TokenOrValue
 } from 'lightningcss'
 import { ROOT_FONT_SIZE, parseBaseUnit } from '@stet-css/engine/compiler'
+import { assertCSSNestingDepth } from './css-nesting'
 import { decodeCSS, encodeCSS, getCSSTransform, setCSSTransform, type CSSTransform } from './css-transform'
 import {
   collectCSSDirectiveRanges,
@@ -2406,6 +2407,7 @@ export function maskManagedPatternEntryNames(source: string) {
 
 export function compileCSS(source: string, options: CompileCSSOptions = {}): CompileCSSResult {
   const filename = options.from || 'master.css'
+  assertCSSNestingDepth(source, filename)
   const references = findCSSReferenceStatements(source, filename)
   const sourceWithoutReferences = removeSourceRanges(source, references)
   const parsed: ParsedDirectives = {

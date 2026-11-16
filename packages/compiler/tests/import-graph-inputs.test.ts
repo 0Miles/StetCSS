@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { expect, test } from 'vitest'
-import { compileCSSManifestFile, resolveCSSImportGraph } from '../src'
+import { compileCSSManifest, compileCSSManifestFile, resolveCSSImportGraph } from '../src'
 
 const testDirectory = dirname(fileURLToPath(import.meta.url))
 const compilerSource = resolve(testDirectory, '../src/index.ts')
@@ -278,3 +278,87 @@ test('stylesheets imported by referenced files count toward the compile\'s 10,00
 
   expect(() => compileCSSManifestFile(entry)).toThrow(`CSS imports inline more than 10000 stylesheets, counting repeated imports of the same file: ${part}`)
 }))
+
+const deepNesting = '.a{'.repeat(5_000) + 'color:red' + '}'.repeat(5_000)
+
+const deepStylesheets = [
+  { shape: '5,000 nested rules', css: deepNesting, line: 1 },
+  { shape: '1,000 alternating rules and @media blocks', css: '.a{@media (min-width:1px){'.repeat(500) + 'color:red' + '}'.repeat(1_000), line: 1 },
+  { shape: '400 nested rules', css: '.a{'.repeat(400) + 'color:red' + '}'.repeat(400), line: 1 },
+  { shape: '5,000 nested :is()', css: ':is('.repeat(5_000) + '.a' + ')'.repeat(5_000) + '{color:red}', line: 1 },
+  // Each row below passed the first counter and still crashed.
+  { shape: 'a mismatched closer in every rule', css: '.a{];'.repeat(5_000) + 'color:red' + '}'.repeat(5_000), line: 1 },
+  { shape: 'a } inside an unquoted url() in every rule', css: '.a{x:url(});'.repeat(5_000) + 'color:red' + '}'.repeat(5_000), line: 1 },
+  { shape: 'a comment opener inside an earlier unquoted url()', css: '.x{background:url(/*)}' + deepNesting, line: 1 },
+  { shape: 'an earlier string continued across a CRLF', css: '.x{content:"a\\\r\nb"}' + deepNesting, line: 2 }
+]
+
+/**
+ * Guards: lightningcss recurses once per nested rule, selector function or media-query parenthesis.
+ * 5,000 nested rules killed the build with SIGSEGV, 1,000 rule and @media levels with SIGTRAP, both
+ * without a message; 400 rules threw an unnamed `Maximum call stack size exceeded`. Each must fail
+ * with an error naming the stylesheet and line. The last four rows tokenize differently from a
+ * naive bracket count (mismatched closers, unquoted URLs, CRLF line continuations), which let them
+ * through the first version of the prescan.
+ * Runs in a child process, so a crash fails the test instead of killing the runner.
+ * Reverse check: the `assertCSSNestingDepth` call in `compileCSS` removed fails every row and the
+ * 64-level test; popping on any closer fails only the mismatched-closer row; skipping unquoted URLs
+ * removed fails the two URL rows and the ordinary-CSS test; the escaped-CRLF step removed fails only
+ * the CRLF row.
+ */
+test.concurrent.each(deepStylesheets)('a stylesheet with $shape fails with its file name instead of crashing', async ({ css, line }) => {
+  expect(await callIsolated(compilerSource, 'compileCSSManifest', [css, { from: '/project/deep.css' }])).toEqual({
+    outcome: 'threw',
+    message: `CSS nests deeper than 64 levels at line ${line}: /project/deep.css`,
+    cpuMs: expect.any(Number)
+  })
+})
+
+/**
+ * Guards: deep nesting usually arrives in third-party CSS pulled in by `@import`; the error must
+ * name that file and its line, not the entry that imports it.
+ * Runs in a child process, so the old crash fails the test instead of killing the runner.
+ * Reverse check: the `assertCSSNestingDepth` call in `findCSSImportStatements` removed fails only
+ * this test (the entry's compile then names the entry instead).
+ */
+test.concurrent('a deeply nested stylesheet reached by @import fails with the imported file and line', () => withRoot(async (root) => {
+  const entry = join(root, 'entry.css')
+  const vendor = join(root, 'vendor.css')
+  writeFileSync(vendor, '.ok { color: red; }\n' + deepNesting)
+  writeFileSync(entry, "@import './vendor.css';\n.example { color: red; }")
+
+  expect(await callIsolated(compilerSource, 'compileCSSManifestFile', [entry])).toEqual({
+    outcome: 'threw',
+    message: `CSS nests deeper than 64 levels at line 2: ${vendor}`,
+    cpuMs: expect.any(Number)
+  })
+}))
+
+/**
+ * Guards: the limit is 64 levels of `{`, `(` and `[` together; 64 levels must keep compiling and
+ * the 65th must fail.
+ * Reverse check: `depth === CSS_NESTING_LIMIT` turned into `depth === CSS_NESTING_LIMIT - 1` fails
+ * only this test.
+ */
+test('a stylesheet nesting 64 levels compiles and 65 levels fail', () => {
+  const nest = (rules: number, parens: number) => '.a{'.repeat(rules) + `width:calc(${'('.repeat(parens - 1)}1px${')'.repeat(parens - 1)})` + '}'.repeat(rules)
+
+  expect(compileCSSManifest(nest(32, 32), { from: '/project/deep.css' }).css).toContain('width: 1px')
+  expect(() => compileCSSManifest(nest(33, 32), { from: '/project/deep.css' })).toThrow('CSS nests deeper than 64 levels at line 1: /project/deep.css')
+})
+
+/**
+ * Guards: brackets in comments, strings, escapes and unquoted URLs are not nesting; counting them
+ * would reject ordinary CSS such as an SVG data URI or a commented-out block.
+ * Reverse check: skipping strings removed from `css-nesting.ts` fails only this test.
+ */
+test('brackets inside comments, strings, escapes and unquoted URLs do not count toward the nesting limit', () => {
+  const css = [
+    `/* ${'{'.repeat(200)} */`,
+    `.icon { background: url("data:image/svg+xml,${'('.repeat(200)}"); content: '${'['.repeat(200)}'; }`,
+    `.mask { mask: url(data:image/svg+xml,${'{['.repeat(100)}); }`,
+    `.a\\{ { color: red; }`.repeat(200)
+  ].join('\n')
+
+  expect(compileCSSManifest(css, { from: 'ordinary.css' }).css).toContain('.icon {')
+})
