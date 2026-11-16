@@ -49,11 +49,6 @@
       "import": "./dist/manifest-json.js",
       "default": "./dist/manifest-json.js"
     },
-    "./hydration-manifest": {
-      "types": "./dist/hydration-manifest.d.ts",
-      "import": "./dist/hydration-manifest.js",
-      "default": "./dist/hydration-manifest.js"
-    },
     "./css-directives": {
       "types": "./dist/css-directives.d.ts",
       "import": "./dist/css-directives.js",
