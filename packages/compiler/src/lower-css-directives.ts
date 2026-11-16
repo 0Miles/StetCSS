@@ -300,18 +300,20 @@ function validateTokenConflicts(input: CSSDirectiveManifestInput, resolveVariabl
   }
 }
 
-function warnUnsupportedMediaModes(input: CSSDirectiveManifestInput, options: LowerCSSDirectivesOptions, warnings: string[]) {
-  if (input.modeTrigger !== 'media') return
+/**
+ * Reads the engine-resolved trigger and modes, so the default trigger and settings inherited from
+ * the base manifest warn like an explicit `mode-trigger: media`. Runs after
+ * `assertDeclaredDefaultMode`, which puts a named `default-mode` in `css.modes`.
+ */
+function warnUnsupportedMediaModes(css: MasterCSS, options: LowerCSSDirectivesOptions, warnings: string[]) {
+  if (css.settings.modeTrigger !== 'media') return
 
-  const customModes = new Set((input.modes || []).filter((mode) => !MEDIA_MODE_NAMES.has(mode)))
-  if (isNamedDefaultMode(input.defaultMode) && !MEDIA_MODE_NAMES.has(input.defaultMode)) {
-    customModes.add(input.defaultMode)
-  }
-  if (!customModes.size) return
+  const customModes = css.modes.filter((mode) => !MEDIA_MODE_NAMES.has(mode))
+  if (!customModes.length) return
 
-  const modeList = [...customModes].map((mode) => `"${mode}"`).join(', ')
-  const subject = customModes.size === 1 ? 'mode' : 'modes'
-  warn(warnings, options, `Custom ${subject} ${modeList} will not work with mode-trigger: media. Browsers only support light and dark prefers-color-scheme values; use mode-trigger: class or host for custom modes.`)
+  const modeList = customModes.map((mode) => `"${mode}"`).join(', ')
+  const subject = customModes.length === 1 ? 'mode' : 'modes'
+  warn(warnings, options, `Custom ${subject} ${modeList} will not work with mode-trigger: media, the default. Browsers only support light and dark prefers-color-scheme values; use mode-trigger: class or host for custom modes.`)
 }
 
 function assertDeclaredDefaultMode(input: CSSDirectiveManifestInput, css: MasterCSS) {
@@ -1122,10 +1124,10 @@ export default function lowerCSSDirectives(input: CSSDirectiveManifestInputSourc
   const warnings = isCSSDirectiveResult(input) ? [...input.warnings] : []
 
   timeCompilerDiagnostic(diagnostics, 'lower-validate-token-conflicts-ms', () => validateTokenConflicts(directiveInput, resolveVariableName))
-  timeCompilerDiagnostic(diagnostics, 'lower-warn-media-modes-ms', () => warnUnsupportedMediaModes(directiveInput, options, warnings))
 
   const css = timeCompilerDiagnostic(diagnostics, 'lower-create-directive-css-total-ms', () => createDirectiveCSS(directiveInput, options))
   assertDeclaredDefaultMode(directiveInput, css)
+  timeCompilerDiagnostic(diagnostics, 'lower-warn-media-modes-ms', () => warnUnsupportedMediaModes(css, options, warnings))
   warnMediaDefaultMode(directiveInput, css, options, warnings)
   timeCompilerDiagnostic(diagnostics, 'lower-finalize-utility-definitions-ms', () => finalizeUtilityDefinitions(directiveInput, css, options))
   const initialRefreshManifest = timeCompilerDiagnostic(diagnostics, 'lower-initial-refresh-manifest-creation-ms', () => createMasterCSSManifest(directiveInput, {

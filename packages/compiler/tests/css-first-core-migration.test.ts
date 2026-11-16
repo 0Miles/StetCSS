@@ -1191,6 +1191,44 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     expect(warnings).toEqual(warns ? [expect.stringContaining('default-mode')] : [])
   })
 
+  /**
+   * Prevents (#70): a developer who declares `@theme sepia {}` without writing `mode-trigger`
+   * shipping `@media (prefers-color-scheme:sepia)`, which never matches, with no hint that the
+   * `sepia` styles are dead; and the opposite, a spurious warning under the class or host trigger
+   * (including one set in the base manifest), or for a project that declares only light and dark.
+   * The output itself stays: it is what the same query written in plain CSS does.
+   * Reverse-checked in `warnUnsupportedMediaModes`: the previous version (raw `input.modeTrigger`
+   * and `input.modes`) reds the five warning rows and nothing else; dropping the trigger check reds
+   * the three class and host rows only; dropping the preset-mode filter reds the base-manifest
+   * modes, several-modes and light-and-dark rows plus the default-mode and browser tests, whose
+   * exact warning lists then gain a light/dark warning.
+   */
+  test.each([
+    ['default media trigger', '', '@theme sepia { --color-paper: #f4ecd8; }', undefined, ['sepia']],
+    ['explicit media trigger', 'mode-trigger: media;', '@theme sepia {}', undefined, ['sepia']],
+    ['media trigger from the base manifest', '', '@theme sepia {}', { modeTrigger: 'media' }, ['sepia']],
+    ['custom modes from the base manifest', '', '', { modes: ['light', 'sepia'] }, ['sepia']],
+    ['several custom modes', '', '@theme sepia {}\n@theme ocean {}\n@theme dark {}', undefined, ['sepia', 'ocean']],
+    ['class trigger', 'mode-trigger: class;', '@theme sepia {}', undefined, []],
+    ['host trigger', 'mode-trigger: host;', '@theme sepia {}', undefined, []],
+    ['class trigger from the base manifest', '', '@theme sepia {}', { modeTrigger: 'class' }, []],
+    ['only light and dark', '', '@theme light {}\n@theme dark {}', undefined, []]
+  ] as const)('warns about custom modes only under the media trigger: %s', (_, declarations, themes, baseSettings, customModes) => {
+    const baseManifest = baseSettings
+      ? { ...defaultManifest, settings: { ...defaultManifest.settings, ...baseSettings } } as MasterCSSManifest
+      : defaultManifest
+    const { warnings } = compileCSSManifest(`
+      @settings {
+        ${declarations}
+      }
+      ${themes}
+    `, { baseManifest })
+
+    expect(warnings).toEqual(customModes.length
+      ? [`Custom ${customModes.length === 1 ? 'mode' : 'modes'} ${customModes.map((mode) => `"${mode}"`).join(', ')} will not work with mode-trigger: media, the default. Browsers only support light and dark prefers-color-scheme values; use mode-trigger: class or host for custom modes.`]
+      : [])
+  })
+
   test('lowers color variables, mode values, aliases, and alpha references', () => {
     const { manifest } = compileCSSManifest(`
       @settings {

@@ -104,7 +104,7 @@ describe('@stet-css/stylesheet/browser', () => {
     })
 
     expect(result.warnings).toEqual([
-      'Custom mode "custom" will not work with mode-trigger: media. Browsers only support light and dark prefers-color-scheme values; use mode-trigger: class or host for custom modes.'
+      'Custom mode "custom" will not work with mode-trigger: media, the default. Browsers only support light and dark prefers-color-scheme values; use mode-trigger: class or host for custom modes.'
     ])
   })
 })
