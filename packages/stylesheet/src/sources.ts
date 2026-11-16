@@ -24,6 +24,11 @@ export interface StylesheetSourceScope {
   blocklist?: ClassExcludePattern[]
   /** Custom source adapters tried before the built-in ones. */
   adapters?: SourceAdapter[]
+  /**
+   * Absolute files or directories never read, not even through `@source`: a build's own
+   * output, which would otherwise feed the bundle back into the class set.
+   */
+  ignorePaths?: string[]
 }
 
 interface CachedCandidates {
@@ -100,10 +105,17 @@ function globIncludedFiles(patterns: string[], projectDir: string) {
   ].map((file) => resolve(projectDir, file))
 }
 
-function withoutExcludedFiles(files: Iterable<string>, projectDir: string, excludePatterns: string[] | undefined) {
+function isIgnoredPath(file: string, ignorePaths: string[] | undefined) {
+  return Boolean(ignorePaths?.some((ignorePath) => {
+    const relativePath = relative(resolve(ignorePath), file)
+    return !relativePath || (!relativePath.startsWith('..') && !isAbsolute(relativePath))
+  }))
+}
+
+function withoutExcludedFiles(files: Iterable<string>, projectDir: string, excludePatterns: string[] | undefined, ignorePaths?: string[]) {
   const exclude = toProjectPatterns(excludePatterns, projectDir)
   return [...new Set(files)]
-    .filter((file) => !isExcludedPath(toPosixPath(relative(projectDir, file)), exclude))
+    .filter((file) => !isExcludedPath(toPosixPath(relative(projectDir, file)), exclude) && !isIgnoredPath(file, ignorePaths))
     .sort()
 }
 
@@ -116,14 +128,14 @@ export function resolveStylesheetIncludedFiles(scope: Pick<StylesheetSourceScope
 
 /**
  * Lists the files a scope reads classes from: the project's own source files (or the
- * `sources` patterns), plus `@source` files, minus `@source not` files.
+ * `sources` patterns), plus `@source` files, minus `@source not` files and `ignorePaths`.
  */
 export async function resolveStylesheetScopeFiles(scope: StylesheetSourceScope) {
   const projectDir = resolve(scope.projectDir)
   return withoutExcludedFiles([
     ...(scope.sources ? globIncludedFiles(toProjectPatterns(scope.sources, projectDir), projectDir) : await findProjectSourceFiles(projectDir)),
     ...globIncludedFiles(toProjectPatterns(scope.include, projectDir), projectDir)
-  ], projectDir, scope.exclude)
+  ], projectDir, scope.exclude, scope.ignorePaths)
 }
 
 /**
@@ -135,6 +147,7 @@ export function isStylesheetScopeFile(file: string, scope: StylesheetSourceScope
   const absoluteFile = resolve(projectDir, file)
   const relativePath = toPosixPath(relative(projectDir, absoluteFile))
   if (isExcludedPath(relativePath, toProjectPatterns(scope.exclude, projectDir))) return false
+  if (isIgnoredPath(absoluteFile, scope.ignorePaths)) return false
   const isBaseFile = scope.sources
     ? isIncludedPath(relativePath, toProjectPatterns(scope.sources, projectDir))
     : isProjectSourceFile(absoluteFile, projectDir)
