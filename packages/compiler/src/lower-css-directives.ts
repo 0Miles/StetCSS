@@ -19,6 +19,7 @@ import {
   generateCondition,
   generateSelector,
   isUndeclaredPresetMode,
+  joinConditionNodes,
   parseCondition,
   parseSelector,
   splitModeConjuncts,
@@ -536,7 +537,12 @@ function resolveConditionVariantReference(token: string, css: MasterCSS): Resolv
     throw new Error(`Unknown @variant token: ${token}`)
   }
 
-  return [{ conditions: [generateCondition(parseCondition(conditionToken, css))] }]
+  const condition = parseCondition(conditionToken, css)
+  const nodes = joinConditionNodes(condition.id, undefined, condition.nodes)
+  if (!nodes) {
+    throw new Error(`@variant ${token} puts a media type or container name where one query cannot have it; it must lead the condition`)
+  }
+  return [{ conditions: [generateCondition({ id: condition.id, nodes })] }]
 }
 
 function resolveMasterVariantReference(token: string, css: MasterCSS): ResolvedVariantReferenceBranch[] {

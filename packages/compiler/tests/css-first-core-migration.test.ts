@@ -1112,6 +1112,23 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
    * selector expresses it, so the build fails and names the mode.
    * Reverse-checked: dropping the generic throw in `resolveMasterVariantReference` reds both rows.
    */
+  /**
+   * Prevents (#72): `@variant sm&print {}` emitting `@media (width>=52.125rem) and print`, which
+   * browsers drop (a media type has to lead), and a type in an `or` list or negated mid-query
+   * compiling at all.
+   * Reverse-checked: generating the parsed nodes without `joinConditionNodes` in
+   * `resolveConditionVariantReference` reds all three rows.
+   */
+  test.each([
+    ['sm&print', '@media print and (width>=52.125rem){.card{color:red}}'],
+    ['sm,print', undefined],
+    ['sm&!print', undefined]
+  ])('@variant %s leads with its media type or fails', (variant, css) => {
+    const compile = () => compileCSSManifest(`.card { @variant ${variant} { color: red; } }`, { baseManifest: defaultManifest }).css
+    if (css) expect(compile()).toBe(css)
+    else expect(compile).toThrow('puts a media type or container name where one query cannot have it')
+  })
+
   test.each(['sm,md&dark', '!dark'])('rejects a mode @variant %s cannot express', (variant) => {
     expect(() => compileCSSManifest(`.card { @variant ${variant} { color: red; } }`, { baseManifest: defaultManifest }))
       .toThrow('puts mode "dark" in a "," list or after "!"')

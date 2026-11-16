@@ -63,12 +63,16 @@ describe('stacked conditions form one valid query', () => {
    * missing `and` (`@sm@md`, a two-branch variant stacked on itself, two `@container` or
    * `@supports` conditions), and a media type landing after a condition (`(…) and print` is
    * invalid; the type has to lead).
-   * Reverse-checked: no `and` reds every row but `@sm@print`; putting the media type last reds
-   * only `@sm@print` and `@print@dark` above.
+   * The same holds inside one `&` token (`@sm&print`).
+   * Reverse-checked: no `and` reds every row but the `print` ones; putting the media type last reds
+   * only `@sm@print`, `@sm&print@dark` and `@print@dark` above; not moving a type ahead within one
+   * token (`leadFirst`) reds only the two `@sm&print` rows.
    */
   test.each([
     ['block@sm@md', ['@media (width>=52.125rem) and (width>=64rem){.block\\@sm\\@md{display:block}}']],
     ['block@sm@print', ['@media print and (width>=52.125rem){.block\\@sm\\@print{display:block}}']],
+    ['block@sm&print', ['@media print and (width>=52.125rem){.block\\@sm\\&print{display:block}}']],
+    ['block@sm&print@dark', ['@media print and (width>=52.125rem) and (prefers-color-scheme:dark){.block\\@sm\\&print\\@dark{display:block}}']],
     ['block@touch@touch', [
       '@media (hover:none) and (hover:none){.block\\@touch\\@touch{display:block}}',
       '@media (hover:none) and (pointer:coarse){.block\\@touch\\@touch{display:block}}',
@@ -90,13 +94,17 @@ describe('stacked conditions form one valid query', () => {
    * `or` list, which could only be grouped into `print and (or screen)` or `((…) or print)`.
    * Reverse-checked: skipping the lead checks in `joinConditionNodes` reds the `!print`,
    * `print@screen` and container rows; skipping the type-position checks in `splitLead` reds the
-   * two `,` rows.
+   * two stacked `,` rows; dropping `leadFirst`'s cannot-move checks reds only `@sm,print`,
+   * `@sm&!print` and `@sm,print@dark`; letting it keep two types reds only `@print&screen`.
    */
   test.each([
     'block@!print@dark',
     'block@print@screen',
     'block@print,screen@sm',
     'block@sm,print@dark',
+    'block@sm,print',
+    'block@sm&!print',
+    'block@print&screen',
     'block@sidebar(w>=10rem)@main(w>=20rem)',
     'block@sidebar(w>=10rem)@container(w>=20rem)'
   ])('%s yields no rule', (className) => {
