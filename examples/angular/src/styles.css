@@ -1,1 +1,2 @@
-/* You can add global styles to this file, and also import other style files */
+/* The preset's base.css declares the cascade layer order the runtime's rules rely on. */
+@import '@stet-css/preset/base.css';
