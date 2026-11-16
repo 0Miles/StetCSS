@@ -62,7 +62,6 @@
     "@stet-css/runtime": "workspace:^",
     "@stet-css/scanner": "workspace:^",
     "@stet-css/schema": "workspace:^",
-    "@stet-css/server": "workspace:^",
     "@stet-css/source": "workspace:^",
     "@stet-css/stylesheet": "workspace:^",
     "@stet-css/validator": "workspace:^",

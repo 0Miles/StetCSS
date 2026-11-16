@@ -70,9 +70,6 @@
     "packages/schema": {
       "component": "schema"
     },
-    "packages/server": {
-      "component": "server"
-    },
     "packages/source": {
       "component": "source"
     },
@@ -118,7 +115,6 @@
         "runtime",
         "scanner",
         "schema",
-        "server",
         "source",
         "stylesheet",
         "svelte",
