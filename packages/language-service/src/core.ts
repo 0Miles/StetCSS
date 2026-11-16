@@ -1,4 +1,5 @@
 import {
+  createLanguageCSS,
   defaultCSSLanguageRuntime,
   getClassPositions,
   type CSSLanguageRuntime,
@@ -40,10 +41,7 @@ export default class CSSLanguageService extends EventEmitter {
     super()
     this.runtime = options.runtime ?? defaultCSSLanguageRuntime
     this.settings = defu(customSettings, settings) as Settings
-    this.css = this.runtime.MasterCSS.create({
-      manifest: this.settings.manifest || this.runtime.defaultManifest,
-      nativeDeclarationMatcher: this.runtime.nativeDeclarationMatcher
-    })
+    this.css = createLanguageCSS(this.settings.manifest || this.runtime.defaultManifest, this.runtime)
   }
 
   private getCompletionIndex() {

@@ -1,4 +1,4 @@
-import { UtilityType, type MasterCSS } from '../master-css'
+import { generateLanguageRules, hasLanguageRuleGenerator, UtilityType, type MasterCSS } from '../master-css'
 import { inspectMasterCSSClass } from '@stet-css/engine/inspect'
 import {
   collectMasterCSSClassListTokenRanges,
@@ -55,6 +55,8 @@ export function tokenizeClassToken(css: MasterCSS, token: string, offset: number
   }
 
   const tokens: HighlightTokenItem[] = []
+  // A runtime with its own rule generator decides which classes count; one it rejects gets no tokens.
+  if (hasLanguageRuleGenerator(css) && !generateLanguageRules(css, token).length) return tokens
   const inspection = inspectMasterCSSClass(css, token)
   const rules = inspection.rules
   const component = rules.find((rule) => rule.type === UtilityType.Semantic && rule.layerName === 'components')

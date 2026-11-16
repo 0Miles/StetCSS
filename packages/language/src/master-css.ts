@@ -1,4 +1,4 @@
-import { MasterCSS, type CompiledUtility, type NativeCSSDeclarationMatcher } from '@stet-css/core'
+import { MasterCSS, type CompiledUtility, type GeneratedRule, type NativeCSSDeclarationMatcher } from '@stet-css/core'
 import { builtinKeyAliases, builtinNativeValueNamespaces } from '@stet-css/engine'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 import UtilityType from '@stet-css/schema/utility-type'
@@ -14,6 +14,13 @@ export function matchesLanguageServiceNativeDeclaration({ property }: { property
   return property.startsWith('--') || Boolean(getMdnPropertySyntax(property))
 }
 
+/**
+ * Generates the rules an editor feature shows for a class. A host that knows
+ * what the build emits (the language server) supplies one; without it the
+ * engine's own `generate` decides.
+ */
+export type LanguageRuleGenerator = (css: MasterCSS, className: string) => GeneratedRule[]
+
 export interface CSSLanguageRuntime {
   MasterCSS: typeof MasterCSS
   UtilityType: typeof UtilityType
@@ -21,6 +28,7 @@ export interface CSSLanguageRuntime {
   builtinKeyAliases: typeof builtinKeyAliases
   builtinNativeValueNamespaces: typeof builtinNativeValueNamespaces
   nativeDeclarationMatcher: NativeCSSDeclarationMatcher
+  generateRules?: LanguageRuleGenerator
 }
 
 export const defaultCSSLanguageRuntime: CSSLanguageRuntime = {
@@ -54,11 +62,26 @@ export function createDefaultCSS(runtime: CSSLanguageRuntime = defaultCSSLanguag
   })
 }
 
+const ruleGenerators = new WeakMap<MasterCSS, LanguageRuleGenerator>()
+
 export function createLanguageCSS(manifest: MasterCSSManifest = defaultManifest, runtime: CSSLanguageRuntime = defaultCSSLanguageRuntime) {
-  return runtime.MasterCSS.create({
+  const css = runtime.MasterCSS.create({
     manifest,
     nativeDeclarationMatcher: runtime.nativeDeclarationMatcher
   })
+  if (runtime.generateRules) ruleGenerators.set(css, runtime.generateRules)
+  return css
+}
+
+/** Whether `css` was created with a runtime that supplies its own rule generator. */
+export function hasLanguageRuleGenerator(css: MasterCSS) {
+  return ruleGenerators.has(css)
+}
+
+/** The rules editor features show for a class: the runtime's generator when `css` has one, else the engine's. */
+export function generateLanguageRules(css: MasterCSS, className: string): GeneratedRule[] {
+  const generateRules = ruleGenerators.get(css)
+  return generateRules ? generateRules(css, className) : css.generate(className)
 }
 
 export function generateCSS(
@@ -72,7 +95,11 @@ export function generateCSS(
     nativeDeclarationMatcher: runtime.nativeDeclarationMatcher
   })
   for (const className of classNames) {
-    generatedCSS.ensureClassRules(className)
+    if (runtime.generateRules) {
+      for (const rule of runtime.generateRules(generatedCSS, className)) rule.layer.insert(rule)
+    } else {
+      generatedCSS.ensureClassRules(className)
+    }
   }
   return generatedCSS.text
 }
