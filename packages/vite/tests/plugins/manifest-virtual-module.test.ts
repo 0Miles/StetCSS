@@ -54,7 +54,7 @@ describe('ManifestVirtualModulePlugin', () => {
     try {
       mkdirSync(root, { recursive: true })
       writeFileSync(entryPath, [
-        '@master entry;',
+        '@import "@stet-css/core";',
         '@components {',
         '    card { @compose bg:neutral-120; }',
         '}'
@@ -69,7 +69,7 @@ describe('ManifestVirtualModulePlugin', () => {
       expect(viteConfig.server.fs.allow).toContain(entryPath)
 
       writeFileSync(entryPath, [
-        '@master entry;',
+        '@import "@stet-css/core";',
         '@components {',
         '    card { @compose block; }',
         '}'

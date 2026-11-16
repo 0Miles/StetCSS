@@ -241,7 +241,7 @@ describe('Webpack static CSS', () => {
       'app/src/index.js': 'import "./app.scss"\nimport "../../shared/extra.css"\n',
       'app/src/app.scss': '$brand: #123456;\n@import "@stet-css/core";\n@theme { --color-brand: $brand; }\n',
       'app/src/template.html': '<main class="fg:brand"></main>\n',
-      'shared/extra.css': '@master entry;\n@safelist \'p:2x\';\n'
+      'shared/extra.css': '@import "@stet-css/core";\n@safelist \'p:2x\';\n'
     })
     const root = join(workspace, 'app')
 

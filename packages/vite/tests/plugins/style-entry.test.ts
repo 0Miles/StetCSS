@@ -97,7 +97,7 @@ describe('StyleEntryPlugin', () => {
     await expect((plugin as any).transform.call(
       { addWatchFile },
       [
-        '@master entry;',
+        '@import "@stet-css/core";',
         '@components {',
         '    card { @compose bg:neutral-120; }',
         '}'
