@@ -4,7 +4,7 @@ Owns the Nuxt module: it registers `@stet-css/vite` with its default static outp
 
 ## Boundaries
 
-- Static CSS, the class set and option defaults live in `@stet-css/vite` and `@stet-css/stylesheet`; `ModuleOptions` is the Vite plugin's options (only `adapters`), passed through as they are; the Vite plugin rejects other keys, naming this package through `PluginHost.name`.
+- Static CSS, the class set and option defaults live in `@stet-css/vite` and `@stet-css/stylesheet`; `ModuleOptions` is the Vite plugin's options (only `adapters`), passed through as they are; the module calls `masterCSS(options, { name })` once at `setup`, before the `nuxi prepare` return, so a bad key fails there too, naming this package through `PluginHost.name`.
 - Vue SFC extraction lives in `@stet-css/source`, reached through scanner auto adapters.
 - The module injects no runtime, writes no assets and adds no Nitro server code. A project that wants the runtime imports it itself (#14).
 

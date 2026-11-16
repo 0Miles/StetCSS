@@ -27,8 +27,8 @@ it('builds static CSS for an SPA', async () => {
  * adapter can read would otherwise ship without those rules. It reuses the SPA build instead
  * of a fixture of its own (testing.md rule 6: one Nuxt build less; options pass through the
  * same way for every Nuxt build kind, which `static.test.ts` covers without options).
- * Reverse check: passing `{}` instead of `options` to `masterCSS` in `src/module.ts` turns
- * this test and the unknown-key one in `options.test.ts` red.
+ * Reverse check: passing `{}` instead of `options` to `masterCSS` in the `vite:extendConfig`
+ * hook of `src/module.ts` turns only this test red.
  */
 it('builds the classes custom adapters find', async () => {
   const html = await $fetch<string>('/')
