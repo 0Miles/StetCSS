@@ -2,8 +2,9 @@ name: Release Please
 
 # Opens or updates the release PR that bumps every published @stet-css/*
 # package to one shared version and writes their changelogs. It publishes
-# nothing: merging the release PR only makes release-please tag the releases
-# on its next run; publishing to npm is a separate step.
+# nothing to npm. Once the release PR is merged, the next run creates one
+# GitHub release and tag per package (`core-v0.1.0`, ...); publishing to npm
+# is a separate step.
 #
 # Repository settings this workflow reads (set by a maintainer):
 # - variable RELEASE_PLEASE_ENABLED: the job runs only when it is `true`, so
@@ -32,6 +33,7 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: write
+      issues: write
       pull-requests: write
     steps:
       - name: Open or update the release PR
