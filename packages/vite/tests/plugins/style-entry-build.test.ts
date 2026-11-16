@@ -25,6 +25,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
+import { createSlotCSSRule } from '../../src/utils/slot'
 import { createProjectContext, removeProjects, SLOT_CSS_RULE } from '../plugin-test-helper'
 
 afterEach(removeProjects)
@@ -42,11 +43,13 @@ function makeBundle(entries: Record<string, string>) {
   return bundle
 }
 
-const SLOT = SLOT_CSS_RULE
 let REAL_CSS: string
+/** The placeholder a stylesheet transformed with `REAL_CSS` emits. */
+let SLOT: string
 
 beforeAll(async () => {
   REAL_CSS = await getExtractedCSS(makeContext())
+  SLOT = createSlotCSSRule(SLOT_CSS_RULE, REAL_CSS)
   expect(REAL_CSS).toContain('.bg\\:white')
 })
 
@@ -66,6 +69,32 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
     expect(bundle['assets/index-abc.css'].source).toContain(REAL_CSS)
     expect(bundle['assets/index-abc.css'].source).not.toContain(SLOT)
     expect(warn).not.toHaveBeenCalled()
+  })
+
+  /**
+   * Guards the cache warning: an asset is named while it holds the placeholder, so one whose
+   * placeholder carries the digest of other CSS than the CSS spliced in (a stylesheet that
+   * imports Master CSS registered after it was transformed) may keep its name after a deploy
+   * that changes its CSS. The build must say so, and still ship the full CSS.
+   * Reverse check: dropping the `staleFileNames` warning in `style-entry-build.ts` turns only
+   * this test red.
+   */
+  test('warns when an asset was named after other CSS than the CSS spliced in', async () => {
+    const ctx = makeContext()
+    const plugin = StyleEntryBuildPlugin(ctx)
+    const warn = vi.fn()
+    ctx.virtualCSSPlaceholderEnvironments = new Set(['client'])
+
+    const bundle = makeBundle({
+      'assets/index-abc.css': SLOT,
+      'assets/admin-abc.css': createSlotCSSRule(SLOT_CSS_RULE, 'body{margin:0}')
+    })
+    await (plugin as any).generateBundle.call({ warn }, {}, bundle)
+
+    expect(bundle['assets/admin-abc.css'].source).toBe(REAL_CSS)
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn.mock.calls[0][0]).toContain('assets/admin-abc.css')
+    expect(warn.mock.calls[0][0]).not.toContain('assets/index-abc.css')
   })
 
   test('deduplicates duplicate placeholder occurrences in the same CSS asset', async () => {
@@ -122,7 +151,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
     expect(warn).toHaveBeenCalledTimes(1)
     const msg = warn.mock.calls[0][0] as string
     expect(msg).toContain('Could not splice managed style CSS')
-    expect(msg).toContain(SLOT)
+    expect(msg).toContain('#master-css-slot')
   })
 
   /**
@@ -272,10 +301,10 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
       const plugin = StyleEntryBuildPlugin(ctx)
       const warn = vi.fn()
 
-      await (styleEntryPlugin as any).transform.call({ addWatchFile: vi.fn() }, source, entryPath)
+      const { code } = await (styleEntryPlugin as any).transform.call({ addWatchFile: vi.fn() }, source, entryPath)
 
       const bundle = makeBundle({
-        'assets/index-abc.css': SLOT,
+        'assets/index-abc.css': code,
       })
       await (plugin as any).generateBundle.call({ warn }, {}, bundle)
 
@@ -329,10 +358,10 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
       const plugin = StyleEntryBuildPlugin(ctx)
       const warn = vi.fn()
 
-      await (styleEntryPlugin as any).transform.call({ addWatchFile: vi.fn() }, source, entryPath)
+      const { code } = await (styleEntryPlugin as any).transform.call({ addWatchFile: vi.fn() }, source, entryPath)
 
       const bundle = makeBundle({
-        'assets/index-abc.css': SLOT,
+        'assets/index-abc.css': code,
       })
       await (plugin as any).generateBundle.call({ warn }, {}, bundle)
 
