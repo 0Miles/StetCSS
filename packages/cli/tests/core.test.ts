@@ -58,6 +58,34 @@ describe('root command', () => {
     expect(String(error.stderr)).toContain(`The "${command}" command was removed.`)
   })
 
+  /**
+   * Guards the error a user sees for a stylesheet the build cannot read, such as one still
+   * written with the removed `@master` at-rule: the message names the fix, and an uncaught
+   * exception buried it under a source excerpt, a stack trace and the error's fields.
+   * Reverse check: rethrowing the original error instead of `StylesheetEntryError` in
+   * `registerManagedCSSEntries` turns only this test red.
+   */
+  it.each([
+    ['a removed @master at-rule', '@master entry;\n', '@master entry; was removed'],
+    ['a missing import', '@import "@stet-css/core";\n@import "./missing.css";\n', 'CSS file not found']
+  ])('prints only the message for a stylesheet with %s', (_, css, message) => {
+    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'master-css-cli-stylesheet-error-'))
+    try {
+      fs.writeFileSync(resolve(cwd, 'index.css'), css)
+      fs.writeFileSync(resolve(cwd, 'index.html'), '<div class="block"></div>')
+      const error = runFailedCLI(['--no-export'], { cwd })
+      const stderr = String(error.stderr)
+      expect(error.status).toBe(1)
+      expect(stderr).toContain(message)
+      expect(stderr).toContain(fs.realpathSync(cwd))
+      expect(stderr).not.toMatch(/^\s+at /m)
+      expect(stderr.trim().split('\n')).toHaveLength(1)
+      expect(String(error.stdout)).toBe('')
+    } finally {
+      fs.rmSync(cwd, { recursive: true, force: true })
+    }
+  })
+
   it('publishes only the package-name binary', () => {
     expect(pkg.bin).toBe('./dist/bin/index.js')
   })
