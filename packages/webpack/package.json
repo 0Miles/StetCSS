@@ -10,9 +10,8 @@
     "test": "vitest"
   },
   "license": "MIT",
-  "description": "Webpack plugin for Master CSS",
+  "description": "Webpack plugin for StetCSS",
   "author": "Aoyue Design LLC.",
-  "funding": "https://rc.css.master.co/sponsor",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/webpack#readme",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"
@@ -28,7 +27,7 @@
     "integration",
     "build tools",
     "css",
-    "mastercss",
+    "stetcss",
     "webpack-plugin"
   ],
   "sideEffects": false,

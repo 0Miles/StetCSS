@@ -10,14 +10,13 @@
     "lint": "eslint"
   },
   "keywords": [
-    "mastercss",
+    "stetcss",
     "eslint",
     "eslintplugin"
   ],
   "license": "MIT",
-  "description": "Master CSS ESLint Plugin",
+  "description": "StetCSS ESLint Plugin",
   "author": "Aoyue Design LLC.",
-  "funding": "https://rc.css.master.co/sponsor",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/eslint-plugin#readme",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"

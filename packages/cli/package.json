@@ -10,9 +10,8 @@
   },
   "type": "module",
   "license": "MIT",
-  "description": "Master CSS CLI",
+  "description": "StetCSS CLI",
   "author": "Aoyue Design LLC.",
-  "funding": "https://rc.css.master.co/sponsor",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/cli#readme",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"
@@ -25,7 +24,7 @@
   "keywords": [
     "cli",
     "css",
-    "mastercss"
+    "stetcss"
   ],
   "bin": "./dist/bin/index.js",
   "files": [

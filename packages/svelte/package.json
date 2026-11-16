@@ -14,9 +14,8 @@
     "lint": "eslint"
   },
   "license": "MIT",
-  "description": "Svelte and SvelteKit integration for Master CSS",
+  "description": "Svelte and SvelteKit integration for StetCSS",
   "author": "Aoyue Design LLC.",
-  "funding": "https://rc.css.master.co/sponsor",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/svelte#readme",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"
@@ -30,7 +29,7 @@
     "svelte",
     "sveltekit",
     "css",
-    "mastercss"
+    "stetcss"
   ],
   "sideEffects": false,
   "exports": {

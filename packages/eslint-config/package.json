@@ -10,14 +10,13 @@
     "lint": "eslint src *.js"
   },
   "keywords": [
-    "mastercss",
+    "stetcss",
     "eslint",
     "eslintconfig"
   ],
   "license": "MIT",
-  "description": "Master CSS ESLint Configuration",
+  "description": "StetCSS ESLint Configuration",
   "author": "Aoyue Design LLC.",
-  "funding": "https://rc.css.master.co/sponsor",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/eslint-config#readme",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"

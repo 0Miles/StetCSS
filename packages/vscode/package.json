@@ -16,14 +16,13 @@
   "description": "StetCSS for Visual Studio Code",
   "displayName": "StetCSS",
   "author": "Aoyue Design LLC.",
-  "funding": "https://rc.css.master.co/sponsor",
-  "homepage": "https://rc.css.master.co/guide/installation/language-service",
+  "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/vscode#readme",
   "license": "MIT",
   "publisher": "masterco",
   "icon": "icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/master-co/css.git",
+    "url": "git+https://github.com/0Miles/StetCSS.git",
     "directory": "packages/vscode"
   },
   "engines": {
