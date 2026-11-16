@@ -11,7 +11,7 @@ const outDir = join(fixtureDir, 'out')
 describe('static export e2e', () => {
   /**
    * Guards #57: `output: 'export'` serves every page's Server Component classes from the CSS
-   * asset, with no pre-rendered `<style>` or hydration manifest.
+   * asset, with no pre-rendered `<style>`.
    * Reverse check: removing the Turbopack generated CSS rule turns it red.
    */
   it('exports the Server Component classes of every page into the CSS asset', () => {
