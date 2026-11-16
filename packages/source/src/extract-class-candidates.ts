@@ -1,4 +1,18 @@
 import { MASTER_CSS_VALUE_UNIT_PATTERN } from '@stet-css/lexer'
+import {
+  getGroupBody,
+  hasBraceGroup,
+  hasObjectArgument,
+  hasParenthesizedArrow,
+  removeBlockComments,
+  removeDecorators,
+  removeHTMLComments,
+  removeImportCalls,
+  removeImportsFrom,
+  removeRequireCalls,
+  removeStyleTags,
+  trimTrailing
+} from './extraction-scans'
 
 /**
  * Extract class-like candidates from arbitrary source content (HTML, JSX, TS,
@@ -18,11 +32,15 @@ import { MASTER_CSS_VALUE_UNIT_PATTERN } from '@stet-css/lexer'
  *     and avoids accidental local rebuild.
  *   - `trimString` is iterative, so a long class with many trailing
  *     characters cannot blow the stack.
- *   - `needExclude` short-circuits via two cheap structural patterns first,
- *     then walks the explicit reject list — most input fails at the first
- *     check so we avoid 11 redundant regex evaluations.
+ *   - `needExclude` short-circuits via the keep checks first (a `{…}`
+ *     group, `KEEP_TOKEN`, `KEEP_WXH`), then walks the reject list and the
+ *     reject scans — most input fails a keep check, which skips the rest.
  *   - The CSS-unit suffix list is pulled into a constant so the giant
  *     `WxH` regex isn't an inline literal repeated through the file.
+ *   - Patterns that a backtracking regex would retry from every character of
+ *     a long run (brackets, tags, keywords without whitespace) are
+ *     single-pass scans in `./extraction-scans`, each documented with the
+ *     regex it replaces.
  */
 
 // ─── Sentinel (placeholder for protected string literals) ────────────────────
@@ -41,33 +59,21 @@ const NON_QUOTE_RUN = /[^"'`]+/g
 const SPLIT_SENTINEL_TEXT = 'SPLIT_BY_THIS'
 
 const TRIM_LEADING = /^[^:@~(]*(?<!@>?)=/
-// Stripped from the end of a token. A `/[...]+$/` regex would retry from every
-// character of a long run of them, so the scan walks back from the end.
-const TRIM_TRAILING_CHARS = new Set(['(', '[', '{', '\\', ':', '#', '=', '.'])
 
-const PRE_EXCLUDE_BLOCK_COMMENT = /\/\*(?:(?!\*\/)[\S\s])*\*\//g
-const PRE_EXCLUDE_HTML_COMMENT = /<!--(?:(?!-->)[\S\s])*-->/g
 const PRE_EXCLUDE_LINE_COMMENT = /\/\/.*/g
-const PRE_EXCLUDE_STYLE_TAG = /<style[^>]*>(?:(?!<\/style>)[\S\s])*<\/style>/g
-const PRE_EXCLUDE_IMPORT_FROM = /import.*from\s*COMPLETE-STRING--\d+--/g
-const PRE_EXCLUDE_IMPORT = /import\s*(?:COMPLETE-STRING--\d+--|\([^;\s]*\))/g
-const PRE_EXCLUDE_REQUIRE = /(?:require|import)\([^;\s]*\)/g
-const PRE_EXCLUDE_DECORATOR = /(?:@.*\n)+(?:export|function|class)/g
-
-const GROUP_BODY = /{(.*)}/
 
 // "Keep this token" patterns OR'd into one — cheaper than three separate
 // `.match()` calls. A `{...}` group is the fourth keep pattern, checked by
 // `hasBraceGroup`.
 const KEEP_TOKEN = /(?:^[\w\-()]+:\S+)|(?:^[\w-]+\(\S+\))|(?:^[\w-]+)/
-const WHITESPACE = /\s/
-const LINE_TERMINATORS = new Set(['\n', '\r', '\u2028', '\u2029'])
 
 // CSS unit suffix used by the `WxH` shorthand recognizer.
 const KEEP_WXH = new RegExp(`^(?:calc\\(.*\\)|\\d+(?:${MASTER_CSS_VALUE_UNIT_PATTERN})?)x(?:calc\\(.*\\)|\\d+(?:${MASTER_CSS_VALUE_UNIT_PATTERN})?)$`)
 
 // Reject the token when any of these match. Listed in order of frequency in
-// real codebases, so the loop short-circuits earlier on average.
+// real codebases, so the loop short-circuits earlier on average. Two more
+// reject rules run after the list as scans: `hasObjectArgument` and
+// `hasParenthesizedArrow`.
 const REJECT_PATTERNS: RegExp[] = [
   /;$/,
   /<\w+>|<\/\w+>/,
@@ -77,7 +83,6 @@ const REJECT_PATTERNS: RegExp[] = [
   /^~\/.+.\w+$/,
   /^\$\(.*/,
   /^\w+:\/\//,
-  /\(\{[^}]*\}/,
   /:\[/,
   /\*\*/,
   /function\(/,
@@ -159,12 +164,6 @@ function splitStringByQuotation(content: string): string[] {
  * Iteratively strip a leading `name=` prefix and trailing punctuation. The
  * loop reaches the same fixed point without stack growth on long inputs.
  */
-function trimTrailing(content: string): string {
-  let end = content.length
-  while (end > 0 && TRIM_TRAILING_CHARS.has(content[end - 1])) end--
-  return end === content.length ? content : content.slice(0, end)
-}
-
 function trimString(content: string): string {
   while (true) {
     const before = content
@@ -198,53 +197,18 @@ function peelCompleteString(content: string): Set<string> {
 function preExclude(content: string): string {
   return keepCompleteStringAndProcessContent(
     content,
-    c => c
-      .replace(PRE_EXCLUDE_BLOCK_COMMENT, '')
-      .replace(PRE_EXCLUDE_HTML_COMMENT, '')
-      .replace(PRE_EXCLUDE_LINE_COMMENT, '')
-      .replace(PRE_EXCLUDE_STYLE_TAG, '')
-      .replace(PRE_EXCLUDE_IMPORT_FROM, '')
-      .replace(PRE_EXCLUDE_IMPORT, '')
-      .replace(PRE_EXCLUDE_REQUIRE, '')
-      .replace(PRE_EXCLUDE_DECORATOR, '')
+    c => removeDecorators(
+      removeRequireCalls(
+        removeImportCalls(
+          removeImportsFrom(
+            removeStyleTags(
+              removeHTMLComments(removeBlockComments(c)).replace(PRE_EXCLUDE_LINE_COMMENT, '')
+            )
+          )
+        )
+      )
+    )
   )
-}
-
-/**
- * Whether a `{` is followed by a `}` with no whitespace between them, the
- * same as testing `/\S*\{\S*\}/` but in one pass: that regex retries from
- * every character of a long token that has no such group.
- */
-function hasBraceGroup(content: string): boolean {
-  const first = content.indexOf('{')
-  if (first < 0) return false
-  let open = false
-  for (let i = first; i < content.length; i++) {
-    const ch = content[i]
-    if (ch === '{') open = true
-    else if (ch === '}') {
-      if (open) return true
-    } else if (open && WHITESPACE.test(ch)) open = false
-  }
-  return false
-}
-
-/**
- * Whether a `(` comes before a `)=>` on the same line, the same as testing
- * `/\(.*\)=>/` but in one pass: that regex rescans the rest of the line from
- * every `(`.
- */
-function hasParenthesizedArrow(content: string): boolean {
-  const last = content.lastIndexOf(')=>')
-  if (last < 0) return false
-  let open = false
-  for (let i = 0; i <= last; i++) {
-    const ch = content[i]
-    if (LINE_TERMINATORS.has(ch)) open = false
-    else if (ch === ')' && open && content.startsWith(')=>', i)) return true
-    else if (ch === '(') open = true
-  }
-  return false
 }
 
 function needExclude(content: string): boolean {
@@ -256,15 +220,15 @@ function needExclude(content: string): boolean {
   for (let i = 0; i < REJECT_PATTERNS.length; i++) {
     if (REJECT_PATTERNS[i].test(content)) return true
   }
-  return hasParenthesizedArrow(content)
+  return hasObjectArgument(content) || hasParenthesizedArrow(content)
 }
 
 function checkToExclude(content: string): boolean {
   const protectedContent = protectCompleteStrings(content)
   const checkContent = protectedContent?.content ?? content
-  const groupMatch = GROUP_BODY.exec(checkContent)
-  if (groupMatch) {
-    return groupMatch[1].split(';').some(needExclude)
+  const groupBody = getGroupBody(checkContent)
+  if (groupBody !== undefined) {
+    return groupBody.split(';').some(needExclude)
   }
   return needExclude(checkContent) || hasUnclosedBrackets(content)
 }
