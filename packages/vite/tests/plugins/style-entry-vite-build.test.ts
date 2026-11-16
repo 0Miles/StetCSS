@@ -2,11 +2,7 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import masterCSS from '../../src/core'
-import { buildProject, type BuildProjectOptions } from '../plugin-test-helper'
-
-async function buildCSSFixture(options: BuildProjectOptions) {
-  return (await buildProject(options)).css
-}
+import { buildProject } from '../plugin-test-helper'
 
 function expectMasterBaseCSS(css: string) {
   expect(css).toContain('@layer base')
@@ -16,7 +12,7 @@ function expectMasterBaseCSS(css: string) {
 
 describe('StyleEntryPlugin Vite build integration', () => {
   test('keeps package imports legal when @stet-css/core appears first in the import block', async () => {
-    const css = await buildCSSFixture({
+    const { css } = await buildProject({
       appClass: 'block',
       plugins: [
         masterCSS({ mode: 'static' })
@@ -46,7 +42,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
   })
 
   test.each(['runtime', 'progressive', 'pre-render'] as const)('%s mode emits preset base CSS for the root Master CSS import', async (mode) => {
-    const css = await buildCSSFixture({
+    const { css } = await buildProject({
       appClass: 'block',
       plugins: [
         masterCSS({ mode })
@@ -66,7 +62,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
   })
 
   test('static mode emits preset base CSS for the root Master CSS import', async () => {
-    const css = await buildCSSFixture({
+    const { css } = await buildProject({
       appClass: 'block',
       plugins: [
         masterCSS({ mode: 'static' })
@@ -92,7 +88,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
     ['masterCSS()', undefined],
     ["masterCSS({ mode: 'runtime' })", { mode: 'runtime' }]
   ] as const)('%s lets Vite expand the explicit base.css subpath import', async (_label, options) => {
-    const css = await buildCSSFixture({
+    const { css } = await buildProject({
       plugins: [
         masterCSS(options)
       ],
@@ -118,7 +114,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
    * (and rebuilding) turns only this test red.
    */
   test('static SSR build emits rules for classes in server-only templates', async () => {
-    const css = await buildCSSFixture({
+    const { css } = await buildProject({
       plugins: [masterCSS({ mode: 'static' })],
       prefix: 'master-css-vite-ssr-template-',
       styleCSS: '@import "@stet-css/core";',
@@ -149,7 +145,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
    * and the serve load test of the virtual CSS module in `style-entry.test.ts` red.
    */
   test('static build without a stylesheet entry emits rules for the virtual CSS module', async () => {
-    const css = await buildCSSFixture({
+    const { css } = await buildProject({
       appClass: 'block',
       plugins: [masterCSS({ mode: 'static' })],
       prefix: 'master-css-vite-virtual-only-',
