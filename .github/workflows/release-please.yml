@@ -12,10 +12,11 @@ name: Release Please
 #   requests.
 # - Actions may create pull requests (Settings > Actions > General).
 #
-# Everything runs on GITHUB_TOKEN; no personal token is stored. Pushes and PRs
-# made with GITHUB_TOKEN start no other workflow, but workflow_dispatch is the
-# documented exception, so the release-please job dispatches CI on the release
-# PR branch itself to give the PR its `required` check.
+# Everything runs on GITHUB_TOKEN; no personal token is stored. The release
+# PR is opened by github-actions[bot], so its pull_request CI run waits for a
+# maintainer to approve it ("Approve and run workflows" on the PR) after every
+# update. Check runs from a workflow_dispatch run on the same commit do not
+# count toward the PR's `required`, so dispatching CI from here does not help.
 # - variable NPM_PUBLISH_ENABLED: nothing is packed or published unless it is
 #   `true`. Leave it unset until the first publish.
 # - secret NPM_TOKEN (optional): npm lets a package trust this workflow only
@@ -51,8 +52,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
-      # actions: write lets `gh workflow run` dispatch CI on the release PR.
-      actions: write
       contents: write
       issues: write
       pull-requests: write
@@ -108,14 +107,6 @@ jobs:
           git add bun.lock
           git commit -m 'chore: sync bun.lock with the release versions'
           git push origin "HEAD:refs/heads/$BRANCH"
-
-      # Runs after the bun.lock push so CI checks the PR's final head commit.
-      - name: Run CI on the release PR
-        if: ${{ steps.release.outputs.prs_created == 'true' }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-          BRANCH: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
-        run: gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"
 
   # Builds the released commit and packs the tarballs. Dependencies are
   # installed and built here, in a job that cannot publish.
