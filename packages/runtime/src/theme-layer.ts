@@ -32,7 +32,7 @@ export default class RuntimeThemeLayer extends ThemeLayer {
     }
   }
 
-  getBucketKey(mediaText: string, selectorText: string) {
+  private getBucketKey(mediaText: string, selectorText: string) {
     const normalizedMediaText = mediaText.replace(/\s*:\s*/g, ':').replace(/\s+/g, ' ').trim()
     const normalizedSelectorText = selectorText.replace(/\s*,\s*/g, ',').replace(/\s+/g, ' ').trim()
     return normalizedMediaText + '\n' + normalizedSelectorText
@@ -55,14 +55,14 @@ export default class RuntimeThemeLayer extends ThemeLayer {
     return false
   }
 
-  getStyleRule(nativeRule: CSSRule): CSSStyleRule | undefined {
+  private getStyleRule(nativeRule: CSSRule): CSSStyleRule | undefined {
     if (nativeRule instanceof CSSStyleRule) return nativeRule
     if (nativeRule instanceof CSSGroupingRule) {
       return nativeRule.cssRules.item(0) as CSSStyleRule | undefined
     }
   }
 
-  syncNativeBuckets() {
+  private syncNativeBuckets() {
     this.nativeBuckets.clear()
     if (!this.native) return
     for (const nativeRule of this.native.cssRules) {
@@ -114,7 +114,7 @@ export default class RuntimeThemeLayer extends ThemeLayer {
     return newBucket
   }
 
-  getNativeBucketInsertIndex(mediaText: string, selectorText: string) {
+  private getNativeBucketInsertIndex(mediaText: string, selectorText: string) {
     if (!this.native) return 0
     const bucket = { mediaText, selectorText }
     for (let index = 0; index < this.native.cssRules.length; index++) {
