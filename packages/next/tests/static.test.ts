@@ -36,7 +36,6 @@ function runStyleCSSLoader(root: string, resourcePath: string, source: string) {
   return new Promise<string>((resolve, reject) => {
     const context: ThisParameterType<typeof masterCSSStyleCSSLoader> = {
       resourcePath,
-      rootContext: root,
       getOptions: () => ({ outputPath: resolveStaticOutputPath(root), projectDir: root }),
       async: () => (error, content) => {
         if (error) {
