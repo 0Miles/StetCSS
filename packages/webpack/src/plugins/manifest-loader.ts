@@ -1,6 +1,6 @@
 import {
-  MASTER_CSS_MANIFEST_QUERY,
-  stripMasterCSSManifestQuery
+  STET_CSS_MANIFEST_QUERY,
+  stripStetCSSManifestQuery
 } from '@stet-css/integration/manifest-module'
 import {
   toBrowserManifestFacadeModule,
@@ -23,13 +23,13 @@ export default function ManifestLoaderPlugin(context: MasterCSSWebpackContext): 
       compiler.hooks.normalModuleFactory.tap(context.name, (normalModuleFactory) => {
         normalModuleFactory.hooks.beforeResolve.tapAsync(context.name, (resolveData, callback) => {
           const request = resolveData.request
-          const isPlanRequest = request.endsWith(MASTER_CSS_MANIFEST_QUERY)
+          const isPlanRequest = request.endsWith(STET_CSS_MANIFEST_QUERY)
           if (!isPlanRequest) {
             callback()
             return
           }
 
-          const sourceRequest = stripMasterCSSManifestQuery(request)
+          const sourceRequest = stripStetCSSManifestQuery(request)
           const resolver = normalModuleFactory.getResolver('normal')
           resolver.resolve(
             resolveData.contextInfo,

@@ -1,11 +1,11 @@
 export const MANIFEST_MODULE_FILE = 'stet-css-manifest.js'
 export const MANIFEST_ASSET_FILE = 'stet-css-manifest.json'
-export const MASTER_CSS_MANIFEST_PRELOAD_REL = 'modulepreload'
-export const MASTER_CSS_MANIFEST_PRELOAD_AS = 'json'
+export const STET_CSS_MANIFEST_PRELOAD_REL = 'modulepreload'
+export const STET_CSS_MANIFEST_PRELOAD_AS = 'json'
 
 export interface ManifestPreloadLinkAttrs {
-  rel: typeof MASTER_CSS_MANIFEST_PRELOAD_REL
-  as: typeof MASTER_CSS_MANIFEST_PRELOAD_AS
+  rel: typeof STET_CSS_MANIFEST_PRELOAD_REL
+  as: typeof STET_CSS_MANIFEST_PRELOAD_AS
   crossorigin: ''
   href: string
 }
@@ -22,8 +22,8 @@ export function toInlineManifestModule(json: string) {
 
 export function toManifestPreloadLinkAttrs(href: string): ManifestPreloadLinkAttrs {
   return {
-    rel: MASTER_CSS_MANIFEST_PRELOAD_REL,
-    as: MASTER_CSS_MANIFEST_PRELOAD_AS,
+    rel: STET_CSS_MANIFEST_PRELOAD_REL,
+    as: STET_CSS_MANIFEST_PRELOAD_AS,
     crossorigin: '',
     href
   }
@@ -50,9 +50,9 @@ export function toBrowserManifestFacadeModule(urlExpression: string) {
   // fails to bootstrap and renders blank with no obvious console error. `fetch`
   // is universally supported and needs no bundler-hiding indirection.
   return [
-    `const masterCSSManifestURL = ${urlExpression};`,
-    `const masterCSSManifestResponse = await fetch(typeof masterCSSManifestURL === 'string' ? masterCSSManifestURL : masterCSSManifestURL.href);`,
-    `export default await masterCSSManifestResponse.json();`,
+    `const stetCSSManifestURL = ${urlExpression};`,
+    `const stetCSSManifestResponse = await fetch(typeof stetCSSManifestURL === 'string' ? stetCSSManifestURL : stetCSSManifestURL.href);`,
+    `export default await stetCSSManifestResponse.json();`,
     ``
   ].join('\n')
 }
@@ -61,19 +61,19 @@ export function toNodeManifestFacadeModule(urlExpression: string) {
   return [
     `import { fileURLToPath, pathToFileURL } from 'node:url';`,
     ``,
-    `const masterCSSManifestURL = ${urlExpression};`,
-    `const masterCSSManifestFile = fileURLToPath(new URL(masterCSSManifestURL, import.meta.url));`,
-    `const masterCSSManifestModule = await import(pathToFileURL(masterCSSManifestFile).href, { with: { type: 'json' } });`,
-    `export default masterCSSManifestModule.default;`,
+    `const stetCSSManifestURL = ${urlExpression};`,
+    `const stetCSSManifestFile = fileURLToPath(new URL(stetCSSManifestURL, import.meta.url));`,
+    `const stetCSSManifestModule = await import(pathToFileURL(stetCSSManifestFile).href, { with: { type: 'json' } });`,
+    `export default stetCSSManifestModule.default;`,
     ``
   ].join('\n')
 }
 
 export function toUniversalManifestFacadeModule(urlExpression: string) {
   return [
-    `const masterCSSManifestURL = ${urlExpression};`,
+    `const stetCSSManifestURL = ${urlExpression};`,
     ``,
-    `async function loadMasterCSSManifestFromFile(url) {`,
+    `async function loadStetCSSManifestFromFile(url) {`,
     `    const load = new Function('specifier', 'options', 'return import(specifier, options)');`,
     `    const { fileURLToPath, pathToFileURL } = await load('node:url');`,
     `    const { join } = await load('node:path');`,
@@ -96,7 +96,7 @@ export function toUniversalManifestFacadeModule(urlExpression: string) {
     `    throw lastError;`,
     `}`,
     ``,
-    `async function loadMasterCSSManifestFromFetch(url) {`,
+    `async function loadStetCSSManifestFromFetch(url) {`,
     `    const specifier = typeof url === 'string' ? url : url.href;`,
     `    const response = await fetch(specifier);`,
     `    return response.json();`,
@@ -106,8 +106,8 @@ export function toUniversalManifestFacadeModule(urlExpression: string) {
     // See `toBrowserManifestFacadeModule` for why import attributes cannot be used
     // on the browser (they break Safari < 17.2 / iOS 15-16 at parse time).
     `export default typeof window === 'undefined'`,
-    `    ? await loadMasterCSSManifestFromFile(masterCSSManifestURL)`,
-    `    : await loadMasterCSSManifestFromFetch(masterCSSManifestURL);`,
+    `    ? await loadStetCSSManifestFromFile(stetCSSManifestURL)`,
+    `    : await loadStetCSSManifestFromFetch(stetCSSManifestURL);`,
     ``
   ].join('\n')
 }

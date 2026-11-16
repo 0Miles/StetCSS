@@ -5,7 +5,7 @@ import { MANIFEST_ASSET_FILE, MANIFEST_MODULE_FILE } from './manifest-facade'
 export type { StetCSSManifest }
 
 export const VIRTUAL_MANIFEST_ID = 'virtual:stet-css-manifest'
-export const MASTER_CSS_MANIFEST_QUERY = '?stet-css-manifest'
+export const STET_CSS_MANIFEST_QUERY = '?stet-css-manifest'
 export const VIRTUAL_MANIFEST_FILE = MANIFEST_MODULE_FILE
 export const VIRTUAL_MANIFEST_ASSET_FILE = MANIFEST_ASSET_FILE
 export const EMPTY_MANIFEST_JSON = '{"version":1}'
@@ -24,13 +24,13 @@ export type CSSManifestJSONResult = CSSManifestLoadResult & {
   json: string
 }
 
-export function isMasterCSSManifestRequest(id: string) {
-  return id.endsWith(MASTER_CSS_MANIFEST_QUERY)
+export function isStetCSSManifestRequest(id: string) {
+  return id.endsWith(STET_CSS_MANIFEST_QUERY)
 }
 
-export function stripMasterCSSManifestQuery(id: string) {
-  return isMasterCSSManifestRequest(id)
-    ? id.slice(0, -MASTER_CSS_MANIFEST_QUERY.length)
+export function stripStetCSSManifestQuery(id: string) {
+  return isStetCSSManifestRequest(id)
+    ? id.slice(0, -STET_CSS_MANIFEST_QUERY.length)
     : id
 }
 

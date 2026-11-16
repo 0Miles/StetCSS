@@ -1,14 +1,14 @@
 import type { ModuleNode, Plugin } from 'vite'
 import type { PluginContext } from '../core'
 import {
-  fromResolvedMasterCSSManifestId,
-  toResolvedMasterCSSManifestId
+  fromResolvedStetCSSManifestId,
+  toResolvedStetCSSManifestId
 } from '@stet-css/integration/node'
 import { loadManifestJSON } from '@stet-css/project/manifest'
 import { isCSSManifestRequest } from '@stet-css/project/entries'
 import {
-  isMasterCSSManifestRequest,
-  stripMasterCSSManifestQuery
+  isStetCSSManifestRequest,
+  stripStetCSSManifestQuery
 } from '@stet-css/integration/manifest-module'
 import { collectStyleCSSDependencies } from '@stet-css/stylesheet'
 import { includesFile } from '../utils/path'
@@ -25,13 +25,13 @@ export default function ManifestLoaderPlugin(context: PluginContext): Plugin {
     name: 'stet-css:manifest-loader',
     enforce: 'pre',
     async resolveId(id, importer) {
-      if (!isMasterCSSManifestRequest(id)) return
-      const sourceId = stripMasterCSSManifestQuery(id)
+      if (!isStetCSSManifestRequest(id)) return
+      const sourceId = stripStetCSSManifestQuery(id)
       const resolved = await this.resolve(sourceId, importer, { skipSelf: true })
-      if (resolved) return toResolvedMasterCSSManifestId(resolved.id)
+      if (resolved) return toResolvedStetCSSManifestId(resolved.id)
     },
     async load(id) {
-      const manifestPath = fromResolvedMasterCSSManifestId(id)
+      const manifestPath = fromResolvedStetCSSManifestId(id)
       if (!manifestPath) return
       if (!isCSSManifestRequest(manifestPath)) {
         throw new TypeError('Master CSS manifest queries only support CSS entry files.')
@@ -58,7 +58,7 @@ export default function ManifestLoaderPlugin(context: PluginContext): Plugin {
         if (includesFile(dependencies, file)) queryManifestPaths.add(manifestPath)
       }
       for (const manifestPath of queryManifestPaths) {
-        const queryModule = server.moduleGraph.getModuleById(toResolvedMasterCSSManifestId(manifestPath))
+        const queryModule = server.moduleGraph.getModuleById(toResolvedStetCSSManifestId(manifestPath))
         if (!queryModule) continue
         modules.push(...invalidateManifestModule(queryModule, server))
       }

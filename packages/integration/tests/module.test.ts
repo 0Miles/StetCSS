@@ -5,12 +5,12 @@ import * as moduleHelpers from '../src/module'
 import {
   EMPTY_MANIFEST_JSON,
   EMPTY_EMITTED_GLOBALS_MODULE,
-  MASTER_CSS_MANIFEST_QUERY,
+  STET_CSS_MANIFEST_QUERY,
   VIRTUAL_CSS_ID,
   VIRTUAL_EMITTED_GLOBALS_ID,
   VIRTUAL_MANIFEST_ID,
   normalizeEmittedGlobals,
-  stripMasterCSSManifestQuery,
+  stripStetCSSManifestQuery,
   stripResourceQuery,
   toManifestJSON,
   toManifestPreloadLinkAttrs,
@@ -25,7 +25,7 @@ describe('@stet-css/integration module helpers', () => {
     expect(VIRTUAL_MANIFEST_ID).toBe('virtual:stet-css-manifest')
     expect(VIRTUAL_CSS_ID).toBe('virtual:stet-utilities.css')
     expect(VIRTUAL_EMITTED_GLOBALS_ID).toBe('virtual:stet-css-emitted-globals')
-    expect(MASTER_CSS_MANIFEST_QUERY).toBe('?stet-css-manifest')
+    expect(STET_CSS_MANIFEST_QUERY).toBe('?stet-css-manifest')
   })
 
   it('serializes manifest and emittedGlobals modules', () => {
@@ -42,13 +42,13 @@ describe('@stet-css/integration module helpers', () => {
     ) as { exports: Record<string, unknown> }
 
     expect(moduleHelpers).not.toHaveProperty('CSS_RUNTIME_INJECTION')
-    expect(moduleHelpers).not.toHaveProperty('MASTER_CSS_RUNTIME_INJECTED_MARKER')
+    expect(moduleHelpers).not.toHaveProperty('STET_CSS_RUNTIME_INJECTED_MARKER')
     expect(moduleHelpers).not.toHaveProperty('VIRTUAL_RUNTIME_ID')
     expect(packageJSON.exports).not.toHaveProperty('./runtime')
   })
 
   it('matches and strips CSS manifest resource queries', () => {
-    expect(stripMasterCSSManifestQuery('./theme.css?stet-css-manifest')).toBe('./theme.css')
+    expect(stripStetCSSManifestQuery('./theme.css?stet-css-manifest')).toBe('./theme.css')
     expect(stripResourceQuery('./theme.css?stet-css-manifest')).toBe('./theme.css')
   })
 
@@ -75,7 +75,7 @@ describe('@stet-css/integration module helpers', () => {
     expect(source).toContain(`with: { type: 'json' }`)
     // Browser branch loads via fetch; import attributes break Safari < 17.2 (iOS 15/16).
     expect(source).toContain('await fetch(specifier)')
-    expect(source).toContain(': await loadMasterCSSManifestFromFetch(masterCSSManifestURL)')
+    expect(source).toContain(': await loadStetCSSManifestFromFetch(stetCSSManifestURL)')
     expect(source).not.toContain('readFile')
   })
 
