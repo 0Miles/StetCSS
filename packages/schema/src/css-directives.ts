@@ -152,8 +152,7 @@ export interface CSSDirectiveManifestInput {
   variants?: CSSDirectiveVariantDefinitions
   variables?: CSSDirectiveVariableDefinition[]
   utilities?: CSSDirectiveUtilityDefinition[]
-  rootSize?: number
-  baseUnit?: number
+  baseUnit?: string
   defaultMode?: CSSDirectiveDefaultMode
   scope?: string
   important?: boolean

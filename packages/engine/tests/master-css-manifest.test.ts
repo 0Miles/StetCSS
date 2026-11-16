@@ -196,7 +196,6 @@ describe.concurrent('MasterCSSManifest execution', () => {
     const manifest: MasterCSSManifest = {
       version: 1,
       settings: {
-        rootSize: 16,
         modes: []
       },
       variables: variables([
@@ -234,7 +233,6 @@ describe.concurrent('MasterCSSManifest execution', () => {
     const manifest: MasterCSSManifest = {
       version: 1,
       settings: {
-        rootSize: 16,
         modes: []
       },
       variables: variables([
@@ -307,7 +305,6 @@ describe.concurrent('MasterCSSManifest execution', () => {
     const manifest: MasterCSSManifest = {
       version: 1,
       settings: {
-        rootSize: 16,
         modes: []
       },
       variables: variables([
@@ -373,11 +370,23 @@ describe.concurrent('MasterCSSManifest execution', () => {
     expect(rejectingCSS.createRule('test-property:value')).toBeUndefined()
   })
 
+  /**
+   * Prevents: a manifest that did not come through the compiler's `@settings` check, such as one
+   * written by hand or serialized when `baseUnit` was a pixel count, loading fine and then
+   * emitting a broken length for every `x` value instead of failing where it is loaded.
+   * Reverse-checked: deleting the `assertBaseUnit` call in `createCompiledSettings` turns only this
+   * test red.
+   */
+  it('rejects a manifest whose baseUnit is not a CSS length', () => {
+    const manifest = { version: 1, settings: { baseUnit: 4 } } as unknown as MasterCSSManifest
+
+    expect(() => MasterCSS.create({ manifest })).toThrow('Expected a CSS length')
+  })
+
   it('ignores manifest-carried registry fields', () => {
     const manifest = {
       version: 1,
       settings: {
-        rootSize: 16,
         modes: []
       },
       variables: variables([
@@ -431,7 +440,6 @@ describe.concurrent('MasterCSSManifest execution', () => {
     const manifest: MasterCSSManifest = {
       version: 1,
       settings: {
-        rootSize: 16,
         modes: []
       },
       conditions: {
@@ -462,7 +470,6 @@ describe.concurrent('MasterCSSManifest execution', () => {
     const manifest: MasterCSSManifest = {
       version: 1,
       settings: {
-        rootSize: 16,
         modes: []
       },
       variables: variables([

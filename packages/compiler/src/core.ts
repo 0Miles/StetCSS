@@ -24,6 +24,7 @@ import type {
   Token,
   TokenOrValue
 } from 'lightningcss'
+import { parseBaseUnit } from '@stet-css/engine/compiler'
 import { decodeCSS, encodeCSS, getCSSTransform, setCSSTransform, type CSSTransform } from './css-transform'
 import {
   collectCSSDirectiveRanges,
@@ -313,18 +314,12 @@ function defineThemeVariable(manifestInput: CSSDirectiveManifestInput, property:
 
 function parseMasterOption(manifestInput: CSSDirectiveManifestInput, property: string, value: string) {
   switch (property) {
-    case 'root-size': {
-      const rootSize = parseNumber(value)
-      if (rootSize === undefined) throw new Error('root-size must be a number')
-      manifestInput.rootSize = rootSize
+    case 'root-size':
+      throw new Error('@settings root-size was removed; rem conversion always uses 16px')
+    case 'base-unit':
+      if (!parseBaseUnit(value)) throw new Error('base-unit must be a CSS length such as 0.25rem or 4px')
+      manifestInput.baseUnit = value
       return true
-    }
-    case 'base-unit': {
-      const baseUnit = parseNumber(value)
-      if (baseUnit === undefined) throw new Error('base-unit must be a number')
-      manifestInput.baseUnit = baseUnit
-      return true
-    }
     case 'default-mode':
       manifestInput.defaultMode = parseDefaultMode(value)
       return true

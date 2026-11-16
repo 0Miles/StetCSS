@@ -208,7 +208,7 @@ describe('StyleEntryPlugin', () => {
 
     const result = await (plugin as any).transform.call(
       {},
-      '@settings { root-size: 16; }\n.card { color: red }',
+      '@settings { base-unit: 0.25rem; }\n.card { color: red }',
       '/project/src/style.css'
     )
 

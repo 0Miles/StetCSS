@@ -8,8 +8,10 @@ import type { Utility } from './utility'
 import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 import type { MasterCSSEmittedGlobals } from './emitted-globals'
 import type { MasterCSSOptions } from './core'
+import { ROOT_FONT_SIZE } from './common'
+import { parseBaseUnit } from './utils/base-unit'
 
-export { MasterCSS, compareRulePriority, generateCondition, generateSelector, parseCondition, parseSelector }
+export { MasterCSS, ROOT_FONT_SIZE, compareRulePriority, generateCondition, generateSelector, parseBaseUnit, parseCondition, parseSelector }
 export type { Utility as GeneratedRule }
 export type * from '@stet-css/schema/manifest'
 

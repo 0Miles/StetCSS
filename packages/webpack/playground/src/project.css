@@ -1,6 +1,5 @@
 @settings {
-  root-size: 16;
-  base-unit: 4;
+  base-unit: 0.25rem;
   default-mode: light;
   mode-trigger: media;
 }

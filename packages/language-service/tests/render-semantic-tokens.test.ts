@@ -272,7 +272,7 @@ test.concurrent('renders semantic tokens only for CSS directive class-list spans
     @safelist "block fg:red:hover@md";
 
     @settings {
-      root-size: 16;
+      base-unit: 0.25rem;
     }
 
     @theme dark {
@@ -363,7 +363,7 @@ test.concurrent('renders semantic tokens only for CSS directive class-list spans
   expect(tokens).not.toContainEqual({ text: '@master', type: 'keyword', modifiers: ['directive'] })
   expect(tokens).not.toContainEqual({ text: '@reference', type: 'keyword', modifiers: ['directive'] })
   expect(tokens).not.toContainEqual({ text: '@settings', type: 'keyword', modifiers: ['directive'] })
-  expect(tokens).not.toContainEqual({ text: 'root-size', type: 'property', modifiers: [] })
+  expect(tokens).not.toContainEqual({ text: 'base-unit', type: 'property', modifiers: [] })
   expect(tokens).not.toContainEqual({ text: '@theme', type: 'keyword', modifiers: ['directive'] })
   expect(tokens).not.toContainEqual({ text: 'dark', type: 'enumMember', modifiers: ['directive'] })
   expect(tokens).not.toContainEqual({ text: '--color-primary', type: 'variable', modifiers: [] })

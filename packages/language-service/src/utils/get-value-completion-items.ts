@@ -4,6 +4,7 @@ import createCSSMarkdownDocumentation from './create-css-markdown-documentation'
 import sortCompletionItems from './sort-completion-items'
 import { getMdnPropertySyntax, getMdnPropertyValueNames } from '@stet-css/language'
 import { createCompletionIndex, type CompletionIndex } from './completion-index'
+import { ROOT_FONT_SIZE } from '@stet-css/engine/inspect'
 
 const SCOPED_VARIABLE_PRIORITY = 'aaaa'
 const NATIVE_PRIORITY = 'ccccc'
@@ -17,11 +18,11 @@ interface GenerateVariableCompletionItemOptions {
   scoped?: boolean
 }
 
-function getNumericSortValue(variable: Variable, rootSize: number) {
+function getNumericSortValue(variable: Variable) {
   if (variable.numeric) {
     switch (variable.numeric.unit) {
       case 'rem':
-        return variable.numeric.value * rootSize
+        return variable.numeric.value * ROOT_FONT_SIZE
       case undefined:
       case '':
       case 'px':
@@ -97,7 +98,7 @@ export default function getValueCompletionItems(css: MasterCSS = createDefaultCS
       }
     } else if (variable.type === 'number') {
       completionItem.detail = String(variable.name)
-      const value = getNumericSortValue(variable, css.settings.rootSize)
+      const value = getNumericSortValue(variable)
       const sortValue = negative ? -Math.abs(value) : value
       completionItem.sortText = (variable.namespace || '') + (sortValue >= 0
         ? String(sortValue).padStart(10, '0')

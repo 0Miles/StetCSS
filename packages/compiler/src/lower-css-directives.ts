@@ -11,6 +11,7 @@ import {
 } from '@stet-css/schema/css-directives'
 import type { PropertiesHyphen } from 'csstype'
 import {
+  ROOT_FONT_SIZE,
   compareRulePriority,
   createCompilerCSS,
   generateCondition,
@@ -217,7 +218,6 @@ function normalizeDirectiveInput(input: CSSDirectiveManifestInputSource = {}, op
   const source = getDirectiveInput(input)
   const resolveVariableName = createVariableNameResolver(source, { baseManifest: getResolutionManifest(options) })
   const normalized: CSSDirectiveManifestInput = {}
-  if (source.rootSize !== undefined) normalized.rootSize = source.rootSize
   if (source.baseUnit !== undefined) normalized.baseUnit = source.baseUnit
   if (source.defaultMode !== undefined) normalized.defaultMode = source.defaultMode
   if (source.modeTrigger !== undefined) normalized.modeTrigger = source.modeTrigger
@@ -718,17 +718,17 @@ function createMergedStyleDefinition(bucket: StyleMergeBucket): MergedStyleDefin
   }
 }
 
-function normalizeStyleConditionFeatureValue(value: number, unit: string, rootSize: number) {
-  if (unit === 'px') return value / rootSize
+function normalizeStyleConditionFeatureValue(value: number, unit: string) {
+  if (unit === 'px') return value / ROOT_FONT_SIZE
   return value
 }
 
-function getStyleConditionFeatures(conditions: string[] | undefined, rootSize: number) {
+function getStyleConditionFeatures(conditions: string[] | undefined) {
   const featureMap = new Map<string, { min?: number, max?: number }>()
   for (const condition of conditions || []) {
     for (const match of condition.matchAll(STYLE_CONDITION_FEATURE_REGEX)) {
       const [, name, operator, rawValue, unit] = match
-      const value = normalizeStyleConditionFeatureValue(Number(rawValue), unit, rootSize)
+      const value = normalizeStyleConditionFeatureValue(Number(rawValue), unit)
       const entry = featureMap.get(name) ?? {}
       switch (operator) {
         case '>':
@@ -776,7 +776,7 @@ function compareStyleConditionFeatures(a: StyleConditionFeature[], b: StyleCondi
   return 0
 }
 
-function compareStyleMergeBuckets(a: StyleMergeBucket, b: StyleMergeBucket, rootSize: number) {
+function compareStyleMergeBuckets(a: StyleMergeBucket, b: StyleMergeBucket) {
   const layerA = a.layer || 'components'
   const layerB = b.layer || 'components'
   if (layerA === layerB && a.selector === b.selector) {
@@ -784,8 +784,8 @@ function compareStyleMergeBuckets(a: StyleMergeBucket, b: StyleMergeBucket, root
     const conditionStateB = b.conditions?.length ? 1 : 0
     if (conditionStateA !== conditionStateB) return conditionStateA - conditionStateB
     if (conditionStateA && conditionStateB) {
-      const featuresA = getStyleConditionFeatures(a.conditions, rootSize)
-      const featuresB = getStyleConditionFeatures(b.conditions, rootSize)
+      const featuresA = getStyleConditionFeatures(a.conditions)
+      const featuresB = getStyleConditionFeatures(b.conditions)
       if (featuresA.length && featuresB.length) {
         const featureCompare = compareStyleConditionFeatures(featuresA, featuresB)
         if (featureCompare !== 0) return featureCompare
@@ -828,9 +828,8 @@ function createMergedStyleDefinitions(definitions: CSSDirectiveStyleDefinition[]
     }
   }
 
-  const rootSize = css.settings.rootSize || 16
   return [...buckets.values()]
-    .sort((a, b) => compareStyleMergeBuckets(a, b, rootSize))
+    .sort(compareStyleMergeBuckets)
     .flatMap((bucket) => {
       const definition = createMergedStyleDefinition(bucket)
       return definition ? [definition] : []

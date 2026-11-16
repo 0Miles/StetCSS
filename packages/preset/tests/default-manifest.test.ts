@@ -307,8 +307,7 @@ describe('@stet-css/preset defaultManifest', () => {
 
     expect(defaultManifest.settings).toBeUndefined()
     expect(css.settings).toEqual({
-      rootSize: 16,
-      baseUnit: 4,
+      baseUnit: '0.25rem',
       defaultMode: 'light',
       modeTrigger: 'media',
       modes: ['light', 'dark']

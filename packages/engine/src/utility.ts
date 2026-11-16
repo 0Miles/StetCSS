@@ -3,7 +3,8 @@ import MasterCSS from './core'
 import { cssEscape, replaceCSSVariableReferences } from '@stet-css/lexer'
 import UtilityType, { type UtilityType as UtilityTypeValue } from '@stet-css/schema/utility-type'
 import { type PropertiesHyphen } from 'csstype'
-import { VALUE_DELIMITERS, BASE_UNIT_REGEX, CONDITION_IDENTIFIERS } from './common'
+import { VALUE_DELIMITERS, BASE_UNIT_REGEX, CONDITION_IDENTIFIERS, ROOT_FONT_SIZE } from './common'
+import { formatBaseUnitMultiple } from './utils/base-unit'
 import Layer from './layer'
 import type { ValueComponent, VariableValueComponent, Variable, StringValueComponent } from '@stet-css/schema/css-syntax'
 import { Condition, ConditionNode, ConditionStringNode, ConditionValueNode, } from './utils/parse-condition'
@@ -123,11 +124,6 @@ function utilityMayReferenceAnimations(utility: CompiledUtility) {
     default:
       return false
   }
-}
-
-function formatMasterBaseUnitValue(value: number, baseUnit: number, rootSize: number) {
-  const resolved = value * baseUnit / rootSize
-  return String(Object.is(resolved, -0) ? 0 : resolved).replace(/^(-?)0\./, '$1.') + 'rem'
 }
 
 function parseClassAlpha(value: string) {
@@ -949,10 +945,10 @@ export class Utility {
               if (negative) {
                 return bypassParsing
                   ? negateResolvedValue(createCSSVariableReference(variable.name))
-                  : createNegativeNumberVariableReference(variable, unit, this.css.settings.rootSize)
+                  : createNegativeNumberVariableReference(variable)
               }
               if (!bypassParsing) {
-                return createNumberVariableReference(variable, unit, this.css.settings.rootSize)
+                return createNumberVariableReference(variable)
               }
             }
             return createCSSVariableReference(variableName, eachValueComponent.alpha, resolveFallback())
@@ -1020,7 +1016,7 @@ export class Utility {
       if (utilityUnit === 'rem' || utilityUnit === 'em') {
         unitValueComponents.push(
           { type: 'separator', value: '/', text: ' / ', token: '/' },
-          { type: 'number', value: this.css.settings.rootSize as number, token: String(this.css.settings.rootSize) }
+          { type: 'number', value: ROOT_FONT_SIZE, token: String(ROOT_FONT_SIZE) }
         )
       }
       unitValueComponents.push(
@@ -1059,11 +1055,7 @@ export class Utility {
           if (!isVarFunction) {
             const result = BASE_UNIT_REGEX.exec(current)
             if (result) {
-              current = formatMasterBaseUnitValue(
-                +result[1],
-                this.css.settings.baseUnit ?? 1,
-                this.css.settings.rootSize
-              )
+              current = formatBaseUnitMultiple(+result[1], this.css.settings.baseUnit)
             }
           }
 
@@ -1127,7 +1119,7 @@ export class Utility {
         if (utilityUnit === 'rem' || utilityUnit === 'em') {
           currentValueComponents.push(
             { type: 'separator', value: '/', text: ' / ', token: '/' },
-            { type: 'number', value: this.css.settings.rootSize as number, token: String(this.css.settings.rootSize) }
+            { type: 'number', value: ROOT_FONT_SIZE, token: String(ROOT_FONT_SIZE) }
           )
         }
         currentValueComponents.push(
@@ -1320,11 +1312,7 @@ export class Utility {
           if (!isVarFunction) {
             const result = BASE_UNIT_REGEX.exec(currentValue)
             if (result) {
-              currentValue = formatMasterBaseUnitValue(
-                +result[1],
-                this.css.settings.baseUnit ?? 1,
-                this.css.settings.rootSize
-              )
+              currentValue = formatBaseUnitMultiple(+result[1], this.css.settings.baseUnit)
             }
           }
           if (bypassParsing) {
@@ -1418,8 +1406,7 @@ export class Utility {
   }
 
   parseValue(token: string | number, unit = '') {
-    const parsed = parseValue(token, unit, this.css.settings.rootSize)
-    return parsed
+    return parseValue(token, unit)
   }
 
   get key(): string {
