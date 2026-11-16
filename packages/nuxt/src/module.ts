@@ -1,7 +1,7 @@
 import { defineNuxtModule } from '@nuxt/kit'
 import { resolve } from 'node:path'
 import { name } from '../package.json'
-import masterCSS, { type PluginHost } from '@stet-css/vite'
+import stetCSS, { type PluginHost } from '@stet-css/vite'
 import type { ModuleOptions } from './options'
 
 export type { ModuleOptions } from './options'
@@ -13,7 +13,7 @@ export default defineNuxtModule<ModuleOptions>({
   },
   setup(options, nuxt) {
     // Creating the plugins checks the options, so `nuxi prepare` also reports a bad key.
-    masterCSS(options, { name })
+    stetCSS(options, { name })
     if (nuxt.options._prepare) return
     // Fix: [plugin ssr-styles] Cannot inline generated static CSS during SSR.
     if (nuxt.options.features?.inlineStyles)
@@ -30,7 +30,7 @@ export default defineNuxtModule<ModuleOptions>({
       ignorePaths: [nuxt.options.buildDir]
     }
     nuxt.hook('vite:extendConfig', (viteConfig) => {
-      const plugins = masterCSS(options, host)
+      const plugins = stetCSS(options, host)
       if (viteConfig.plugins) viteConfig.plugins.push(...plugins as never[])
       else Object.assign(viteConfig, { plugins })
     })

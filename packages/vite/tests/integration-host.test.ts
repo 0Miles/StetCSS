@@ -1,6 +1,6 @@
 import { join } from 'node:path'
 import { expect, test } from 'vitest'
-import masterCSS, { type PluginHost } from '../src'
+import stetCSS, { type PluginHost } from '../src'
 import writeFile from './write-file-helper'
 import { buildProject } from './plugin-test-helper'
 
@@ -17,7 +17,7 @@ function write(root: string, file: string, content: string) {
 test('reads the class set from the directories the integration host names', async () => {
   const host: PluginHost = {}
   const { css } = await buildProject({
-    plugins: [masterCSS({}, host)],
+    plugins: [stetCSS({}, host)],
     styleCSS: '@import "@stet-css/core";',
     setup(root) {
       write(root, 'src/vite-root-only.html', '<div class="mt:11px"></div>')

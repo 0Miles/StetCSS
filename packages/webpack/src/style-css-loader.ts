@@ -5,7 +5,7 @@ import {
   collectStyleCSSDependencies,
   hasLocalStyleDirectives,
   isStetCSSPackageStyleFile,
-  resolveMasterStyleSource
+  resolveStetStyleSource
 } from '@stet-css/stylesheet'
 
 interface StyleCSSLoaderOptions {
@@ -34,7 +34,7 @@ function shouldAddStyleDependencies(resourcePath: string, source: string, projec
   if (hasLocalStyleDirectives(source)) return true
   if (isStetCSSPackageStyleFile(resourcePath, projectDir)) return true
   try {
-    return Boolean(resolveMasterStyleSource(resourcePath, source, projectDir))
+    return Boolean(resolveStetStyleSource(resourcePath, source, projectDir))
   } catch {
     return true
   }
@@ -54,7 +54,7 @@ export default function masterCSSStyleCSSLoader(this: LoaderContext, source: str
   }
   transformStyleSource(this.resourcePath, source, {
     projectDir: this.rootContext,
-    masterImport: toCSSImportPath(this.resourcePath, options.virtualCSSImportModuleId)
+    stetImport: toCSSImportPath(this.resourcePath, options.virtualCSSImportModuleId)
   })
     .then(async (result) => {
       for (const dependency of new Set(result.dependencies)) {

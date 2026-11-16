@@ -7,8 +7,8 @@ import {
   createStyleCSSHostSource,
   isStetCSSPackageStyleFile,
   isStyleCSSRequest,
-  removeMasterStyleDirectives,
-  resolveMasterStyleSource
+  removeStetStyleDirectives,
+  resolveStetStyleSource
 } from '@stet-css/stylesheet'
 import { registerStyleCSSSource } from '../utils/register-style-source'
 import { getScanner } from '../utils/scanner-context'
@@ -45,18 +45,18 @@ export default function StyleEntryPlugin(context: PluginContext): Plugin {
       context.virtualCSSImporters ??= new Set()
       context.virtualCSSImporters.add(RESOLVED_VIRTUAL_CSS_ID)
 
-      const masterSource = await createMasterSource(context)
+      const stetSource = await createMasterSource(context)
       if (context.config?.command !== 'serve') markPlaceholderEmitted(context, this)
-      return masterSource
+      return stetSource
     },
     async transform(code, id) {
       if (id.startsWith('\0')) return
       if (!isStyleCSSRequest(id)) return
       const projectDir = getProjectDir(context)
       const dependencies = new Set<string>()
-      let resolvedStyleSource: ReturnType<typeof resolveMasterStyleSource>
+      let resolvedStyleSource: ReturnType<typeof resolveStetStyleSource>
       try {
-        resolvedStyleSource = resolveMasterStyleSource(id, code, projectDir)
+        resolvedStyleSource = resolveStetStyleSource(id, code, projectDir)
       } catch (error) {
         for (const dependency of collectStyleCSSDependencies(id, code, projectDir)) {
           dependencies.add(dependency)
@@ -73,7 +73,7 @@ export default function StyleEntryPlugin(context: PluginContext): Plugin {
 
       if (isStetCSSPackageStyleFile(id, projectDir)) {
         return {
-          code: removeMasterStyleDirectives(code).code,
+          code: removeStetStyleDirectives(code).code,
           map: null
         }
       }
@@ -84,7 +84,7 @@ export default function StyleEntryPlugin(context: PluginContext): Plugin {
         this.addWatchFile?.(dependency)
       }
 
-      const masterSource = await createMasterSource(context)
+      const stetSource = await createMasterSource(context)
 
       if (context.config?.command === 'serve') {
         context.virtualCSSImporters ??= new Set()
@@ -94,7 +94,7 @@ export default function StyleEntryPlugin(context: PluginContext): Plugin {
       }
 
       return {
-        code: createStyleCSSHostSource(code, { masterSource }),
+        code: createStyleCSSHostSource(code, { stetSource }),
         map: null
       }
     }

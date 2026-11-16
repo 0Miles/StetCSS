@@ -15,19 +15,19 @@ import {
   compileRenderedStyleCSS,
   createStyleEntryEmittedGlobals,
   createStyleCSSHostSource,
-  createMasterCSSPackageHostSource,
+  createStetCSSPackageHostSource,
   createExtractedCSS,
   createExtractedCSSResult,
   collectStyleCSSDependencies,
   getNativeCSS,
-  hasMasterStyleEntrypoint,
+  hasStetStyleEntrypoint,
   hasLocalStyleDirectives,
-  isMasterStyleSource,
+  isStetStyleSource,
   isStyleCSSRequest,
-  removeMasterStyleDirectives,
+  removeStetStyleDirectives,
   removeStyleCSSImports,
   registerStyleCSSSource,
-  resolveMasterStyleSource,
+  resolveStetStyleSource,
   resolveStyleCSSImportGraph,
   replaceStyleCSSImports,
   transformLocalStyleCSS
@@ -124,7 +124,7 @@ describe('style CSS extraction helpers', () => {
       '@import "@stet-css/core";',
       '@import "./home.css";'
     ].join('\n')
-    const resolvedSource = resolveMasterStyleSource(entryPath, source, root)
+    const resolvedSource = resolveStetStyleSource(entryPath, source, root)
     expect(resolvedSource?.source).toContain('@keyframes active-spin')
 
     const result = await compileRenderedStyleCSS(entryPath, resolvedSource?.source || source, {
@@ -146,24 +146,24 @@ describe('style CSS extraction helpers', () => {
   })
 
   it('detects Master CSS entrypoints', () => {
-    expect(hasMasterStyleEntrypoint('@import "@stet-css/core";')).toBe(true)
-    expect(hasMasterStyleEntrypoint('@master entry;')).toBe(false)
-    expect(hasMasterStyleEntrypoint('@safelist "card";')).toBe(false)
-    expect(hasMasterStyleEntrypoint('@theme { --color-primary: red; }')).toBe(false)
-    expect(hasMasterStyleEntrypoint('@import "./other.css";')).toBe(false)
-    expect(isMasterStyleSource('@theme { --color-primary: red; }')).toBe(false)
-    expect(isMasterStyleSource('@import "@stet-css/core";')).toBe(true)
-    expect(isMasterStyleSource(resolveStyleCSSImportGraph(
+    expect(hasStetStyleEntrypoint('@import "@stet-css/core";')).toBe(true)
+    expect(hasStetStyleEntrypoint('@master entry;')).toBe(false)
+    expect(hasStetStyleEntrypoint('@safelist "card";')).toBe(false)
+    expect(hasStetStyleEntrypoint('@theme { --color-primary: red; }')).toBe(false)
+    expect(hasStetStyleEntrypoint('@import "./other.css";')).toBe(false)
+    expect(isStetStyleSource('@theme { --color-primary: red; }')).toBe(false)
+    expect(isStetStyleSource('@import "@stet-css/core";')).toBe(true)
+    expect(isStetStyleSource(resolveStyleCSSImportGraph(
       join(createFixture(), 'app/globals.css'),
       '@import "@stet-css/core";',
       undefined,
-      { expandMasterCSSPackage: false }
+      { expandStetCSSPackage: false }
     ).source)).toBe(true)
-    expect(isMasterStyleSource('@import "virtual:stet-utilities.css";')).toBe(false)
-    expect(isMasterStyleSource('@import "master.css";')).toBe(false)
-    expect(isMasterStyleSource('@master entry;')).toBe(false)
-    expect(isMasterStyleSource('@safelist "card";')).toBe(false)
-    expect(isMasterStyleSource('@import "./other.css";')).toBe(false)
+    expect(isStetStyleSource('@import "virtual:stet-utilities.css";')).toBe(false)
+    expect(isStetStyleSource('@import "master.css";')).toBe(false)
+    expect(isStetStyleSource('@master entry;')).toBe(false)
+    expect(isStetStyleSource('@safelist "card";')).toBe(false)
+    expect(isStetStyleSource('@import "./other.css";')).toBe(false)
   })
 
   it('detects local compose styles without treating them as Master entries', () => {
@@ -174,7 +174,7 @@ describe('style CSS extraction helpers', () => {
     expect(hasLocalStyleDirectives('.card { color: red; }')).toBe(false)
     expect(isStyleCSSRequest('/project/src/Button.module.css')).toBe(true)
     expect(isStyleCSSRequest('/project/src/Button.vue?vue&type=style&index=0&lang.css')).toBe(true)
-    expect(isMasterStyleSource('.card { @compose block; }')).toBe(false)
+    expect(isStetStyleSource('.card { @compose block; }')).toBe(false)
   })
 
   it('collects best-effort style dependencies from local import graphs', () => {
@@ -438,7 +438,7 @@ describe('style CSS extraction helpers', () => {
 
   it('resolves Master style sources through the stylesheet import graph', () => {
     const root = createFixture()
-    const result = resolveMasterStyleSource(
+    const result = resolveStetStyleSource(
       join(root, 'app/globals.css'),
       '@import "@stet-css/core";',
       root
@@ -447,22 +447,22 @@ describe('style CSS extraction helpers', () => {
     expect(result?.source).toContain('@layer base')
     expect(result?.dependencies).toContain(join(root, 'app/globals.css'))
     expect(result?.dependencies.filter((dependency) => !dependency.startsWith(root)).length).toBeGreaterThan(0)
-    expect(resolveMasterStyleSource(
+    expect(resolveStetStyleSource(
       join(root, 'app/theme.css'),
       '@theme { --color-primary: red; }',
       root
     )).toBeUndefined()
-    expect(resolveMasterStyleSource(
+    expect(resolveStetStyleSource(
       join(root, 'app/main.ts'),
       '@import "@stet-css/core";',
       root
     )).toBeUndefined()
-    expect(resolveMasterStyleSource(
+    expect(resolveStetStyleSource(
       join(root, 'app/regular.css'),
       '@import "./missing.css";',
       root
     )).toBeUndefined()
-    expect(() => resolveMasterStyleSource(
+    expect(() => resolveStetStyleSource(
       join(root, 'app/entry.css'),
       '@import "@stet-css/core";\n@import "./missing.css";',
       root
@@ -482,24 +482,24 @@ describe('style CSS extraction helpers', () => {
     const root = createFixture()
     writeFileSync(join(root, 'app/settings.css'), '@master { mode-trigger: media; }')
 
-    expect(() => resolveMasterStyleSource(
+    expect(() => resolveStetStyleSource(
       join(root, 'app/legacy.css'),
       '@master entry;\n.card { color: red; }',
       root
     )).toThrow(expect.objectContaining({
       message: expect.stringMatching(/@master entry;.*@import '@stet-css\/core'/)
     }))
-    expect(() => resolveMasterStyleSource(
+    expect(() => resolveStetStyleSource(
       join(root, 'app/legacy.css'),
       '@master entry;',
       root
     )).toThrow(join(root, 'app/legacy.css'))
-    expect(() => resolveMasterStyleSource(
+    expect(() => resolveStetStyleSource(
       join(root, 'app/legacy.css'),
       '@import "./missing.css";\n@master entry;',
       root
     )).toThrow('@master entry;')
-    expect(() => resolveMasterStyleSource(
+    expect(() => resolveStetStyleSource(
       join(root, 'app/globals.css'),
       '@import "./settings.css";\n.card { color: red; }',
       root
@@ -507,11 +507,11 @@ describe('style CSS extraction helpers', () => {
   })
 
   it('derives package host CSS from the package entry graph', async () => {
-    const hostSource = await createMasterCSSPackageHostSource(process.cwd(), {
+    const hostSource = await createStetCSSPackageHostSource(process.cwd(), {
       projectDir: process.cwd()
     })
     const graph = resolveStetCSSPackageImportGraph(process.cwd())
-    const compileSource = removeMasterStyleDirectives(removeStyleCSSImports(graph.source).code).code
+    const compileSource = removeStetStyleDirectives(removeStyleCSSImports(graph.source).code).code
     const compiledResult = await compileStyleCSS(graph.dependencies[0] || '@stet-css/core', compileSource, {
       projectDir: process.cwd(),
       preserveNativeCSS: true
@@ -549,7 +549,7 @@ describe('style CSS extraction helpers', () => {
   })
 
   it('removes top-level master style directives', () => {
-    const result = removeMasterStyleDirectives([
+    const result = removeStetStyleDirectives([
       '@source "./page.tsx";',
       '@safelist "card";',
       '@blocklist "debug-*";',
@@ -570,32 +570,32 @@ describe('style CSS extraction helpers', () => {
 
   it('treats an empty host source as an intentionally handled Master CSS import', () => {
     const result = createStyleCSSHostSource('@import "@stet-css/core";', {
-      masterSource: ''
+      stetSource: ''
     })
 
     expect(result).toBe('')
   })
 
   it('keeps native imports before generated host CSS', () => {
-    const masterFirst = createStyleCSSHostSource([
+    const stetFirst = createStyleCSSHostSource([
       '@import "@stet-css/core";',
       '@import "@fontsource/fira-mono";',
       '',
       '.card { color: red; }'
     ].join('\n'), {
-      masterSource: '#stet-css-slot{--slot:0}'
+      stetSource: '#stet-css-slot{--slot:0}'
     })
-    const masterLast = createStyleCSSHostSource([
+    const stetLast = createStyleCSSHostSource([
       '@import "@fontsource/fira-mono";',
       '@import "@stet-css/core";',
       '',
       '.card { color: red; }'
     ].join('\n'), {
-      masterSource: '#stet-css-slot{--slot:0}'
+      stetSource: '#stet-css-slot{--slot:0}'
     })
 
-    expect(masterFirst).toBe('@import "@fontsource/fira-mono";\n#stet-css-slot{--slot:0}')
-    expect(masterLast).toBe('@import "@fontsource/fira-mono";\n#stet-css-slot{--slot:0}')
+    expect(stetFirst).toBe('@import "@fontsource/fira-mono";\n#stet-css-slot{--slot:0}')
+    expect(stetLast).toBe('@import "@fontsource/fira-mono";\n#stet-css-slot{--slot:0}')
   })
 
   it('preserves native import modifiers before generated host CSS', () => {
@@ -604,7 +604,7 @@ describe('style CSS extraction helpers', () => {
       '@import "normalize.css" layer(reset);',
       '@import "@stet-css/core";'
     ].join('\n'), {
-      masterSource: '#stet-css-slot{--slot:0}'
+      stetSource: '#stet-css-slot{--slot:0}'
     })
 
     expect(result).toBe([

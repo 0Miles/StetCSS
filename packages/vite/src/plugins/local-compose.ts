@@ -6,7 +6,7 @@ import {
   createStyleEntryEmittedGlobals,
   hasLocalStyleDirectives,
   isStyleCSSRequest,
-  resolveMasterStyleSource,
+  resolveStetStyleSource,
   transformLocalStyleCSS
 } from '@stet-css/stylesheet'
 import type { PluginContext } from '../core'
@@ -79,7 +79,7 @@ export default function LocalComposePlugin(context: PluginContext): Plugin {
       if (id.startsWith('\0')) return
       if (!isStyleCSSRequest(id)) return
       if (!hasLocalStyleDirectives(code)) return
-      if (resolveMasterStyleSource(id, code, getProjectDir(context))) return
+      if (resolveStetStyleSource(id, code, getProjectDir(context))) return
 
       const dependencies = new Set(collectStyleCSSDependencies(id, code, getProjectDir(context)))
       for (const dependency of dependencies) {

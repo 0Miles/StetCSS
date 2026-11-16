@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { build } from 'astro'
 import { cleanFixture, readFiles } from './fixture-helpers'
-import masterCSS, { type IntegrationOptions } from '../src'
+import stetCSS, { type IntegrationOptions } from '../src'
 
 const root = fileURLToPath(new URL('./fixtures/adapters/', import.meta.url))
 const outDir = join(root, 'dist')
@@ -21,7 +21,7 @@ const probeAdapter: NonNullable<IntegrationOptions['adapters']>[number] = {
 
 afterAll(() => cleanFixture(root, outDir))
 
-describe('masterCSS options', () => {
+describe('stetCSS options', () => {
   /**
    * Guards that an Astro config with a removed or misspelled key fails the build and names
    * the integration and the one allowed key, instead of building without what it asked for.
@@ -34,7 +34,7 @@ describe('masterCSS options', () => {
       outDir,
       logLevel: 'silent',
       telemetry: false,
-      integrations: [masterCSS({ adapter: [] } as never)]
+      integrations: [stetCSS({ adapter: [] } as never)]
     } as Parameters<typeof build>[0]))
       .rejects
       .toThrow('Unknown @stet-css/astro option "adapter"; the only option is "adapters".')
@@ -54,7 +54,7 @@ describe('masterCSS options', () => {
       logLevel: 'error',
       telemetry: false,
       build: { inlineStylesheets: 'never' },
-      integrations: [masterCSS({ adapters: [probeAdapter] })]
+      integrations: [stetCSS({ adapters: [probeAdapter] })]
     } as Parameters<typeof build>[0])
 
     const css = readFiles(outDir, '.css').join('\n')

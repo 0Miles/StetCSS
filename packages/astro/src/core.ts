@@ -2,7 +2,7 @@ import type { AstroIntegration } from 'astro'
 import vitePlugin from '@stet-css/vite'
 import type { IntegrationOptions } from './options'
 
-export default function masterCSS(options: IntegrationOptions = {}): AstroIntegration {
+export default function stetCSS(options: IntegrationOptions = {}): AstroIntegration {
   return {
     name: '@stet-css/astro',
     hooks: {

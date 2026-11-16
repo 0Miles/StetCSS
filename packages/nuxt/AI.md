@@ -4,13 +4,13 @@ Owns the Nuxt module: it registers `@stet-css/vite` with its default static outp
 
 ## Boundaries
 
-- Static CSS, the class set and option defaults live in `@stet-css/vite` and `@stet-css/stylesheet`; `ModuleOptions` is the Vite plugin's options (only `adapters`), passed through as they are; the module calls `masterCSS(options, { name })` once at `setup`, before the `nuxi prepare` return, so a bad key fails there too, naming this package through `PluginHost.name`.
+- Static CSS, the class set and option defaults live in `@stet-css/vite` and `@stet-css/stylesheet`; `ModuleOptions` is the Vite plugin's options (only `adapters`), passed through as they are; the module calls `stetCSS(options, { name })` once at `setup`, before the `nuxi prepare` return, so a bad key fails there too, naming this package through `PluginHost.name`.
 - Vue SFC extraction lives in `@stet-css/source`, reached through scanner auto adapters.
 - The module injects no runtime, writes no assets and adds no Nitro server code. A project that wants the runtime imports it itself (#14).
 
 ## Risks
 
-- **Project directories**: Nuxt sets Vite's root to `srcDir` (`app/`). The module passes `masterCSS()`'s second, internal `PluginHost` argument: `projectDir` is `nuxt.options.rootDir` (so `layers/`, `server/` and the rest of the project are read), `extraProjectDirs` holds every layer's `rootDir` and `srcDir` (`extends: ['../base']`, npm and giget layers, each read by the project rules with itself as the root), and `ignorePaths` holds `buildDir`. `PluginHost` is a first-party seam, not a user option: projects add directories with `@source`.
+- **Project directories**: Nuxt sets Vite's root to `srcDir` (`app/`). The module passes `stetCSS()`'s second, internal `PluginHost` argument: `projectDir` is `nuxt.options.rootDir` (so `layers/`, `server/` and the rest of the project are read), `extraProjectDirs` holds every layer's `rootDir` and `srcDir` (`extends: ['../base']`, npm and giget layers, each read by the project rules with itself as the root), and `ignorePaths` holds `buildDir`. `PluginHost` is a first-party seam, not a user option: projects add directories with `@source`.
 - **Project-wide discovery**: with the Nuxt root as project root, stylesheet entry and manifest discovery walk all of it, so a nested app (`playground/`, `docs/`) with its own StetCSS entry joins the manifest, as in a plain Vite project.
 - **Dev updates**: Vite watches `srcDir` and its module graph; a class added in a file outside both (for example under `server/` or an extended layer no module imports) reaches the CSS after a restart.
 - **Nuxt build options** change only when static output requires it: `features.inlineStyles` is turned off because Nuxt cannot inline generated static CSS during SSR.

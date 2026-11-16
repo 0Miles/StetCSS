@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 import { build } from 'astro'
 import type { AstroIntegration } from 'astro'
 import { cleanFixture, readFiles } from './fixture-helpers'
-import masterCSS from '../src'
+import stetCSS from '../src'
 
 const root = fileURLToPath(new URL('./fixtures/static-build/', import.meta.url))
 const outDir = join(root, 'dist')
@@ -40,14 +40,14 @@ beforeAll(async () => {
     telemetry: false,
     build: { inlineStylesheets: 'never' },
     adapter: stubAdapter,
-    integrations: [masterCSS()]
+    integrations: [stetCSS()]
   } as Parameters<typeof build>[0])
 }, 180_000)
 
 afterAll(() => cleanFixture(root, outDir))
 
 /**
- * Guards what this package exists for: `masterCSS()` with no options must give an Astro
+ * Guards what this package exists for: `stetCSS()` with no options must give an Astro
  * build static CSS holding the classes of prerendered pages, on-demand pages (including a
  * class picked at request time) and server islands, with no runtime left in the HTML. Before
  * #54 the default was progressive: classes reached the page only through the middleware and
@@ -55,7 +55,7 @@ afterAll(() => cleanFixture(root, outDir))
  * only inspected the hook's arguments (testing.md rules 2 and 4).
  * Reverse check: registering no Vite plugin in `src/core.ts` turns the CSS test red here.
  */
-describe('Astro build with masterCSS()', () => {
+describe('Astro build with stetCSS()', () => {
   it('puts the classes of every page kind into the built CSS', () => {
     const css = readFiles(join(outDir, 'client'), '.css').join('\n')
 

@@ -10,9 +10,9 @@ const projectFiles: Record<string, string> = {
   // SvelteKit runs its client build from this file, so the plugins cannot be passed inline.
   'vite.config.js': `
 import { sveltekit } from '@sveltejs/kit/vite'
-import masterCSS from ${JSON.stringify(join(packageDir, 'src/lib/vite.ts'))}
+import stetCSS from ${JSON.stringify(join(packageDir, 'src/lib/vite.ts'))}
 
-export default { plugins: [sveltekit(), masterCSS()] }
+export default { plugins: [sveltekit(), stetCSS()] }
 `,
   'src/app.html': `
 <!doctype html>
@@ -62,7 +62,7 @@ const previousCwd = process.cwd()
 let root: string
 
 /**
- * A SvelteKit project set up as the README describes: `sveltekit()` and `masterCSS()` with no
+ * A SvelteKit project set up as the README describes: `sveltekit()` and `stetCSS()` with no
  * options, a stylesheet that imports `@stet-css/core`, and no `hooks.server`. Besides classes in
  * a page's markup it has the two cases only the server renders, which the removed hook used to
  * cover: a class that arrives in server load data, and a component on a route without client
@@ -83,7 +83,7 @@ afterAll(() => {
   if (root) rmSync(root, { recursive: true, force: true })
 })
 
-describe('SvelteKit project with masterCSS() and no hooks.server', () => {
+describe('SvelteKit project with stetCSS() and no hooks.server', () => {
   /**
    * Guards: `vite build` writes the rules for the project's classes into the stylesheet a built
    * page links, without a server hook. If the wrapper went back to a mode that leaves rule

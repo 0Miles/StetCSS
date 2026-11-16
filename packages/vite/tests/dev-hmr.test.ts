@@ -3,7 +3,7 @@ import { chromium, type Browser } from '@playwright/test'
 import { createServer, type ViteDevServer } from 'vite'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
-import masterCSS from '../src'
+import stetCSS from '../src'
 
 let server: ViteDevServer | undefined
 let browser: Browser | undefined
@@ -44,7 +44,7 @@ async function startStaticTemplateServer(prefix: string) {
       host: '127.0.0.1',
       port: 0
     },
-    plugins: masterCSS()
+    plugins: stetCSS()
   })
   await server.listen()
   const url = server.resolvedUrls?.local[0]
@@ -93,7 +93,7 @@ describe('Vite dev HMR', () => {
         host: '127.0.0.1',
         port: 0
       },
-      plugins: masterCSS()
+      plugins: stetCSS()
     })
     await server.listen()
     const wsEvents: unknown[] = []

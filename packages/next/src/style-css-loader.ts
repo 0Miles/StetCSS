@@ -3,8 +3,8 @@ import {
   createStyleEntryEmittedGlobals,
   hasLocalStyleDirectives,
   isStetCSSPackageStyleFile,
-  removeMasterStyleDirectives,
-  resolveMasterStyleSource,
+  removeStetStyleDirectives,
+  resolveStetStyleSource,
   transformLocalStyleCSS,
   collectStyleCSSDependencies
 } from '@stet-css/stylesheet'
@@ -80,10 +80,10 @@ async function transformLocalStyleSource(resourcePath: string, source: string, p
 async function transformStyleSource(resourcePath: string, source: string, options: StyleCSSLoaderOptions) {
   const { projectDir } = options
   if (isStetCSSPackageStyleFile(resourcePath, projectDir)) {
-    return { code: removeMasterStyleDirectives(source).code, dependencies: [] }
+    return { code: removeStetStyleDirectives(source).code, dependencies: [] }
   }
-  if (resolveMasterStyleSource(resourcePath, source, projectDir)) {
-    const code = createStyleCSSHostSource(source, { masterImport: toCSSImportPath(resourcePath, options.outputPath) })
+  if (resolveStetStyleSource(resourcePath, source, projectDir)) {
+    const code = createStyleCSSHostSource(source, { stetImport: toCSSImportPath(resourcePath, options.outputPath) })
     if (!options.writeOutput) return { code, dependencies: [], entry: true }
     const result = await createStaticCSS({ projectDir, adapters: options.adapters })
     await writeStaticOutputFile(options.outputPath, result.css)

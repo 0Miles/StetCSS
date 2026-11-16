@@ -274,10 +274,10 @@ export function resolveBuildArgs(tool: StaticBuildTool) {
 
 function renderViteConfig(tool: StaticBuildTool) {
   const pluginImport = tool.command === 'master-vite'
-    ? 'import masterCSS from "@stet-css/vite"'
+    ? 'import stetCSS from "@stet-css/vite"'
     : 'import tailwindcss from "@tailwindcss/vite"'
   const plugin = tool.command === 'master-vite'
-    ? 'masterCSS()'
+    ? 'stetCSS()'
     : 'tailwindcss()'
 
   return [

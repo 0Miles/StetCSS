@@ -61,12 +61,12 @@ npm install @stet-css/vite
 ## Usage
 
 ```js
-import masterCSS from '@stet-css/vite'
+import stetCSS from '@stet-css/vite'
 
 /** @type {import('vite').UserConfig} */
 const config = {
   plugins: [
-    masterCSS()
+    stetCSS()
   ]
 }
 
@@ -115,7 +115,7 @@ Use these virtual modules when application code should receive the same manifest
 ## Options
 
 ```js
-masterCSS({
+stetCSS({
   adapters: [{
     name: 'markdown-attributes',
     test: /\.md$/,

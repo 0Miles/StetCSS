@@ -212,8 +212,8 @@ async function runMasterViteDiagnostic(workspace: string, fixtureId: BenchmarkFi
   recorder.setCount('css-entry-count', 1)
 
   const totalStartedAt = performance.now()
-  const masterCSS = await loadMasterCSSVite()
-  const plugins = instrumentMasterVitePlugins(masterCSS(), recorder)
+  const stetCSS = await loadMasterCSSVite()
+  const plugins = instrumentMasterVitePlugins(stetCSS(), recorder)
 
   const build = await loadViteBuild()
   await recorder.time('vite-total-build-ms', () => build({
