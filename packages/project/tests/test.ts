@@ -43,13 +43,14 @@ function writeCSSFixture(cwd: string, { entry: markEntry = false } = {}) {
   mkdirSync(join(cwd, 'styles'), { recursive: true })
   const entry = join(cwd, 'index.css')
   const tokens = join(cwd, 'styles', 'tokens.css')
+  const marker = markEntry ? '@import "@stet-css/core";' : ''
   writeFileSync(tokens, `
     @theme {
       --color-primary: #123;
     }
   `)
-  writeFileSync(entry, `${markEntry ? `
-    @import "@stet-css/core";` : ''}
+  writeFileSync(entry, `
+    ${marker}
     @import './styles/tokens.css';
 
     @components {
