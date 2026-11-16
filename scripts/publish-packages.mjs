@@ -127,9 +127,10 @@ function publish({ tag, dir }) {
     if (foreign.length) fail(`${tag} releases ${SCOPE}*@${version}, but the tarballs include ${foreign.map(({ pkg }) => `${pkg.name}@${pkg.version}`).join(', ')}`)
 
     const npmVersion = npm(['--version'], { encoding: 'utf8' }).stdout.trim()
-    const parts = npmVersion.split('.').map((part) => Number.parseInt(part, 10))
-    const differs = MIN_NPM.findIndex((min, index) => parts[index] !== min)
-    if (differs !== -1 && !(parts[differs] > MIN_NPM[differs])) fail(`npm ${npmVersion} is older than ${MIN_NPM.join('.')}, the first with trusted publishing`)
+    const [major, minor, patch] = npmVersion.split('.').map((part) => Number.parseInt(part, 10))
+    const [minMajor, minMinor, minPatch] = MIN_NPM
+    const supported = major !== minMajor ? major > minMajor : minor !== minMinor ? minor > minMinor : patch >= minPatch
+    if (!supported) fail(`npm ${npmVersion} is older than ${MIN_NPM.join('.')}, the first with trusted publishing`)
 
     // Ask about every package before uploading any, so a registry outage stops the run with nothing published.
     const missing = tarballs.filter(({ pkg }) => {
