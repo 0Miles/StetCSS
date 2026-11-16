@@ -219,13 +219,12 @@ async function readCandidates(file: string, adapters: readonly SourceAdapter[]) 
 }
 
 /**
- * The scope's class set: candidates extracted from its files, plus classes the caller
- * detected elsewhere, plus `@safelist`, minus `@blocklist`. Rendering keeps only candidates
- * that generate rules.
+ * The scope's class set: candidates extracted from its files, plus `@safelist`, minus
+ * `@blocklist`. Rendering keeps only candidates that generate rules.
  */
-export async function collectStylesheetScopeClasses(scope: StylesheetSourceScope, detectedClasses: Iterable<string> = []) {
+export async function collectStylesheetScopeClasses(scope: StylesheetSourceScope) {
   const adapters = scope.adapters?.length ? scope.adapters : NO_CUSTOM_ADAPTERS
-  const classes = new Set([...detectedClasses, ...(scope.safelist || [])])
+  const classes = new Set(scope.safelist || [])
   for (const file of await resolveStylesheetScopeFiles(scope)) {
     for (const className of await readCandidates(file, adapters)) {
       classes.add(className)
