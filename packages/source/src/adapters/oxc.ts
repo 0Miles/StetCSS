@@ -65,22 +65,15 @@ function getTemplateLiteralValue(node: OxcNode) {
 }
 
 export function extractOxcClasses(source: string, content: string): string[] {
-  let parseResult: ReturnType<typeof parseOxcOnSourceStack>
-  try {
-    parseResult = parseOxcOnSourceStack(normalizeSource(source), content, {
-      range: false,
-      sourceType: 'unambiguous'
-    })
-  } catch {
-    return extractClassCandidates(content)
-  }
-  if (!parseResult || parseResult.errors.length) {
-    return extractClassCandidates(content)
-  }
+  const program = parseOxcOnSourceStack(normalizeSource(source), content, {
+    range: false,
+    sourceType: 'unambiguous'
+  })
+  if (!program) return extractClassCandidates(content)
 
   const classes = new Set<string>()
   const classStringCache = new Map<string, string[]>()
-  const stack: unknown[] = [parseResult.program]
+  const stack: unknown[] = [program]
   while (stack.length) {
     const node = stack.pop()
     if (!isOxcNode(node)) continue
