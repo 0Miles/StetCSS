@@ -7,7 +7,7 @@ Owns the Vite plugin chain that builds static CSS: the style entry pipeline, the
 - Manifest entry discovery and loading live in `@stet-css/project` (`findCSSManifestEntryFiles`, `loadProjectManifest`); this package consumes them rather than scanning the workspace itself.
 - The class set (project files, `@source`, `@safelist`, `@blocklist`) lives in `@stet-css/stylesheet`; the plugin scans no modules. The browser runtime lives in `@stet-css/runtime`.
 - Framework lifecycle beyond Vite belongs to the wrapping integrations.
-- **Integration host** (`PluginHost`, the internal second argument of `masterCSS()`): first-party wrappers name the project root (`projectDir`, read through `utils/project-dir.ts` instead of `config.root`), extra project directories and ignored paths. It is not a user option and stays undocumented in the README; users add directories with `@source`.
+- **Integration host** (`PluginHost`, the internal second argument of `masterCSS()`): first-party wrappers name their package (`name`, for option errors), the project root (`projectDir`, read through `utils/project-dir.ts` instead of `config.root`), extra project directories and ignored paths. It is not a user option and stays undocumented in the README; users add directories with `@source`.
 
 ## Risks
 
@@ -19,7 +19,7 @@ Owns the Vite plugin chain that builds static CSS: the style entry pipeline, the
 - **`handleHotUpdate` results replace Vite's update list**: a hook that returns modules (the manifest modules) includes the changed file's own `modules`, or the edited stylesheet never reaches the page; local compose reloads its modules and returns nothing.
 - **`virtual:master-css-manifest`** is the project-level manifest API; keep stylesheet output and scanner usage out of it. **`virtual:master-css-emitted-globals`** describes only the generated variables and keyframes the runtime treats as already present.
 - **Virtual module IDs** are defined in `@stet-css/integration` and imported across integrations; keep them stable.
-- **Options**: `PluginOptions` holds only `scanner`, whose only key is `adapters` (the scanner throws on any other); the defaults in `src/options.ts` are empty; #66 flattens it.
+- **Options**: `PluginOptions` is `ScannerOptions`, only `adapters`. `masterCSS()` checks it with `@stet-css/scanner`'s `validatePluginOptions` before creating any plugin, naming `PluginHost.name` (the wrapper's package: astro, svelte, nuxt) in errors; the removed keys and their replacements live in the scanner's `src/options/index.ts`.
 - **One plugin per file**: each `src/plugins/*.ts` defines one plugin and default-exports it.
 
 ## Validation

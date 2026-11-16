@@ -81,4 +81,27 @@ export default defineConfig({
 @import '@stet-css/core';
 ```
 
+### Options
+
+The options are the `@stet-css/vite` plugin options.
+
+```ts
+masterCSS({
+  adapters: [{
+    name: 'markdown-attributes',
+    test: /\.md$/,
+    async extract({ content }) {
+      // `{.fg:red .bold}` attribute lists
+      return [...content.matchAll(/\{\.([^}]*)\}/g)].flatMap((match) => match[1].split(/\s+\.?/))
+    }
+  }]
+})
+```
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `adapters` | `SourceAdapter[]` | `[]` | Custom source adapters. For each file the class set reads, the first adapter whose `test` matches extracts its classes, custom ones before the built-in ones. |
+
+`adapters` is the only option. Any other key throws and names `adapters`; a removed key such as `mode`, `injectRuntime` or `scanner` names its replacement, and class rules (`@safelist`, `@blocklist`, `@source`, `@source not`) go in the CSS entry. An adapter sees the files the class set reads: the project's source files and the entry's `@source` files.
+
 See the [Svelte installation guide](https://rc.css.master.co/guide/installation/svelte) for a full project setup.
