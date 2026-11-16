@@ -10,8 +10,9 @@ import type { MasterCSSEmittedGlobals } from './emitted-globals'
 import type { MasterCSSOptions } from './core'
 import { ROOT_FONT_SIZE } from './common'
 import { parseBaseUnit } from './utils/base-unit'
+import { formatUndeclaredModeMessage, isUndeclaredPresetMode } from './utils/undeclared-mode'
 
-export { MasterCSS, ROOT_FONT_SIZE, compareRulePriority, generateCondition, generateSelector, parseBaseUnit, parseCondition, parseSelector }
+export { MasterCSS, ROOT_FONT_SIZE, compareRulePriority, formatUndeclaredModeMessage, generateCondition, generateSelector, isUndeclaredPresetMode, parseBaseUnit, parseCondition, parseSelector }
 export type { Utility as GeneratedRule }
 export type * from '@stet-css/schema/manifest'
 
