@@ -159,6 +159,11 @@ export interface CSSDirectiveManifestInput {
   animations?: CSSDirectiveAnimationDefinitions
   animationOptions?: CSSDirectiveAnimationOptions
   modes?: string[]
+  /**
+   * Modes declared only by Master CSS package CSS (the preset's `@theme light` / `@theme dark`).
+   * They stay implicit: once the project declares a mode of its own, they are dropped from `modes`.
+   */
+  implicitModes?: string[]
   modeTrigger?: CSSDirectiveModeTrigger
 }
 
