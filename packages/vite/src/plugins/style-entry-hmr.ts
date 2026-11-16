@@ -28,7 +28,7 @@ export default function StyleEntryHMRPlugin(context: PluginContext): Plugin {
   }
   const queueUpdate = (update: () => Promise<unknown>) => {
     updateChain = updateChain.then(update).catch((err: unknown) => {
-      console.error('[master-css.vite] source update failed:', err)
+      console.error('[stet-css.vite] source update failed:', err)
     })
   }
   const serversWithPendingSourceUpdate = new Set<ViteDevServer>()
@@ -55,7 +55,7 @@ export default function StyleEntryHMRPlugin(context: PluginContext): Plugin {
     })
   }
   return {
-    name: 'master-css:style-entry:hmr',
+    name: 'stet-css:style-entry:hmr',
     enforce: 'pre',
     apply: 'serve',
     configureServer(server) {

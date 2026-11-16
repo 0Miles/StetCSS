@@ -272,16 +272,16 @@ function instrumentMasterVitePlugins(plugins: VitePlugin[], recorder: Diagnostic
   return plugins.map((plugin) => {
     const next = { ...plugin } as VitePlugin
 
-    if (plugin.name === 'master-css:scanner') {
+    if (plugin.name === 'stet-css:scanner') {
       wrapPluginHook(next, 'configResolved', 'vite-master-scanner-init-ms', recorder)
     }
 
-    if (plugin.name === 'master-css:style-entry') {
+    if (plugin.name === 'stet-css:style-entry') {
       wrapPluginHook(next, 'load', 'vite-master-style-entry-ms', recorder)
       wrapPluginHook(next, 'transform', 'vite-master-style-entry-ms', recorder)
     }
 
-    if (plugin.name === 'master-css:style-entry:build') {
+    if (plugin.name === 'stet-css:style-entry:build') {
       wrapPluginHook(next, 'generateBundle', 'vite-master-generate-bundle-ms', recorder)
     }
 

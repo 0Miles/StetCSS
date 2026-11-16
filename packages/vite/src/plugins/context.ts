@@ -3,7 +3,7 @@ import type { PluginContext } from '../core'
 
 export default function ContextPlugin(context: PluginContext): Plugin {
   return {
-    name: 'master-css:context',
+    name: 'stet-css:context',
     enforce: 'pre',
     configResolved(config) {
       context.config = config

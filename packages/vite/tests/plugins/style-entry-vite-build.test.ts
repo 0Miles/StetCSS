@@ -185,6 +185,6 @@ describe('StyleEntryPlugin Vite build integration', () => {
     expect(same.cssFiles).toEqual(first.cssFiles)
     expect(changed.css).toContain('green')
     expect(changed.cssFiles.filter((file) => first.cssFiles.includes(file))).toEqual([])
-    expect([...first.warnings, ...same.warnings, ...changed.warnings].filter((warning) => warning.includes('master-css'))).toEqual([])
+    expect([...first.warnings, ...same.warnings, ...changed.warnings].filter((warning) => warning.includes('stet-css'))).toEqual([])
   })
 })

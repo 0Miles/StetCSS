@@ -6,7 +6,7 @@ import { getProjectDir } from '../utils/project-dir'
 
 export default function ScannerPlugin(options: PluginOptions, context: PluginContext): Plugin {
   return {
-    name: 'master-css:scanner',
+    name: 'stet-css:scanner',
     enforce: 'pre',
     async configResolved() {
       const scanner = new CSSScanner(options, getProjectDir(context))

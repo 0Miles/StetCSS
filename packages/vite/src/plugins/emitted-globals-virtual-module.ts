@@ -8,7 +8,7 @@ export default function EmittedGlobalsVirtualModulePlugin(
   context: PluginContext
 ): Plugin {
   return {
-    name: 'master-css:virtual-module:emitted-globals',
+    name: 'stet-css:virtual-module:emitted-globals',
     enforce: 'pre',
     async resolveId(id) {
       if (id === VIRTUAL_EMITTED_GLOBALS_ID) return RESOLVED_VIRTUAL_EMITTED_GLOBALS_ID

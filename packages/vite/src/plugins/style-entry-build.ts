@@ -20,7 +20,7 @@ function replaceSlotCSSRules(source: string, slotPattern: RegExp, realCSS: strin
 }
 
 export const NO_STYLE_ENTRY_WARNING =
-  '[master-css.vite] No stylesheet in this build imports Master CSS, so no Master CSS rules ' +
+  '[stet-css.vite] No stylesheet in this build imports Master CSS, so no Master CSS rules ' +
   'were generated. Import \'@stet-css/core\' from a .css file that your app imports. ' +
   'Astro inlines @import inside .astro <style> blocks before Vite plugins see it, so an ' +
   'import written there ships the raw preset source instead.'
@@ -28,7 +28,7 @@ export const NO_STYLE_ENTRY_WARNING =
 export default function StyleEntryBuildPlugin(context: PluginContext): Plugin {
   let warnedNoStyleEntry = false
   return {
-    name: 'master-css:style-entry:build',
+    name: 'stet-css:style-entry:build',
     enforce: 'pre',
     apply: 'build',
     async generateBundle(_options, bundle) {
@@ -63,7 +63,7 @@ export default function StyleEntryBuildPlugin(context: PluginContext): Plugin {
       // asset named after an earlier version of the CSS now spliced in.
       if (staleFileNames.length) {
         this.warn(
-          `[master-css.vite] ${staleFileNames.join(', ')}: the file name was hashed before ` +
+          `[stet-css.vite] ${staleFileNames.join(', ')}: the file name was hashed before ` +
           `every stylesheet that imports Master CSS was read, so it may not change when its ` +
           `CSS does and caches can keep serving the old file. Keep stylesheets that import ` +
           `'@stet-css/core' as .css, .scss or .sass files inside the project root.`
@@ -78,7 +78,7 @@ export default function StyleEntryBuildPlugin(context: PluginContext): Plugin {
       const placeholderEmitted = context.virtualCSSPlaceholderEnvironments?.has(getEnvironmentName(this))
       if (placeholderEmitted && !replacedAny && realCSS.length > 0) {
         this.warn(
-          `[master-css.vite] Could not splice managed style CSS into any bundle asset. ` +
+          `[stet-css.vite] Could not splice managed style CSS into any bundle asset. ` +
           `The placeholder rule "${getSlotSelector(slotCSSRule)}" was emitted but no CSS chunk in the final ` +
           `bundle still contained it — Vite's downstream CSS pipeline (a PostCSS ` +
           `plugin in your vite config, the bundler's CSS minifier, etc.) most likely ` +

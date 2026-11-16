@@ -14,6 +14,14 @@ const probeAdapter: NonNullable<PluginOptions['adapters']>[number] = {
 }
 
 describe('masterCSS options', () => {
+  /** Guards the plugin names Vite prints in build errors and plugin timings (#92). */
+  test('names every plugin under stet-css:', () => {
+    const names = masterCSS().map((plugin) => plugin.name)
+
+    expect(names.length).toBeGreaterThan(0)
+    for (const name of names) expect(name).toMatch(/^stet-css:/)
+  })
+
   /**
    * Guards that a config written for the removed rendering modes, or with a typo, fails when
    * Vite loads it instead of building without what the developer asked for.

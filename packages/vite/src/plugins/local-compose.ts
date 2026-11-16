@@ -67,7 +67,7 @@ export default function LocalComposePlugin(context: PluginContext): Plugin {
   }
 
   return {
-    name: 'master-css:local-compose',
+    name: 'stet-css:local-compose',
     enforce: 'pre',
     async buildStart() {
       projectManifest = undefined

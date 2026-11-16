@@ -32,7 +32,7 @@ async function createMasterSource(context: PluginContext) {
 
 export default function StyleEntryPlugin(context: PluginContext): Plugin {
   return {
-    name: 'master-css:style-entry',
+    name: 'stet-css:style-entry',
     enforce: 'pre',
     resolveId(id) {
       if (id === VIRTUAL_CSS_ID || id === RESOLVED_VIRTUAL_CSS_ID) {
