@@ -55,6 +55,22 @@ it('validates native CSS declarations through css-tree fallback', () => {
 })
 
 /**
+ * Guards: static CSS emits invalid native declarations such as
+ * `.display\:banana{display:banana}` when the css-tree matcher regresses.
+ * `generateValidRules` re-validates its rules afterwards, so the css-tree fallback
+ * test above stays green even with a matcher that accepts everything; this runs
+ * the instance the stylesheet, scanner and CLI build CSS with.
+ *
+ * Reverse check: making `cssTreeNativeDeclarationMatcher` in
+ * `src/native-declaration.ts` return `true` reddens all three rows.
+ */
+it.each(['display:banana', 'float:banana', 'made-up:left'])('keeps %s out of the generated CSS', (className) => {
+  const css = createCSSWithNativeDeclarations(defaultManifest)
+  css.ensureClassRules(className)
+  expect(css.text).toBe('')
+})
+
+/**
  * Guards: lint and builds counted `flex:col` as valid because its value parsed
  * as the pseudo-class `:col`. This runs the real css-tree matcher the build
  * plugins and lint use, which the engine tests only imitate.
