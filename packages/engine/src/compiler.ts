@@ -11,8 +11,9 @@ import type { MasterCSSOptions } from './core'
 import { ROOT_FONT_SIZE } from './common'
 import { parseBaseUnit } from './utils/base-unit'
 import { PRESET_MODES, UndeclaredModeError, isUndeclaredPresetMode } from './utils/undeclared-mode'
+import splitModeConjuncts from './utils/split-mode-conjuncts'
 
-export { MasterCSS, ROOT_FONT_SIZE, PRESET_MODES, UndeclaredModeError, compareRulePriority, generateCondition, generateSelector, isUndeclaredPresetMode, parseBaseUnit, parseCondition, parseSelector }
+export { MasterCSS, ROOT_FONT_SIZE, PRESET_MODES, UndeclaredModeError, compareRulePriority, generateCondition, generateSelector, isUndeclaredPresetMode, parseBaseUnit, parseCondition, parseSelector, splitModeConjuncts }
 export type { Utility as GeneratedRule }
 export type * from '@stet-css/schema/manifest'
 

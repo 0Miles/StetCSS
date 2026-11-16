@@ -22,6 +22,8 @@ import { createAlphaColorValue, createCSSVariableReference, normalizeEngineVaria
 import collectAnimationNames from './utils/collect-animation-names'
 import { isKnownPseudoClass } from './pseudo-classes'
 import { UndeclaredModeError, isUndeclaredPresetMode } from './utils/undeclared-mode'
+import joinConditionNodes from './utils/join-condition-nodes'
+import splitModeConjuncts from './utils/split-mode-conjuncts'
 
 export type UtilityStateBranch = {
   selectorTemplate?: string
@@ -162,24 +164,32 @@ function cloneConditions(conditions?: Partial<Record<MasterCSSManifestConditionI
   return cloned
 }
 
+/** `undefined` when the condition cannot join the same at-rule's query (see `joinConditionNodes`). */
 function mergeConditionNodeMap(
   current: Partial<Record<MasterCSSManifestConditionIdentifier, ConditionNode[]>> | undefined,
   condition: { id: MasterCSSManifestConditionIdentifier, nodes: ConditionNode[] }
 ) {
+  const nodes = joinConditionNodes(condition.id, current?.[condition.id], condition.nodes)
+  if (!nodes) return
   const merged = cloneConditions(current) || {}
-  merged[condition.id] = [...(merged[condition.id] || []), ...condition.nodes]
+  merged[condition.id] = nodes
   return merged
 }
 
 function mergeBranch(base: UtilityStateBranch, branch: MasterCSSManifestVariantBranch, css: MasterCSS, key: string): UtilityStateBranch {
   let conditions = cloneConditions(base.conditions)
+  let joinable = true
+  const merge = (condition: Condition) => {
+    const merged = mergeConditionNodeMap(conditions, condition)
+    if (merged) conditions = merged
+    else joinable = false
+  }
   for (const condition of branch.conditionNodes || []) {
-    conditions = mergeConditionNodeMap(conditions, condition as Condition)
+    merge(condition as Condition)
   }
   if (!branch.conditionNodes?.length) {
     for (const condition of branch.conditions || []) {
-      const parsed = parseCondition(condition, css)
-      conditions = mergeConditionNodeMap(conditions, parsed as { id: MasterCSSManifestConditionIdentifier, nodes: ConditionNode[] })
+      merge(parseCondition(condition, css))
     }
   }
   if (branch.selectorNodes?.length && !branch.selector) {
@@ -189,7 +199,7 @@ function mergeBranch(base: UtilityStateBranch, branch: MasterCSSManifestVariantB
       selectorNodes: branch.selectorNodes as SelectorNode[],
       ...(conditions ? { conditions } : {}),
       ...(branch.layer || base.layer ? { layer: branch.layer || base.layer } : {}),
-      valid: base.valid !== false && !(base.layer && branch.layer && base.layer !== branch.layer)
+      valid: base.valid !== false && joinable && !(base.layer && branch.layer && base.layer !== branch.layer)
     }
   }
   const layer = branch.layer || base.layer
@@ -199,7 +209,7 @@ function mergeBranch(base: UtilityStateBranch, branch: MasterCSSManifestVariantB
     selectorTemplate: composeSelectorTemplate(base.selectorTemplate, branch.selector),
     ...(conditions ? { conditions } : {}),
     ...(layer ? { layer } : {}),
-    valid: base.valid !== false && !(base.layer && branch.layer && base.layer !== branch.layer)
+    valid: base.valid !== false && joinable && !(base.layer && branch.layer && base.layer !== branch.layer)
   }
 }
 
@@ -380,8 +390,10 @@ export class Utility {
 
     this.stateToken = stateToken
     if (stateToken.includes('@')) {
-      for (const conditionToken of stateToken.split('@').slice(1)) {
-        if (!css.modes.includes(conditionToken)) this.conditionToken = (this.conditionToken || '') + '@' + conditionToken
+      for (const stackToken of stateToken.split('@').slice(1)) {
+        for (const conditionToken of splitModeConjuncts(stackToken, css.modes)) {
+          if (!css.modes.includes(conditionToken)) this.conditionToken = (this.conditionToken || '') + '@' + conditionToken
+        }
       }
     }
 
@@ -413,12 +425,11 @@ export class Utility {
         name: 'prefers-color-scheme',
         value: this.mode
       } as ConditionStringNode
-      if (this.conditions?.media) {
-        this.conditions = { ...this.conditions, media: [...this.conditions.media, atComp] }
+      const media = joinConditionNodes('media', this.conditions?.media, [atComp])
+      if (media) {
+        this.conditions = { ...this.conditions, media }
       } else {
-        this.conditions = {
-          media: [atComp]
-        }
+        this.valid = false
       }
     }
 
@@ -714,7 +725,8 @@ export class Utility {
 
   /** The branches a state token selects; `undefined`, leaving the class invalid, past `MAX_STATE_BRANCHES`. */
   resolveStateBranches(stateToken: string): UtilityStateBranch[] | undefined {
-    const [selectorToken = '', ...conditionTokens] = stateToken.split('@')
+    const [selectorToken = '', ...stackTokens] = stateToken.split('@')
+    const conditionTokens = stackTokens.flatMap((token) => splitModeConjuncts(token, this.css.modes))
     const conditionBranchCounts: number[] = []
     for (const conditionToken of conditionTokens) {
       if (this.css.modes.includes(conditionToken)) continue
@@ -750,11 +762,14 @@ export class Utility {
       }
 
       const condition = parseCondition(conditionToken, this.css)
-      branches = branches.map((branch) => ({
-        ...branch,
-        key: branch.key + '@' + conditionToken,
-        conditions: mergeConditionNodeMap(branch.conditions, condition as { id: MasterCSSManifestConditionIdentifier, nodes: ConditionNode[] })
-      }))
+      branches = branches.map((branch) => {
+        const conditions = mergeConditionNodeMap(branch.conditions, condition)
+        return {
+          ...branch,
+          key: branch.key + '@' + conditionToken,
+          ...(conditions ? { conditions } : { valid: false })
+        }
+      })
     }
 
     return branches.length ? branches : [{ key: '' }]
