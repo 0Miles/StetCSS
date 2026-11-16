@@ -18,7 +18,8 @@ export interface PluginContext {
   config?: ResolvedConfig
   scanner?: CSSScanner
   virtualCSSImporters?: Set<string>
-  virtualCSSPlaceholderEmitted?: boolean
+  /** Vite environments whose managed CSS imports emitted the slot placeholder. */
+  virtualCSSPlaceholderEnvironments?: Set<string>
   styleCSSSources?: StyleCSSSources
   includeGeneratedCSS?: boolean
   emittedGlobals?: MasterCSSEmittedGlobals
