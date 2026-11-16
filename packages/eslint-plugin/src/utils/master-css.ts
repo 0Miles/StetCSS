@@ -1,8 +1,8 @@
-import { type MasterCSS, type MasterCSSManifest } from '@stet-css/core'
+import { type MasterCSS, type StetCSSManifest } from '@stet-css/core'
 import { createCSSWithNativeDeclarations } from '@stet-css/validator'
 import { createRequire } from 'node:module'
 
-export type { MasterCSS, MasterCSSManifest }
+export type { MasterCSS, StetCSSManifest }
 const require = createRequire(import.meta.url)
-const defaultManifest = require('@stet-css/preset/default-manifest.json') as MasterCSSManifest
+const defaultManifest = require('@stet-css/preset/default-manifest.json') as StetCSSManifest
 export { createCSSWithNativeDeclarations, defaultManifest }

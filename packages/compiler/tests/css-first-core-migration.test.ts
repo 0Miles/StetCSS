@@ -3,22 +3,22 @@ import { MasterCSS } from '@stet-css/engine'
 import { compileCSS, compileCSSManifest } from '../src'
 import type { CompilerDiagnosticRecorder } from '../src/diagnostics'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
-import { flattenMasterCSSManifestVariables, type MasterCSSManifest } from '@stet-css/schema/manifest'
+import { flattenStetCSSManifestVariables, type StetCSSManifest } from '@stet-css/schema/manifest'
 import UtilityType from '@stet-css/schema/utility-type'
 
-const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
+const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
 
-function variablesOf(manifest: MasterCSSManifest) {
-  return flattenMasterCSSManifestVariables(manifest.variables)
+function variablesOf(manifest: StetCSSManifest) {
+  return flattenStetCSSManifestVariables(manifest.variables)
 }
 
-function createTestCSS(manifest: MasterCSSManifest) {
+function createTestCSS(manifest: StetCSSManifest) {
   return MasterCSS.create({ manifest })
 }
 
 /** The preset manifest with some settings replaced, as a project's base manifest. */
-function withBaseSettings(settings?: object): MasterCSSManifest {
-  return settings ? { ...defaultManifest, settings: { ...defaultManifest.settings, ...settings } } as MasterCSSManifest : defaultManifest
+function withBaseSettings(settings?: object): StetCSSManifest {
+  return settings ? { ...defaultManifest, settings: { ...defaultManifest.settings, ...settings } } as StetCSSManifest : defaultManifest
 }
 
 function normalizeDeclarationOrder(css: string) {

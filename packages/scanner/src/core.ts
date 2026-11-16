@@ -1,6 +1,6 @@
 import scannerOptions, { validateScannerOptions, type ScannerOptions } from './options'
 import { MasterCSS } from '@stet-css/core'
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import { createRequire } from 'node:module'
 import {
   extractSourceClassCandidates,
@@ -13,7 +13,7 @@ import { createHash } from 'node:crypto'
 import { cssEscape } from '@stet-css/lexer'
 
 const require = createRequire(import.meta.url)
-const defaultManifest = require('@stet-css/preset/default-manifest.json') as MasterCSSManifest
+const defaultManifest = require('@stet-css/preset/default-manifest.json') as StetCSSManifest
 
 interface ScannerResetOptions {
   emit?: boolean
@@ -26,7 +26,7 @@ interface ScannerResetOptions {
  */
 export interface ScannerValidation {
   /** The manifest compiled from the project's entries; defaults to the preset's. */
-  manifest?: MasterCSSManifest
+  manifest?: StetCSSManifest
 }
 
 /**
@@ -204,7 +204,7 @@ export default class CSSScanner extends EventEmitter {
   /**
    * The manifest the scanner validates candidates against.
    */
-  get manifest(): MasterCSSManifest {
+  get manifest(): StetCSSManifest {
     return this.css.manifest
   }
 

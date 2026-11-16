@@ -1,7 +1,7 @@
 import type MasterCSS from './core'
 import type { Utility } from './utility'
 import type { Variable } from '@stet-css/schema/css-syntax'
-import type { MasterCSSManifestUtilityMatcher } from '@stet-css/schema/manifest'
+import type { StetCSSManifestUtilityMatcher } from '@stet-css/schema/manifest'
 import { ROOT_FONT_SIZE } from './common'
 import { assertBaseUnit } from './utils/base-unit'
 
@@ -26,7 +26,7 @@ export interface MasterCSSClassInspection {
   valueToken?: string
   stateToken?: string
   important?: boolean
-  matcherTypes: MasterCSSManifestUtilityMatcher['type'][]
+  matcherTypes: StetCSSManifestUtilityMatcher['type'][]
   variables: Map<string, Variable>
   variableEntries: MasterCSSInspectedClassVariable[]
 }
@@ -114,7 +114,7 @@ export function inspectMasterCSSClass(css: MasterCSS, className: string, mode?: 
   const rules = css.generate(className, mode)
   const rule = rules[0]
   const variables = new Map<string, Variable>()
-  const matcherTypes = new Set<MasterCSSManifestUtilityMatcher['type']>()
+  const matcherTypes = new Set<StetCSSManifestUtilityMatcher['type']>()
   for (const eachRule of rules) {
     for (const [key, variable] of eachRule.registeredUtility.variables || []) {
       if (!variables.has(key)) variables.set(key, variable)

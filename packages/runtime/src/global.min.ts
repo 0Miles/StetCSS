@@ -2,8 +2,8 @@
 import { cancelRevealFallback } from './reveal-fallback'
 import CSSRuntime from './core'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 
 // `create` and `observe` reveal the page themselves, also when they throw.
-CSSRuntime.create({ manifest: defaultManifestJSON as unknown as MasterCSSManifest }).observe()
+CSSRuntime.create({ manifest: defaultManifestJSON as unknown as StetCSSManifest }).observe()
 cancelRevealFallback()

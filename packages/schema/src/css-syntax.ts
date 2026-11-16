@@ -1,4 +1,4 @@
-import type { MasterCSSManifestUtility, MasterCSSManifestUtilityLayerName, MasterCSSManifestVariableNumericValue } from './manifest.js'
+import type { StetCSSManifestUtility, StetCSSManifestUtilityLayerName, StetCSSManifestVariableNumericValue } from './manifest.js'
 
 export type ValueComponent = StringValueComponent | NumberValueComponent | FunctionValueComponent | VariableValueComponent | SeparatorValueComponent
 
@@ -20,10 +20,10 @@ export interface DefinedUtility {
   }
   variables?: Map<string, Variable>
   order: number
-  definition: MasterCSSManifestUtility
+  definition: StetCSSManifestUtility
 }
 
-export type ExplicitUtilityLayerName = MasterCSSManifestUtilityLayerName
+export type ExplicitUtilityLayerName = StetCSSManifestUtilityLayerName
 
 export interface MediaFeatureComponent {
   type: string
@@ -50,11 +50,11 @@ interface VariableCommon {
 }
 
 export interface StringVariable { type: 'string', value: string | number }
-export interface NumberVariable { type: 'number', value: number | string, numeric?: MasterCSSManifestVariableNumericValue }
+export interface NumberVariable { type: 'number', value: number | string, numeric?: StetCSSManifestVariableNumericValue }
 export type ResolvedVariableValue = StringVariable | NumberVariable
 
 export type Variable = VariableCommon & {
   type: ResolvedVariableValue['type']
   value?: ResolvedVariableValue['value']
-  numeric?: MasterCSSManifestVariableNumericValue
+  numeric?: StetCSSManifestVariableNumericValue
 }

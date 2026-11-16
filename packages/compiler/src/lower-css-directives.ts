@@ -26,7 +26,7 @@ import {
   type GeneratedRule,
   type MasterCSS
 } from '@stet-css/engine/compiler'
-import type { MasterCSSManifest, MasterCSSManifestUtilityLayerName } from '@stet-css/schema/manifest'
+import type { StetCSSManifest, StetCSSManifestUtilityLayerName } from '@stet-css/schema/manifest'
 import { createMasterCSSManifest, createVariableNameResolver, type CSSDirectiveVariableNameResolver } from './master-css-manifest'
 import { combineStyleSelectors } from './utils/selectors'
 import wrapConditions from './utils/wrap-conditions'
@@ -39,16 +39,16 @@ import {
 } from './diagnostics'
 
 export interface LowerCSSDirectivesOptions {
-  baseManifest?: MasterCSSManifest
-  resolutionManifest?: MasterCSSManifest
+  baseManifest?: StetCSSManifest
+  resolutionManifest?: StetCSSManifest
   onWarning?: (warning: string) => void
   diagnostics?: CompilerDiagnosticRecorder
 }
 
 export interface LowerCSSDirectivesResult {
   input: CSSDirectiveManifestInput
-  manifest: MasterCSSManifest
-  resolutionManifest: MasterCSSManifest
+  manifest: StetCSSManifest
+  resolutionManifest: StetCSSManifest
   warnings: string[]
   generatedCSS: string
 }
@@ -63,7 +63,7 @@ interface MergedStyleDefinition {
   selector: string
   declarations: PropertiesHyphen
   conditions?: string[]
-  layer?: MasterCSSManifestUtilityLayerName
+  layer?: StetCSSManifestUtilityLayerName
 }
 
 interface ComposedStyleDefinition extends MergedStyleDefinition {
@@ -86,7 +86,7 @@ type StyleMergeEvent =
 interface StyleMergeBucket {
   selector: string
   conditions?: string[]
-  layer?: MasterCSSManifestUtilityLayerName
+  layer?: StetCSSManifestUtilityLayerName
   order: number
   events: StyleMergeEvent[]
 }
@@ -469,13 +469,13 @@ function resolveSelectorAliases(selector: string, css: MasterCSS) {
 interface ResolvedStyleBranch {
   selector: string
   conditions?: string[]
-  layer?: MasterCSSManifestUtilityLayerName
+  layer?: StetCSSManifestUtilityLayerName
 }
 
 interface ResolvedVariantReferenceBranch {
   selector?: string
   conditions?: string[]
-  layer?: MasterCSSManifestUtilityLayerName
+  layer?: StetCSSManifestUtilityLayerName
 }
 
 function mergeResolvedVariantReferenceBranch(
@@ -567,7 +567,7 @@ function resolveMasterVariantReference(token: string, css: MasterCSS): ResolvedV
   return branches
 }
 
-function resolveConfiguredBranches(conditionPath: CSSDirectiveConditionPath | undefined, css: MasterCSS, selector = '&', layer?: MasterCSSManifestUtilityLayerName): ResolvedStyleBranch[] {
+function resolveConfiguredBranches(conditionPath: CSSDirectiveConditionPath | undefined, css: MasterCSS, selector = '&', layer?: StetCSSManifestUtilityLayerName): ResolvedStyleBranch[] {
   let branches: ResolvedStyleBranch[] = [{ selector, ...(layer ? { layer } : {}) }]
   if (!conditionPath?.length) {
     return branches.map((branch) => ({
@@ -669,7 +669,7 @@ function finalizeUtilityDefinitions(input: CSSDirectiveManifestInput, css: Maste
   }
 }
 
-function getStyleMergeBucketKey(selector: string, conditions: string[] | undefined, layer: MasterCSSManifestUtilityLayerName | undefined) {
+function getStyleMergeBucketKey(selector: string, conditions: string[] | undefined, layer: StetCSSManifestUtilityLayerName | undefined) {
   return JSON.stringify([layer || '', selector, conditions || []])
 }
 
@@ -677,7 +677,7 @@ function pushStyleMergeEvent(
   buckets: Map<string, StyleMergeBucket>,
   selector: string,
   conditions: string[] | undefined,
-  layer: MasterCSSManifestUtilityLayerName | undefined,
+  layer: StetCSSManifestUtilityLayerName | undefined,
   event: StyleMergeEvent
 ) {
   const key = getStyleMergeBucketKey(selector, conditions, layer)
@@ -820,7 +820,7 @@ function compareStyleMergeBuckets(a: StyleMergeBucket, b: StyleMergeBucket) {
   return a.order - b.order
 }
 
-function createMergedStyleDefinitions(definitions: CSSDirectiveStyleDefinition[], css: MasterCSS, targetLayer?: MasterCSSManifestUtilityLayerName) {
+function createMergedStyleDefinitions(definitions: CSSDirectiveStyleDefinition[], css: MasterCSS, targetLayer?: StetCSSManifestUtilityLayerName) {
   const buckets = new Map<string, StyleMergeBucket>()
   for (const definition of definitions) {
     if (definition.type === 'compose') {
@@ -873,7 +873,7 @@ function isManagedStyleDefinition(definition: CSSDirectiveStyleDefinition): defi
   return Boolean(definition.name)
 }
 
-function getManagedStyleDefinitionLayer(definition: ManagedStyleDefinition): MasterCSSManifestUtilityLayerName {
+function getManagedStyleDefinitionLayer(definition: ManagedStyleDefinition): StetCSSManifestUtilityLayerName {
   return definition.layer || 'components'
 }
 
@@ -885,7 +885,7 @@ function splitManagedStyleDefinitionKey(key: string) {
   const [name, layer] = key.split('\0')
   return {
     name,
-    layer: layer as MasterCSSManifestUtilityLayerName
+    layer: layer as StetCSSManifestUtilityLayerName
   }
 }
 

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { compileCSSManifestFile, compileProjectManifest } from '../src'
-import { flattenMasterCSSManifestVariables } from '@stet-css/schema/manifest'
+import { flattenStetCSSManifestVariables } from '@stet-css/schema/manifest'
 
 function createFixture() {
   const root = mkdtempSync(join(tmpdir(), 'master-css-reference-'))
@@ -134,7 +134,7 @@ describe('CSS @reference', () => {
 
       expect(result.dependencies).toContain(entryPath)
       expect(result.css).not.toContain('@import "fake-font/index.css"')
-      expect(flattenMasterCSSManifestVariables(result.manifest.variables)).toEqual(expect.arrayContaining([
+      expect(flattenStetCSSManifestVariables(result.manifest.variables)).toEqual(expect.arrayContaining([
         expect.objectContaining({
           name: 'color-primary',
           value: '#123456'

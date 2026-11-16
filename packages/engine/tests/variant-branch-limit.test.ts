@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import { MasterCSS } from '../src'
 import { cloneManifest } from './helpers/css-tester'
 
@@ -12,7 +12,7 @@ import { cloneManifest } from './helpers/css-tester'
  * synchronous work, which a concurrent sibling would stall.
  */
 describe('variant branch limit', () => {
-  const createCSS = (settings?: MasterCSSManifest['settings']) => {
+  const createCSS = (settings?: StetCSSManifest['settings']) => {
     const manifest = cloneManifest()
     if (settings) manifest.settings = { ...(manifest.settings || {}), ...settings }
     manifest.variants = [

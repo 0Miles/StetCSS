@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest'
-import type { MasterCSSManifest, MasterCSSManifestModeTrigger } from '@stet-css/schema/manifest'
+import type { StetCSSManifest, StetCSSManifestModeTrigger } from '@stet-css/schema/manifest'
 import { MasterCSS, isUndeclaredModeError } from '../src'
 import { cloneManifest } from './helpers/css-tester'
 
-function createCSSWithModes(modes: string[] | undefined, modeTrigger?: MasterCSSManifestModeTrigger, extend: (manifest: MasterCSSManifest) => void = () => {}) {
+function createCSSWithModes(modes: string[] | undefined, modeTrigger?: StetCSSManifestModeTrigger, extend: (manifest: StetCSSManifest) => void = () => {}) {
   const manifest = cloneManifest()
   manifest.settings = { ...manifest.settings, ...(modes ? { modes } : {}), ...(modeTrigger ? { modeTrigger } : {}) }
   extend(manifest)
@@ -74,10 +74,10 @@ describe('only declared modes exist', () => {
    * `css.conditions.has()` guard reds the condition row.
    */
   test.each([
-    ['condition variant', (manifest: MasterCSSManifest) => {
+    ['condition variant', (manifest: StetCSSManifest) => {
       manifest.variants = [...(manifest.variants || []), { token: '@dark', branches: [{ conditions: ['@media print'] }] }]
     }, '@media print{.fg\\:red\\@dark{color:var(--color-red)}}'],
-    ['named condition', (manifest: MasterCSSManifest) => {
+    ['named condition', (manifest: StetCSSManifest) => {
       manifest.conditions = { ...manifest.conditions, dark: { id: 'media', nodes: [{ type: 'number', name: 'width', value: 100, unit: 'rem', operator: '>=' }] } }
     }, '@media (width>=100rem){.fg\\:red\\@dark{color:var(--color-red)}}']
   ])('resolves a project-defined dark first: %s', (_, extend, text) => {

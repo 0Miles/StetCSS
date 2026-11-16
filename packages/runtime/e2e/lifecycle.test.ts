@@ -1,12 +1,12 @@
 import { test, expect, type Page } from '@playwright/test'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import UtilityType from '@stet-css/schema/utility-type'
-import { MASTER_CSS_RUNTIME_STYLE_ID } from '@stet-css/schema/runtime-style'
+import { STET_CSS_RUNTIME_STYLE_ID } from '@stet-css/schema/runtime-style'
 import CSSRuntime from '../src'
 import init, { RUNTIME_SCRIPT_URL, getRuntimeLoaderURL, routeRuntimeAssets } from './init'
 
-const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
+const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
 
 async function waitForRuntimeRuleFlush(page: Page) {
   await page.evaluate(() => new Promise<void>((resolve) => {
@@ -60,7 +60,7 @@ test('destroy removes its style, is safe to repeat, and a registered runtime obs
     style: (globalThis as any).destroyedRuntime.style,
     runtimeStyles: document.querySelectorAll(`style#${styleId}`).length,
     registered: globalThis.StetCSSRuntime.instances.has(document) || globalThis.stetCSSRuntime !== undefined
-  }), MASTER_CSS_RUNTIME_STYLE_ID)
+  }), STET_CSS_RUNTIME_STYLE_ID)
   const destroyedState = { style: null, runtimeStyles: 0, registered: false }
   expect(await readDestroyedState()).toEqual(destroyedState)
   await page.evaluate(() => (globalThis as any).destroyedRuntime.destroy())

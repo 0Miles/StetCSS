@@ -1,7 +1,7 @@
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
-import CSSRuntime, { type MasterCSSManifest } from '../../src'
+import CSSRuntime, { type StetCSSManifest } from '../../src'
 
-const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
+const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
 
 // CSSRuntime.create({
 //     manifest: {

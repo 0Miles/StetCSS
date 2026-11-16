@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import {
   compileCSSManifest,
   createManifestFromCSSResult,
@@ -34,7 +34,7 @@ import {
 } from '../src'
 import { renderCompiledManifestCSS } from '../src/render'
 
-const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
+const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
 
 function createFixture() {
   const root = mkdtempSync(join(tmpdir(), 'master-css-stylesheet-'))

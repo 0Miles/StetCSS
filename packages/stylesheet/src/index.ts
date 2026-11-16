@@ -13,7 +13,7 @@ import {
 } from '@stet-css/compiler'
 import type { MasterCSSEmittedGlobals } from '@stet-css/core'
 import type { createCSSWithNativeDeclarations } from '@stet-css/validator/native-declaration'
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import { renderCompiledManifestCSS, type RenderCompiledManifestCSSResult } from './render'
 import {
   findCSSImportStatements,
@@ -64,7 +64,7 @@ export interface SassModule {
 }
 
 export interface CompileStyleCSSOptions extends CompileCSSOptions {
-  baseManifest?: MasterCSSManifest
+  baseManifest?: StetCSSManifest
   projectDir?: string
   loadSass?: (projectDir?: string) => SassModule
 }
@@ -76,7 +76,7 @@ export interface CompileRenderedStyleCSSOptions extends CompileStyleCSSOptions {
 
 export interface CompileRenderedStyleCSSResult extends CompileCSSResult {
   emittedGlobals: Required<MasterCSSEmittedGlobals>
-  manifest: MasterCSSManifest
+  manifest: StetCSSManifest
   renderedCSS: RenderCompiledManifestCSSResult
 }
 
@@ -128,7 +128,7 @@ export interface StylesheetSourceContext {
 }
 
 export interface CreateExtractedCSSOptions extends CompileStyleCSSOptions, StylesheetSourceContext {
-  manifest?: MasterCSSManifest
+  manifest?: StetCSSManifest
   includeGeneratedCSS?: boolean
   includeNativeCSS?: boolean
   includeMasterBaseCSS?: boolean
@@ -174,7 +174,7 @@ export interface CreateStyleCSSHostSourceOptions {
 }
 
 interface DefaultMasterCSSPackageArtifact {
-  manifest: MasterCSSManifest
+  manifest: StetCSSManifest
   nativeCSS: string
   dependencies: string[]
 }
@@ -528,7 +528,7 @@ function readDefaultMasterCSSPackageArtifact(projectDir: string | undefined, opt
   if (!artifactFiles) return
 
   return {
-    manifest: JSON.parse(readFileSync(artifactFiles.manifestFile, 'utf8')) as MasterCSSManifest,
+    manifest: JSON.parse(readFileSync(artifactFiles.manifestFile, 'utf8')) as StetCSSManifest,
     nativeCSS: readFileSync(artifactFiles.nativeCSSFile, 'utf8'),
     dependencies: [...new Set([
       ...graph.dependencies,
@@ -942,7 +942,7 @@ export async function createStyleCSSManifest(options: CreateStyleCSSManifestOpti
     ...entries.flatMap(([, styleSource]) => styleSource.dependencies),
     ...styleResults.flatMap((result: CompileCSSResult) => result.dependencies || [])
   ]
-  let manifest: MasterCSSManifest | undefined = defaultArtifact?.manifest ?? compileOptions.baseManifest
+  let manifest: StetCSSManifest | undefined = defaultArtifact?.manifest ?? compileOptions.baseManifest
   let hasStyleManifest = Boolean(defaultArtifact)
   for (const result of styleResults) {
     if (!hasCompiledStyleManifestInput(result)) continue

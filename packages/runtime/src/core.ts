@@ -1,7 +1,7 @@
 import { MasterCSS, isUndeclaredModeError } from '@stet-css/engine'
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import type { MasterCSSEmittedGlobals } from '@stet-css/engine'
-import { MASTER_CSS_RUNTIME_STYLE_ID } from '@stet-css/schema/runtime-style'
+import { STET_CSS_RUNTIME_STYLE_ID } from '@stet-css/schema/runtime-style'
 import registerGlobal, { isRuntimeClass } from './register-global'
 import { hostOf, isDocumentRoot, ownerDocumentOf, readDocument } from './document'
 import RuntimeUtilityLayer from './utility-layer'
@@ -38,7 +38,7 @@ interface RuntimeCleanupWindow {
 }
 
 export interface CSSRuntimeCreateOptions {
-  manifest: MasterCSSManifest
+  manifest: StetCSSManifest
   root?: Document | ShadowRoot
   emittedGlobals?: MasterCSSEmittedGlobals
 }
@@ -90,7 +90,7 @@ export default class CSSRuntime extends MasterCSS {
 
   constructor(
     public root: Document | ShadowRoot = document,
-    manifest: MasterCSSManifest,
+    manifest: StetCSSManifest,
     emittedGlobals?: MasterCSSEmittedGlobals
   ) {
     super(manifest, emittedGlobals, {
@@ -128,7 +128,7 @@ export default class CSSRuntime extends MasterCSS {
     const ownerDocument = ownerDocumentOf(this.root)
     // `.call` drops the tag-name overload, so restate the element type.
     const style = readDocument(ownerDocument, 'createElement').call(ownerDocument, 'style') as HTMLStyleElement
-    style.id = MASTER_CSS_RUNTIME_STYLE_ID
+    style.id = STET_CSS_RUNTIME_STYLE_ID
     style.setAttribute('blocking', 'render')
     this.style = style
     this.container.append(style)
@@ -516,7 +516,7 @@ export default class CSSRuntime extends MasterCSS {
     return this
   }
 
-  refresh(manifest: MasterCSSManifest = this.manifest) {
+  refresh(manifest: StetCSSManifest = this.manifest) {
     this.clearPendingAddedClassNames()
     this.clearPendingRemovedClassNames()
     this.clearRetainedClassRules()

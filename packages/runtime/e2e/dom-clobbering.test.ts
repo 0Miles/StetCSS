@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
-import { MASTER_CSS_RUNTIME_STYLE_ID } from '@stet-css/schema/runtime-style'
+import { STET_CSS_RUNTIME_STYLE_ID } from '@stet-css/schema/runtime-style'
 import init, { RUNTIME_SCRIPT_URL, getRuntimeLoaderURL, routeRuntimeAssets } from './init'
 
 /**
@@ -30,7 +30,7 @@ const WINDOW_GUARD_CASES: ClobberingCase[] = [
  */
 const WINDOW_CONFIRMATION_CASES: ClobberingCase[] = [
   { label: 'an element with id="stetCSSRuntime"', markup: '<div id="stetCSSRuntime"></div>', selector: 'div[id="stetCSSRuntime"]' },
-  { label: `an element with id="${MASTER_CSS_RUNTIME_STYLE_ID}"`, markup: `<div id="${MASTER_CSS_RUNTIME_STYLE_ID}"></div>`, selector: `div[id="${MASTER_CSS_RUNTIME_STYLE_ID}"]` }
+  { label: `an element with id="${STET_CSS_RUNTIME_STYLE_ID}"`, markup: `<div id="${STET_CSS_RUNTIME_STYLE_ID}"></div>`, selector: `div[id="${STET_CSS_RUNTIME_STYLE_ID}"]` }
 ]
 
 /**
@@ -82,7 +82,7 @@ async function readRuntimeState(page: Page, selector: string) {
       // The runtime adds its own `style#stet-css`, so look the page's element up by tag.
       clobberingElementKept: query(selector).length > 0
     }
-  }, { selector, styleId: MASTER_CSS_RUNTIME_STYLE_ID })
+  }, { selector, styleId: STET_CSS_RUNTIME_STYLE_ID })
 }
 
 const expectedState = {

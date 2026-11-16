@@ -10,7 +10,7 @@ import type { ValueComponent, VariableValueComponent, Variable, StringValueCompo
 import { Condition, ConditionNode, ConditionStringNode, ConditionValueNode, } from './utils/parse-condition'
 import parseValue from './utils/parse-value'
 import parseCondition from './utils/parse-condition'
-import type { MasterCSSManifestConditionIdentifier, MasterCSSManifestUtilityLayerName, MasterCSSManifestUtilityMatcher, MasterCSSManifestVariantBranch, MasterCSSManifestVariantToken } from '@stet-css/schema/manifest'
+import type { StetCSSManifestConditionIdentifier, StetCSSManifestUtilityLayerName, StetCSSManifestUtilityMatcher, StetCSSManifestVariantBranch, StetCSSManifestVariantToken } from '@stet-css/schema/manifest'
 import type { CompiledUtility } from './core'
 import generateCondition from './utils/generate-condition'
 import parseSelector, { SelectorNode } from './utils/parse-selector'
@@ -28,8 +28,8 @@ import splitModeConjuncts from './utils/split-mode-conjuncts'
 export type UtilityStateBranch = {
   selectorTemplate?: string
   selectorNodes?: SelectorNode[]
-  conditions?: Partial<Record<MasterCSSManifestConditionIdentifier, ConditionNode[]>>
-  layer?: MasterCSSManifestUtilityLayerName
+  conditions?: Partial<Record<StetCSSManifestConditionIdentifier, ConditionNode[]>>
+  layer?: StetCSSManifestUtilityLayerName
   mode?: string
   key: string
   valid?: boolean
@@ -47,7 +47,7 @@ type ResolvedVariableAlias = {
  */
 const MAX_STATE_BRANCHES = 4096
 
-function isVariantToken(value: string): value is MasterCSSManifestVariantToken {
+function isVariantToken(value: string): value is StetCSSManifestVariantToken {
   return /^:{1,2}[-_a-zA-Z][-_a-zA-Z0-9]*$/.test(value) || /^@[-_a-zA-Z][-_a-zA-Z0-9]*$/.test(value)
 }
 
@@ -83,7 +83,7 @@ function matchesPatternUtilityName(className: string, name: string) {
     || next === '~' || next === ':' || next === '[' || next === '@' || next === '_' || next === '.'
 }
 
-function getPatternUtilityMatch(className: string, matcher: MasterCSSManifestUtilityMatcher) {
+function getPatternUtilityMatch(className: string, matcher: StetCSSManifestUtilityMatcher) {
   if (matcher.type !== 'pattern') return
   for (const value of matcher.values) {
     const name = matcher.prefix + value
@@ -154,9 +154,9 @@ function composeSelectorTemplate(current: string | undefined, next: string | und
   return next.replace(/&/g, current || '&')
 }
 
-function cloneConditions(conditions?: Partial<Record<MasterCSSManifestConditionIdentifier, ConditionNode[]>>) {
+function cloneConditions(conditions?: Partial<Record<StetCSSManifestConditionIdentifier, ConditionNode[]>>) {
   if (!conditions) return
-  const cloned: Partial<Record<MasterCSSManifestConditionIdentifier, ConditionNode[]>> = {}
+  const cloned: Partial<Record<StetCSSManifestConditionIdentifier, ConditionNode[]>> = {}
   for (const id of CONDITION_IDENTIFIERS) {
     const nodes = conditions[id]
     if (nodes?.length) cloned[id] = [...nodes]
@@ -166,7 +166,7 @@ function cloneConditions(conditions?: Partial<Record<MasterCSSManifestConditionI
 
 /** `undefined` when the condition cannot join the same at-rule's query (see `joinConditionNodes`). */
 function mergeConditionNodeMap(
-  current: Partial<Record<MasterCSSManifestConditionIdentifier, ConditionNode[]>> | undefined,
+  current: Partial<Record<StetCSSManifestConditionIdentifier, ConditionNode[]>> | undefined,
   condition: Condition
 ) {
   const nodes = joinConditionNodes(condition.id, current?.[condition.id], condition.nodes)
@@ -176,7 +176,7 @@ function mergeConditionNodeMap(
   return merged
 }
 
-function mergeBranch(base: UtilityStateBranch, branch: MasterCSSManifestVariantBranch, css: MasterCSS, key: string): UtilityStateBranch {
+function mergeBranch(base: UtilityStateBranch, branch: StetCSSManifestVariantBranch, css: MasterCSS, key: string): UtilityStateBranch {
   let conditions = cloneConditions(base.conditions)
   let joinable = true
   const merge = (condition: Condition) => {
@@ -301,14 +301,14 @@ function wrapCalcArguments(value: string) {
 export class Utility {
   native?: CSSRule
   nodes?: UtilityRuleNode[]
-  readonly conditions?: Partial<Record<MasterCSSManifestConditionIdentifier, ConditionNode[]>>
+  readonly conditions?: Partial<Record<StetCSSManifestConditionIdentifier, ConditionNode[]>>
   readonly priority!: RulePriority
   readonly type: UtilityTypeValue = UtilityType.Normal
   readonly declarations?: PropertiesHyphen
   readonly declarationRules?: { declarations: PropertiesHyphen, conditions?: string[], selector?: string }[]
   readonly layer!: Layer
-  readonly layerName: MasterCSSManifestUtilityLayerName
-  explicitLayerName?: MasterCSSManifestUtilityLayerName
+  readonly layerName: StetCSSManifestUtilityLayerName
+  explicitLayerName?: StetCSSManifestUtilityLayerName
   readonly valid: boolean = true
   animationNames?: Set<string>
   variableNames?: Set<string>
@@ -737,7 +737,7 @@ export class Utility {
     const conditionBranchCounts: number[] = []
     for (const conditionToken of conditionTokens) {
       if (this.css.modes.includes(conditionToken)) continue
-      const variantBranches = this.css.resolveVariant(`@${conditionToken}` as MasterCSSManifestVariantToken)
+      const variantBranches = this.css.resolveVariant(`@${conditionToken}` as StetCSSManifestVariantToken)
       if (variantBranches) conditionBranchCounts.push(variantBranches.length)
     }
     let branches = this.applySelectorTokenBranches([{ key: '' }], selectorToken, conditionBranchCounts)
@@ -753,7 +753,7 @@ export class Utility {
         continue
       }
 
-      const variantToken = `@${conditionToken}` as MasterCSSManifestVariantToken
+      const variantToken = `@${conditionToken}` as StetCSSManifestVariantToken
       const variantBranches = this.css.resolveVariant(variantToken)
       if (variantBranches) {
         branches = branches.flatMap((branch) =>
@@ -837,7 +837,7 @@ export class Utility {
 
   /** A selector token as its raw selector text and its `:` variants, in order. */
   private splitSelectorToken(selectorToken: string) {
-    const segments: (string | { token: MasterCSSManifestVariantToken, variantBranches: MasterCSSManifestVariantBranch[], suffix: string })[] = []
+    const segments: (string | { token: StetCSSManifestVariantToken, variantBranches: StetCSSManifestVariantBranch[], suffix: string })[] = []
     const selectorVariantTokens = [...this.css.variants.keys()]
       .filter((token) => token.startsWith(':'))
       .sort((a, b) => b.length - a.length)

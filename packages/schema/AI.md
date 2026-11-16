@@ -1,6 +1,6 @@
 # @stet-css/schema
 
-Owns the **wire formats** every layer shares: the `MasterCSSManifest` ABI and its JSON codec, CSS directive results, and syntax IR types. It holds types, serializable constants, and pure codec helpers; the behaviour that uses them lives in the consuming package.
+Owns the **wire formats** every layer shares: the `StetCSSManifest` ABI and its JSON codec, CSS directive results, and syntax IR types. It holds types, serializable constants, and pure codec helpers; the behaviour that uses them lives in the consuming package.
 
 ## Boundaries
 

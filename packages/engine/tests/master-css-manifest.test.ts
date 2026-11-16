@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import UtilityType from '@stet-css/schema/utility-type'
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
-import { groupMasterCSSManifestVariables } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
+import { groupStetCSSManifestVariables } from '@stet-css/schema/manifest'
 import { MasterCSS } from '../src'
 
-const variables = groupMasterCSSManifestVariables
+const variables = groupStetCSSManifestVariables
 
-describe.concurrent('MasterCSSManifest execution', () => {
+describe.concurrent('StetCSSManifest execution', () => {
   it('executes semantic enum pattern utilities after exact semantic utilities', () => {
-    const manifest: MasterCSSManifest = {
+    const manifest: StetCSSManifest = {
       version: 1,
       settings: {
         modes: []
@@ -61,7 +61,7 @@ describe.concurrent('MasterCSSManifest execution', () => {
   })
 
   it('keeps all matching exact semantic utilities when arbitrary utilities are indexed', () => {
-    const manifest: MasterCSSManifest = {
+    const manifest: StetCSSManifest = {
       version: 1,
       settings: {
         modes: []
@@ -99,7 +99,7 @@ describe.concurrent('MasterCSSManifest execution', () => {
   })
 
   it('falls back to pattern scanning when pattern names cannot be safely indexed', () => {
-    const manifest: MasterCSSManifest = {
+    const manifest: StetCSSManifest = {
       version: 1,
       settings: {
         modes: []
@@ -128,7 +128,7 @@ describe.concurrent('MasterCSSManifest execution', () => {
   })
 
   it('tries raw managed utilities before key alias fallback', () => {
-    const manifest: MasterCSSManifest = {
+    const manifest: StetCSSManifest = {
       version: 1,
       settings: {
         modes: []
@@ -192,7 +192,7 @@ describe.concurrent('MasterCSSManifest execution', () => {
   })
 
   it('executes pre-bucketed utility and variable aliases without config-style resolution', () => {
-    const manifest: MasterCSSManifest = {
+    const manifest: StetCSSManifest = {
       version: 1,
       settings: {
         modes: []
@@ -229,7 +229,7 @@ describe.concurrent('MasterCSSManifest execution', () => {
   })
 
   it('resolves variable alias refs during manifest loading without serialized namespaces', () => {
-    const manifest: MasterCSSManifest = {
+    const manifest: StetCSSManifest = {
       version: 1,
       settings: {
         modes: []
@@ -301,7 +301,7 @@ describe.concurrent('MasterCSSManifest execution', () => {
   })
 
   it('reuses compiled manifest data without sharing mutable instance state', () => {
-    const manifest: MasterCSSManifest = {
+    const manifest: StetCSSManifest = {
       version: 1,
       settings: {
         modes: []
@@ -349,7 +349,7 @@ describe.concurrent('MasterCSSManifest execution', () => {
   })
 
   it('keeps native declaration matcher behavior instance-local for cached manifests', () => {
-    const manifest: MasterCSSManifest = {
+    const manifest: StetCSSManifest = {
       version: 1,
       settings: {
         modes: []
@@ -377,7 +377,7 @@ describe.concurrent('MasterCSSManifest execution', () => {
    * test red.
    */
   it('rejects a manifest whose baseUnit is not a CSS length', () => {
-    const manifest = { version: 1, settings: { baseUnit: 4 } } as unknown as MasterCSSManifest
+    const manifest = { version: 1, settings: { baseUnit: 4 } } as unknown as StetCSSManifest
 
     expect(() => MasterCSS.create({ manifest })).toThrow('Expected a CSS length')
   })
@@ -398,7 +398,7 @@ describe.concurrent('MasterCSSManifest execution', () => {
         properties: ['fake-property'],
         variableAliasRefs: ['~spacing']
       }]
-    } as unknown as MasterCSSManifest
+    } as unknown as StetCSSManifest
     const css = MasterCSS.create({ manifest: manifest })
 
     expect(css.createRule('fakeAlias:#fff')).toBeUndefined()
@@ -407,8 +407,8 @@ describe.concurrent('MasterCSSManifest execution', () => {
   })
 
   it('rejects v2 manifests instead of compatibility-loading them', () => {
-    expect(() => MasterCSS.create({ manifest: { version: 2 } as unknown as MasterCSSManifest }))
-      .toThrow('Unsupported MasterCSSManifest version. Expected version 1.')
+    expect(() => MasterCSS.create({ manifest: { version: 2 } as unknown as StetCSSManifest }))
+      .toThrow('Unsupported StetCSSManifest version. Expected version 1.')
   })
 
   it('rejects stale flat v1 variable manifests instead of compatibility-loading them', () => {
@@ -418,8 +418,8 @@ describe.concurrent('MasterCSSManifest execution', () => {
         variables: [
           { name: 'spacing-card', key: 'card', namespace: 'spacing', type: 'number', value: 16 }
         ]
-      } as unknown as MasterCSSManifest
-    })).toThrow('Unsupported MasterCSSManifest variables format. Expected namespace-grouped variables.')
+      } as unknown as StetCSSManifest
+    })).toThrow('Unsupported StetCSSManifest variables format. Expected namespace-grouped variables.')
   })
 
   it('rejects stale v1 utility bucket manifests instead of compatibility-loading them', () => {
@@ -427,16 +427,16 @@ describe.concurrent('MasterCSSManifest execution', () => {
       manifest: {
         version: 1,
         utilityBuckets: {}
-      } as unknown as MasterCSSManifest
-    })).toThrow('Unsupported MasterCSSManifest utilityBuckets field. Matcher indexes are engine-derived.')
+      } as unknown as StetCSSManifest
+    })).toThrow('Unsupported StetCSSManifest utilityBuckets field. Matcher indexes are engine-derived.')
   })
 
   it('uses compiled condition aliases from the manifest', () => {
     const cardCondition = {
       id: 'media',
       nodes: [{ type: 'number', name: 'width', operator: '>=', value: 48, unit: 'rem' }]
-    } satisfies NonNullable<MasterCSSManifest['conditions']>[string]
-    const manifest: MasterCSSManifest = {
+    } satisfies NonNullable<StetCSSManifest['conditions']>[string]
+    const manifest: StetCSSManifest = {
       version: 1,
       settings: {
         modes: []
@@ -471,7 +471,7 @@ describe.concurrent('MasterCSSManifest execution', () => {
    * `compare-rule-priority.ts` turns this test and one other engine test red.
    */
   it('orders generated utilities by rule priority within the layer', () => {
-    const manifest: MasterCSSManifest = {
+    const manifest: StetCSSManifest = {
       version: 1,
       settings: {
         modes: []

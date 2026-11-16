@@ -1,9 +1,9 @@
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import type { MasterCSSEmittedGlobals } from '@stet-css/engine'
 import CSSRuntime from './core'
 
 type CSSRuntimeHostConstructor = new (...args: any[]) => HTMLElement
-type CSSRuntimeManifest = MasterCSSManifest | ((host: HTMLElement) => MasterCSSManifest)
+type CSSRuntimeManifest = StetCSSManifest | ((host: HTMLElement) => StetCSSManifest)
 type CSSRuntimeRoot = ShadowRoot | ((host: HTMLElement) => ShadowRoot | null | undefined)
 type CSSRuntimeEmittedGlobals = MasterCSSEmittedGlobals | ((host: HTMLElement) => MasterCSSEmittedGlobals | undefined)
 
@@ -15,7 +15,7 @@ export interface CSSRuntimeOptions {
 
 export type CSSRuntimeDecoratorOptions = CSSRuntimeOptions
 
-function resolveManifest(host: HTMLElement, manifest: CSSRuntimeManifest): MasterCSSManifest {
+function resolveManifest(host: HTMLElement, manifest: CSSRuntimeManifest): StetCSSManifest {
   return typeof manifest === 'function' ? manifest(host) : manifest
 }
 

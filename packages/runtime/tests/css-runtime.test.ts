@@ -1,8 +1,8 @@
 import { cssRuntime } from '../src'
 import type CSSRuntime from '../src'
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 
-const manifest = { version: 1 } satisfies MasterCSSManifest
+const manifest = { version: 1 } satisfies StetCSSManifest
 
 class RuntimeElement extends HTMLElement {
   cssRuntime?: CSSRuntime

@@ -1,13 +1,13 @@
 import { CONDITION_COMPARABLE_FEATURES, CONDITION_COMPARISON_OPERATORS, CONDITION_FEATURE_ALIASES, CONDITION_IDENTIFIERS, CONDITION_LOGICAL_OPERATORS } from '../common'
 import type MasterCSS from '../core'
-import type { MasterCSSManifestConditionIdentifier } from '@stet-css/schema/manifest'
+import type { StetCSSManifestConditionIdentifier } from '@stet-css/schema/manifest'
 import parsePair from './parse-pair'
 import parseValue from './parse-value'
 import replaceCharOutsideQuotes from './replace-char-outside-quotes'
 import splitCharOutsideQuotes from './split-char-outside-quotes'
 
 export type Condition = {
-  id: MasterCSSManifestConditionIdentifier
+  id: StetCSSManifestConditionIdentifier
   nodes: ConditionNode[]
 }
 export declare type ConditionBooleanNode = { raw?: string, name: string, type: 'boolean' }
@@ -28,12 +28,12 @@ function isConditionFeatureName(value: string) {
   return CONDITION_COMPARABLE_FEATURES.includes(resolveConditionFeatureName(value))
 }
 
-function isConditionIdentifier(value: string): value is MasterCSSManifestConditionIdentifier {
+function isConditionIdentifier(value: string): value is StetCSSManifestConditionIdentifier {
   return (CONDITION_IDENTIFIERS as string[]).includes(value)
 }
 
 export default function parseCondition(token: string, css: MasterCSS, isRaw = true) {
-  let id: MasterCSSManifestConditionIdentifier | undefined
+  let id: StetCSSManifestConditionIdentifier | undefined
   let firstToken: string | undefined
   const resolve = (token: string) => {
     const regex = /([a-zA-Z0-9-:%|]+|[&|!|,|>|<|=][=]?)/g

@@ -1,20 +1,20 @@
-import { defaultManifest, UtilityType, type MasterCSSManifest } from '@stet-css/language'
+import { defaultManifest, UtilityType, type StetCSSManifest } from '@stet-css/language'
 import {
-  flattenMasterCSSManifestVariables,
-  groupMasterCSSManifestVariables,
-  type MasterCSSManifestVariable
+  flattenStetCSSManifestVariables,
+  groupStetCSSManifestVariables,
+  type StetCSSManifestVariable
 } from '@stet-css/schema/manifest'
 
-type PlanVariableDraft = MasterCSSManifestVariable
-type ManifestUtilityDraft = Partial<NonNullable<MasterCSSManifest['utilities']>[number]> & {
+type PlanVariableDraft = StetCSSManifestVariable
+type ManifestUtilityDraft = Partial<NonNullable<StetCSSManifest['utilities']>[number]> & {
   declarations?: Record<string, string | number>
   rules?: { selector?: string, declarations: Record<string, string | number> }[]
 }
-type PresetManifestDraftInput = Partial<Omit<MasterCSSManifest, 'variables' | 'utilities'>> & {
+type PresetManifestDraftInput = Partial<Omit<StetCSSManifest, 'variables' | 'utilities'>> & {
   variables?: PlanVariableDraft[]
   utilities?: ManifestUtilityDraft[]
 }
-type PresetManifestInput = MasterCSSManifest | PresetManifestDraftInput
+type PresetManifestInput = StetCSSManifest | PresetManifestDraftInput
 
 function normalizeVariable(variable: PlanVariableDraft): PlanVariableDraft {
   if (variable.name && variable.type) return variable
@@ -26,9 +26,9 @@ function normalizeVariable(variable: PlanVariableDraft): PlanVariableDraft {
   }
 }
 
-function normalizeUtility(utility: ManifestUtilityDraft, order: number): NonNullable<MasterCSSManifest['utilities']>[number] {
+function normalizeUtility(utility: ManifestUtilityDraft, order: number): NonNullable<StetCSSManifest['utilities']>[number] {
   if (utility.emit && utility.matchers) {
-    return utility as NonNullable<MasterCSSManifest['utilities']>[number]
+    return utility as NonNullable<StetCSSManifest['utilities']>[number]
   }
   const name = utility.name || utility.id?.replace(/^\./, '') || ''
   const id = utility.id || (utility.type === UtilityType.Semantic || utility.layer === 'components' ? `.${name}` : name)
@@ -56,8 +56,8 @@ function normalizeUtility(utility: ManifestUtilityDraft, order: number): NonNull
   }
 }
 
-export function createPresetManifest(manifest: PresetManifestInput = {}): MasterCSSManifest {
-  if (manifest.version === 1) return manifest as MasterCSSManifest
+export function createPresetManifest(manifest: PresetManifestInput = {}): StetCSSManifest {
+  if (manifest.version === 1) return manifest as StetCSSManifest
   const input = manifest as PresetManifestDraftInput
   const defaultUtilities = defaultManifest.utilities || []
   const utilities = (input.utilities || []).map((utility, index) => normalizeUtility(utility as ManifestUtilityDraft, defaultUtilities.length + index))
@@ -69,8 +69,8 @@ export function createPresetManifest(manifest: PresetManifestInput = {}): Master
       ...defaultManifest.settings,
       ...input.settings
     },
-    variables: groupMasterCSSManifestVariables([
-      ...flattenMasterCSSManifestVariables(defaultManifest.variables),
+    variables: groupStetCSSManifestVariables([
+      ...flattenStetCSSManifestVariables(defaultManifest.variables),
       ...variables
     ]),
     animations: {

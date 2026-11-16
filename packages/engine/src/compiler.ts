@@ -5,7 +5,7 @@ import parseSelector from './utils/parse-selector'
 import generateSelector from './utils/generate-selector'
 import compareRulePriority from './utils/compare-rule-priority'
 import type { Utility } from './utility'
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import type { MasterCSSEmittedGlobals } from './emitted-globals'
 import type { MasterCSSOptions } from './core'
 import { ROOT_FONT_SIZE } from './common'
@@ -18,7 +18,7 @@ export { MasterCSS, ROOT_FONT_SIZE, PRESET_MODES, UndeclaredModeError, compareRu
 export type { Utility as GeneratedRule }
 export type * from '@stet-css/schema/manifest'
 
-export function createCompilerCSS(manifest: MasterCSSManifest, emittedGlobals?: MasterCSSEmittedGlobals, options?: MasterCSSOptions) {
+export function createCompilerCSS(manifest: StetCSSManifest, emittedGlobals?: MasterCSSEmittedGlobals, options?: MasterCSSOptions) {
   return MasterCSS.create({
     manifest,
     emittedGlobals,
@@ -26,7 +26,7 @@ export function createCompilerCSS(manifest: MasterCSSManifest, emittedGlobals?: 
   })
 }
 
-export function expandClassName(manifest: MasterCSSManifest, className: string, mode?: string) {
+export function expandClassName(manifest: StetCSSManifest, className: string, mode?: string) {
   return createCompilerCSS(manifest).createRules(className, undefined, mode)
 }
 

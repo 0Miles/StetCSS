@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { createMasterCSSManifest } from '../src/master-css-manifest'
 import UtilityType from '@stet-css/schema/utility-type'
-import { flattenMasterCSSManifestVariables, type MasterCSSManifest } from '@stet-css/schema/manifest'
+import { flattenStetCSSManifestVariables, type StetCSSManifest } from '@stet-css/schema/manifest'
 import { MasterCSS } from '@stet-css/engine'
 
-function variablesOf(manifest: MasterCSSManifest) {
-  return flattenMasterCSSManifestVariables(manifest.variables)
+function variablesOf(manifest: StetCSSManifest) {
+  return flattenStetCSSManifestVariables(manifest.variables)
 }
 
 describe.concurrent('createMasterCSSManifest', () => {

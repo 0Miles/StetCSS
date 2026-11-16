@@ -33,7 +33,7 @@ import {
   resolveStylesheetSourcePaths,
   type StylesheetSourceOptions
 } from '@stet-css/stylesheet/directives'
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import type { CompilerDiagnosticRecorder } from '../../packages/compiler/src/diagnostics'
 import { renderCompiledManifestCSS } from '../../packages/stylesheet/src/render'
 import fg from 'fast-glob'
@@ -192,7 +192,7 @@ const DEFAULT_PRESET_SOURCE_FILES = [
 ]
 
 interface DefaultMasterCSSPackageArtifact {
-  manifest: MasterCSSManifest
+  manifest: StetCSSManifest
   nativeCSS: string
 }
 
@@ -508,7 +508,7 @@ function readDefaultMasterCSSPackageArtifact(projectDir: string, recorder: Diagn
   recorder.setCount('master-package-shortcut-hit-count', 1)
   recorder.setCount('master-package-shortcut-fallback-count', 0)
   return recorder.time('master-package-artifact-read-ms', () => ({
-    manifest: JSON.parse(readFileSync(artifactFiles.manifestFile, 'utf8')) as MasterCSSManifest,
+    manifest: JSON.parse(readFileSync(artifactFiles.manifestFile, 'utf8')) as StetCSSManifest,
     nativeCSS: readFileSync(artifactFiles.nativeCSSFile, 'utf8')
   }))
 }

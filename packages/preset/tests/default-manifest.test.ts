@@ -15,21 +15,21 @@ import {
   createDefaultNativeCSSFromSourceFile
 } from '../scripts/generate-default-manifest'
 import defaultManifestJSON from '../src/default-manifest.json' with { type: 'json' }
-import { flattenMasterCSSManifestVariables, type MasterCSSManifest } from '@stet-css/schema/manifest'
+import { flattenStetCSSManifestVariables, type StetCSSManifest } from '@stet-css/schema/manifest'
 
-const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
+const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
 
-function createTestCSS(manifest: MasterCSSManifest, options: Omit<MasterCSSCreateOptions, 'manifest'> = {}) {
+function createTestCSS(manifest: StetCSSManifest, options: Omit<MasterCSSCreateOptions, 'manifest'> = {}) {
   return MasterCSS.create({ manifest, ...options })
 }
-function variablesOf(manifest: MasterCSSManifest) {
-  return flattenMasterCSSManifestVariables(manifest.variables)
+function variablesOf(manifest: StetCSSManifest) {
+  return flattenStetCSSManifestVariables(manifest.variables)
 }
 function normalizeLineEndings(value: string) {
   return value.replace(/\r\n?/g, '\n')
 }
 const __dirname = dirname(fileURLToPath(import.meta.url))
-let compiledDefaultManifest: MasterCSSManifest
+let compiledDefaultManifest: StetCSSManifest
 
 const retainedRadiusKeyAliases = {
   rbl: 'border-bottom-left-radius',
@@ -208,7 +208,7 @@ const removedSourceUtilityIds = [
   'word-spacing'
 ]
 
-function collectMatcherKeys(manifest: MasterCSSManifest) {
+function collectMatcherKeys(manifest: StetCSSManifest) {
   const keys = new Set<string>()
   for (const utility of manifest.utilities || []) {
     for (const matcher of utility.matchers || []) {
@@ -220,7 +220,7 @@ function collectMatcherKeys(manifest: MasterCSSManifest) {
   return keys
 }
 
-function hasCSSVariableAssignmentUtility(manifest: MasterCSSManifest) {
+function hasCSSVariableAssignmentUtility(manifest: StetCSSManifest) {
   return (manifest.utilities || []).some((utility) =>
     ((utility.emit as { type: string }).type === 'css-variable-assignment')
     || utility.matchers.some((matcher) => (matcher as { type: string }).type === 'css-variable-assignment')

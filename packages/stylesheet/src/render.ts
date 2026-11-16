@@ -2,12 +2,12 @@ import { AnimationRule, VariableRule, type MasterCSSEmittedGlobals } from '@stet
 import { collectAnimationNamesFromDeclaration } from '@stet-css/engine'
 import { collectCSSVariableReferences } from '@stet-css/lexer'
 import { createCSSWithNativeDeclarations } from '@stet-css/validator/native-declaration'
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 
 type StylesheetCSS = ReturnType<typeof createCSSWithNativeDeclarations>
 
 export interface RenderCompiledManifestCSSOptions {
-  manifest: MasterCSSManifest
+  manifest: StetCSSManifest
   classNames?: Iterable<string>
   nativeCSS?: string | string[]
   includeGeneratedCSS?: boolean

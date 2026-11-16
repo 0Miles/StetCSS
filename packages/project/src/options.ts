@@ -1,8 +1,8 @@
 import type { CompileCSSManifestResult, CompileProjectManifestResult } from '@stet-css/compiler'
-import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
 
 export interface LoadManifestOptions {
-  baseManifest?: MasterCSSManifest
+  baseManifest?: StetCSSManifest
   classes?: string[]
   onWarning?: (warning: string) => void
 }
