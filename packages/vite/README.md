@@ -95,9 +95,9 @@ In static mode, import the generated stylesheet from a source stylesheet.
 @import '@stet-css/core';
 ```
 
-Classes come from the project's own source files, plus `@source` files, minus `@source not` files, plus `@safelist`, minus `@blocklist`, so templates that only a server build compiles, such as Astro pages, get their rules. The plugin does not collect classes from Vite's module graph.
+Classes come from the project's own source files, plus `@source` files, minus `@source not` files, plus `@safelist`, minus `@blocklist`, so templates that only a server build compiles, such as Astro pages, get their rules. The plugin does not collect classes from Vite's module graph, so classes that appear only in `node_modules`, outside the Vite root, or only in code another plugin generates need `@source` or `@safelist`; for example, `src/style.css` adds a component library with `@source "../node_modules/my-ui/dist";` (paths are relative to the stylesheet). In dev, the plugin updates the CSS when a file it reads is added, changed or removed; a new file under an `@source` pattern outside the Vite root is picked up after the next change to a watched file or a restart.
 
-Source stylesheets that import `@stet-css/core` are treated as native CSS pruning roots by default. Ordinary CSS outside Master CSS directives is pruned against detected classes, and the import inserts generated Master CSS. Add `@preserve native;` when native CSS must be preserved.
+Source stylesheets that import `@stet-css/core` are treated as native CSS pruning roots by default. Ordinary CSS outside Master CSS directives is pruned against the same class set in every mode (`runtime`, `static`, `progressive` and `pre-render`), and the import inserts generated Master CSS. Add `@preserve native;` when native CSS must be preserved.
 
 ## Runtime input imports
 
@@ -121,7 +121,7 @@ The `options` object is passed to `masterCSS(options)`.
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
 | `mode` | `'runtime' \| 'static' \| 'progressive' \| 'pre-render' \| null` | `'runtime'` | Integration mode. Use `null` to disable automatic integration. |
-| `scanner` | `ScannerOptions` | `undefined` | `safelist`, `blocklist`, `adapters` and `manifest` apply to the class set; `exclude` no longer applies, use `@source not`. |
+| `scanner` | `ScannerOptions` | `undefined` | `safelist`, `blocklist` and `adapters` apply to the class set, and `manifest` replaces the manifest used for rendering; `exclude` no longer applies, use `@source not`. |
 | `injectRuntime` | `boolean` | `true` | Includes the runtime through Vite's HTML transform. |
 | `avoidFOUC` | `boolean` | `true` | Prevents flash of unstyled content during runtime rendering. |
 
