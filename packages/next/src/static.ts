@@ -8,7 +8,7 @@ import {
   resolveStylesheetSourceFiles,
   type StyleCSSSources
 } from '@stet-css/stylesheet'
-import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
+import { findCSSManifestEntryFiles, STYLE_ENTRY_EXTENSIONS } from '@stet-css/project/entries'
 
 // Not under node_modules/.master-css like the virtual modules: webpack snapshots
 // node_modules as immutable (`managedPaths`), so it would not see the file being rewritten.
@@ -80,7 +80,7 @@ export async function createStaticCSS({ projectDir, scannerOptions = {} }: Stati
   const scanner = new CSSScanner(scannerOptions, projectDir)
   await scanner.init()
   const styleCSSSources: StyleCSSSources = new Map()
-  for (const entry of await findCSSManifestEntryFiles(projectDir)) {
+  for (const entry of await findCSSManifestEntryFiles(projectDir, { extensions: STYLE_ENTRY_EXTENSIONS })) {
     await registerStyleCSSSource(scanner, styleCSSSources, entry, await readFile(entry, 'utf8'), {
       projectDir
     })
