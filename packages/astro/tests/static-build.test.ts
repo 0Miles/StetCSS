@@ -74,7 +74,7 @@ describe('Astro build with masterCSS()', () => {
     expect(css).not.toContain('@utilities')
   })
 
-  it('leaves no runtime, rendered style or hydration manifest in the HTML', () => {
+  it('leaves no runtime or rendered style in the HTML', () => {
     const html = readFiles(join(outDir, 'client'), '.html').join('\n')
 
     expect(html).toContain('Prerendered')

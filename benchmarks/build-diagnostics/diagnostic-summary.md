@@ -116,5 +116,5 @@ Current follow-up:
 
 - Generated CSS output, cascade order, and directive semantics.
 - Source detection and extraction correctness.
-- Hydration manifests or runtime delivery behavior.
+- Runtime delivery behavior.
 - Public CLI, Vite plugin, compiler, scanner, or package exports.
