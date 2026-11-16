@@ -411,4 +411,53 @@ describe('static source files', () => {
       expect(isStylesheetSourceFile(relative(root, join(workspace, file)), context), file).toBe(listed)
     }
   })
+
+  /**
+   * Guards extra project directories (a Nuxt layer outside the project root, or installed
+   * under `node_modules`): each is read by the project rules with itself as the root, so its
+   * own dependencies and build output stay out while a directory the project's rules would
+   * skip is still read, and the per-path check agrees with the listed files.
+   * Reverse check: listing only `projectDir`'s files turns only this test red.
+   */
+  it('reads extra project directories by the project rules', async () => {
+    const workspace = createProject({
+      'app/src/page.html': '<div class="block"></div>',
+      'base/components/Card.vue': '<template><div class="m:4x"></div></template>',
+      'base/node_modules/dep/index.js': 'const c = "p:2x"',
+      'base/.output/index.html': '<div class="p:3x"></div>',
+      'app/node_modules/layer/Button.vue': '<template><div class="m:5x"></div></template>',
+      'app/node_modules/layer/node_modules/dep/index.js': 'const c = "p:6x"'
+    })
+    const root = join(workspace, 'app')
+    const scanner = new CSSScanner({ verbose: 0 }, root)
+    await scanner.init()
+    const styleCSSSources: StyleCSSSources = new Map()
+    await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'src/index.css'), '@import "@stet-css/core";', { projectDir: root })
+    const context = {
+      scanner,
+      styleCSSSources,
+      projectDir: root,
+      extraProjectDirs: [join(workspace, 'base'), join(root, 'node_modules/layer')]
+    }
+
+    const css = await createExtractedCSS({ ...context, classes: [] })
+    const files = await resolveStylesheetSourceFiles(context)
+
+    for (const className of ['block', 'm:4x', 'm:5x']) expect(css).toContain(rule(className))
+    for (const className of ['p:2x', 'p:3x', 'p:6x']) expect(css).not.toContain(rule(className))
+    expect(files).toStrictEqual([
+      join(root, 'node_modules/layer/Button.vue'),
+      join(root, 'src/page.html'),
+      join(workspace, 'base/components/Card.vue')
+    ])
+    for (const file of [
+      'base/components/Card.vue',
+      'base/node_modules/dep/index.js',
+      'base/.output/index.html',
+      'app/node_modules/layer/Button.vue',
+      'app/node_modules/layer/node_modules/dep/index.js'
+    ]) {
+      expect(isStylesheetSourceFile(join(workspace, file), context), file).toBe(files.includes(join(workspace, file)))
+    }
+  })
 })
