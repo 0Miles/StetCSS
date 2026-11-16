@@ -34,8 +34,11 @@ export default function StyleEntryHMRPlugin(_options: PluginOptions, context: Pl
   const handleSourceFileChange = (server: ViteDevServer, file: string) => {
     if (!context.virtualCSSImporters?.size) return
     if (!isStylesheetSourceFile(file, getStylesheetSourceContext(context))) return
+    // The baseline is taken when the file changes, not when the queued update runs: another
+    // extraction in between (the emittedGlobals module, an SSR transform) would already see
+    // the new classes and make the update look like a no-op.
+    const previousCSS = context.extractedCSS
     return queueUpdate(async () => {
-      const previousCSS = context.extractedCSS
       if (await getExtractedCSS(context) === previousCSS) return
       await updateStyleCSSImporters({ server })
     }, 'source update')
