@@ -264,6 +264,31 @@ describe('static class set', () => {
 
     expect(css).toContain(rule('m:4x'))
   })
+
+  /**
+   * Guards that an entry importing `@stet-css/core` can `@compose` the package's static
+   * utilities: the entry is compiled without its core import, so it must resolve against the
+   * package's manifest, or static builds throw `Invalid @compose class: inline-flex`.
+   * Runs once with the default package artifact (`classes: []`) and once with module classes,
+   * which compile the package instead.
+   * Reverse check: compiling the entry without the package manifest turns both cases red.
+   */
+  it.each([
+    ['the default package artifact', []],
+    ['a compiled package', ['probe']]
+  ])('composes preset static utilities from an entry with %s', async (_, classes) => {
+    const root = createProject({ 'src/page.html': '<div class="probe"></div>' })
+    const scanner = new CSSScanner({ verbose: 0 }, root)
+    await scanner.init()
+    const entry = '@import "@stet-css/core";\n@components { probe { @compose inline-flex; width: 40px; } }'
+    const styleCSSSources: StyleCSSSources = new Map()
+    writeFileSync(join(root, 'src/index.css'), entry)
+    await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'src/index.css'), entry, { projectDir: root })
+
+    const css = await createExtractedCSS({ scanner, styleCSSSources, projectDir: root, classes })
+
+    expect(css).toMatch(/\.probe\{[^}]*display:inline-flex/)
+  })
 })
 
 describe('static source files', () => {
