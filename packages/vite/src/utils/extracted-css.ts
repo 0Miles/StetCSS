@@ -7,9 +7,13 @@ export async function getExtractedCSSResult(context: PluginContext) {
     scanner: getScanner(context),
     styleCSSSources: context.styleCSSSources,
     projectDir: context.config?.root,
-    includeGeneratedCSS: context.includeGeneratedCSS
+    includeGeneratedCSS: context.includeGeneratedCSS,
+    // The plugin scans no modules: every class comes from the stylesheet's class set, so
+    // templates that only an SSR or prerender build compiles still get their rules.
+    classes: []
   })
   context.emittedGlobals = result.emittedGlobals
+  context.extractedCSS = result.css
   return result
 }
 

@@ -1,19 +1,23 @@
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { build, type PluginOption } from 'vite'
+import { build, type BuildOptions, type PluginOption } from 'vite'
 import { describe, expect, test } from 'vitest'
 import masterCSS from '../../src/core'
 
 interface BuildCSSFixtureOptions {
   appClass?: string
+  build?: BuildOptions
+  mainTS?: string
   plugins?: PluginOption[]
   prefix?: string
   setup?: (root: string) => void
-  styleCSS: string
+  styleCSS?: string
 }
 
 async function buildCSSFixture({
   appClass = '',
+  build: buildOptions,
+  mainTS = 'import "./style.css"\n',
   plugins = [masterCSS()],
   prefix = 'master-css-vite-style-entry-',
   setup,
@@ -29,8 +33,8 @@ async function buildCSSFixture({
       `<main${appClass ? ` class="${appClass}"` : ''}></main>`,
       '<script type="module" src="/src/main.ts"></script>'
     ].join('\n'))
-    writeFileSync(join(root, 'src/main.ts'), 'import "./style.css"\n')
-    writeFileSync(join(root, 'src/style.css'), styleCSS)
+    writeFileSync(join(root, 'src/main.ts'), mainTS)
+    if (styleCSS !== undefined) writeFileSync(join(root, 'src/style.css'), styleCSS)
     setup?.(root)
 
     await build({
@@ -39,7 +43,8 @@ async function buildCSSFixture({
       plugins,
       build: {
         outDir: 'dist',
-        emptyOutDir: true
+        emptyOutDir: true,
+        ...buildOptions
       }
     })
 
@@ -161,6 +166,56 @@ describe('StyleEntryPlugin Vite build integration', () => {
     expectMasterBaseCSS(css)
     expect(css).toMatch(/body\s*\{\s*margin:\s*0/)
     expect(css).not.toContain('@stet-css/core/base.css')
+    expect(css).not.toContain('#master-css-slot')
+  })
+
+  /**
+   * Guards templates that only a server build compiles, such as Astro pages: the SSR build
+   * must still emit their rules. The module scan this replaced skipped SSR builds, so the
+   * server bundle's CSS lacked the template's classes.
+   * Reverse check: dropping `.ts` from the project's source extensions in `@stet-css/project`
+   * (and rebuilding) turns only this test red.
+   */
+  test('static SSR build emits rules for classes in server-only templates', async () => {
+    const css = await buildCSSFixture({
+      plugins: [masterCSS({ mode: 'static' })],
+      prefix: 'master-css-vite-ssr-template-',
+      styleCSS: '@import "@stet-css/core";',
+      build: {
+        ssr: 'src/entry-server.ts',
+        ssrEmitAssets: true,
+        rollupOptions: { output: { assetFileNames: 'assets/[name][extname]' } }
+      },
+      setup(root) {
+        writeFileSync(join(root, 'src/entry-server.ts'), [
+          'import "./style.css"',
+          'import { render } from "./template"',
+          'export default render'
+        ].join('\n'))
+        writeFileSync(join(root, 'src/template.ts'), 'export const render = () => `<h1 class="font:heavy">Home</h1>`\n')
+      }
+    })
+
+    expect(css).toContain('.font\\:heavy{font-weight:var(--font-weight-heavy)}')
+    expect(css).not.toContain('#master-css-slot')
+  })
+
+  /**
+   * Guards integrations that import only the generated CSS module and have no stylesheet
+   * entry: without an entry the stylesheet falls back to classes from a module scan, which
+   * the plugin no longer runs, so it must ask for the project's class set explicitly.
+   * Reverse check: dropping `classes: []` from `src/utils/extracted-css.ts` turns this test
+   * and the serve load test of the virtual CSS module in `style-entry.test.ts` red.
+   */
+  test('static build without a stylesheet entry emits rules for the virtual CSS module', async () => {
+    const css = await buildCSSFixture({
+      appClass: 'block',
+      plugins: [masterCSS({ mode: 'static' })],
+      prefix: 'master-css-vite-virtual-only-',
+      mainTS: 'import "virtual:master-utilities.css"\n'
+    })
+
+    expect(css).toContain('.block{display:block}')
     expect(css).not.toContain('#master-css-slot')
   })
 })
