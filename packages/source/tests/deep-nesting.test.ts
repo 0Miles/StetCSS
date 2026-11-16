@@ -1,4 +1,5 @@
 import { exceedsScriptNestingLimit } from '@stet-css/lexer'
+import { INLINE_LENGTH, MAX_PARSE_LENGTH } from '../src/adapters/oxc-stack'
 import { spawn } from 'node:child_process'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
@@ -32,6 +33,23 @@ const lineShapes: [name: string, file: string, nest: (depth: number) => string][
   ['nested JSX elements', 'a.tsx', (depth) => `x=<a className="block">${'<a>\n'.repeat(depth - 1)}${'</a>'.repeat(depth)}`],
   ['new chains', 'a.js', (depth) => `x=${'new\n'.repeat(depth)}A('block')`]
 ]
+
+// Labels cost oxc the most stack per character of the chains the prescan
+// never counts.
+const labels = (depth: number) => `${'a:'.repeat(depth)}x='block'`
+
+// The deepest input still short enough to parse on the caller's stack.
+function deepestInline(nest: (depth: number) => string) {
+  let allowed = 1
+  let rejected = Math.min(INLINE_LENGTH + 1, 1 << 16)
+  while (rejected - allowed > 1) {
+    const depth = (allowed + rejected) >> 1
+    const content = nest(depth)
+    if (content.length > INLINE_LENGTH || exceedsScriptNestingLimit(content)) rejected = depth
+    else allowed = depth
+  }
+  return allowed
+}
 
 function deepestAllowed(nest: (depth: number) => string) {
   let allowed = 1
@@ -116,8 +134,9 @@ describe.concurrent('JavaScript and TypeScript at the deepest nesting oxc still 
  * and still overflows oxc-parser's native stack at 20,000 levels, killing the
  * build or dev server. oxc must parse these on a stack sized to the source and
  * return the file's class. Reverse check: setting `INLINE_LENGTH` in
- * `oxc-stack.ts` to `Infinity`, so every source parses on the caller's stack,
- * turns only these six cases red.
+ * `oxc-stack.ts` to `1 << 30`, so every source parses on the caller's stack,
+ * turns these six cases red, plus the inline cases below for the uncounted
+ * chains, whose inputs grow with `INLINE_LENGTH`.
  */
 describe.concurrent('JavaScript and TypeScript chained one level per line, 20,000 deep', () => {
   test.each(lineShapes)('%s survive extraction and keep their classes', async (_, file, nest) => {
@@ -126,4 +145,36 @@ describe.concurrent('JavaScript and TypeScript chained one level per line, 20,00
     expect({ code, signal }, stderr).toEqual({ code: 0, signal: null })
     expect(JSON.parse(stdout)).toContain('block')
   })
+})
+
+/**
+ * Guards: sources up to `INLINE_LENGTH` parse on the caller's own stack, so
+ * the deepest input that short, in every shape, must fit the smallest stack
+ * extraction runs on. Reverse check: raising `INLINE_LENGTH` to 16384 turns
+ * the labels and `new` chains cases red.
+ */
+describe.concurrent('JavaScript and TypeScript short enough to parse inline', () => {
+  test.each([...shapes, ...lineShapes, ['labels', 'a.js', labels] as const])('%s parse without crashing', async (_, file, nest) => {
+    const { code, signal, stdout, stderr } = await extractOnWorkerInChild(file, nest(deepestInline(nest)))
+
+    expect({ code, signal }, stderr).toEqual({ code: 0, signal: null })
+    expect(JSON.parse(stdout)).toContain('block')
+  })
+})
+
+/**
+ * Guards: a source longer than `MAX_PARSE_LENGTH` needs more stack than the
+ * parse thread can get, and 4 MB of labels overflows even that, killing the
+ * build. It must skip oxc and keep its class through text extraction.
+ * Reverse check: setting `MAX_PARSE_LENGTH` to `Infinity` turns only this
+ * case red.
+ */
+test('JavaScript longer than the parse limit survives extraction and keeps its classes', async () => {
+  const content = labels(2_000_000)
+  expect(content.length).toBeGreaterThan(MAX_PARSE_LENGTH)
+
+  const { code, signal, stdout, stderr } = await extractOnWorkerInChild('a.js', content)
+
+  expect({ code, signal }, stderr).toEqual({ code: 0, signal: null })
+  expect(JSON.parse(stdout)).toContain('block')
 })
