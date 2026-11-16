@@ -871,12 +871,12 @@ export async function registerStyleCSSSource(
   const resolvedSource = resolveStyleCSSImportGraph(filename, source, options.projectDir ?? scanner.cwd, {
     expandMasterCSSPackage: false
   })
-  const extension = extname(filename)
-  // A Sass entry's directives pass through Sass untouched, so they are read from its output.
-  const collectedDirectives = extension === '.css' || extension === '.scss' || extension === '.sass'
+  // Sass passes a Sass entry's directives through untouched, so they are read from its
+  // output; plain CSS comes back from `preprocessStyleCSS` as is.
+  const collectedDirectives = isStyleCSSRequest(filename)
     ? collectStylesheetDirectivesFromCSSGraph(
       filename,
-      extension === '.css' ? detectionSource.source : await preprocessStyleCSS(detectionSource.source, filename, options),
+      await preprocessStyleCSS(detectionSource.source, filename, options),
       scanner.cwd
     )
     : {
