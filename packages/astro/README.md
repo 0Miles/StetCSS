@@ -92,7 +92,7 @@ Do not write `@import '@stet-css/core'` inside an `.astro` `<style>` block, `is:
 
 ## Options
 
-The options are the `@stet-css/vite` plugin options without `mode`, `injectRuntime` and `avoidFOUC`; the integration always builds static CSS.
+The options are the `@stet-css/vite` plugin options.
 
 | Option | Default | Description |
 | --- | --- | --- |

@@ -1,10 +1,10 @@
 # @stet-css/astro
 
-Owns the Astro integration: it registers `@stet-css/vite` in static mode through `astro:config:setup` and nothing else. It injects no runtime, registers no middleware and rewrites no built HTML.
+Owns the Astro integration: it registers `@stet-css/vite` through `astro:config:setup` and nothing else. It injects no runtime, registers no middleware and rewrites no built HTML.
 
 ## Boundaries
 
-- Static CSS generation, dev updates and the project class set live in `@stet-css/vite`; this package only forces `mode: 'static'` and drops `mode`, `injectRuntime` and `avoidFOUC` from its options type.
+- Static CSS generation, dev updates and the project class set live in `@stet-css/vite`; this package passes its options through.
 - Astro source extraction lives in `@stet-css/source`.
 
 ## Risks

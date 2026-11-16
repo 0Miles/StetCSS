@@ -39,19 +39,16 @@ export function removeProjects() {
  */
 export function createProjectContext({
   command = 'build',
-  html = '',
-  includeGeneratedCSS
+  html = ''
 }: {
   command?: 'serve' | 'build'
   html?: string
-  includeGeneratedCSS?: boolean
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'master-css-vite-project-'))
   projectRoots.push(root)
   writeFileSync(join(root, 'index.html'), html)
   return {
     config: { command, root },
-    includeGeneratedCSS,
     scanner: Object.assign(new EventEmitter(), {
       cwd: root,
       options: { safelist: [] },

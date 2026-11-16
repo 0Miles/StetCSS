@@ -15,7 +15,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
     const { css } = await buildProject({
       appClass: 'block',
       plugins: [
-        masterCSS({ mode: 'static' })
+        masterCSS()
       ],
       prefix: 'master-css-vite-import-order-',
       styleCSS: [
@@ -41,31 +41,11 @@ describe('StyleEntryPlugin Vite build integration', () => {
     expect(css).not.toContain('@stet-css/core')
   })
 
-  test.each(['runtime', 'progressive', 'pre-render'] as const)('%s mode emits preset base CSS for the root Master CSS import', async (mode) => {
+  test('emits preset base CSS for the root Master CSS import', async () => {
     const { css } = await buildProject({
       appClass: 'block',
       plugins: [
-        masterCSS({ mode })
-      ],
-      styleCSS: [
-        '@import "@stet-css/core";',
-        '',
-        'body { margin: 0; }'
-      ].join('\n')
-    })
-
-    expectMasterBaseCSS(css)
-    expect(css).toMatch(/body\s*\{\s*margin:\s*0/)
-    expect(css).not.toContain('.block{display:block}')
-    expect(css).not.toContain('@stet-css/core')
-    expect(css).not.toContain('#master-css-slot')
-  })
-
-  test('static mode emits preset base CSS for the root Master CSS import', async () => {
-    const { css } = await buildProject({
-      appClass: 'block',
-      plugins: [
-        masterCSS({ mode: 'static' })
+        masterCSS()
       ],
       styleCSS: [
         '@import "@stet-css/core";',
@@ -81,16 +61,13 @@ describe('StyleEntryPlugin Vite build integration', () => {
   })
 
   /**
-   * Guards the explicit `@stet-css/core/base.css` subpath import in the default (static) build
-   * and in runtime mode: Vite must expand it into the preset base CSS, not ship the import.
+   * Guards the explicit `@stet-css/core/base.css` subpath import: Vite must expand it into the
+   * preset base CSS, not ship the import.
    */
-  test.each([
-    ['masterCSS()', undefined],
-    ["masterCSS({ mode: 'runtime' })", { mode: 'runtime' }]
-  ] as const)('%s lets Vite expand the explicit base.css subpath import', async (_label, options) => {
+  test('lets Vite expand the explicit base.css subpath import', async () => {
     const { css } = await buildProject({
       plugins: [
-        masterCSS(options)
+        masterCSS()
       ],
       styleCSS: [
         '@import "@stet-css/core/base.css";',
@@ -115,7 +92,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
    */
   test('static SSR build emits rules for classes in server-only templates', async () => {
     const { css } = await buildProject({
-      plugins: [masterCSS({ mode: 'static' })],
+      plugins: [masterCSS()],
       prefix: 'master-css-vite-ssr-template-',
       styleCSS: '@import "@stet-css/core";',
       build: {
@@ -147,7 +124,7 @@ describe('StyleEntryPlugin Vite build integration', () => {
   test('static build without a stylesheet entry emits rules for the virtual CSS module', async () => {
     const { css } = await buildProject({
       appClass: 'block',
-      plugins: [masterCSS({ mode: 'static' })],
+      plugins: [masterCSS()],
       prefix: 'master-css-vite-virtual-only-',
       mainTS: 'import "virtual:master-utilities.css"\n'
     })
