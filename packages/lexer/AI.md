@@ -1,6 +1,6 @@
 # @stet-css/lexer
 
-Owns **lexical scanning** with exact source ranges: class-list parsing and tokenizing, CSS directive ranges, `@import` and `@master` statement scanning for manifest entries, CSS value and variable-reference helpers, the JS/TS nesting-depth prescan, and unit constants. It returns tokens and ranges; consumers validate and compile them.
+Owns **lexical scanning** with exact source ranges: class-list parsing and tokenizing, CSS directive ranges, `@import` statement scanning for manifest entries, CSS value and variable-reference helpers, the JS/TS nesting-depth prescan, and unit constants. It returns tokens and ranges; consumers validate and compile them.
 
 ## Boundaries
 
