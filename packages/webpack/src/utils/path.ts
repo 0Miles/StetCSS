@@ -1,9 +1,4 @@
-import { VIRTUAL_MODULE_DIR } from '@stet-css/integration/node'
 import path from 'node:path'
-
-export function isVirtualManifestModulePath(modulePath: string) {
-  return modulePath.replace(/\\/g, '/').includes(`${VIRTUAL_MODULE_DIR}/`)
-}
 
 export function normalizePath(filePath: string) {
   return path.resolve(filePath).replace(/\\/g, '/')
@@ -16,4 +11,10 @@ export function hasModifiedFile(modifiedFiles: ReadonlySet<string> | undefined, 
     if (normalizePath(eachModifiedFile) === normalizedFilePath) return true
   }
   return false
+}
+
+/** Whether `child` sits strictly inside `parent`. */
+export function isInsidePath(child: string, parent: string) {
+  const relativePath = path.relative(parent, child)
+  return Boolean(relativePath) && !relativePath.startsWith('..') && !path.isAbsolute(relativePath)
 }

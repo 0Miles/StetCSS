@@ -910,7 +910,6 @@
         "@stet-css/core": "workspace:^",
         "@stet-css/integration": "workspace:^",
         "@stet-css/project": "workspace:^",
-        "@stet-css/runtime": "workspace:^",
         "@stet-css/scanner": "workspace:^",
         "@stet-css/stylesheet": "workspace:^",
         "consola": "^3.4.2",
