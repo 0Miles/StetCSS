@@ -2331,7 +2331,7 @@ export function compileCSS(source: string, options: CompileCSSOptions = {}): Com
     composeRangeIndex: 0,
     sourceLocationResolver: createSourceLocationResolver(source)
   }
-  parsed.extractionPolicy = collectStandaloneCSSDirectiveExtractionPolicy(sourceWithoutReferences, filename)
+  parsed.extractionPolicy = collectStandaloneCSSDirectiveExtractionPolicy(sourceWithoutReferences, options.from)
   validateComposeRanges(parsed)
   const preprocessedSource = maskManagedPatternEntryNames(removeStandaloneCSSDirectives(sourceWithoutReferences, filename))
   let ruleDepth = 0
