@@ -13,7 +13,7 @@ Runs the engine in the browser. `CSSRuntime` observes DOM class changes, keeps p
 - **Usage counts**: a class keeps its rules while its `classCounts` entry lives. Pair every increment with its decrement across `MutationObserver` diffs, for Document and ShadowRoot roots alike.
 - **Emitted globals**: emittedGlobals variable and keyframe counts stop duplicate global insertion and leave utility insertion untouched.
 - **Native indexes**: locate a native rule by identity (`findNativeCSSRuleIndex`) before deleting it; a guessed index deletes the wrong rule.
-- **FOUC**: runtime removes `hidden` from `<html>` after its first render, for pages that hide the root until it runs; no build integration adds `hidden` any more.
+- **FOUC**: runtime removes `hidden` from `<html>` after its first render, for pages that hide the root until it runs; no build integration adds `hidden` any more. Every failure path reveals too: `create()` and `observe()` remove `hidden` before rethrowing, and the CDN bundle starts a 3 s timer in `src/reveal-timeout.ts`, imported first in `global.min.ts` so it runs before any other bundled module evaluates.
 - **Global names** `MasterCSSRuntime` (the class, holding `instances`) and `masterCSSRuntime` (the document instance) are public; rename them only on request.
 - **Named access**: page elements with an `id` or `name` occupy same-named `window` globals, and `name`d `img`/`form`/`embed`/`object`/`iframe` elements shadow `document` members. Read the runtime's own class directly, accept a `MasterCSSRuntime` global only when `isRuntimeClass` passes, and read `document` members through `src/document.ts`.
 
