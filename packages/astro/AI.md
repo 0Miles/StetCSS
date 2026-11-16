@@ -12,7 +12,7 @@ Owns the Astro integration: it registers `@stet-css/vite` through `astro:config:
 - **Split builds**: Astro builds the prerender, server and client environments separately; classes reach the CSS from the project's files, not from the modules a given environment compiles.
 - **Inline `@import`**: Astro inlines `@import` in `.astro` `<style>` blocks before Vite plugins run, so `@import '@stet-css/core'` there ships raw preset source; the Vite plugin's no-entry build warning names the supported pattern (import a `.css` file).
 
-- **Silent unstyled build**: when no stylesheet imports Master CSS, `@stet-css/vite` warns at build end; keep that warning reachable from Astro builds.
+- **Silent unstyled build**: when no stylesheet imports StetCSS, `@stet-css/vite` warns at build end; keep that warning reachable from Astro builds.
 
 ## Validation
 

@@ -1,6 +1,6 @@
 # @stet-css/stylesheet
 
-Stylesheet entry pipeline for Master CSS static rendering.
+Stylesheet entry pipeline for StetCSS static rendering.
 
 ## Installation
 
@@ -10,7 +10,7 @@ npm install @stet-css/stylesheet
 
 ## Responsibility
 
-`@stet-css/stylesheet` detects Master CSS stylesheet entries, resolves stylesheet import graphs, compiles CSS-first directives, registers stylesheet sources, and composes final CSS with emittedGlobals metadata.
+`@stet-css/stylesheet` detects StetCSS stylesheet entries, resolves stylesheet import graphs, compiles CSS-first directives, registers stylesheet sources, and composes final CSS with emittedGlobals metadata.
 
 It accepts structural scanner state from callers and does not depend on `@stet-css/scanner`. It decides the static class set itself: the project's own source files (from `@stet-css/project/sources`), plus every entry's `@source` files, minus every entry's `@source not` files, read through `@stet-css/source` adapters, plus `@safelist`, minus `@blocklist`. `resolveStylesheetSourceFiles()` lists those files and `isStylesheetSourceFile()` answers the same rule for one changed path.
 
@@ -31,7 +31,7 @@ Common API areas:
 
 | API area | Purpose |
 | --- | --- |
-| Style request helpers | Detect and resolve Master CSS stylesheet requests. |
+| Style request helpers | Detect and resolve StetCSS stylesheet requests. |
 | Local CSS transforms | Lower local `@compose` and `@reference` directives. |
 | Source registration | Register stylesheet sources and dependency metadata. |
 | Manifest creation | Build stylesheet-local manifests from compiled CSS. |
@@ -47,8 +47,6 @@ import {
   createStylesheetSourceOptions,
 } from '@stet-css/stylesheet/directives'
 ```
-
-For user-facing CSS directive syntax, see [CSS directives](https://rc.css.master.co/reference/directives).
 
 ## Browser rendering
 

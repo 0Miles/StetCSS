@@ -1,6 +1,6 @@
 # @stet-css/preset
 
-The default Master CSS preset source and compiled manifest.
+The default StetCSS preset source and compiled manifest.
 
 ## Installation
 

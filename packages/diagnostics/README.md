@@ -1,6 +1,6 @@
-# Master CSS Diagnostics
+# StetCSS Diagnostics
 
-Adapter-neutral project inspection reports for Master CSS tooling.
+Adapter-neutral project inspection reports for StetCSS tooling.
 
 `@stet-css/diagnostics` builds scanner, stylesheet, generated CSS, and missing CSS reports that can be reused by adapters such as `@stet-css/cli`.
 
