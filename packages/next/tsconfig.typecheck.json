@@ -28,12 +28,6 @@
       "path": "../scanner/tsconfig.typecheck.json"
     },
     {
-      "path": "../schema/tsconfig.typecheck.json"
-    },
-    {
-      "path": "../server/tsconfig.typecheck.json"
-    },
-    {
       "path": "../stylesheet/tsconfig.typecheck.json"
     }
   ],

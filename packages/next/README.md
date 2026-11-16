@@ -21,52 +21,22 @@ const nextConfig = withMasterCSS({
 export default nextConfig
 ```
 
-## Modes
+## How it works
 
-`@stet-css/next` defaults to progressive rendering and supports these mode values:
+`withMasterCSS` takes no mode: every build gets static CSS.
 
-| Mode | Description |
-| --- | --- |
-| `progressive` | Combines pre-rendered first-page CSS with the browser runtime for later client-side class changes. |
-| `runtime` | Injects the browser runtime through the Next.js client instrumentation hook without adding the build adapter. |
-| `pre-render` | Uses the Next.js Adapter API to render CSS into static and pre-rendered HTML outputs during `next build`. |
-| `static` | Scans source files with `@stet-css/scanner`, writes a generated stylesheet, and wires Master CSS stylesheet imports into Turbopack CSS processing. |
-| `null` | Skips rendering modes while keeping the CSS manifest loaders available. |
+- Stylesheet entries (CSS files that `@import '@stet-css/core'` or declare `@master entry;`) are rewritten to import one generated module, `.master/next.css`. Add `/.master/` to `.gitignore`.
+- The generated module is computed from the project's files in one pass when Next compiles it: the project's own source files plus `@source`, minus `@source not`, plus `@safelist`, minus `@blocklist`. Classes used only in Server Components, and pages built with `output: 'export'`, are covered.
+- Turbopack and `next build --webpack` both get the CSS. In `next dev`, editing a source file or a stylesheet updates the CSS.
+- CSS files that import `@stet-css/core` are native CSS pruning roots: native rules for unused classes are dropped. Add `@preserve native;` when native CSS must be kept.
+- Local stylesheets such as CSS Modules can use `@compose`, `@variant` and `@reference`; they are lowered in place.
+- `node_modules` and workspace packages outside the project root are not read. List them with `@source` in the entry.
 
-Use `progressive` when route HTML should carry its first-render CSS and client-side class changes still need runtime coverage. Use `runtime` when CSS should be generated only in the browser. Use `pre-render` when build-rendered HTML should carry first-render CSS without runtime injection. Use `static` when classes are statically visible in source and should be emitted into a generated CSS asset.
-
-## Static rendering
-
-In static mode, import the generated stylesheet from your app stylesheet:
-
-```css
-@import '@stet-css/core';
-
-.main {
-  background-color: var(--color-primary);
-}
-
-@theme {
-  --color-primary: #ff0000;
-}
-```
-
-Then enable static mode:
+`withMasterCSS` returns the config object itself, so it composes with other wrappers on either side:
 
 ```js
-import { withMasterCSS } from '@stet-css/next'
-
-/** @type {import('next').NextConfig} */
-const nextConfig = await withMasterCSS({
-  /* your Next.js config */
-}, {
-  mode: 'static'
-})
-
-export default nextConfig
+export default withBundleAnalyzer(withMasterCSS(nextConfig))
 ```
-
-Static mode uses source-glob scanning as the correctness baseline. A Turbopack CSS loader replaces `@import '@stet-css/core'` with generated CSS. CSS files that import `@stet-css/core` are treated as native CSS pruning roots by default; add `@preserve native;` when native CSS must be preserved.
 
 ## Client types
 
@@ -93,11 +63,6 @@ The `options` object is passed to `withMasterCSS(nextConfig, options)`.
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `mode` | `'runtime' \| 'pre-render' \| 'static' \| 'progressive' \| null` | `'progressive'` | Next.js integration mode. Use `null` to skip rendering modes while keeping CSS manifest loaders. |
-| `injectRuntime` | `boolean` | `true` | Include the Master CSS runtime through the Next.js client instrumentation hook in `runtime` and `progressive` modes. |
-| `scannerOptions` | `ScannerOptions` | `{}` | Scanner options for static mode. |
-| `buildReport` | `boolean \| string` | `false` | Write a build report with rendered files. `true` writes `.next/master-css-build-report.json`; a string is resolved from `distDir`. |
-| `debug` | `boolean` | `false` | Log rendered output details during `next build`. |
-| `adapterOrder` | `'master-first' \| 'external-first'` | `'master-first'` | Adapter execution order when composing with another Next adapter. |
+| `scannerOptions` | `ScannerOptions` | `{}` | Scanner options; `safelist` and `blocklist` shape the class set. Turbopack passes them to its loaders as JSON, so they must be plain data. |
 
 See the [Next.js installation guide](https://rc.css.master.co/guide/installation/nextjs) for a full setup.
