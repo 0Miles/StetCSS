@@ -1,7 +1,5 @@
 @settings {
   base-unit: 0.25rem;
-  default-mode: light;
-  mode-trigger: media;
 }
 
 @theme {
