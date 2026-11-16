@@ -171,8 +171,9 @@ describe('StyleEntryPlugin Vite build integration', () => {
 
   /**
    * Guards templates that only a server build compiles, such as Astro pages: the SSR build
-   * must still emit their rules. The module scan this replaced skipped SSR builds, so the
-   * server bundle's CSS lacked the template's classes.
+   * must emit their rules from the project's files. This passed before the module scan was
+   * removed too, because the stylesheet already added the project's class set on top; it
+   * now pins that the SSR build gets the class set with no module scan at all.
    * Reverse check: dropping `.ts` from the project's source extensions in `@stet-css/project`
    * (and rebuilding) turns only this test red.
    */
