@@ -164,18 +164,8 @@ export default class CSSScanner extends EventEmitter {
       this.contentHashes.set(source, hash)
     }
 
-    const allLatent = await this.collectCandidates(source, content)
-    if (!allLatent.length) {
-      return false
-    }
-
-    // Single pass: skip candidates already known invalid or already known valid.
-    const latentClasses: string[] = []
-    for (const eachLatentClass of allLatent) {
-      if (this.invalidClasses.has(eachLatentClass)) continue
-      if (this.validClasses.has(eachLatentClass)) continue
-      latentClasses.push(eachLatentClass)
-    }
+    // Only candidates this scanner has not seen yet; valid and invalid classes are subsets.
+    const latentClasses = await this.collectCandidates(source, content)
     if (!latentClasses.length) {
       return false
     }
