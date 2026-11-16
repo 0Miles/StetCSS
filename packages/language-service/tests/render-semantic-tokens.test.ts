@@ -267,7 +267,7 @@ test.concurrent('renders native-aligned semantic tokens for grouped classes with
 
 test.concurrent('renders semantic tokens only for CSS directive class-list spans', () => {
   const { tokens } = renderTokens(`
-    @master entry;
+    @import "@stet-css/core";
     @reference "./tokens.css";
     @safelist "block fg:red:hover@md";
 
@@ -360,7 +360,7 @@ test.concurrent('renders semantic tokens only for CSS directive class-list spans
   expectToken(tokens, 'inline-flex', 'enumMember')
   expectToken(tokens, 'blue', 'enumMember')
 
-  expect(tokens).not.toContainEqual({ text: '@master', type: 'keyword', modifiers: ['directive'] })
+  expect(tokens).not.toContainEqual({ text: '@import', type: 'keyword', modifiers: ['directive'] })
   expect(tokens).not.toContainEqual({ text: '@reference', type: 'keyword', modifiers: ['directive'] })
   expect(tokens).not.toContainEqual({ text: '@settings', type: 'keyword', modifiers: ['directive'] })
   expect(tokens).not.toContainEqual({ text: 'base-unit', type: 'property', modifiers: [] })

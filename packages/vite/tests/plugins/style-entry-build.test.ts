@@ -239,7 +239,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
     try {
       const entryPath = path.join(root, 'app.css')
       const source = `
-        @master entry;
+        @import "@stet-css/core";
 
         body {
           margin: 0;
@@ -295,7 +295,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
     try {
       const entryPath = path.join(root, 'app.css')
       const source = `
-        @master entry;
+        @import "@stet-css/core";
 
         .native-used,
         .native-unused {

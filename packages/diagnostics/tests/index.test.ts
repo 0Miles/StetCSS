@@ -88,7 +88,7 @@ describe('@stet-css/diagnostics', () => {
   it('includes generated CSS and stylesheet entry metadata', async () => {
     const cwd = createTempDir('master-css-diagnostics-css-')
     try {
-      writeFileSync(join(cwd, 'index.css'), '@master entry;')
+      writeFileSync(join(cwd, 'index.css'), '@import "@stet-css/core";')
       writeFileSync(join(cwd, 'index.html'), '<div class="block"></div>')
       const report = await createMasterCSSInspectionReport({
         cwd,
@@ -100,7 +100,7 @@ describe('@stet-css/diagnostics', () => {
       expect(report.stylesheets.entries).toHaveLength(1)
       expect(report.stylesheets.entries[0]).toEqual(expect.objectContaining({
         filePath: resolve(cwd, 'index.css'),
-        masterCSS: false
+        masterCSS: true
       }))
       expect(report.stylesheets.entries[0].dependencies).toContain(resolve(cwd, 'index.css'))
       expect(report.css.included).toBe(true)
@@ -155,7 +155,7 @@ describe('@stet-css/diagnostics', () => {
   it('reports the entry compiler warning for default-mode under the media trigger', async () => {
     const cwd = createTempDir('master-css-diagnostics-entry-warning-')
     try {
-      writeFileSync(join(cwd, 'index.css'), '@master entry;\n@settings { default-mode: dark; }')
+      writeFileSync(join(cwd, 'index.css'), '@import "@stet-css/core";\n@settings { default-mode: dark; }')
       writeFileSync(join(cwd, 'index.html'), '<div class="block"></div>')
       const report = await createMasterCSSInspectionReport({
         cwd,
@@ -246,7 +246,7 @@ describe('@stet-css/diagnostics', () => {
   it('reports stylesheet entry errors without hiding scanner diagnostics', async () => {
     const cwd = createTempDir('master-css-diagnostics-entry-error-')
     try {
-      writeFileSync(join(cwd, 'index.css'), '@master entry;\n@import "./missing.css";')
+      writeFileSync(join(cwd, 'index.css'), '@import "@stet-css/core";\n@import "./missing.css";')
       writeFileSync(join(cwd, 'index.html'), '<div class="block"></div>')
       const report = await createMasterCSSInspectionReport({
         cwd,

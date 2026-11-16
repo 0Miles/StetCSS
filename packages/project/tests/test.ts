@@ -34,7 +34,12 @@ function isSameOrChildPath(parentPath: string, childPath: string) {
     )
 }
 
-function writeCSSFixture(cwd: string) {
+/**
+ * Writes a stylesheet with its own theme and components. Loading it by path needs no entry
+ * marker; pass `entry` when the test relies on entry discovery, which only finds stylesheets
+ * that import `@stet-css/core`.
+ */
+function writeCSSFixture(cwd: string, { entry: markEntry = false } = {}) {
   mkdirSync(join(cwd, 'styles'), { recursive: true })
   const entry = join(cwd, 'index.css')
   const tokens = join(cwd, 'styles', 'tokens.css')
@@ -43,8 +48,8 @@ function writeCSSFixture(cwd: string) {
       --color-primary: #123;
     }
   `)
-  writeFileSync(entry, `
-    @master entry;
+  writeFileSync(entry, `${markEntry ? `
+    @import "@stet-css/core";` : ''}
     @import './styles/tokens.css';
 
     @components {
@@ -190,7 +195,7 @@ test('loads package entry preset manifest from CSS imports', async () => {
 test('loads project-level CSS manifest entries', async () => {
   const cwd = createFixture()
   try {
-    const { entry } = writeCSSFixture(cwd)
+    const { entry } = writeCSSFixture(cwd, { entry: true })
     writeFileSync(join(cwd, 'ignored.css'), `
       @source "./ignored.tsx";
       @layer components {
@@ -236,7 +241,7 @@ test('finds Sass stylesheet entries only when the caller asks for their extensio
     mkdirSync(join(cwd, 'node_modules', 'ui'), { recursive: true })
     writeFileSync(join(cwd, 'styles', 'app.css'), '@import "@stet-css/core";')
     writeFileSync(join(cwd, 'styles', 'theme.scss'), '$brand: #123456;\n@import "@stet-css/core";\n@theme { --color-brand: #{$brand}; }')
-    writeFileSync(join(cwd, 'styles', 'legacy.sass'), '@master entry;')
+    writeFileSync(join(cwd, 'styles', 'legacy.sass'), '@import "@stet-css/core";')
     writeFileSync(join(cwd, 'styles', 'plain.scss'), '.card { color: red; }')
     writeFileSync(join(cwd, 'node_modules', 'ui', 'index.scss'), '@import "@stet-css/core";')
 
@@ -263,7 +268,7 @@ test('finds Master CSS workspace directories from package and CSS entries', asyn
         '@stet-css/core': 'workspace:*'
       }
     }))
-    writeFileSync(join(cwd, 'packages', 'app', 'index.css'), '@master entry;')
+    writeFileSync(join(cwd, 'packages', 'app', 'index.css'), '@import "@stet-css/core";')
     writeFileSync(join(cwd, 'docs', 'styles', 'global.css'), '@import "@stet-css/core";')
 
     await expect(findMasterCSSWorkspaceDirectories(cwd)).resolves.toStrictEqual([
@@ -286,7 +291,7 @@ test('does not match sibling workspace path prefixes', async () => {
         '@stet-css/core': 'workspace:*'
       }
     }))
-    writeFileSync(join(cwd, 'packages', 'app-kit', 'index.css'), '@master entry;')
+    writeFileSync(join(cwd, 'packages', 'app-kit', 'index.css'), '@import "@stet-css/core";')
 
     await expect(findMasterCSSWorkspaceDirectories(cwd)).resolves.toStrictEqual([
       cwd,
