@@ -1,6 +1,6 @@
 # @stet-css/vite
 
-Owns the Vite plugin chain behind the `runtime`, `static`, `pre-render` and `progressive` **modes**: the style entry pipeline, the manifest and emittedGlobals virtual modules, runtime injection, FOUC handling, HMR and HTML pre-rendering. `@stet-css/nuxt`, `@stet-css/astro` and `@stet-css/svelte` wrap it.
+Owns the Vite plugin chain behind the `runtime`, `static`, `pre-render` and `progressive` **modes**: the style entry pipeline, the manifest and emittedGlobals virtual modules, runtime injection, FOUC handling, HMR and HTML pre-rendering. `@stet-css/nuxt` and `@stet-css/svelte` wrap it; `@stet-css/astro` wraps it in `static` mode only.
 
 ## Boundaries
 
@@ -13,6 +13,8 @@ Owns the Vite plugin chain behind the `runtime`, `static`, `pre-render` and `pro
 - **Scanner lifecycle** is shared by every mode; a change there reaches all four. The plugin scans no modules with it; the stylesheet reads its options (`safelist`, `blocklist`, `adapters`, `manifest`), `cwd`, default manifest and native-class state, and the plugin uses its slot placeholder and `change` event.
 - **Dev updates**: `style-entry-hmr.ts` reloads the managed CSS when the watcher reports a file that `isStylesheetSourceFile` accepts and the extracted CSS changed.
 - **Splice warning** is tracked per Vite environment (`this.environment.name`); Astro bundles prerender, server and client separately.
+- **No-entry warning**: a build where no environment registered a managed CSS entry warns once; the check spans environments so Astro's client build after its server build stays quiet.
+- **Dev HMR across environments**: on a class change the CSS entry is invalidated in every non-client `server.environments[*].moduleGraph`, because frameworks inline the server environment's copy into dev HTML; `server.moduleGraph` alone returns the client module.
 - **Style entry pipeline** runs in every mode; `static` differs only by `includeGeneratedCSS` on the plugin context.
 - **`virtual:master-css-manifest`** is the project-level manifest API; keep stylesheet output and scanner usage out of it. **`virtual:master-css-emitted-globals`** describes only the generated variables and keyframes the runtime treats as already present.
 - **Virtual module IDs** are defined in `@stet-css/integration` and imported across integrations; keep them stable.
