@@ -111,7 +111,7 @@ describe('inspect command', () => {
   it('can include generated CSS and stylesheet entry metadata without failing', () => {
     const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'master-css-cli-inspect-css-'))
     try {
-      fs.writeFileSync(resolve(cwd, 'index.css'), '@master entry;')
+      fs.writeFileSync(resolve(cwd, 'index.css'), '@import "@stet-css/core";')
       fs.writeFileSync(resolve(cwd, 'index.html'), '<div class="block"></div>')
       const output = runCLI([
         'inspect',
@@ -126,7 +126,7 @@ describe('inspect command', () => {
       expect(report.stylesheets.entries).toHaveLength(1)
       expect(report.stylesheets.entries[0]).toEqual(expect.objectContaining({
         filePath: fs.realpathSync(resolve(cwd, 'index.css')),
-        masterCSS: false
+        masterCSS: true
       }))
       expect(report.stylesheets.entries[0].dependencies).toContain(fs.realpathSync(resolve(cwd, 'index.css')))
       expect(report.css.included).toBe(true)
@@ -140,7 +140,7 @@ describe('inspect command', () => {
   it('reports stylesheet entry errors without hiding scanner diagnostics', () => {
     const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'master-css-cli-inspect-entry-error-'))
     try {
-      fs.writeFileSync(resolve(cwd, 'index.css'), '@master entry;\n@import "./missing.css";')
+      fs.writeFileSync(resolve(cwd, 'index.css'), '@import "@stet-css/core";\n@import "./missing.css";')
       fs.writeFileSync(resolve(cwd, 'index.html'), '<div class="block"></div>')
       const error = runFailedCLI(['inspect', 'index.html'], { cwd })
       expect(error.status).toBe(1)
@@ -234,7 +234,7 @@ describe('lint command', () => {
   it('reports manifest preflight diagnostics', () => {
     const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'master-css-cli-lint-manifest-'))
     try {
-      fs.writeFileSync(resolve(cwd, 'index.css'), '@master entry;\n\n.btn { @compose "block"; }')
+      fs.writeFileSync(resolve(cwd, 'index.css'), '@import "@stet-css/core";\n\n.btn { @compose "block"; }')
       const error = runFailedCLI(['lint'], { cwd })
       expect(error.status).toBe(1)
       const report = JSON.parse(String(error.stdout))

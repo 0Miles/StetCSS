@@ -8,7 +8,7 @@ function createFixture() {
   const root = mkdtempSync(path.join(tmpdir(), 'master-css-vite-local-compose-'))
   mkdirSync(path.join(root, 'src'), { recursive: true })
   writeFileSync(path.join(root, 'app.css'), `
-    @master entry;
+    @import "@stet-css/core";
 
     @components {
       brand {
@@ -99,7 +99,7 @@ describe('LocalComposePlugin', () => {
       )).toBeUndefined()
       expect(await (plugin as any).transform.call(
         {},
-        '@master entry; .button { @compose block; }',
+        '@import "@stet-css/core"; .button { @compose block; }',
         path.join(root, 'src/app.css')
       )).toBeUndefined()
     } finally {
