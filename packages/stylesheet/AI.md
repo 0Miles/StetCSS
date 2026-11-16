@@ -13,3 +13,7 @@ Owns the **stylesheet entry** pipeline for static rendering: detecting Master CS
 - **CSS output** hot spots: generated CSS ordering, emittedGlobals counts, and local `@compose` / `@reference` lowering.
 - **Sass entries**: directives of `.scss` and `.sass` entries are read from the project's `sass` output, since Sass passes unknown at-rules through.
 - **Entry detection and import graph**: the dependencies they collect become the integrations' reset watch lists.
+
+## Validation
+
+- `tests/fixtures/manifest-examples/<name>/` holds documented manifest examples: an optional `manifest.css`, a `template.html`, and the `generated.css` that `renderCompiledManifestCSS` must produce for its classes (`tests/manifest-examples.test.ts`). Add a fixture for a new documented output case; any diff in a `generated.css` is a CSS output change.
