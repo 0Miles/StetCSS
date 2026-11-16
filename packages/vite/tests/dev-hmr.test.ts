@@ -216,4 +216,46 @@ describe('Vite dev HMR', () => {
     writeFileSync(page, '<h1 class="font:heavy">Home</h1><p class="italic">Intro</p>')
     await expect.poll(fetchCSS, { timeout: 5000 }).toContain('.italic')
   })
+
+  /**
+   * Guards the CSS a framework inlines into server-rendered dev HTML. Astro, SvelteKit and
+   * Nuxt take it from the server environment's copy of the stylesheet entry. Once a browser
+   * had requested the client copy, a class added to a template only refreshed the client
+   * copy, so every page load painted without the new rule until the Vite client ran, and
+   * never got it with JavaScript off.
+   * Reverse check: removing the per-environment invalidation in `style-entry-hmr.ts` turns
+   * only this test red.
+   */
+  it('refreshes the server environment CSS after a template gains a class', async () => {
+    mkdirSync(fixtureRoot, { recursive: true })
+    fixtureDir = mkdtempSync(path.join(fixtureRoot, 'static-ssr-'))
+    mkdirSync(path.join(fixtureDir, 'src/pages'), { recursive: true })
+    writeFileSync(path.join(fixtureDir, 'index.html'), '<script type="module" src="/src/main.ts"></script>')
+    writeFileSync(path.join(fixtureDir, 'src/main.ts'), 'import "./style.css"')
+    writeFileSync(path.join(fixtureDir, 'src/style.css'), '@import "@stet-css/core";')
+    const page = path.join(fixtureDir, 'src/pages/index.astro')
+    writeFileSync(page, '<h1 class="font:heavy">Home</h1>')
+
+    server = await createServer({
+      root: fixtureDir,
+      logLevel: 'silent',
+      server: {
+        host: '127.0.0.1',
+        port: 0
+      },
+      plugins: masterCSS({ mode: 'static' })
+    })
+    await server.listen()
+    const url = server.resolvedUrls?.local[0]
+    if (!url) throw new Error('Expected Vite dev server URL.')
+    const devServer = server
+    const serverCSS = async () => (await devServer.environments.ssr.transformRequest('/src/style.css?inline'))?.code ?? ''
+
+    // A browser loads the client copy of the entry, as the Vite client does on every page.
+    expect(await (await fetch(new URL('src/style.css?inline', url))).text()).toContain('font\\\\:heavy')
+    expect(await serverCSS()).toContain('font\\\\:heavy')
+
+    writeFileSync(page, '<h1 class="font:heavy">Home</h1><p class="italic">Intro</p>')
+    await expect.poll(serverCSS, { timeout: 5000 }).toContain('.italic')
+  })
 })

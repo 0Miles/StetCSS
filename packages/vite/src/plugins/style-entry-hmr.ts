@@ -16,6 +16,17 @@ export default function StyleEntryHMRPlugin(_options: PluginOptions, context: Pl
     if (!server) return
     const virtualCSSImporters = Array.from(context.virtualCSSImporters || [])
     await Promise.all(virtualCSSImporters.map(async (eachModuleId) => {
+      // `server.moduleGraph` returns the client module when several environments hold the
+      // id, so reloading it leaves the others with their cached transform. Frameworks that
+      // inline the server environment's CSS into the HTML (Astro, SvelteKit, Nuxt) would
+      // keep serving the CSS from before the change.
+      for (const environment of Object.values(server.environments ?? {})) {
+        if (environment.name === 'client') continue
+        const environmentModule = environment.moduleGraph.getModuleById(eachModuleId)
+        if (environmentModule) {
+          environment.moduleGraph.invalidateModule(environmentModule)
+        }
+      }
       const eachModule = server.moduleGraph.getModuleById(eachModuleId)
       if (eachModule) {
         await server.reloadModule(eachModule)
