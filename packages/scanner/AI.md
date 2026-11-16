@@ -1,6 +1,6 @@
 # @stet-css/scanner
 
-`CSSScanner` validates and caches: it collects **candidates** from supplied source text through `@stet-css/source`, keeps those `@stet-css/validator` accepts against the default manifest, inserts their rules, remembers valid, invalid and already-read sources, and emits `init`, `change`, `reset` and `destroy`. Its only option is `adapters`.
+`CSSScanner` validates and caches: it collects **candidates** from supplied source text through `@stet-css/source`, keeps those `@stet-css/validator` accepts against the default manifest, inserts their rules, remembers valid, invalid and already-read sources, and emits `init`, `change`, `reset` and `destroy`. Its only option is `adapters`, which is also every build plugin's only option.
 
 ## Boundaries
 
@@ -14,7 +14,7 @@
 
 - **Candidates** are guesses: each passes `generateValidRules` before it becomes a rule, and only literal class text is reachable (dynamically concatenated classes are not). Loosen extraction only alongside false-positive tests.
 - **Async**: `init`, `reset`, `scan` and `collectCandidates` return promises; every consumer awaits them.
-- **Options**: `src/options/index.ts` is the one place that lists the allowed keys and maps each removed key to its replacement; `validateScannerOptions` throws on a removed or unknown key during `init` and `reset`.
+- **Options**: `src/options/index.ts` is the one place that lists the allowed keys and maps each removed key to its replacement, for the scanner and for every build plugin; `validateScannerOptions` throws on a removed or unknown key during `init` and `reset`, and the build plugins call `validatePluginOptions` when their config loads.
 - **Caches**: `reset()` and `destroy()` clear every scanner cache (class sets, content hashes, valid-rule memo).
 - **`resetDependencies`** feed the reset watchers in the CLI, webpack and Next integrations; guard changes against reset loops.
 

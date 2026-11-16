@@ -92,7 +92,16 @@ Any other key throws. The removed options throw with their replacement:
 | `verbose` | the CLI's `-v` |
 | `path` | none; it had no effect |
 
-`validateScannerOptions(options, owner?)` runs this check for any options object and names `owner` (default `CSSScanner`) in its errors; `SCANNER_OPTION_KEYS` lists the allowed keys and `REMOVED_SCANNER_OPTIONS` maps each removed key to its replacement. Build integrations use them to check their own options the same way.
+`validateScannerOptions(options, owner?)` runs this check for any options object and names `owner` (default `CSSScanner`) in its errors; `SCANNER_OPTION_KEYS` lists the allowed keys and `REMOVED_SCANNER_OPTIONS` maps each removed key to its replacement.
+
+Every build plugin (`@stet-css/vite`, `webpack`, `next`, `nuxt`, `astro`, `svelte`) takes these same options, only `adapters`, and checks them with `validatePluginOptions(options, owner)` when the config loads. Besides the keys above, it rejects the removed plugin keys listed in `REMOVED_PLUGIN_OPTIONS`:
+
+| Removed plugin option | Replacement |
+| --- | --- |
+| `mode` | none; static CSS is the only output (import `@stet-css/runtime` in the app to also run the runtime) |
+| `injectRuntime` | import `@stet-css/runtime` in the app |
+| `avoidFOUC` | none; static CSS is in the page before it renders |
+| `scanner`, `scannerOptions` | pass `adapters` directly |
 
 ## CSS directives
 
