@@ -39,52 +39,47 @@ function findClassEnd(pattern: string, open: number) {
   return pattern.length - 1
 }
 
-/**
- * Calls `visit` for each character where braces and commas are syntax: outside escapes and, with
- * `literalClasses`, outside `[...]` classes.
- */
-function forEachSyntaxChar(pattern: string, literalClasses: boolean, visit: (char: string, index: number) => void) {
-  for (let index = 0; index < pattern.length; index++) {
-    const char = pattern[index]
-    if (char === '\\') index++
-    else if (literalClasses && char === '[') index = findClassEnd(pattern, index)
-    else visit(char, index)
-  }
-}
-
 interface Group {
   open: number
-  /** Patterns of the finished alternatives. */
+  /** Patterns of the finished alternatives; zero until the group's first comma. */
   sum: number
   /** Patterns of the alternative being read. */
   product: number
-  alternatives: number
+  /** Whether a group closed inside this one, so its body cannot be a range. */
+  nested: boolean
 }
 
 function createGroup(open: number): Group {
-  return { open, sum: 0, product: 1, alternatives: 1 }
+  return { open, sum: 0, product: 1, nested: false }
 }
 
+/** Counts with braces and commas as syntax outside escapes and, with `literalClasses`, outside `[...]`. */
 function countExpansions(pattern: string, literalClasses: boolean) {
   const root = createGroup(-1)
   const groups = [root]
-  forEachSyntaxChar(pattern, literalClasses, (char, index) => {
+  for (let index = 0; index < pattern.length; index++) {
+    const char = pattern[index]
     const group = groups[groups.length - 1]
-    if (char === '{') {
+    if (char === '\\') {
+      index++
+    } else if (literalClasses && char === '[') {
+      index = findClassEnd(pattern, index)
+    } else if (char === '{') {
       groups.push(createGroup(index))
     } else if (char === ',' && group !== root) {
       group.sum += group.product
       group.product = 1
-      group.alternatives++
     } else if (char === '}' && group !== root) {
       groups.pop()
+      const parent = groups[groups.length - 1]
       // A lone alternative stays literal unless it is a range; groups nested in it still expand.
-      const count = group.alternatives === 1
-        ? Math.max(countRange(pattern.slice(group.open + 1, index)) ?? 1, group.product)
-        : group.sum + group.product
-      groups[groups.length - 1].product *= count
+      const count = group.sum
+        ? group.sum + group.product
+        : group.nested ? group.product : countRange(pattern.slice(group.open + 1, index)) ?? 1
+      parent.product *= count
+      parent.nested = true
     }
-  })
+  }
   // A `{` that never closes is literal: its alternatives do not multiply, the groups in them do.
   return groups.reduceRight((inner, group) => Math.max(group.sum, 1) * group.product * inner, 1)
 }
