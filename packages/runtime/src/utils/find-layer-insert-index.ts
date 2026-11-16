@@ -7,6 +7,8 @@ import { layerOrder } from '@stet-css/engine'
  */
 export default function findLayerInsertIndex(rules: CSSRuleList, layerName: string) {
   const order = layerOrder.indexOf(layerName)
+  // Like engine `text`, which sorts an unknown layer last.
+  if (order === -1) return rules.length
   for (let index = 0; index < rules.length; index++) {
     const rule = rules[index]
     if (rule instanceof CSSLayerBlockRule && layerOrder.indexOf(rule.name) > order) return index
