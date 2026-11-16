@@ -32,8 +32,13 @@ export default async function runProgram(argv: string[] = process.argv) {
       if (removedCommand && removedCommands.has(removedCommand)) {
         errorRemovedCommand(program, removedCommand)
       }
-      const { default: runScan } = await import('./scan')
-      return runScan(sourcePaths, options)
+      const { default: runScan, StylesheetEntryError } = await import('./scan')
+      try {
+        return await runScan(sourcePaths, options)
+      } catch (error) {
+        if (error instanceof StylesheetEntryError) program.error(error.message)
+        throw error
+      }
     })
   program
     .command('lint')
