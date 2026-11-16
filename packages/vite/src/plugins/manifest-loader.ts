@@ -94,7 +94,6 @@ export default function ManifestLoaderPlugin(context: PluginContext): Plugin {
       return createManifestModule(context, this, result.json)
     },
     async handleHotUpdate({ file, modules: changedModules, server }) {
-      let handled = false
       // Vite updates only the modules a hook returns: keep the changed file's own modules.
       const modules: ModuleNode[] = [...changedModules]
       const queryManifestPaths = new Set([file])
@@ -104,10 +103,9 @@ export default function ManifestLoaderPlugin(context: PluginContext): Plugin {
       for (const manifestPath of queryManifestPaths) {
         const queryModule = server.moduleGraph.getModuleById(toResolvedMasterCSSManifestId(manifestPath))
         if (!queryModule) continue
-        handled = true
         modules.push(...invalidateManifestModule(queryModule, server))
       }
-      if (handled) return modules
+      if (modules.length > changedModules.length) return modules
     }
   }
 }

@@ -97,17 +97,12 @@ export default function ManifestVirtualModulePlugin(
       }
     },
     async handleHotUpdate({ file, modules: changedModules, server }) {
-      let handled = false
+      if (!includesFile(cssManifestDependencies, file)) return
       // Vite updates only the modules a hook returns: keep the changed file's own modules.
-      const modules: ModuleNode[] = [...changedModules]
-      if (includesFile(cssManifestDependencies, file)) {
-        handled = true
-        modules.push(...invalidateManifestModule(
-          server.moduleGraph.getModuleById(RESOLVED_VIRTUAL_MANIFEST_ID),
-          server
-        ))
-      }
-      if (handled) return modules
+      return [
+        ...changedModules,
+        ...invalidateManifestModule(server.moduleGraph.getModuleById(RESOLVED_VIRTUAL_MANIFEST_ID), server)
+      ]
     }
   }
 }
