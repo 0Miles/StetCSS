@@ -76,31 +76,22 @@ Import the default stylesheet from a global Vue style block:
 </style>
 ```
 
-The default `progressive` mode integrates Nuxt SSR, SSG, ISR, and Hybrid rendering strategies through Nitro, automatically loading custom configuration.
-
-In `mode: 'runtime'`, the module publishes a stable manifest JSON asset and modulepreloads it from the Nuxt document head when it also injects the client runtime plugin. `injectRuntime: false` disables both automatic runtime injection and the manifest JSON modulepreload.
+The module builds static CSS for every Nuxt build: `nuxt build`, `nuxt generate`, and `ssr: false` apps. Classes come from the project's files under the Nuxt root, including server components (`.server.vue`) and `layers/`. Layers outside the project root need an `@source` in your stylesheet.
 
 ## Options
-
-The module options extend `@stet-css/vite` options.
 
 ```ts
 export default defineNuxtConfig({
   modules: [
     ['@stet-css/nuxt', {
-      mode: 'progressive'
+      scanner: {}
     }]
   ]
 })
 ```
 
-Default options:
-
 | Option | Default | Description |
 | --- | --- | --- |
-| `mode` | `'progressive'` | Nuxt defaults to progressive rendering. |
-| `scanner` | `undefined` | Scanner options passed through to the shared Vite pipeline. |
-| `injectRuntime` | `true` | Injects the browser runtime when the selected mode needs it. |
-| `avoidFOUC` | `true` | Adds runtime-mode FOUC protection. |
+| `scanner` | `undefined` | Scanner options passed through to `@stet-css/vite`. |
 
 See the [Nuxt installation guide](https://rc.css.master.co/guide/installation/nuxtjs) for a full project setup.
