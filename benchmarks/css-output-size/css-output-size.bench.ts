@@ -116,7 +116,7 @@ async function createCSSOutputReport(): Promise<BenchmarkReport> {
     summary: summarizeReportSamples(samples, metricUnits),
     limits: [
       'This suite measures generated CSS artifacts only; it does not measure browser parse, style recalculation, layout, paint, or interaction cost.',
-      'Master CSS and Tailwind CSS fixtures target equivalent rendered UI intent, not identical class strings.',
+      'StetCSS and Tailwind CSS fixtures target equivalent rendered UI intent, not identical class strings.',
       'CLI and Vite variants use their own production command paths and should be compared with setup labels visible.'
     ],
     artifacts

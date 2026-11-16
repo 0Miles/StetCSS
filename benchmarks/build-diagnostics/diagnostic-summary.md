@@ -22,7 +22,7 @@ Environment:
 - Static fixture set only: `minimal`, `docs`, `dashboard`, and `stress-css`.
 - Local command and in-process diagnostic timings only; these are not public production guarantees.
 - Startup probe metrics run in separate child processes, so import timings are directional and not additive flamegraphs.
-- Build diagnostics split Master CSS work from surrounding CLI/Vite work, but do not replace the public build-performance suite.
+- Build diagnostics split StetCSS work from surrounding CLI/Vite work, but do not replace the public build-performance suite.
 - Diagnostic paths must preserve final CSS output hashes before numbers are useful.
 
 ## Confirmed Bottleneck
@@ -33,7 +33,7 @@ Evidence:
 
 - CLI full command startup sits around `195-218ms`, while CLI CSS extraction is `13.81-20.94ms`.
 - The scanner import probe is the largest isolated CLI startup signal at `66.20-72.20ms`; commander import is only `4.32-4.72ms`.
-- Vite startup with Master CSS shows `153.88-174.66ms` command overhead over the Vite baseline, while Master Vite scanner init is only `5.31-5.66ms`.
+- Vite startup with StetCSS shows `153.88-174.66ms` command overhead over the Vite baseline, while StetCSS Vite scanner init is only `5.31-5.66ms`.
 - Production `createExtractedCSS` is `14.42-20.60ms`, and diagnostic compiler total is `12.37-18.28ms`, so compiler/extraction is measurable but not the first startup bottleneck.
 
 ## Key Comparisons
@@ -49,16 +49,16 @@ Evidence:
 
 The full CLI command stays mostly flat across the normal fixtures. `stress-css` increases extraction and command time, but the cold command envelope remains much larger than extraction alone.
 
-### Vite baseline vs Master plugin diagnostics
+### Vite baseline vs StetCSS plugin diagnostics
 
-| Fixture | Vite + Master startup | Vite baseline startup | Command overhead | Master Vite import | Scanner init |
+| Fixture | Vite + StetCSS startup | Vite baseline startup | Command overhead | StetCSS Vite import | Scanner init |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | minimal | `282.78ms` | `128.90ms` | `153.88ms` | `80.62ms` | `5.31ms` |
 | docs | `291.04ms` | `132.60ms` | `158.45ms` | `78.12ms` | `5.41ms` |
 | dashboard | `284.65ms` | `129.06ms` | `155.59ms` | `79.58ms` | `5.46ms` |
 | stress-css | `301.84ms` | `127.83ms` | `174.66ms` | `79.59ms` | `5.66ms` |
 
-The Master Vite scanner init hook is small in these runs. The larger startup signal is cold Vite integration import/command overhead, which should be investigated separately from CSS generation.
+The StetCSS Vite scanner init hook is small in these runs. The larger startup signal is cold Vite integration import/command overhead, which should be investigated separately from CSS generation.
 
 ### Compiler and extraction decomposition
 
@@ -93,16 +93,16 @@ Environment:
 
 The startup diagnostic now includes cold import probes for the CLI bin/core/scan entries, Vite package entry/core/options/common modules, Vite mode/plugin modules, and key lower package imports. The browser runtime entry was intentionally excluded from Node cold import probes because it depends on Vite virtual modules.
 
-The accepted product change keeps `@stet-css/vite` mode-specific plugins as lazy shells. Static mode no longer eagerly imports runtime/progressive/pre-render mode modules, while public plugin names, `masterCSS(options): Plugin[]`, virtual module IDs, and generated CSS behavior stay unchanged.
+The accepted product change keeps `@stet-css/vite` mode-specific plugins as lazy shells. Static mode no longer eagerly imports runtime/progressive/pre-render mode modules, while public plugin names, `stetCSS(options): Plugin[]`, virtual module IDs, and generated CSS behavior stay unchanged.
 
 One-round same-machine diagnostic comparison for static Vite fixtures:
 
 | Metric | Before avg | After avg | Delta |
 | --- | ---: | ---: | ---: |
-| Master Vite command overhead | `147.24ms` | `143.38ms` | `-3.86ms` |
+| StetCSS Vite command overhead | `147.24ms` | `143.38ms` | `-3.86ms` |
 | `@stet-css/vite` import | `77.13ms` | `69.97ms` | `-7.16ms` |
 | `@stet-css/vite` core module import | `102.32ms` | `97.81ms` | `-4.52ms` |
-| Vite build with Master plugin | `106.55ms` | `107.72ms` | `+1.17ms` |
+| Vite build with StetCSS plugin | `106.55ms` | `107.72ms` | `+1.17ms` |
 
 This is a small cold-start improvement, not a public claim. The full command timing is still dominated by Vite process/module startup and required scanner/stylesheet work. Shared plugin lazy-loading was explored but not kept: it did not produce a clearer full-command improvement and risked duplicating stylesheet request/local directive predicates outside `@stet-css/stylesheet`.
 

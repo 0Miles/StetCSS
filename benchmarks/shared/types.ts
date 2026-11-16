@@ -7,8 +7,8 @@ export type BenchmarkFixtureId =
   | 'stress-dom'
 
 export type BenchmarkAdapterId =
-  | 'master-runtime'
-  | 'master-static'
+  | 'stet-runtime'
+  | 'stet-static'
   | 'tailwind-cli'
   | 'tailwind-vite'
   | 'browser-css'
@@ -24,7 +24,7 @@ export type BenchmarkSuiteId =
   | 'css-output-size'
   | 'css-structure'
   | 'build-performance'
-  | 'master-delivery-modes'
+  | 'stet-delivery-modes'
   | 'browser-css-cost'
   | 'browser-lifecycle'
   | 'interaction-cost'
@@ -45,7 +45,7 @@ export interface BenchmarkFixture {
 export interface BenchmarkAdapter {
   id: BenchmarkAdapterId
   name: string
-  family: 'master-css' | 'tailwind-css' | 'browser'
+  family: 'stet-css' | 'tailwind-css' | 'browser'
 }
 
 export interface BenchmarkEnvironment {

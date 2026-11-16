@@ -161,7 +161,7 @@ function getMetricUnit(id: string): BenchmarkMetricUnit {
 
 function toMetricLabel(id: string) {
   return id
-    .replace(/^master-internal-/, 'Master internal ')
+    .replace(/^stet-internal-/, 'StetCSS internal ')
     .replace(/^outer-/, 'Outer ')
     .split('-')
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
@@ -169,7 +169,7 @@ function toMetricLabel(id: string) {
 }
 
 function toMetricDescription(id: string) {
-  if (id.startsWith('master-internal-')) {
+  if (id.startsWith('stet-internal-')) {
     return 'Compiler lowering metric collected while compiling the @stet-css/core package source.'
   }
   if (id.startsWith('outer-')) {

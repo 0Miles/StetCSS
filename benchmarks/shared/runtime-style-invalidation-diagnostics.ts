@@ -151,11 +151,11 @@ const runtimeStyleInvalidationFixtureIds = [
 ] satisfies BenchmarkFixtureId[]
 
 const runtimeStyleInvalidationRuntimeModeIds = [
-  'master-runtime'
+  'stet-runtime'
 ] satisfies InteractionModeId[]
 
 const runtimeStyleInvalidationStaticModeIds = [
-  'master-static',
+  'stet-static',
   'tailwind-static'
 ] satisfies InteractionModeId[]
 
@@ -196,7 +196,7 @@ export const runtimeStyleInvalidationMetrics = [
     id: 'runtime-mutation-ms',
     label: 'Runtime ensure/delete total',
     unit: 'ms',
-    description: 'Instrumented Master CSS runtime ensure/delete class-rules duration during the diagnostic action.'
+    description: 'Instrumented StetCSS runtime ensure/delete class-rules duration during the diagnostic action.'
   },
   {
     id: 'runtime-ensure-class-rules-duration-ms',
@@ -532,7 +532,7 @@ async function createRuntimeStyleInvalidationDiagnosticsReport(): Promise<Benchm
       scenarioId: 'mutation-cleanup-cycle',
       variantId: variant.id,
       pageSuite: 'runtime-style-invalidation-diagnostics',
-      runtimeDiagnostics: variant.modeId === 'master-runtime',
+      runtimeDiagnostics: variant.modeId === 'stet-runtime',
       postInteractionSettleFrames: 3
     })
 
@@ -687,7 +687,7 @@ async function measureRuntimeStyleInvalidationDiagnostic(options: {
 }
 
 async function prepareRuntimeDiagnosticPage(page: Page, variant: RuntimeStyleDiagnosticDescriptor): Promise<RuntimeStyleInvalidationPreparation> {
-  if (variant.modeId !== 'master-runtime') {
+  if (variant.modeId !== 'stet-runtime') {
     return {
       preseededRuntimeRuleCount: 0,
       seededRetainedClassCount: 0,
@@ -1154,9 +1154,9 @@ async function assertDiagnosticPageReady(page: Page, modeId: InteractionModeId) 
     throw new Error(`Expected interaction style probe text-align:center, received ${state.textAlign}.`)
   }
 
-  if (modeId === 'master-runtime') {
+  if (modeId === 'stet-runtime') {
     if (!state.runtimeAvailable) throw new Error(`${modeId} did not expose globalThis.stetCSSRuntime.`)
-    if (state.htmlHidden) throw new Error('Master runtime diagnostic page did not reveal the hidden html element.')
+    if (state.htmlHidden) throw new Error('StetCSS runtime diagnostic page did not reveal the hidden html element.')
   }
 }
 

@@ -80,7 +80,7 @@ const metricMetadata: Record<typeof buildDiagnosticMetricIds[number], Omit<Bench
   'cli-css-extraction-ms': {
     label: 'CLI CSS extraction',
     unit: 'ms',
-    description: 'Time spent creating extracted Master CSS.'
+    description: 'Time spent creating extracted StetCSS.'
   },
   'cli-file-write-ms': {
     label: 'CLI file write',
@@ -90,24 +90,24 @@ const metricMetadata: Record<typeof buildDiagnosticMetricIds[number], Omit<Bench
   'vite-baseline-build-ms': {
     label: 'Vite baseline build',
     unit: 'ms',
-    description: 'Vite production build time for the fixture without Master CSS plugin work.'
+    description: 'Vite production build time for the fixture without StetCSS plugin work.'
   },
   'vite-total-build-ms': {
     label: 'Vite total build',
     unit: 'ms',
-    description: 'Total Vite production build time with instrumented Master CSS plugin work.'
+    description: 'Total Vite production build time with instrumented StetCSS plugin work.'
   },
-  'vite-master-scanner-init-ms': {
+  'vite-stet-scanner-init-ms': {
     label: 'Vite scanner init',
     unit: 'ms',
-    description: 'Time spent initializing the Master CSS scanner during Vite config resolution.'
+    description: 'Time spent initializing the StetCSS scanner during Vite config resolution.'
   },
-  'vite-master-style-entry-ms': {
+  'vite-stet-style-entry-ms': {
     label: 'Vite style entry',
     unit: 'ms',
-    description: 'Time spent handling Master CSS style entry transforms and virtual CSS loads.'
+    description: 'Time spent handling StetCSS style entry transforms and virtual CSS loads.'
   },
-  'vite-master-generate-bundle-ms': {
+  'vite-stet-generate-bundle-ms': {
     label: 'Vite bundle CSS extraction',
     unit: 'ms',
     description: 'Time spent extracting generated CSS and splicing it into the final CSS bundle.'
@@ -146,9 +146,9 @@ async function createBuildDiagnosticsReport(): Promise<BenchmarkReport> {
   const rounds = getDiagnosticRounds()
 
   for (const variant of variants) {
-    const toolId = variant.id.endsWith('master-cli-diagnostic')
-      ? 'master-cli-diagnostic'
-      : 'master-vite-diagnostic'
+    const toolId = variant.id.endsWith('stet-cli-diagnostic')
+      ? 'stet-cli-diagnostic'
+      : 'stet-vite-diagnostic'
 
     for (let round = 0; round < rounds; round++) {
       console.log(`Measuring build diagnostics for ${variant.label}, round ${round + 1}/${rounds}`)
@@ -199,7 +199,7 @@ async function createBuildDiagnosticsReport(): Promise<BenchmarkReport> {
     limits: [
       'This suite is diagnostic and does not replace end-user production command timing from build-performance.',
       'CLI diagnostics mirror the scan and extraction pipeline in-process, so child-process startup and package loader cost are intentionally excluded.',
-      'Vite diagnostics instrument Master CSS plugin hooks and include a Vite baseline metric for context.',
+      'Vite diagnostics instrument StetCSS plugin hooks and include a Vite baseline metric for context.',
       'Do not use diagnostic numbers as permission to change CSS output, cascade order, source detection, or public behavior.'
     ],
     artifacts

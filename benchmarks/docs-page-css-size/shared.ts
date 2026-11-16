@@ -79,23 +79,23 @@ export async function writeSnapshot(snapshot: DocsPageCSSSizeSnapshot) {
 }
 
 export function printSnapshotSummary(snapshot: DocsPageCSSSizeSnapshot) {
-  const masterCSSPage = snapshot.pages.find((page) => page.name === 'Master CSS')
+  const upstreamPage = snapshot.pages.find((page) => page.name === 'Master CSS')
 
-  if (!masterCSSPage) {
-    console.log('Master CSS page is missing from docs page CSS size input.')
+  if (!upstreamPage) {
+    console.log('The upstream Master CSS docs page is missing from docs page CSS size input.')
     return
   }
 
   console.log('')
   console.log('Total page CSS size (raw):')
   for (const page of snapshot.pages) {
-    console.log(formatPageLine(page, masterCSSPage, 'rawBytes'))
+    console.log(formatPageLine(page, upstreamPage, 'rawBytes'))
   }
 
   console.log('')
   console.log('Total page CSS size (brotli):')
   for (const page of snapshot.pages) {
-    console.log(formatPageLine(page, masterCSSPage, 'brotliBytes'))
+    console.log(formatPageLine(page, upstreamPage, 'brotliBytes'))
   }
   console.log('')
 }

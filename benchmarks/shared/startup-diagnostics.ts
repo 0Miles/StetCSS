@@ -29,7 +29,7 @@ import type {
   ByteSummary
 } from './types'
 
-export type StartupDiagnosticToolId = 'master-cli-startup-diagnostic' | 'master-vite-startup-diagnostic'
+export type StartupDiagnosticToolId = 'stet-cli-startup-diagnostic' | 'stet-vite-startup-diagnostic'
 
 export interface StartupDiagnosticResult {
   samples: BenchmarkSample[]
@@ -68,41 +68,41 @@ export const startupDiagnosticMetricIds = [
   'cli-fast-glob-import-ms',
   'cli-chokidar-import-ms',
   'cli-consola-import-ms',
-  'cli-master-css-import-ms',
-  'vite-master-command-elapsed-ms',
+  'cli-stet-css-import-ms',
+  'vite-stet-command-elapsed-ms',
   'vite-baseline-command-elapsed-ms',
-  'vite-master-command-overhead-ms',
+  'vite-stet-command-overhead-ms',
   'vite-probe-command-elapsed-ms',
   'vite-node-first-userland-ms',
   'vite-import-ms',
-  'master-vite-import-ms',
-  'master-vite-index-module-import-ms',
-  'master-vite-core-module-import-ms',
-  'master-vite-options-module-import-ms',
-  'master-vite-common-module-import-ms',
-  'master-vite-plugin-context-import-ms',
-  'master-vite-plugin-manifest-loader-import-ms',
-  'master-vite-plugin-manifest-virtual-import-ms',
-  'master-vite-plugin-emitted-globals-virtual-import-ms',
-  'master-vite-plugin-scanner-import-ms',
-  'master-vite-plugin-local-compose-import-ms',
-  'master-vite-plugin-style-entry-import-ms',
-  'master-vite-plugin-style-entry-hmr-import-ms',
-  'master-vite-plugin-style-entry-build-import-ms',
-  'master-vite-util-extracted-css-import-ms',
-  'master-vite-util-register-style-source-import-ms',
-  'master-vite-util-scanner-context-import-ms',
+  'stet-vite-import-ms',
+  'stet-vite-index-module-import-ms',
+  'stet-vite-core-module-import-ms',
+  'stet-vite-options-module-import-ms',
+  'stet-vite-common-module-import-ms',
+  'stet-vite-plugin-context-import-ms',
+  'stet-vite-plugin-manifest-loader-import-ms',
+  'stet-vite-plugin-manifest-virtual-import-ms',
+  'stet-vite-plugin-emitted-globals-virtual-import-ms',
+  'stet-vite-plugin-scanner-import-ms',
+  'stet-vite-plugin-local-compose-import-ms',
+  'stet-vite-plugin-style-entry-import-ms',
+  'stet-vite-plugin-style-entry-hmr-import-ms',
+  'stet-vite-plugin-style-entry-build-import-ms',
+  'stet-vite-util-extracted-css-import-ms',
+  'stet-vite-util-register-style-source-import-ms',
+  'stet-vite-util-scanner-context-import-ms',
   'vite-css-scanner-import-ms',
   'vite-css-stylesheet-import-ms',
   'vite-css-project-manifest-import-ms',
   'vite-css-project-entries-import-ms',
   'vite-css-integration-node-import-ms',
-  'master-vite-plugin-factory-ms',
-  'vite-build-with-master-ms',
+  'stet-vite-plugin-factory-ms',
+  'vite-build-with-stet-ms',
   'vite-child-process-uptime-ms',
-  'vite-master-scanner-init-ms',
-  'vite-master-style-entry-ms',
-  'vite-master-generate-bundle-ms'
+  'vite-stet-scanner-init-ms',
+  'vite-stet-style-entry-ms',
+  'vite-stet-generate-bundle-ms'
 ] as const
 
 class DiagnosticRecorder {
@@ -140,17 +140,17 @@ class DiagnosticRecorder {
 export function createStartupDiagnosticVariants(fixtureIds: BenchmarkFixtureId[] = staticFixtureIds): BenchmarkVariant[] {
   return fixtureIds.flatMap((fixtureId) => [
     {
-      id: createStartupDiagnosticVariantId(fixtureId, 'master-cli-startup-diagnostic'),
+      id: createStartupDiagnosticVariantId(fixtureId, 'stet-cli-startup-diagnostic'),
       fixtureId,
-      adapterId: 'master-static',
-      label: `${fixtureId} / Master CSS CLI startup diagnostic`,
+      adapterId: 'stet-static',
+      label: `${fixtureId} / StetCSS CLI startup diagnostic`,
       limits: ['Startup diagnostics split child-process, module import, parser, and CLI runProgram costs.']
     },
     {
-      id: createStartupDiagnosticVariantId(fixtureId, 'master-vite-startup-diagnostic'),
+      id: createStartupDiagnosticVariantId(fixtureId, 'stet-vite-startup-diagnostic'),
       fixtureId,
-      adapterId: 'master-static',
-      label: `${fixtureId} / Master CSS Vite startup diagnostic`,
+      adapterId: 'stet-static',
+      label: `${fixtureId} / StetCSS Vite startup diagnostic`,
       limits: ['Startup diagnostics split Vite baseline, plugin import/factory, and instrumented plugin hook costs.']
     }
   ])
@@ -167,7 +167,7 @@ export async function runStartupDiagnostic(options: {
   variantId: string
   round: number
 }): Promise<StartupDiagnosticResult> {
-  const result = options.toolId === 'master-cli-startup-diagnostic'
+  const result = options.toolId === 'stet-cli-startup-diagnostic'
     ? await runStetCLIStartupDiagnostic(options.workspace, options.fixtureId)
     : await runStetViteStartupDiagnostic(options.workspace, options.fixtureId)
 
@@ -178,8 +178,8 @@ export async function runStartupDiagnostic(options: {
 }
 
 async function runStetCLIStartupDiagnostic(workspace: string, fixtureId: BenchmarkFixtureId): Promise<DiagnosticRunResult> {
-  const tool = staticBuildTools.find((candidate) => candidate.id === 'master-static-cli')
-  if (!tool) throw new Error('Missing Master CSS static CLI tool.')
+  const tool = staticBuildTools.find((candidate) => candidate.id === 'stet-static-cli')
+  if (!tool) throw new Error('Missing StetCSS static CLI tool.')
 
   await prepareStaticWorkspace(workspace, fixtureId, tool)
 
@@ -210,7 +210,7 @@ async function runStetCLIStartupDiagnostic(workspace: string, fixtureId: Benchma
     ['cli-fast-glob-import-ms', 'fast-glob', cliPackageFile],
     ['cli-chokidar-import-ms', 'chokidar', cliPackageFile],
     ['cli-consola-import-ms', 'consola', cliPackageFile],
-    ['cli-master-css-import-ms', '@stet-css/core', cliPackageFile]
+    ['cli-stet-css-import-ms', '@stet-css/core', cliPackageFile]
   ])
 
   const parseProbe = await runProbe(workspace, 'cli-commander-parse', renderCLICommanderParseProbe(cliPackageFile))
@@ -227,8 +227,8 @@ async function runStetCLIStartupDiagnostic(workspace: string, fixtureId: Benchma
 }
 
 async function runStetViteStartupDiagnostic(workspace: string, fixtureId: BenchmarkFixtureId): Promise<DiagnosticRunResult> {
-  const tool = staticBuildTools.find((candidate) => candidate.id === 'master-static-vite')
-  if (!tool) throw new Error('Missing Master CSS static Vite tool.')
+  const tool = staticBuildTools.find((candidate) => candidate.id === 'stet-static-vite')
+  if (!tool) throw new Error('Missing StetCSS static Vite tool.')
 
   await prepareStaticWorkspace(workspace, fixtureId, tool)
 
@@ -237,11 +237,11 @@ async function runStetViteStartupDiagnostic(workspace: string, fixtureId: Benchm
   recorder.setCount('css-entry-count', 1)
 
   const stetCommand = await runCommand(process.execPath, resolveViteBuildArgs(), workspace)
-  recorder.addTiming('vite-master-command-elapsed-ms', stetCommand.elapsedMs)
+  recorder.addTiming('vite-stet-command-elapsed-ms', stetCommand.elapsedMs)
 
   const baselineCommandMs = await runViteBaselineCommand(`${workspace}-baseline-command`, fixtureId)
   recorder.addTiming('vite-baseline-command-elapsed-ms', baselineCommandMs)
-  recorder.addTiming('vite-master-command-overhead-ms', stetCommand.elapsedMs - baselineCommandMs)
+  recorder.addTiming('vite-stet-command-overhead-ms', stetCommand.elapsedMs - baselineCommandMs)
 
   await runViteImportProbes(workspace, recorder)
 
@@ -317,22 +317,22 @@ async function runImportProbeBatch(
 async function runViteImportProbes(workspace: string, recorder: DiagnosticRecorder) {
   const vitePackageFile = resolveBenchmarkPackageFile('@stet-css/vite', 'package.json')
   await runImportProbeBatch(workspace, recorder, [
-    ['master-vite-index-module-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/index.js'))],
-    ['master-vite-core-module-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/core.js'))],
-    ['master-vite-options-module-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/options.js'))],
-    ['master-vite-common-module-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/common.js'))],
-    ['master-vite-plugin-context-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/context.js'))],
-    ['master-vite-plugin-manifest-loader-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/manifest-loader.js'))],
-    ['master-vite-plugin-manifest-virtual-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/manifest-virtual-module.js'))],
-    ['master-vite-plugin-emitted-globals-virtual-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/emitted-globals-virtual-module.js'))],
-    ['master-vite-plugin-scanner-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/scanner.js'))],
-    ['master-vite-plugin-local-compose-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/local-compose.js'))],
-    ['master-vite-plugin-style-entry-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/style-entry.js'))],
-    ['master-vite-plugin-style-entry-hmr-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/style-entry-hmr.js'))],
-    ['master-vite-plugin-style-entry-build-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/style-entry-build.js'))],
-    ['master-vite-util-extracted-css-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/utils/extracted-css.js'))],
-    ['master-vite-util-register-style-source-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/utils/register-style-source.js'))],
-    ['master-vite-util-scanner-context-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/utils/scanner-context.js'))],
+    ['stet-vite-index-module-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/index.js'))],
+    ['stet-vite-core-module-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/core.js'))],
+    ['stet-vite-options-module-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/options.js'))],
+    ['stet-vite-common-module-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/common.js'))],
+    ['stet-vite-plugin-context-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/context.js'))],
+    ['stet-vite-plugin-manifest-loader-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/manifest-loader.js'))],
+    ['stet-vite-plugin-manifest-virtual-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/manifest-virtual-module.js'))],
+    ['stet-vite-plugin-emitted-globals-virtual-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/emitted-globals-virtual-module.js'))],
+    ['stet-vite-plugin-scanner-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/scanner.js'))],
+    ['stet-vite-plugin-local-compose-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/local-compose.js'))],
+    ['stet-vite-plugin-style-entry-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/style-entry.js'))],
+    ['stet-vite-plugin-style-entry-hmr-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/style-entry-hmr.js'))],
+    ['stet-vite-plugin-style-entry-build-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/plugins/style-entry-build.js'))],
+    ['stet-vite-util-extracted-css-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/utils/extracted-css.js'))],
+    ['stet-vite-util-register-style-source-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/utils/register-style-source.js'))],
+    ['stet-vite-util-scanner-context-import-ms', fileSpecifier(resolveBenchmarkPackageFile('@stet-css/vite', 'dist/utils/scanner-context.js'))],
     ['vite-css-scanner-import-ms', '@stet-css/scanner', vitePackageFile],
     ['vite-css-stylesheet-import-ms', '@stet-css/stylesheet', vitePackageFile],
     ['vite-css-project-manifest-import-ms', '@stet-css/project/manifest', vitePackageFile],
@@ -388,11 +388,11 @@ function renderCLICommanderParseProbe(cliPackageFile: string) {
     'const program = new Command()',
     'program',
     '    .name("@stet-css/core")',
-    '    .description("Master CSS CLI")',
+    '    .description("StetCSS CLI")',
     '    .version("0.0.0")',
     '    .argument("[source paths...]", "The glob pattern paths to scan sources")',
     '    .option("-w, --watch", "Watch file changes and generate CSS rules.")',
-    '    .option("-o, --output <path>", "Specify your CSS file output path", "master.css")',
+    '    .option("-o, --output <path>", "Specify your CSS file output path", "stet.css")',
     '    .option("-v, --verbose <level>", "Verbose logging 0~N", "1")',
     '    .option("--no-export", "Print only CSS results.")',
     '    .action(() => {})',
@@ -433,10 +433,10 @@ function renderViteStartupProbe() {
     'metrics["vite-import-ms"] = performance.now() - viteImportStartedAt',
     'const stetViteImportStartedAt = performance.now()',
     'const stetCSSModule = await import("@stet-css/vite")',
-    'metrics["master-vite-import-ms"] = performance.now() - stetViteImportStartedAt',
+    'metrics["stet-vite-import-ms"] = performance.now() - stetViteImportStartedAt',
     'const pluginFactoryStartedAt = performance.now()',
     'const plugins = instrumentStetVitePlugins(stetCSSModule.default())',
-    'metrics["master-vite-plugin-factory-ms"] = performance.now() - pluginFactoryStartedAt',
+    'metrics["stet-vite-plugin-factory-ms"] = performance.now() - pluginFactoryStartedAt',
     'const buildStartedAt = performance.now()',
     'await vite.build({',
     '    root: process.cwd(),',
@@ -451,7 +451,7 @@ function renderViteStartupProbe() {
     '        }',
     '    }',
     '})',
-    'metrics["vite-build-with-master-ms"] = performance.now() - buildStartedAt',
+    'metrics["vite-build-with-stet-ms"] = performance.now() - buildStartedAt',
     'metrics["vite-child-process-uptime-ms"] = performance.now()',
     `console.log(${JSON.stringify(probeMarker)} + JSON.stringify(metrics))`,
     '',
@@ -459,14 +459,14 @@ function renderViteStartupProbe() {
     '    return plugins.map((plugin) => {',
     '        const next = { ...plugin }',
     '        if (plugin.name === "stet-css:scanner") {',
-    '            wrapPluginHook(next, "configResolved", "vite-master-scanner-init-ms")',
+    '            wrapPluginHook(next, "configResolved", "vite-stet-scanner-init-ms")',
     '        }',
     '        if (plugin.name === "stet-css:style-entry") {',
-    '            wrapPluginHook(next, "load", "vite-master-style-entry-ms")',
-    '            wrapPluginHook(next, "transform", "vite-master-style-entry-ms")',
+    '            wrapPluginHook(next, "load", "vite-stet-style-entry-ms")',
+    '            wrapPluginHook(next, "transform", "vite-stet-style-entry-ms")',
     '        }',
     '        if (plugin.name === "stet-css:style-entry:build") {',
-    '            wrapPluginHook(next, "generateBundle", "vite-master-generate-bundle-ms")',
+    '            wrapPluginHook(next, "generateBundle", "vite-stet-generate-bundle-ms")',
     '        }',
     '        return next',
     '    })',

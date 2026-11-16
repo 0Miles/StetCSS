@@ -4,18 +4,18 @@
   "generatedAt": "2026-11-16T03:08:31.433Z",
   "sourceReports": [
     {
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "suite": "browser-lifecycle",
       "generatedAt": "2026-11-16T02:45:51.199Z",
-      "source": ".results/browser-lifecycle/report.long-session-5m-master-static.json",
-      "command": "BROWSER_LIFECYCLE_SCENARIOS=long-session BROWSER_LIFECYCLE_MODES=master-static BROWSER_LIFECYCLE_ROUNDS=1 BROWSER_LIFECYCLE_WARMUP_ROUNDS=1 BROWSER_LIFECYCLE_LONG_SESSION_MS=300000 BROWSER_LIFECYCLE_MEASURE_TIMEOUT_MS=420000 BROWSER_LIFECYCLE_REPORT_LABEL=long-session-5m-master-static BENCHMARK_COMMAND_TIMEOUT_MS=900000 bun run --filter benchmarks bench:browser-lifecycle"
+      "source": ".results/browser-lifecycle/report.long-session-5m-stet-static.json",
+      "command": "BROWSER_LIFECYCLE_SCENARIOS=long-session BROWSER_LIFECYCLE_MODES=stet-static BROWSER_LIFECYCLE_ROUNDS=1 BROWSER_LIFECYCLE_WARMUP_ROUNDS=1 BROWSER_LIFECYCLE_LONG_SESSION_MS=300000 BROWSER_LIFECYCLE_MEASURE_TIMEOUT_MS=420000 BROWSER_LIFECYCLE_REPORT_LABEL=long-session-5m-stet-static BENCHMARK_COMMAND_TIMEOUT_MS=900000 bun run --filter benchmarks bench:browser-lifecycle"
     },
     {
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "suite": "browser-lifecycle",
       "generatedAt": "2026-11-16T02:57:00.615Z",
-      "source": ".results/browser-lifecycle/report.long-session-5m-master-runtime.json",
-      "command": "BROWSER_LIFECYCLE_SCENARIOS=long-session BROWSER_LIFECYCLE_MODES=master-runtime BROWSER_LIFECYCLE_ROUNDS=1 BROWSER_LIFECYCLE_WARMUP_ROUNDS=1 BROWSER_LIFECYCLE_LONG_SESSION_MS=300000 BROWSER_LIFECYCLE_MEASURE_TIMEOUT_MS=420000 BROWSER_LIFECYCLE_REPORT_LABEL=long-session-5m-master-runtime BENCHMARK_COMMAND_TIMEOUT_MS=900000 bun run --filter benchmarks bench:browser-lifecycle"
+      "source": ".results/browser-lifecycle/report.long-session-5m-stet-runtime.json",
+      "command": "BROWSER_LIFECYCLE_SCENARIOS=long-session BROWSER_LIFECYCLE_MODES=stet-runtime BROWSER_LIFECYCLE_ROUNDS=1 BROWSER_LIFECYCLE_WARMUP_ROUNDS=1 BROWSER_LIFECYCLE_LONG_SESSION_MS=300000 BROWSER_LIFECYCLE_MEASURE_TIMEOUT_MS=420000 BROWSER_LIFECYCLE_REPORT_LABEL=long-session-5m-stet-runtime BENCHMARK_COMMAND_TIMEOUT_MS=900000 bun run --filter benchmarks bench:browser-lifecycle"
     },
     {
       "modeId": "tailwind-static",
@@ -73,14 +73,14 @@
   ],
   "modes": [
     {
-      "id": "master-static",
-      "label": "Master CSS static",
-      "family": "master-css"
+      "id": "stet-static",
+      "label": "StetCSS static",
+      "family": "stet-css"
     },
     {
-      "id": "master-runtime",
-      "label": "Master CSS runtime",
-      "family": "master-css"
+      "id": "stet-runtime",
+      "label": "StetCSS runtime",
+      "family": "stet-css"
     },
     {
       "id": "tailwind-static",
@@ -103,25 +103,25 @@
   ],
   "variants": [
     {
-      "id": "long-session-master-static-mixed-operations",
+      "id": "long-session-stet-static-mixed-operations",
       "fixtureId": "dynamic",
-      "modeId": "master-static",
+      "modeId": "stet-static",
       "scenarioId": "long-session",
       "detailId": "mixed-operations",
-      "adapterId": "master-static",
-      "label": "Long session mixed operations / Master CSS static",
+      "adapterId": "stet-static",
+      "label": "Long session mixed operations / StetCSS static",
       "limits": [
         "Default long-session duration is short unless BROWSER_LIFECYCLE_LONG_SESSION_MS is set."
       ]
     },
     {
-      "id": "long-session-master-runtime-mixed-operations",
+      "id": "long-session-stet-runtime-mixed-operations",
       "fixtureId": "dynamic",
-      "modeId": "master-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "long-session",
       "detailId": "mixed-operations",
-      "adapterId": "master-runtime",
-      "label": "Long session mixed operations / Master CSS runtime",
+      "adapterId": "stet-runtime",
+      "label": "Long session mixed operations / StetCSS runtime",
       "limits": [
         "Default long-session duration is short unless BROWSER_LIFECYCLE_LONG_SESSION_MS is set."
       ]
@@ -142,10 +142,10 @@
   ],
   "variantSummaries": [
     {
-      "variantId": "long-session-master-static-mixed-operations",
+      "variantId": "long-session-stet-static-mixed-operations",
       "fixtureId": "dynamic",
-      "adapterId": "master-static",
-      "modeId": "master-static",
+      "adapterId": "stet-static",
+      "modeId": "stet-static",
       "scenarioId": "long-session",
       "detailId": "mixed-operations",
       "correctness": {
@@ -514,10 +514,10 @@
       }
     },
     {
-      "variantId": "long-session-master-runtime-mixed-operations",
+      "variantId": "long-session-stet-runtime-mixed-operations",
       "fixtureId": "dynamic",
-      "adapterId": "master-runtime",
-      "modeId": "master-runtime",
+      "adapterId": "stet-runtime",
+      "modeId": "stet-runtime",
       "scenarioId": "long-session",
       "detailId": "mixed-operations",
       "correctness": {
@@ -1299,19 +1299,19 @@
       "id": "runtime-js-raw-bytes",
       "label": "Runtime JS raw bytes",
       "unit": "B",
-      "description": "Raw bytes for the Master CSS browser runtime bundle."
+      "description": "Raw bytes for the StetCSS browser runtime bundle."
     },
     {
       "id": "runtime-js-gzip-bytes",
       "label": "Runtime JS gzip bytes",
       "unit": "B",
-      "description": "Gzip bytes for the Master CSS browser runtime bundle."
+      "description": "Gzip bytes for the StetCSS browser runtime bundle."
     },
     {
       "id": "runtime-js-brotli-bytes",
       "label": "Runtime JS brotli bytes",
       "unit": "B",
-      "description": "Brotli bytes for the Master CSS browser runtime bundle."
+      "description": "Brotli bytes for the StetCSS browser runtime bundle."
     },
     {
       "id": "manifest-json-raw-bytes",
@@ -1443,7 +1443,7 @@
       "id": "runtime-ready-ms",
       "label": "Runtime ready",
       "unit": "ms",
-      "description": "Browser performance timestamp when Master CSS runtime finished observe."
+      "description": "Browser performance timestamp when StetCSS runtime finished observe."
     },
     {
       "id": "runtime-bootstrap-ms",
@@ -1461,7 +1461,7 @@
       "id": "runtime-mutation-ms",
       "label": "Runtime mutation work",
       "unit": "ms",
-      "description": "Instrumented Master CSS runtime ensure/delete class-rules duration during the measured scenario."
+      "description": "Instrumented StetCSS runtime ensure/delete class-rules duration during the measured scenario."
     },
     {
       "id": "runtime-generated-rule-count",
@@ -1529,8 +1529,8 @@
       "scenarioId": "long-session",
       "detailId": "mixed-operations",
       "modes": {
-        "master-static": {
-          "variantId": "long-session-master-static-mixed-operations",
+        "stet-static": {
+          "variantId": "long-session-stet-static-mixed-operations",
           "timing": {
             "inpStyleInteractionMs": {
               "min": 300130,
@@ -1684,8 +1684,8 @@
             }
           }
         },
-        "master-runtime": {
-          "variantId": "long-session-master-runtime-mixed-operations",
+        "stet-runtime": {
+          "variantId": "long-session-stet-runtime-mixed-operations",
           "timing": {
             "inpStyleInteractionMs": {
               "min": 300113.8,

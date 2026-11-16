@@ -61,9 +61,9 @@ async function createStartupDiagnosticsReport(): Promise<BenchmarkReport> {
   const rounds = getDiagnosticRounds()
 
   for (const variant of variants) {
-    const toolId: StartupDiagnosticToolId = variant.id.endsWith('master-cli-startup-diagnostic')
-      ? 'master-cli-startup-diagnostic'
-      : 'master-vite-startup-diagnostic'
+    const toolId: StartupDiagnosticToolId = variant.id.endsWith('stet-cli-startup-diagnostic')
+      ? 'stet-cli-startup-diagnostic'
+      : 'stet-vite-startup-diagnostic'
 
     for (let round = 0; round < rounds; round++) {
       console.log(`Measuring startup diagnostics for ${variant.label}, round ${round + 1}/${rounds}`)
@@ -118,7 +118,7 @@ async function createStartupDiagnosticsReport(): Promise<BenchmarkReport> {
       'This suite is diagnostic and does not replace end-user production command timing from build-performance.',
       'Module import probes run in separate child processes, so each import metric is a cold diagnostic approximation, not an additive flamegraph.',
       'CLI runProgram probes use the built package core entry to split import and execution while the full CLI command metric still uses the published bin entry.',
-      'Vite diagnostics include a baseline command metric because most full Vite build time is unrelated to Master CSS plugin work.',
+      'Vite diagnostics include a baseline command metric because most full Vite build time is unrelated to StetCSS plugin work.',
       'Do not use diagnostic numbers as permission to change CSS output, cascade order, source detection, or public behavior.'
     ],
     artifacts
@@ -177,7 +177,7 @@ function toMetricDescription(id: string) {
   if (id.includes('import')) return 'Cold child-process module import timing for startup diagnostics.'
   if (id.includes('command')) return 'Full child-process command timing measured by the benchmark parent process.'
   if (id.includes('probe')) return 'Benchmark-local probe timing used to split startup and execution costs.'
-  if (id.includes('vite-master')) return 'Instrumented Master CSS Vite plugin startup or hook timing.'
+  if (id.includes('vite-stet')) return 'Instrumented StetCSS Vite plugin startup or hook timing.'
   if (id.includes('generated-css')) return 'Generated CSS artifact size from the diagnostic output.'
   return 'Startup diagnostic metric.'
 }

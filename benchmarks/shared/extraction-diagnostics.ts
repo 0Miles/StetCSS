@@ -80,9 +80,9 @@ export interface ExtractionDiagnosticResult {
 export const extractionDiagnosticMetricIds = [
   'production-create-extracted-css-ms',
   'diagnostic-extraction-total-ms',
-  'master-import-graph-resolution-ms',
-  'master-package-artifact-read-ms',
-  'master-package-css-compilation-ms',
+  'stet-import-graph-resolution-ms',
+  'stet-package-artifact-read-ms',
+  'stet-package-css-compilation-ms',
   'entry-css-compilation-ms',
   'manifest-finalization-ms',
   'native-css-collection-ms',
@@ -99,8 +99,8 @@ export const extractionDiagnosticMetricIds = [
   'latent-class-count',
   'valid-class-count',
   'generated-class-count',
-  'master-package-shortcut-hit-count',
-  'master-package-shortcut-fallback-count',
+  'stet-package-shortcut-hit-count',
+  'stet-package-shortcut-fallback-count',
   'native-css-source-count',
   'native-css-raw-bytes',
   'generated-css-raw-bytes',
@@ -128,14 +128,14 @@ export function createExtractionDiagnosticVariants(fixtureIds: BenchmarkFixtureI
   return fixtureIds.map((fixtureId) => ({
     id: createExtractionDiagnosticVariantId(fixtureId),
     fixtureId,
-    adapterId: 'master-static',
-    label: `${fixtureId} / Master CSS extraction diagnostic`,
+    adapterId: 'stet-static',
+    label: `${fixtureId} / StetCSS extraction diagnostic`,
     limits: ['Diagnostic timings decompose the static extraction path and are not end-user command timings.']
   }))
 }
 
 export function createExtractionDiagnosticVariantId(fixtureId: BenchmarkFixtureId) {
-  return `${fixtureId}-master-static-extraction`
+  return `${fixtureId}-stet-static-extraction`
 }
 
 export async function runExtractionDiagnostic(options: {
@@ -191,8 +191,8 @@ class DiagnosticRecorder {
 }
 
 async function runStetExtractionDiagnostic(workspace: string, fixtureId: BenchmarkFixtureId): Promise<DiagnosticRunResult> {
-  const tool = staticBuildTools.find((candidate) => candidate.id === 'master-static-cli')
-  if (!tool) throw new Error('Missing Master CSS static CLI tool.')
+  const tool = staticBuildTools.find((candidate) => candidate.id === 'stet-static-cli')
+  if (!tool) throw new Error('Missing StetCSS static CLI tool.')
 
   await prepareStaticWorkspace(workspace, fixtureId, tool)
 
@@ -351,9 +351,9 @@ async function createDiagnosticExtractedCSS(options: {
 }
 
 async function compileStetCSSPackage(projectDir: string, recorder: DiagnosticRecorder) {
-  recorder.setCount('master-package-shortcut-fallback-count', 1)
-  const graph = recorder.timeSync('master-import-graph-resolution-ms', () => resolveStetCSSPackageCompileSource(projectDir))
-  const result = await recorder.time('master-package-css-compilation-ms', () => compileStyleCSS(graph.dependencies[0] || '@stet-css/core', graph.source, {
+  recorder.setCount('stet-package-shortcut-fallback-count', 1)
+  const graph = recorder.timeSync('stet-import-graph-resolution-ms', () => resolveStetCSSPackageCompileSource(projectDir))
+  const result = await recorder.time('stet-package-css-compilation-ms', () => compileStyleCSS(graph.dependencies[0] || '@stet-css/core', graph.source, {
     projectDir
   }))
   return {
@@ -371,16 +371,16 @@ function resolveStetCSSPackageCompileSource(projectDir: string) {
 }
 
 function readDefaultStetCSSPackageArtifact(projectDir: string, recorder: DiagnosticRecorder): DefaultStetCSSPackageArtifact | undefined {
-  const graph = recorder.timeSync('master-import-graph-resolution-ms', () => resolveStetCSSPackageImportGraph(projectDir))
+  const graph = recorder.timeSync('stet-import-graph-resolution-ms', () => resolveStetCSSPackageImportGraph(projectDir))
   const artifactFiles = findDefaultPresetArtifactFiles(graph.dependencies)
   if (!artifactFiles) {
-    recorder.setCount('master-package-shortcut-hit-count', 0)
+    recorder.setCount('stet-package-shortcut-hit-count', 0)
     return
   }
 
-  recorder.setCount('master-package-shortcut-hit-count', 1)
-  recorder.setCount('master-package-shortcut-fallback-count', 0)
-  return recorder.timeSync('master-package-artifact-read-ms', () => ({
+  recorder.setCount('stet-package-shortcut-hit-count', 1)
+  recorder.setCount('stet-package-shortcut-fallback-count', 0)
+  return recorder.timeSync('stet-package-artifact-read-ms', () => ({
     manifest: JSON.parse(readFileSync(artifactFiles.manifestFile, 'utf8')) as StetCSSManifest,
     nativeCSS: readFileSync(artifactFiles.nativeCSSFile, 'utf8')
   }))

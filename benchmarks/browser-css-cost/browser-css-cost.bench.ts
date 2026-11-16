@@ -139,7 +139,7 @@ async function createBrowserCSSCostReport(): Promise<BenchmarkReport> {
     summary: summarizeReportSamples(samples, metricUnits),
     limits: [
       'This suite primarily measures Chromium load-time browser costs as deterministic CSS rule volume grows while visible DOM stays fixed.',
-      'Neutral CSS volume variants are browser-only controls; they are not a Master CSS versus Tailwind CSS comparison.',
+      'Neutral CSS volume variants are browser-only controls; they are not a StetCSS versus Tailwind CSS comparison.',
       'Stress DOM variants are secondary diagnostics for DOM scaling with fixed CSS and should not be used as the main delivery-mode decision input.',
       'DOM control variants record repeated item count, measured DOM node count, fixed CSS bytes, and fixed CSS structure so CSS and DOM axes can be separated.',
       'This suite does not measure interaction mutation cost, runtime rule generation, HMR, or real application JavaScript.',

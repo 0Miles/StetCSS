@@ -2,7 +2,7 @@
 
 Status: internal diagnostic, not a public benchmark result.
 
-The Master progressive results below are historical: #60 removed progressive delivery from the suites, so these commands now measure Master runtime only.
+The StetCSS progressive results below are historical: #60 removed progressive delivery from the suites, so these commands now measure StetCSS runtime only.
 
 Captured from:
 
@@ -19,7 +19,7 @@ Environment:
 ## Scope And Limits
 
 - Dynamic and stress-dom fixtures only.
-- Master runtime and Master progressive modes only for runtime internals.
+- StetCSS runtime and StetCSS progressive modes only for runtime internals.
 - Local Chromium trace timings only; trace event names and scheduling can vary by Chromium version.
 - Instrumentation is benchmark-only and does not change `@stet-css/runtime` source behavior.
 - Raw reports, traces, screenshots, and temporary workspaces stay under `benchmarks/.results/**` and are not committed.
@@ -30,7 +30,7 @@ The dominant cleanup-cycle hotspot is browser style invalidation caused by runti
 
 Evidence:
 
-- In the style-invalidation diagnostic, moving from cold temporary rule generation to preseeded temporary rules reduced stress-dom style recalculation from `7.62ms` to `2.11ms` for Master runtime and from `7.26ms` to `2.17ms` for Master progressive.
+- In the style-invalidation diagnostic, moving from cold temporary rule generation to preseeded temporary rules reduced stress-dom style recalculation from `7.62ms` to `2.11ms` for StetCSS runtime and from `7.26ms` to `2.17ms` for StetCSS progressive.
 - Runtime ensure/delete medians over the same comparison were small: runtime `0.30ms -> 0.10ms`, progressive `1.00ms -> 0.10ms`.
 - MutationObserver delivery for preseeded retained-0 variants was `1.5ms` to `2.6ms` across 6-8 callbacks, while observer-paused and observer-enabled preseeded variants had similar style recalculation medians.
 - Retained volume increased style recalculation even with preseeded temporary rules: stress-dom retained-0 was about `2.11ms`, retained-128 was about `2.70ms`, and retained-512 was about `4.41-4.52ms`.
@@ -41,10 +41,10 @@ Evidence:
 
 | Case | Dynamic style recalc | Stress DOM style recalc |
 | --- | ---: | ---: |
-| Master runtime cold baseline | `1.90ms` | `7.62ms` |
-| Master runtime preseeded retained-0 | `1.27ms` | `2.11ms` |
-| Master progressive cold baseline | `1.87ms` | `7.26ms` |
-| Master progressive preseeded retained-0 | `1.24ms` | `2.17ms` |
+| StetCSS runtime cold baseline | `1.90ms` | `7.62ms` |
+| StetCSS runtime preseeded retained-0 | `1.27ms` | `2.11ms` |
+| StetCSS progressive cold baseline | `1.87ms` | `7.26ms` |
+| StetCSS progressive preseeded retained-0 | `1.24ms` | `2.17ms` |
 
 Stress DOM amplifies browser style recalculation far more than runtime JS work. This points to invalidation fan-out over document shape rather than a pure runtime method cost.
 

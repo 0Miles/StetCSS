@@ -3,8 +3,8 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const expectedModeIds = [
-  'master-static',
-  'master-runtime',
+  'stet-static',
+  'stet-runtime',
   'tailwind-static'
 ]
 
@@ -53,7 +53,7 @@ const evidence = {
   modes: expectedModeIds.map((modeId) => ({
     id: modeId,
     label: formatModeLabel(modeId),
-    family: modeId === 'tailwind-static' ? 'tailwind-css' : 'master-css'
+    family: modeId === 'tailwind-static' ? 'tailwind-css' : 'stet-css'
   })),
   scenarios: [
     {
@@ -237,8 +237,8 @@ function createSourceCommand(modeId) {
 }
 
 function formatModeLabel(modeId) {
-  if (modeId === 'master-static') return 'Master CSS static'
-  if (modeId === 'master-runtime') return 'Master CSS runtime'
+  if (modeId === 'stet-static') return 'StetCSS static'
+  if (modeId === 'stet-runtime') return 'StetCSS runtime'
   if (modeId === 'tailwind-static') return 'Tailwind CSS static'
   return modeId
 }

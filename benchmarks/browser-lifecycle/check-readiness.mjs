@@ -17,8 +17,8 @@ const expectedScenarioIds = [
 ]
 
 const expectedModeIds = [
-  'master-static',
-  'master-runtime',
+  'stet-static',
+  'stet-runtime',
   'tailwind-static'
 ]
 

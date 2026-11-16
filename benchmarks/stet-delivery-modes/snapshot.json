@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "suite": "master-delivery-modes",
+  "suite": "stet-delivery-modes",
   "generatedAt": "2026-11-16T06:32:56.562Z",
   "sourceReport": {
-    "suite": "master-delivery-modes",
+    "suite": "stet-delivery-modes",
     "generatedAt": "2026-11-16T06:32:56.469Z",
-    "command": "bun run --filter benchmarks bench:master-delivery-modes"
+    "command": "bun run --filter benchmarks bench:stet-delivery-modes"
   },
   "environment": {
     "os": {
@@ -77,14 +77,14 @@
   ],
   "modes": [
     {
-      "id": "master-static",
-      "label": "Master CSS static",
-      "family": "master-css"
+      "id": "stet-static",
+      "label": "StetCSS static",
+      "family": "stet-css"
     },
     {
-      "id": "master-runtime",
-      "label": "Master CSS runtime",
-      "family": "master-css"
+      "id": "stet-runtime",
+      "label": "StetCSS runtime",
+      "family": "stet-css"
     },
     {
       "id": "tailwind-static",
@@ -94,18 +94,18 @@
   ],
   "variants": [
     {
-      "id": "minimal-master-static",
+      "id": "minimal-stet-static",
       "fixtureId": "minimal",
-      "modeId": "master-static",
-      "adapterId": "master-static",
-      "label": "minimal / Master CSS static"
+      "modeId": "stet-static",
+      "adapterId": "stet-static",
+      "label": "minimal / StetCSS static"
     },
     {
-      "id": "minimal-master-runtime",
+      "id": "minimal-stet-runtime",
       "fixtureId": "minimal",
-      "modeId": "master-runtime",
-      "adapterId": "master-runtime",
-      "label": "minimal / Master CSS runtime"
+      "modeId": "stet-runtime",
+      "adapterId": "stet-runtime",
+      "label": "minimal / StetCSS runtime"
     },
     {
       "id": "minimal-tailwind-static",
@@ -115,18 +115,18 @@
       "label": "minimal / Tailwind CSS static"
     },
     {
-      "id": "docs-master-static",
+      "id": "docs-stet-static",
       "fixtureId": "docs",
-      "modeId": "master-static",
-      "adapterId": "master-static",
-      "label": "docs / Master CSS static"
+      "modeId": "stet-static",
+      "adapterId": "stet-static",
+      "label": "docs / StetCSS static"
     },
     {
-      "id": "docs-master-runtime",
+      "id": "docs-stet-runtime",
       "fixtureId": "docs",
-      "modeId": "master-runtime",
-      "adapterId": "master-runtime",
-      "label": "docs / Master CSS runtime"
+      "modeId": "stet-runtime",
+      "adapterId": "stet-runtime",
+      "label": "docs / StetCSS runtime"
     },
     {
       "id": "docs-tailwind-static",
@@ -136,18 +136,18 @@
       "label": "docs / Tailwind CSS static"
     },
     {
-      "id": "dashboard-master-static",
+      "id": "dashboard-stet-static",
       "fixtureId": "dashboard",
-      "modeId": "master-static",
-      "adapterId": "master-static",
-      "label": "dashboard / Master CSS static"
+      "modeId": "stet-static",
+      "adapterId": "stet-static",
+      "label": "dashboard / StetCSS static"
     },
     {
-      "id": "dashboard-master-runtime",
+      "id": "dashboard-stet-runtime",
       "fixtureId": "dashboard",
-      "modeId": "master-runtime",
-      "adapterId": "master-runtime",
-      "label": "dashboard / Master CSS runtime"
+      "modeId": "stet-runtime",
+      "adapterId": "stet-runtime",
+      "label": "dashboard / StetCSS runtime"
     },
     {
       "id": "dashboard-tailwind-static",
@@ -157,18 +157,18 @@
       "label": "dashboard / Tailwind CSS static"
     },
     {
-      "id": "stress-css-master-static",
+      "id": "stress-css-stet-static",
       "fixtureId": "stress-css",
-      "modeId": "master-static",
-      "adapterId": "master-static",
-      "label": "stress-css / Master CSS static"
+      "modeId": "stet-static",
+      "adapterId": "stet-static",
+      "label": "stress-css / StetCSS static"
     },
     {
-      "id": "stress-css-master-runtime",
+      "id": "stress-css-stet-runtime",
       "fixtureId": "stress-css",
-      "modeId": "master-runtime",
-      "adapterId": "master-runtime",
-      "label": "stress-css / Master CSS runtime"
+      "modeId": "stet-runtime",
+      "adapterId": "stet-runtime",
+      "label": "stress-css / StetCSS runtime"
     },
     {
       "id": "stress-css-tailwind-static",
@@ -219,19 +219,19 @@
       "id": "runtime-js-raw-bytes",
       "label": "Runtime JS raw bytes",
       "unit": "B",
-      "description": "Raw bytes for the Master CSS browser runtime bundle."
+      "description": "Raw bytes for the StetCSS browser runtime bundle."
     },
     {
       "id": "runtime-js-gzip-bytes",
       "label": "Runtime JS gzip bytes",
       "unit": "B",
-      "description": "Gzip bytes for the Master CSS browser runtime bundle."
+      "description": "Gzip bytes for the StetCSS browser runtime bundle."
     },
     {
       "id": "runtime-js-brotli-bytes",
       "label": "Runtime JS brotli bytes",
       "unit": "B",
-      "description": "Brotli bytes for the Master CSS browser runtime bundle."
+      "description": "Brotli bytes for the StetCSS browser runtime bundle."
     },
     {
       "id": "delivered-style-rule-count",
@@ -297,7 +297,7 @@
       "id": "runtime-ready-ms",
       "label": "Runtime ready",
       "unit": "ms",
-      "description": "Browser performance timestamp when Master CSS runtime finished observe."
+      "description": "Browser performance timestamp when StetCSS runtime finished observe."
     },
     {
       "id": "runtime-bootstrap-ms",
@@ -328,8 +328,8 @@
     {
       "fixtureId": "minimal",
       "modes": {
-        "master-static": {
-          "variantId": "minimal-master-static",
+        "stet-static": {
+          "variantId": "minimal-stet-static",
           "payload": {
             "html": {
               "rawBytes": 2243,
@@ -451,8 +451,8 @@
             }
           }
         },
-        "master-runtime": {
-          "variantId": "minimal-master-runtime",
+        "stet-runtime": {
+          "variantId": "minimal-stet-runtime",
           "payload": {
             "html": {
               "rawBytes": 4478,
@@ -702,8 +702,8 @@
     {
       "fixtureId": "docs",
       "modes": {
-        "master-static": {
-          "variantId": "docs-master-static",
+        "stet-static": {
+          "variantId": "docs-stet-static",
           "payload": {
             "html": {
               "rawBytes": 4658,
@@ -825,8 +825,8 @@
             }
           }
         },
-        "master-runtime": {
-          "variantId": "docs-master-runtime",
+        "stet-runtime": {
+          "variantId": "docs-stet-runtime",
           "payload": {
             "html": {
               "rawBytes": 6893,
@@ -1076,8 +1076,8 @@
     {
       "fixtureId": "dashboard",
       "modes": {
-        "master-static": {
-          "variantId": "dashboard-master-static",
+        "stet-static": {
+          "variantId": "dashboard-stet-static",
           "payload": {
             "html": {
               "rawBytes": 9007,
@@ -1199,8 +1199,8 @@
             }
           }
         },
-        "master-runtime": {
-          "variantId": "dashboard-master-runtime",
+        "stet-runtime": {
+          "variantId": "dashboard-stet-runtime",
           "payload": {
             "html": {
               "rawBytes": 11242,
@@ -1450,8 +1450,8 @@
     {
       "fixtureId": "stress-css",
       "modes": {
-        "master-static": {
-          "variantId": "stress-css-master-static",
+        "stet-static": {
+          "variantId": "stress-css-stet-static",
           "payload": {
             "html": {
               "rawBytes": 17164,
@@ -1573,8 +1573,8 @@
             }
           }
         },
-        "master-runtime": {
-          "variantId": "stress-css-master-runtime",
+        "stet-runtime": {
+          "variantId": "stress-css-stet-runtime",
           "payload": {
             "html": {
               "rawBytes": 19399,
@@ -1823,9 +1823,9 @@
     }
   ],
   "limits": [
-    "This suite measures local Chromium initial payload, page load, and Master CSS runtime startup cost only.",
-    "Master static and Tailwind static variants use CLI-generated external CSS from equivalent rendered fixture intent, not identical class strings.",
-    "Master runtime uses the built browser runtime bundle and default manifest JSON; no upfront generated CSS is delivered.",
+    "This suite measures local Chromium initial payload, page load, and StetCSS runtime startup cost only.",
+    "StetCSS static and Tailwind static variants use CLI-generated external CSS from equivalent rendered fixture intent, not identical class strings.",
+    "StetCSS runtime uses the built browser runtime bundle and default manifest JSON; no upfront generated CSS is delivered.",
     "This suite does not measure post-load mutation, route transition, HMR, dev workflow, Vite injection cost, CDN behavior, or public real-world page variance.",
     "Trace-derived event names can change across Chromium versions, so raw trace artifacts are kept for review before publishing public conclusions."
   ]

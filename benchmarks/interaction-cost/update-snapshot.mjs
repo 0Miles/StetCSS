@@ -5,14 +5,14 @@ import { fileURLToPath } from 'node:url'
 const fixtureIds = ['dynamic', 'dashboard', 'stress-dom']
 const modes = [
   {
-    id: 'master-static',
-    label: 'Master CSS static',
-    family: 'master-css'
+    id: 'stet-static',
+    label: 'StetCSS static',
+    family: 'stet-css'
   },
   {
-    id: 'master-runtime',
-    label: 'Master CSS runtime',
-    family: 'master-css'
+    id: 'stet-runtime',
+    label: 'StetCSS runtime',
+    family: 'stet-css'
   },
   {
     id: 'tailwind-static',

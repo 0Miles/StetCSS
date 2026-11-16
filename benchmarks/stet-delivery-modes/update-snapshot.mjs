@@ -5,14 +5,14 @@ import { fileURLToPath } from 'node:url'
 const fixtureIds = ['minimal', 'docs', 'dashboard', 'stress-css']
 const modes = [
   {
-    id: 'master-static',
-    label: 'Master CSS static',
-    family: 'master-css'
+    id: 'stet-static',
+    label: 'StetCSS static',
+    family: 'stet-css'
   },
   {
-    id: 'master-runtime',
-    label: 'Master CSS runtime',
-    family: 'master-css'
+    id: 'stet-runtime',
+    label: 'StetCSS runtime',
+    family: 'stet-css'
   },
   {
     id: 'tailwind-static',
@@ -53,24 +53,24 @@ const metricIds = [
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const benchmarkRoot = resolve(__dirname, '..')
-const reportFile = resolve(benchmarkRoot, '.results/master-delivery-modes/report.json')
+const reportFile = resolve(benchmarkRoot, '.results/stet-delivery-modes/report.json')
 const snapshotFile = resolve(__dirname, 'snapshot.json')
 const report = JSON.parse(await readFile(reportFile, 'utf8'))
 
-if (report.suite !== 'master-delivery-modes') {
-  throw new Error(`Expected master-delivery-modes report at ${reportFile}, received ${report.suite}.`)
+if (report.suite !== 'stet-delivery-modes') {
+  throw new Error(`Expected stet-delivery-modes report at ${reportFile}, received ${report.suite}.`)
 }
 
 validateReport()
 
 const snapshot = {
   schemaVersion: 1,
-  suite: 'master-delivery-modes',
+  suite: 'stet-delivery-modes',
   generatedAt: new Date().toISOString(),
   sourceReport: {
     suite: report.suite,
     generatedAt: report.generatedAt,
-    command: 'bun run --filter benchmarks bench:master-delivery-modes'
+    command: 'bun run --filter benchmarks bench:stet-delivery-modes'
   },
   environment: report.environment,
   browser: report.browser,
@@ -108,19 +108,19 @@ console.log(`Wrote ${snapshotFile}`)
 function validateReport() {
   for (const metricId of metricIds) {
     if (!report.metrics.some((metric) => metric.id === metricId)) {
-      throw new Error(`master-delivery-modes report is missing metric ${metricId}.`)
+      throw new Error(`stet-delivery-modes report is missing metric ${metricId}.`)
     }
   }
 
   for (const fixtureId of fixtureIds) {
     if (!report.fixtures.some((fixture) => fixture.id === fixtureId)) {
-      throw new Error(`master-delivery-modes report is missing fixture ${fixtureId}.`)
+      throw new Error(`stet-delivery-modes report is missing fixture ${fixtureId}.`)
     }
 
     for (const mode of modes) {
       const variantId = createVariantId(fixtureId, mode.id)
       if (!report.variants.some((variant) => variant.id === variantId)) {
-        throw new Error(`master-delivery-modes report is missing variant ${variantId}.`)
+        throw new Error(`stet-delivery-modes report is missing variant ${variantId}.`)
       }
 
       for (const metricId of metricIds) {
@@ -188,7 +188,7 @@ function createMetricSummary(variantId, metricId) {
 function findSummary(variantId, metricId) {
   const summary = report.summary.find((candidate) => candidate.variantId === variantId && candidate.metricId === metricId)
   if (!summary) {
-    throw new Error(`master-delivery-modes report is missing ${metricId} for ${variantId}.`)
+    throw new Error(`stet-delivery-modes report is missing ${metricId} for ${variantId}.`)
   }
   return summary
 }
@@ -199,7 +199,7 @@ function getMetrics(ids) {
 
 function getMetric(metricId) {
   const metric = report.metrics.find((candidate) => candidate.id === metricId)
-  if (!metric) throw new Error(`master-delivery-modes report is missing metric ${metricId}.`)
+  if (!metric) throw new Error(`stet-delivery-modes report is missing metric ${metricId}.`)
   return metric
 }
 

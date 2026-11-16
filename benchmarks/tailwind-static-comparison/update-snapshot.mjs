@@ -3,7 +3,7 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const fixtureIds = ['minimal', 'docs', 'dashboard', 'stress-css']
-const variantIds = ['master-static-cli', 'master-static-vite', 'tailwind-cli', 'tailwind-vite']
+const variantIds = ['stet-static-cli', 'stet-static-vite', 'tailwind-cli', 'tailwind-vite']
 const structureMetricIds = [
   'style-rule-count',
   'selector-count',
@@ -30,15 +30,15 @@ const structureMetricIds = [
 
 const variants = [
   {
-    id: 'master-static-cli',
-    label: 'Master CSS static CLI',
-    family: 'master-css',
+    id: 'stet-static-cli',
+    label: 'StetCSS static CLI',
+    family: 'stet-css',
     tool: 'cli'
   },
   {
-    id: 'master-static-vite',
-    label: 'Master CSS static Vite',
-    family: 'master-css',
+    id: 'stet-static-vite',
+    label: 'StetCSS static Vite',
+    family: 'stet-css',
     tool: 'vite'
   },
   {
@@ -129,7 +129,7 @@ const snapshot = {
     'CSS bytes and structure are not browser parse, style recalculation, layout, paint, or interaction cost.',
     'Build timings include Node, CLI, Vite, and package startup for each command path.',
     'Repeat production build means a second command execution in the same temp workspace; it is not watch mode or HMR.',
-    'Master CSS and Tailwind CSS fixtures target equivalent rendered UI intent, not identical class strings.',
+    'StetCSS and Tailwind CSS fixtures target equivalent rendered UI intent, not identical class strings.',
     'Results are advisory and should be read with the package versions, commands, machine details, and fixture source.'
   ]
 }
