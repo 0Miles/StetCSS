@@ -10,7 +10,7 @@ export default createRule({
   meta: {
     type: 'layout',
     docs: {
-      description: 'Disallow conflicting Master CSS classes'
+      description: 'Disallow conflicting StetCSS classes'
     },
     messages: {
       collisionClass: '{{message}}',

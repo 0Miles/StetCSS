@@ -628,7 +628,7 @@ export default class CSSLanguageServer {
           },
         severity: DiagnosticSeverity.Error,
         code: 'manifest-loading-error',
-        source: 'Master CSS',
+        source: 'StetCSS',
         message: `Failed to load Master CSS manifest: ${error instanceof Error ? error.message : String(error)}`,
         relatedInformation: directiveError
           ? this.createCSSDirectiveRelatedInformation(directiveError.related, textDocument, documentFile, 0)
@@ -648,7 +648,7 @@ export default class CSSLanguageServer {
       range: this.createCSSDirectiveRange(error.source, textDocument, documentFile, sourceOffset),
       severity: DiagnosticSeverity.Error,
       code: error.code,
-      source: 'Master CSS',
+      source: 'StetCSS',
       message: error.message,
       relatedInformation: this.createCSSDirectiveRelatedInformation(error.related, textDocument, documentFile, sourceOffset)
     }

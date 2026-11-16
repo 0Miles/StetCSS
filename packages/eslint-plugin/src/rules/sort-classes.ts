@@ -11,7 +11,7 @@ export default createRule({
     type: 'layout',
     fixable: 'code',
     docs: {
-      description: 'Sort Master CSS classes'
+      description: 'Sort StetCSS classes'
     },
     messages: {
       invalidClassOrder: '{{message}}',

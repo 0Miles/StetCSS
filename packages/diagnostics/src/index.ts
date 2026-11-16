@@ -28,7 +28,7 @@ export interface MasterCSSInspectionDiagnostic {
   code: MasterCSSInspectionDiagnosticCode
   severity: MasterCSSInspectionDiagnosticSeverity
   message: string
-  source: 'Master CSS'
+  source: 'StetCSS'
   sourceKind: MasterCSSInspectionDiagnosticSourceKind
   filePath?: string
   data?: unknown
@@ -175,7 +175,7 @@ function createScannerClassDiagnostics(scanner: CSSScanner, firstSourceByClass: 
     code: 'invalid-scanner-class',
     severity: 'warning',
     message: `Scanner candidate "${className}" did not generate Master CSS rules.`,
-    source: 'Master CSS',
+    source: 'StetCSS',
     sourceKind: 'scanner',
     filePath: firstSourceByClass.get(className),
     data: {
@@ -248,7 +248,7 @@ function createMissingCSSDiagnostics(results: MasterCSSMissingCSSResult[]): Mast
       code: 'missing-css',
       severity: 'error',
       message: `No generated CSS found for "${result.className}" (${result.reason}).`,
-      source: 'Master CSS',
+      source: 'StetCSS',
       sourceKind: 'missing-css',
       data: result
     }))
@@ -449,7 +449,7 @@ export async function createMasterCSSInspectionReport(options: CreateMasterCSSIn
       code: 'stylesheet-warning' as const,
       severity: 'warning' as const,
       message: warning,
-      source: 'Master CSS' as const,
+      source: 'StetCSS' as const,
       sourceKind: 'stylesheet' as const,
       filePath: entry.filePath
     }))))
@@ -457,7 +457,7 @@ export async function createMasterCSSInspectionReport(options: CreateMasterCSSIn
       code: 'stylesheet-error' as const,
       severity: 'error' as const,
       message: error.message,
-      source: 'Master CSS' as const,
+      source: 'StetCSS' as const,
       sourceKind: 'stylesheet' as const,
       filePath: error.filePath
     })))
@@ -532,7 +532,7 @@ export async function createMasterCSSInspectionReport(options: CreateMasterCSSIn
       code: 'scanner-error',
       severity: 'error',
       message: error instanceof Error ? error.message : String(error),
-      source: 'Master CSS',
+      source: 'StetCSS',
       sourceKind: 'scanner',
       data: {
         cwd

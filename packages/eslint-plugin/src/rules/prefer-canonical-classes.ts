@@ -18,7 +18,7 @@ export default createRule({
   meta: {
     type: 'suggestion',
     docs: {
-      description: 'Prefer canonical Master CSS classes'
+      description: 'Prefer canonical StetCSS classes'
     },
     messages: {
       preferClass: '{{message}}',

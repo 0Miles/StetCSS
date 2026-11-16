@@ -208,6 +208,7 @@ describe('lint command', () => {
         'invalid-class'
       ]))
       expect(report.files[0].diagnostics[0]).toHaveProperty('loc.start.line')
+      expect(report.files[0].diagnostics[0].source).toBe('StetCSS')
       expect(report.summary.errors).toBeGreaterThan(0)
     } finally {
       fs.rmSync(cwd, { recursive: true, force: true })

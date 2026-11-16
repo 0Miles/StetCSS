@@ -11,7 +11,7 @@ export default createRule({
   meta: {
     type: 'problem',
     docs: {
-      description: 'Disallow invalid Master CSS classes'
+      description: 'Disallow invalid StetCSS classes'
     },
     messages: {
       invalidClass: '{{message}}',

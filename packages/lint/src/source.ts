@@ -76,7 +76,7 @@ export interface MasterCSSLintSourceDiagnostic {
   message: string
   range: MasterCSSLintRange
   loc: MasterCSSLintSourceLocationRange
-  source: 'Master CSS'
+  source: 'StetCSS'
   sourceKind: MasterCSSLintDiagnosticSourceKind
   data?: MasterCSSLintDiagnosticData
   fixes?: MasterCSSLintSourceFix[]
@@ -385,7 +385,7 @@ function toSourceDiagnostic(
     message: diagnostic.message,
     range,
     loc: toLocationRange(content, range),
-    source: 'Master CSS',
+    source: 'StetCSS',
     sourceKind: context.sourceKind,
     ...(diagnostic.data ? { data: diagnostic.data } : {}),
     ...(fix ? { fixes: [fix] } : {})
