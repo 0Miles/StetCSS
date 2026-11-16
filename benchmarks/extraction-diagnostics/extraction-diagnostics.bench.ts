@@ -127,16 +127,6 @@ const metricMetadata: Record<typeof extractionDiagnosticMetricIds[number], Omit<
     unit: 'count',
     description: 'Scanner valid class count before extraction.'
   },
-  'native-class-name-count': {
-    label: 'Native class names',
-    unit: 'count',
-    description: 'Native class names registered from managed CSS sources.'
-  },
-  'used-native-class-count': {
-    label: 'Used native classes',
-    unit: 'count',
-    description: 'Native class names used by scanned fixture sources.'
-  },
   'generated-class-count': {
     label: 'Generated classes',
     unit: 'count',

@@ -22,7 +22,7 @@ function parseMaxWarnings(value: string | number | undefined) {
 function formatStylish(report: MasterCSSInspectionReport) {
   const lines = [
     `Scanned ${report.summary.files} files, ${report.summary.stylesheets} stylesheet entries.`,
-    `Classes: ${report.scanner.counts.valid} valid, ${report.scanner.counts.invalid} invalid, ${report.scanner.counts.usedNative} native.`,
+    `Classes: ${report.scanner.counts.valid} valid, ${report.scanner.counts.invalid} invalid.`,
     `CSS: ${report.css.bytes} bytes.`
   ]
   if (report.missingCSS.checked.length) {

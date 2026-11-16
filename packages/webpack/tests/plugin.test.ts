@@ -146,7 +146,6 @@ function runStyleCSSLoader(root: string, resourcePath: string, source: string) {
 function makeRegisteredStyleSource(dependencies: string[]) {
   return {
     source: '',
-    pruneNativeCSS: false,
     masterCSS: false,
     directives: createStylesheetDirectives(),
     dependencies,
@@ -802,7 +801,7 @@ describe('MasterCSSPlugin', () => {
     }
   })
 
-  test('prunes managed CSS entry native CSS and uses its config', async () => {
+  test('keeps managed CSS entry native CSS and uses its config', async () => {
     const root = mkdtempSync(path.join(tmpdir(), 'master-css-webpack-'))
     try {
       mkdirSync(path.join(root, 'src'), { recursive: true })
@@ -837,7 +836,7 @@ describe('MasterCSSPlugin', () => {
 
       expect(css).toContain('.native-used')
       expect(css).toContain('.root-native')
-      expect(css).not.toContain('.root-unused')
+      expect(css).toContain('.root-unused')
       expect(css).toMatch(/--color-primary:(rgb\(18 52 86\)|#123456)/)
       expect(css).toMatch(/\.btn\s*\{\s*display:\s*grid;?\s*\}/)
     } finally {

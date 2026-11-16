@@ -113,8 +113,6 @@ export default class CSSScanner extends EventEmitter {
   latentClasses = new Set<string>()
   validClasses = new Set<string>()
   invalidClasses = new Set<string>()
-  nativeClassNames = new Set<string>()
-  usedNativeClasses = new Set<string>()
   initialized = false
   initializing?: Promise<this>
   resetDependencies: string[] = []
@@ -173,7 +171,6 @@ export default class CSSScanner extends EventEmitter {
     this.sourceMatcherOptions = undefined
     this.classExclusionMatcher = undefined
     this.classExclusionOptions = undefined
-    this.nativeClassNames = new Set()
     this.css = createCSSWithNativeDeclarations(this.options.manifest || defaultManifest)
     this.insertSafelist()
     this.emit('init', this.options, this.manifest)
@@ -188,8 +185,6 @@ export default class CSSScanner extends EventEmitter {
     this.latentClasses.clear()
     this.validClasses.clear()
     this.invalidClasses.clear()
-    this.nativeClassNames.clear()
-    this.usedNativeClasses.clear()
     this.contentHashes.clear()
     this.validRulesCache.clear()
     this.resetDependencies = []
@@ -210,8 +205,6 @@ export default class CSSScanner extends EventEmitter {
     this.latentClasses.clear()
     this.validClasses.clear()
     this.invalidClasses.clear()
-    this.nativeClassNames.clear()
-    this.usedNativeClasses.clear()
     this.contentHashes.clear()
     this.validRulesCache.clear()
     this.resetDependencies = []
@@ -287,22 +280,16 @@ export default class CSSScanner extends EventEmitter {
     }
 
     // Single-pass filter (was three sequential `.filter` chains, each
-    // allocating a new array). Track native CSS classes separately, then
-    // skip generated-rule candidates already known invalid / already
-    // known valid / explicitly excluded by blocklist options.
+    // allocating a new array): skip candidates already known invalid /
+    // already known valid / explicitly excluded by blocklist options.
     const latentClasses: string[] = []
-    const nativeClasses: string[] = []
     for (const eachLatentClass of allLatent) {
       if (this.isClassExcluded(eachLatentClass)) continue
-      if (this.nativeClassNames.has(eachLatentClass) && !this.usedNativeClasses.has(eachLatentClass)) {
-        this.usedNativeClasses.add(eachLatentClass)
-        nativeClasses.push(eachLatentClass)
-      }
       if (this.invalidClasses.has(eachLatentClass)) continue
       if (this.validClasses.has(eachLatentClass)) continue
       latentClasses.push(eachLatentClass)
     }
-    if (!latentClasses.length && !nativeClasses.length) {
+    if (!latentClasses.length) {
       return false
     }
 
@@ -328,12 +315,11 @@ export default class CSSScanner extends EventEmitter {
         this.invalidClasses.add(eachLatentClass)
       }
     }
-    if (validClasses.length || nativeClasses.length) {
+    if (validClasses.length) {
       if (this.options.verbose) {
         time = process.hrtime(time)
         const spent = Math.round(((time[0] * 1e9 + time[1]) / 1e6) * 10) / 10
-        const changedClasses = [...validClasses, ...nativeClasses]
-        logger.success(`${path.relative(this.cwd, source)} ${changedClasses.length} classes inserted in ${spent}ms ${this.options.verbose > 1 ? changedClasses.join(', ') : ''}`)
+        logger.success(`${path.relative(this.cwd, source)} ${validClasses.length} classes inserted in ${spent}ms ${this.options.verbose > 1 ? validClasses.join(', ') : ''}`)
       }
       this.emit('change')
     }

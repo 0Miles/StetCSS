@@ -19,6 +19,12 @@ export type StandaloneMasterDirectiveStatement = StandaloneCSSDirectiveStatement
   atRuleName: 'master'
 }
 
+/**
+ * `@preserve` is still located so an entry that keeps `@preserve native;` fails loudly instead
+ * of carrying a directive that no longer does anything.
+ */
+const REMOVED_PRESERVE_DIRECTIVE_MESSAGE = '@preserve native was removed; stylesheet entries keep all native CSS, so delete this line'
+
 const STANDALONE_CSS_DIRECTIVE_NAMES = new Set<StandaloneCSSDirectiveName>([
   'master',
   'source',
@@ -130,8 +136,7 @@ export function createCSSDirectiveExtractionPolicy(): CSSDirectiveExtractionPoli
     include: [],
     exclude: [],
     safelist: [],
-    blocklist: [],
-    preserveNative: false
+    blocklist: []
   }
 }
 
@@ -143,7 +148,6 @@ export function mergeCSSDirectiveExtractionPolicy(...policies: (Partial<CSSDirec
     addUnique(merged.exclude, policy.exclude || [])
     addUnique(merged.safelist, policy.safelist || [])
     addUnique(merged.blocklist, policy.blocklist || [])
-    merged.preserveNative ||= Boolean(policy.preserveNative)
   }
   return merged
 }
@@ -265,10 +269,7 @@ export function collectStandaloneCSSDirectiveExtractionPolicy(source: string, fi
           .map(normalizeBlocklistPattern))
         break
       case 'preserve':
-        if (statement.modifiers.includes('native')) {
-          policy.preserveNative = true
-        }
-        break
+        throw new Error(REMOVED_PRESERVE_DIRECTIVE_MESSAGE)
     }
   }
   return policy

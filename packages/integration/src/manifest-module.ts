@@ -14,7 +14,6 @@ export interface CSSManifestLoadResult {
   manifest: MasterCSSManifest
   dependencies: string[]
   classNames?: string[]
-  nativeClassNames?: string[]
   nativeCSS?: string
   css?: string
   generatedCSS?: string

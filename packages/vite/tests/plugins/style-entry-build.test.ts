@@ -206,7 +206,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
     expect(prerenderWarn).toHaveBeenCalledTimes(1)
   })
 
-  test('compiles managed CSS entry config rules and preserves used native CSS', async () => {
+  test('compiles managed CSS entry config rules and keeps all native CSS', async () => {
     const root = mkdtempSync(path.join(tmpdir(), 'master-css-vite-'))
     try {
       const entryPath = path.join(root, 'app.css')
@@ -254,7 +254,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
       const css = String(bundle['assets/index-abc.css'].source)
       expect(css).toContain('body')
       expect(css).toContain('.native-card')
-      expect(css).not.toContain('.unused-card')
+      expect(css).toContain('.unused-card')
       expect(css).toContain('.btn{display:inline-flex}')
       expect(warn).not.toHaveBeenCalled()
     } finally {
@@ -262,7 +262,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
     }
   })
 
-  test('uses the managed CSS entry for config and native CSS pruning', async () => {
+  test('uses the managed CSS entry for config and keeps its native CSS', async () => {
     const root = mkdtempSync(path.join(tmpdir(), 'master-css-vite-'))
     try {
       const entryPath = path.join(root, 'app.css')
@@ -310,7 +310,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
 
       const css = String(bundle['assets/index-abc.css'].source)
       expect(css).toContain('.native-used')
-      expect(css).not.toContain('.native-unused')
+      expect(css).toContain('.native-unused')
       expect(css).toMatch(/--color-primary:(rgb\(18 52 86\)|#123456)/)
       expect(css).toContain('.btn{display:grid}')
       expect(warn).not.toHaveBeenCalled()
