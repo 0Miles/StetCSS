@@ -228,6 +228,30 @@ test('loads project-level CSS manifest entries', async () => {
 })
 
 /**
+ * Prevents: a project still marked with the removed `@master entry;` (or holding a `@master { }`
+ * block) being silently skipped by discovery, so `stet-css scan`, `inspect` and the language
+ * server find no entries and show no error. Such files are listed so compiling them raises the
+ * replacement message; unrelated CSS, including `url(logo@master.png)`, stays out.
+ * Reverse check: dropping the `@master` predicate from `isDiscoveredCSSManifestEntry` turns only
+ * this test red in this package (and the diagnostics `@master` inspect test).
+ */
+test('lists stylesheets holding removed @master at-rules so compiling them reports the error', async () => {
+  const cwd = createFixture()
+  try {
+    writeFileSync(join(cwd, 'legacy.css'), '@master entry;\n.btn { color: red; }')
+    writeFileSync(join(cwd, 'settings.css'), '.btn { color: red; }\n@master { mode-trigger: media; }')
+    writeFileSync(join(cwd, 'plain.css'), '.logo { background: url(logo@master.png); }')
+    const listed = [join(cwd, 'legacy.css'), join(cwd, 'settings.css')]
+
+    await expect(findCSSManifestEntryFiles(cwd)).resolves.toStrictEqual(listed)
+    expect(findCSSManifestEntryFilesSync(cwd)).toStrictEqual(listed)
+    await expect(loadProjectManifest(cwd)).rejects.toThrow("@import '@stet-css/core'")
+  } finally {
+    rmSync(cwd, { recursive: true, force: true })
+  }
+})
+
+/**
  * Guards Sass stylesheet entries for static CSS: a build that only looks for `.css` entries
  * drops a Sass entry's `@theme` and `@components`, while manifest loading, which reads plain
  * CSS only, must keep ignoring Sass files.
