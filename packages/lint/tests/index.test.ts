@@ -10,17 +10,17 @@ import {
   createConflictingClassesReport,
   createInvalidClassesReport,
   createSortClassesReport,
-  fixMasterCSSContent,
+  fixStetCSSContent,
   findClassConflicts,
   findPartialClassConflicts,
   findUnapprovedRawValueClasses,
   getClassValidationIssues,
-  lintMasterCSSContent,
+  lintStetCSSContent,
   removeClassNamesFromClassList,
   replaceClassGroupInClassList,
   replaceClassNameInClassList,
-  resolveMasterCSSLintRules,
-  summarizeMasterCSSLintFiles,
+  resolveStetCSSLintRules,
+  summarizeStetCSSLintFiles,
   suggestCanonicalClassGroups,
   suggestCanonicalComposeDirective,
   sortClassList,
@@ -329,25 +329,25 @@ describe('lint diagnostics', () => {
 
 describe('source content linting', () => {
   test('resolves rule presets and explicit rule sets', () => {
-    expect(resolveMasterCSSLintRules('no-invalid-classes')).toEqual({
+    expect(resolveStetCSSLintRules('no-invalid-classes')).toEqual({
       'sort-classes': false,
       'no-invalid-classes': true,
       'no-conflicting-classes': false,
       'prefer-canonical-classes': false,
       'no-unapproved-raw-values': false
     })
-    expect(resolveMasterCSSLintRules('recommended')).toEqual({
+    expect(resolveStetCSSLintRules('recommended')).toEqual({
       'sort-classes': true,
       'no-invalid-classes': true,
       'no-conflicting-classes': true,
       'prefer-canonical-classes': true,
       'no-unapproved-raw-values': false
     })
-    expect(() => resolveMasterCSSLintRules('unknown-rule')).toThrow('Unknown Master CSS lint rule')
+    expect(() => resolveStetCSSLintRules('unknown-rule')).toThrow('Unknown Master CSS lint rule')
   })
 
   test('maps class diagnostics and safe fixes onto source ranges', () => {
-    const result = lintMasterCSSContent({
+    const result = lintStetCSSContent({
       content: '<div class="fg:white m:2x"></div>',
       filePath: '/project/index.html',
       css
@@ -369,12 +369,12 @@ describe('source content linting', () => {
         text: 'm:2x fg:white'
       })]
     }))
-    expect(fixMasterCSSContent({
+    expect(fixStetCSSContent({
       content: '<div class="fg:white m:2x"></div>',
       filePath: '/project/index.html',
       css
     })).toBe('<div class="m:xs fg:white"></div>')
-    expect(summarizeMasterCSSLintFiles([result])).toMatchObject({
+    expect(summarizeStetCSSLintFiles([result])).toMatchObject({
       files: 1,
       warnings: result.diagnostics.length,
       safeFixes: expect.any(Number)
@@ -389,7 +389,7 @@ describe('source content linting', () => {
       '</button>',
       '```'
     ].join('\n')
-    const result = lintMasterCSSContent({
+    const result = lintStetCSSContent({
       content,
       filePath: '/project/content.mdx',
       css
@@ -404,7 +404,7 @@ describe('source content linting', () => {
       'prefer-canonical-classes',
       'prefer-canonical-classes'
     ])
-    expect(fixMasterCSSContent({
+    expect(fixStetCSSContent({
       content,
       filePath: '/project/content.mdx',
       css
@@ -423,7 +423,7 @@ describe('source content linting', () => {
       '<div class="btn font:15px w:17px"></div>',
       '```'
     ].join('\n')
-    const result = lintMasterCSSContent({
+    const result = lintStetCSSContent({
       content,
       filePath: '/project/content.mdx',
       css,
@@ -463,7 +463,7 @@ describe('source content linting', () => {
   })
 
   test('applies source fixes until class lists are stable', () => {
-    expect(fixMasterCSSContent({
+    expect(fixStetCSSContent({
       content: '<div class="size:md w:md h:md block"></div>',
       filePath: '/project/index.html',
       css
@@ -471,14 +471,14 @@ describe('source content linting', () => {
   })
 
   test('uses script language ids for cjs and typescript module files', () => {
-    expect(lintMasterCSSContent({
+    expect(lintStetCSSContent({
       content: 'const cls = "fg:white m:2x"',
       filePath: '/project/component.cjs',
       css
     })).toMatchObject({
       languageId: 'javascript'
     })
-    expect(lintMasterCSSContent({
+    expect(lintStetCSSContent({
       content: 'const cls = "fg:white m:2x"',
       filePath: '/project/component.mts',
       css
@@ -489,7 +489,7 @@ describe('source content linting', () => {
 
   test('reports and applies structural compose directive fixes when allowed', () => {
     const content = '.btn { @compose contain:content; }'
-    const result = lintMasterCSSContent({
+    const result = lintStetCSSContent({
       content,
       filePath: '/project/index.css',
       css
@@ -501,12 +501,12 @@ describe('source content linting', () => {
       sourceKind: 'compose-directive',
       fixes: [expect.objectContaining({ kind: 'directive', safety: 'structural' })]
     }))
-    expect(fixMasterCSSContent({
+    expect(fixStetCSSContent({
       content,
       filePath: '/project/index.css',
       css
     })).toBe(content)
-    expect(fixMasterCSSContent({
+    expect(fixStetCSSContent({
       content,
       filePath: '/project/index.css',
       css,

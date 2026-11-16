@@ -20,12 +20,12 @@ export {
   createUnapprovedRawValueClassesReport
 } from './diagnostics'
 export {
-  defaultMasterCSSLintRules,
-  fixMasterCSSContent,
-  lintMasterCSSContent,
-  masterCSSLintRuleIds,
-  resolveMasterCSSLintRules,
-  summarizeMasterCSSLintFiles
+  defaultStetCSSLintRules,
+  fixStetCSSContent,
+  lintStetCSSContent,
+  stetCSSLintRuleIds,
+  resolveStetCSSLintRules,
+  summarizeStetCSSLintFiles
 } from './source'
 export { default as suggestCanonicalComposeDirective } from './suggest-canonical-compose-directive'
 export { default as suggestCanonicalClassGroups } from './suggest-canonical-class-groups'
@@ -35,7 +35,7 @@ export {
 } from './suggest-canonical-class-name'
 
 export type { ClassConflict } from './find-class-conflicts'
-export type { MasterCSSClassListEditOptions } from './class-list-edits'
+export type { StetCSSClassListEditOptions } from './class-list-edits'
 export type { PartialClassConflict } from './find-partial-class-conflicts'
 export type {
   RawValuePolicyOptions,
@@ -52,33 +52,33 @@ export type {
   ClassValidationOptions
 } from './get-class-validation-issues'
 export type {
-  MasterCSSCanonicalClassesReportOptions,
-  MasterCSSClassListLintReportOptions,
-  MasterCSSConflictingClassesReportOptions,
-  MasterCSSLintDiagnostic,
-  MasterCSSLintDiagnosticData,
-  MasterCSSLintDiagnosticSeverity,
-  MasterCSSLintFix,
-  MasterCSSLintRange,
-  MasterCSSLintReport,
-  MasterCSSLintReportOptions,
-  MasterCSSLintRuleId,
-  MasterCSSInvalidClassesReportOptions,
-  MasterCSSUnapprovedRawValueClassesReportOptions
+  StetCSSCanonicalClassesReportOptions,
+  StetCSSClassListLintReportOptions,
+  StetCSSConflictingClassesReportOptions,
+  StetCSSLintDiagnostic,
+  StetCSSLintDiagnosticData,
+  StetCSSLintDiagnosticSeverity,
+  StetCSSLintFix,
+  StetCSSLintRange,
+  StetCSSLintReport,
+  StetCSSLintReportOptions,
+  StetCSSLintRuleId,
+  StetCSSInvalidClassesReportOptions,
+  StetCSSUnapprovedRawValueClassesReportOptions
 } from './diagnostics'
 export type {
-  MasterCSSFixContentOptions,
-  MasterCSSLintContentOptions,
-  MasterCSSLintContentRuleOptions,
-  MasterCSSLintDiagnosticSourceKind,
-  MasterCSSLintFileResult,
-  MasterCSSLintFileSourceKind,
-  MasterCSSLintSourceDiagnostic,
-  MasterCSSLintSourceFix,
-  MasterCSSLintSourceFixKind,
-  MasterCSSLintSourceFixSafety,
-  MasterCSSLintSourceLocation,
-  MasterCSSLintSourceLocationRange,
-  MasterCSSLintSummary
+  StetCSSFixContentOptions,
+  StetCSSLintContentOptions,
+  StetCSSLintContentRuleOptions,
+  StetCSSLintDiagnosticSourceKind,
+  StetCSSLintFileResult,
+  StetCSSLintFileSourceKind,
+  StetCSSLintSourceDiagnostic,
+  StetCSSLintSourceFix,
+  StetCSSLintSourceFixKind,
+  StetCSSLintSourceFixSafety,
+  StetCSSLintSourceLocation,
+  StetCSSLintSourceLocationRange,
+  StetCSSLintSummary
 } from './source'
 export type { CanonicalClassNameOptions } from './suggest-canonical-class-name'
