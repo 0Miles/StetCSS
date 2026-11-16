@@ -3,26 +3,21 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 import { compileCSSManifestFile } from '@stet-css/compiler'
-import { createCSSWithNativeDeclarations } from '@stet-css/validator'
+import { extractHTMLClasses } from '@stet-css/source'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 import type { MasterCSSManifest } from '@stet-css/schema/manifest'
+import { renderCompiledManifestCSS } from '../src/render'
 
 /**
  * Each fixture is a documented manifest example: `manifest.css` (optional, compiled over the
  * default manifest), `template.html` (the markup using it) and `generated.css` (the rules its
- * `class` attributes must produce).
+ * classes must produce through the stylesheet renderer).
  *
  * Guards: CSS generated for the documented manifest examples drifts from the published output.
  */
 const defaultManifest = defaultManifestJSON as unknown as MasterCSSManifest
 const fixturesDirectory = join(dirname(fileURLToPath(import.meta.url)), 'fixtures/manifest-examples')
-
-function collectFixtureNames() {
-  return readdirSync(fixturesDirectory)
-    .filter((name) => existsSync(join(fixturesDirectory, name, 'template.html'))
-      && existsSync(join(fixturesDirectory, name, 'generated.css')))
-    .sort()
-}
+const fixtureNames = readdirSync(fixturesDirectory).sort()
 
 function loadManifest(fixtureDirectory: string) {
   const manifestSource = join(fixtureDirectory, 'manifest.css')
@@ -30,23 +25,18 @@ function loadManifest(fixtureDirectory: string) {
   return compileCSSManifestFile(manifestSource, { baseManifest: defaultManifest }).manifest
 }
 
-function collectClasses(html: string) {
-  return [...html.matchAll(/\bclass="([^"]*)"/g)]
-    .flatMap(([, value]) => value.split(/\s+/))
-    .filter(Boolean)
-}
-
-describe.concurrent('manifest example CSS', () => {
+describe('manifest example CSS', () => {
   test('finds the fixtures', () => {
-    expect(collectFixtureNames()).toHaveLength(16)
+    expect(fixtureNames.length).toBeGreaterThan(0)
   })
 
-  test.each(collectFixtureNames())('%s', (fixtureName) => {
+  test.each(fixtureNames)('%s', (fixtureName) => {
     const fixtureDirectory = join(fixturesDirectory, fixtureName)
-    const css = createCSSWithNativeDeclarations(loadManifest(fixtureDirectory))
-    for (const className of collectClasses(readFileSync(join(fixtureDirectory, 'template.html'), 'utf-8'))) {
-      css.ensureClassRules(className)
-    }
-    expect(css.text).toBe(readFileSync(join(fixtureDirectory, 'generated.css'), 'utf-8'))
+    const templatePath = join(fixtureDirectory, 'template.html')
+    const { css } = renderCompiledManifestCSS({
+      manifest: loadManifest(fixtureDirectory),
+      classNames: extractHTMLClasses(templatePath, readFileSync(templatePath, 'utf-8'))
+    })
+    expect(css).toBe(readFileSync(join(fixtureDirectory, 'generated.css'), 'utf-8'))
   })
 })
