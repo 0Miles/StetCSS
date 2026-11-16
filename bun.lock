@@ -394,6 +394,7 @@
     },
     "packages/astro": {
       "name": "@stet-css/astro",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/core": "workspace:^",
         "@stet-css/integration": "workspace:^",
@@ -411,6 +412,7 @@
     },
     "packages/cli": {
       "name": "@stet-css/cli",
+      "version": "0.0.0",
       "bin": "./dist/bin/index.js",
       "dependencies": {
         "@stet-css/core": "workspace:^",
@@ -435,6 +437,7 @@
     },
     "packages/compiler": {
       "name": "@stet-css/compiler",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/engine": "workspace:^",
         "@stet-css/lexer": "workspace:^",
@@ -451,6 +454,7 @@
     },
     "packages/core": {
       "name": "@stet-css/core",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/engine": "workspace:^",
         "@stet-css/preset": "workspace:^",
@@ -458,6 +462,7 @@
     },
     "packages/diagnostics": {
       "name": "@stet-css/diagnostics",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/project": "workspace:^",
         "@stet-css/scanner": "workspace:^",
@@ -466,6 +471,7 @@
     },
     "packages/engine": {
       "name": "@stet-css/engine",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/lexer": "workspace:^",
         "@stet-css/schema": "workspace:^",
@@ -478,6 +484,7 @@
     },
     "packages/eslint-config": {
       "name": "@stet-css/eslint-config",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/eslint-plugin": "workspace:^",
       },
@@ -491,6 +498,7 @@
     },
     "packages/eslint-plugin": {
       "name": "@stet-css/eslint-plugin",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/core": "workspace:^",
         "@stet-css/lexer": "workspace:^",
@@ -517,6 +525,7 @@
     },
     "packages/integration": {
       "name": "@stet-css/integration",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/engine": "workspace:^",
         "@stet-css/schema": "workspace:^",
@@ -524,6 +533,7 @@
     },
     "packages/language": {
       "name": "@stet-css/language",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/core": "workspace:^",
         "@stet-css/engine": "workspace:^",
@@ -543,6 +553,7 @@
     },
     "packages/language-server": {
       "name": "@stet-css/language-server",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/compiler": "workspace:^",
         "@stet-css/core": "workspace:^",
@@ -561,6 +572,7 @@
     },
     "packages/language-service": {
       "name": "@stet-css/language-service",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/core": "workspace:^",
         "@stet-css/engine": "workspace:^",
@@ -580,9 +592,11 @@
     },
     "packages/lexer": {
       "name": "@stet-css/lexer",
+      "version": "0.0.0",
     },
     "packages/lint": {
       "name": "@stet-css/lint",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/engine": "workspace:^",
         "@stet-css/language": "workspace:^",
@@ -596,6 +610,7 @@
     },
     "packages/next": {
       "name": "@stet-css/next",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/core": "workspace:^",
         "@stet-css/integration": "workspace:^",
@@ -620,6 +635,7 @@
     },
     "packages/nuxt": {
       "name": "@stet-css/nuxt",
+      "version": "0.0.0",
       "dependencies": {
         "@nuxt/kit": "^4.4.8",
         "@stet-css/integration": "workspace:^",
@@ -653,6 +669,7 @@
     },
     "packages/preset": {
       "name": "@stet-css/preset",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/schema": "workspace:^",
       },
@@ -662,6 +679,7 @@
     },
     "packages/project": {
       "name": "@stet-css/project",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/compiler": "workspace:^",
         "@stet-css/integration": "workspace:^",
@@ -672,6 +690,7 @@
     },
     "packages/runtime": {
       "name": "@stet-css/runtime",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/engine": "workspace:^",
         "@stet-css/preset": "workspace:^",
@@ -686,6 +705,7 @@
     },
     "packages/scanner": {
       "name": "@stet-css/scanner",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/core": "workspace:^",
         "@stet-css/lexer": "workspace:^",
@@ -703,12 +723,14 @@
     },
     "packages/schema": {
       "name": "@stet-css/schema",
+      "version": "0.0.0",
       "dependencies": {
         "csstype": "^3.2.3",
       },
     },
     "packages/server": {
       "name": "@stet-css/server",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/core": "workspace:^",
         "@stet-css/preset": "workspace:^",
@@ -724,6 +746,7 @@
     },
     "packages/source": {
       "name": "@stet-css/source",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/lexer": "workspace:^",
         "htmlparser2": "^12.0.0",
@@ -744,6 +767,7 @@
     },
     "packages/stylesheet": {
       "name": "@stet-css/stylesheet",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/compiler": "workspace:^",
         "@stet-css/core": "workspace:^",
@@ -763,6 +787,7 @@
     },
     "packages/svelte": {
       "name": "@stet-css/svelte",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/core": "workspace:^",
         "@stet-css/integration": "workspace:^",
@@ -799,6 +824,7 @@
     },
     "packages/validator": {
       "name": "@stet-css/validator",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/core": "workspace:^",
         "@stet-css/preset": "workspace:^",
@@ -812,6 +838,7 @@
     },
     "packages/vite": {
       "name": "@stet-css/vite",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/core": "workspace:^",
         "@stet-css/integration": "workspace:^",
@@ -854,6 +881,7 @@
     },
     "packages/webpack": {
       "name": "@stet-css/webpack",
+      "version": "0.0.0",
       "dependencies": {
         "@stet-css/core": "workspace:^",
         "@stet-css/integration": "workspace:^",

@@ -1,5 +1,6 @@
 {
   "name": "@stet-css/eslint-config",
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "build": "tsdown --config ../../shared/tsdown-package.config.ts",

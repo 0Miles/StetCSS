@@ -1,5 +1,6 @@
 {
   "name": "@stet-css/runtime",
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "build": "tsdown",
