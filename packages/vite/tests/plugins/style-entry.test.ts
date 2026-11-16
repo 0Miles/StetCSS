@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import StyleEntryPlugin from '../../src/plugins/style-entry'
 import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
 import { createBuildDigest } from '../../src/utils/build-digest'
+import getExtractedCSS from '../../src/utils/extracted-css'
 import { createSlotCSSRule } from '../../src/utils/slot'
 import { createProjectContext, removeProjects, SLOT_CSS_RULE as SLOT } from '../plugin-test-helper'
 
@@ -151,6 +152,35 @@ describe('StyleEntryPlugin', () => {
     )).rejects.toThrow(expect.objectContaining({
       message: expect.stringMatching(/@master entry;.*@import '@stet-css\/core'/)
     }))
+  })
+
+  /**
+   * Guards the cascade between stylesheet entries: Vite transforms modules concurrently, so
+   * entries register in a different order from one build to the next, and the generated CSS
+   * ordered each entry's native rules by registration. Two builds of the same project then
+   * shipped the rules in a different order under the same file name, and a rule in one entry
+   * could win over the other's in one build and lose in the next.
+   * Reverse check: passing `context.styleCSSSources` unsorted in `getStylesheetSourceContext`
+   * turns only this test red.
+   */
+  test('orders entries by path, not by the order they were transformed', async () => {
+    const extract = async (order: string[]) => {
+      const context = makeContext('build')
+      const plugin = StyleEntryPlugin(context)
+      for (const name of order) {
+        await (plugin as any).transform.call(
+          { addWatchFile: vi.fn() },
+          `@import "@stet-css/core";\n.${name}-native{color:red}`,
+          `/project/src/${name}.css`
+        )
+      }
+      return getExtractedCSS(context)
+    }
+
+    const css = await extract(['b', 'a'])
+    expect(css.indexOf('.a-native')).toBeGreaterThan(-1)
+    expect(css.indexOf('.a-native')).toBeLessThan(css.indexOf('.b-native'))
+    expect(await extract(['a', 'b'])).toBe(css)
   })
 
   test('ignores stylesheets without @stet-css/core imports', async () => {
