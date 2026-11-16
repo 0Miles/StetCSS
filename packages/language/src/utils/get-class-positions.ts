@@ -3,7 +3,7 @@ import type { Position } from 'vscode-languageserver-protocol'
 import findMatchingPairs from './find-matching-brackets'
 import escapeRegexp from 'lodash.escaperegexp'
 import { visitorKeys } from 'oxc-parser'
-import { collectCSSDirectiveRanges, exceedsScriptNestingLimit, parseMasterCSSClassList } from '@stet-css/lexer'
+import { collectCSSDirectiveRanges, parseMasterCSSClassList } from '@stet-css/lexer'
 import { parseOxcOnSourceStack } from './oxc-stack'
 
 export interface ClassPosition {
@@ -506,11 +506,6 @@ function createOxcClassPositions(
     parseFailed: true,
     positions: []
   }
-  // oxc-parser overflows its native stack on deep nesting, killing the host
-  // process: bracket nesting past the limit skips oxc, and the rest parses on
-  // a stack sized to the source.
-  if (exceedsScriptNestingLimit(source)) return failedResult
-
   let parseResult: ReturnType<typeof parseOxcOnSourceStack>
   try {
     parseResult = parseOxcOnSourceStack(getOxcSource(textDocument), source, {
