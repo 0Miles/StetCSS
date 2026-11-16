@@ -40,14 +40,12 @@ export interface MasterCSSSourceInspection {
     latent: string[]
     valid: string[]
     invalid: string[]
-    usedNative: string[]
   }
 }
 
 export interface MasterCSSStylesheetInspection {
   filePath: string
   masterCSS: boolean
-  pruneNativeCSS: boolean
   dependencies: string[]
   sourceDependencies: string[]
   warnings: string[]
@@ -62,7 +60,7 @@ export interface MasterCSSStylesheetError {
 export interface MasterCSSMissingCSSResult {
   className: string
   status: 'present' | 'missing'
-  reason: 'generated' | 'native-css' | 'safelist' | 'invalid' | 'blocklisted' | 'not-detected'
+  reason: 'generated' | 'safelist' | 'invalid' | 'blocklisted' | 'not-detected'
 }
 
 export interface MasterCSSInspectionReport {
@@ -78,8 +76,6 @@ export interface MasterCSSInspectionReport {
       latent: number
       valid: number
       invalid: number
-      native: number
-      usedNative: number
       safelist: number
       blocklist: number
     }
@@ -87,8 +83,6 @@ export interface MasterCSSInspectionReport {
       latent: string[]
       valid: string[]
       invalid: string[]
-      native: string[]
-      usedNative: string[]
       safelist: string[]
       blocklist: string[]
     }
@@ -202,9 +196,6 @@ function classifyMissingCSS(scanner: CSSScanner, className: string): MasterCSSMi
   if (scanner.validClasses.has(className)) {
     return { className, status: 'present', reason: 'generated' }
   }
-  if (scanner.usedNativeClasses.has(className)) {
-    return { className, status: 'present', reason: 'native-css' }
-  }
   if (safelist.includes(className)) {
     return { className, status: 'present', reason: 'safelist' }
   }
@@ -273,7 +264,6 @@ async function registerManagedCSSEntries(
       entries.push({
         filePath,
         masterCSS: Boolean(styleSource?.masterCSS),
-        pruneNativeCSS: Boolean(styleSource?.pruneNativeCSS),
         dependencies: sortedValues(styleSource?.dependencies ?? []),
         sourceDependencies: sortedValues(styleSource?.sourceDependencies ?? []),
         warnings: result.warnings ?? [],
@@ -285,7 +275,6 @@ async function registerManagedCSSEntries(
       entries.push({
         filePath,
         masterCSS: false,
-        pruneNativeCSS: false,
         dependencies: [],
         sourceDependencies: [],
         warnings: [],
@@ -316,13 +305,11 @@ async function scanSourceFile(
   const beforeLatent = new Set(scanner.latentClasses)
   const beforeValid = new Set(scanner.validClasses)
   const beforeInvalid = new Set(scanner.invalidClasses)
-  const beforeUsedNative = new Set(scanner.usedNativeClasses)
   const changed = await scanner.scan(source, fs.readFileSync(filePath, 'utf8'))
   const latent = diffSet(scanner.latentClasses, beforeLatent)
   const valid = diffSet(scanner.validClasses, beforeValid)
   const invalid = diffSet(scanner.invalidClasses, beforeInvalid)
-  const usedNative = diffSet(scanner.usedNativeClasses, beforeUsedNative)
-  for (const className of [...latent, ...valid, ...invalid, ...usedNative]) {
+  for (const className of [...latent, ...valid, ...invalid]) {
     if (!firstSourceByClass.has(className)) firstSourceByClass.set(className, filePath)
   }
   return {
@@ -333,8 +320,7 @@ async function scanSourceFile(
     discovered: {
       latent,
       valid,
-      invalid,
-      usedNative
+      invalid
     }
   }
 }
@@ -367,8 +353,6 @@ function createEmptyReport(cwd: string, sourcePatterns: string[], classChecks: s
         latent: 0,
         valid: 0,
         invalid: 0,
-        native: 0,
-        usedNative: 0,
         safelist: 0,
         blocklist: 0
       },
@@ -376,8 +360,6 @@ function createEmptyReport(cwd: string, sourcePatterns: string[], classChecks: s
         latent: [],
         valid: [],
         invalid: [],
-        native: [],
-        usedNative: [],
         safelist: [],
         blocklist: []
       },
@@ -474,8 +456,6 @@ export async function createMasterCSSInspectionReport(options: CreateMasterCSSIn
           latent: scanner.latentClasses.size,
           valid: scanner.validClasses.size,
           invalid: scanner.invalidClasses.size,
-          native: scanner.nativeClassNames.size,
-          usedNative: scanner.usedNativeClasses.size,
           safelist: scanner.options.safelist?.length ?? 0,
           blocklist: scanner.options.blocklist?.length ?? 0
         },
@@ -483,8 +463,6 @@ export async function createMasterCSSInspectionReport(options: CreateMasterCSSIn
           latent: sortedValues(scanner.latentClasses),
           valid: sortedValues(scanner.validClasses),
           invalid: sortedValues(scanner.invalidClasses),
-          native: sortedValues(scanner.nativeClassNames),
-          usedNative: sortedValues(scanner.usedNativeClasses),
           safelist: sortedValues(scanner.options.safelist ?? []),
           blocklist: (scanner.options.blocklist ?? []).map(String).sort()
         },

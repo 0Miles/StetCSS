@@ -36,7 +36,7 @@ describe('StyleEntryPlugin', () => {
     expect(context.virtualCSSPlaceholderEnvironments).toBeUndefined()
   })
 
-  test('treats @stet-css/core import stylesheets as managed native CSS pruning entries', async () => {
+  test('treats @stet-css/core import stylesheets as managed entries', async () => {
     const context = makeContext('build')
     const plugin = StyleEntryPlugin({ mode: 'static' } as any, context)
 
@@ -48,7 +48,6 @@ describe('StyleEntryPlugin', () => {
 
     expect(result.code).toBe(SLOT)
     expect(context.styleCSSSources.get('/project/src/style.css')).toMatchObject({
-      pruneNativeCSS: true,
       source: expect.stringContaining('.card')
     })
     expect(context.styleCSSSources.get('/project/src/style.css').source).not.toContain('@stet-css/core')
@@ -68,7 +67,6 @@ describe('StyleEntryPlugin', () => {
 
     expect(result.code).toBe('@import "@fontsource/fira-mono";\n' + SLOT)
     expect(context.styleCSSSources.get('/project/src/style.css')).toMatchObject({
-      pruneNativeCSS: true,
       source: expect.stringContaining('.card')
     })
     expect(context.styleCSSSources.get('/project/src/style.css').source).not.toContain('@stet-css/core')
@@ -143,9 +141,7 @@ describe('StyleEntryPlugin', () => {
     expect(result.code).not.toContain('@stet-css/core')
     expect(result.code).not.toContain(SLOT)
     expect(result.code).not.toContain('.fg\\:red')
-    expect(context.styleCSSSources.get('/project/src/style.css')).toMatchObject({
-      pruneNativeCSS: true
-    })
+    expect(context.styleCSSSources.has('/project/src/style.css')).toBe(true)
     expect(context.virtualCSSImporters).toEqual(new Set(['/project/src/style.css']))
   })
 
@@ -166,7 +162,7 @@ describe('StyleEntryPlugin', () => {
     expect(context.virtualCSSImporters).toEqual(new Set(['/project/src/style.css']))
   })
 
-  test('treats @master stylesheets as managed native CSS pruning entries', async () => {
+  test('treats @master stylesheets as managed entries', async () => {
     const context = makeContext('build')
     const plugin = StyleEntryPlugin({ mode: 'static' } as any, context)
 
@@ -178,7 +174,6 @@ describe('StyleEntryPlugin', () => {
 
     expect(result.code).toBe(SLOT)
     expect(context.styleCSSSources.get('/project/src/style.css')).toMatchObject({
-      pruneNativeCSS: true,
       source: expect.stringContaining('.card')
     })
     expect(context.styleCSSSources.get('/project/src/style.css').source).not.toContain('@master entry;')
