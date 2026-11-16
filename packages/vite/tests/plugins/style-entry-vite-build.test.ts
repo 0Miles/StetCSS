@@ -162,8 +162,13 @@ describe('StyleEntryPlugin Vite build integration', () => {
    * lazily loaded chunk's stylesheet changes the main asset too. The main stylesheet is
    * transformed before the lazy one registers, so a digest of the CSS generated at that point
    * left the main asset's name unchanged and warned on every build.
-   * Reverse check: building the digest from the registered entries only, without the ones
-   * discovery finds, turns this test red.
+   * The warning check reads only warnings a `stet-css:*` plugin raised: the bundler's
+   * `PLUGIN_TIMINGS` report lists our plugin names whenever a build is slow, which turned a
+   * search of the logged text red on slow CI runners.
+   * Reverse check: returning a constant from `createBuildDigest` turns this test and the
+   * asset name test red; dropping the `!` from the stale-digest check in
+   * `style-entry-build.ts`, so the plugin warns about correctly named assets, turns only this
+   * test red in this file.
    */
   test('renames every CSS asset when a lazily loaded stylesheet changes', async () => {
     const buildLazy = (color: string) => buildProject({
@@ -185,6 +190,9 @@ describe('StyleEntryPlugin Vite build integration', () => {
     expect(same.cssFiles).toEqual(first.cssFiles)
     expect(changed.css).toContain('green')
     expect(changed.cssFiles.filter((file) => first.cssFiles.includes(file))).toEqual([])
-    expect([...first.warnings, ...same.warnings, ...changed.warnings].filter((warning) => warning.includes('stet-css'))).toEqual([])
+    const pluginWarnings = [...first.warnings, ...same.warnings, ...changed.warnings]
+      .filter((warning) => warning.plugin?.startsWith('stet-css'))
+      .map((warning) => warning.message)
+    expect(pluginWarnings).toEqual([])
   })
 })

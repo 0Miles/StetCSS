@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { build, createLogger, type BuildOptions, type Plugin, type PluginOption } from 'vite'
+import { build, type BuildOptions, type Plugin, type PluginOption, type Rollup } from 'vite'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 
 export const SLOT_CSS_RULE = '#stet-css-slot{--slot:0}'
@@ -75,7 +75,8 @@ export interface BuildProjectOptions {
 /**
  * Runs a real Vite build of a temp project and returns its built `index.html` (empty when the
  * build emits none, such as an SSR build), the concatenated CSS assets, their file names and
- * the warnings the build logged. Fails when the build emits no CSS asset.
+ * the warnings the bundler logged, as logs whose `plugin` names the plugin that raised them.
+ * Fails when the build emits no CSS asset.
  */
 export async function buildProject({
   appClass = '',
@@ -101,19 +102,22 @@ export async function buildProject({
     if (styleCSS !== undefined) writeFileSync(join(root, 'src/style.css'), styleCSS)
     setup?.(root)
 
-    const warnings: string[] = []
-    const logger = createLogger('warn')
-    logger.warn = (message) => { warnings.push(message) }
-    logger.warnOnce = logger.warn
+    const warnings: Rollup.RollupLog[] = []
     await build({
       root,
       logLevel: 'warn',
-      customLogger: logger,
       plugins,
       build: {
         outDir: 'dist',
         emptyOutDir: true,
-        ...buildOptions
+        ...buildOptions,
+        rollupOptions: {
+          ...buildOptions?.rollupOptions,
+          onLog(level, log, handler) {
+            if (level === 'warn') warnings.push(log)
+            else handler(level, log)
+          }
+        }
       }
     })
 
