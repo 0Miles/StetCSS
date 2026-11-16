@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import init from './init'
 
 test('keeps default variable buckets before mode buckets when CSSOM buckets are inserted later', async ({ page }) => {
-  await init(page, '', {
+  await init(page, {
     defaultMode: 'light',
     modeTrigger: 'class',
     modes: ['light', 'dark'],

@@ -25,8 +25,8 @@ const WINDOW_GUARD_CASES: ClobberingCase[] = [
 
 /**
  * AC2 confirmations, not regression guards: these 4 tests are green before the fix too
- * (`masterCSSRuntime` is only ever written as an own property; the style lookup requires a
- * `<style>`). Keep them as the ticket's acceptance evidence.
+ * (`masterCSSRuntime` is only ever written as an own property; the runtime never looks
+ * `#master-css` up). Keep them as the ticket's acceptance evidence.
  */
 const WINDOW_CONFIRMATION_CASES: ClobberingCase[] = [
   { label: 'an element with id="masterCSSRuntime"', markup: '<div id="masterCSSRuntime"></div>', selector: 'div[id="masterCSSRuntime"]' },
@@ -36,19 +36,17 @@ const WINDOW_CONFIRMATION_CASES: ClobberingCase[] = [
 /**
  * Guards: the runtime reading a `document` member that a `name`d `<img>` shadows, which stops
  * startup. Reading these members through `document` instead of `Document.prototype`
- * (`src/document.ts`) turns 14 of these 18 tests red. `nodeType` and `head` stay green then:
+ * (`src/document.ts`) turns 10 of these 14 tests red. `nodeType` and `head` stay green then:
  * the reverted `isDocumentRoot` does not read `nodeType`, and a shadowed `head` does not stop
  * Firefox. They guard against a `root.nodeType` check and engines that do break on `head`.
  */
 const DOCUMENT_GUARD_CASES: ClobberingCase[] = [
-  'getElementById',
   'constructor',
   'nodeType',
   'documentElement',
   'head',
   'defaultView',
   'createElement',
-  'styleSheets',
   'querySelectorAll'
 ].map(name => ({
   label: `an image with name="${name}"`,
@@ -140,8 +138,7 @@ for (const { label, markup, selector } of [...WINDOW_GUARD_CASES, ...WINDOW_CONF
 
 /**
  * Guards: a bundled import beside the CDN script starting a second runtime on the document,
- * which logs a hydration fallback warning, replaces the first copy's `style#master-css` and
- * leaves the first runtime writing into a detached sheet. Giving `CSSRuntime.instances` its own
+ * which adds a second `style#master-css` and generates every rule twice. Giving `CSSRuntime.instances` its own
  * map when another runtime class holds the global (`core.ts`) turns this test red.
  */
 test('a module copy loaded after the CDN script reuses the CDN runtime', async ({ page }) => {

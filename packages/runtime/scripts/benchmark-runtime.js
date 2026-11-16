@@ -13,11 +13,9 @@ const rounds = Number(process.env.MASTER_CSS_BENCH_ROUNDS || 5)
 const warmupRounds = Number(process.env.MASTER_CSS_BENCH_WARMUP_ROUNDS || 1)
 const scanClassCount = Number(process.env.MASTER_CSS_BENCH_SCAN_CLASSES || 1000)
 const mutationClassCount = Number(process.env.MASTER_CSS_BENCH_MUTATION_CLASSES || 1000)
-const hydrationClassCount = Number(process.env.MASTER_CSS_BENCH_HYDRATION_CLASSES || 250)
 const outputFile = args.get('output') || process.env.MASTER_CSS_BENCH_OUTPUT || process.env.MASTER_CSS_BENCH_JSON
 const browserName = args.get('browser') || process.env.MASTER_CSS_BENCH_BROWSER || 'chromium'
 const cpuThrottleRate = Number(args.get('cpu-throttle') || process.env.MASTER_CSS_BENCH_CPU_THROTTLE || 1)
-const MASTER_CSS_RUNTIME_STYLE_ID = 'master-css'
 
 const nativeProperties = [
   'width',
@@ -38,8 +36,6 @@ if (!existsSync(globalBundleFile)) {
   process.exit(1)
 }
 
-const { MasterCSS, createHydrationManifest } = await import('@stet-css/engine')
-const defaultManifest = (await import('@stet-css/preset/default-manifest.json', { with: { type: 'json' } })).default
 const browserTypes = {
   chromium,
   firefox,
@@ -95,19 +91,6 @@ async function waitForRuntimeRemovalFlush(page) {
       })
     })
   }))
-}
-
-function createHydrationFixture(classNames) {
-  const css = MasterCSS.create({
-    manifest: defaultManifest,
-    nativeDeclarationMatcher: () => true
-  })
-  css.ensureClassRules(...classNames)
-  return {
-    bodyMarkup: createClassMarkup(classNames),
-    hydrationManifest: createHydrationManifest(css),
-    styleText: css.text
-  }
 }
 
 function startServer() {
@@ -201,34 +184,6 @@ async function createObservedPage(browser, baseURL, scriptURL, bodyMarkup = '') 
   return page
 }
 
-async function createProgressivePage(browser, baseURL, fixture, includeManifest) {
-  const page = await createPage(browser, baseURL)
-  await page.evaluate(({ bodyMarkup, hydrationManifest, runtimeStyleId, styleText, withManifest }) => {
-    const style = document.createElement('style')
-    style.id = runtimeStyleId
-    style.setAttribute('blocking', 'render')
-    style.textContent = styleText
-    document.head.append(style)
-
-    if (withManifest) {
-      const hydrationManifestScript = document.createElement('script')
-      hydrationManifestScript.id = 'master-css-hydration-manifest'
-      hydrationManifestScript.type = 'application/json'
-      hydrationManifestScript.textContent = JSON.stringify(hydrationManifest)
-      document.head.append(hydrationManifestScript)
-    }
-
-    document.body.innerHTML = bodyMarkup
-  }, {
-    bodyMarkup: fixture.bodyMarkup,
-    hydrationManifest: fixture.hydrationManifest,
-    runtimeStyleId: MASTER_CSS_RUNTIME_STYLE_ID,
-    styleText: fixture.styleText,
-    withManifest: includeManifest
-  })
-  return page
-}
-
 async function runBenchmark(name, callback) {
   const samples = []
   const totalRounds = warmupRounds + rounds
@@ -268,7 +223,7 @@ function printResults(results) {
   console.log(`Browser: ${browserName} via Playwright`)
   console.log(`CPU throttle: ${cpuThrottleRate}x`)
   console.log(`Rounds: ${rounds} measured, ${warmupRounds} warmup`)
-  console.log(`Class counts: scan=${scanClassCount}, mutation=${mutationClassCount}, hydration=${hydrationClassCount}`)
+  console.log(`Class counts: scan=${scanClassCount}, mutation=${mutationClassCount}`)
   console.log('')
 
   for (const result of results) {
@@ -303,8 +258,7 @@ async function writeResults(results, browserVersion) {
       warmupRounds,
       cpuThrottleRate,
       scanClassCount,
-      mutationClassCount,
-      hydrationClassCount
+      mutationClassCount
     },
     benchmarks: results.map((result) => ({
       name: result.name,
@@ -329,10 +283,8 @@ try {
   const scriptURL = `${server.url}/global.min.js`
   const scanClasses = createClassNames(scanClassCount)
   const mutationClasses = createClassNames(mutationClassCount)
-  const hydrationClasses = createClassNames(hydrationClassCount)
   const scanMarkup = createClassMarkup(scanClasses)
   const mutationMarkup = createClassMarkup(mutationClasses)
-  const hydrationFixture = createHydrationFixture(hydrationClasses)
   const results = []
 
   results.push(await runBenchmark('empty DOM startup', async () => {
@@ -399,42 +351,6 @@ try {
       const generatedCount = await page.evaluate(() => globalThis.masterCSSRuntime.classUtilities.size)
       if (generatedCount) {
         throw new Error(`Expected direct ensure/delete cleanup to empty classUtilities, got ${generatedCount}.`)
-      }
-      return elapsed
-    } finally {
-      await page.close()
-    }
-  }))
-
-  results.push(await runBenchmark('progressive hydration success path', async () => {
-    const page = await createProgressivePage(browser, server.url, hydrationFixture, true)
-    try {
-      const elapsed = await loadRuntime(page, scriptURL)
-      const state = await page.evaluate(() => ({
-        failure: globalThis.masterCSSRuntime.hydrationFailureReason,
-        progressive: globalThis.masterCSSRuntime.progressive,
-        utilities: globalThis.masterCSSRuntime.classUtilities.size
-      }))
-      if (!state.progressive || state.failure || state.utilities !== hydrationClasses.length) {
-        throw new Error(`Expected successful hydration, got ${JSON.stringify(state)}.`)
-      }
-      return elapsed
-    } finally {
-      await page.close()
-    }
-  }))
-
-  results.push(await runBenchmark('progressive hydration fallback path', async () => {
-    const page = await createProgressivePage(browser, server.url, hydrationFixture, false)
-    try {
-      const elapsed = await loadRuntime(page, scriptURL)
-      const state = await page.evaluate(() => ({
-        failure: globalThis.masterCSSRuntime.hydrationFailureReason,
-        progressive: globalThis.masterCSSRuntime.progressive,
-        utilities: globalThis.masterCSSRuntime.classUtilities.size
-      }))
-      if (state.progressive || state.utilities !== hydrationClasses.length) {
-        throw new Error(`Expected fallback hydration, got ${JSON.stringify(state)}.`)
       }
       return elapsed
     } finally {
