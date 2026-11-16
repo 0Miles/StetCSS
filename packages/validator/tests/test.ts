@@ -66,6 +66,30 @@ it.each(['flex:col', 'top:48', 'block:foo', 'fg:red:col', 'flex:col@sm'])('rejec
   expectClassInvalid(className)
 })
 
+/**
+ * Guards #81: a static build dropped a whole group when one declaration was
+ * invalid, while runtime and native CSS drop only that declaration. The
+ * scanner inserts exactly these rules, so the text is the build output.
+ * `validate()` must still report the bad declaration for lint.
+ *
+ * Reverse check: returning `[]` instead of the reduced group in
+ * `generate-valid-rules.ts` reddens the reduced-group rows only.
+ */
+it.each([
+  ['{display:banana;bg:red}', '.\\{display\\:banana\\;bg\\:red\\}{background-color:var(--color-red)}'],
+  ['{flex:col;bg:red}', '.\\{flex\\:col\\;bg\\:red\\}{background-color:var(--color-red)}'],
+  ['{top:48;bg:red}', '.\\{top\\:48\\;bg\\:red\\}{background-color:var(--color-red)}'],
+  ['{made-up:x;bg:red;fg:blue}', '.\\{made-up\\:x\\;bg\\:red\\;fg\\:blue\\}{background-color:var(--color-red);color:var(--color-blue)}'],
+  ['{text-align:asdf;bg:red}:hover@sm', '@media (width>=52.125rem){.\\{text-align\\:asdf\\;bg\\:red\\}\\:hover\\@sm:hover{background-color:var(--color-red)}}']
+])('drops only the invalid declaration of group %s', (className, text) => {
+  expect(generateValidRules(className).map((rule) => rule.text)).toEqual([text])
+  expect(validate(className).errors).toHaveLength(1)
+})
+
+it('drops a group whose declarations are all invalid', () => {
+  expect(generateValidRules('{display:banana;top:48}')).toHaveLength(0)
+})
+
 it('fairly irregular classes can be ignored very well', () => {
   expect(generateValidRules('shadow:rgba(45,43,37,0.05)|0|-1|0|0|inset,rgba(15,14,12,')).toHaveLength(0)
 })

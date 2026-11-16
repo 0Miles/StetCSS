@@ -511,6 +511,21 @@ describe('class conflicts', () => {
       ])
   })
 
+  /**
+   * Guards #81: the build keeps a group's valid declarations, so
+   * `{display:banana;bg:red}` still sets `background-color` and a later
+   * `bg:blue` overrides it. Lint must see the same declarations the build emits.
+   *
+   * Reverse check: making `generate-valid-rules.ts` drop the reduced group
+   * reddens only this test in lint.
+   */
+  test('compares the valid declarations of a group with an invalid one', () => {
+    expect(findClassConflicts(['{display:banana;bg:red}', 'bg:blue'], css))
+      .toEqual([
+        { className: '{display:banana;bg:red}', conflicts: ['bg:blue'] }
+      ])
+  })
+
   test('keeps the last conflicting class', () => {
     expect(findClassConflicts(['m:sm', 'm:md', 'm:lg'], css))
       .toEqual([
