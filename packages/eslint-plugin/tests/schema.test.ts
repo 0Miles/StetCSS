@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { ESLint, type Linter } from 'eslint'
 import { expect, test } from 'vitest'
 import plugin from '../src'
@@ -29,7 +30,7 @@ function createESLint(rules: Linter.RulesRecord) {
   })
 }
 
-test('keeps Master CSS settings schema separate from rule option schemas', () => {
+test('keeps StetCSS settings schema separate from rule option schemas', () => {
   expect(stetCSSSettingsSchema).toMatchObject({
     type: 'object',
     additionalProperties: false,
@@ -101,5 +102,31 @@ test('names StetCSS in the public rule ids, configs and rule descriptions', () =
   expect(Object.keys(plugin.configs.recommended.plugins ?? {})).toEqual(['@stet-css'])
   for (const rule of Object.values(plugin.rules ?? {})) {
     expect(rule.meta?.docs?.description).not.toMatch(/Master/)
+  }
+})
+
+/**
+ * Prevents: rule help links pointing at the upstream docs site (which
+ * documents other packages and a JS config), or at a README heading that was renamed, so the
+ * editor's "show documentation" link lands on a page that does not describe the rule.
+ * Gate 3 trade-off: the test re-implements GitHub's heading slug rule (lowercase, punctuation
+ * other than `-` and `_` dropped, spaces to `-`) instead of asking GitHub, so a change in
+ * GitHub's slugging would go unnoticed; in exchange every rule link is checked offline and
+ * deterministically on each run.
+ * Reverse check: the URL template in `src/create-rule.ts` without the `stet-css` anchor prefix,
+ * or a README heading renamed, turns only this test red.
+ */
+test('links every rule to its heading in the package README', () => {
+  const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8')
+  const anchors = new Set([...readme.matchAll(/^#{1,6} (.+)$/gm)].map(([, heading]) => heading
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s_-]/gu, '')
+    .replace(/\s/g, '-')))
+  const rules = Object.values(plugin.rules ?? {})
+  expect(rules.length).toBeGreaterThan(0)
+  for (const rule of rules) {
+    const url = new URL(rule.meta?.docs?.url ?? '')
+    expect(url.origin + url.pathname).toBe('https://github.com/0Miles/StetCSS/blob/main/packages/eslint-plugin/README.md')
+    expect(anchors).toContain(url.hash.slice(1))
   }
 })
