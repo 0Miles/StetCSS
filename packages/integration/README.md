@@ -12,7 +12,7 @@ npm install @stet-css/integration
 
 `@stet-css/integration` is adapter-neutral glue for official build and framework integrations. It owns virtual module IDs, `?master-css-manifest` request helpers, generated manifest and emittedGlobals module source helpers, ambient client declarations, and explicit Node helper subpaths.
 
-It does not implement project manifest discovery, CSS import graph resolution, extraction, runtime hydration, browser runtime boot code, or framework lifecycle behavior.
+It does not implement project manifest discovery, CSS import graph resolution, extraction, browser runtime boot code, or framework lifecycle behavior.
 
 ## Public subpaths
 
