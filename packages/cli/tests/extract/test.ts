@@ -1,4 +1,4 @@
-import { execFileSync } from 'child_process'
+import { execFileSync, spawnSync } from 'child_process'
 import { createRequire } from 'module'
 import fs, { readFileSync } from 'fs'
 import os from 'node:os'
@@ -87,6 +87,37 @@ it('prints CSS without exporting', async () => {
     })
     expect(output).toContain('text-center')
     expect(fs.existsSync(join(cwd, 'master.css'))).toBe(false)
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true })
+  }
+})
+
+function runCLI(cwd: string, args: string[] = []) {
+  const result = spawnSync(process.execPath, ['--import', tsxLoaderURL, cliFilepath, ...args], {
+    cwd,
+    encoding: 'utf8'
+  })
+  expect(result.status).toBe(0)
+  return result.stdout + result.stderr
+}
+
+/**
+ * Guards that `-v` is the CLI's own log now that the scanner prints nothing: the default
+ * level reports the written file, `-v 2` also names each file the class set read, and
+ * `-v 0` is silent.
+ * Reverse check: making the CLI ignore its verbose level turns only this test red.
+ */
+it('logs by its own -v level', async () => {
+  const cwd = fs.mkdtempSync(join(os.tmpdir(), 'master-css-cli-verbose-'))
+  try {
+    fs.writeFileSync(join(cwd, 'page.html'), '<h1 class="text-center">Hello World</h1>')
+    const defaultLog = runCLI(cwd)
+    expect(defaultLog).toContain('master.css exported')
+    expect(defaultLog).not.toContain('page.html')
+    const detailedLog = runCLI(cwd, ['-v', '2'])
+    expect(detailedLog).toContain('master.css exported')
+    expect(detailedLog).toContain('page.html')
+    expect(runCLI(cwd, ['-v', '0'])).not.toContain('exported')
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true })
   }
