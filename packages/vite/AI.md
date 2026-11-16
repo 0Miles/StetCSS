@@ -13,6 +13,7 @@ Owns the Vite plugin chain that builds static CSS: the style entry pipeline, the
 
 - **Scanner lifecycle**: the plugin scans no modules with it; the stylesheet reads its `adapters`, `cwd` and default manifest, and the plugin uses its slot placeholder.
 - **Dev updates**: `style-entry-hmr.ts` reloads the managed CSS when the watcher reports a file that `isStylesheetSourceFile` accepts and the extracted CSS changed.
+- **CSS asset names**: Vite hashes a CSS asset while it still holds the build placeholder, before `generateBundle` splices the generated CSS in, so the placeholder carries a digest of that CSS (`utils/slot.ts`). A placeholder must never be constant, or the file name stops following the CSS and long-lived caches serve old rules. A stylesheet that imports Master CSS and registers after another was transformed makes that earlier digest stale; the build warns and names the asset.
 - **Splice warning** is tracked per Vite environment (`this.environment.name`); Astro bundles prerender, server and client separately.
 - **No-entry warning**: a build where no environment registered a managed CSS entry warns once; the check spans environments so Astro's client build after its server build stays quiet.
 - **Dev HMR across environments**: on a class change the CSS entry is invalidated in every non-client `server.environments[*].moduleGraph`, because frameworks inline the server environment's copy into dev HTML; `server.moduleGraph` alone returns the client module.

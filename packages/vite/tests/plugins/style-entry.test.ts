@@ -1,11 +1,18 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import StyleEntryPlugin from '../../src/plugins/style-entry'
 import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
+import getExtractedCSS from '../../src/utils/extracted-css'
+import { createSlotCSSRule } from '../../src/utils/slot'
 import { createProjectContext, removeProjects, SLOT_CSS_RULE as SLOT } from '../plugin-test-helper'
 
 const RESOLVED_VIRTUAL_CSS_ID = '\0' + VIRTUAL_CSS_ID
 
 afterEach(removeProjects)
+
+/** The build placeholder for the CSS the context generates now. */
+async function slotFor(context: any) {
+  return createSlotCSSRule(SLOT, await getExtractedCSS(context))
+}
 
 /** A project whose only source file uses `fg:red`. */
 function makeContext(command: 'serve' | 'build') {
@@ -20,7 +27,7 @@ describe('StyleEntryPlugin', () => {
     expect((plugin as any).resolveId(VIRTUAL_CSS_ID)).toBe(RESOLVED_VIRTUAL_CSS_ID)
     const result = await (plugin as any).load.call({}, RESOLVED_VIRTUAL_CSS_ID)
 
-    expect(result).toBe(SLOT)
+    expect(result).toBe(await slotFor(context))
     expect(context.virtualCSSImporters).toEqual(new Set([RESOLVED_VIRTUAL_CSS_ID]))
     expect(context.virtualCSSPlaceholderEnvironments).toEqual(new Set(['client']))
   })
@@ -46,7 +53,7 @@ describe('StyleEntryPlugin', () => {
       '/project/src/style.css'
     )
 
-    expect(result.code).toBe(SLOT)
+    expect(result.code).toBe(await slotFor(context))
     expect(context.styleCSSSources.get('/project/src/style.css')).toMatchObject({
       source: expect.stringContaining('.card')
     })
@@ -65,7 +72,7 @@ describe('StyleEntryPlugin', () => {
       '/project/src/style.css'
     )
 
-    expect(result.code).toBe('@import "@fontsource/fira-mono";\n' + SLOT)
+    expect(result.code).toBe('@import "@fontsource/fira-mono";\n' + await slotFor(context))
     expect(context.styleCSSSources.get('/project/src/style.css')).toMatchObject({
       source: expect.stringContaining('.card')
     })
