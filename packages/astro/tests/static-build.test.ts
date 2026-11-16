@@ -21,7 +21,8 @@ const stubAdapter: AstroIntegration = {
         supportedAstroFeatures: {
           serverOutput: 'stable',
           hybridOutput: 'stable',
-          staticOutput: 'stable'
+          staticOutput: 'stable',
+          sharpImageService: 'stable'
         }
       })
     }
