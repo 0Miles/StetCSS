@@ -25,36 +25,13 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
-import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
+import { createProjectContext, removeProjects, SLOT_CSS_RULE } from '../plugin-test-helper'
 
-const roots: string[] = []
-
-afterEach(() => {
-  for (const root of roots.splice(0)) {
-    rmSync(root, { recursive: true, force: true })
-  }
-})
+afterEach(removeProjects)
 
 /** A build whose project has one source file; the extracted CSS comes from its classes. */
-function makeContext(slot: string, html = '<div class="bg:white fg:black"></div>') {
-  const root = mkdtempSync(path.join(tmpdir(), 'master-css-vite-splice-'))
-  roots.push(root)
-  writeFileSync(path.join(root, 'index.html'), html)
-  return {
-    config: { command: 'build', root },
-    scanner: {
-      cwd: root,
-      slotCSSRule: slot,
-      css: { text: '', manifest: defaultManifestJSON },
-      config: {},
-      latentClasses: new Set(),
-      validClasses: new Set(),
-      nativeClassNames: new Set(),
-      usedNativeClasses: new Set(),
-      options: { safelist: [] },
-      emit: vi.fn(),
-    },
-  } as any
+function makeContext(html = '<div class="bg:white fg:black"></div>') {
+  return createProjectContext({ html })
 }
 
 function makeBundle(entries: Record<string, string>) {
@@ -65,17 +42,17 @@ function makeBundle(entries: Record<string, string>) {
   return bundle
 }
 
-const SLOT = '#master-css-slot{--slot:0}'
+const SLOT = SLOT_CSS_RULE
 let REAL_CSS: string
 
 beforeAll(async () => {
-  REAL_CSS = await getExtractedCSS(makeContext(SLOT))
+  REAL_CSS = await getExtractedCSS(makeContext())
   expect(REAL_CSS).toContain('.bg\\:white')
 })
 
 describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
   test('replaces placeholder when present and does NOT warn', async () => {
-    const ctx = makeContext(SLOT)
+    const ctx = makeContext()
     const plugin = StyleEntryBuildPlugin({} as any, ctx)
     const warn = vi.fn()
 
@@ -92,7 +69,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
   })
 
   test('deduplicates duplicate placeholder occurrences in the same CSS asset', async () => {
-    const ctx = makeContext(SLOT)
+    const ctx = makeContext()
     const plugin = StyleEntryBuildPlugin({} as any, ctx)
     const warn = vi.fn()
 
@@ -111,7 +88,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
   })
 
   test('keeps one extracted CSS copy per CSS asset', async () => {
-    const ctx = makeContext(SLOT)
+    const ctx = makeContext()
     const plugin = StyleEntryBuildPlugin({} as any, ctx)
     const warn = vi.fn()
 
@@ -129,7 +106,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
   })
 
   test('warns when placeholder was emitted but no CSS asset still contains it', async () => {
-    const ctx = makeContext(SLOT)
+    const ctx = makeContext()
     const plugin = StyleEntryBuildPlugin({} as any, ctx)
     const warn = vi.fn()
 
@@ -151,7 +128,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
   test('does NOT warn if no managed CSS import emitted the placeholder', async () => {
     // No extracted CSS to splice in, no placeholder ever emitted →
     // generateBundle must be a quiet no-op.
-    const ctx = makeContext(SLOT)
+    const ctx = makeContext()
     const plugin = StyleEntryBuildPlugin({} as any, ctx)
     const warn = vi.fn()
 
@@ -167,7 +144,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
     // Edge case: a managed CSS import exists but no Master CSS class
     // was extracted (e.g. config-only project). Warning here would be
     // noise — there's nothing to splice anyway.
-    const ctx = makeContext(SLOT, '<div></div>')
+    const ctx = makeContext('<div></div>')
     const plugin = StyleEntryBuildPlugin({} as any, ctx)
     const warn = vi.fn()
 
@@ -182,7 +159,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
   })
 
   test('only treats `type: asset` chunks (skips `chunk` entries)', async () => {
-    const ctx = makeContext(SLOT)
+    const ctx = makeContext()
     const plugin = StyleEntryBuildPlugin({} as any, ctx)
     const warn = vi.fn()
     ctx.virtualCSSPlaceholderEnvironments = new Set(['client'])
@@ -207,7 +184,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
    * `style-entry-build.ts` turns only this test red.
    */
   test('warns only for the environment that emitted the placeholder', async () => {
-    const ctx = makeContext(SLOT)
+    const ctx = makeContext()
     const plugin = StyleEntryBuildPlugin({} as any, ctx)
     const styleEntryPlugin = StyleEntryPlugin({ mode: 'static' } as any, ctx)
     await (styleEntryPlugin as any).load.call({ environment: { name: 'prerender' } }, '\0' + VIRTUAL_CSS_ID)
@@ -252,7 +229,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
         }
       `
       writeFileSync(entryPath, source)
-      const ctx = makeContext(SLOT)
+      const ctx = makeContext()
       ctx.config = {
         command: 'build',
         root,
@@ -308,7 +285,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
         }
       `
       writeFileSync(entryPath, source)
-      const ctx = makeContext(SLOT)
+      const ctx = makeContext()
       ctx.config = {
         command: 'build',
         root,
