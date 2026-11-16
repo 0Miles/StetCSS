@@ -1,10 +1,7 @@
-import { type PluginOptions, options as defaultPluginOptions } from '@stet-css/vite'
+import type { PluginOptions } from '@stet-css/vite'
 
-const options: IntegrationOptions = {
-  ...defaultPluginOptions,
-  mode: 'progressive'
-}
-
-export default options
-
-export declare type IntegrationOptions = PluginOptions
+/**
+ * Options for the Astro integration. The integration always builds static CSS,
+ * so the Vite plugin's `mode`, `injectRuntime` and `avoidFOUC` are not accepted.
+ */
+export type IntegrationOptions = Omit<PluginOptions, 'mode' | 'injectRuntime' | 'avoidFOUC'>

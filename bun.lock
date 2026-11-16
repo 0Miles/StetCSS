@@ -397,13 +397,7 @@
       "version": "0.0.0",
       "dependencies": {
         "@stet-css/core": "workspace:^",
-        "@stet-css/integration": "workspace:^",
-        "@stet-css/schema": "workspace:^",
-        "@stet-css/server": "workspace:^",
         "@stet-css/vite": "workspace:^",
-      },
-      "devDependencies": {
-        "@stet-css/preset": "workspace:^",
       },
       "peerDependencies": {
         "astro": ">=5",
