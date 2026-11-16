@@ -23,6 +23,7 @@ import StyleEntryPlugin from '../../src/plugins/style-entry'
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
+import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
 
 function makeContext(slot: string, css: string) {
   return {
@@ -57,7 +58,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
     const plugin = StyleEntryBuildPlugin({} as any, ctx)
     const warn = vi.fn()
 
-    ctx.virtualCSSPlaceholderEmitted = true
+    ctx.virtualCSSPlaceholderEnvironments = new Set(['client'])
 
     const bundle = makeBundle({
       'assets/index-abc.css': `body{margin:0}${SLOT}`,
@@ -74,7 +75,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
     const plugin = StyleEntryBuildPlugin({} as any, ctx)
     const warn = vi.fn()
 
-    ctx.virtualCSSPlaceholderEmitted = true
+    ctx.virtualCSSPlaceholderEnvironments = new Set(['client'])
 
     const bundle = makeBundle({
       'assets/index-abc.css': `${SLOT}body{margin:0}${SLOT}`,
@@ -93,7 +94,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
     const plugin = StyleEntryBuildPlugin({} as any, ctx)
     const warn = vi.fn()
 
-    ctx.virtualCSSPlaceholderEmitted = true
+    ctx.virtualCSSPlaceholderEnvironments = new Set(['client'])
 
     const bundle = makeBundle({
       'assets/index-abc.css': SLOT,
@@ -111,7 +112,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
     const plugin = StyleEntryBuildPlugin({} as any, ctx)
     const warn = vi.fn()
 
-    ctx.virtualCSSPlaceholderEmitted = true
+    ctx.virtualCSSPlaceholderEnvironments = new Set(['client'])
 
     // Simulate a downstream PostCSS plugin / minifier having mutated
     // the placeholder rule beyond recognition.
@@ -149,7 +150,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
     const plugin = StyleEntryBuildPlugin({} as any, ctx)
     const warn = vi.fn()
 
-    ctx.virtualCSSPlaceholderEmitted = true
+    ctx.virtualCSSPlaceholderEnvironments = new Set(['client'])
 
     const bundle = makeBundle({
       'assets/index-abc.css': 'body{margin:0}', // placeholder absent
@@ -163,7 +164,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
     const ctx = makeContext(SLOT, REAL_CSS)
     const plugin = StyleEntryBuildPlugin({} as any, ctx)
     const warn = vi.fn()
-    ctx.virtualCSSPlaceholderEmitted = true
+    ctx.virtualCSSPlaceholderEnvironments = new Set(['client'])
 
     const bundle: Record<string, any> = {
       'assets/index-abc.css': { type: 'asset', source: `body{margin:0}${SLOT}` },
@@ -174,6 +175,38 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
     expect(bundle['assets/index-abc.css'].source).toContain(REAL_CSS)
     expect(bundle['assets/index-abc.js'].code).toBe('console.log(1)')
     expect(warn).not.toHaveBeenCalled()
+  })
+
+  /**
+   * Guards multi-environment builds: Astro bundles prerender, server and client separately,
+   * and only the environment whose own CSS import emitted the placeholder may warn that it
+   * vanished. A flag shared across environments warned in the client bundle after the
+   * prerender bundle had emitted it.
+   * Reverse check: checking any environment instead of `getEnvironmentName(this)` in
+   * `style-entry-build.ts` turns only this test red.
+   */
+  test('warns only for the environment that emitted the placeholder', async () => {
+    const ctx = makeContext(SLOT, REAL_CSS)
+    const plugin = StyleEntryBuildPlugin({} as any, ctx)
+    const styleEntryPlugin = StyleEntryPlugin({ mode: 'static' } as any, ctx)
+    ctx.config = { command: 'build' }
+    await (styleEntryPlugin as any).load.call({ environment: { name: 'prerender' } }, '\0' + VIRTUAL_CSS_ID)
+
+    const clientWarn = vi.fn()
+    await (plugin as any).generateBundle.call(
+      { warn: clientWarn, environment: { name: 'client' } },
+      {},
+      makeBundle({ 'assets/index-abc.css': 'body{margin:0}' })
+    )
+    const prerenderWarn = vi.fn()
+    await (plugin as any).generateBundle.call(
+      { warn: prerenderWarn, environment: { name: 'prerender' } },
+      {},
+      makeBundle({ 'assets/page-abc.css': 'body{margin:0}' })
+    )
+
+    expect(clientWarn).not.toHaveBeenCalled()
+    expect(prerenderWarn).toHaveBeenCalledTimes(1)
   })
 
   test('compiles managed CSS entry config rules and preserves used native CSS', async () => {
