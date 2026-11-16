@@ -5,6 +5,10 @@ on:
     types: [opened, reopened, synchronize]
   push:
     branches: [main]
+  # release-please.yml dispatches this on the release PR branch: the PR is
+  # opened with GITHUB_TOKEN, which starts no pull_request run. The check runs
+  # land on the branch's head commit, so the PR still gets `required`.
+  workflow_dispatch:
 
 permissions:
   contents: read
