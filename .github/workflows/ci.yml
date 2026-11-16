@@ -58,6 +58,13 @@ jobs:
         if: ${{ !cancelled() }}
         run: bun run check:release
 
+      # Packs every published package with bun (the publish tool, which rewrites
+      # workspace:^) and checks the tarballs: entry points present, no local
+      # dependency protocols, repository metadata pointing at this repo.
+      - name: Check package contents
+        if: ${{ !cancelled() }}
+        run: bun run check:packages
+
       - name: Build examples
         if: ${{ !cancelled() }}
         run: bun run build:examples -- --continue
