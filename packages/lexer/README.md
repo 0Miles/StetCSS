@@ -30,7 +30,7 @@ Common uses:
 | --- | --- |
 | Source primitives | Stable offsets and source locations. |
 | Directive ranges | Locate CSS directives and quoted arguments without compiling them. |
-| Manifest entry scanners | Detect `@master entry;` and `@import '@stet-css/core'` entry markers. |
+| Manifest entry scanners | Detect the `@import '@stet-css/core'` entry marker. |
 | Class tokenizers | Split Master CSS class strings into lexical token ranges. |
 | Script nesting | `exceedsScriptNestingLimit` flags JS/TS nested too deep to hand to a native parser. |
 | Unit constants | Shared lexical constants for CSS units. |

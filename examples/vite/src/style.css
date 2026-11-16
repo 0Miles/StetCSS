@@ -1,9 +1,5 @@
 @import '@stet-css/core';
 
-@master {
-  mode-trigger: media;
-}
-
 @theme {
   --color-primary: var(--color-yellow);
 }

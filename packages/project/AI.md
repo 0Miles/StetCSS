@@ -12,7 +12,7 @@ Resolves a project's manifest: discovers **entry** CSS files, finds workspace ro
 ## Risks
 
 - **Ignored directories** (`PROJECT_IGNORED_DIRECTORIES`) decide both which CSS files can be entries and which files feed static CSS; adding or removing one changes CSS output.
-- **Entry markers**: discovery checks only top-level `@master entry;` and `@import "@stet-css/core"`; imported files and package CSS files are never independent entries.
+- **Entry markers**: discovery checks only a top-level `@import "@stet-css/core"`; imported files and package CSS files are never independent entries.
 - **Dependencies** come from compiler results, never from hardcoded package CSS filenames.
 - **CSS only**: manifests load from `.css` files; JavaScript/TypeScript manifest loading is intentionally unsupported.
 - **Entry extensions**: discovery reads `.css` by default (`CSS_MANIFEST_ENTRY_EXTENSIONS`), which manifest loading needs. Static CSS builds pass `extensions: STYLE_ENTRY_EXTENSIONS` to also find `.scss` and `.sass` entries; markers there still need their semicolon.
