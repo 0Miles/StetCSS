@@ -97,9 +97,7 @@ export default async function runScan(specifiedSourcePaths: string[] = [], optio
       scanner,
       styleCSSSources,
       projectDir: scanner.cwd,
-      sources,
-      // The CLI scans no modules: every class comes from the stylesheet's class set.
-      classes: []
+      sources
     })
     if (options.export) {
       await exportCSS(scanner, css, output)

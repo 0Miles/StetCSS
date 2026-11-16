@@ -23,7 +23,6 @@ import {
   registerStyleCSSSource,
   removeMasterStyleDirectives,
   removeStyleCSSImports,
-  type ScannerState,
   type StyleCSSSource,
   type StyleCSSSources
 } from '@stet-css/stylesheet'
@@ -242,7 +241,6 @@ async function prepareScannerWorkspace(workspace: string) {
   const styleCSSSources: StyleCSSSources = new Map()
   const scanner = new CSSScanner({}, workspace)
   await scanner.init()
-  scanner.options.verbose = 0
 
   const entries = await findCSSManifestEntryFiles(scanner.cwd)
   for (const entry of entries) {
@@ -271,7 +269,7 @@ async function prepareScannerWorkspace(workspace: string) {
 }
 
 async function createDiagnosticExtractedCSS(options: {
-  scanner: ScannerState
+  scanner: CSSScanner
   styleCSSSources: StyleCSSSources
   projectDir: string
   recorder: DiagnosticRecorder
@@ -306,7 +304,7 @@ async function createDiagnosticExtractedCSS(options: {
     ...(masterCSSResult ? [masterCSSResult] : []),
     ...entryStyleResults
   ]
-  let mergedManifest = defaultArtifact?.manifest ?? scanner.customOptions?.manifest ?? scanner.css.manifest
+  let mergedManifest = defaultArtifact?.manifest ?? scanner.css.manifest
   const finalizedStyleResults = new Map<CompileCSSResult, ReturnType<typeof createManifestFromCSSResult>>()
 
   for (const result of styleResults) {
@@ -558,22 +556,21 @@ function hasCompiledStyleManifestInput(result: CompileCSSResult) {
   return Boolean(Object.keys(result.manifestInput || {}).length || result.styleDefinitions?.length)
 }
 
-function getScannerClasses(scanner: ScannerState) {
-  return filterExcludedClasses([...new Set([
-    ...(scanner.latentClasses || []),
-    ...(scanner.validClasses || []),
-    ...(scanner.options.safelist || [])
-  ])], scanner.options.blocklist)
+function getScannerClasses(scanner: CSSScanner) {
+  return [...new Set([
+    ...scanner.latentClasses,
+    ...scanner.validClasses
+  ])]
 }
 
 function getStyleSourceClasses(
-  scanner: ScannerState,
+  scanner: CSSScanner,
   styleSource: StyleCSSSource,
   baseClasses: string[],
   projectDir: string
 ) {
   if (!hasStylesheetDirectives(styleSource.directives)) return baseClasses
-  const scopedOptions = mergeStylesheetSourceOptions(scanner.options, styleSource.directives)
+  const scopedOptions = mergeStylesheetSourceOptions<StylesheetSourceOptions>({}, styleSource.directives)
   const classes = hasStylesheetSourceDirectives(styleSource.directives)
     ? getStylesheetOptionClasses(scopedOptions, projectDir)
     : [
