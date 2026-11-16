@@ -1,11 +1,6 @@
 import { Page } from '@playwright/test'
-import { MasterCSS, createHydrationManifest, type MasterCSSManifest } from '@stet-css/core'
+import type { MasterCSSManifest } from '@stet-css/core'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
-import {
-  MASTER_CSS_HYDRATION_MANIFEST_SCRIPT_ID,
-  type MasterCSSHydrationManifest
-} from '@stet-css/schema/hydration-manifest'
-import { MASTER_CSS_RUNTIME_STYLE_ID } from '@stet-css/schema/runtime-style'
 import {
   flattenMasterCSSManifestVariables,
   groupMasterCSSManifestVariables,
@@ -182,19 +177,6 @@ function createRuntimeProjectManifest(manifest: RuntimeProjectManifestInput) {
   } satisfies MasterCSSManifest
 }
 
-async function createHydrationManifestForPage(page: Page, manifest: MasterCSSManifest) {
-  const classNames = await page.evaluate(() => {
-    const classNames = new Set<string>()
-    for (const element of document.querySelectorAll('[class]')) {
-      element.classList.forEach((className) => classNames.add(className))
-    }
-    return [...classNames]
-  })
-  const css = MasterCSS.create({ manifest })
-  css.ensureClassRules(...classNames)
-  return createHydrationManifest(css)
-}
-
 const RUNTIME_ASSET_BASE_URL = 'http://master-css-runtime.test'
 export const RUNTIME_SCRIPT_URL = `${RUNTIME_ASSET_BASE_URL}/css-runtime@rc`
 /** Serves the built CDN bundle (`dist/global.min.js`), which embeds its default manifest. */
@@ -232,36 +214,8 @@ export async function getRuntimeLoaderURL() {
   return new URL('/e2e/runtime-loader.ts', localURL).href
 }
 
-export default async function init(
-  page: Page,
-  text?: string,
-  manifestInput?: RuntimeProjectManifestInput,
-  hydrationManifestInput?: MasterCSSHydrationManifest | 'auto'
-) {
+export default async function init(page: Page, manifestInput?: RuntimeProjectManifestInput) {
   const manifest = manifestInput ? createRuntimeProjectManifest(manifestInput) : undefined
-  const hydrationManifest = hydrationManifestInput === 'auto'
-    ? await createHydrationManifestForPage(page, manifest || defaultManifest)
-    : hydrationManifestInput
-  await page.evaluate(({ hydrationManifest, text, manifestScriptId, runtimeStyleId }) => {
-    if (text) {
-      const style = document.createElement('style')
-      style.id = runtimeStyleId
-      style.textContent = text
-      document.head.appendChild(style)
-    }
-    if (hydrationManifest) {
-      const script = document.createElement('script')
-      script.type = 'application/json'
-      script.id = manifestScriptId
-      script.textContent = JSON.stringify(hydrationManifest)
-      document.head.appendChild(script)
-    }
-  }, {
-    hydrationManifest,
-    text,
-    manifestScriptId: MASTER_CSS_HYDRATION_MANIFEST_SCRIPT_ID,
-    runtimeStyleId: MASTER_CSS_RUNTIME_STYLE_ID
-  })
   await page.evaluate(async ({ loaderURL, manifest }) => {
     const { startCSSRuntime } = await import(loaderURL)
     startCSSRuntime({ manifest })

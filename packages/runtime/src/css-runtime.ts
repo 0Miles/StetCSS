@@ -1,19 +1,16 @@
 import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 import type { MasterCSSEmittedGlobals } from '@stet-css/engine'
-import type { MasterCSSHydrationManifest } from '@stet-css/schema/hydration-manifest'
 import CSSRuntime from './core'
 
 type CSSRuntimeHostConstructor = new (...args: any[]) => HTMLElement
 type CSSRuntimeManifest = MasterCSSManifest | ((host: HTMLElement) => MasterCSSManifest)
 type CSSRuntimeRoot = ShadowRoot | ((host: HTMLElement) => ShadowRoot | null | undefined)
 type CSSRuntimeEmittedGlobals = MasterCSSEmittedGlobals | ((host: HTMLElement) => MasterCSSEmittedGlobals | undefined)
-type CSSHydrationManifest = MasterCSSHydrationManifest | ((host: HTMLElement) => MasterCSSHydrationManifest | undefined)
 
 export interface CSSRuntimeOptions {
   manifest: CSSRuntimeManifest
   root?: CSSRuntimeRoot
   emittedGlobals?: CSSRuntimeEmittedGlobals
-  hydrationManifest?: CSSHydrationManifest
 }
 
 export type CSSRuntimeDecoratorOptions = CSSRuntimeOptions
@@ -30,10 +27,6 @@ function resolveRoot(host: HTMLElement, root: CSSRuntimeRoot | undefined): Shado
 
 function resolveEmittedGlobals(host: HTMLElement, emittedGlobals: CSSRuntimeEmittedGlobals | undefined): MasterCSSEmittedGlobals | undefined {
   return typeof emittedGlobals === 'function' ? emittedGlobals(host) : emittedGlobals
-}
-
-function resolveHydrationManifest(host: HTMLElement, hydrationManifest: CSSHydrationManifest | undefined): MasterCSSHydrationManifest | undefined {
-  return typeof hydrationManifest === 'function' ? hydrationManifest(host) : hydrationManifest
 }
 
 export default function cssRuntime(options: CSSRuntimeOptions): <T extends CSSRuntimeHostConstructor>(target: T) => T {
@@ -53,17 +46,10 @@ export default function cssRuntime(options: CSSRuntimeOptions): <T extends CSSRu
         const cssRuntime = CSSRuntime.create({
           manifest: resolveManifest(this, options.manifest),
           root,
-          emittedGlobals: resolveEmittedGlobals(this, options.emittedGlobals),
-          hydrationManifest: resolveHydrationManifest(this, options.hydrationManifest)
+          emittedGlobals: resolveEmittedGlobals(this, options.emittedGlobals)
         })
         this.cssRuntime = cssRuntime
-        if (cssRuntime.needsHydrationManifest()) {
-          void cssRuntime.loadHydrationManifest().then(() => {
-            if (this.cssRuntime === cssRuntime) cssRuntime.observe()
-          })
-        } else {
-          cssRuntime.observe()
-        }
+        cssRuntime.observe()
       }
 
       disconnectedCallback() {
