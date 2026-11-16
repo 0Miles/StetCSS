@@ -16,7 +16,14 @@ function replaceSlotCSSRule(source: string, slotCSSRule: string, realCSS: string
   return { source: nextSource, replaced }
 }
 
+export const NO_STYLE_ENTRY_WARNING =
+  '[master-css.vite] No stylesheet in this build imports Master CSS, so no Master CSS rules ' +
+  'were generated. Import \'@stet-css/core\' from a .css file that your app imports. ' +
+  'Astro inlines @import inside .astro <style> blocks before Vite plugins see it, so an ' +
+  'import written there ships the raw preset source instead.'
+
 export default function StyleEntryBuildPlugin(_options: PluginOptions, context: PluginContext): Plugin {
+  let warnedNoStyleEntry = false
   return {
     name: 'master-css:style-entry:build',
     enforce: 'pre',
@@ -47,6 +54,13 @@ export default function StyleEntryBuildPlugin(_options: PluginOptions, context: 
       // Each environment is checked against its own placeholder only: Astro
       // and other multi-environment builds bundle prerender, server and
       // client separately.
+      // No environment built so far registered a managed CSS entry. Frameworks that build
+      // several environments share one context, so a later environment without CSS (Astro's
+      // client build after its server build) stays quiet once any entry was seen.
+      if (!context.virtualCSSPlaceholderEnvironments?.size && !warnedNoStyleEntry) {
+        warnedNoStyleEntry = true
+        this.warn(NO_STYLE_ENTRY_WARNING)
+      }
       const placeholderEmitted = context.virtualCSSPlaceholderEnvironments?.has(getEnvironmentName(this))
       if (placeholderEmitted && !replacedAny && realCSS.length > 0) {
         this.warn(
