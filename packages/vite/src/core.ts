@@ -13,8 +13,23 @@ import StyleEntryHMRPlugin from './plugins/style-entry-hmr'
 import StyleEntryBuildPlugin from './plugins/style-entry-build'
 import defaultPluginOptions, { type PluginOptions } from './options'
 
+/**
+ * What a first-party framework integration tells the plugin about its project. Not a user
+ * option: projects add directories with `@source`.
+ * @internal
+ */
+export interface PluginHost {
+  /** The project root; defaults to Vite's `root`. Nuxt passes its root, since Vite's is `srcDir`. */
+  projectDir?: string
+  /** More project directories read by the project rules, such as Nuxt layers. */
+  extraProjectDirs?: string[]
+  /** Absolute files or directories the class set never reads: the framework's build output. */
+  ignorePaths?: string[]
+}
+
 export interface PluginContext {
   config?: ResolvedConfig
+  host?: PluginHost
   scanner?: CSSScanner
   virtualCSSImporters?: Set<string>
   /** Vite environments whose managed CSS imports emitted the slot placeholder. */
@@ -28,9 +43,13 @@ export interface PluginContext {
   defaultManifestAssetSource?: string
 }
 
-export default function masterCSS(options?: PluginOptions): Plugin[] {
+/**
+ * @param host - Internal: set by first-party framework integrations only.
+ */
+export default function masterCSS(options?: PluginOptions, host?: PluginHost): Plugin[] {
   options = { ...defaultPluginOptions, ...options }
   const context = {
+    host,
     includeGeneratedCSS: options.mode === 'static'
   } as PluginContext
   const plugins: Plugin[] = [

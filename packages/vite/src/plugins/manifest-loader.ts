@@ -18,6 +18,7 @@ import {
 } from '@stet-css/integration/manifest-facade'
 import { collectStyleCSSDependencies } from '@stet-css/stylesheet'
 import { includesFile } from '../utils/path'
+import { getProjectDir } from '../utils/project-dir'
 
 function invalidateManifestModule(module: ModuleNode | undefined, server: ViteDevServer): ModuleNode[] {
   if (!module) return []
@@ -78,7 +79,7 @@ export default function ManifestLoaderPlugin(context: PluginContext): Plugin {
       if (!isCSSManifestRequest(manifestPath)) {
         throw new TypeError('Master CSS manifest queries only support CSS entry files.')
       }
-      const dependencies = new Set(collectStyleCSSDependencies(manifestPath, undefined, context.config?.root))
+      const dependencies = new Set(collectStyleCSSDependencies(manifestPath, undefined, getProjectDir(context)))
       for (const dependency of dependencies) {
         this.addWatchFile(dependency)
       }
