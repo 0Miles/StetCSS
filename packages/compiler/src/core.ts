@@ -191,7 +191,7 @@ function decodeCSSQuotedString(source: string) {
   return source.replace(/\\([\s\S])/g, '$1')
 }
 
-export function findCSSReferenceStatements(source: string, filename = 'master.css') {
+export function findCSSReferenceStatements(source: string, filename = 'stet.css') {
   const statements: CSSReferenceStatement[] = []
   for (const range of collectCSSDirectiveRanges(source)) {
     if (range.name !== 'reference') continue
@@ -226,7 +226,7 @@ export function findCSSReferenceStatements(source: string, filename = 'master.cs
   return statements
 }
 
-export function removeCSSReferenceStatements(source: string, filename = 'master.css') {
+export function removeCSSReferenceStatements(source: string, filename = 'stet.css') {
   return removeSourceRanges(source, findCSSReferenceStatements(source, filename))
 }
 
@@ -349,7 +349,7 @@ function parseMasterOption(manifestInput: CSSDirectiveManifestInput, property: s
 
 function formatDeclaration(declaration: Declaration): string {
   const result = getCSSTransform()({
-    filename: 'master-css-declaration.css',
+    filename: 'stet-css-declaration.css',
     code: encodeCSS('.x{}'),
     visitor: {
       Rule: {
@@ -370,7 +370,7 @@ function formatDeclaration(declaration: Declaration): string {
 
 function formatSelectors(selectors: Selector[]) {
   const result = getCSSTransform()({
-    filename: 'master-css-selector.css',
+    filename: 'stet-css-selector.css',
     code: encodeCSS('.x{color:red}'),
     minify: true,
     visitor: {
@@ -2283,7 +2283,7 @@ export function maskManagedPatternEntryNames(source: string) {
 }
 
 export function compileCSS(source: string, options: CompileCSSOptions = {}): CompileCSSResult {
-  const filename = options.from || 'master.css'
+  const filename = options.from || 'stet.css'
   assertCSSNestingDepth(source, filename)
   const references = findCSSReferenceStatements(source, filename)
   const sourceWithoutReferences = removeSourceRanges(source, references)
