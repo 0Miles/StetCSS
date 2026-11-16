@@ -38,25 +38,14 @@ const lineShapes: [name: string, file: string, nest: (depth: number) => string][
 // never counts.
 const labels = (depth: number) => `${'a:'.repeat(depth)}x='block'`
 
-// The deepest input still short enough to parse on the caller's stack.
-function deepestInline(nest: (depth: number) => string) {
+// The deepest input the prescan hands to oxc, optionally no longer than `maxLength`.
+function deepestAllowed(nest: (depth: number) => string, maxLength = Infinity) {
   let allowed = 1
-  let rejected = Math.min(INLINE_LENGTH + 1, 1 << 16)
+  let rejected = Math.min(maxLength + 1, 1 << 16)
   while (rejected - allowed > 1) {
     const depth = (allowed + rejected) >> 1
     const content = nest(depth)
-    if (content.length > INLINE_LENGTH || exceedsScriptNestingLimit(content)) rejected = depth
-    else allowed = depth
-  }
-  return allowed
-}
-
-function deepestAllowed(nest: (depth: number) => string) {
-  let allowed = 1
-  let rejected = 1 << 16
-  while (rejected - allowed > 1) {
-    const depth = (allowed + rejected) >> 1
-    if (exceedsScriptNestingLimit(nest(depth))) rejected = depth
+    if (content.length > maxLength || exceedsScriptNestingLimit(content)) rejected = depth
     else allowed = depth
   }
   return allowed
@@ -156,7 +145,7 @@ describe.concurrent('JavaScript and TypeScript chained one level per line, 20,00
  */
 describe.concurrent('JavaScript and TypeScript short enough to parse inline', () => {
   test.each([...shapes, ...lineShapes, ['labels', 'a.js', labels] as const])('%s parse without crashing', async (_, file, nest) => {
-    const { code, signal, stdout, stderr } = await extractOnWorkerInChild(file, nest(deepestInline(nest)))
+    const { code, signal, stdout, stderr } = await extractOnWorkerInChild(file, nest(deepestAllowed(nest, INLINE_LENGTH)))
 
     expect({ code, signal }, stderr).toEqual({ code: 0, signal: null })
     expect(JSON.parse(stdout)).toContain('block')
