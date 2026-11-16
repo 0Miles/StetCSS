@@ -13,6 +13,7 @@ import {
 } from './runner'
 import {
   createInteractionPage,
+  formatInteractionModeLabel,
   type InteractionModeId,
   type InteractionResult,
   type RuntimeState
@@ -490,7 +491,7 @@ function createDescriptor(options: {
     id: createRuntimeStyleInvalidationVariantId(options),
     fixtureId: options.fixtureId,
     adapterId: options.modeId === 'tailwind-static' ? 'tailwind-cli' : options.modeId,
-    label: `${options.fixtureId} / ${formatModeLabel(options.modeId)} / ${options.labelSuffix}`,
+    label: `${options.fixtureId} / ${formatInteractionModeLabel(options.modeId)} / ${options.labelSuffix}`,
     modeId: options.modeId,
     kind: options.kind,
     action: options.action,
@@ -1298,17 +1299,6 @@ function getWarmupRounds() {
   const value = Number(process.env.RUNTIME_STYLE_INVALIDATION_DIAGNOSTIC_WARMUP_ROUNDS || 1)
   if (!Number.isFinite(value) || value < 0) return 1
   return Math.floor(value)
-}
-
-function formatModeLabel(modeId: InteractionModeId) {
-  switch (modeId) {
-    case 'master-static':
-      return 'Master CSS static'
-    case 'master-runtime':
-      return 'Master CSS runtime'
-    case 'tailwind-static':
-      return 'Tailwind CSS static'
-  }
 }
 
 function getTemporaryClassNames() {
