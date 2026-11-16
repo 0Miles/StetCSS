@@ -80,7 +80,7 @@ Options:
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `-o, --output <path>` | `string` | `master.css` | Generated CSS output path. |
+| `-o, --output <path>` | `string` | `stet.css` | Generated CSS output path. |
 | `-v, --verbose <level>` | `number` | `1` | Logging level: `0` is silent, `1` reports the written file and watched config changes, `2` also lists each file read. With `--no-export` the log goes to stderr, so stdout is only CSS. |
 | `-w, --watch` | `boolean` | `false` | Watch files and rebuild continuously. |
 
