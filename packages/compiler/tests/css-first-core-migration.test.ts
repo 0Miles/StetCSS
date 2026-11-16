@@ -1081,6 +1081,27 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
   })
 
   /**
+   * Prevents (#69): `default-mode` naming a mode the project does not declare (preset `dark` once
+   * only `sepia` is declared, or a custom mode with no `@theme` block) being accepted while it
+   * styles nothing; and the error firing for a declared mode or for `none`.
+   * Reverse-checked: removing the `assertDeclaredDefaultMode` call reds the two throwing rows only.
+   */
+  test.each([
+    ['preset mode after declaring others', 'default-mode: dark;', '@theme sepia {}', 'default-mode uses mode "dark", which is not declared (declared modes: "sepia")'],
+    ['custom mode without @theme', 'default-mode: ocean;', '', 'default-mode uses mode "ocean", which is not declared (declared modes: "light", "dark")'],
+    ['declared custom mode', 'default-mode: sepia;', '@theme sepia {}', undefined],
+    ['none', 'default-mode: none;', '@theme sepia {}', undefined]
+  ])('default-mode must name a declared mode: %s', (_, declaration, theme, message) => {
+    const compile = () => compileCSSManifest(`@settings { mode-trigger: class; ${declaration} }\n${theme}`, { baseManifest: defaultManifest })
+
+    if (message) {
+      expect(compile).toThrow(message)
+    } else {
+      expect(compile).not.toThrow()
+    }
+  })
+
+  /**
    * Prevents: a developer setting `default-mode` under the media trigger (written or left as the
    * default) without being told it does nothing, since the system color scheme picks the mode;
    * and the opposite, a spurious warning under the class or host trigger (including one set in

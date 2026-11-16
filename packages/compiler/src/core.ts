@@ -106,6 +106,8 @@ export interface ResolvedCSSImportGraph {
   source: string
   dependencies: string[]
   references?: CSSDirectiveReference[]
+  /** `@theme <mode>` names found only in inlined Master CSS package files. */
+  implicitModes?: string[]
 }
 
 type ParsedStyleDefinition = CSSDirectiveStyleDefinition
