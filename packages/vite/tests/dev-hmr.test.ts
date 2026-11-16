@@ -23,6 +23,35 @@ function writeStyle(root: string, displayClass: string) {
   ].join('\n'))
 }
 
+/**
+ * A static-mode dev server whose CSS entry is imported from `src/main.ts` and whose only
+ * template, `src/pages/index.astro`, no module imports.
+ */
+async function startStaticTemplateServer(prefix: string) {
+  mkdirSync(fixtureRoot, { recursive: true })
+  fixtureDir = mkdtempSync(path.join(fixtureRoot, prefix))
+  mkdirSync(path.join(fixtureDir, 'src/pages'), { recursive: true })
+  writeFileSync(path.join(fixtureDir, 'index.html'), '<script type="module" src="/src/main.ts"></script>')
+  writeFileSync(path.join(fixtureDir, 'src/main.ts'), 'import "./style.css"')
+  writeFileSync(path.join(fixtureDir, 'src/style.css'), '@import "@stet-css/core";')
+  const page = path.join(fixtureDir, 'src/pages/index.astro')
+  writeFileSync(page, '<h1 class="font:heavy">Home</h1>')
+
+  server = await createServer({
+    root: fixtureDir,
+    logLevel: 'silent',
+    server: {
+      host: '127.0.0.1',
+      port: 0
+    },
+    plugins: masterCSS({ mode: 'static' })
+  })
+  await server.listen()
+  const url = server.resolvedUrls?.local[0]
+  if (!url) throw new Error('Expected Vite dev server URL.')
+  return { page, url }
+}
+
 afterEach(async () => {
   await browser?.close()
   await server?.close()
@@ -188,27 +217,7 @@ describe('Vite dev HMR', () => {
    * only this test red.
    */
   it('styles and updates classes from a template no module imports in static mode', async () => {
-    mkdirSync(fixtureRoot, { recursive: true })
-    fixtureDir = mkdtempSync(path.join(fixtureRoot, 'static-template-'))
-    mkdirSync(path.join(fixtureDir, 'src/pages'), { recursive: true })
-    writeFileSync(path.join(fixtureDir, 'index.html'), '<script type="module" src="/src/main.ts"></script>')
-    writeFileSync(path.join(fixtureDir, 'src/main.ts'), 'import "./style.css"')
-    writeFileSync(path.join(fixtureDir, 'src/style.css'), '@import "@stet-css/core";')
-    const page = path.join(fixtureDir, 'src/pages/index.astro')
-    writeFileSync(page, '<h1 class="font:heavy">Home</h1>')
-
-    server = await createServer({
-      root: fixtureDir,
-      logLevel: 'silent',
-      server: {
-        host: '127.0.0.1',
-        port: 0
-      },
-      plugins: masterCSS({ mode: 'static' })
-    })
-    await server.listen()
-    const url = server.resolvedUrls?.local[0]
-    if (!url) throw new Error('Expected Vite dev server URL.')
+    const { page, url } = await startStaticTemplateServer('static-template-')
     const fetchCSS = async () => (await fetch(new URL('src/style.css?direct', url))).text()
 
     expect(await fetchCSS()).toContain('.font\\:heavy')
@@ -227,28 +236,8 @@ describe('Vite dev HMR', () => {
    * only this test red.
    */
   it('refreshes the server environment CSS after a template gains a class', async () => {
-    mkdirSync(fixtureRoot, { recursive: true })
-    fixtureDir = mkdtempSync(path.join(fixtureRoot, 'static-ssr-'))
-    mkdirSync(path.join(fixtureDir, 'src/pages'), { recursive: true })
-    writeFileSync(path.join(fixtureDir, 'index.html'), '<script type="module" src="/src/main.ts"></script>')
-    writeFileSync(path.join(fixtureDir, 'src/main.ts'), 'import "./style.css"')
-    writeFileSync(path.join(fixtureDir, 'src/style.css'), '@import "@stet-css/core";')
-    const page = path.join(fixtureDir, 'src/pages/index.astro')
-    writeFileSync(page, '<h1 class="font:heavy">Home</h1>')
-
-    server = await createServer({
-      root: fixtureDir,
-      logLevel: 'silent',
-      server: {
-        host: '127.0.0.1',
-        port: 0
-      },
-      plugins: masterCSS({ mode: 'static' })
-    })
-    await server.listen()
-    const url = server.resolvedUrls?.local[0]
-    if (!url) throw new Error('Expected Vite dev server URL.')
-    const devServer = server
+    const { page, url } = await startStaticTemplateServer('static-ssr-')
+    const devServer = server!
     const serverCSS = async () => (await devServer.environments.ssr.transformRequest('/src/style.css?inline'))?.code ?? ''
 
     // A browser loads the client copy of the entry, as the Vite client does on every page.
