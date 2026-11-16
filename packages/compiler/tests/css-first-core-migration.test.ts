@@ -1042,6 +1042,45 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
   })
 
   /**
+   * Prevents (#69): a project that declares only some modes in CSS (`@theme sepia {}`, or only
+   * `@theme dark {…}`) getting `@container dark` / `@container light` rules for `@dark` / `@light`
+   * with no error. Declared modes replace the preset light and dark, so the undeclared one fails
+   * with the fix; the declared one, and every mode of a project that declares none, still compiles.
+   * Reverse-checked: removing the undeclared-mode throw in the engine's `resolveStateBranches`
+   * reds the two throwing rows only.
+   */
+  test.each([
+    ['custom mode only', '@theme sepia {}', 'fg:red@dark', 'Class "fg:red@dark" uses mode "dark", which is not declared (declared modes: "sepia")'],
+    ['dark only', '@theme dark { --color-primary: #fff; }', 'fg:red@light', 'add @theme light {} to use @light'],
+    ['dark only, dark class', '@theme dark { --color-primary: #fff; }', 'fg:red@dark', '@media (prefers-color-scheme:dark){.fg\\:red\\@dark{color:var(--color-red)}}'],
+    ['no declared modes', '', 'fg:red@light', '@media (prefers-color-scheme:light){.fg\\:red\\@light{color:var(--color-red)}}']
+  ])('only declared modes resolve @light and @dark classes: %s', (_, source, className, expected) => {
+    const { manifest } = compileCSSManifest(source, { baseManifest: defaultManifest })
+    const css = createTestCSS(manifest)
+
+    if (expected.startsWith('@media')) {
+      expect(css.generate(className).map((rule) => rule.text)).toEqual([expected])
+    } else {
+      expect(() => css.generate(className)).toThrow(expected)
+      expect(manifest.settings?.modes).not.toContain(className.split('@')[1])
+    }
+  })
+
+  /**
+   * Prevents (#69): the CSS-entry forms of an undeclared mode, `@variant dark {}` and
+   * `@compose fg:red@dark`, either failing with the generic "Unknown @variant token" that does not
+   * say declared modes replaced the preset ones, or (for `@compose`) emitting `@container dark`.
+   * Reverse-checked: removing the `isUndeclaredPresetMode` branch in `resolveConditionVariantReference`
+   * reds the `@variant` row only; removing the engine throw reds the `@compose` row only.
+   */
+  test.each([
+    ['@variant', '.a { color: red; @variant dark { color: blue; } }', '@variant dark uses mode "dark", which is not declared (declared modes: "sepia")'],
+    ['@compose', '.b { @compose fg:red@dark; }', 'Class "fg:red@dark" uses mode "dark", which is not declared (declared modes: "sepia")']
+  ])('rejects an undeclared mode in entry CSS: %s', (_, body, message) => {
+    expect(() => compileCSSManifest(`@theme sepia {}\n${body}`, { baseManifest: defaultManifest })).toThrow(message)
+  })
+
+  /**
    * Prevents: a developer setting `default-mode` under the media trigger (written or left as the
    * default) without being told it does nothing, since the system color scheme picks the mode;
    * and the opposite, a spurious warning under the class or host trigger (including one set in
