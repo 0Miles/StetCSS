@@ -58,6 +58,13 @@ jobs:
         if: ${{ !cancelled() }}
         run: bun run check:release
 
+      # No file path or text may still use the upstream product name outside
+      # the reasoned allowlist in the script (upstream references, the removed
+      # @master at-rule, old-name guard tests, third-party names).
+      - name: Check naming
+        if: ${{ !cancelled() }}
+        run: bun run check:naming
+
       # Packs every published package with bun (the publish tool, which rewrites
       # workspace:^) and checks the tarballs: entry points present, no local
       # dependency protocols, repository metadata pointing at this repo.

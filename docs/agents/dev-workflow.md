@@ -21,6 +21,7 @@
 
 1. `bun run check -- --continue`：所有套件的 `test`、`lint`，以及有 `type-check` script 的套件的型別檢查。`--continue` 讓所有 task 跑完再回報。
    - 另跑 `bun run check:release`：release-please 的 config 與 manifest 要剛好列出每個要發佈的 `@stet-css/*` 套件，版號和各自的 `package.json` 相同。新增、改名或刪除套件時要一起改這兩個檔。
+   - 另跑 `bun run check:naming`：檔名與檔案內容不能再出現上游的舊產品名（不分大小寫）。保留的只有 `scripts/check-naming.mjs` 的 `ALLOWED` 列出的項目，每項都寫了原因：指向上游的引用、已移除的 `@master` at-rule、證明舊名稱已不再使用的測試、第三方名稱。新的命中要改成 Stet；真的要保留時，在 `ALLOWED` 加一項並寫明原因。
    - 另跑 `bun run check:packages`：先建置，再用 `bun pm pack` 打包每個要發佈的 `@stet-css/*`（不連 registry），檢查 tarball：`exports`、`main`、`types`、`browser`、`bin`、`typesVersions` 指到的檔都在，有 `LICENSE`；`.js`／`.d.ts` 的相對 import 都解析得到、沒有 repo 內部的 `~/` 路徑，import 的套件都列在 `dependencies`、`peerDependencies` 或 `optionalDependencies`（宿主專案提供的套件列成 optional peer）；依賴沒有留下 `workspace:` 之類的本地協定，`package.json` 有 `files`，`repository`／`bugs`／`homepage` 指向 `0Miles/StetCSS`。
 2. `bun run build:examples -- --continue`：建置 `examples/` 的每個範例。
 3. `bun run e2e`：先跑建置整合的 e2e，通過後再單獨跑 runtime 的 Playwright e2e。
