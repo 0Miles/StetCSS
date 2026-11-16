@@ -46,10 +46,10 @@ export interface CSSRuntimeCreateOptions {
 export default class CSSRuntime extends MasterCSS {
   /**
    * Another copy of the runtime on the page (a CDN script beside a bundled import) may already
-   * hold the `MasterCSSRuntime` global. Share its instances so each root keeps a single runtime.
+   * hold the `StetCSSRuntime` global. Share its instances so each root keeps a single runtime.
    */
-  static instances: WeakMap<Document | ShadowRoot, CSSRuntime> = isRuntimeClass(globalThis.MasterCSSRuntime)
-    ? globalThis.MasterCSSRuntime.instances
+  static instances: WeakMap<Document | ShadowRoot, CSSRuntime> = isRuntimeClass(globalThis.StetCSSRuntime)
+    ? globalThis.StetCSSRuntime.instances
     : new WeakMap()
   readonly host: Element
   readonly container: HTMLElement | ShadowRoot
@@ -107,7 +107,7 @@ export default class CSSRuntime extends MasterCSS {
     const registered = CSSRuntime.instances.get(this.root) === this
     CSSRuntime.instances.set(this.root, this)
     if (isDocumentRoot(this.root)) {
-      readDocument(this.root, 'defaultView')!.globalThis.masterCSSRuntime = this
+      readDocument(this.root, 'defaultView')!.globalThis.stetCSSRuntime = this
     }
     if (!registered && process.env.NODE_ENV === 'development') {
       debugRuntimeCreated(this)
@@ -119,7 +119,7 @@ export default class CSSRuntime extends MasterCSS {
     CSSRuntime.instances.delete(this.root)
     if (isDocumentRoot(this.root)) {
       const scope = readDocument(this.root, 'defaultView')!.globalThis
-      if (scope.masterCSSRuntime === this) scope.masterCSSRuntime = undefined as unknown as CSSRuntime
+      if (scope.stetCSSRuntime === this) scope.stetCSSRuntime = undefined as unknown as CSSRuntime
     }
     return this
   }

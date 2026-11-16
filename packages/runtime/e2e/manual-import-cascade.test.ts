@@ -58,7 +58,7 @@ async function startStaticPage(page: Page) {
 function readStaticPage(page: Page) {
   return page.evaluate(() => {
     const colorOf = (id: string) => getComputedStyle(document.getElementById(id)!).color
-    const runtimeRules = Array.from(document.querySelector<HTMLStyleElement>('style#master-css')!.sheet!.cssRules)
+    const runtimeRules = Array.from(document.querySelector<HTMLStyleElement>('style#stet-css')!.sheet!.cssRules)
     return {
       mixed: colorOf('mixed'),
       author: colorOf('author'),
@@ -110,7 +110,7 @@ for (const rootKind of ['shadow root', 'document without base.css'] as const) {
     const result = await page.evaluate(() => {
       const root: Document | ShadowRoot = document.querySelector('div')?.shadowRoot || document
       const mixed = root.getElementById('mixed')!
-      const sheet = root.querySelector<HTMLStyleElement>('style#master-css')!.sheet!
+      const sheet = root.querySelector<HTMLStyleElement>('style#stet-css')!.sheet!
       return {
         mixed: getComputedStyle(mixed).color,
         layers: Array.from(sheet.cssRules).flatMap((rule) => rule instanceof CSSLayerBlockRule ? [rule.name] : [])

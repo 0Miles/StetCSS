@@ -26,17 +26,17 @@ test('disconnect clears counts and observe rescans the current DOM', async ({ pa
     document.body.innerHTML = '<div class="block"></div>'
     await new Promise(resolve => setTimeout(resolve, 0))
   })
-  expect(await page.evaluate(() => Object.fromEntries(globalThis.masterCSSRuntime.classCounts))).toEqual({
+  expect(await page.evaluate(() => Object.fromEntries(globalThis.stetCSSRuntime.classCounts))).toEqual({
     block: 1
   })
 
   const disconnected = await page.evaluate(async () => {
-    globalThis.masterCSSRuntime.disconnect()
+    globalThis.stetCSSRuntime.disconnect()
     document.body.innerHTML = '<div class="font:bold"></div>'
     await new Promise(resolve => setTimeout(resolve, 0))
     return {
-      counts: Object.fromEntries(globalThis.masterCSSRuntime.classCounts),
-      hasStyle: !!document.head.querySelector('style#master-css')
+      counts: Object.fromEntries(globalThis.stetCSSRuntime.classCounts),
+      hasStyle: !!document.head.querySelector('style#stet-css')
     }
   })
   expect(disconnected).toEqual({
@@ -45,11 +45,11 @@ test('disconnect clears counts and observe rescans the current DOM', async ({ pa
   })
 
   const reconnected = await page.evaluate(async () => {
-    globalThis.masterCSSRuntime.observe()
+    globalThis.stetCSSRuntime.observe()
     await new Promise(resolve => setTimeout(resolve, 0))
     return {
-      counts: Object.fromEntries(globalThis.masterCSSRuntime.classCounts),
-      text: globalThis.masterCSSRuntime.text
+      counts: Object.fromEntries(globalThis.stetCSSRuntime.classCounts),
+      text: globalThis.stetCSSRuntime.text
     }
   })
   expect(reconnected.counts).toEqual({
@@ -71,9 +71,9 @@ test('mutation removals keep counts immediate and retain CSSOM rules after settl
     document.getElementById('target')?.remove()
     await new Promise(resolve => setTimeout(resolve, 0))
     return {
-      counts: Object.fromEntries(globalThis.masterCSSRuntime.classCounts),
-      hasClassUtility: globalThis.masterCSSRuntime.classUtilities.has('fg:red-60'),
-      text: globalThis.masterCSSRuntime.text
+      counts: Object.fromEntries(globalThis.stetCSSRuntime.classCounts),
+      hasClassUtility: globalThis.stetCSSRuntime.classUtilities.has('fg:red-60'),
+      text: globalThis.stetCSSRuntime.text
     }
   })
   expect(duringFlushWindow.counts).toEqual({})
@@ -82,10 +82,10 @@ test('mutation removals keep counts immediate and retain CSSOM rules after settl
 
   await waitForRuntimeRemovalFlush(page)
   const afterFlush = await page.evaluate(() => ({
-    counts: Object.fromEntries(globalThis.masterCSSRuntime.classCounts),
-    hasClassUtility: globalThis.masterCSSRuntime.classUtilities.has('fg:red-60'),
-    retainedClassNames: [...globalThis.masterCSSRuntime.retainedClassNames],
-    text: globalThis.masterCSSRuntime.text
+    counts: Object.fromEntries(globalThis.stetCSSRuntime.classCounts),
+    hasClassUtility: globalThis.stetCSSRuntime.classUtilities.has('fg:red-60'),
+    retainedClassNames: [...globalThis.stetCSSRuntime.retainedClassNames],
+    text: globalThis.stetCSSRuntime.text
   }))
   expect(afterFlush).toEqual({
     counts: {},
@@ -95,11 +95,11 @@ test('mutation removals keep counts immediate and retain CSSOM rules after settl
   })
 
   const afterForcedCleanup = await page.evaluate(() => ({
-    removedCount: globalThis.masterCSSRuntime.flushRetainedClassRules(),
-    counts: Object.fromEntries(globalThis.masterCSSRuntime.classCounts),
-    retainedClassNames: [...globalThis.masterCSSRuntime.retainedClassNames],
-    hasClassUtility: globalThis.masterCSSRuntime.classUtilities.has('fg:red-60'),
-    text: globalThis.masterCSSRuntime.text
+    removedCount: globalThis.stetCSSRuntime.flushRetainedClassRules(),
+    counts: Object.fromEntries(globalThis.stetCSSRuntime.classCounts),
+    retainedClassNames: [...globalThis.stetCSSRuntime.retainedClassNames],
+    hasClassUtility: globalThis.stetCSSRuntime.classUtilities.has('fg:red-60'),
+    text: globalThis.stetCSSRuntime.text
   }))
   expect(afterForcedCleanup).toEqual({
     removedCount: 1,
@@ -126,7 +126,7 @@ test('mutation removal flush keeps remaining native CSSOM references valid', asy
   await waitForRuntimeRemovalFlush(page)
 
   const afterBatchFlush = await page.evaluate(() => {
-    const runtime = globalThis.masterCSSRuntime
+    const runtime = globalThis.stetCSSRuntime
     const sheetText = Array.from(runtime.style!.sheet!.cssRules)
       .map((cssRule) => cssRule.cssText)
       .join('\n')
@@ -159,7 +159,7 @@ test('mutation removal flush keeps remaining native CSSOM references valid', asy
   expect(afterBatchFlush.sheetText).toContain('@keyframes fade')
 
   const afterForcedCleanup = await page.evaluate(() => {
-    const runtime = globalThis.masterCSSRuntime
+    const runtime = globalThis.stetCSSRuntime
     const removedCount = runtime.flushRetainedClassRules()
     const sheetText = Array.from(runtime.style!.sheet!.cssRules)
       .map((cssRule) => cssRule.cssText)
@@ -191,7 +191,7 @@ test('mutation removal flush keeps remaining native CSSOM references valid', asy
   expect(afterForcedCleanup.sheetText).not.toContain('@keyframes fade')
 
   const afterDirectMutation = await page.evaluate(() => {
-    const runtime = globalThis.masterCSSRuntime
+    const runtime = globalThis.stetCSSRuntime
     runtime.ensureClassRules('block')
     runtime.deleteClassRules('fg:blue-60')
     const sheetText = Array.from(runtime.style!.sheet!.cssRules)
@@ -227,13 +227,13 @@ test('re-adding a retained class cancels retained cleanup', async ({ page }) => 
   const afterReadd = await page.evaluate(async () => {
     document.body.innerHTML = '<p id="target" class="fg:red-60"></p>'
     await new Promise(resolve => setTimeout(resolve, 0))
-    const removedCount = globalThis.masterCSSRuntime.flushRetainedClassRules()
+    const removedCount = globalThis.stetCSSRuntime.flushRetainedClassRules()
     return {
       removedCount,
-      counts: Object.fromEntries(globalThis.masterCSSRuntime.classCounts),
-      retainedClassNames: [...globalThis.masterCSSRuntime.retainedClassNames],
-      hasClassUtility: globalThis.masterCSSRuntime.classUtilities.has('fg:red-60'),
-      text: globalThis.masterCSSRuntime.text
+      counts: Object.fromEntries(globalThis.stetCSSRuntime.classCounts),
+      retainedClassNames: [...globalThis.stetCSSRuntime.retainedClassNames],
+      hasClassUtility: globalThis.stetCSSRuntime.classUtilities.has('fg:red-60'),
+      text: globalThis.stetCSSRuntime.text
     }
   })
   expect(afterReadd.counts).toEqual({
@@ -255,11 +255,11 @@ test('direct remove deletes retained CSSOM rules synchronously', async ({ page }
   await waitForRuntimeRemovalFlush(page)
 
   const afterDirectRemove = await page.evaluate(() => {
-    globalThis.masterCSSRuntime.deleteClassRules('fg:red-60')
+    globalThis.stetCSSRuntime.deleteClassRules('fg:red-60')
     return {
-      retainedClassNames: [...globalThis.masterCSSRuntime.retainedClassNames],
-      hasClassUtility: globalThis.masterCSSRuntime.classUtilities.has('fg:red-60'),
-      text: globalThis.masterCSSRuntime.text
+      retainedClassNames: [...globalThis.stetCSSRuntime.retainedClassNames],
+      hasClassUtility: globalThis.stetCSSRuntime.classUtilities.has('fg:red-60'),
+      text: globalThis.stetCSSRuntime.text
     }
   })
   expect(afterDirectRemove).toEqual({
@@ -320,9 +320,9 @@ test('retained hard-limit cleanup returns to soft target and preserves active cl
       await waitFrames(3)
 
       const beforeHardLimitCleanup = {
-        counts: Object.fromEntries(globalThis.masterCSSRuntime.classCounts),
-        retainedCount: globalThis.masterCSSRuntime.retainedClassNames.size,
-        retainedHasReusedClass: globalThis.masterCSSRuntime.retainedClassNames.has('z:0'),
+        counts: Object.fromEntries(globalThis.stetCSSRuntime.classCounts),
+        retainedCount: globalThis.stetCSSRuntime.retainedClassNames.size,
+        retainedHasReusedClass: globalThis.stetCSSRuntime.retainedClassNames.has('z:0'),
         queuedIdleCount: idleCallbacks.size
       }
 
@@ -331,32 +331,32 @@ test('retained hard-limit cleanup returns to soft target and preserves active cl
       document.body.append(reused)
       await new Promise(resolve => setTimeout(resolve, 0))
       const afterReuseBeforeCleanup = {
-        counts: Object.fromEntries(globalThis.masterCSSRuntime.classCounts),
-        retainedCount: globalThis.masterCSSRuntime.retainedClassNames.size,
-        retainedHasReusedClass: globalThis.masterCSSRuntime.retainedClassNames.has('z:0'),
-        hasReusedClassUtility: globalThis.masterCSSRuntime.classUtilities.has('z:0'),
-        hasActiveClassUtility: globalThis.masterCSSRuntime.classUtilities.has('fg:blue-60'),
+        counts: Object.fromEntries(globalThis.stetCSSRuntime.classCounts),
+        retainedCount: globalThis.stetCSSRuntime.retainedClassNames.size,
+        retainedHasReusedClass: globalThis.stetCSSRuntime.retainedClassNames.has('z:0'),
+        hasReusedClassUtility: globalThis.stetCSSRuntime.classUtilities.has('z:0'),
+        hasActiveClassUtility: globalThis.stetCSSRuntime.classUtilities.has('fg:blue-60'),
         queuedIdleCount: idleCallbacks.size
       }
 
       flushIdleCallbacks()
       const afterHardLimitCleanup = {
-        counts: Object.fromEntries(globalThis.masterCSSRuntime.classCounts),
-        retainedCount: globalThis.masterCSSRuntime.retainedClassNames.size,
-        retainedHasReusedClass: globalThis.masterCSSRuntime.retainedClassNames.has('z:0'),
-        hasReusedClassUtility: globalThis.masterCSSRuntime.classUtilities.has('z:0'),
-        hasActiveClassUtility: globalThis.masterCSSRuntime.classUtilities.has('fg:blue-60'),
-        text: globalThis.masterCSSRuntime.text,
+        counts: Object.fromEntries(globalThis.stetCSSRuntime.classCounts),
+        retainedCount: globalThis.stetCSSRuntime.retainedClassNames.size,
+        retainedHasReusedClass: globalThis.stetCSSRuntime.retainedClassNames.has('z:0'),
+        hasReusedClassUtility: globalThis.stetCSSRuntime.classUtilities.has('z:0'),
+        hasActiveClassUtility: globalThis.stetCSSRuntime.classUtilities.has('fg:blue-60'),
+        text: globalThis.stetCSSRuntime.text,
         queuedIdleCount: idleCallbacks.size
       }
 
       const afterForcedCleanup = {
-        removedCount: globalThis.masterCSSRuntime.flushRetainedClassRules(),
-        retainedCount: globalThis.masterCSSRuntime.retainedClassNames.size,
-        counts: Object.fromEntries(globalThis.masterCSSRuntime.classCounts),
-        hasReusedClassUtility: globalThis.masterCSSRuntime.classUtilities.has('z:0'),
-        hasActiveClassUtility: globalThis.masterCSSRuntime.classUtilities.has('fg:blue-60'),
-        text: globalThis.masterCSSRuntime.text
+        removedCount: globalThis.stetCSSRuntime.flushRetainedClassRules(),
+        retainedCount: globalThis.stetCSSRuntime.retainedClassNames.size,
+        counts: Object.fromEntries(globalThis.stetCSSRuntime.classCounts),
+        hasReusedClassUtility: globalThis.stetCSSRuntime.classUtilities.has('z:0'),
+        hasActiveClassUtility: globalThis.stetCSSRuntime.classUtilities.has('fg:blue-60'),
+        text: globalThis.stetCSSRuntime.text
       }
 
       return {
@@ -427,8 +427,8 @@ test('mutation removals are canceled when a class returns before flush', async (
     document.body.append(target)
     await new Promise(resolve => setTimeout(resolve, 0))
     return {
-      counts: Object.fromEntries(globalThis.masterCSSRuntime.classCounts),
-      hasClassUtility: globalThis.masterCSSRuntime.classUtilities.has('fg:red-60')
+      counts: Object.fromEntries(globalThis.stetCSSRuntime.classCounts),
+      hasClassUtility: globalThis.stetCSSRuntime.classUtilities.has('fg:red-60')
     }
   })
   expect(duringFlushWindow).toEqual({
@@ -440,9 +440,9 @@ test('mutation removals are canceled when a class returns before flush', async (
 
   await waitForRuntimeRemovalFlush(page)
   const afterFlush = await page.evaluate(() => ({
-    counts: Object.fromEntries(globalThis.masterCSSRuntime.classCounts),
-    hasClassUtility: globalThis.masterCSSRuntime.classUtilities.has('fg:red-60'),
-    text: globalThis.masterCSSRuntime.text
+    counts: Object.fromEntries(globalThis.stetCSSRuntime.classCounts),
+    hasClassUtility: globalThis.stetCSSRuntime.classUtilities.has('fg:red-60'),
+    text: globalThis.stetCSSRuntime.text
   }))
   expect(afterFlush.counts).toEqual({
     'fg:red-60': 1
@@ -455,17 +455,17 @@ test('direct ensureClassRules and deleteClassRules stay synchronous', async ({ p
   await init(page)
 
   const result = await page.evaluate(() => {
-    globalThis.masterCSSRuntime.ensureClassRules('fg:red-60')
+    globalThis.stetCSSRuntime.ensureClassRules('fg:red-60')
     const added = {
-      hasClassUtility: globalThis.masterCSSRuntime.classUtilities.has('fg:red-60'),
-      text: globalThis.masterCSSRuntime.text
+      hasClassUtility: globalThis.stetCSSRuntime.classUtilities.has('fg:red-60'),
+      text: globalThis.stetCSSRuntime.text
     }
-    globalThis.masterCSSRuntime.deleteClassRules('fg:red-60')
+    globalThis.stetCSSRuntime.deleteClassRules('fg:red-60')
     return {
       added,
       removed: {
-        hasClassUtility: globalThis.masterCSSRuntime.classUtilities.has('fg:red-60'),
-        text: globalThis.masterCSSRuntime.text
+        hasClassUtility: globalThis.stetCSSRuntime.classUtilities.has('fg:red-60'),
+        text: globalThis.stetCSSRuntime.text
       }
     }
   })
@@ -503,9 +503,9 @@ test('observer-added cold classes update counts immediately and flush rules befo
 
       const beforeFlush = {
         queuedFrameCount: queuedFrames.size,
-        counts: Object.fromEntries(globalThis.masterCSSRuntime.classCounts),
-        hasClassUtility: globalThis.masterCSSRuntime.classUtilities.has('fg:red-60'),
-        text: globalThis.masterCSSRuntime.text
+        counts: Object.fromEntries(globalThis.stetCSSRuntime.classCounts),
+        hasClassUtility: globalThis.stetCSSRuntime.classUtilities.has('fg:red-60'),
+        text: globalThis.stetCSSRuntime.text
       }
 
       for (const callback of queuedFrames.values()) {
@@ -514,9 +514,9 @@ test('observer-added cold classes update counts immediately and flush rules befo
       queuedFrames.clear()
 
       const afterFlush = {
-        counts: Object.fromEntries(globalThis.masterCSSRuntime.classCounts),
-        hasClassUtility: globalThis.masterCSSRuntime.classUtilities.has('fg:red-60'),
-        text: globalThis.masterCSSRuntime.text
+        counts: Object.fromEntries(globalThis.stetCSSRuntime.classCounts),
+        hasClassUtility: globalThis.stetCSSRuntime.classUtilities.has('fg:red-60'),
+        text: globalThis.stetCSSRuntime.text
       }
 
       return { beforeFlush, afterFlush }
@@ -573,10 +573,10 @@ test('observer-added retained classes are reused immediately', async ({ page }) 
       await new Promise(resolve => setTimeout(resolve, 0))
       return {
         queuedFrameCount: queuedFrames.size,
-        counts: Object.fromEntries(globalThis.masterCSSRuntime.classCounts),
-        retainedClassNames: [...globalThis.masterCSSRuntime.retainedClassNames],
-        hasClassUtility: globalThis.masterCSSRuntime.classUtilities.has('fg:red-60'),
-        text: globalThis.masterCSSRuntime.text
+        counts: Object.fromEntries(globalThis.stetCSSRuntime.classCounts),
+        retainedClassNames: [...globalThis.stetCSSRuntime.retainedClassNames],
+        hasClassUtility: globalThis.stetCSSRuntime.classUtilities.has('fg:red-60'),
+        text: globalThis.stetCSSRuntime.text
       }
     } finally {
       window.requestAnimationFrame = nativeRequestAnimationFrame
@@ -620,9 +620,9 @@ test('observer queued cold classes removed before flush are skipped', async ({ p
 
       const beforeFlush = {
         queuedFrameCount: queuedFrames.size,
-        counts: Object.fromEntries(globalThis.masterCSSRuntime.classCounts),
-        hasClassUtility: globalThis.masterCSSRuntime.classUtilities.has('z:1234'),
-        text: globalThis.masterCSSRuntime.text
+        counts: Object.fromEntries(globalThis.stetCSSRuntime.classCounts),
+        hasClassUtility: globalThis.stetCSSRuntime.classUtilities.has('z:1234'),
+        text: globalThis.stetCSSRuntime.text
       }
 
       for (const callback of queuedFrames.values()) {
@@ -633,9 +633,9 @@ test('observer queued cold classes removed before flush are skipped', async ({ p
       return {
         beforeFlush,
         afterFlush: {
-          counts: Object.fromEntries(globalThis.masterCSSRuntime.classCounts),
-          hasClassUtility: globalThis.masterCSSRuntime.classUtilities.has('z:1234'),
-          text: globalThis.masterCSSRuntime.text
+          counts: Object.fromEntries(globalThis.stetCSSRuntime.classCounts),
+          hasClassUtility: globalThis.stetCSSRuntime.classUtilities.has('z:1234'),
+          text: globalThis.stetCSSRuntime.text
         }
       }
     } finally {
@@ -664,12 +664,12 @@ test('disconnect and destroy clear pending mutation additions and removals', asy
     await new Promise(resolve => setTimeout(resolve, 0))
     document.getElementById('target')?.remove()
     await new Promise(resolve => setTimeout(resolve, 0))
-    globalThis.masterCSSRuntime.disconnect()
+    globalThis.stetCSSRuntime.disconnect()
     return {
-      counts: Object.fromEntries(globalThis.masterCSSRuntime.classCounts),
-      retainedClassNames: [...globalThis.masterCSSRuntime.retainedClassNames],
-      utilities: globalThis.masterCSSRuntime.classUtilities.size,
-      hasStyle: !!document.head.querySelector('style#master-css')
+      counts: Object.fromEntries(globalThis.stetCSSRuntime.classCounts),
+      retainedClassNames: [...globalThis.stetCSSRuntime.retainedClassNames],
+      utilities: globalThis.stetCSSRuntime.classUtilities.size,
+      hasStyle: !!document.head.querySelector('style#stet-css')
     }
   })
   expect(disconnected).toEqual({
@@ -679,19 +679,19 @@ test('disconnect and destroy clear pending mutation additions and removals', asy
     hasStyle: false
   })
   await waitForRuntimeRemovalFlush(page)
-  expect(await page.evaluate(() => globalThis.masterCSSRuntime.classUtilities.size)).toBe(0)
+  expect(await page.evaluate(() => globalThis.stetCSSRuntime.classUtilities.size)).toBe(0)
 
-  await page.evaluate(() => globalThis.masterCSSRuntime.observe())
+  await page.evaluate(() => globalThis.stetCSSRuntime.observe())
   const destroyed = await page.evaluate(async () => {
     document.body.innerHTML = '<p id="target" class="fg:red-60"></p><p class="z:1234"></p>'
     await new Promise(resolve => setTimeout(resolve, 0))
     document.getElementById('target')?.remove()
     await new Promise(resolve => setTimeout(resolve, 0))
-    const runtime = globalThis.masterCSSRuntime
+    const runtime = globalThis.stetCSSRuntime
     runtime.destroy()
     return {
-      registered: globalThis.MasterCSSRuntime.instances.get(document) === runtime,
-      globalRuntime: globalThis.masterCSSRuntime,
+      registered: globalThis.StetCSSRuntime.instances.get(document) === runtime,
+      globalRuntime: globalThis.stetCSSRuntime,
       counts: Object.fromEntries(runtime.classCounts),
       retainedClassNames: [...runtime.retainedClassNames],
       utilities: runtime.classUtilities.size
@@ -716,18 +716,18 @@ test('shadow roots maintain isolated runtime state and style nodes', async ({ pa
     shadow.innerHTML = '<p class="block"></p>'
     document.body.append(host)
 
-    const shadowRuntime = globalThis.MasterCSSRuntime.create({
+    const shadowRuntime = globalThis.StetCSSRuntime.create({
       root: shadow,
-      manifest: globalThis.masterCSSRuntime.manifest
+      manifest: globalThis.stetCSSRuntime.manifest
     }).observe()
 
     return {
-      documentCounts: Object.fromEntries(globalThis.masterCSSRuntime.classCounts),
-      documentHasBlockRule: globalThis.masterCSSRuntime.text.includes('.block{display:block}'),
+      documentCounts: Object.fromEntries(globalThis.stetCSSRuntime.classCounts),
+      documentHasBlockRule: globalThis.stetCSSRuntime.text.includes('.block{display:block}'),
       shadowCounts: Object.fromEntries(shadowRuntime.classCounts),
-      shadowHasStyle: !!shadow.querySelector('style#master-css'),
+      shadowHasStyle: !!shadow.querySelector('style#stet-css'),
       shadowText: shadowRuntime.text,
-      instanceRegistered: globalThis.MasterCSSRuntime.instances.get(shadow) === shadowRuntime
+      instanceRegistered: globalThis.StetCSSRuntime.instances.get(shadow) === shadowRuntime
     }
   })
 
@@ -742,12 +742,12 @@ test('shadow roots maintain isolated runtime state and style nodes', async ({ pa
 })
 
 /**
- * Guards: the runtime adopting or deleting a `style#master-css` that is already on the page
+ * Guards: the runtime adopting or deleting a `style#stet-css` that is already on the page
  * (left by an older build or written by the page itself). The runtime renders into its own
  * sheet and leaves that element and its rules alone. Making `observe()` reuse or remove the
  * existing element turns this test red.
  */
-test('leaves a style#master-css already on the page alone and renders its own sheet', async ({ page }) => {
+test('leaves a style#stet-css already on the page alone and renders its own sheet', async ({ page }) => {
   const messages: string[] = []
   page.on('console', (message) => {
     if (message.type() === 'warning' || message.type() === 'error') messages.push(message.text())
@@ -767,7 +767,7 @@ test('leaves a style#master-css already on the page alone and renders its own sh
 
   const result = await page.evaluate(() => {
     const prerenderedStyle = (globalThis as any).prerenderedStyle as HTMLStyleElement
-    const runtime = globalThis.masterCSSRuntime
+    const runtime = globalThis.stetCSSRuntime
     return {
       prerenderedConnected: prerenderedStyle.isConnected,
       prerenderedText: prerenderedStyle.textContent,
@@ -800,8 +800,8 @@ test('removes shared alias variable dependencies when classes disappear', async 
   })
   await waitForRuntimeRuleFlush(page)
   const initial = await page.evaluate(() => ({
-    text: globalThis.masterCSSRuntime.themeLayer.text,
-    counts: Object.fromEntries(globalThis.masterCSSRuntime.themeLayer.tokenCounts)
+    text: globalThis.stetCSSRuntime.themeLayer.text,
+    counts: Object.fromEntries(globalThis.stetCSSRuntime.themeLayer.tokenCounts)
   }))
   expect(initial).toEqual({
     text: '@layer theme{:root{--brand:var(--surface);--surface:#ffffff}}',
@@ -816,9 +816,9 @@ test('removes shared alias variable dependencies when classes disappear', async 
   })
   await waitForRuntimeRemovalFlush(page)
   const afterOneRemoval = await page.evaluate(() => ({
-    text: globalThis.masterCSSRuntime.themeLayer.text,
-    counts: Object.fromEntries(globalThis.masterCSSRuntime.themeLayer.tokenCounts),
-    retainedClassNames: [...globalThis.masterCSSRuntime.retainedClassNames]
+    text: globalThis.stetCSSRuntime.themeLayer.text,
+    counts: Object.fromEntries(globalThis.stetCSSRuntime.themeLayer.tokenCounts),
+    retainedClassNames: [...globalThis.stetCSSRuntime.retainedClassNames]
   }))
   expect(afterOneRemoval).toEqual({
     text: '@layer theme{:root{--brand:var(--surface);--surface:#ffffff}}',
@@ -834,10 +834,10 @@ test('removes shared alias variable dependencies when classes disappear', async 
   })
   await waitForRuntimeRemovalFlush(page)
   const afterAllRemoved = await page.evaluate(() => ({
-    text: globalThis.masterCSSRuntime.themeLayer.text,
-    counts: Object.fromEntries(globalThis.masterCSSRuntime.themeLayer.tokenCounts),
-    retainedClassNames: [...globalThis.masterCSSRuntime.retainedClassNames],
-    nativeAttached: !!globalThis.masterCSSRuntime.themeLayer.native?.parentStyleSheet
+    text: globalThis.stetCSSRuntime.themeLayer.text,
+    counts: Object.fromEntries(globalThis.stetCSSRuntime.themeLayer.tokenCounts),
+    retainedClassNames: [...globalThis.stetCSSRuntime.retainedClassNames],
+    nativeAttached: !!globalThis.stetCSSRuntime.themeLayer.native?.parentStyleSheet
   }))
   expect(afterAllRemoved).toEqual({
     text: '@layer theme{:root{--brand:var(--surface);--surface:#ffffff}}',
@@ -850,11 +850,11 @@ test('removes shared alias variable dependencies when classes disappear', async 
   })
 
   const afterForcedCleanup = await page.evaluate(() => ({
-    removedCount: globalThis.masterCSSRuntime.flushRetainedClassRules(),
-    text: globalThis.masterCSSRuntime.themeLayer.text,
-    counts: Object.fromEntries(globalThis.masterCSSRuntime.themeLayer.tokenCounts),
-    retainedClassNames: [...globalThis.masterCSSRuntime.retainedClassNames],
-    nativeAttached: !!globalThis.masterCSSRuntime.themeLayer.native?.parentStyleSheet
+    removedCount: globalThis.stetCSSRuntime.flushRetainedClassRules(),
+    text: globalThis.stetCSSRuntime.themeLayer.text,
+    counts: Object.fromEntries(globalThis.stetCSSRuntime.themeLayer.tokenCounts),
+    retainedClassNames: [...globalThis.stetCSSRuntime.retainedClassNames],
+    nativeAttached: !!globalThis.stetCSSRuntime.themeLayer.native?.parentStyleSheet
   }))
   expect(afterForcedCleanup).toEqual({
     removedCount: 2,
@@ -880,8 +880,8 @@ test('inlines variables without runtime theme counts', async ({ page }) => {
       })
     })
     return {
-      text: globalThis.masterCSSRuntime.text,
-      counts: Object.fromEntries(globalThis.masterCSSRuntime.themeLayer.tokenCounts)
+      text: globalThis.stetCSSRuntime.text,
+      counts: Object.fromEntries(globalThis.stetCSSRuntime.themeLayer.tokenCounts)
     }
   })
 

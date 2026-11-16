@@ -19,8 +19,8 @@ async function waitForRuntimeRuleFlush(page: Page) {
 test('does not expose tooling-only engine inspection helpers', async ({ page }) => {
   await init(page)
   await expect(page.evaluate(() => ({
-    inspectClass: 'inspectClass' in globalThis.masterCSSRuntime,
-    normalizeNumericValue: 'normalizeNumericValue' in globalThis.masterCSSRuntime
+    inspectClass: 'inspectClass' in globalThis.stetCSSRuntime,
+    normalizeNumericValue: 'normalizeNumericValue' in globalThis.stetCSSRuntime
   }))).resolves.toEqual({
     inspectClass: false,
     normalizeNumericValue: false
@@ -33,7 +33,7 @@ test('does not install the removed devtools hook global', async ({ page }) => {
 })
 
 /**
- * Guards: `destroy()` leaving the runtime's `style#master-css` in the page, so its rules keep
+ * Guards: `destroy()` leaving the runtime's `style#stet-css` in the page, so its rules keep
  * applying after the runtime is gone, or a second `destroy()` throwing. Dropping
  * `this.style?.remove()` from `disconnect()` in `core.ts` turns this test and two disconnect
  * tests in `edge-cases.test.ts` red.
@@ -44,14 +44,14 @@ test('destroy removes its style, is safe to repeat, and a registered runtime obs
     document.body.classList.add('text-center')
   })
   await waitForRuntimeRuleFlush(page)
-  expect(await page.evaluate(() => globalThis.masterCSSRuntime.utilitiesLayer.rules.length)).toBe(1)
-  expect(await page.evaluate(() => Array.from(globalThis.masterCSSRuntime.style?.sheet?.cssRules || [])
-    .filter(cssRule => cssRule === globalThis.masterCSSRuntime.utilitiesLayer.native)
+  expect(await page.evaluate(() => globalThis.stetCSSRuntime.utilitiesLayer.rules.length)).toBe(1)
+  expect(await page.evaluate(() => Array.from(globalThis.stetCSSRuntime.style?.sheet?.cssRules || [])
+    .filter(cssRule => cssRule === globalThis.stetCSSRuntime.utilitiesLayer.native)
     .length
   )).toBe(1)
-  expect(await page.evaluate(() => Array.from(globalThis.masterCSSRuntime.style?.sheet?.cssRules || []).length)).toBe(1)
+  expect(await page.evaluate(() => Array.from(globalThis.stetCSSRuntime.style?.sheet?.cssRules || []).length)).toBe(1)
   await page.evaluate(() => {
-    const runtime = globalThis.masterCSSRuntime
+    const runtime = globalThis.stetCSSRuntime
     runtime.destroy()
     ;(globalThis as any).destroyedRuntime = runtime
   })
@@ -59,20 +59,20 @@ test('destroy removes its style, is safe to repeat, and a registered runtime obs
   const readDestroyedState = () => page.evaluate((styleId) => ({
     style: (globalThis as any).destroyedRuntime.style,
     runtimeStyles: document.querySelectorAll(`style#${styleId}`).length,
-    registered: globalThis.MasterCSSRuntime.instances.has(document) || globalThis.masterCSSRuntime !== undefined
+    registered: globalThis.StetCSSRuntime.instances.has(document) || globalThis.stetCSSRuntime !== undefined
   }), MASTER_CSS_RUNTIME_STYLE_ID)
   const destroyedState = { style: null, runtimeStyles: 0, registered: false }
   expect(await readDestroyedState()).toEqual(destroyedState)
   await page.evaluate(() => (globalThis as any).destroyedRuntime.destroy())
   expect(await readDestroyedState()).toEqual(destroyedState)
   await page.evaluate(() => {
-    const runtime = (globalThis as any).destroyedRuntime as typeof globalThis.masterCSSRuntime
+    const runtime = (globalThis as any).destroyedRuntime as typeof globalThis.stetCSSRuntime
     runtime.register().observe()
     document.body.classList.add('block')
     document.body.classList.add('font:bold')
   })
   await waitForRuntimeRuleFlush(page)
-  expect(await page.evaluate(() => Array.from(globalThis.masterCSSRuntime.style?.sheet?.cssRules || []).length)).toBe(2)
+  expect(await page.evaluate(() => Array.from(globalThis.stetCSSRuntime.style?.sheet?.cssRules || []).length)).toBe(2)
 })
 
 test('prevent attach layer twice', async ({ page }) => {
@@ -94,7 +94,7 @@ test('prevent attach layer twice', async ({ page }) => {
     document.body.classList.add('app-wrapper')
   })
   await waitForRuntimeRuleFlush(page)
-  expect(await page.evaluate(() => globalThis.masterCSSRuntime.componentsLayer.native?.cssRules?.length)).toBe(3)
+  expect(await page.evaluate(() => globalThis.stetCSSRuntime.componentsLayer.native?.cssRules?.length)).toBe(3)
 })
 
 test('insert semantic utility with multiple native rules into existing layer', async ({ page }) => {
@@ -117,7 +117,7 @@ test('insert semantic utility with multiple native rules into existing layer', a
       }
     ]
   })
-  expect(await page.evaluate(() => globalThis.masterCSSRuntime.utilitiesLayer.native?.cssRules.length)).toBe(4)
+  expect(await page.evaluate(() => globalThis.stetCSSRuntime.utilitiesLayer.native?.cssRules.length)).toBe(4)
   expect(consoleErrors.find((message) => message.includes('insertRule'))).toBeUndefined()
 })
 
@@ -131,7 +131,7 @@ test('inserts functional pseudo-class selector aliases into native CSSOM', async
   })
   await init(page)
 
-  expect(await page.evaluate(() => Array.from(globalThis.masterCSSRuntime.utilitiesLayer.native?.cssRules || [])
+  expect(await page.evaluate(() => Array.from(globalThis.stetCSSRuntime.utilitiesLayer.native?.cssRules || [])
     .map((cssRule) => cssRule.cssText)
   )).toEqual([
     '.text-center_td\\:not\\(\\:first\\) td:not(:first-child) { text-align: center; }',
@@ -146,15 +146,15 @@ test('refresh clears stale native keyframes', async ({ page }) => {
     document.body.classList.add('animation:fade|1s', 'animation:flash|1s')
   })
   await waitForRuntimeRuleFlush(page)
-  expect(await page.evaluate(() => Array.from(globalThis.masterCSSRuntime.style!.sheet!.cssRules)
+  expect(await page.evaluate(() => Array.from(globalThis.stetCSSRuntime.style!.sheet!.cssRules)
     .filter((cssRule) => cssRule.constructor.name === 'CSSKeyframesRule')
     .map((cssRule) => (cssRule as CSSKeyframesRule).name)
   )).toEqual(['fade', 'flash'])
 
   await page.evaluate(() => {
-    globalThis.masterCSSRuntime.refresh()
+    globalThis.stetCSSRuntime.refresh()
   })
-  expect(await page.evaluate(() => Array.from(globalThis.masterCSSRuntime.style!.sheet!.cssRules)
+  expect(await page.evaluate(() => Array.from(globalThis.stetCSSRuntime.style!.sheet!.cssRules)
     .filter((cssRule) => cssRule.constructor.name === 'CSSKeyframesRule')
     .map((cssRule) => (cssRule as CSSKeyframesRule).name)
   )).toEqual(['fade', 'flash'])
@@ -186,7 +186,7 @@ test('observes static theme variables and keyframes without class references', a
     }
   })
 
-  const cssRules = await page.evaluate(() => Array.from(globalThis.masterCSSRuntime.style!.sheet!.cssRules)
+  const cssRules = await page.evaluate(() => Array.from(globalThis.stetCSSRuntime.style!.sheet!.cssRules)
     .map((cssRule) => cssRule.cssText)
   )
   expect(cssRules.some((cssRule) => cssRule.includes('--color-static'))).toBe(true)
@@ -207,8 +207,8 @@ test('generates browser native declarations through CSS.supports fallback', asyn
       fieldSizing: CSS.supports('field-sizing', 'content'),
       transitionBehavior: CSS.supports('transition-behavior', 'allow-discrete')
     },
-    classUtilities: [...globalThis.masterCSSRuntime.classUtilities.keys()],
-    cssRules: Array.from(globalThis.masterCSSRuntime.utilitiesLayer.native?.cssRules || [])
+    classUtilities: [...globalThis.stetCSSRuntime.classUtilities.keys()],
+    cssRules: Array.from(globalThis.stetCSSRuntime.utilitiesLayer.native?.cssRules || [])
       .map((cssRule) => cssRule.cssText)
   }))
 
@@ -326,20 +326,20 @@ test('CDN: reveals the page at once and still reports the error when startup thr
 
 /**
  * Guards: a bundled module throwing while the bundle evaluates, before the startup call
- * runs, so no try/catch around that call sees it. Here the `MasterCSSRuntime` global throws
+ * runs, so no try/catch around that call sees it. Here the `StetCSSRuntime` global throws
  * when core reads it. The reveal waits for the next task, so it stays hidden while the clock
  * is paused. Dropping the timer in `src/reveal-fallback.ts` turns it red.
  */
 test('CDN: reveals the page when a bundled module throws while loading', async ({ page }) => {
   const errors = collectPageErrors(page)
   await openHiddenCDNPage(page, `
-    Object.defineProperty(window, 'MasterCSSRuntime', {
+    Object.defineProperty(window, 'StetCSSRuntime', {
       configurable: true,
-      get() { throw new Error('MasterCSSRuntime is unavailable') }
+      get() { throw new Error('StetCSSRuntime is unavailable') }
     })
   `)
 
-  expect(errors).toEqual(['MasterCSSRuntime is unavailable'])
+  expect(errors).toEqual(['StetCSSRuntime is unavailable'])
   expect(await readHidden(page)).toBe(true)
   await page.clock.runFor(1)
   expect(await readHidden(page)).toBe(false)

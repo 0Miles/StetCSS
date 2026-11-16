@@ -1,6 +1,6 @@
 # @stet-css/runtime
 
-Runs the engine in the browser. `CSSRuntime` observes DOM class changes, keeps per-class **usage counts**, and inserts or deletes native rules in its own `style#master-css`. It never reads or adopts rules already on the page: static CSS from a build and the runtime's sheet are independent.
+Runs the engine in the browser. `CSSRuntime` observes DOM class changes, keeps per-class **usage counts**, and inserts or deletes native rules in its own `style#stet-css`. It never reads or adopts rules already on the page: static CSS from a build and the runtime's sheet are independent.
 
 ## Boundaries
 
@@ -15,8 +15,8 @@ Runs the engine in the browser. `CSSRuntime` observes DOM class changes, keeps p
 - **Layer order**: the runtime's sheet never repeats the `@layer` statement; `base.css` declares it before the runtime starts. A shadow root sees no page CSS, so new layer blocks go in engine `layerOrder` (`src/utils/find-layer-insert-index.ts`), not in first-use order. `e2e/manual-import-cascade.test.ts` holds the README's claims about static rules generated twice and the layer order.
 - **Native indexes**: locate a native rule by identity (`findNativeCSSRuleIndex`) before deleting it; a guessed index deletes the wrong rule.
 - **FOUC**: runtime removes `hidden` from `<html>` after its first render, for pages that hide the root until it runs; no build integration adds `hidden` any more. Every failure path reveals too: `create()` and `observe()` before rethrowing, and the CDN bundle's fallback timer (`src/reveal-fallback.ts`, which says why it must be imported first) when a module throws while loading.
-- **Global names** `MasterCSSRuntime` (the class, holding `instances`) and `masterCSSRuntime` (the document instance) are public; rename them only on request.
-- **Named access**: page elements with an `id` or `name` occupy same-named `window` globals, and `name`d `img`/`form`/`embed`/`object`/`iframe` elements shadow `document` members. Read the runtime's own class directly, accept a `MasterCSSRuntime` global only when `isRuntimeClass` passes, and read `document` members through `src/document.ts`.
+- **Global names** `StetCSSRuntime` (the class, holding `instances`) and `stetCSSRuntime` (the document instance) are public; rename them only on request.
+- **Named access**: page elements with an `id` or `name` occupy same-named `window` globals, and `name`d `img`/`form`/`embed`/`object`/`iframe` elements shadow `document` members. Read the runtime's own class directly, accept a `StetCSSRuntime` global only when `isRuntimeClass` passes, and read `document` members through `src/document.ts`.
 
 ## Validation
 

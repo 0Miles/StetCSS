@@ -218,5 +218,5 @@ export default async function init(page: Page, manifestInput?: RuntimeProjectMan
     const { startCSSRuntime } = await import(loaderURL)
     startCSSRuntime({ manifest })
   }, { loaderURL: await getRuntimeLoaderURL(), manifest })
-  await page.waitForFunction(() => !!globalThis.masterCSSRuntime)
+  await page.waitForFunction(() => !!globalThis.stetCSSRuntime)
 }

@@ -69,7 +69,7 @@ function expectStaticCSS(css: string) {
 
 function expectNoDuplicateRuntimeHTML(html: string) {
   expect(count(html, 'master-css-runtime')).toBeLessThanOrEqual(2)
-  expect(count(html, /id="master-css"/g)).toBeLessThanOrEqual(1)
+  expect(count(html, /id="stet-css"/g)).toBeLessThanOrEqual(1)
 }
 
 function commonPackageJSON() {

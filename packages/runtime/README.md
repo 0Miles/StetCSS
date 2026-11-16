@@ -87,7 +87,7 @@ Replace both `<version>` placeholders with the same release, such as `0.1.0`. un
 
 - Link `base.css` from `@stet-css/preset`. The `base.css` in `@stet-css/core` only imports the preset's file by package name, which a browser cannot resolve.
 - Put the `<link>` before the `<script>`: `base.css` declares the cascade layer order the runtime's rules rely on (see [Layer order](#layer-order)).
-- The script carries the default manifest, so it makes no other request. It starts in `<head>`, styles the classes of the page as the browser parses them, and registers the document runtime as `globalThis.masterCSSRuntime`.
+- The script carries the default manifest, so it makes no other request. It starts in `<head>`, styles the classes of the page as the browser parses them, and registers the document runtime as `globalThis.stetCSSRuntime`.
 - Only the default preset works. The CDN runtime reads no options and no project CSS, so `@theme`, `@utilities`, `@components`, and the other directives of a CSS entry have no effect on it.
 - For production, generate static CSS with a build integration or the CLI. A CDN page downloads about 36 KB (gzip) of script before it can style anything, and generates every rule again on every visit.
 
@@ -150,7 +150,7 @@ Such a project loads `@stet-css/core/base.css` itself, before the runtime starts
 
 ### Rules generated twice
 
-The build still emits static CSS for every class it finds in your sources. The runtime does not read that CSS: it generates a rule for every class on the page into its own `style#master-css` at the end of `<head>`. A class the build already saw therefore has the same rule twice. The page looks the same: both copies sit in the same cascade layer with the same selector and declarations, the order between layers comes from the `@layer` statement in `base.css` rather than from which sheet comes later, and your own normal declarations outside layers still outrank both (`!important` ones in a layer beat unlayered ones, as in plain CSS). The cost is the extra rules in the CSSOM and the time spent generating them.
+The build still emits static CSS for every class it finds in your sources. The runtime does not read that CSS: it generates a rule for every class on the page into its own `style#stet-css` at the end of `<head>`. A class the build already saw therefore has the same rule twice. The page looks the same: both copies sit in the same cascade layer with the same selector and declarations, the order between layers comes from the `@layer` statement in `base.css` rather than from which sheet comes later, and your own normal declarations outside layers still outrank both (`!important` ones in a layer beat unlayered ones, as in plain CSS). The cost is the extra rules in the CSSOM and the time spent generating them.
 
 ### Layer order
 
@@ -184,14 +184,14 @@ cssRuntime.observe()
 | `CSSRuntime.create(options)` | `CSSRuntime` | Creates or reuses a registered runtime for `options.root`. |
 | `cssRuntime.root` | `Document \| ShadowRoot` | Observed root. |
 | `cssRuntime.host` | `Element` | Root host, usually `root.host` or `document.documentElement`. |
-| `cssRuntime.container` | `HTMLElement \| ShadowRoot` | Container for `style#master-css`. |
+| `cssRuntime.container` | `HTMLElement \| ShadowRoot` | Container for `style#stet-css`. |
 | `cssRuntime.observing` | `boolean` | `true` after `observe()`, `false` after `disconnect()`. |
 | `cssRuntime.classCounts` | `Map<string, number>` | Active DOM class usage counts. This is the source of truth for observed DOM usage. |
 | `cssRuntime.classUtilities` | `Map<string, Utility[]>` | Generated rule cache. It can include retained mutation rules that are no longer active in the DOM. |
 | `cssRuntime.retainedClassNames` | `Set<string>` | Mutation-removed class names whose generated rules are temporarily retained in CSSOM. |
 | `register()` | `this` | Registers this runtime in `CSSRuntime.instances`. |
 | `unregister()` | `this` | Removes this runtime from `CSSRuntime.instances`. |
-| `observe()` | `this` | Creates the runtime's own `style#master-css`, generates rules for the classes already in the root, and observes class attribute changes. It never reads or removes a `style#master-css` that is already on the page. |
+| `observe()` | `this` | Creates the runtime's own `style#stet-css`, generates rules for the classes already in the root, and observes class attribute changes. It never reads or removes a `style#stet-css` that is already on the page. |
 | `ensureClassRules(...classNames)` | `this` | Synchronously ensures generated rules exist for class names. Use this to warm rules before DOM insertion. |
 | `deleteClassRules(...classNames)` | `void` | Synchronously deletes generated rules for class names. |
 | `flushRetainedClassRules()` | `number` | Synchronously removes retained mutation rules that are no longer active and returns the removed class count. |
@@ -202,7 +202,7 @@ cssRuntime.observe()
 
 MutationObserver additions update `classCounts` immediately. Existing and retained generated rules are reused immediately, while first-time rules discovered by the observer are batched into the next pre-paint flush. MutationObserver removals also update `classCounts` immediately, but generated CSS rules may be retained briefly to avoid CSSOM deletion during interaction-heavy updates. Re-adding a retained class reuses the existing generated rule. Direct `cssRuntime.ensureClassRules(...)`, `cssRuntime.deleteClassRules(...)`, `refresh()`, `disconnect()`, and `destroy()` stay synchronous.
 
-Remove any `style#master-css` left in your HTML by an older build. The runtime leaves it in place, and on a page that does not load `base.css` first, an `@layer` statement inside it can fix a different layer order before the runtime's own sheet loads.
+Remove any runtime `<style>` element an older build left in your HTML, whatever its id. The runtime never reads or removes it and renders into its own `style#stet-css` instead; on a page that does not load `base.css` first, an `@layer` statement inside the old sheet can fix a different layer order before the runtime's own sheet loads.
 
 ### Emitted Globals
 

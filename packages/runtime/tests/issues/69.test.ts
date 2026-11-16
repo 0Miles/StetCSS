@@ -23,9 +23,9 @@ test('69', async ({ page }) => {
   await page.evaluate(() => {
     document.body.insertAdjacentHTML('beforeend', '<p class="fg:red@light fg:green"></p>')
   })
-  await page.waitForFunction(() => globalThis.masterCSSRuntime.classUtilities.has('fg:green'))
+  await page.waitForFunction(() => globalThis.stetCSSRuntime.classUtilities.has('fg:green'))
 
-  const text = await page.evaluate(() => globalThis.masterCSSRuntime.text)
+  const text = await page.evaluate(() => globalThis.stetCSSRuntime.text)
   expect(text).toContain('.fg\\:blue{')
   expect(text).toContain('.fg\\:green{')
   expect(text).not.toContain('@container')

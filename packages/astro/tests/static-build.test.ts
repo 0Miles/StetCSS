@@ -71,7 +71,7 @@ describe('Astro build with masterCSS()', () => {
 
     expect(html).toContain('Prerendered')
     expect(html).toMatch(/<link rel="stylesheet" href="\/_astro\/[^"]+\.css"/)
-    expect(html).not.toMatch(/id=["']master-css/)
+    expect(html).not.toMatch(/id=["']stet-css/)
     expect(html).not.toContain('<script')
   })
 })
