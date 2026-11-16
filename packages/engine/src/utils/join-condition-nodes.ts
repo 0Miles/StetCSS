@@ -4,11 +4,12 @@ import type { ConditionNode } from './parse-condition'
 const AND: ConditionNode = { type: 'logical', value: 'and' }
 
 /** Nodes as they render: a defined condition's ungrouped children sit inline. */
-function inline(nodes: ConditionNode[]): ConditionNode[] {
-  return nodes.flatMap((node) => 'children' in node && node.type !== 'group' ? inline(node.children) : [node])
+function flattenUngrouped(nodes: ConditionNode[]): ConditionNode[] {
+  return nodes.flatMap((node) => 'children' in node && node.type !== 'group' ? flattenUngrouped(node.children) : [node])
 }
 
-function isBare(node: ConditionNode | undefined) {
+/** An unnamed string node: a media type (`print`) or a container name (`sidebar`). */
+function isMediaTypeOrName(node: ConditionNode | undefined) {
   return node?.type === 'string' && !node.name
 }
 
@@ -18,22 +19,28 @@ function isLogical(node: ConditionNode | undefined, value: string) {
 
 /**
  * Splits off what has to lead the query: a media type (`print`, `not print`, `only screen`) or a
- * container name, followed by the conditions after it.
+ * container name, followed by the conditions after it. `undefined` when a type or name sits
+ * anywhere but the lead (`(…) or print`) or the lead is not followed the way one query allows
+ * (`print or screen`, `sidebar or (…)`), so nothing can join it.
  */
 function splitLead(id: MasterCSSManifestConditionIdentifier, nodes: ConditionNode[]) {
-  const flat = inline(nodes)
-  const prefixed = id === 'media' && (isLogical(flat[0], 'not') || isLogical(flat[0], 'only')) && isBare(flat[1])
-  const leadEnd = prefixed ? 2 : isBare(flat[0]) ? 1 : 0
+  if (id === 'supports') return { lead: [], rest: nodes }
+  const flat = flattenUngrouped(nodes)
+  const prefixed = id === 'media' && (isLogical(flat[0], 'not') || isLogical(flat[0], 'only')) && isMediaTypeOrName(flat[1])
+  const leadEnd = prefixed ? 2 : isMediaTypeOrName(flat[0]) ? 1 : 0
+  if (flat.slice(leadEnd).some(isMediaTypeOrName)) return
   if (!leadEnd) return { lead: [], rest: nodes }
+  const after = flat[leadEnd]
+  if (after && (id === 'media' ? !isLogical(after, 'and') : isLogical(after, 'and') || isLogical(after, 'or'))) return
   return {
     lead: flat.slice(0, leadEnd),
-    rest: flat.slice(isLogical(flat[leadEnd], 'and') ? leadEnd + 1 : leadEnd)
+    rest: flat.slice(id === 'media' && after ? leadEnd + 1 : leadEnd)
   }
 }
 
 /** An operand of `and`: an `or` list or a negation is grouped so it keeps its meaning. */
 function asOperand(nodes: ConditionNode[]): ConditionNode[] {
-  return inline(nodes).some((node) => isLogical(node, 'or')) || isLogical(nodes[0], 'not')
+  return flattenUngrouped(nodes).some((node) => isLogical(node, 'or')) || isLogical(nodes[0], 'not')
     ? [{ type: 'group', children: nodes }]
     : nodes
 }
@@ -46,7 +53,8 @@ function leadText(nodes: ConditionNode[]) {
  * Joins the nodes of two stacked conditions of one at-rule (`@sm@dark`, `@sm@md`, a variant
  * stacked on another) into one query: `@media`, `@container` and `@supports` need `and` between
  * them. `undefined` when no single query means both: two media types, a negated media type (`not`
- * negates the whole query), or two container names that may name different containers.
+ * negates the whole query), a media type or container name in an `or` list, or two container
+ * names that may name different containers.
  */
 export default function joinConditionNodes(
   id: MasterCSSManifestConditionIdentifier,
@@ -57,15 +65,16 @@ export default function joinConditionNodes(
   if (!next.length) return [...current]
   if (id !== 'media' && id !== 'container' && id !== 'supports') return [...current, ...next]
 
-  const a = splitLead(id, current)
-  const b = splitLead(id, next)
-  const lead = a.lead.length ? a.lead : b.lead
-  if (a.lead.length || b.lead.length) {
-    if (id === 'media' && (a.lead.length && b.lead.length || isLogical(lead[0], 'not'))) return
-    if (id === 'container' && leadText(a.lead) !== leadText(b.lead)) return
+  const currentSplit = splitLead(id, current)
+  const nextSplit = splitLead(id, next)
+  if (!currentSplit || !nextSplit) return
+  const lead = currentSplit.lead.length ? currentSplit.lead : nextSplit.lead
+  if (currentSplit.lead.length || nextSplit.lead.length) {
+    if (id === 'media' && (currentSplit.lead.length && nextSplit.lead.length || isLogical(lead[0], 'not'))) return
+    if (id === 'container' && leadText(currentSplit.lead) !== leadText(nextSplit.lead)) return
   }
 
-  const operands = [a.rest, b.rest].filter((nodes) => nodes.length).map(asOperand)
+  const operands = [currentSplit.rest, nextSplit.rest].filter((nodes) => nodes.length).map(asOperand)
   const joined: ConditionNode[] = []
   for (const operand of operands) {
     if (joined.length) joined.push(AND)

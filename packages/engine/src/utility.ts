@@ -391,7 +391,7 @@ export class Utility {
     this.stateToken = stateToken
     if (stateToken.includes('@')) {
       for (const stackToken of stateToken.split('@').slice(1)) {
-        for (const conditionToken of splitModeConjuncts(stackToken, css.modes)) {
+        for (const conditionToken of splitModeConjuncts(stackToken, css).tokens) {
           if (!css.modes.includes(conditionToken)) this.conditionToken = (this.conditionToken || '') + '@' + conditionToken
         }
       }
@@ -726,7 +726,18 @@ export class Utility {
   /** The branches a state token selects; `undefined`, leaving the class invalid, past `MAX_STATE_BRANCHES`. */
   resolveStateBranches(stateToken: string): UtilityStateBranch[] | undefined {
     const [selectorToken = '', ...stackTokens] = stateToken.split('@')
-    const conditionTokens = stackTokens.flatMap((token) => splitModeConjuncts(token, this.css.modes))
+    const conditionTokens: string[] = []
+    let expressible = true
+    for (const stackToken of stackTokens) {
+      const { tokens, inexpressibleMode } = splitModeConjuncts(stackToken, this.css)
+      if (inexpressibleMode !== undefined) {
+        if (!this.css.modes.includes(inexpressibleMode)) {
+          throw new UndeclaredModeError(`Class "${this.name}"`, inexpressibleMode, this.css.modes)
+        }
+        expressible = false
+      }
+      conditionTokens.push(...tokens)
+    }
     const conditionBranchCounts: number[] = []
     for (const conditionToken of conditionTokens) {
       if (this.css.modes.includes(conditionToken)) continue
@@ -772,6 +783,7 @@ export class Utility {
       })
     }
 
+    if (!expressible) branches = branches.map((branch) => ({ ...branch, valid: false }))
     return branches.length ? branches : [{ key: '' }]
   }
 
