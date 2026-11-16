@@ -1,0 +1,12 @@
+---
+import Layout from '../layouts/Layout.astro'
+import Island from '../components/Island.astro'
+
+export const prerender = false
+
+const tone = Astro.url.searchParams.has('alt') ? 'bg:gold' : 'bg:plum'
+---
+<Layout>
+  <p class={tone}>On demand</p>
+  <Island server:defer />
+</Layout>
