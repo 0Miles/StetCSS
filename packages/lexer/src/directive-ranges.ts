@@ -84,30 +84,6 @@ export const CSS_DIRECTIVE_RANGE_NAMES = [
 
 const CSS_DIRECTIVE_SOURCE_NAME_SET = new Set<string>(CSS_DIRECTIVE_RANGE_NAMES)
 
-/**
- * Whether the at-sign at `index` begins a statement: only whitespace and comments separate it
- * from the start of the source or the previous `;`, `{` or `}`. `@master` is located only there,
- * because every located `@master` is rejected and text such as `url(logo@master.png)` must not be.
- */
-function startsCSSStatement(source: string, index: number) {
-  let cursor = index - 1
-  while (cursor >= 0) {
-    const char = source[cursor]
-    if (/\s/.test(char)) {
-      cursor--
-      continue
-    }
-    if (char === '/' && source[cursor - 1] === '*') {
-      const commentStart = source.lastIndexOf('/*', cursor - 2)
-      if (commentStart === -1) return false
-      cursor = commentStart - 1
-      continue
-    }
-    return char === ';' || char === '{' || char === '}'
-  }
-  return true
-}
-
 export function collectCSSQuotedStringRanges(source: string, start = 0, end = source.length) {
   const ranges: CSSQuotedStringRange[] = []
   let comment = false
@@ -247,11 +223,19 @@ export function collectCSSDeclarationRanges(source: string, start: number, end: 
   return ranges
 }
 
+function isCSSWhitespaceChar(char: string) {
+  return char === ' ' || char === '\n' || char === '\t' || char === '\r' || char === '\f'
+}
+
 export function collectCSSDirectiveRanges(source: string) {
   const ranges: CSSDirectiveRuleRange[] = []
   let quote = ''
   let comment = false
   let depth = 0
+  // Only whitespace and comments since the start of the source or the last `;`, `{` or `}`.
+  // `@master` is located only there: every located `@master` is rejected, and text such as
+  // `url(logo@master.png)` must not be.
+  let atStatementStart = true
   for (let index = 0; index < source.length; index++) {
     const char = source[index]
     const next = source[index + 1]
@@ -277,21 +261,33 @@ export function collectCSSDirectiveRanges(source: string) {
     }
     if (char === '"' || char === '\'') {
       quote = char
+      atStatementStart = false
       continue
     }
     if (char === '{') {
       depth++
+      atStatementStart = true
       continue
     }
     if (char === '}') {
       depth = Math.max(0, depth - 1)
+      atStatementStart = true
       continue
     }
-    if (char !== '@') continue
+    if (char === ';') {
+      atStatementStart = true
+      continue
+    }
+    if (char !== '@') {
+      if (!isCSSWhitespaceChar(char)) atStatementStart = false
+      continue
+    }
+    const startsStatement = atStatementStart
+    atStatementStart = false
 
     const name = readCSSIdent(source, index + 1)
     if (!CSS_DIRECTIVE_SOURCE_NAME_SET.has(name.value)) continue
-    if (name.value === 'master' && !startsCSSStatement(source, index)) continue
+    if (name.value === 'master' && !startsStatement) continue
 
     const statementEnd = findCSSStatementEnd(source, name.end)
     const blockStart = statementEnd.reason === 'block' ? statementEnd.end : -1
@@ -349,7 +345,14 @@ export function collectCSSDirectiveRanges(source: string) {
 
     if (blockStart === -1) {
       index = Math.max(index, end - 1)
+      atStatementStart = true
     }
   }
   return ranges
+}
+
+/** The first `@master` at-rule that starts a statement; every one is a removed directive. */
+export function findMasterAtRule(source: string) {
+  if (!source.includes('@master')) return
+  return collectCSSDirectiveRanges(source).find((range) => range.name === 'master')
 }
