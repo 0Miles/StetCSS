@@ -231,9 +231,43 @@ function compileKeyAliases() {
   return keyAliases
 }
 
+type ManifestVariableEntry = ReturnType<typeof flattenMasterCSSManifestVariables>[number]
+
+/**
+ * Once a manifest declares its modes, values for any other mode (the preset light and dark values
+ * of a project that declared only `sepia`, say) have no mode to apply in: drop them. A variable
+ * that then has no value at all takes the value of the default mode, else light, as its plain
+ * value, so preset tokens such as `--color-red` keep resolving.
+ */
+function scopeVariableToDeclaredModes(definition: ManifestVariableEntry, settings: MasterCSSManifest['settings']): ManifestVariableEntry {
+  const declaredModes = settings?.modes
+  if (!definition.modes || !declaredModes) return definition
+  const entries = Object.entries(definition.modes)
+  const kept = entries.filter(([mode]) => declaredModes.includes(mode))
+  if (kept.length === entries.length) return definition
+  const scoped: ManifestVariableEntry = { ...definition }
+  if (kept.length) {
+    scoped.modes = Object.fromEntries(kept)
+  } else {
+    delete scoped.modes
+  }
+  if (scoped.value === undefined) {
+    const fallback = definition.modes[settings?.defaultMode || ''] || definition.modes.light || entries[0][1]
+    scoped.type = fallback.type
+    scoped.value = fallback.value
+    if (fallback.numeric) scoped.numeric = fallback.numeric
+  }
+  const values = [scoped.value, ...kept.map(([, each]) => each.value)].map(String)
+  if (scoped.dependencies) {
+    scoped.dependencies = scoped.dependencies.filter((name) => values.some((value) => new RegExp(`--${name}(?![-\\w])`).test(value)))
+  }
+  return scoped
+}
+
 function compileVariables(manifest: MasterCSSManifest) {
   const variables = new Map<string, Variable>()
-  for (const definition of flattenMasterCSSManifestVariables(manifest.variables)) {
+  for (const entry of flattenMasterCSSManifestVariables(manifest.variables)) {
+    const definition = scopeVariableToDeclaredModes(entry, manifest.settings)
     if (!definition.name || !definition.type || definition.value === false) continue
     variables.set(definition.name, {
       name: definition.name,
