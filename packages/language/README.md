@@ -1,18 +1,6 @@
-<br>
-<div align="center">
+# @stet-css/language
 
-<p align="center">
-  <a href="https://css.master.co">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/33840671/201701649-3bb7d698-abec-4d5f-ac30-ccc4d7bafcd4.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://user-images.githubusercontent.com/33840671/201703010-77bf2373-9899-40cc-98f5-30cf9b546941.svg">
-      <img alt="Master CSS" src="https://user-images.githubusercontent.com/33840671/201703010-77bf2373-9899-40cc-98f5-30cf9b546941.svg" width="100%">
-    </picture>
-  </a>
-</p>
-<p align="center">Language primitives for Master CSS</p>
-
-</div>
+Language primitives for StetCSS.
 
 ## Installation
 
@@ -22,7 +10,7 @@ npm install @stet-css/language
 
 ## Usage
 
-`@stet-css/language` provides editor-neutral Master CSS language primitives such as semantic token legends, class-list tokenizers, class-position scanning, directive formatting, browser semantic tokens, Shiki integration, and the shared TextMate grammar.
+`@stet-css/language` provides editor-neutral StetCSS language primitives such as semantic token legends, class-list tokenizers, class-position scanning, directive formatting, browser semantic tokens, Shiki integration, and the shared TextMate grammar.
 
 ### Semantic token legend
 
@@ -32,7 +20,7 @@ import { SEMANTIC_TOKENS_LEGEND } from '@stet-css/language'
 
 ### Browser semantic tokens
 
-Use the browser subpath when a web editor needs Master CSS semantic tokens without the stateful language service class.
+Use the browser subpath when a web editor needs StetCSS semantic tokens without the stateful language service class.
 
 ```ts
 import {
@@ -47,7 +35,7 @@ The browser helper supports CSS directive class-list spans in CSS documents and 
 
 ### Shiki
 
-Use the Shiki subpath to register the shared TextMate injection grammar and decorate Master CSS semantic ranges.
+Use the Shiki subpath to register the shared TextMate injection grammar and decorate StetCSS semantic ranges.
 
 ```ts
 import {
@@ -68,7 +56,7 @@ const positions = getClassPositions(textDocument, languageSettings)
 
 ### Directive formatting
 
-Use `formatStetCSSDirectives()` when an editor integration needs source-offset edits for Master CSS directive formatting without LSP service lifecycle.
+Use `formatStetCSSDirectives()` when an editor integration needs source-offset edits for StetCSS directive formatting without LSP service lifecycle.
 
 ```ts
 import {

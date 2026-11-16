@@ -1,6 +1,6 @@
 # @stet-css/integration
 
-Shared Master CSS integration contracts and virtual module protocols.
+Shared StetCSS integration contracts and virtual module protocols.
 
 ## Installation
 
@@ -29,7 +29,7 @@ It does not implement project manifest discovery, CSS import graph resolution, e
 
 ## Client types
 
-Add the client type reference when TypeScript imports Master CSS virtual modules:
+Add the client type reference when TypeScript imports StetCSS virtual modules:
 
 ```ts
 /// <reference types="@stet-css/integration/client" />

@@ -1,6 +1,6 @@
 # @stet-css/stylesheet
 
-Owns the **stylesheet entry** pipeline for static rendering: detecting Master CSS entries, expanding their CSS import graph through compiler results, lowering CSS-first and local directives, and composing the generated CSS with its emittedGlobals.
+Owns the **stylesheet entry** pipeline for static rendering: detecting StetCSS entries, expanding their CSS import graph through compiler results, lowering CSS-first and local directives, and composing the generated CSS with its emittedGlobals.
 
 ## Boundaries
 

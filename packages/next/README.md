@@ -1,6 +1,6 @@
 # @stet-css/next
 
-Next.js integration for Master CSS.
+Next.js integration for StetCSS.
 
 ## Installation
 
@@ -40,7 +40,7 @@ export default withBundleAnalyzer(withStetCSS(nextConfig))
 
 ## Client types
 
-Add `@stet-css/integration/client` to a project environment file when TypeScript imports Master CSS virtual modules.
+Add `@stet-css/integration/client` to a project environment file when TypeScript imports StetCSS virtual modules.
 
 ```ts
 /// <reference types="@stet-css/integration/client" />
@@ -80,4 +80,4 @@ export default withStetCSS(nextConfig, {
 
 Custom adapters need webpack: run `next dev --webpack` and `next build --webpack`. Turbopack passes loader options to its workers as JSON, which drops the adapter functions, so `withStetCSS` throws when Turbopack runs with custom adapters.
 
-See the [Next.js installation guide](https://rc.css.master.co/guide/installation/nextjs) for a full setup.
+See [`examples/next.js`](https://github.com/0Miles/StetCSS/tree/main/examples/next.js) for a full setup.

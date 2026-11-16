@@ -1,6 +1,6 @@
 # @stet-css/engine
 
-The manifest-driven Master CSS engine.
+The manifest-driven StetCSS engine.
 
 ## Installation
 

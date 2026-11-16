@@ -1,6 +1,6 @@
 # @stet-css/compiler
 
-Compile Master CSS stylesheet directives into manifest data, native CSS, and directive metadata.
+Compile StetCSS stylesheet directives into manifest data, native CSS, and directive metadata.
 
 ## Installation
 
@@ -10,7 +10,7 @@ npm install @stet-css/compiler
 
 ## Responsibility
 
-`@stet-css/compiler` is the CSS source compiler for Master CSS. It parses CSS manifest directives such as `@settings`, `@theme`, `@custom-variant`, `@defaults`, `@components`, `@utilities`, local `@compose`, top-level extraction directives, native CSS, and CSS import graphs.
+`@stet-css/compiler` is the CSS source compiler for StetCSS. It parses CSS manifest directives such as `@settings`, `@theme`, `@custom-variant`, `@defaults`, `@components`, `@utilities`, local `@compose`, top-level extraction directives, native CSS, and CSS import graphs.
 
 The compiler delegates class semantics and rule generation to `@stet-css/engine`; project entry discovery belongs to `@stet-css/project`.
 

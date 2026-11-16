@@ -1,56 +1,6 @@
-<br>
-<div align="center">
+# @stet-css/eslint-plugin
 
-<p align="center">
-  <a href="https://css.master.co">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/33840671/201701649-3bb7d698-abec-4d5f-ac30-ccc4d7bafcd4.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://user-images.githubusercontent.com/33840671/201703010-77bf2373-9899-40cc-98f5-30cf9b546941.svg">
-      <img alt="Master CSS" src="https://user-images.githubusercontent.com/33840671/201703010-77bf2373-9899-40cc-98f5-30cf9b546941.svg" width="100%">
-    </picture>
-  </a>
-</p>
-<p align="center">An ESLint plugin enforcing a consistent coding style for Master CSS</p>
-
-<p align="center">
-  <a aria-label="GitHub release (latest by date including pre-releases)" href="https://github.com/master-co/css/releases">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/github/v/release/master-co/css?include_prereleases&color=212022&label=&style=for-the-badge&logo=github&logoColor=fff">
-      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/github/v/release/master-co/css?include_prereleases&color=f6f7f8&label=&style=for-the-badge&logo=github&logoColor=%23000">
-      <img alt="NPM Version" src="https://img.shields.io/github/v/release/master-co/css?include_prereleases&color=f6f7f8&label=&style=for-the-badge&logo=github">
-    </picture>
-  </a>
-  <a aria-label="NPM Package" href="https://www.npmjs.com/package/@stet-css/eslint-plugin">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/npm/dm/@stet-css/eslint-plugin?color=212022&label=%20&logo=npm&style=for-the-badge">
-      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/npm/dm/@stet-css/eslint-plugin?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
-      <img alt="NPM package ( download / month )" src="https://img.shields.io/npm/dm/@stet-css/eslint-plugin?color=f6f7f8&label=%20&logo=npm&style=for-the-badge">
-    </picture>
-  </a>
-  <a aria-label="Discord Community" href="https://discord.gg/sZNKpAAAw6">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/discord/917780624314613760?color=212022&label=%20&logo=discord&style=for-the-badge">
-      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/discord/917780624314613760?color=f6f7f8&label=%20&logo=discord&style=for-the-badge">
-      <img alt="Discord online" src="https://img.shields.io/discord/917780624314613760?color=f6f7f8&label=%20&logo=discord&style=for-the-badge">
-    </picture>
-  </a>
-  <a aria-label="Follow @mastercorg" href="https://twitter.com/mastercorg">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/static/v1?label=%20&message=twitter&color=212022&logo=twitter&style=for-the-badge">
-      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/static/v1?label=%20&message=twitter&color=f6f7f8&logo=twitter&style=for-the-badge">
-      <img alt="Follow @mastercorg" src="https://img.shields.io/static/v1?label=%20&message=twitter&color=f6f7f8&logo=twitter&style=for-the-badge">
-    </picture>
-  </a>
-  <a aria-label="Github Actions" href="https://github.com/master-co/css/actions/workflows/ci-release.yml">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/github/actions/workflow/status/master-co/css/ci-release.yml?branch=rc&label=%20&message=twitter&color=212022&logo=githubactions&style=for-the-badge">
-      <source media="(prefers-color-scheme: light)" srcset="https://img.shields.io/github/actions/workflow/status/master-co/css/ci-release.yml?branch=rc&label=%20&message=twitter&color=f6f7f8&logo=githubactions&style=for-the-badge&logoColor=%23000">
-      <img alt="Github release actions" src="https://img.shields.io/github/actions/workflow/status/master-co/css/ci-release.yml?branch=rc&label=%20&message=twitter&color=f6f7f8&logo=githubactions&style=for-the-badge&logoColor=%23000">
-    </picture>
-  </a>
-</p>
-
-</div>
+An ESLint plugin enforcing a consistent coding style for StetCSS.
 
 ## Installation
 
@@ -60,7 +10,7 @@ npm install -D @stet-css/eslint-plugin
 
 The recommended config is also available through `@stet-css/eslint-config`.
 
-In Visual Studio Code, install the VS Code ESLint extension to surface these diagnostics and run sort-on-save. The Master CSS extension provides completion, hover, colors, highlighting, directive diagnostics, manifest diagnostics, and directive formatting; it does not duplicate class policy warnings by default.
+In Visual Studio Code, install the VS Code ESLint extension to surface these diagnostics and run sort-on-save. The StetCSS extension provides completion, hover, colors, highlighting, directive diagnostics, manifest diagnostics, and directive formatting; it does not duplicate class policy warnings by default.
 
 ## Usage
 
@@ -100,7 +50,7 @@ export default defineConfig([
 
 ### `@stet-css/sort-classes`
 
-Sorts Master CSS classes into a consistent and logical order.
+Sorts StetCSS classes into a consistent and logical order.
 
 ```js
 import { defineConfig } from 'eslint/config'
@@ -116,7 +66,7 @@ export default defineConfig([
 
 ### `@stet-css/no-invalid-classes`
 
-Disallows invalid Master CSS classes.
+Disallows invalid StetCSS classes.
 
 ```js
 import { defineConfig } from 'eslint/config'
@@ -148,7 +98,7 @@ export default defineConfig([
 
 ### `@stet-css/prefer-canonical-classes`
 
-Prefers canonical Master CSS class forms, including semantic utilities, theme tokens, property aliases, composition utilities, and condition suffix order.
+Prefers canonical StetCSS class forms, including semantic utilities, theme tokens, property aliases, composition utilities, and condition suffix order.
 
 ```js
 import { defineConfig } from 'eslint/config'
@@ -274,7 +224,7 @@ The rules check classes against the manifest: the utilities, tokens, and variant
 
 ## Related docs
 
-See the [code linting guide](https://rc.css.master.co/guide/code-linting) for setup guides across frameworks and editors.
+See [`examples/eslint`](https://github.com/0Miles/StetCSS/tree/main/examples/eslint) for a working setup and the [`@stet-css/eslint-config`](https://github.com/0Miles/StetCSS/tree/main/packages/eslint-config#readme) README for the shared config.
 
 ## Credits
 This plugin is heavily inspired by the awesome [eslint-plugin-tailwindcss](https://github.com/francoismassart/eslint-plugin-tailwindcss). We want to thank for their initial work, which served as the foundation for this project. While significant modifications have been made, the core ideas and concepts from A Plugin have been instrumental in developing this plugin.

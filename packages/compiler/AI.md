@@ -1,6 +1,6 @@
 # @stet-css/compiler
 
-The CSS source compiler: parses Master CSS directives and native CSS, resolves the CSS **import graph** (`compileCSSFile()`), and lowers CSS-first authoring into `StetCSSManifest` values, returning native CSS with consumed directives removed plus dependency paths.
+The CSS source compiler: parses StetCSS directives and native CSS, resolves the CSS **import graph** (`compileCSSFile()`), and lowers CSS-first authoring into `StetCSSManifest` values, returning native CSS with consumed directives removed plus dependency paths.
 
 ## Boundaries
 

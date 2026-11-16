@@ -1,16 +1,8 @@
-<br>
-<div align="center">
+# StetCSS for Visual Studio Code
 
-<p align="center">
-  <img alt="Master CSS" src="https://github.com/master-co/css/assets/33840671/fabe83d3-e882-4c7b-93f1-ca06792a6fb2" width="100%">
-</p>
-<p align="center">Master CSS for Visual Studio Code</p>
+StetCSS for Visual Studio Code provides manifest-aware language features for StetCSS classes, CSS directives, and project-specific tokens. The extension starts the bundled StetCSS language server, loads the nearest project manifest, and brings completion, hover, TextMate directive highlighting, semantic class-list highlighting, color tools, directive diagnostics, and directive formatting into supported files.
 
-</div>
-
-Master CSS for Visual Studio Code provides manifest-aware language features for Master CSS classes, CSS directives, and project-specific tokens. The extension starts the bundled Master CSS language server, loads the nearest project manifest, and brings completion, hover, TextMate directive highlighting, semantic class-list highlighting, color tools, directive diagnostics, and directive formatting into supported files.
-
-For the complete VS Code workflow, use this extension together with the official VS Code ESLint extension. Master CSS owns completion, hover, colors, highlighting, directive diagnostics, manifest diagnostics, and directive formatting. ESLint owns class policy diagnostics and sort-on-save for rules such as `@stet-css/sort-classes`, `@stet-css/prefer-canonical-classes`, and `@stet-css/no-conflicting-classes`.
+For the complete VS Code workflow, use this extension together with the official VS Code ESLint extension. StetCSS owns completion, hover, colors, highlighting, directive diagnostics, manifest diagnostics, and directive formatting. ESLint owns class policy diagnostics and sort-on-save for rules such as `@stet-css/sort-classes`, `@stet-css/prefer-canonical-classes`, and `@stet-css/no-conflicting-classes`.
 
 ## Quick Start
 
@@ -33,7 +25,7 @@ Enable suggestions inside strings so utility completions appear in markup, JSX, 
 }
 ```
 
-For project-aware tokens, create a CSS entry that imports `@stet-css/core`, or declare a Master CSS package dependency in the project `package.json`.
+For project-aware tokens, create a CSS entry that imports `@stet-css/core`, or declare a StetCSS package dependency in the project `package.json`.
 
 ```css
 @import "@stet-css/core";
@@ -49,29 +41,29 @@ For project-aware tokens, create a CSS entry that imports `@stet-css/core`, or d
 
 ## Features
 
-- **Syntax suggestions**: Completes Master CSS utilities, values, selectors, queries, groups, and directive syntax in configured languages.
-- **Hover inspection**: Shows generated CSS previews for Master CSS syntax at the cursor.
+- **Syntax suggestions**: Completes StetCSS utilities, values, selectors, queries, groups, and directive syntax in configured languages.
+- **Hover inspection**: Shows generated CSS previews for StetCSS syntax at the cursor.
 - **Syntax highlighting**: Highlights CSS directive syntax with the bundled TextMate grammar, then uses semantic tokens for embedded class lists, manifest-aware variables, components, selectors, pseudo states, queries, units, important markers, and quoted strings.
 - **Embedded highlighting modes**: Highlights the active class context by default, can highlight every discovered embedded utility, or can disable embedded utility highlighting.
-- **Color support**: Shows VS Code color decorators for supported Master CSS color syntax and lets the VS Code color picker edit those values.
-- **Directive diagnostics**: Reports Master CSS directive errors in CSS, SCSS, LESS, and style blocks inside Vue, Svelte, and Astro files.
+- **Color support**: Shows VS Code color decorators for supported StetCSS color syntax and lets the VS Code color picker edit those values.
+- **Directive diagnostics**: Reports StetCSS directive errors in CSS, SCSS, LESS, and style blocks inside Vue, Svelte, and Astro files.
 - **Manifest diagnostics**: Reports project manifest loading errors without taking over ESLint class policy warnings.
-- **Directive formatting**: Formats Master CSS directives and keeps class important markers attached, such as `bg:transparent !` to `bg:transparent!`.
-- **Workspace-aware manifests**: Loads project manifests from the closest detected Master CSS workspace so completions and tokens reflect custom variables, components, utilities, and modes.
+- **Directive formatting**: Formats StetCSS directives and keeps class important markers attached, such as `bg:transparent !` to `bg:transparent!`.
+- **Workspace-aware manifests**: Loads project manifests from the closest detected StetCSS workspace so completions and tokens reflect custom variables, components, utilities, and modes.
 - **Restart command**: Provides `StetCSS: Restart Language Server` for reloading the language server after dependency, manifest, or workspace changes.
 
 The default language list covers HTML, PHP, JavaScript, TypeScript, JSX, TSX, CSS, SCSS, LESS, Vue, Svelte, Rust, Astro, Markdown, and MDX.
 
-For CSS, SCSS, and LESS document formatting, the extension delegates to VS Code's existing formatter first, then repairs Master CSS directive spacing and class-list important markers on the formatted text. Vue, Svelte, and Astro CSS-family `<style>` blocks can be formatted when Master CSS is explicitly selected as the formatter, but the extension does not take over their default formatters automatically.
+For CSS, SCSS, and LESS document formatting, the extension delegates to VS Code's existing formatter first, then repairs StetCSS directive spacing and class-list important markers on the formatted text. Vue, Svelte, and Astro CSS-family `<style>` blocks can be formatted when StetCSS is explicitly selected as the formatter, but the extension does not take over their default formatters automatically.
 
 ## Workspace Discovery
 
 `stetCSS.workspaces` defaults to `auto`. In auto mode, the language server always creates a root workspace and also detects:
 
 - CSS files importing `@stet-css/core`
-- `package.json` files that declare Master CSS package dependencies such as `@stet-css/core`, `@stet-css/runtime`, or official integration packages matching `@stet-css/core*`
+- `package.json` files that declare StetCSS package dependencies such as `@stet-css/core`, `@stet-css/runtime`, or official integration packages matching `@stet-css/core*`
 
-Each detected workspace gets its own language service and project manifest. In monorepos, this lets each package use its nearest Master CSS manifest while still keeping the root workspace available.
+Each detected workspace gets its own language service and project manifest. In monorepos, this lets each package use its nearest StetCSS manifest while still keeping the root workspace available.
 
 Use explicit workspace globs when auto detection is not the intended project shape:
 
@@ -99,18 +91,18 @@ Set options in `.vscode/settings.json` or VS Code user settings with the `stetCS
 
 | Setting | Type and default | Description |
 | --- | --- | --- |
-| `stetCSS.includedLanguages` | `string[]`, default supported language list | Language IDs that receive Master CSS language features. |
-| `stetCSS.exclude` | `string[]`, default `["**/.git/**", "**/node_modules/**", "**/.hg/**"]` | Glob patterns excluded from all Master CSS language-service features. |
-| `stetCSS.classAttributes` | `string[]`, default `["class", "className"]` | Markup attributes whose quoted string values are treated as Master CSS class strings. |
+| `stetCSS.includedLanguages` | `string[]`, default supported language list | Language IDs that receive StetCSS language features. |
+| `stetCSS.exclude` | `string[]`, default `["**/.git/**", "**/node_modules/**", "**/.hg/**"]` | Glob patterns excluded from all StetCSS language-service features. |
+| `stetCSS.classAttributes` | `string[]`, default `["class", "className"]` | Markup attributes whose quoted string values are treated as StetCSS class strings. |
 | `stetCSS.classAttributeBindings` | `Record<string, [string, string] \| false>`, see defaults below | Bound markup attributes and their wrapping delimiters for framework binding syntax. Set an entry to `false` to disable that binding form. |
-| `stetCSS.classDeclarations` | `string[]`, default `[]` | Variable declarations or object properties whose strings are treated as Master CSS class strings. |
-| `stetCSS.classFunctions` | `string[]`, see defaults below | Function, tagged template, or method-call patterns whose string arguments are treated as Master CSS class strings. |
-| `stetCSS.suggestSyntax` | `boolean`, default `true` | Enables Master CSS completion items. |
+| `stetCSS.classDeclarations` | `string[]`, default `[]` | Variable declarations or object properties whose strings are treated as StetCSS class strings. |
+| `stetCSS.classFunctions` | `string[]`, see defaults below | Function, tagged template, or method-call patterns whose string arguments are treated as StetCSS class strings. |
+| `stetCSS.suggestSyntax` | `boolean`, default `true` | Enables StetCSS completion items. |
 | `stetCSS.inspectSyntax` | `boolean`, default `true` | Enables hover inspection and generated CSS previews. |
-| `stetCSS.renderSyntaxColors` | `boolean`, default `true` | Enables color information for Master CSS syntax. |
-| `stetCSS.formatDirectives` | `boolean`, default `true` | Enables Master CSS directive formatting in CSS-family documents. |
+| `stetCSS.renderSyntaxColors` | `boolean`, default `true` | Enables color information for StetCSS syntax. |
+| `stetCSS.formatDirectives` | `boolean`, default `true` | Enables StetCSS directive formatting in CSS-family documents. |
 | `stetCSS.embeddedSyntaxHighlighting` | `"active"`, `"always"`, or `"off"`; default `"active"` | Controls semantic highlighting for embedded utilities in markup and scripts. CSS directive syntax is still highlighted by the TextMate grammar. |
-| `stetCSS.workspaces` | `"auto"` or `string[]`, default `"auto"` | Configures Master CSS workspaces. Auto mode detects CSS entries and Master CSS package dependencies. |
+| `stetCSS.workspaces` | `"auto"` or `string[]`, default `"auto"` | Configures StetCSS workspaces. Auto mode detects CSS entries and StetCSS package dependencies. |
 
 Default class binding and function detection:
 
@@ -200,7 +192,7 @@ Choose embedded highlighting behavior:
 }
 ```
 
-Use `active` for lower-noise active-context highlighting, `always` to highlight all discovered embedded utility classes, and `off` to disable embedded utility highlighting. Master CSS syntax inside CSS, SCSS, and LESS documents remains highlighted by the extension.
+Use `active` for lower-noise active-context highlighting, `always` to highlight all discovered embedded utility classes, and `off` to disable embedded utility highlighting. StetCSS syntax inside CSS, SCSS, and LESS documents remains highlighted by the extension.
 
 Disable directive formatting when another formatter integration must own all directive whitespace:
 
@@ -218,36 +210,27 @@ Open the Command Palette and run:
 StetCSS: Restart Language Server
 ```
 
-Use this after changing dependencies, workspace layout, or project manifest files if VS Code has not reloaded the language server automatically. The extension also restarts the Master CSS language server when `stetCSS.*` settings change.
+Use this after changing dependencies, workspace layout, or project manifest files if VS Code has not reloaded the language server automatically. The extension also restarts the StetCSS language server when `stetCSS.*` settings change.
 
 ## Requirements and Limitations
 
 - Requires VS Code `1.120.0` or newer.
 - Requires a trusted local workspace because the language server loads configuration and code from the workspace.
 - Does not support VS Code virtual workspaces or untrusted workspaces.
-- Uses a TextMate injection grammar for CSS directive syntax and semantic tokens for Master CSS class-list spans. It does not contribute a custom `.mcss` language.
+- Uses a TextMate injection grammar for CSS directive syntax and semantic tokens for StetCSS class-list spans. It does not contribute a custom `.mcss` language.
 
 ## Troubleshooting
 
 - **Completions do not show inside strings**: Enable `editor.quickSuggestions.strings` as shown in [Quick Start](#quick-start).
-- **Manifest-specific variables or components are missing**: Ensure the project has a detected CSS entry or Master CSS package dependency, then run `StetCSS: Restart Language Server`.
+- **Manifest-specific variables or components are missing**: Ensure the project has a detected CSS entry or StetCSS package dependency, then run `StetCSS: Restart Language Server`.
 - **The wrong monorepo package is used**: Set `stetCSS.workspaces` to explicit workspace directories.
 - **Embedded markup highlighting is too noisy or too quiet**: Change `stetCSS.embeddedSyntaxHighlighting` to `active`, `always`, or `off`.
 - **Semantic colors do not appear**: Confirm VS Code semantic highlighting is enabled for the active theme.
 
 ## Documentation
 
-See the [language service guide](https://rc.css.master.co/guide/language-service), the [`@stet-css/language-service`](../language-service) README, and the [`@stet-css/language-server`](../language-server) README for deeper details.
-
-## Community
-
-The Master CSS community can be found here:
-
-- [Discuss on GitHub](https://github.com/master-co/css/discussions) - Ask questions, voice ideas, and do any other discussion
-- [Join our Discord Server](https://discord.com/invite/sZNKpAAAw6) - Casually chat with other people using the language <sup><sub>✓ 中文</sub></sup>
-
-<sub>Our [《 Code of Conduct 》](https://github.com/master-co/css/blob/main/CODE_OF_CONDUCT.md) applies to all Master CSS community channels.</sub>
+See the [`@stet-css/language-service`](../language-service) and [`@stet-css/language-server`](../language-server) READMEs for deeper details.
 
 ## Contributing
 
-Please see our [CONTRIBUTING](https://github.com/master-co/css/blob/rc/.github/CONTRIBUTING.md) for workflow.
+Issues and pull requests go to [0Miles/StetCSS](https://github.com/0Miles/StetCSS).

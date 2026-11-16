@@ -1,6 +1,6 @@
 # @stet-css/source
 
-Source class extraction helpers for Master CSS tooling.
+Source class extraction helpers for StetCSS tooling.
 
 ## Installation
 
@@ -10,7 +10,7 @@ npm install @stet-css/source
 
 ## Responsibility
 
-`@stet-css/source` extracts unvalidated Master CSS class candidates from source text and provides source-format-aware adapters for HTML and JavaScript/TypeScript syntax.
+`@stet-css/source` extracts unvalidated StetCSS class candidates from source text and provides source-format-aware adapters for HTML and JavaScript/TypeScript syntax.
 
 It does not validate classes, generate CSS, maintain scanner state, observe file changes, or resolve manifests. Scanner state belongs to `@stet-css/scanner`; file-change invalidation belongs to CLI/build/framework integrations; manifest resolution belongs to `@stet-css/project`.
 
