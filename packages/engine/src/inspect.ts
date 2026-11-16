@@ -5,8 +5,6 @@ import type { MasterCSSManifestUtilityMatcher } from '@stet-css/schema/manifest'
 import { ROOT_FONT_SIZE } from './common'
 import { assertBaseUnit } from './utils/base-unit'
 
-export { ROOT_FONT_SIZE }
-
 export interface MasterCSSNormalizedNumericValue {
   kind: 'number' | 'rem'
   value: number
