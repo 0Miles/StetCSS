@@ -26,3 +26,6 @@ vite.config.ts.timestamp-*
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Temp SvelteKit projects made by tests
+/tests/.tmp-*
