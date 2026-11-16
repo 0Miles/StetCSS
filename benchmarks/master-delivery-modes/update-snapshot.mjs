@@ -20,7 +20,7 @@ const modes = [
     family: 'tailwind-css'
   }
 ]
-const byteGroups = ['html', 'external-css', 'runtime-js', 'manifest-json']
+const byteGroups = ['html', 'external-css', 'runtime-js']
 const byteMetricIds = byteGroups.flatMap((group) => [
   `${group}-raw-bytes`,
   `${group}-gzip-bytes`,
@@ -41,7 +41,6 @@ const timingMetricIds = [
   'request-count',
   'runtime-ready-ms',
   'runtime-bootstrap-ms',
-  'manifest-load-ms',
   'runtime-observe-ms',
   'runtime-generated-rule-count',
   'runtime-style-raw-bytes'
@@ -139,8 +138,7 @@ function createModeResult(fixtureId, modeId) {
     payload: {
       html: createByteSummary(variantId, 'html'),
       externalCSS: createByteSummary(variantId, 'external-css'),
-      runtimeJS: createByteSummary(variantId, 'runtime-js'),
-      manifestJSON: createByteSummary(variantId, 'manifest-json')
+      runtimeJS: createByteSummary(variantId, 'runtime-js')
     },
     structure: {
       styleRules: findSummary(variantId, 'delivered-style-rule-count').median,
@@ -157,7 +155,6 @@ function createModeResult(fixtureId, modeId) {
       requestCount: createMetricSummary(variantId, 'request-count'),
       runtimeReadyMs: createMetricSummary(variantId, 'runtime-ready-ms'),
       runtimeBootstrapMs: createMetricSummary(variantId, 'runtime-bootstrap-ms'),
-      manifestLoadMs: createMetricSummary(variantId, 'manifest-load-ms'),
       runtimeObserveMs: createMetricSummary(variantId, 'runtime-observe-ms'),
       runtimeGeneratedRuleCount: createMetricSummary(variantId, 'runtime-generated-rule-count'),
       runtimeStyleRawBytes: createMetricSummary(variantId, 'runtime-style-raw-bytes')

@@ -391,24 +391,6 @@ export const browserLifecycleMetrics = [
     description: 'Brotli bytes for the Master CSS browser runtime bundle.'
   },
   {
-    id: 'manifest-json-raw-bytes',
-    label: 'Manifest JSON raw bytes',
-    unit: 'B',
-    description: 'Raw bytes for the runtime default manifest JSON payload.'
-  },
-  {
-    id: 'manifest-json-gzip-bytes',
-    label: 'Manifest JSON gzip bytes',
-    unit: 'B',
-    description: 'Gzip bytes for the runtime default manifest JSON payload.'
-  },
-  {
-    id: 'manifest-json-brotli-bytes',
-    label: 'Manifest JSON brotli bytes',
-    unit: 'B',
-    description: 'Brotli bytes for the runtime default manifest JSON payload.'
-  },
-  {
     id: 'delivered-style-rule-count',
     label: 'Delivered style rules',
     unit: 'count',
@@ -603,7 +585,6 @@ export const browserLifecycleMetrics = [
 ] satisfies BenchmarkMetric[]
 
 let runtimeBundlePromise: Promise<Buffer> | undefined
-let defaultManifestJSONPromise: Promise<Buffer> | undefined
 
 export async function writeBrowserLifecycleReport() {
   const report = await createBrowserLifecycleReport()
@@ -866,7 +847,6 @@ async function writeBrowserLifecyclePage(options: {
   html: string
   externalCSS?: string
   runtimeJS?: Buffer
-  manifestJSON?: Buffer
   buildArtifacts?: BenchmarkArtifact[]
 }): Promise<BrowserLifecyclePage> {
   const root = resolve(benchmarkRoot, '.results', 'browser-lifecycle', 'pages', options.variantId)
@@ -878,7 +858,6 @@ async function writeBrowserLifecyclePage(options: {
 
   if (options.externalCSS !== undefined) files['style.css'] = options.externalCSS
   if (options.runtimeJS) files['global.min.js'] = options.runtimeJS.toString('utf8')
-  if (options.manifestJSON) files['default-manifest.json'] = options.manifestJSON.toString('utf8')
 
   await writeWorkspaceFiles(root, files)
 
@@ -890,8 +869,7 @@ async function writeBrowserLifecyclePage(options: {
       ...createPayloadSamples(options.variantId, {
         html: Buffer.from(options.html),
         externalCSS: Buffer.from(options.externalCSS || ''),
-        runtimeJS: options.runtimeJS || Buffer.alloc(0),
-        manifestJSON: options.manifestJSON || Buffer.alloc(0)
+        runtimeJS: options.runtimeJS || Buffer.alloc(0)
       }),
       ...createDeliveredCSSStructureSamples(options.variantId, options.externalCSS ?? '')
     ],
@@ -1798,13 +1776,11 @@ function createPayloadSamples(variantId: string, payload: {
   html: Buffer
   externalCSS: Buffer
   runtimeJS: Buffer
-  manifestJSON: Buffer
 }): BenchmarkSample[] {
   return [
     ...createByteSamples(variantId, 'html', payload.html),
     ...createByteSamples(variantId, 'external-css', payload.externalCSS),
-    ...createByteSamples(variantId, 'runtime-js', payload.runtimeJS),
-    ...createByteSamples(variantId, 'manifest-json', payload.manifestJSON)
+    ...createByteSamples(variantId, 'runtime-js', payload.runtimeJS)
   ]
 }
 
@@ -2179,17 +2155,6 @@ async function readRuntimeBundle() {
     })()
   }
   return runtimeBundlePromise
-}
-
-async function readDefaultManifestJSON() {
-  if (!defaultManifestJSONPromise) {
-    defaultManifestJSONPromise = (async () => {
-      const file = resolveBenchmarkPackageFile('@stet-css/preset', 'src/default-manifest.json')
-      assertExistingFile(file, 'Expected @stet-css/preset default manifest to exist.')
-      return readFile(file)
-    })()
-  }
-  return defaultManifestJSONPromise
 }
 
 function assertExistingFile(file: string, message: string) {
