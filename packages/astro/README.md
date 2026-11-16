@@ -98,6 +98,4 @@ The options are the `@stet-css/vite` plugin options without `mode`, `injectRunti
 | --- | --- | --- |
 | `scanner` | `undefined` | Scanner options passed through to the shared Vite pipeline. |
 
-To use the browser runtime instead, import `@stet-css/runtime` from your own client script.
-
 See the [Astro installation guide](https://rc.css.master.co/guide/installation/astro) for a full project setup.
