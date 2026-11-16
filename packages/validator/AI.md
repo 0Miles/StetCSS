@@ -11,7 +11,7 @@ Owns **CSS validity**: whether the CSS a class generates passes `css-tree` gramm
 
 - **`css-tree` gaps** (newer CSS functions, at-rule preludes, property values): add a narrow exception for the specific construct, with a test, and keep `css-tree` as the parser.
 - **Strict results**: keep `SyntaxError`, `SyntaxMatchError` and `SyntaxReferenceError` reported outside a deliberate exception, and keep classes that generate no rules invalid.
-- **`generateValidRules`** returns rules only after every rule's CSS passes `validateCSS`; the scanner and `@stet-css/lint` use its output as already-checked CSS.
+- **`generateValidRules`** returns rules only after every rule's CSS passes `validateCSS`; the scanner and `@stet-css/lint` use its output as already-checked CSS. A group (`{a:b;c:d}`) drops only its invalid declarations, as native CSS and the runtime do; any other failing rule drops the whole class. `validate()` and `isClassValid()` still report the group's invalid declaration.
 - **Native declaration matcher**: `cssTreeNativeDeclarationMatcher` decides whether native `property:value` classes generate rules at all, so changing it is a CSS output change for every instance built with `createCSSWithNativeDeclarations`.
 
 ## Validation
