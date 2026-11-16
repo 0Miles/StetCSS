@@ -3,7 +3,8 @@ import {
   inspectMasterCSSClass,
   normalizeMasterCSSNumericValue
 } from '../src/inspect'
-import { createDefaultCSS } from './helpers/css-tester'
+import { MasterCSS } from '../src'
+import { cloneManifest, createDefaultCSS } from './helpers/css-tester'
 
 describe('class inspection', () => {
   test('inspects key/value utilities with variants and token metadata', () => {
@@ -67,5 +68,23 @@ describe('class inspection', () => {
     expect(normalizeMasterCSSNumericValue(css, '16px')).toEqual({ kind: 'rem', value: 1 })
     expect(normalizeMasterCSSNumericValue(css, '4x')).toEqual({ kind: 'rem', value: 1 })
     expect(normalizeMasterCSSNumericValue(css, '50%')).toBeUndefined()
+  })
+
+  /**
+   * Prevents: lint's canonical-class suggestions treating `x` values as equal to the wrong rem
+   * length under a non-default `base-unit`: under `4px`, `4x` must equal `1rem`; under `1em`,
+   * `4x` has no fixed rem length, so it must not count as equal to any rem or px value.
+   * Reverse-checked: in `inspect.ts`, dropping `/ ROOT_FONT_SIZE` from the px branch reds the
+   * `4px` row only; returning `{ kind: 'rem', value: numericValue * baseUnit.value }` from the
+   * default branch reds the `1em` row only.
+   */
+  test.each([
+    { baseUnit: '4px', expected: { kind: 'rem', value: 1 } },
+    { baseUnit: '1em', expected: undefined }
+  ])('normalizes 4x under base-unit $baseUnit', ({ baseUnit, expected }) => {
+    const manifest = cloneManifest()
+    manifest.settings = { ...manifest.settings, baseUnit }
+
+    expect(normalizeMasterCSSNumericValue(MasterCSS.create({ manifest }), '4x')).toEqual(expected)
   })
 })
