@@ -103,11 +103,33 @@
 **版號與 release PR**
 
 - 每個要發佈的 `@stet-css/*` 共用一個版號，設定在 `release-please-config.json`（`linked-versions`）與 `.release-please-manifest.json`。VS Code 擴充、examples、benchmarks、shared 不在裡面，VS Code 擴充照舊用 `release:vscode`。
-- 推到 main 時，`.github/workflows/release-please.yml` 開出或更新 release PR：新版號、各套件的 `CHANGELOG.md`，再把 `bun.lock` 同步後 commit 回 PR 分支。它不發佈到 npm；release PR 合併後，下一次執行會替每個套件建立 GitHub release 與 tag（`<套件名>-v<版號>`，例如 `core-v0.1.0`）。
+- 推到 main 時，`.github/workflows/release-please.yml` 開出或更新 release PR：新版號、各套件的 `CHANGELOG.md`，再把 `bun.lock` 同步後 commit 回 PR 分支。release PR 合併後，下一次執行會替每個套件建立 GitHub release 與 tag（`<套件名>-v<版號>`，例如 `core-v0.1.0`），接著發佈到 npm，見〈發佈到 npm〉。
 - 目前的版號是 `0.0.0`，代表還沒發佈過。release-please 把 manifest 裡的 `0.0.0` 當成沒有前一版，第一張 release PR 不看 commit 類型，直接用 config 的 `initial-version`（`0.1.0`）；changelog 從 config 的 `bootstrap-sha` 之後算起。發佈過之後 `initial-version` 不再作用，不必拿掉。
 - 之後的版號由 commit 類型決定。1.0 之前：`fix` 升 patch（`0.1.0` → `0.1.1`），`feat` 升 minor（→ `0.2.0`），帶 `!` 的破壞性變更也只升 minor（→ `0.2.0`）。
 - workflow 只在 repo 變數 `RELEASE_PLEASE_ENABLED` 是 `true` 時執行。release PR 要能觸發 CI，得有 repo secret `RELEASE_PLEASE_TOKEN`（GitHub App token 或 fine-grained PAT）；沒有時退回 `GITHUB_TOKEN`，release PR 不會有 `required`。兩者都由維護者設定。
 - 不要手改版號，版號只由 release PR 改。新增或移除套件時，在 manifest、config 的 `packages` 與 `linked-versions` 各加或刪一筆，版號照目前的共用版號。
+
+**發佈到 npm**
+
+同一個 workflow 在 release-please 建立 release 之後，接著跑兩個 job。沒有建立 release 的執行不會發佈。
+
+- `pack`：checkout release 的 tag，安裝、跑 `check:release` 與 `check:packages`（含建置），再用 `bun pm pack` 把每個要發佈的套件打包成 tarball。套件版號和 tag 的版號不同時直接失敗，所以 `0.0.0` 發不出去。
+- `publish`：只下載 tarball，用 `npm publish <tarball> --access public --provenance` 上傳。只有這個 job 有 `id-token: write`，它不安裝依賴。
+- 用 npm 上傳而不是 `bun publish`：Bun 1.4.4 的 `bun publish` 不支援 npm trusted publishing（OIDC），也產生不了 provenance；`bun pm pack` 負責把 `workspace:^` 改寫成實際版號。
+- 順序與中斷：npm 沒有跨套件的交易。腳本（`scripts/publish-packages.mjs`）先問 registry 每個版號在不在，再照依賴順序上傳缺的，已經在 npm 上的跳過，任何一個失敗就停。先發被依賴的套件，所以中斷時 npm 上不會有套件依賴還沒發佈的版號。
+- 中斷後補發：在那次執行按「Re-run failed jobs」；超過重跑期限時，手動執行 workflow（`workflow_dispatch`），`tag` 填那次 release 的任一個 tag，例如 `core-v0.1.0`。兩種都只補還沒發佈的套件。
+- 開關：repo 變數 `NPM_PUBLISH_ENABLED` 是 `true` 才會跑，沒設時兩個 job 都跳過。首次發佈（#96）前保持不設。
+- 認證：npm 要等套件存在才能設定 trusted publisher，所以首次發佈用 repo secret `NPM_TOKEN`（granular token，只給 `@stet-css` scope 的讀寫權限）。之後每個套件在 npm 設定 trusted publisher：repository `0Miles/StetCSS`、workflow `release-please.yml`、不填 environment，再刪掉 `NPM_TOKEN`。workflow 改檔名時，28 個套件的設定都要跟著改。
+- 代理不設定變數與 secret、不碰 npm、不手動觸發發佈；這些都是維護者的事，見 #84 與 #96。
+
+維護者首次發佈的步驟（#84 完成、改名 #18 合併之後）：
+
+1. 確認 npm 上的 `@stet-css` organization 屬於自己，建立 granular token，存成 repo secret `NPM_TOKEN`。
+2. 確認 `RELEASE_PLEASE_ENABLED` 是 `true`、`RELEASE_PLEASE_TOKEN` 已存在，release PR 已經開出來。
+3. 檢查 release PR：版號是 `0.1.0`，每個套件有 `CHANGELOG.md`，`bun.lock` 的 workspace 版號已同步，`required` 是 success。
+4. 把 repo 變數 `NPM_PUBLISH_ENABLED` 設成 `true`，再合併 release PR。
+5. 看那次 `Release Please` 執行：`release-please` 建立 28 個 release，`pack`、`publish` 成功，npm 上 28 個套件都是 `0.1.0` 並帶 provenance。`publish` 中途失敗就照上面補發。
+6. 在 npm 替 28 個套件設定 trusted publisher，撤銷並刪除 `NPM_TOKEN`。下一次 release 走 OIDC。
 
 ## 實機驗收
 
