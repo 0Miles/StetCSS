@@ -281,7 +281,6 @@ test('highlights every Master CSS directive keyword', () => {
     @source not "app.tsx";
     @safelist "block";
     @blocklist "debug-*";
-    @preserve native;
     @reference "./tokens.css";
     @theme {}
     @defaults {}
@@ -299,7 +298,6 @@ test('highlights every Master CSS directive keyword', () => {
     'source',
     'safelist',
     'blocklist',
-    'preserve',
     'reference',
     'theme',
     'defaults',
@@ -336,13 +334,29 @@ test('does not highlight @dark or @light as directives', () => {
   ])
 })
 
+/**
+ * Prevents: the editor still highlighting the removed `@preserve native;` as a directive,
+ * which tells a developer that a line the compiler now rejects is valid.
+ * Reverse-checked: restoring the `(@)(preserve)\\b` rule in the grammar reds only this test.
+ */
+test('does not highlight @preserve as a directive', () => {
+  const tokens = tokenizeWith(injectedCSSGrammar, `
+    @preserve native;
+    @source "app.tsx";
+  `)
+  const directiveTokens = tokens.filter((token) => token.scopes.includes('keyword.control.at-rule.master-css'))
+
+  expect(directiveTokens).toEqual([
+    expect.objectContaining({ text: 'source' })
+  ])
+})
+
 test('highlights directive preludes, strings, class lists, and dynamic patterns', () => {
   const tokens = tokenize(`
     @source not "src/**/*.{ts,tsx}";
     @reference './tokens.css';
     @blocklist "debug-*";
     @theme inline dark {}
-    @preserve native;
     @safelist "block fg:red:hover@md";
     @compose inline-flex fg:primary:hover@md bg:transparent! bg:transparent!@sm;
     @utilities {
@@ -364,7 +378,6 @@ test('highlights directive preludes, strings, class lists, and dynamic patterns'
   expectNoSomeScope(tokens, 'debug-', 'entity.other.attribute-name.class.master-css')
   expectScope(tokens, 'inline', 'storage.modifier.master-css')
   expectScope(tokens, 'dark', 'support.constant.property-value.master-css')
-  expectScope(tokens, 'native', 'support.constant.property-value.master-css')
   expectScope(tokens, 'block', 'entity.other.attribute-name.class.master-css')
   expectScope(tokens, 'inline-flex', 'entity.other.attribute-name.class.master-css')
   expectScope(tokens, 'fg', 'support.type.property-name.master-css')

@@ -68,28 +68,6 @@
           ]
         },
         {
-          "begin": "(@)(preserve)\\b",
-          "beginCaptures": {
-            "1": {
-              "name": "punctuation.definition.keyword.master-css"
-            },
-            "2": {
-              "name": "keyword.control.at-rule.master-css"
-            }
-          },
-          "end": "(;)|$",
-          "endCaptures": {
-            "1": {
-              "name": "punctuation.section.master-css"
-            }
-          },
-          "patterns": [
-            {
-              "include": "#master-preserve-prelude"
-            }
-          ]
-        },
-        {
           "begin": "(@)(theme)\\b",
           "beginCaptures": {
             "1": {
@@ -566,18 +544,6 @@
               ]
             }
           ]
-        }
-      ]
-    },
-    "master-preserve-prelude": {
-      "patterns": [
-        {
-          "match": "\\bnative\\b",
-          "name": "support.constant.property-value.master-css"
-        },
-        {
-          "match": "[;{}]",
-          "name": "punctuation.section.master-css"
         }
       ]
     },
