@@ -441,14 +441,9 @@ export async function createMasterCSSInspectionReport(options: CreateMasterCSSIn
 
   try {
     const entryFiles = await resolveCSSEntryFiles(cwd, options.resolveExistingFile)
-    const scanner = new CSSScanner({}, cwd)
-    scanner.on('init', (scannerOptions: ScannerOptions) => {
-      scannerOptions.verbose = 0
-    })
-    // The entry manifest goes to `init` only, not to the constructor's options: as an explicit
-    // plan it would make `createExtractedCSSResult` recompile core instead of reusing the
-    // prebuilt artifact, the way the root command does.
-    await scanner.init({ manifest: await loadEntryManifest(cwd, entryFiles) })
+    // Classes are judged by the entry's manifest, as the build judges them.
+    const scanner = new CSSScanner({}, cwd, { manifest: await loadEntryManifest(cwd, entryFiles) })
+    await scanner.init()
     const stylesheetInspection = await registerManagedCSSEntries(scanner, styleCSSSources, entryFiles)
     diagnostics.push(...stylesheetInspection.entries.flatMap((entry) => entry.warnings.map((warning) => ({
       code: 'stylesheet-warning' as const,
