@@ -7,6 +7,7 @@ Owns the Vite plugin chain behind the `runtime`, `static`, `pre-render` and `pro
 - Manifest entry discovery and loading live in `@stet-css/project` (`findCSSManifestEntryFiles`, `loadProjectManifest`); this package consumes them rather than scanning the workspace itself.
 - The class set (project files, `@source`, `@safelist`, `@blocklist`) lives in `@stet-css/stylesheet`; the plugin scans no modules and passes `classes: []`. The browser runtime lives in `@stet-css/runtime`.
 - Framework lifecycle beyond Vite belongs to the wrapping integrations.
+- **Integration host** (`PluginHost`, the internal second argument of `masterCSS()`): first-party wrappers name the project root (`projectDir`, read through `utils/project-dir.ts` instead of `config.root`), extra project directories and ignored paths. It is not a user option and stays undocumented in the README; users add directories with `@source`.
 
 ## Risks
 
