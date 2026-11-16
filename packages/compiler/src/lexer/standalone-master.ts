@@ -1,5 +1,9 @@
-import type { CSSDirectiveExtractionPolicy } from '@stet-css/schema/css-directives'
-import { collectCSSDirectiveRanges, escapeRegExp, type CSSDirectiveRuleRange } from '@stet-css/lexer'
+import {
+  createCSSDirectiveSourceReference,
+  CSSDirectiveError,
+  type CSSDirectiveExtractionPolicy
+} from '@stet-css/schema/css-directives'
+import { collectCSSDirectiveRanges, escapeRegExp, type CSSDirectiveRuleRange, type SourceRange } from '@stet-css/lexer'
 import { countSourcePatternExpansions, MAX_SOURCE_PATTERN_EXPANSIONS } from './source-pattern'
 import { findAtRuleStatementEnd, removeSourceRanges } from './source'
 
@@ -15,19 +19,48 @@ export interface StandaloneCSSDirectiveStatement {
   modifiers: string[]
 }
 
-/**
- * `@preserve` is still located so an entry that keeps `@preserve native;` fails loudly instead
- * of carrying a directive that no longer does anything. The error names the entry when the caller
- * knows it; callers pass sources with local imports already expanded, so the directive may sit
- * in the entry or in any stylesheet it imports.
- */
-function createRemovedPreserveDirectiveError(statement: StandaloneCSSDirectiveStatement, filename?: string) {
-  const location = describeErrorLocation(filename)
-  return new Error(`@preserve was removed; stylesheet entries keep all native CSS, so delete "${statement.statement.trim()}"${location}`)
+export interface RemovedDirectiveCheckOptions {
+  /**
+   * Offsets in `source` are offsets in `filename`, so the error carries a source reference the
+   * editor can underline. Leave it off when `source` holds an expanded import graph.
+   */
+  locate?: boolean
 }
 
-function describeErrorLocation(filename?: string) {
-  return filename ? ` (in ${filename} or a stylesheet it imports)` : ''
+function createRemovedDirectiveError(
+  code: string,
+  message: string,
+  source: string,
+  range: SourceRange,
+  filename: string | undefined,
+  options: RemovedDirectiveCheckOptions
+) {
+  const location = filename ? ` (in ${filename} or a stylesheet it imports)` : ''
+  return new CSSDirectiveError(
+    code,
+    message + location,
+    options.locate ? createCSSDirectiveSourceReference(filename, { start: range.start, end: range.end }, source) : undefined
+  )
+}
+
+/**
+ * `@preserve` is still located so an entry that keeps `@preserve native;` fails loudly instead
+ * of carrying a directive that no longer does anything.
+ */
+function createRemovedPreserveDirectiveError(
+  source: string,
+  statement: StandaloneCSSDirectiveStatement,
+  filename: string | undefined,
+  options: RemovedDirectiveCheckOptions = {}
+) {
+  return createRemovedDirectiveError(
+    'removed-preserve-directive',
+    `@preserve was removed; stylesheet entries keep all native CSS, so delete "${statement.statement.trim()}"`,
+    source,
+    statement,
+    filename,
+    options
+  )
 }
 
 function formatMasterAtRule(source: string, range: CSSDirectiveRuleRange) {
@@ -41,20 +74,37 @@ function formatMasterAtRule(source: string, range: CSSDirectiveRuleRange) {
  * and `@master { … }` blocks never had an effect (settings live in `@settings`). Each one fails
  * with the replacement instead of passing through as an unknown at-rule.
  */
-function createRemovedMasterAtRuleError(source: string, range: CSSDirectiveRuleRange, filename?: string) {
+function createRemovedMasterAtRuleError(
+  source: string,
+  range: CSSDirectiveRuleRange,
+  filename: string | undefined,
+  options: RemovedDirectiveCheckOptions
+) {
   const statement = formatMasterAtRule(source, range)
-  const location = describeErrorLocation(filename)
-  if (statement === '@master entry;') {
-    return new Error(`@master entry; was removed; mark stylesheet entries with @import '@stet-css/core'; instead${location}`)
-  }
-  return new Error(`@master at-rules were removed; mark stylesheet entries with @import '@stet-css/core'; and put settings in @settings, so delete "${statement}"${location}`)
+  const message = statement === '@master entry;'
+    ? `@master entry; was removed; mark stylesheet entries with @import '@stet-css/core'; instead`
+    : `@master at-rules were removed; mark stylesheet entries with @import '@stet-css/core'; and put settings in @settings, so delete "${statement}"`
+  return createRemovedDirectiveError('removed-master-at-rule', message, source, range, filename, options)
 }
 
-/** Throws on the first `@master` at-rule in `source`, which may hold an expanded import graph. */
-export function assertNoMasterAtRules(source: string, filename?: string) {
+/**
+ * Throws on the first `@master` at-rule that starts a statement in `source`. Bundler routing
+ * filters (local-style directive names, the Next Turbopack content condition) are deliberately
+ * wider and send any file mentioning `@master` here; this check decides.
+ */
+export function assertNoMasterAtRules(source: string, filename?: string, options: RemovedDirectiveCheckOptions = {}) {
   if (!source.includes('@master')) return
   const range = collectCSSDirectiveRanges(source).find((directive) => directive.name === 'master')
-  if (range) throw createRemovedMasterAtRuleError(source, range, filename)
+  if (range) throw createRemovedMasterAtRuleError(source, range, filename, options)
+}
+
+/** Throws, with a source reference into `source`, on any removed directive it holds. */
+export function assertNoRemovedDirectives(source: string, filename?: string) {
+  assertNoMasterAtRules(source, filename, { locate: true })
+  if (!source.includes('@preserve')) return
+  const statement = findStandaloneCSSDirectiveStatements(source, filename)
+    .find((directive) => directive.atRuleName === 'preserve')
+  if (statement) throw createRemovedPreserveDirectiveError(source, statement, filename, { locate: true })
 }
 
 const STANDALONE_CSS_DIRECTIVE_NAMES = new Set<StandaloneCSSDirectiveName>([
@@ -295,7 +345,7 @@ export function collectStandaloneCSSDirectiveExtractionPolicy(source: string, fi
           .map(normalizeBlocklistPattern))
         break
       case 'preserve':
-        throw createRemovedPreserveDirectiveError(statement, filename)
+        throw createRemovedPreserveDirectiveError(source, statement, filename)
     }
   }
   return policy
