@@ -2,6 +2,7 @@ import { test, expect, type Page } from '@playwright/test'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 import type { MasterCSSManifest } from '@stet-css/schema/manifest'
 import UtilityType from '@stet-css/schema/utility-type'
+import { MASTER_CSS_RUNTIME_STYLE_ID } from '@stet-css/schema/runtime-style'
 import CSSRuntime from '../src'
 import init from './init'
 
@@ -55,11 +56,11 @@ test('destroy removes its style, is safe to repeat, and a registered runtime obs
     ;(globalThis as any).destroyedRuntime = runtime
   })
   expect(await page.evaluate(() => (globalThis as any).destroyedRuntime.utilitiesLayer.rules.length)).toBe(0)
-  const readDestroyedState = () => page.evaluate(() => ({
+  const readDestroyedState = () => page.evaluate((styleId) => ({
     style: (globalThis as any).destroyedRuntime.style,
-    runtimeStyles: document.querySelectorAll('style#master-css').length,
+    runtimeStyles: document.querySelectorAll(`style#${styleId}`).length,
     registered: globalThis.MasterCSSRuntime.instances.has(document) || globalThis.masterCSSRuntime !== undefined
-  }))
+  }), MASTER_CSS_RUNTIME_STYLE_ID)
   const destroyedState = { style: null, runtimeStyles: 0, registered: false }
   expect(await readDestroyedState()).toEqual(destroyedState)
   await page.evaluate(() => (globalThis as any).destroyedRuntime.destroy())
