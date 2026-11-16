@@ -3,6 +3,6 @@ import masterCSS from '@stet-css/vite'
 
 export default defineConfig({
   plugins: [
-    masterCSS({ mode: 'static' })
+    masterCSS()
   ]
 })
