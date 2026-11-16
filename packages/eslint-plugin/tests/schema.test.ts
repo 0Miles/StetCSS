@@ -1,7 +1,7 @@
 import { ESLint, type Linter } from 'eslint'
 import { expect, test } from 'vitest'
 import plugin from '../src'
-import { masterCSSSettingsSchema } from '../src/settings-schema'
+import { stetCSSSettingsSchema } from '../src/settings-schema'
 
 const baseConfig: Linter.Config = {
   files: ['**/*.jsx'],
@@ -30,7 +30,7 @@ function createESLint(rules: Linter.RulesRecord) {
 }
 
 test('keeps Master CSS settings schema separate from rule option schemas', () => {
-  expect(masterCSSSettingsSchema).toMatchObject({
+  expect(stetCSSSettingsSchema).toMatchObject({
     type: 'object',
     additionalProperties: false,
     properties: {

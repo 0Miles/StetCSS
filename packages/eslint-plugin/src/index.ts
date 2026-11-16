@@ -7,7 +7,7 @@ import plugin from './plugin'
 import type { Linter } from 'eslint'
 import type { TSESLint } from '@typescript-eslint/utils'
 
-const masterCSSPlugin: Omit<TSESLint.Linter.Plugin, 'configs'> & {
+const stetCSSPlugin: Omit<TSESLint.Linter.Plugin, 'configs'> & {
   configs: {
     legacy: unknown
     base: Linter.Config
@@ -26,4 +26,4 @@ const masterCSSPlugin: Omit<TSESLint.Linter.Plugin, 'configs'> & {
   settings
 }
 
-export default masterCSSPlugin
+export default stetCSSPlugin

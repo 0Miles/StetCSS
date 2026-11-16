@@ -1,6 +1,6 @@
 import type { RuleContext } from '@typescript-eslint/utils/ts-eslint'
 import settings, { Settings } from '../settings'
-import { StetCSS, createCSSWithNativeDeclarations, defaultManifest } from './master-css'
+import { StetCSS, createCSSWithNativeDeclarations, defaultManifest } from './stet-css'
 import { findStetCSSWorkspaceDirectoriesSync } from '@stet-css/project/entries'
 import { loadProjectManifestSync } from '@stet-css/project/manifest-sync'
 import path from 'node:path'

@@ -6,7 +6,7 @@ const sourceMatcherSchema: JSONSchema4 = {
   uniqueItems: true
 }
 
-export const masterCSSSettingsSchema: JSONSchema4 = {
+export const stetCSSSettingsSchema: JSONSchema4 = {
   type: 'object',
   properties: {
     classAttributes: sourceMatcherSchema,
@@ -25,4 +25,4 @@ export const noInvalidClassesOptionsSchema: JSONSchema4 = {
   additionalProperties: false
 }
 
-export default masterCSSSettingsSchema
+export default stetCSSSettingsSchema
