@@ -97,7 +97,7 @@ export default defineNuxtConfig({
 })
 ```
 
-The module also reads these options from the `mastercss` key of the Nuxt config.
+The module also reads these options from the `stetcss` key of the Nuxt config.
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |

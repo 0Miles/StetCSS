@@ -9,7 +9,7 @@ export type { ModuleOptions } from './options'
 export default defineNuxtModule<ModuleOptions>({
   meta: {
     name,
-    configKey: 'mastercss'
+    configKey: 'stetcss'
   },
   setup(options, nuxt) {
     // Creating the plugins checks the options, so `nuxi prepare` also reports a bad key.
