@@ -10,7 +10,7 @@ const scannerOptions: Required<ScannerOptions> = {
 }
 
 /** The only keys `ScannerOptions` accepts. */
-export const SCANNER_OPTION_KEYS: readonly string[] = ['adapters']
+export const SCANNER_OPTION_KEYS: readonly string[] = ['adapters'] satisfies readonly (keyof ScannerOptions)[]
 
 /**
  * Removed scanner options and what replaces each, read by every error about a removed key.

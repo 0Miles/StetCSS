@@ -20,6 +20,16 @@ interface ScannerResetOptions {
 }
 
 /**
+ * What a first-party caller validates candidates against. Not a user option: projects
+ * configure classes in their CSS entry.
+ * @internal
+ */
+export interface ScannerValidation {
+  /** The manifest compiled from the project's entries; defaults to the preset's. */
+  manifest?: MasterCSSManifest
+}
+
+/**
  * Validates class candidates from supplied source text and caches the result: which classes
  * are valid, which are not, and which (source, content) pairs were already read. Which files
  * to read and which classes to force in or out is the stylesheet's class set.
@@ -35,9 +45,8 @@ export default class CSSScanner extends EventEmitter {
 
   /**
    * Per-source content-hash cache. When the same `source` arrives with the
-   * same `content` (HMR re-fires the same file unchanged, vite transform
-   * runs the same module twice), we skip re-running the regex pipeline
-   * and re-validating every class.
+   * same `content` (a caller re-reads an unchanged file), we skip re-running
+   * extraction and re-validating every class.
    */
   private contentHashes = new Map<string, string>()
 
@@ -49,9 +58,13 @@ export default class CSSScanner extends EventEmitter {
    */
   private validRulesCache = new Map<string, ReturnType<typeof generateValidRules>>()
 
+  /**
+   * @param validation - Internal: set by first-party callers only, kept across `reset()`.
+   */
   constructor(
     public customOptions: ScannerOptions = {},
-    public cwd = process.cwd()
+    public cwd = process.cwd(),
+    public validation: ScannerValidation = {}
   ) {
     super()
   }
@@ -69,7 +82,7 @@ export default class CSSScanner extends EventEmitter {
     validateScannerOptions(customOptions)
     this.options = { ...scannerOptions, ...customOptions }
     this.resetDependencies = []
-    this.css = createCSSWithNativeDeclarations(defaultManifest)
+    this.css = createCSSWithNativeDeclarations(this.validation.manifest || defaultManifest)
     this.emit('init', this.options, this.manifest)
     this.initialized = true
     return this
@@ -199,7 +212,7 @@ export default class CSSScanner extends EventEmitter {
   }
 
   /**
-   * The default manifest the scanner validates candidates against.
+   * The manifest the scanner validates candidates against.
    */
   get manifest(): MasterCSSManifest {
     return this.css.manifest
