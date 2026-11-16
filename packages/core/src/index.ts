@@ -9,7 +9,9 @@ export {
   VariableRule,
   AnimationRule,
   compareRulePriority,
-  createHydrationManifest
+  createHydrationManifest,
+  UndeclaredModeError,
+  isUndeclaredModeError
 } from '@stet-css/engine'
 export type {
   CompiledUtility,
