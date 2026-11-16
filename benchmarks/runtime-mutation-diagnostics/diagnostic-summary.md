@@ -2,6 +2,8 @@
 
 Status: internal diagnostic, not a public benchmark result.
 
+The Master progressive results below are historical: #60 removed progressive delivery from the suites, so these commands now measure Master runtime only.
+
 Captured from:
 
 - `pnpm --filter ./benchmarks bench:runtime-mutation-diagnostics`
