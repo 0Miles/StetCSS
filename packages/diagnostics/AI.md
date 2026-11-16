@@ -10,7 +10,7 @@ Owns the adapter-neutral **inspection report** behind the CLI `inspect` command:
 
 ## Risks
 
-- **Report shape**: the CLI reads the top-level shape and its `version` (`MASTER_CSS_INSPECTION_REPORT_VERSION`); keep both stable.
+- **Report shape**: the CLI reads the top-level shape and its `version` (`STET_CSS_INSPECTION_REPORT_VERSION`); keep both stable.
 - **Class validity**: the scanner judges classes by the manifest `loadProjectManifest` compiles from the project's entries (their tokens, modes and utilities), as the build integrations do; judging by the preset's default manifest reports classes the build emits as invalid (#71).
 - **Stylesheet entry errors** stay in `diagnostics` alongside scanner diagnostics.
 - **CLI exit code**: source discovery and missing-CSS classification feed `summary.errors` and `summary.warnings`, which set the CLI exit code, so broadening either changes CLI behaviour.

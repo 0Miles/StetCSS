@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { createMasterCSSInspectionReport } from '../src'
+import { createStetCSSInspectionReport } from '../src'
 
 function createTempDir(prefix: string) {
   return mkdtempSync(join(tmpdir(), prefix))
@@ -13,7 +13,7 @@ describe('@stet-css/diagnostics', () => {
     const cwd = createTempDir('master-css-diagnostics-inspect-')
     try {
       writeFileSync(join(cwd, 'index.html'), '<div class="block text-decoration:bad()"></div>')
-      const report = await createMasterCSSInspectionReport({
+      const report = await createStetCSSInspectionReport({
         cwd,
         patterns: ['index.html'],
         classes: ['block', 'never-generated-class']
@@ -67,7 +67,7 @@ describe('@stet-css/diagnostics', () => {
         @blocklist 'block';
       `)
       writeFileSync(join(cwd, 'index.html'), '<div class="block"></div>')
-      const report = await createMasterCSSInspectionReport({
+      const report = await createStetCSSInspectionReport({
         cwd,
         classes: ['block', 'p:2x']
       })
@@ -90,7 +90,7 @@ describe('@stet-css/diagnostics', () => {
     try {
       writeFileSync(join(cwd, 'index.css'), '@import "@stet-css/core";')
       writeFileSync(join(cwd, 'index.html'), '<div class="block"></div>')
-      const report = await createMasterCSSInspectionReport({
+      const report = await createStetCSSInspectionReport({
         cwd,
         patterns: ['index.html'],
         classes: 'block',
@@ -128,7 +128,7 @@ describe('@stet-css/diagnostics', () => {
         '@media (min-width: 768px) { .unused\\:wide:hover { color: blue; } }'
       ].join('\n'))
       writeFileSync(join(cwd, 'index.html'), '<div class="card"></div>')
-      const report = await createMasterCSSInspectionReport({
+      const report = await createStetCSSInspectionReport({
         cwd,
         patterns: ['index.html'],
         classes: ['card', 'unused:wide', 'png', 'ghost']
@@ -157,7 +157,7 @@ describe('@stet-css/diagnostics', () => {
     try {
       writeFileSync(join(cwd, 'index.css'), '@import "@stet-css/core";\n@settings { default-mode: dark; }')
       writeFileSync(join(cwd, 'index.html'), '<div class="block"></div>')
-      const report = await createMasterCSSInspectionReport({
+      const report = await createStetCSSInspectionReport({
         cwd,
         patterns: ['index.html']
       })
@@ -191,7 +191,7 @@ describe('@stet-css/diagnostics', () => {
       writeFileSync(join(cwd, 'src/page.html'), '<div class="block"></div>')
       writeFileSync(join(cwd, 'src/legacy/page.html'), '<div class="m:4x"></div>')
       writeFileSync(join(cwd, 'build/index.html'), '<div class="p:2x"></div>')
-      const report = await createMasterCSSInspectionReport({
+      const report = await createStetCSSInspectionReport({
         cwd,
         classes: 'block m:4x p:2x',
         includeCss: true
@@ -226,7 +226,7 @@ describe('@stet-css/diagnostics', () => {
         '@components { btnz { display: block; } }'
       ].join('\n'))
       writeFileSync(join(cwd, 'index.html'), '<div class="block fg:brand p:card fg:red@sepia cardy btnz"></div>')
-      const report = await createMasterCSSInspectionReport({
+      const report = await createStetCSSInspectionReport({
         cwd,
         classes: 'fg:brand p:card fg:red@sepia cardy btnz',
         includeCss: true
@@ -256,7 +256,7 @@ describe('@stet-css/diagnostics', () => {
     try {
       writeFileSync(join(cwd, 'index.css'), '@master entry;\n.btn { color: red; }')
       writeFileSync(join(cwd, 'index.html'), '<div class="block"></div>')
-      const report = await createMasterCSSInspectionReport({
+      const report = await createStetCSSInspectionReport({
         cwd,
         patterns: ['index.html']
       })
@@ -280,7 +280,7 @@ describe('@stet-css/diagnostics', () => {
     try {
       writeFileSync(join(cwd, 'index.css'), '@import "@stet-css/core";\n@import "./missing.css";')
       writeFileSync(join(cwd, 'index.html'), '<div class="block"></div>')
-      const report = await createMasterCSSInspectionReport({
+      const report = await createStetCSSInspectionReport({
         cwd,
         patterns: ['index.html']
       })

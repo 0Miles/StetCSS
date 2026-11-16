@@ -1,6 +1,6 @@
 import {
-  createMasterCSSInspectionReport,
-  type MasterCSSInspectionReport
+  createStetCSSInspectionReport,
+  type StetCSSInspectionReport
 } from '@stet-css/diagnostics'
 import path from 'node:path'
 
@@ -19,7 +19,7 @@ function parseMaxWarnings(value: string | number | undefined) {
   return Number.isFinite(maxWarnings) && maxWarnings >= 0 ? maxWarnings : 0
 }
 
-function formatStylish(report: MasterCSSInspectionReport) {
+function formatStylish(report: StetCSSInspectionReport) {
   const lines = [
     `Scanned ${report.summary.files} files, ${report.summary.stylesheets} stylesheet entries.`,
     `Classes: ${report.scanner.counts.valid} valid, ${report.scanner.counts.invalid} invalid.`,
@@ -34,7 +34,7 @@ function formatStylish(report: MasterCSSInspectionReport) {
   return `${lines.join('\n')}\n`
 }
 
-function outputReport(report: MasterCSSInspectionReport, format: 'json' | 'stylish') {
+function outputReport(report: StetCSSInspectionReport, format: 'json' | 'stylish') {
   if (format === 'stylish') {
     process.stdout.write(formatStylish(report))
   } else {
@@ -46,7 +46,7 @@ export default async function runInspect(specifiedSourcePaths: string[] = [], op
   const cwd = path.resolve(options.cwd || process.cwd())
   const format = options.format || 'json'
   const exitCode = options.exitCode || 'diagnostics'
-  const report = await createMasterCSSInspectionReport({
+  const report = await createStetCSSInspectionReport({
     cwd,
     patterns: specifiedSourcePaths.length ? specifiedSourcePaths : undefined,
     classes: options.classes,

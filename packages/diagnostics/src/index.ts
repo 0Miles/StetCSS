@@ -13,28 +13,28 @@ import { loadProjectManifest } from '@stet-css/project/manifest'
 import fs from 'node:fs'
 import path from 'node:path'
 
-export const MASTER_CSS_INSPECTION_REPORT_VERSION = 1
+export const STET_CSS_INSPECTION_REPORT_VERSION = 1
 
-export type MasterCSSInspectionDiagnosticSeverity = 'error' | 'warning'
-export type MasterCSSInspectionDiagnosticCode =
+export type StetCSSInspectionDiagnosticSeverity = 'error' | 'warning'
+export type StetCSSInspectionDiagnosticCode =
   | 'invalid-scanner-class'
   | 'missing-css'
   | 'stylesheet-error'
   | 'stylesheet-warning'
   | 'scanner-error'
-export type MasterCSSInspectionDiagnosticSourceKind = 'scanner' | 'stylesheet' | 'missing-css'
+export type StetCSSInspectionDiagnosticSourceKind = 'scanner' | 'stylesheet' | 'missing-css'
 
-export interface MasterCSSInspectionDiagnostic {
-  code: MasterCSSInspectionDiagnosticCode
-  severity: MasterCSSInspectionDiagnosticSeverity
+export interface StetCSSInspectionDiagnostic {
+  code: StetCSSInspectionDiagnosticCode
+  severity: StetCSSInspectionDiagnosticSeverity
   message: string
   source: 'StetCSS'
-  sourceKind: MasterCSSInspectionDiagnosticSourceKind
+  sourceKind: StetCSSInspectionDiagnosticSourceKind
   filePath?: string
   data?: unknown
 }
 
-export interface MasterCSSSourceInspection {
+export interface StetCSSSourceInspection {
   filePath: string
   source: string
   scanned: boolean
@@ -46,7 +46,7 @@ export interface MasterCSSSourceInspection {
   }
 }
 
-export interface MasterCSSStylesheetInspection {
+export interface StetCSSStylesheetInspection {
   filePath: string
   stetCSS: boolean
   dependencies: string[]
@@ -55,19 +55,19 @@ export interface MasterCSSStylesheetInspection {
   errors: string[]
 }
 
-export interface MasterCSSStylesheetError {
+export interface StetCSSStylesheetError {
   filePath: string
   message: string
 }
 
-export interface MasterCSSMissingCSSResult {
+export interface StetCSSMissingCSSResult {
   className: string
   status: 'present' | 'missing'
   reason: 'generated' | 'native-css' | 'safelist' | 'invalid' | 'blocklisted' | 'not-detected'
 }
 
-export interface MasterCSSInspectionReport {
-  version: typeof MASTER_CSS_INSPECTION_REPORT_VERSION
+export interface StetCSSInspectionReport {
+  version: typeof STET_CSS_INSPECTION_REPORT_VERSION
   cwd: string
   inputs: {
     patterns: string[]
@@ -92,10 +92,10 @@ export interface MasterCSSInspectionReport {
     resetDependencies: string[]
   }
   stylesheets: {
-    entries: MasterCSSStylesheetInspection[]
+    entries: StetCSSStylesheetInspection[]
     dependencies: string[]
     warnings: string[]
-    errors: MasterCSSStylesheetError[]
+    errors: StetCSSStylesheetError[]
   }
   css: {
     bytes: number
@@ -108,11 +108,11 @@ export interface MasterCSSInspectionReport {
   }
   missingCSS: {
     checked: string[]
-    present: MasterCSSMissingCSSResult[]
-    missing: MasterCSSMissingCSSResult[]
+    present: StetCSSMissingCSSResult[]
+    missing: StetCSSMissingCSSResult[]
   }
-  files: MasterCSSSourceInspection[]
-  diagnostics: MasterCSSInspectionDiagnostic[]
+  files: StetCSSSourceInspection[]
+  diagnostics: StetCSSInspectionDiagnostic[]
   summary: {
     files: number
     stylesheets: number
@@ -124,7 +124,7 @@ export interface MasterCSSInspectionReport {
   }
 }
 
-export interface CreateMasterCSSInspectionReportOptions {
+export interface CreateStetCSSInspectionReportOptions {
   cwd?: string
   /** Glob patterns that replace the project's own source files, as the root command's arguments do. */
   patterns?: string[]
@@ -170,7 +170,7 @@ function parseClassChecks(value: string[] | string | undefined) {
     : value?.split(/\s+/).map((item) => item.trim()).filter(Boolean) ?? []
 }
 
-function createScannerClassDiagnostics(scanner: CSSScanner, firstSourceByClass: Map<string, string>): MasterCSSInspectionDiagnostic[] {
+function createScannerClassDiagnostics(scanner: CSSScanner, firstSourceByClass: Map<string, string>): StetCSSInspectionDiagnostic[] {
   return sortedValues(scanner.invalidClasses).map((className) => ({
     code: 'invalid-scanner-class',
     severity: 'warning',
@@ -222,7 +222,7 @@ function classifyMissingCSS(
   directives: StylesheetDirectives,
   nativeRuleClasses: Set<string>,
   className: string
-): MasterCSSMissingCSSResult {
+): StetCSSMissingCSSResult {
   if (nativeRuleClasses.has(className)) {
     return { className, status: 'present', reason: 'native-css' }
   }
@@ -241,7 +241,7 @@ function classifyMissingCSS(
   return { className, status: 'missing', reason: 'not-detected' }
 }
 
-function createMissingCSSDiagnostics(results: MasterCSSMissingCSSResult[]): MasterCSSInspectionDiagnostic[] {
+function createMissingCSSDiagnostics(results: StetCSSMissingCSSResult[]): StetCSSInspectionDiagnostic[] {
   return results
     .filter((result) => result.status === 'missing')
     .map((result) => ({
@@ -254,13 +254,13 @@ function createMissingCSSDiagnostics(results: MasterCSSMissingCSSResult[]): Mast
     }))
 }
 
-async function resolveFilePath(cwd: string, filePath: string, resolver?: CreateMasterCSSInspectionReportOptions['resolveExistingFile']) {
+async function resolveFilePath(cwd: string, filePath: string, resolver?: CreateStetCSSInspectionReportOptions['resolveExistingFile']) {
   return resolver
     ? await resolver(filePath)
     : path.resolve(cwd, filePath)
 }
 
-async function resolveCSSEntryFiles(cwd: string, resolver?: CreateMasterCSSInspectionReportOptions['resolveExistingFile']) {
+async function resolveCSSEntryFiles(cwd: string, resolver?: CreateStetCSSInspectionReportOptions['resolveExistingFile']) {
   return Promise.all((await findCSSManifestEntryFiles(cwd)).map((entry) => resolveFilePath(cwd, entry, resolver)))
 }
 
@@ -284,9 +284,9 @@ async function registerManagedCSSEntries(
   styleCSSSources: StyleCSSSources,
   entryFiles: string[]
 ) {
-  const entries: MasterCSSStylesheetInspection[] = []
+  const entries: StetCSSStylesheetInspection[] = []
   const warnings: string[] = []
-  const errors: MasterCSSStylesheetError[] = []
+  const errors: StetCSSStylesheetError[] = []
   const nativeRuleClasses = new Set<string>()
   styleCSSSources.clear()
   for (const filePath of entryFiles) {
@@ -337,7 +337,7 @@ async function scanSourceFile(
   source: string,
   filePath: string,
   firstSourceByClass: Map<string, string>
-): Promise<MasterCSSSourceInspection> {
+): Promise<StetCSSSourceInspection> {
   const beforeLatent = new Set(scanner.latentClasses)
   const beforeValid = new Set(scanner.validClasses)
   const beforeInvalid = new Set(scanner.invalidClasses)
@@ -361,7 +361,7 @@ async function scanSourceFile(
   }
 }
 
-function createSummary(report: Omit<MasterCSSInspectionReport, 'summary'>): MasterCSSInspectionReport['summary'] {
+function createSummary(report: Omit<StetCSSInspectionReport, 'summary'>): StetCSSInspectionReport['summary'] {
   const errors = report.diagnostics.filter((diagnostic) => diagnostic.severity === 'error').length
   const warnings = report.diagnostics.filter((diagnostic) => diagnostic.severity === 'warning').length
   return {
@@ -375,9 +375,9 @@ function createSummary(report: Omit<MasterCSSInspectionReport, 'summary'>): Mast
   }
 }
 
-function createEmptyReport(cwd: string, sourcePatterns: string[], classChecks: string[], diagnostics: MasterCSSInspectionDiagnostic[]): MasterCSSInspectionReport {
-  const baseReport: Omit<MasterCSSInspectionReport, 'summary'> = {
-    version: MASTER_CSS_INSPECTION_REPORT_VERSION,
+function createEmptyReport(cwd: string, sourcePatterns: string[], classChecks: string[], diagnostics: StetCSSInspectionDiagnostic[]): StetCSSInspectionReport {
+  const baseReport: Omit<StetCSSInspectionReport, 'summary'> = {
+    version: STET_CSS_INSPECTION_REPORT_VERSION,
     cwd,
     inputs: {
       patterns: sourcePatterns,
@@ -429,7 +429,7 @@ function createEmptyReport(cwd: string, sourcePatterns: string[], classChecks: s
   }
 }
 
-export async function createMasterCSSInspectionReport(options: CreateMasterCSSInspectionReportOptions = {}): Promise<MasterCSSInspectionReport> {
+export async function createStetCSSInspectionReport(options: CreateStetCSSInspectionReportOptions = {}): Promise<StetCSSInspectionReport> {
   const cwd = path.resolve(options.cwd || process.cwd())
   const classChecks = parseClassChecks(options.classes)
   const sources = options.patterns?.length ? normalizeGlobPatterns(options.patterns) : undefined
@@ -437,7 +437,7 @@ export async function createMasterCSSInspectionReport(options: CreateMasterCSSIn
   options.validatePatterns?.(sourcePatterns)
   const styleCSSSources: StyleCSSSources = new Map()
   const firstSourceByClass = new Map<string, string>()
-  const diagnostics: MasterCSSInspectionDiagnostic[] = []
+  const diagnostics: StetCSSInspectionDiagnostic[] = []
 
   try {
     const entryFiles = await resolveCSSEntryFiles(cwd, options.resolveExistingFile)
@@ -475,8 +475,8 @@ export async function createMasterCSSInspectionReport(options: CreateMasterCSSIn
     diagnostics.push(...createScannerClassDiagnostics(scanner, firstSourceByClass))
     diagnostics.push(...createMissingCSSDiagnostics(missingResults))
 
-    const baseReport: Omit<MasterCSSInspectionReport, 'summary'> = {
-      version: MASTER_CSS_INSPECTION_REPORT_VERSION,
+    const baseReport: Omit<StetCSSInspectionReport, 'summary'> = {
+      version: STET_CSS_INSPECTION_REPORT_VERSION,
       cwd,
       inputs: {
         patterns: sourcePatterns,
