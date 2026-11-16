@@ -6,6 +6,7 @@ import {
   resolveMasterCSSPackageEntryFile
 } from '@stet-css/compiler'
 import {
+  collectCSSDirectiveRanges,
   createMasterCSSManifestEntryPattern,
   hasMasterCSSManifestEntrypoint as hasMasterCSSManifestEntrypointFallback,
   isMasterCSSModuleId,
@@ -62,6 +63,17 @@ export function hasMasterCSSManifestEntrypoint(source: string) {
   }
 }
 
+/**
+ * Whether discovery lists `source`: an entry (`@import '@stet-css/core'`), or a stylesheet that
+ * still holds a removed `@master` at-rule. The latter is no entry, but listing it lets every tool
+ * that compiles the entries (CLI scan and inspect, the language server, the bundlers) fail with
+ * the compiler's replacement message instead of silently finding no entries.
+ */
+function isDiscoveredCSSManifestEntry(source: string) {
+  return hasMasterCSSManifestEntrypoint(source)
+    || (source.includes('@master') && collectCSSDirectiveRanges(source).some((range) => range.name === 'master'))
+}
+
 async function collectCSSManifestEntryFiles(root: string, directory: string, entries: string[], extensions: readonly string[]) {
   try {
     for (const dirent of await readdir(directory, { withFileTypes: true })) {
@@ -73,7 +85,7 @@ async function collectCSSManifestEntryFiles(root: string, directory: string, ent
       }
       if (!dirent.isFile() || !extensions.includes(extname(dirent.name))) continue
       try {
-        if (hasMasterCSSManifestEntrypoint(await readFile(file, 'utf8'))) {
+        if (isDiscoveredCSSManifestEntry(await readFile(file, 'utf8'))) {
           entries.push(file)
         }
       } catch {
@@ -96,7 +108,7 @@ function collectCSSManifestEntryFilesSync(root: string, directory: string, entri
       }
       if (!dirent.isFile() || !extensions.includes(extname(dirent.name))) continue
       try {
-        if (hasMasterCSSManifestEntrypoint(readFileSync(file, 'utf8'))) {
+        if (isDiscoveredCSSManifestEntry(readFileSync(file, 'utf8'))) {
           entries.push(file)
         }
       } catch {

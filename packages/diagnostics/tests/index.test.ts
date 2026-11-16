@@ -205,6 +205,37 @@ describe('@stet-css/diagnostics', () => {
     }
   })
 
+  /**
+   * Prevents: `stet-css inspect` reporting zero entries and no error for a project still marked
+   * with the removed `@master entry;`; the report must carry the replacement message as a
+   * stylesheet error.
+   * Reverse check: dropping the `@master` predicate from project discovery
+   * (`isDiscoveredCSSManifestEntry`) turns this test red.
+   */
+  it('reports stylesheets still marked with @master entry as errors', async () => {
+    const cwd = createTempDir('master-css-diagnostics-master-entry-')
+    try {
+      writeFileSync(join(cwd, 'index.css'), '@master entry;\n.btn { color: red; }')
+      writeFileSync(join(cwd, 'index.html'), '<div class="block"></div>')
+      const report = await createMasterCSSInspectionReport({
+        cwd,
+        patterns: ['index.html']
+      })
+
+      expect(report.stylesheets.errors).toContainEqual(expect.objectContaining({
+        filePath: resolve(cwd, 'index.css'),
+        message: expect.stringContaining("@import '@stet-css/core'")
+      }))
+      expect(report.diagnostics).toContainEqual(expect.objectContaining({
+        code: 'stylesheet-error',
+        severity: 'error',
+        filePath: resolve(cwd, 'index.css')
+      }))
+    } finally {
+      rmSync(cwd, { recursive: true, force: true })
+    }
+  })
+
   it('reports stylesheet entry errors without hiding scanner diagnostics', async () => {
     const cwd = createTempDir('master-css-diagnostics-entry-error-')
     try {
