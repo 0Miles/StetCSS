@@ -6,18 +6,22 @@ import { createCSSWithNativeDeclarations } from './native-declaration'
 type Declarations = NonNullable<GeneratedRule['declarations']>
 
 /**
- * Returns the declarations of a group (`{a:b;c:d}`) whose CSS passes
- * validation, the way a browser drops an invalid declaration and keeps the
- * rest of the block. Each declaration is checked inside the group's own
- * selector and at-rules, so an invalid selector or condition drops them all.
- * Returns `undefined` for non-group rules and for groups with nothing valid.
+ * Returns a group's declarations without the ones its validation errors name.
+ * Returns `undefined` for non-group rules, for errors not tied to a single
+ * declaration (parse, at-rule), and for groups with nothing valid left.
  */
-function getValidGroupDeclarations(rule: GeneratedRule): Declarations | undefined {
+function getValidGroupDeclarations(
+  rule: GeneratedRule,
+  errors: ReturnType<typeof validateCSS>
+): Declarations | undefined {
   if (rule.registeredUtility.emit.type !== 'group' || !rule.declarations) return
+  const invalidProperties = new Set<string>()
+  for (const error of errors) {
+    if (!error.property || error.atrule) return
+    invalidProperties.add(error.property)
+  }
   const declarations = Object.fromEntries(
-    Object.entries(rule.declarations).filter(([property, value]) =>
-      !validateCSS(rule.createRuleText({ [property]: value })).length
-    )
+    Object.entries(rule.declarations).filter(([property]) => !invalidProperties.has(property))
   ) as Declarations
   return Object.keys(declarations).length ? declarations : undefined
 }
@@ -35,8 +39,9 @@ export default function generateValidRules(
 ) {
   const rules = css.generate(syntax)
   for (const eachRule of rules) {
-    if (!validateCSS(eachRule.text).length) continue
-    const validDeclarations = getValidGroupDeclarations(eachRule)
+    const errors = validateCSS(eachRule.text)
+    if (!errors.length) continue
+    const validDeclarations = getValidGroupDeclarations(eachRule, errors)
     if (!validDeclarations) return []
     // `generate()` builds fresh rules on every call, so nothing else holds this
     // one; its `text` getter renders from `declarations`.
