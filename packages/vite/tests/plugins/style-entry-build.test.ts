@@ -26,6 +26,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
 import { createSlotCSSRule } from '../../src/utils/slot'
+import { createBuildDigest } from '../../src/utils/build-digest'
 import { createProjectContext, removeProjects, SLOT_CSS_RULE } from '../plugin-test-helper'
 
 afterEach(removeProjects)
@@ -44,12 +45,12 @@ function makeBundle(entries: Record<string, string>) {
 }
 
 let REAL_CSS: string
-/** The placeholder a stylesheet transformed with `REAL_CSS` emits. */
+/** The placeholder a build of `makeContext()`'s project emits. */
 let SLOT: string
 
 beforeAll(async () => {
   REAL_CSS = await getExtractedCSS(makeContext())
-  SLOT = createSlotCSSRule(SLOT_CSS_RULE, REAL_CSS)
+  SLOT = createSlotCSSRule(SLOT_CSS_RULE, await createBuildDigest(makeContext()))
   expect(REAL_CSS).toContain('.bg\\:white')
 })
 
@@ -73,13 +74,13 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
 
   /**
    * Guards the cache warning: an asset is named while it holds the placeholder, so one whose
-   * placeholder carries the digest of other CSS than the CSS spliced in (a stylesheet that
-   * imports Master CSS registered after it was transformed) may keep its name after a deploy
-   * that changes its CSS. The build must say so, and still ship the full CSS.
+   * placeholder carries another digest than the build's final one (an entry discovery misses
+   * registered after it was transformed) may keep its name after a deploy that changes its
+   * CSS. The build must say so, and still ship the full CSS.
    * Reverse check: dropping the `staleFileNames` warning in `style-entry-build.ts` turns only
    * this test red.
    */
-  test('warns when an asset was named after other CSS than the CSS spliced in', async () => {
+  test('warns when an asset was named before the build digest was final', async () => {
     const ctx = makeContext()
     const plugin = StyleEntryBuildPlugin(ctx)
     const warn = vi.fn()
@@ -87,7 +88,7 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
 
     const bundle = makeBundle({
       'assets/index-abc.css': SLOT,
-      'assets/admin-abc.css': createSlotCSSRule(SLOT_CSS_RULE, 'body{margin:0}')
+      'assets/admin-abc.css': createSlotCSSRule(SLOT_CSS_RULE, 'hstale')
     })
     await (plugin as any).generateBundle.call({ warn }, {}, bundle)
 
@@ -95,6 +96,29 @@ describe('StyleEntryBuildPlugin (D1 placeholder-leak warn)', () => {
     expect(warn).toHaveBeenCalledTimes(1)
     expect(warn.mock.calls[0][0]).toContain('assets/admin-abc.css')
     expect(warn.mock.calls[0][0]).not.toContain('assets/index-abc.css')
+  })
+
+  /**
+   * Guards unminified builds: with `build.cssMinify: false` and the lightningcss transformer,
+   * Vite prints the placeholder over several lines, and a splice that matched only the
+   * minified text shipped the placeholder with no generated CSS.
+   * Reverse check: matching only `{--slot:<digest>}` without whitespace turns only this test
+   * red.
+   */
+  test('splices a placeholder an unminified build printed over several lines', async () => {
+    const ctx = makeContext()
+    const plugin = StyleEntryBuildPlugin(ctx)
+    const warn = vi.fn()
+    ctx.virtualCSSPlaceholderEnvironments = new Set(['client'])
+    const digest = /--slot:(\w+)/.exec(SLOT)![1]
+
+    const bundle = makeBundle({
+      'assets/index-abc.css': `body {\n  margin: 0;\n}\n\n#master-css-slot {\n  --slot: ${digest};\n}\n`
+    })
+    await (plugin as any).generateBundle.call({ warn }, {}, bundle)
+
+    expect(bundle['assets/index-abc.css'].source).toBe(`body {\n  margin: 0;\n}\n\n${REAL_CSS}\n`)
+    expect(warn).not.toHaveBeenCalled()
   })
 
   test('deduplicates duplicate placeholder occurrences in the same CSS asset', async () => {
