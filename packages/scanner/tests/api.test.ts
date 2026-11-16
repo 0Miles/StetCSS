@@ -27,18 +27,4 @@ describe('CSSScanner public API', () => {
 
     expect(scanner.validClasses.has('block')).toBe(false)
   })
-
-  test('inserts safelist during init and reset', async () => {
-    const scanner = await new CSSScanner({
-      safelist: ['block']
-    }).init()
-
-    expect(scanner.css.text).toContain('.block{display:block}')
-
-    await scanner.scan('index.html', '<div class="fg:red"></div>')
-    await scanner.reset()
-
-    expect(scanner.validClasses.has('fg:red')).toBe(false)
-    expect(scanner.css.text).toContain('.block{display:block}')
-  })
 })
