@@ -232,6 +232,8 @@ async function runMasterViteDiagnostic(workspace: string, fixtureId: BenchmarkFi
   }))
 
   recorder.addTiming('total-diagnostic-ms', performance.now() - totalStartedAt)
+  // No `source-file-count` here: the plugin reads the project's class set, not Vite modules,
+  // so the build reports no per-file scan to count.
 
   return collectDiagnosticOutput(workspace, fixtureId, recorder)
 }
