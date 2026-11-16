@@ -29,15 +29,11 @@
     "build tools",
     "static rendering",
     "static",
-    "runtime",
-    "css runtime",
     "css",
     "mastercss",
     "vite-plugin"
   ],
-  "sideEffects": [
-    "./dist/runtime.js"
-  ],
+  "sideEffects": false,
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "jsnext:main": "./dist/index.js",
@@ -48,11 +44,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
-    },
-    "./runtime": {
-      "types": "./dist/runtime.d.ts",
-      "import": "./dist/runtime.js",
-      "default": "./dist/runtime.js"
     }
   },
   "files": [
@@ -70,11 +61,7 @@
     "@stet-css/project": "workspace:^",
     "@stet-css/scanner": "workspace:^",
     "@stet-css/integration": "workspace:^",
-    "@stet-css/runtime": "workspace:^",
-    "@stet-css/server": "workspace:^",
-    "@stet-css/stylesheet": "workspace:^",
-    "magic-string": "^0.30.21",
-    "@stet-css/schema": "workspace:^"
+    "@stet-css/stylesheet": "workspace:^"
   },
   "devDependencies": {
     "@stet-css/preset": "workspace:^"

@@ -34,8 +34,6 @@ function createManifestModule(
   pluginContext: { emitFile?: (asset: { type: 'asset', name: string, source: string }) => string },
   json: string
 ) {
-  context.defaultManifestAssetReferenceId = undefined
-  context.defaultManifestAssetSource = undefined
   if (!isProductionBuild(context) || !pluginContext.emitFile) return toInlineManifestModule(json)
   const referenceId = pluginContext.emitFile({
     type: 'asset',
@@ -43,10 +41,6 @@ function createManifestModule(
     source: json
   })
   const urlExpression = `import.meta.ROLLUP_FILE_URL_${referenceId}`
-  if (!isServerBuild(context)) {
-    context.defaultManifestAssetReferenceId = referenceId
-    context.defaultManifestAssetSource = json
-  }
   return isServerBuild(context)
     ? toUniversalManifestFacadeModule(urlExpression)
     : toBrowserManifestFacadeModule(urlExpression)

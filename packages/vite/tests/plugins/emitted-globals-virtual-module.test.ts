@@ -41,8 +41,7 @@ describe('EmittedGlobalsVirtualModulePlugin', () => {
       const context = {
         config: { root },
         scanner,
-        styleCSSSources,
-        includeGeneratedCSS: false
+        styleCSSSources
       } as any
       const plugin = EmittedGlobalsVirtualModulePlugin(context)
 
