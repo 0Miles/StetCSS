@@ -1,12 +1,19 @@
-import { createExtractedCSSResult } from '@stet-css/stylesheet'
+import { createExtractedCSSResult, type StylesheetSourceContext } from '@stet-css/stylesheet'
 import type { PluginContext } from '../core'
 import { getScanner } from './scanner-context'
 
-export async function getExtractedCSSResult(context: PluginContext) {
-  const result = await createExtractedCSSResult({
+/** What decides the class set; shared by extraction and the dev watcher's file filter. */
+export function getStylesheetSourceContext(context: PluginContext): StylesheetSourceContext {
+  return {
     scanner: getScanner(context),
     styleCSSSources: context.styleCSSSources,
-    projectDir: context.config?.root,
+    projectDir: context.config?.root
+  }
+}
+
+export async function getExtractedCSSResult(context: PluginContext) {
+  const result = await createExtractedCSSResult({
+    ...getStylesheetSourceContext(context),
     includeGeneratedCSS: context.includeGeneratedCSS,
     // The plugin scans no modules: every class comes from the stylesheet's class set, so
     // templates that only an SSR or prerender build compiles still get their rules.
