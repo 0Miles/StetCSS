@@ -25,13 +25,11 @@
     "directory": "packages/next"
   },
   "keywords": [
-    "adapter",
     "integration",
     "next",
     "nextjs",
     "build tools",
     "static",
-    "pre-render",
     "css",
     "mastercss"
   ],
@@ -46,15 +44,9 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
-    },
-    "./adapter": {
-      "types": "./dist/adapter.d.ts",
-      "import": "./dist/adapter.js",
-      "default": "./dist/adapter.js"
     }
   },
   "files": [
-    "empty.css",
     "dist"
   ],
   "publishConfig": {
@@ -69,10 +61,7 @@
     "@stet-css/scanner": "workspace:^",
     "@stet-css/integration": "workspace:^",
     "@stet-css/project": "workspace:^",
-    "@stet-css/runtime": "workspace:^",
-    "@stet-css/server": "workspace:^",
     "@stet-css/stylesheet": "workspace:^",
-    "@stet-css/schema": "workspace:^",
     "@stet-css/lexer": "workspace:^"
   },
   "devDependencies": {
