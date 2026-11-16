@@ -237,6 +237,35 @@ describe('static class set', () => {
   })
 
   /**
+   * Guards a build integration's output directory under the project root under a name the
+   * built-in exclusions do not know (`www`): the emitted bundle must not feed classes back
+   * into the CSS or count as a source file a watcher rebuilds on, even when `@source` names
+   * it.
+   * Reverse check: dropping `ignorePaths` from the listed-file filter turns only this test red.
+   */
+  it('never reads the ignored paths, even through @source', async () => {
+    const root = createProject({
+      'src/app.html': '<div class="block"></div>',
+      'www/main.js': 'document.body.className = "m:4x"'
+    })
+    const scanner = new CSSScanner({ verbose: 0 }, root)
+    await scanner.init()
+    const styleCSSSources: StyleCSSSources = new Map()
+    await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'src/index.css'), `
+      @import "@stet-css/core";
+      @source '../www';
+    `, { projectDir: root })
+    const context = { scanner, styleCSSSources, projectDir: root, ignorePaths: [join(root, 'www')] }
+
+    const css = await createExtractedCSS({ ...context, classes: [] })
+
+    expect(css).toContain(rule('block'))
+    expect(css).not.toContain(rule('m:4x'))
+    expect(await resolveStylesheetSourceFiles(context)).toStrictEqual([join(root, 'src/app.html')])
+    expect(isStylesheetSourceFile(join(root, 'www/main.js'), context)).toBe(false)
+  })
+
+  /**
    * Guards that the scanner's custom `adapters` also read project files, so a project with
    * its own template syntax keeps the classes only its adapter can find.
    * Reverse check: dropping the scanner's adapters from the scope turns only this test red.
