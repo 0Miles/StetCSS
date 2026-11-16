@@ -39,27 +39,51 @@ export class StylesheetEntryError extends Error {
   }
 }
 
+/**
+ * Errors a stylesheet's author causes and fixes: a removed or invalid directive, a missing
+ * import or an unreadable file. Anything else is a bug and keeps its stack.
+ */
+function isStylesheetInputError(error: unknown) {
+  if (!(error instanceof Error)) return false
+  const code = (error as NodeJS.ErrnoException).code
+  return error.name === 'CSSDirectiveError'
+    || error.message.startsWith('CSS file not found')
+    || (typeof code === 'string' && /^E[A-Z]+$/.test(code))
+}
+
+/**
+ * Registers every entry and sets the files whose change restarts watching. When an entry
+ * fails, those files include the failed entry's import graph, so fixing it restarts.
+ */
 async function registerManagedCSSEntries(scanner: CSSScanner, styleCSSSources: StyleCSSSources) {
   const [
-    { registerStyleCSSSource },
+    { registerStyleCSSSource, collectStyleCSSDependencies },
     { findCSSManifestEntryFiles }
   ] = await Promise.all([
     loadStylesheetModule(),
     loadProjectEntriesModule()
   ])
   styleCSSSources.clear()
+  const setResetDependencies = (extra: string[] = []) => {
+    scanner.resetDependencies = [...new Set([
+      ...Array.from(styleCSSSources.values()).flatMap((source) => source.dependencies),
+      ...extra
+    ])]
+  }
   for (const entry of await findCSSManifestEntryFiles(scanner.cwd)) {
+    let source: string | undefined
     try {
-      await registerStyleCSSSource(scanner, styleCSSSources, entry, fs.readFileSync(entry, 'utf8'), {
+      source = fs.readFileSync(entry, 'utf8')
+      await registerStyleCSSSource(scanner, styleCSSSources, entry, source, {
         projectDir: scanner.cwd
       })
     } catch (error) {
+      if (!isStylesheetInputError(error)) throw error
+      setResetDependencies([entry, ...(source === undefined ? [] : collectStyleCSSDependencies(entry, source, scanner.cwd))])
       throw new StylesheetEntryError(error)
     }
   }
-  scanner.resetDependencies = [...new Set(
-    Array.from(styleCSSSources.values()).flatMap((source) => source.dependencies)
-  )]
+  setResetDependencies()
 }
 
 /** Source path arguments replace the project's own source files; globs use `/` on every platform. */
@@ -179,9 +203,18 @@ export default async function runScan(specifiedSourcePaths: string[] = [], optio
               logger.info(`[change] ${formatWatchedPath(scanner.cwd, resetDependency)}`)
             }
             await closeWatchers()
-            await scanner.reset(scanner.customOptions, { emit: false })
-            await registerManagedCSSEntries(scanner, styleCSSSources)
-            await queueWrite()
+            try {
+              await scanner.reset(scanner.customOptions, { emit: false })
+              await registerManagedCSSEntries(scanner, styleCSSSources)
+              await queueWrite()
+            } catch (error) {
+              if (!(error instanceof StylesheetEntryError)) throw error
+              // Keep watching the broken entry, so saving the fix restarts.
+              const logger = await loadLogger(logStream)
+              logger.error(error.message)
+              await startWatchers()
+              return
+            }
             await startWatchers()
             const logger = await loadLogger(logStream)
             logger.log('')
