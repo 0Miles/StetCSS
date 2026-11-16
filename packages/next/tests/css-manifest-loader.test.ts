@@ -162,7 +162,7 @@ describe('css manifest loader', () => {
     const projectDir = createFixtureDir()
     mkdirSync(join(projectDir, 'app'), { recursive: true })
     const entryPath = join(projectDir, 'app/globals.css')
-    const preserveOnlyPath = join(projectDir, 'app/preserve.css')
+    const directiveOnlyPath = join(projectDir, 'app/directives-only.css')
     const dependencies: string[] = []
     writeFileSync(entryPath, [
       '@import "@stet-css/core";',
@@ -173,8 +173,8 @@ describe('css manifest loader', () => {
       '    btn { color: var(--color-primary); }',
       '}'
     ].join('\n'))
-    writeFileSync(preserveOnlyPath, [
-      '@preserve native;',
+    writeFileSync(directiveOnlyPath, [
+      '@source "./ignored.tsx";',
       '@theme {',
       '    --color-ignored: #456;',
       '}'
@@ -193,7 +193,7 @@ describe('css manifest loader', () => {
     expect(source).toContain('"btn"')
     expect(source).not.toContain('ignored')
     expect(dependencies).toContain(entryPath)
-    expect(dependencies).not.toContain(preserveOnlyPath)
+    expect(dependencies).not.toContain(directiveOnlyPath)
   })
 
   it('keeps virtual manifest dependencies registered after invalid CSS and recovers on the next run', async () => {

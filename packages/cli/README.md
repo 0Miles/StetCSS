@@ -122,7 +122,7 @@ Inspect scanner state, managed stylesheet entries, generated CSS size, and expli
 npx @stet-css/cli inspect --classes "btn card" --format json --exit-code never
 ```
 
-Use `--classes` to ask whether specific class names are present in the generated CSS path. The report explains each checked class as `generated`, `native-css`, `safelist`, `invalid`, `blocklisted`, or `not-detected`.
+Use `--classes` to ask whether specific class names are present in the generated CSS path. The report explains each checked class as `generated`, `safelist`, `invalid`, `blocklisted`, or `not-detected`.
 
 The JSON report includes:
 
@@ -133,7 +133,7 @@ The JSON report includes:
 | `stylesheets` | Managed CSS entries, dependency metadata, warnings, and entry loading errors. |
 | `css` | Generated CSS byte size, emitted global counts, and optional CSS text. |
 | `missingCSS` | Present and missing results for `--classes`. |
-| `files` | Per-file scanner discoveries for latent, valid, invalid, and native CSS classes. |
+| `files` | Per-file scanner discoveries for latent, valid, and invalid classes. |
 | `diagnostics` | Machine-readable `scanner`, `stylesheet`, and `missing-css` diagnostics. |
 | `summary` | File, stylesheet, diagnostic, error, warning, missing CSS, and invalid class totals. |
 

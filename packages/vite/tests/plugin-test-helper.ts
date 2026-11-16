@@ -59,9 +59,7 @@ export function createProjectContext({
       css: { text: '', manifest: defaultManifestJSON },
       config: {},
       latentClasses: new Set(),
-      validClasses: new Set(),
-      nativeClassNames: new Set(),
-      usedNativeClasses: new Set()
+      validClasses: new Set()
     })
   } as any
 }

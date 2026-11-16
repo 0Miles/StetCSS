@@ -24,7 +24,6 @@ describe('stylesheet CSS directives', () => {
       @source not './src/**/*.test.tsx';
       @safelist 'not-exclude';
       @blocklist 'legacy-*';
-      @preserve native;
     `, join(root, 'app/entry.css'), root)
 
     expect(directives.include).toEqual(['app/exclude/**/*.tsx'])
@@ -32,7 +31,6 @@ describe('stylesheet CSS directives', () => {
     expect(directives.safelist).toEqual(['not-exclude'])
     expect(directives.blocklist[0]).toBeInstanceOf(RegExp)
     expect((directives.blocklist[0] as RegExp).test('legacy-card')).toBe(true)
-    expect(directives.preserveNative).toBe(true)
   })
 
   it('does not collect non-entry @master at-rules as extraction directives', () => {
@@ -51,8 +49,7 @@ describe('stylesheet CSS directives', () => {
       include: [],
       exclude: [],
       safelist: [],
-      blocklist: [],
-      preserveNative: false
+      blocklist: []
     })
     expect(result.removed).toBe(false)
     expect(result.code).toContain('@master source')
@@ -163,16 +160,16 @@ describe('stylesheet CSS directives', () => {
   })
 
   /**
-   * Guards that files added with `@source` feed native CSS pruning and are reported as
-   * dependencies to watch: a rule used only by a prebuilt file the entry names must survive,
-   * and editing that file must rerun the build.
+   * Guards that files added with `@source` feed the class set and are reported as
+   * dependencies to watch: a class used only by a prebuilt file the entry names must generate,
+   * and editing that file must rerun the build. Native rules stay whether or not they are used.
    * Reverse check: dropping the `@source` files from a scope's file list turns this test and
    * the other three `@source` tests red.
    */
-  it('prunes a CSS root against the project files plus its source directives', async () => {
+  it('reads a CSS root against the project files plus its source directives', async () => {
     const root = createFixture()
     mkdirSync(join(root, 'dist'), { recursive: true })
-    writeFileSync(join(root, 'dist/page.tsx'), '<div class="card"></div>')
+    writeFileSync(join(root, 'dist/page.tsx'), '<div class="fg:red"></div>')
     const scanner = new CSSScanner({}, root)
     await scanner.init()
 
@@ -193,20 +190,20 @@ describe('stylesheet CSS directives', () => {
     const css = await createExtractedCSS({
       scanner,
       styleCSSSources,
-      includeGeneratedCSS: false,
       projectDir: root
     })
 
     expect(result.dependencies).toContain(join(root, 'dist/page.tsx'))
+    expect(css).toContain('.fg\\:red')
     expect(css).toContain('.card')
-    expect(css).not.toContain('.unused')
+    expect(css).toContain('.unused')
   })
 
   it('merges imported stylesheet class directives into the parent root scope', async () => {
     const root = createFixture()
     writeFileSync(join(root, 'app/shared.css'), `
-      @safelist 'shared-card legacy-card';
-      @blocklist 'legacy-*';
+      @safelist 'block fg:red';
+      @blocklist 'fg:*';
 
       .shared-card {
         color: red;
@@ -228,12 +225,11 @@ describe('stylesheet CSS directives', () => {
     const css = await createExtractedCSS({
       scanner,
       styleCSSSources,
-      includeGeneratedCSS: false,
       projectDir: root
     })
 
-    expect(css).toContain('.shared-card')
-    expect(css).not.toContain('.legacy-card')
+    expect(css).toContain('.block{display:block}')
+    expect(css).not.toContain('.fg\\:red')
     expect(css).not.toContain('@safelist')
   })
 })

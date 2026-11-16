@@ -164,8 +164,6 @@ export const compilerDiagnosticMetricIds = [
   'source-file-count',
   'latent-class-count',
   'valid-class-count',
-  'native-class-name-count',
-  'used-native-class-count',
   'generated-class-count',
   'master-package-shortcut-hit-count',
   'master-package-shortcut-fallback-count',
@@ -298,8 +296,6 @@ async function runMasterCompilerDiagnostic(workspace: string, fixtureId: Benchma
   recorder.setCount('source-file-count', setup.sourceFileCount)
   recorder.setCount('latent-class-count', setup.scanner.latentClasses.size)
   recorder.setCount('valid-class-count', setup.scanner.validClasses.size)
-  recorder.setCount('native-class-name-count', setup.scanner.nativeClassNames.size)
-  recorder.setCount('used-native-class-count', setup.scanner.usedNativeClasses.size)
 
   const productionCSS = await recorder.timeAsync('production-create-extracted-css-ms', () => createExtractedCSS({
     scanner: setup.scanner,
@@ -393,11 +389,7 @@ async function createDiagnosticExtractedCSS(options: {
 
   const entryStyleResults: DiagnosticStyleCSSResult[] = []
   for (const [id, styleSource] of styleCSSSources) {
-    const sourceClasses = styleSource.pruneNativeCSS
-      ? getStyleSourceClasses(scanner, styleSource, classes, projectDir)
-      : undefined
     const result = await compileDiagnosticStyleCSS(id, styleSource.source, {
-      classes: sourceClasses,
       projectDir
     }, recorder, 'entry')
     entryStyleResults.push(result)
@@ -553,7 +545,6 @@ function getScannerClasses(scanner: ScannerState) {
   return filterExcludedClasses([...new Set([
     ...(scanner.latentClasses || []),
     ...(scanner.validClasses || []),
-    ...(scanner.usedNativeClasses || []),
     ...(scanner.options.safelist || [])
   ])], scanner.options.blocklist)
 }

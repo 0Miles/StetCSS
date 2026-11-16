@@ -28,7 +28,7 @@ export default nextConfig
 - Stylesheet entries (CSS files that `@import '@stet-css/core'` or declare `@master entry;`) are rewritten to import one generated module, `.master/next.css`. The `.master` directory ignores itself in git.
 - The generated module is computed from the project's files in one pass when Next compiles it: the project's own source files plus `@source`, minus `@source not`, plus `@safelist`, minus `@blocklist`. Classes used only in Server Components, and pages built with `output: 'export'`, are covered.
 - Turbopack and `next build --webpack` both get the CSS. In `next dev`, editing a source file or a stylesheet updates the CSS.
-- CSS files that import `@stet-css/core` are native CSS pruning roots: native rules for unused classes are dropped. Add `@preserve native;` when native CSS must be kept.
+- CSS files that import `@stet-css/core` keep all of their native CSS, the same as any other CSS file.
 - Local stylesheets such as CSS Modules can use `@compose`, `@variant` and `@reference`; they are lowered in place.
 - `node_modules` and workspace packages outside the project root are not read. List them with `@source` in the entry.
 

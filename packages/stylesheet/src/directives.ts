@@ -38,8 +38,7 @@ export function hasStylesheetDirectives(directives?: StylesheetDirectives) {
     directives.include.length ||
     directives.exclude.length ||
     directives.safelist.length ||
-    directives.blocklist.length ||
-    directives.preserveNative
+    directives.blocklist.length
   ))
 }
 
