@@ -71,6 +71,7 @@ describe('withMasterCSS', () => {
    * Prevents: under Turbopack, a stylesheet whose only StetCSS syntax is a removed `@master`
    * at-rule never reaching the style loader, so the build passes and the at-rule ships doing
    * nothing. Turbopack runs the loader only on files its content condition matches.
+   * Reverse check: removing `master` from the content pattern turns only this test red.
    */
   it('sends stylesheets with removed @master at-rules to the style loader under Turbopack', () => {
     const nextConfig = withMasterCSS({} as NextConfig)
