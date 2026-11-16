@@ -14,7 +14,7 @@ const benchOptions = {
 
 let reportPromise: Promise<number> | undefined
 
-async function writeMasterDeliveryModeReportOnce() {
+async function writeStetDeliveryModeReportOnce() {
   if (!reportPromise) {
     reportPromise = (async () => {
       const result = await runCommand(
@@ -39,6 +39,6 @@ async function writeMasterDeliveryModeReportOnce() {
 
 describe('Master delivery modes', () => {
   bench('write Master delivery modes report', async () => {
-    await writeMasterDeliveryModeReportOnce()
+    await writeStetDeliveryModeReportOnce()
   }, benchOptions)
 })

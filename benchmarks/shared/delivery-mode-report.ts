@@ -1,14 +1,14 @@
 import { chromium, type Browser } from '@playwright/test'
 import { benchmarkFixtures } from '../fixtures/manifest'
 import {
-  createMasterDeliveryModePage,
-  createMasterDeliveryModeVariantId,
-  createMasterDeliveryModeVariants,
+  createStetDeliveryModePage,
+  createStetDeliveryModeVariantId,
+  createStetDeliveryModeVariants,
   deliveryModeDescriptors,
-  getMasterDeliveryModeAdapters,
-  masterDeliveryModeFixtureIds,
-  masterDeliveryModeMetrics,
-  measureMasterDeliveryMode,
+  getStetDeliveryModeAdapters,
+  stetDeliveryModeFixtureIds,
+  stetDeliveryModeMetrics,
+  measureStetDeliveryMode,
   type DeliveryModeId
 } from './delivery-modes'
 import { collectEnvironment, collectPackageVersions } from './environment'
@@ -17,28 +17,28 @@ import { writeBenchmarkReport } from './report'
 import { summarizeReportSamples } from './stats'
 import type { BenchmarkArtifact, BenchmarkMetricUnit, BenchmarkReport, BenchmarkSample } from './types'
 
-export async function writeMasterDeliveryModeReport() {
-  const report = await createMasterDeliveryModeReport()
+export async function writeStetDeliveryModeReport() {
+  const report = await createStetDeliveryModeReport()
   return writeBenchmarkReport(report)
 }
 
-async function createMasterDeliveryModeReport(): Promise<BenchmarkReport> {
+async function createStetDeliveryModeReport(): Promise<BenchmarkReport> {
   validateFixtures(benchmarkFixtures)
 
-  const variants = createMasterDeliveryModeVariants()
+  const variants = createStetDeliveryModeVariants()
   const samples: BenchmarkSample[] = []
   const artifacts: BenchmarkArtifact[] = []
-  const rounds = getMasterDeliveryModeRounds()
+  const rounds = getStetDeliveryModeRounds()
   console.log('Launching Chromium for Master delivery mode benchmark')
   const browser = await chromium.launch({ headless: true })
   const browserVersion = browser.version()
 
   try {
-    for (const fixtureId of masterDeliveryModeFixtureIds) {
+    for (const fixtureId of stetDeliveryModeFixtureIds) {
       for (const mode of deliveryModeDescriptors) {
-        const variantId = createMasterDeliveryModeVariantId(fixtureId, mode.id)
+        const variantId = createStetDeliveryModeVariantId(fixtureId, mode.id)
         console.log(`Preparing Master delivery mode page for ${variantId}`)
-        const page = await createMasterDeliveryModePage({
+        const page = await createStetDeliveryModePage({
           fixtureId,
           modeId: mode.id,
           variantId
@@ -61,7 +61,7 @@ async function createMasterDeliveryModeReport(): Promise<BenchmarkReport> {
     await browser.close()
   }
 
-  const metricUnits = new Map(masterDeliveryModeMetrics.map((metric) => [metric.id, metric.unit as BenchmarkMetricUnit]))
+  const metricUnits = new Map(stetDeliveryModeMetrics.map((metric) => [metric.id, metric.unit as BenchmarkMetricUnit]))
 
   return {
     schemaVersion: 1,
@@ -81,10 +81,10 @@ async function createMasterDeliveryModeReport(): Promise<BenchmarkReport> {
       'tailwindcss',
       '@tailwindcss/cli'
     ]),
-    fixtures: getMasterDeliveryModeFixtures(),
-    adapters: getMasterDeliveryModeAdapters(),
+    fixtures: getStetDeliveryModeFixtures(),
+    adapters: getStetDeliveryModeAdapters(),
     variants,
-    metrics: masterDeliveryModeMetrics,
+    metrics: stetDeliveryModeMetrics,
     samples,
     summary: summarizeReportSamples(samples, metricUnits),
     limits: [
@@ -109,7 +109,7 @@ async function collectDeliveryModeSamples(options: {
 }) {
   for (let round = 0; round < options.rounds; round++) {
     console.log(`Measuring Master delivery mode for ${options.variantId}, round ${round + 1}/${options.rounds}`)
-    const result = await measureMasterDeliveryMode({
+    const result = await measureStetDeliveryMode({
       browser: options.browser,
       pageRoot: options.pageRoot,
       variantId: options.variantId,
@@ -122,16 +122,16 @@ async function collectDeliveryModeSamples(options: {
   }
 }
 
-function getMasterDeliveryModeFixtures() {
-  return masterDeliveryModeFixtureIds.map((id) => {
+function getStetDeliveryModeFixtures() {
+  return stetDeliveryModeFixtureIds.map((id) => {
     const fixture = benchmarkFixtures.find((candidate) => candidate.id === id)
     if (!fixture) throw new Error(`Missing benchmark fixture: ${id}`)
     return fixture
   })
 }
 
-function getMasterDeliveryModeRounds() {
-  const value = Number(process.env.MASTER_DELIVERY_MODE_ROUNDS || process.env.BENCHMARK_ROUNDS || 3)
+function getStetDeliveryModeRounds() {
+  const value = Number(process.env.STET_DELIVERY_MODE_ROUNDS || process.env.BENCHMARK_ROUNDS || 3)
   if (!Number.isFinite(value) || value < 1) return 3
   return Math.floor(value)
 }

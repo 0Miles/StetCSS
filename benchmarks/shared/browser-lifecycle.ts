@@ -290,7 +290,7 @@ export const browserLifecycleScenarios = [
   }
 ] satisfies BrowserLifecycleScenarioDescriptor[]
 
-const masterClasses = {
+const stetClasses = {
   family: 'master',
   body: ['benchmark-root', 'm:0', 'min-h:100vh', 'bg:gray-5', 'fg:slate-90', 'font:14px', 'font:system'],
   shell: ['max-w:1180px', 'mx:auto', 'p:6x', 'grid', 'gap:5x'],
@@ -756,7 +756,7 @@ async function collectBrowserLifecycleSamples(options: {
 async function createBrowserLifecyclePage(variant: BrowserLifecycleVariant): Promise<BrowserLifecyclePage> {
   const spec = getSpecForVariant(variant)
   const mode = getModeForVariant(variant)
-  const classes = mode.id === 'tailwind-static' ? tailwindClasses : masterClasses
+  const classes = mode.id === 'tailwind-static' ? tailwindClasses : stetClasses
   const isStatic = mode.id !== 'master-runtime'
   const sourceHtml = renderLifecycleDocument({
     spec,

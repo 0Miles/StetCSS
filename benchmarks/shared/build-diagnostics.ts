@@ -38,7 +38,7 @@ type VitePlugin = {
   [key: string]: unknown
 }
 type ViteBuild = (options: Record<string, unknown>) => Promise<unknown>
-type MasterCSSVite = () => VitePlugin[]
+type StetCSSVite = () => VitePlugin[]
 
 const dynamicImport = new Function('specifier', 'return import(specifier)') as <T>(specifier: string) => Promise<T>
 
@@ -133,8 +133,8 @@ export async function runBuildDiagnostic(options: {
   round: number
 }): Promise<BuildDiagnosticResult> {
   const result = options.toolId === 'master-cli-diagnostic'
-    ? await runMasterCLIDiagnostic(options.workspace, options.fixtureId)
-    : await runMasterViteDiagnostic(options.workspace, options.fixtureId)
+    ? await runStetCLIDiagnostic(options.workspace, options.fixtureId)
+    : await runStetViteDiagnostic(options.workspace, options.fixtureId)
 
   return {
     samples: createDiagnosticSamples(options.variantId, options.round, result),
@@ -142,7 +142,7 @@ export async function runBuildDiagnostic(options: {
   }
 }
 
-async function runMasterCLIDiagnostic(workspace: string, fixtureId: BenchmarkFixtureId): Promise<DiagnosticRunResult> {
+async function runStetCLIDiagnostic(workspace: string, fixtureId: BenchmarkFixtureId): Promise<DiagnosticRunResult> {
   const tool = staticBuildTools.find((candidate) => candidate.id === 'master-static-cli')
   if (!tool) throw new Error('Missing Master CSS static CLI tool.')
 
@@ -200,7 +200,7 @@ async function runMasterCLIDiagnostic(workspace: string, fixtureId: BenchmarkFix
   return collectDiagnosticOutput(workspace, fixtureId, recorder)
 }
 
-async function runMasterViteDiagnostic(workspace: string, fixtureId: BenchmarkFixtureId): Promise<DiagnosticRunResult> {
+async function runStetViteDiagnostic(workspace: string, fixtureId: BenchmarkFixtureId): Promise<DiagnosticRunResult> {
   const tool = staticBuildTools.find((candidate) => candidate.id === 'master-static-vite')
   if (!tool) throw new Error('Missing Master CSS static Vite tool.')
 
@@ -212,8 +212,8 @@ async function runMasterViteDiagnostic(workspace: string, fixtureId: BenchmarkFi
   recorder.setCount('css-entry-count', 1)
 
   const totalStartedAt = performance.now()
-  const stetCSS = await loadMasterCSSVite()
-  const plugins = instrumentMasterVitePlugins(stetCSS(), recorder)
+  const stetCSS = await loadStetCSSVite()
+  const plugins = instrumentStetVitePlugins(stetCSS(), recorder)
 
   const build = await loadViteBuild()
   await recorder.time('vite-total-build-ms', () => build({
@@ -245,7 +245,7 @@ async function runViteBaselineDiagnostic(workspace: string, fixtureId: Benchmark
       private: true,
       type: 'module'
     }, null, 2) + '\n',
-    'index.html': addViteEntryScript(fixture.masterHtml),
+    'index.html': addViteEntryScript(fixture.stetHtml),
     'input.css': '.benchmark-root{box-sizing:border-box}\n',
     'src/main.js': 'import "../input.css"\n'
   })
@@ -268,7 +268,7 @@ async function runViteBaselineDiagnostic(workspace: string, fixtureId: Benchmark
   return performance.now() - startedAt
 }
 
-function instrumentMasterVitePlugins(plugins: VitePlugin[], recorder: DiagnosticRecorder): VitePlugin[] {
+function instrumentStetVitePlugins(plugins: VitePlugin[], recorder: DiagnosticRecorder): VitePlugin[] {
   return plugins.map((plugin) => {
     const next = { ...plugin } as VitePlugin
 
@@ -339,7 +339,7 @@ async function loadViteBuild(): Promise<ViteBuild> {
   return vite.build
 }
 
-async function loadMasterCSSVite(): Promise<MasterCSSVite> {
-  const mod = await dynamicImport<{ default: MasterCSSVite }>('@stet-css/vite')
+async function loadStetCSSVite(): Promise<StetCSSVite> {
+  const mod = await dynamicImport<{ default: StetCSSVite }>('@stet-css/vite')
   return mod.default
 }

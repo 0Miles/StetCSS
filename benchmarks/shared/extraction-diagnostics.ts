@@ -144,7 +144,7 @@ export async function runExtractionDiagnostic(options: {
   variantId: string
   round: number
 }): Promise<ExtractionDiagnosticResult> {
-  const result = await runMasterExtractionDiagnostic(options.workspace, options.fixtureId)
+  const result = await runStetExtractionDiagnostic(options.workspace, options.fixtureId)
 
   return {
     samples: createDiagnosticSamples(options.variantId, options.round, result),
@@ -190,7 +190,7 @@ class DiagnosticRecorder {
   }
 }
 
-async function runMasterExtractionDiagnostic(workspace: string, fixtureId: BenchmarkFixtureId): Promise<DiagnosticRunResult> {
+async function runStetExtractionDiagnostic(workspace: string, fixtureId: BenchmarkFixtureId): Promise<DiagnosticRunResult> {
   const tool = staticBuildTools.find((candidate) => candidate.id === 'master-static-cli')
   if (!tool) throw new Error('Missing Master CSS static CLI tool.')
 

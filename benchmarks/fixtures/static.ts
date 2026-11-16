@@ -9,7 +9,7 @@ export const staticFixtureIds = [
 
 export interface StaticFixtureSource {
   id: BenchmarkFixtureId
-  masterHtml: string
+  stetHtml: string
   tailwindHtml: string
   expectedCSSMarkers: string[]
 }
@@ -24,7 +24,7 @@ export const staticFixtureSources = [
   {
     id: 'minimal',
     expectedCSSMarkers: ['text-center'],
-    masterHtml: page(`
+    stetHtml: page(`
       <main class="min-h:100vh bg:white fg:slate-90 flex items-center justify-center p:6x">
         <section class="w:full max-w:720px text-center grid gap:4x">
           <p class="m:0 font:14px font:semibold fg:blue-60 uppercase letter-spacing:.08em">Benchmark fixture</p>
@@ -64,7 +64,7 @@ export const staticFixtureSources = [
   {
     id: 'docs',
     expectedCSSMarkers: ['text-center'],
-    masterHtml: page(`
+    stetHtml: page(`
       <div class="min-h:100vh bg:white fg:slate-90">
         <header class="sticky top:0 z:1 bg:white/.9 backdrop-filter:blur(12px) bb:1px|solid|gray-20">
           <nav class="max-w:1120px mx:auto px:6x py:3x flex items-center justify-between">
@@ -172,7 +172,7 @@ import '@stet-css/core'</code></pre>
   {
     id: 'dashboard',
     expectedCSSMarkers: ['text-center'],
-    masterHtml: page(`
+    stetHtml: page(`
       <main class="min-h:100vh bg:gray-5 fg:slate-90 p:6x">
         <section class="max-w:1180px mx:auto grid gap:6x">
           <header class="flex items-center justify-between gap:4x">
@@ -183,7 +183,7 @@ import '@stet-css/core'</code></pre>
             <button class="h:40px px:4x r:8px bg:slate-90 fg:white border:0 font:14px font:semibold">Export</button>
           </header>
           <section class="grid grid-cols:4 gap:4x">
-            ${masterCards()}
+            ${stetCards()}
           </section>
           <section class="grid grid-cols:280px|1fr gap:4x">
             <aside class="p:5x r:12px bg:white border:1px|solid|gray-20 grid gap:4x">
@@ -196,7 +196,7 @@ import '@stet-css/core'</code></pre>
               <div class="p:4x bb:1px|solid|gray-20 flex items-center justify-between"><h2 class="m:0 font:20px font:bold">Accounts</h2><span class="font:13px fg:slate-50">12 rows</span></div>
               <table class="w:full border-collapse:collapse font:14px">
                 <thead class="bg:gray-5 text:left"><tr><th class="p:3x">Account</th><th class="p:3x">Plan</th><th class="p:3x text-center">Health</th><th class="p:3x text:right">MRR</th></tr></thead>
-                <tbody>${masterRows()}</tbody>
+                <tbody>${stetRows()}</tbody>
               </table>
             </div>
           </section>
@@ -238,10 +238,10 @@ import '@stet-css/core'</code></pre>
   {
     id: 'stress-css',
     expectedCSSMarkers: ['text-center'],
-    masterHtml: page(`
+    stetHtml: page(`
       <main class="p:6x bg:white fg:slate-90">
         <h1 class="m:0|0|4x font:32px font:heavy text-center">Stress CSS fixture</h1>
-        <section class="grid grid-cols:6 gap:2x">${masterStressNodes()}</section>
+        <section class="grid grid-cols:6 gap:2x">${stetStressNodes()}</section>
       </main>
     `),
     tailwindHtml: page(`
@@ -269,7 +269,7 @@ function page(body: string) {
   ].join('\n')
 }
 
-function masterCards() {
+function stetCards() {
   return ['Revenue', 'Activation', 'Retention', 'Expansion'].map((label, index) => `
     <article class="p:5x r:12px bg:white border:1px|solid|gray-20">
       <p class="m:0 font:13px fg:slate-50">${label}</p>
@@ -289,7 +289,7 @@ function tailwindCards() {
   `).join('\n')
 }
 
-function masterRows() {
+function stetRows() {
   return Array.from({ length: 12 }, (_, index) => `
     <tr class="bg:white bg:gray-5:hover">
       <td class="p:3x bt:1px|solid|gray-20 font:semibold">Account ${index + 1}</td>
@@ -311,7 +311,7 @@ function tailwindRows() {
   `).join('\n')
 }
 
-function masterStressNodes() {
+function stetStressNodes() {
   const blue = [5, 20, 40, 60, 80, 95]
   const gray = [5, 10, 20, 30, 40, 50, 60, 70, 80, 90]
 
