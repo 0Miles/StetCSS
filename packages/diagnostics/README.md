@@ -9,9 +9,9 @@ It does not own class lint policy. Use `@stet-css/lint` for class-list diagnosti
 ## Usage
 
 ```ts
-import { createMasterCSSInspectionReport } from '@stet-css/diagnostics'
+import { createStetCSSInspectionReport } from '@stet-css/diagnostics'
 
-const report = await createMasterCSSInspectionReport({
+const report = await createStetCSSInspectionReport({
   cwd: process.cwd(),
   patterns: ['src/**/*.{html,tsx}'],
   classes: ['btn', 'card'],
