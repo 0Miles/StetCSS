@@ -16,4 +16,4 @@
 ## Documentation
 Check out the official [documentation](https://rc.css.master.co/guide/installation/svelte).
 
-This example uses `@stet-css/svelte/vite` with the default `progressive` mode and re-exports the SvelteKit server hook from `@stet-css/svelte/hooks.server`.
+This example uses `@stet-css/svelte/vite` with no options, so the built and dev CSS contain the rules for the classes in its `.svelte` files. It has no `hooks.server`.
