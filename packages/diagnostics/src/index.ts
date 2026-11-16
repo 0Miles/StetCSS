@@ -1,7 +1,8 @@
 import CSSScanner from '@stet-css/scanner'
 import {
   createExtractedCSSResult,
-  mergeStylesheetDirectives,
+  getStyleCSSSourcesDirectives,
+  isClassBlocklisted,
   registerStyleCSSSource,
   resolveStylesheetSourceFiles,
   type StyleCSSSources,
@@ -168,16 +169,6 @@ function parseClassChecks(value: string[] | string | undefined) {
     : value?.split(/\s+/).map((item) => item.trim()).filter(Boolean) ?? []
 }
 
-function isBlocklisted(className: string, blocklist: StylesheetDirectives['blocklist']) {
-  return blocklist.some((pattern) => {
-    if (typeof pattern === 'string') return pattern === className
-    pattern.lastIndex = 0
-    const matched = pattern.test(className)
-    pattern.lastIndex = 0
-    return matched
-  })
-}
-
 function createScannerClassDiagnostics(scanner: CSSScanner, firstSourceByClass: Map<string, string>): MasterCSSInspectionDiagnostic[] {
   return sortedValues(scanner.invalidClasses).map((className) => ({
     code: 'invalid-scanner-class',
@@ -234,7 +225,7 @@ function classifyMissingCSS(
   if (nativeRuleClasses.has(className)) {
     return { className, status: 'present', reason: 'native-css' }
   }
-  if (isBlocklisted(className, directives.blocklist)) {
+  if (isClassBlocklisted(className, directives.blocklist)) {
     return { className, status: 'missing', reason: 'blocklisted' }
   }
   if (scanner.validClasses.has(className)) {
@@ -458,9 +449,7 @@ export async function createMasterCSSInspectionReport(options: CreateMasterCSSIn
       projectDir: scanner.cwd,
       sources
     })
-    const directives = mergeStylesheetDirectives(
-      ...Array.from(styleCSSSources.values(), (styleSource) => styleSource.directives)
-    )
+    const directives = getStyleCSSSourcesDirectives(styleCSSSources)
     const missingResults = classChecks.map((className) => classifyMissingCSS(scanner, directives, stylesheetInspection.nativeRuleClasses, className))
     diagnostics.push(...createScannerClassDiagnostics(scanner, firstSourceByClass))
     diagnostics.push(...createMissingCSSDiagnostics(missingResults))

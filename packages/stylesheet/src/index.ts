@@ -48,6 +48,7 @@ import {
 } from './sources'
 
 export * from './directives'
+export { isClassBlocklisted } from './class-exclusion'
 export { collectCSSVariableReferences } from '@stet-css/lexer'
 
 export const STYLE_CSS_REQUEST_RE = /\.(css|scss|sass)(?:[?#].*)?$/
@@ -781,14 +782,22 @@ function hasCompiledStyleManifestInput(result: CompileCSSResult) {
 }
 
 /**
+ * The directives the class set applies: every registered entry's, merged, because all
+ * entries share one generated CSS.
+ */
+export function getStyleCSSSourcesDirectives(styleCSSSources?: StyleCSSSources) {
+  return mergeStylesheetDirectives(
+    ...Array.from(styleCSSSources?.values() || [], (styleSource) => styleSource.directives)
+  )
+}
+
+/**
  * The one scope the static class set reads: the project's own source files plus the
- * directives of every registered entry, because all entries share one generated CSS.
+ * directives of every registered entry.
  */
 function createStylesheetSourceScope(context: StylesheetSourceContext): StylesheetSourceScope {
   const { scanner } = context
-  const directives = mergeStylesheetDirectives(
-    ...Array.from(context.styleCSSSources?.values() || [], (styleSource) => styleSource.directives)
-  )
+  const directives = getStyleCSSSourcesDirectives(context.styleCSSSources)
   return {
     projectDir: context.projectDir ?? scanner.cwd,
     sources: context.sources,
@@ -951,7 +960,7 @@ export async function createExtractedCSSResult(options: CreateExtractedCSSOption
   const {
     scanner,
     styleCSSSources,
-    manifest: planOption,
+    manifest: explicitPlan,
     includeGeneratedCSS = true,
     includeNativeCSS = true,
     includeMasterBaseCSS = true,
@@ -972,7 +981,6 @@ export async function createExtractedCSSResult(options: CreateExtractedCSSOption
   const classes = await collectStylesheetScopeClasses(createStylesheetSourceScope(sourceContext))
 
   const hasMasterCSS = hasMasterCSSPackageSource(styleCSSSources)
-  const explicitPlan = planOption
   const defaultArtifact = hasMasterCSS && !explicitPlan
     ? readDefaultMasterCSSPackageArtifact(compileOptions.projectDir ?? scanner.cwd, compileOptions)
     : undefined
