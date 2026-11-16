@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { MasterCSSManifestModeTrigger } from '@stet-css/schema/manifest'
-import { MasterCSS, isUndeclaredModeError } from '../src'
+import { MasterCSS, UndeclaredModeError } from '../src'
 import { cloneManifest } from './helpers/css-tester'
 
 function createCSS(modeTrigger?: MasterCSSManifestModeTrigger, modes?: string[]) {
@@ -86,12 +86,17 @@ describe('stacked conditions form one valid query', () => {
    * Prevents: stacks that no single query can express emitting a valid-looking query with another
    * meaning. `not print and (…)` negates the whole query, so it would apply in light mode on
    * screen; two media types, or two containers that may differ, cannot share one query. The class
-   * is invalid instead (before, it emitted a query the browser dropped).
-   * Reverse-checked: skipping the lead checks in `joinConditionNodes` reds exactly these rows.
+   * is invalid instead (before, it emitted a query the browser dropped). So is a media type in an
+   * `or` list, which could only be grouped into `print and (or screen)` or `((…) or print)`.
+   * Reverse-checked: skipping the lead checks in `joinConditionNodes` reds the `!print`,
+   * `print@screen` and container rows; skipping the type-position checks in `splitLead` reds the
+   * two `,` rows.
    */
   test.each([
     'block@!print@dark',
     'block@print@screen',
+    'block@print,screen@sm',
+    'block@sm,print@dark',
     'block@sidebar(w>=10rem)@main(w>=20rem)',
     'block@sidebar(w>=10rem)@container(w>=20rem)'
   ])('%s yields no rule', (className) => {
@@ -101,17 +106,32 @@ describe('stacked conditions form one valid query', () => {
   })
 
   /**
-   * Prevents: a preset mode inside an `&` list slipping past #69's undeclared-mode error and
-   * compiling to `… and dark` when the project declares other modes.
-   * Reverse-checked: extracting only declared modes from an `&` list reds only this test.
+   * Prevents: a mode inside a `,` list or after `!` still compiling into the media query
+   * (`… or (width>=64rem) and dark`, `not dark`), the ticket's dropped query. No query or mode
+   * selector expresses `sm or (md and dark)` or "not dark", so the class is invalid under every
+   * trigger.
+   * Reverse-checked: never reporting `inexpressibleMode` from `splitModeConjuncts` reds every row
+   * here and the `,` and `!` rows of the undeclared-mode test below, nothing else.
    */
-  test('an undeclared preset mode inside an & list throws', () => {
-    let error: unknown
-    try {
-      createCSS('media', ['sepia']).generate('block@sm&dark')
-    } catch (caught) {
-      error = caught
-    }
-    expect(isUndeclaredModeError(error)).toBe(true)
+  test.each([
+    ['media', 'block@sm,md&dark'],
+    ['media', 'block@sm,dark'],
+    ['media', 'block@!dark'],
+    ['media', 'block@sm&!dark'],
+    ['class', 'block@sm,md&dark'],
+    ['class', 'block@!dark']
+  ] as const)('%s trigger: %s yields no rule', (modeTrigger, className) => {
+    const css = createCSS(modeTrigger)
+    expect(css.createRule(className)?.valid).toBeFalsy()
+    expect(texts(css, className)).toEqual([])
+  })
+
+  /**
+   * Prevents: a preset mode inside an `&` or `,` list, or after `!`, slipping past #69's
+   * undeclared-mode error and compiling to `… and dark` when the project declares other modes.
+   * Reverse-checked: extracting only declared modes in `splitModeConjuncts` reds only these rows.
+   */
+  test.each(['block@sm&dark', 'block@sm,md&dark', 'block@!dark'])('an undeclared preset mode in %s throws', (className) => {
+    expect(() => createCSS('media', ['sepia']).generate(className)).toThrow(UndeclaredModeError)
   })
 })
