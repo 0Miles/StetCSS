@@ -73,9 +73,10 @@ export function createLanguageCSS(manifest: MasterCSSManifest = defaultManifest,
   return css
 }
 
-/** Whether `css` was created with a runtime that supplies its own rule generator. */
-export function hasLanguageRuleGenerator(css: MasterCSS) {
-  return ruleGenerators.has(css)
+/** Whether the runtime's generator emits rules for a class the engine accepts; true when `css` has no generator. */
+export function isLanguageClassEmitted(css: MasterCSS, className: string) {
+  const generateRules = ruleGenerators.get(css)
+  return !generateRules || generateRules(css, className).length > 0
 }
 
 /** The rules editor features show for a class: the runtime's generator when `css` has one, else the engine's. */
@@ -94,12 +95,9 @@ export function generateCSS(
     manifest: css.manifest,
     nativeDeclarationMatcher: runtime.nativeDeclarationMatcher
   })
-  for (const className of classNames) {
-    if (runtime.generateRules) {
-      for (const rule of runtime.generateRules(generatedCSS, className)) rule.layer.insert(rule)
-    } else {
-      generatedCSS.ensureClassRules(className)
-    }
+  if (runtime.generateRules) ruleGenerators.set(generatedCSS, runtime.generateRules)
+  for (const className of new Set(classNames)) {
+    for (const rule of generateLanguageRules(generatedCSS, className)) rule.layer.insert(rule)
   }
   return generatedCSS.text
 }

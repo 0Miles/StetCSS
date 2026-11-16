@@ -12,7 +12,7 @@ Owns the stateful **editor features** over a manifest: completion, hover with ge
 - **Document syntaxes**: class strings live in JSX, Vue, Svelte, Astro, template literals, and function calls as well as HTML attributes. Back every class-position or regex change with a framework-specific case in `tests/get-class-position/`.
 - **Feature gating**: each feature returns nothing when its setting is off or `isDocumentAccepted` rejects the document (`exclude` globs); route new features through the same check.
 - **Completion** trigger characters and the sort order of variables and colors are user-visible; cover changes in `tests/suggest-syntax/`.
-- **Engine consistency**: hover CSS, completions, and colors come from `this.css` and `this.runtime`, so they match what the engine generates for the active runtime and manifest. A runtime may supply `generateRules`; hover reads rules through `generateLanguageRules` so that generator decides what a class shows.
+- **Engine consistency**: hover CSS, completions, and colors come from `this.css` and `this.runtime`, so they match what the engine generates for the active runtime and manifest. A runtime may supply `generateRules`; hover and document colors read rules through `generateLanguageRules` so that generator decides what a class shows.
 
 ## Validation
 
