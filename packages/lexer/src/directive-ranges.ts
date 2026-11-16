@@ -7,7 +7,6 @@ import {
   skipCSSWhitespace,
   type SourceRange
 } from './source'
-import { MASTER_CSS_ENTRY_DIRECTIVE_NAME } from './css-manifest-entry'
 
 export type { CSSStatementEnd, SourceLocation, SourceRange } from './source'
 
@@ -15,8 +14,9 @@ export type { CSSStatementEnd, SourceLocation, SourceRange } from './source'
  * At-rule names that StetCSS tooling locates, reported as written. Whether a directive is valid
  * where it appears is decided by its consumer. `dark` and `light` are not directives any more:
  * they are located so local CSS that still uses them is sent to the compiler, which rejects them
- * in favour of `@variant dark` and `@variant light`. `preserve` is located for the same reason:
- * the compiler rejects the removed `@preserve native;`.
+ * in favour of `@variant dark` and `@variant light`. `preserve` and `master` are located for the
+ * same reason: the compiler rejects the removed `@preserve native;`, and every `@master` at-rule
+ * (`@master entry;`, `@master { … }`) in favour of `@import '@stet-css/core'` and `@settings`.
  */
 export type CSSDirectiveRangeName =
   | 'master'
@@ -83,6 +83,30 @@ export const CSS_DIRECTIVE_RANGE_NAMES = [
 ] as const
 
 const CSS_DIRECTIVE_SOURCE_NAME_SET = new Set<string>(CSS_DIRECTIVE_RANGE_NAMES)
+
+/**
+ * Whether the at-sign at `index` begins a statement: only whitespace and comments separate it
+ * from the start of the source or the previous `;`, `{` or `}`. `@master` is located only there,
+ * because every located `@master` is rejected and text such as `url(logo@master.png)` must not be.
+ */
+function startsCSSStatement(source: string, index: number) {
+  let cursor = index - 1
+  while (cursor >= 0) {
+    const char = source[cursor]
+    if (/\s/.test(char)) {
+      cursor--
+      continue
+    }
+    if (char === '/' && source[cursor - 1] === '*') {
+      const commentStart = source.lastIndexOf('/*', cursor - 2)
+      if (commentStart === -1) return false
+      cursor = commentStart - 1
+      continue
+    }
+    return char === ';' || char === '{' || char === '}'
+  }
+  return true
+}
 
 export function collectCSSQuotedStringRanges(source: string, start = 0, end = source.length) {
   const ranges: CSSQuotedStringRange[] = []
@@ -267,17 +291,9 @@ export function collectCSSDirectiveRanges(source: string) {
 
     const name = readCSSIdent(source, index + 1)
     if (!CSS_DIRECTIVE_SOURCE_NAME_SET.has(name.value)) continue
+    if (name.value === 'master' && !startsCSSStatement(source, index)) continue
 
     const statementEnd = findCSSStatementEnd(source, name.end)
-    if (
-      name.value === 'master'
-      && (
-        statementEnd.reason !== 'semicolon'
-        || source.slice(name.end, statementEnd.end - 1).trim() !== MASTER_CSS_ENTRY_DIRECTIVE_NAME
-      )
-    ) {
-      continue
-    }
     const blockStart = statementEnd.reason === 'block' ? statementEnd.end : -1
     const blockEnd = blockStart === -1 ? -1 : findCSSBlockEnd(source, blockStart)
     const end = blockStart === -1

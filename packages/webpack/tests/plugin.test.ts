@@ -413,7 +413,6 @@ describe('MasterCSSPlugin', () => {
       }
     )
 
-    expect(result.code).not.toContain('@master')
     expect(result.code).toContain(':root')
   })
 

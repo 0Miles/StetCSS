@@ -1,7 +1,6 @@
-import { escapeRegExp, findCSSStatementEnd, isCSSIdentChar } from './source'
+import { escapeRegExp, findCSSStatementEnd } from './source'
 
 export const MASTER_CSS_PACKAGE_MODULE_IDS = ['@stet-css/core'] as const
-export const MASTER_CSS_ENTRY_DIRECTIVE_NAME = 'entry'
 
 const MASTER_CSS_PACKAGE_MODULE_ID_SET = new Set<string>(MASTER_CSS_PACKAGE_MODULE_IDS)
 
@@ -9,12 +8,6 @@ export interface CSSImportStatement {
   start: number
   end: number
   statement: string
-}
-
-export interface MasterCSSDirectiveStatement {
-  start: number
-  end: number
-  name: string
 }
 
 export function normalizeMasterCSSModuleIds(): Set<string> {
@@ -30,9 +23,9 @@ export function createMasterCSSImportPattern() {
   return new RegExp(String.raw`@import\s+(?:url\(\s*)?(['"])(?:${ids.join('|')})\1\s*\)?[^;]*;`)
 }
 
+/** A stylesheet entry is recognised by its `@stet-css/core` import alone. */
 export function createMasterCSSManifestEntryPattern() {
-  const ids = [...normalizeMasterCSSModuleIds()].map(escapeRegExp)
-  return new RegExp(String.raw`(?:@master\s+${MASTER_CSS_ENTRY_DIRECTIVE_NAME}\s*;|@import\s+(?:url\(\s*)?(['"])(?:${ids.join('|')})\1\s*\)?[^;]*;)`)
+  return createMasterCSSImportPattern()
 }
 
 export function findCSSImportEnd(source: string, start: number) {
@@ -99,75 +92,6 @@ export function findCSSImportStatements(source: string) {
   return imports
 }
 
-function findMasterDirectiveEnd(source: string, start: number) {
-  const statementEnd = findCSSStatementEnd(source, start)
-  return statementEnd.reason === 'semicolon' ? statementEnd.end : -1
-}
-
-export function findMasterDirectiveStatements(source: string) {
-  const statements: MasterCSSDirectiveStatement[] = []
-  let quote = ''
-  let comment = false
-  let depth = 0
-  for (let index = 0; index < source.length; index++) {
-    const char = source[index]
-    const next = source[index + 1]
-    if (comment) {
-      if (char === '*' && next === '/') {
-        comment = false
-        index++
-      }
-      continue
-    }
-    if (quote) {
-      if (char === '\\') {
-        index++
-      } else if (char === quote) {
-        quote = ''
-      }
-      continue
-    }
-    if (char === '/' && next === '*') {
-      comment = true
-      index++
-      continue
-    }
-    if (char === '"' || char === '\'') {
-      quote = char
-      continue
-    }
-    if (char === '{') {
-      depth++
-      continue
-    }
-    if (char === '}') {
-      depth--
-      continue
-    }
-    if (
-      depth === 0
-      && source.startsWith('@master', index)
-      && !isCSSIdentChar(source[index + '@master'.length])
-    ) {
-      const end = findMasterDirectiveEnd(source, index)
-      if (end === -1) continue
-      const statement = source.slice(index, end)
-      const prelude = statement.replace(/^@master\b/, '').replace(/;$/, '').trim()
-      if (prelude !== MASTER_CSS_ENTRY_DIRECTIVE_NAME) {
-        index = end - 1
-        continue
-      }
-      statements.push({
-        start: index,
-        end,
-        name: MASTER_CSS_ENTRY_DIRECTIVE_NAME
-      })
-      index = end - 1
-    }
-  }
-  return statements
-}
-
 export function replaceMasterCSSImports(source: string, replacement: string) {
   let replaced = false
   const code = source.replace(/@import\s+(?:url\(\s*)?(["'])([^"']+)\1\s*\)?[^;]*;/g, (rule, _quote: string, id: string) => {
@@ -182,23 +106,6 @@ export function hasMasterCSSImport(source: string) {
   return replaceMasterCSSImports(source, '').replaced
 }
 
-export function hasMasterEntryDirective(source: string) {
-  return findMasterDirectiveStatements(source).some((statement) => statement.name === MASTER_CSS_ENTRY_DIRECTIVE_NAME)
-}
-
 export function hasMasterCSSManifestEntrypoint(source: string) {
-  return hasMasterEntryDirective(source) || hasMasterCSSImport(source)
-}
-
-export function removeMasterDirectiveStatements(source: string) {
-  const statements = findMasterDirectiveStatements(source)
-  if (!statements.length) return { code: source, removed: false }
-  let code = ''
-  let index = 0
-  for (const statement of statements) {
-    code += source.slice(index, statement.start)
-    index = statement.end
-  }
-  code += source.slice(index)
-  return { code, removed: true }
+  return hasMasterCSSImport(source)
 }

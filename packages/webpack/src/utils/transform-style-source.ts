@@ -26,7 +26,7 @@ interface TransformStyleSourceOptions {
 }
 
 function hasMasterStyleManifestDirective(source: string) {
-  return source.includes('@settings') || source.includes('@theme') || source.includes('@master')
+  return source.includes('@settings') || source.includes('@theme')
 }
 
 async function createGlobalStyleEntryEmittedGlobals(

@@ -147,10 +147,7 @@ describe('style CSS extraction helpers', () => {
 
   it('detects Master CSS entrypoints', () => {
     expect(hasMasterStyleEntrypoint('@import "@stet-css/core";')).toBe(true)
-    expect(hasMasterStyleEntrypoint('@master entry;')).toBe(true)
-    expect(hasMasterStyleEntrypoint('@master;')).toBe(false)
-    expect(hasMasterStyleEntrypoint('@master global;')).toBe(false)
-    expect(hasMasterStyleEntrypoint('@master shake;')).toBe(false)
+    expect(hasMasterStyleEntrypoint('@master entry;')).toBe(false)
     expect(hasMasterStyleEntrypoint('@safelist "card";')).toBe(false)
     expect(hasMasterStyleEntrypoint('@theme { --color-primary: red; }')).toBe(false)
     expect(hasMasterStyleEntrypoint('@import "./other.css";')).toBe(false)
@@ -164,11 +161,7 @@ describe('style CSS extraction helpers', () => {
     ).source)).toBe(true)
     expect(isMasterStyleSource('@import "virtual:master-utilities.css";')).toBe(false)
     expect(isMasterStyleSource('@import "master.css";')).toBe(false)
-    expect(isMasterStyleSource('@master entry;')).toBe(true)
-    expect(isMasterStyleSource('@master;')).toBe(false)
-    expect(isMasterStyleSource('@master global;')).toBe(false)
-    expect(isMasterStyleSource('@master shake;')).toBe(false)
-    expect(isMasterStyleSource('@master no-shake;')).toBe(false)
+    expect(isMasterStyleSource('@master entry;')).toBe(false)
     expect(isMasterStyleSource('@safelist "card";')).toBe(false)
     expect(isMasterStyleSource('@import "./other.css";')).toBe(false)
   })
@@ -424,6 +417,15 @@ describe('style CSS extraction helpers', () => {
       .rejects.toThrow(`@variant ${name} {}`)
   })
 
+  /**
+   * Prevents: a local stylesheet such as a CSS Module carrying a removed `@master` at-rule skipping
+   * the compiler, so the at-rule reaches the browser and does nothing.
+   */
+  it('rejects @master at-rules in local styles', async () => {
+    await expect(transformLocalStyleCSS('/project/src/Button.module.css', '.button { color: red; }\n@master shake;'))
+      .rejects.toThrow('so delete "@master shake;"')
+  })
+
   it('leaves ordinary local CSS unchanged', async () => {
     const source = '.button { color: red; }'
     const result = await transformLocalStyleCSS('/project/src/Button.module.css', source)
@@ -441,7 +443,6 @@ describe('style CSS extraction helpers', () => {
     )
 
     expect(result?.source).toContain('@layer base')
-    expect(result?.source).not.toContain('@master entry;')
     expect(result?.dependencies).toContain(join(root, 'app/globals.css'))
     expect(result?.dependencies.filter((dependency) => !dependency.startsWith(root)).length).toBeGreaterThan(0)
     expect(resolveMasterStyleSource(
@@ -464,6 +465,34 @@ describe('style CSS extraction helpers', () => {
       '@import "@stet-css/core";\n@import "./missing.css";',
       root
     )).toThrow('CSS file not found')
+  })
+
+  /**
+   * Prevents: a stylesheet that still uses a removed `@master` at-rule being handed back to the
+   * bundler untouched. `@master entry;` no longer makes an entry, so without this check a file
+   * marked only that way, or one importing such a file, is never compiled and the developer sees
+   * no error. The check also must not hide behind the import graph's catch, which hands files with
+   * unresolvable imports back to the bundler.
+   */
+  it('rejects @master at-rules in a stylesheet or the stylesheets it imports', () => {
+    const root = createFixture()
+    writeFileSync(join(root, 'app/settings.css'), '@master { mode-trigger: media; }')
+
+    expect(() => resolveMasterStyleSource(
+      join(root, 'app/legacy.css'),
+      '@master entry;\n.card { color: red; }',
+      root
+    )).toThrow(`@master entry; was removed; mark stylesheet entries with @import '@stet-css/core'; instead (in ${join(root, 'app/legacy.css')}`)
+    expect(() => resolveMasterStyleSource(
+      join(root, 'app/legacy.css'),
+      '@import "./missing.css";\n@master entry;',
+      root
+    )).toThrow('@master entry; was removed')
+    expect(() => resolveMasterStyleSource(
+      join(root, 'app/globals.css'),
+      '@import "./settings.css";\n.card { color: red; }',
+      root
+    )).toThrow(`so delete "@master { … }" (in ${join(root, 'app/globals.css')} or a stylesheet it imports)`)
   })
 
   it('derives package host CSS from the package entry graph', async () => {
@@ -494,7 +523,6 @@ describe('style CSS extraction helpers', () => {
     expect(hostSource.source).toContain('--font-family-mono:var(--font-mono, ui-monospace)')
     expect(hostSource.source).not.toContain('@stet-css/core/base.css')
     expect(hostSource.source).not.toContain('virtual:master-utilities.css')
-    expect(hostSource.source).not.toContain('@master')
   })
 
   it('tracks default package artifacts as style dependencies', async () => {
@@ -514,7 +542,6 @@ describe('style CSS extraction helpers', () => {
       '@source "./page.tsx";',
       '@safelist "card";',
       '@blocklist "debug-*";',
-      '@master entry;',
       '',
       '@media (min-width: 768px) {',
       '    @source "./nested.tsx";',
@@ -523,12 +550,10 @@ describe('style CSS extraction helpers', () => {
       '.card { color: red; }'
     ].join('\n'))
 
-    expect(hasMasterStyleEntrypoint('@master entry;\n.card { color: red; }')).toBe(true)
     expect(result.removed).toBe(true)
     expect(result.code).not.toContain('@source "./page.tsx"')
     expect(result.code).not.toContain('@safelist')
     expect(result.code).not.toContain('@blocklist')
-    expect(result.code).not.toContain('@master entry')
     expect(result.code).toContain('@media (min-width: 768px) {\n    @source "./nested.tsx";\n}')
   })
 
@@ -644,7 +669,6 @@ describe('style CSS extraction helpers', () => {
     expect(css).toContain('display: grid')
     expect(css).toContain('.block{display:block}')
     expect(css).toContain('.fg\\:red{color:var(--color-red)}')
-    expect(css).not.toContain('@master')
     expect(css).not.toContain('virtual:master-utilities.css')
     expect(css).not.toContain('@stet-css/core')
   })
