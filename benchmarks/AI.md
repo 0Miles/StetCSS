@@ -4,7 +4,7 @@ Advisory measurement suites and report helpers: CSS output size and structure, b
 
 ## Boundaries
 
-- Product behaviour (CSS output, cascade order, hydration, runtime lifecycle, extraction, public APIs) → the owning package. Benchmark and diagnostic code observes it and changes none of it.
+- Product behaviour (CSS output, cascade order, runtime lifecycle, extraction, public APIs) → the owning package. Benchmark and diagnostic code observes it and changes none of it.
 - Release gates and pass/fail thresholds for benchmark history sit outside this package; numbers stay advisory.
 
 ## Risks
