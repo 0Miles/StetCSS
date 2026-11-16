@@ -1,8 +1,9 @@
 import { afterAll, describe, expect, it } from 'vitest'
-import { readFileSync, readdirSync, rmSync } from 'node:fs'
+import { rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { build } from 'astro'
+import { cleanFixture, readFiles } from './fixture-helpers'
 import masterCSS, { type IntegrationOptions } from '../src'
 
 const root = fileURLToPath(new URL('./fixtures/adapters/', import.meta.url))
@@ -17,18 +18,8 @@ const probeAdapter: NonNullable<IntegrationOptions['adapters']>[number] = {
   }
 }
 
-function readCSS(dir: string) {
-  return readdirSync(dir, { recursive: true, withFileTypes: true })
-    .filter((entry) => entry.isFile() && entry.name.endsWith('.css'))
-    .map((entry) => readFileSync(join(entry.parentPath, entry.name), 'utf8'))
-    .join('\n')
-}
 
-afterAll(() => {
-  rmSync(outDir, { recursive: true, force: true })
-  rmSync(join(root, '.astro'), { recursive: true, force: true })
-  rmSync(join(root, 'node_modules'), { recursive: true, force: true })
-})
+afterAll(() => cleanFixture(root, outDir))
 
 describe('masterCSS options', () => {
   /**
@@ -66,7 +57,7 @@ describe('masterCSS options', () => {
       integrations: [masterCSS({ adapters: [probeAdapter] })]
     } as Parameters<typeof build>[0])
 
-    const css = readCSS(outDir)
+    const css = readFiles(outDir, '.css').join('\n')
     expect(css).toContain('.m\\:13px{margin:13px}')
     expect(css).toContain('.fg\\:crimson{')
   }, 180_000)
