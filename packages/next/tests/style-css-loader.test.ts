@@ -15,7 +15,7 @@ function runStyleCSSLoader(root: string, resourcePath: string, source: string) {
   return new Promise<string>((resolve, reject) => {
     const context: ThisParameterType<typeof masterCSSStyleCSSLoader> = {
       resourcePath,
-      getOptions: () => ({ outputPath: join(root, '.master/next.css'), projectDir: root }),
+      getOptions: () => ({ outputPath: join(root, '.stet/next.css'), projectDir: root }),
       addDependency: (dependency) => dependencies.push(dependency),
       async: () => (error, content) => {
         if (error) {

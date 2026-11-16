@@ -188,7 +188,7 @@ describe('Next dev HMR', () => {
    * Server Component, updates the generated CSS without a full reload. `@compose inline-flex`
    * also guards that entries can compose preset static utilities in a static build.
    * Reverse check: no longer registering the generated CSS loader's dependencies times out
-   * the Server Component step (Turbopack); writing `.master/next.css` only on the entry
+   * the Server Component step (Turbopack); writing `.stet/next.css` only on the entry
    * loader's first run times it out under webpack.
    */
   it.each([

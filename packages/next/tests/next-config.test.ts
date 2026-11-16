@@ -64,7 +64,7 @@ describe('withMasterCSS', () => {
     expect(onWebpack).toHaveBeenCalledTimes(1)
     expect(findLoaders(webpackConfig.module.rules, 'generated-css-loader.js')).toHaveLength(1)
     expect(findLoaders(webpackConfig.module.rules, 'style-css-loader.js')).toHaveLength(1)
-    expect(webpackConfig.resolve.alias[VIRTUAL_CSS_ID]).toBe(join(projectDir, '.master/next.css'))
+    expect(webpackConfig.resolve.alias[VIRTUAL_CSS_ID]).toBe(join(projectDir, '.stet/next.css'))
   })
 
   /**
@@ -120,7 +120,7 @@ describe('withMasterCSS', () => {
     expect(nextConfig.turbopack!.rules!['*']).toContain(userStarRule)
     const resolveAlias = nextConfig.turbopack!.resolveAlias as Record<string, string>
     expect(resolveAlias['@app']).toBe('./app')
-    expect(resolveAlias[VIRTUAL_CSS_ID]).toBe('./.master/next.css')
+    expect(resolveAlias[VIRTUAL_CSS_ID]).toBe('./.stet/next.css')
   })
 
   /**

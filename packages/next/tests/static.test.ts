@@ -130,7 +130,7 @@ describe('Next static CSS', () => {
     const host = await runStyleCSSLoader(root, join(root, 'app/globals.css'), globals)
     const { css } = await runGeneratedCSSLoader(root)
 
-    expect(host).toBe('@import "../.master/next.css";')
+    expect(host).toBe('@import "../.stet/next.css";')
     expect(css).toContain('color: var(--color-primary)')
     expect(css).toContain('--color-primary:red')
     expect(css).toContain('.unused')
@@ -193,7 +193,7 @@ describe('Next static CSS', () => {
     const host = await runStyleCSSLoader(root, join(root, 'app/globals.scss'), globals)
     const { css } = await runGeneratedCSSLoader(root)
 
-    expect(host).toBe('@import "../.master/next.css";')
+    expect(host).toBe('@import "../.stet/next.css";')
     expect(css).toContain('--color-brand:#123456')
   })
 
@@ -223,7 +223,7 @@ describe('Next static CSS', () => {
   })
 
   /**
-   * Guards the first build: bundlers resolve `.master/next.css` from disk before the generated
+   * Guards the first build: bundlers resolve `.stet/next.css` from disk before the generated
    * CSS loader runs, and the directory must keep itself out of git.
    * Reverse check: skipping the placeholder write turns it red.
    */
@@ -232,8 +232,8 @@ describe('Next static CSS', () => {
 
     const outputPath = ensureStaticOutputFile(root)
 
-    expect(outputPath).toBe(join(root, '.master/next.css'))
+    expect(outputPath).toBe(join(root, '.stet/next.css'))
     expect(existsSync(outputPath)).toBe(true)
-    expect(readFileSync(join(root, '.master/.gitignore'), 'utf-8')).toBe('*\n')
+    expect(readFileSync(join(root, '.stet/.gitignore'), 'utf-8')).toBe('*\n')
   })
 })
