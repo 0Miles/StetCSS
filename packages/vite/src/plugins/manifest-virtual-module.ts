@@ -13,6 +13,7 @@ import { RESOLVED_VIRTUAL_MANIFEST_ID, VIRTUAL_MANIFEST_ID } from '../common'
 import { PluginOptions } from '../options'
 import { collectStyleCSSDependencies } from '@stet-css/stylesheet'
 import { includesFile } from '../utils/path'
+import { getProjectDir } from '../utils/project-dir'
 
 function invalidateManifestModule(module: ModuleNode | undefined, server: ViteDevServer): ModuleNode[] {
   if (!module) return []
@@ -64,7 +65,7 @@ export default function ManifestVirtualModulePlugin(
     }
   }
   const loadDefaultManifest = async (pluginContext: { addWatchFile?: (id: string) => void }) => {
-    const root = context.config?.root
+    const root = getProjectDir(context)
     const entries = await findCSSManifestEntryFiles(root)
     const dependencies = new Set<string>()
     for (const entry of entries) {

@@ -12,6 +12,7 @@ import {
 } from '@stet-css/schema/hydration-manifest'
 import { collectStyleCSSDependencies } from '@stet-css/stylesheet'
 import { includesFile } from '../utils/path'
+import { getProjectDir } from '../utils/project-dir'
 
 const HYDRATION_MANIFEST_ASSET_DIR = '_master-css/hydration'
 
@@ -28,7 +29,7 @@ export default function PreRenderPlugin(options: PluginOptions, context: PluginC
     }
   }
   const loadCSSManifest = async (pluginContext?: { addWatchFile?: (id: string) => void }) => {
-    const root = context.config?.root
+    const root = getProjectDir(context)
     const entries = await findCSSManifestEntryFiles(root)
     const dependencies = new Set<string>()
     for (const entry of entries) {
