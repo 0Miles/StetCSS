@@ -79,7 +79,7 @@ Import the default stylesheet from the CSS entry your app already loads:
 @import '@stet-css/core';
 ```
 
-With no options the plugin runs in `static` mode: the build writes the rules for the classes in your source into that stylesheet, and the HTML gets no runtime script and no `hidden` attribute. If your HTML has a hand-written `hidden` on `<html>` for runtime rendering, remove it: static mode never removes it, so the page would stay blank.
+The build writes the rules for the classes in your source into that stylesheet. The plugin only builds static CSS: it adds no runtime script and no `hidden` attribute to your HTML. If your HTML has a hand-written `hidden` on `<html>` for runtime rendering, remove it: the plugin never removes it, so the page would stay blank.
 
 ## Client types
 Add the client type reference when TypeScript source files import Master CSS virtual manifest, emittedGlobals, or generated CSS modules:
@@ -91,7 +91,7 @@ Add the client type reference when TypeScript source files import Master CSS vir
 
 ## Master CSS imports
 
-In static mode, import the generated stylesheet from a source stylesheet.
+Import the generated stylesheet from a source stylesheet.
 
 ```css
 @import '@stet-css/core';
@@ -99,7 +99,7 @@ In static mode, import the generated stylesheet from a source stylesheet.
 
 Classes come from the project's own source files, plus `@source` files, minus `@source not` files, plus `@safelist`, minus `@blocklist`, so templates that only a server build compiles, such as Astro pages, get their rules. The plugin does not collect classes from Vite's module graph, so classes that appear only in `node_modules`, outside the Vite root, or only in code another plugin generates need `@source` or `@safelist`; for example, `src/style.css` adds a component library with `@source "../node_modules/my-ui/dist";` (paths are relative to the stylesheet). In dev, the plugin updates the CSS when a file it reads is added, changed or removed; a new file under an `@source` pattern outside the Vite root is picked up after the next change to a watched file or a restart.
 
-Source stylesheets that import `@stet-css/core` keep all of their native CSS in every mode (`runtime`, `static`, `progressive` and `pre-render`), the same as any other CSS file, and the import inserts generated Master CSS.
+Source stylesheets that import `@stet-css/core` keep all of their native CSS, the same as any other CSS file, and the import inserts generated Master CSS.
 
 ## Runtime input imports
 
@@ -110,11 +110,7 @@ import manifest from 'virtual:master-css-manifest'
 import emittedGlobals from 'virtual:master-css-emitted-globals'
 ```
 
-Use these virtual modules when application code should receive the same manifest graph and emittedGlobals global CSS state that the plugin discovered from the project CSS entry.
-
-In production `runtime` mode, the plugin modulepreloads the emitted manifest JSON module when it also injects the runtime script. `injectRuntime: false` disables both automatic runtime injection and the manifest JSON modulepreload.
-
-The browser runtime entry is available as `@stet-css/vite/runtime` for official integrations that need to inject the same Vite-managed runtime startup module.
+Use these virtual modules when application code should receive the same manifest graph and emittedGlobals global CSS state that the plugin discovered from the project CSS entry. The plugin never loads the runtime itself: to run it, import `@stet-css/runtime` and pass it both modules, as `examples/lit` does.
 
 ## Options
 
@@ -122,9 +118,6 @@ The `options` object is passed to `masterCSS(options)`.
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `mode` | `'runtime' \| 'static' \| 'progressive' \| 'pre-render' \| null` | `'static'` | Integration mode. Use `null` to disable automatic integration. |
 | `scanner` | `ScannerOptions` | `undefined` | `safelist`, `blocklist` and `adapters` apply to the class set, and `manifest` replaces the manifest used for rendering; `exclude` no longer applies, use `@source not`. |
-| `injectRuntime` | `boolean` | `true` | Includes the runtime through Vite's HTML transform. Applies to `runtime` and `progressive` modes. |
-| `avoidFOUC` | `boolean` | `true` | Prevents flash of unstyled content during runtime rendering. Applies to `runtime` mode. |
 
 See the [Vite installation guide](https://rc.css.master.co/guide/installation/vite) for a full project setup.

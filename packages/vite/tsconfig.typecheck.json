@@ -25,16 +25,7 @@
       "path": "../project/tsconfig.typecheck.json"
     },
     {
-      "path": "../runtime/tsconfig.typecheck.json"
-    },
-    {
       "path": "../scanner/tsconfig.typecheck.json"
-    },
-    {
-      "path": "../schema/tsconfig.typecheck.json"
-    },
-    {
-      "path": "../server/tsconfig.typecheck.json"
     },
     {
       "path": "../stylesheet/tsconfig.typecheck.json"
