@@ -50,9 +50,7 @@ function createGlobalsCSS(compose: string) {
   ].join('\n')
 }
 
-// Native property classes: composing a preset static utility such as `inline-flex` from an
-// entry still fails in @stet-css/stylesheet's static pipeline (reported separately).
-function writeFixture(fixtureDir: string, compose = 'display:inline-flex') {
+function writeFixture(fixtureDir: string, compose = 'inline-flex') {
   mkdirSync(join(fixtureDir, 'app'), { recursive: true })
   writeFileSync(join(fixtureDir, 'package.json'), JSON.stringify({
     private: true,
@@ -115,12 +113,12 @@ function buildPackage() {
   })
 }
 
-function startNextDev(fixtureDir: string, port: number) {
+function startNextDev(fixtureDir: string, port: number, bundlerFlag: string) {
   const output = { text: '' }
   const child = spawn(process.execPath, [
     nextBin,
     'dev',
-    '--turbo',
+    bundlerFlag,
     '--hostname',
     '127.0.0.1',
     '--port',
@@ -185,7 +183,18 @@ async function expectDisplay(browser: Browser, url: string, display: string) {
 }
 
 describe('Next dev HMR', () => {
-  it('updates the CSS for stylesheet and Server Component edits', async () => {
+  /**
+   * Guards #57's dev criterion for both bundlers: editing the stylesheet entry, or a class in a
+   * Server Component, updates the generated CSS without a full reload. `@compose inline-flex`
+   * also guards that entries can compose preset static utilities in a static build.
+   * Reverse check: no longer registering the generated CSS loader's dependencies times out
+   * the Server Component step (Turbopack); writing `.master/next.css` only on the entry
+   * loader's first run times it out under webpack.
+   */
+  it.each([
+    ['Turbopack', '--turbo'],
+    ['webpack', '--webpack']
+  ])('updates the CSS for stylesheet and Server Component edits (%s)', async (_, bundlerFlag) => {
     buildPackage()
     const workspaceDir = join(packageDir, 'e2e/dev-hmr-workspaces')
     mkdirSync(workspaceDir, { recursive: true })
@@ -196,7 +205,7 @@ describe('Next dev HMR', () => {
     const globalsPath = join(fixtureDir, 'app/globals.css')
 
     writeFixture(fixtureDir)
-    const { child, output } = startNextDev(fixtureDir, port)
+    const { child, output } = startNextDev(fixtureDir, port, bundlerFlag)
 
     try {
       await waitForServer(url, child, output)
@@ -211,7 +220,7 @@ describe('Next dev HMR', () => {
         markerWindow.__MASTER_CSS_HMR_MARKER = 'preserve'
       })
 
-      writeFileSync(globalsPath, createGlobalsCSS('display:flex'))
+      writeFileSync(globalsPath, createGlobalsCSS('flex'))
       await page.waitForFunction(() => {
         const probe = document.getElementById('probe')
         return probe && getComputedStyle(probe).display === 'flex'
@@ -220,7 +229,6 @@ describe('Next dev HMR', () => {
         return (window as unknown as { __MASTER_CSS_HMR_MARKER?: string }).__MASTER_CSS_HMR_MARKER
       })).resolves.toBe('preserve')
 
-      // Guards #57: editing a class in a Server Component updates the generated CSS in dev.
       await waitForWidth(page, '#server-card', '120px')
       writeServerCard(fixtureDir, 'w:240px')
       await waitForWidth(page, '#server-card', '240px')
