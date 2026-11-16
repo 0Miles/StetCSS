@@ -138,6 +138,40 @@ describe('@stet-css/diagnostics', () => {
     }
   })
 
+  /**
+   * Prevents (#71): `stet-css inspect` warning that a class using the entry's own token or
+   * mode "did not generate Master CSS rules" while the build emits a rule for it, because the
+   * scanner judged classes by the preset's default manifest instead of the entry's.
+   * Reverse check: building the scanner without the entry manifest turns only this test red.
+   */
+  it('judges classes by the tokens and modes the entry declares, as the build does', async () => {
+    const cwd = createTempDir('master-css-diagnostics-entry-manifest-')
+    try {
+      writeFileSync(join(cwd, 'index.css'), [
+        '@import "@stet-css/core";',
+        '@theme { --color-brand: #f00; --spacing-card: 1.25rem; }',
+        '@theme light {}',
+        '@theme sepia {}'
+      ].join('\n'))
+      writeFileSync(join(cwd, 'index.html'), '<div class="block fg:brand p:card fg:red@sepia"></div>')
+      const report = await createMasterCSSInspectionReport({
+        cwd,
+        classes: 'fg:brand p:card fg:red@sepia',
+        includeCss: true
+      })
+
+      expect(report.css.text).toContain('.fg\\:brand{color:var(--color-brand)}')
+      expect(report.css.text).toContain('.p\\:card{padding:var(--spacing-card)}')
+      expect(report.css.text).toContain('.fg\\:red\\@sepia{')
+      expect(report.scanner.classes.invalid).toStrictEqual([])
+      expect(report.scanner.classes.valid).toStrictEqual(['block', 'fg:brand', 'fg:red@sepia', 'p:card'])
+      expect(report.missingCSS.missing).toStrictEqual([])
+      expect(report.diagnostics).toStrictEqual([])
+    } finally {
+      rmSync(cwd, { recursive: true, force: true })
+    }
+  })
+
   it('reports stylesheet entry errors without hiding scanner diagnostics', async () => {
     const cwd = createTempDir('master-css-diagnostics-entry-error-')
     try {

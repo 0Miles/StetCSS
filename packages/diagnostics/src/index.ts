@@ -6,6 +6,7 @@ import {
   type StyleCSSSources
 } from '@stet-css/stylesheet'
 import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
+import { loadProjectManifest } from '@stet-css/project/manifest'
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -235,17 +236,35 @@ async function resolveFilePath(cwd: string, filePath: string, resolver?: CreateM
     : path.resolve(cwd, filePath)
 }
 
+async function resolveCSSEntryFiles(cwd: string, resolver?: CreateMasterCSSInspectionReportOptions['resolveExistingFile']) {
+  return Promise.all((await findCSSManifestEntryFiles(cwd)).map((entry) => resolveFilePath(cwd, entry, resolver)))
+}
+
+/**
+ * The manifest the build compiles from the project's entries, with their tokens, modes and
+ * utilities, so the scanner judges classes the way the build does. A broken entry fails the
+ * build and is reported per entry by `registerManagedCSSEntries`; until it is fixed, classes
+ * fall back to the preset manifest.
+ */
+async function loadEntryManifest(cwd: string, entryFiles: string[]) {
+  if (!entryFiles.length) return undefined
+  try {
+    return (await loadProjectManifest(cwd, { entries: entryFiles })).manifest
+  } catch {
+    return undefined
+  }
+}
+
 async function registerManagedCSSEntries(
   scanner: CSSScanner,
   styleCSSSources: StyleCSSSources,
-  resolveExistingFile?: CreateMasterCSSInspectionReportOptions['resolveExistingFile']
+  entryFiles: string[]
 ) {
   const entries: MasterCSSStylesheetInspection[] = []
   const warnings: string[] = []
   const errors: MasterCSSStylesheetError[] = []
   styleCSSSources.clear()
-  for (const entry of await findCSSManifestEntryFiles(scanner.cwd)) {
-    const filePath = await resolveFilePath(scanner.cwd, entry, resolveExistingFile)
+  for (const filePath of entryFiles) {
     try {
       const result = await registerStyleCSSSource(scanner, styleCSSSources, filePath, fs.readFileSync(filePath, 'utf8'), {
         projectDir: scanner.cwd
@@ -398,18 +417,18 @@ export async function createMasterCSSInspectionReport(options: CreateMasterCSSIn
   const sources = options.patterns?.length ? normalizeGlobPatterns(options.patterns) : undefined
   const sourcePatterns = sources ?? []
   options.validatePatterns?.(sourcePatterns)
-  const scanner = new CSSScanner({}, cwd)
   const styleCSSSources: StyleCSSSources = new Map()
   const firstSourceByClass = new Map<string, string>()
   const diagnostics: MasterCSSInspectionDiagnostic[] = []
 
-  scanner.on('init', (scannerOptions: ScannerOptions) => {
-    scannerOptions.verbose = 0
-  })
-
   try {
+    const entryFiles = await resolveCSSEntryFiles(cwd, options.resolveExistingFile)
+    const scanner = new CSSScanner({ manifest: await loadEntryManifest(cwd, entryFiles) }, cwd)
+    scanner.on('init', (scannerOptions: ScannerOptions) => {
+      scannerOptions.verbose = 0
+    })
     await scanner.init()
-    const stylesheetInspection = await registerManagedCSSEntries(scanner, styleCSSSources, options.resolveExistingFile)
+    const stylesheetInspection = await registerManagedCSSEntries(scanner, styleCSSSources, entryFiles)
     diagnostics.push(...stylesheetInspection.entries.flatMap((entry) => entry.warnings.map((warning) => ({
       code: 'stylesheet-warning' as const,
       severity: 'warning' as const,
