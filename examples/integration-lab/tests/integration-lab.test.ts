@@ -58,11 +58,13 @@ function count(source: string, pattern: string | RegExp) {
   return source.split(pattern).length - 1
 }
 
+/** Ignores formatting: the bundler's CSS pipeline decides whether the output is minified. */
 function expectStaticCSS(css: string) {
+  const compactCSS = css.replace(/\s+/g, '').replace(/;}/g, '}')
   for (const expected of expectedStaticCSS) {
-    expect(css).toContain(expected)
+    expect(compactCSS).toContain(expected)
   }
-  expect(css).toContain('--color-primary:#123456')
+  expect(compactCSS).toContain('--color-primary:#123456')
 }
 
 function expectNoDuplicateRuntimeHTML(html: string) {
@@ -88,9 +90,8 @@ function commonStyle() {
   ].join('\n')
 }
 
-function createRspackFixture(mode: 'runtime' | 'static') {
-  const root = createFixture(`rspack-${mode}`)
-  const modeOption = mode === 'static' ? "mode: 'static'," : ''
+function createRspackFixture() {
+  const root = createFixture('rspack-static')
   writeProjectFiles(root, {
     'package.json': commonPackageJSON(),
     'src/index.html': [
@@ -137,7 +138,7 @@ function createRspackFixture(mode: 'runtime' | 'static') {
       '    plugins: [',
       "        new rspack.HtmlRspackPlugin({ template: join(root, 'src/index.html') }),",
       "        new rspack.CssExtractRspackPlugin({ filename: '[name].css' }),",
-      `        new MasterCSSPlugin({ ${modeOption} }, root)`,
+      '        new MasterCSSPlugin({}, root)',
       '    ]',
       '}',
       ''
@@ -146,9 +147,8 @@ function createRspackFixture(mode: 'runtime' | 'static') {
   return root
 }
 
-function createRsbuildFixture(mode: 'runtime' | 'static') {
-  const root = createFixture(`rsbuild-${mode}`)
-  const modeOption = mode === 'static' ? "mode: 'static'," : ''
+function createRsbuildFixture() {
+  const root = createFixture('rsbuild-static')
   writeProjectFiles(root, {
     'package.json': commonPackageJSON(),
     'src/index.html': [
@@ -188,7 +188,7 @@ function createRsbuildFixture(mode: 'runtime' | 'static') {
       '    tools: {',
       '        rspack(config) {',
       '            config.plugins ||= []',
-      `            config.plugins.push(new MasterCSSPlugin({ ${modeOption} }, root))`,
+      '            config.plugins.push(new MasterCSSPlugin({}, root))',
       '            return config',
       '        }',
       '    }',
@@ -320,7 +320,7 @@ function createTanStackStartRsbuildFixture() {
       '    tools: {',
       '        rspack(config) {',
       '            config.plugins ||= []',
-      "            config.plugins.push(new MasterCSSPlugin({ mode: 'static' }, root))",
+      '            config.plugins.push(new MasterCSSPlugin({}, root))',
       '            return config',
       '        }',
       '    }',
@@ -451,8 +451,8 @@ describe('integration lab package', () => {
 })
 
 describe('@stet-css/webpack with Rspack', () => {
-  test.each(['static', 'runtime'] as const)('builds a raw Rspack app in %s mode', async (mode) => {
-    const root = createRspackFixture(mode)
+  test('builds a raw Rspack app with static CSS', async () => {
+    const root = createRspackFixture()
     try {
       await buildRspack(root)
       const html = readOutputFiles(join(root, 'dist'), (path) => path.endsWith('.html'))
@@ -460,13 +460,9 @@ describe('@stet-css/webpack with Rspack', () => {
       const js = readOutputFiles(join(root, 'dist'), (path) => path.endsWith('.js'))
 
       expect(html).toContain('Rspack fixture')
-      expectNoDuplicateRuntimeHTML(html)
-      if (mode === 'static') {
-        expectStaticCSS(css)
-      } else {
-        expect(html).toContain('master-css-runtime')
-        expect(js).toContain('__MASTER_CSS_WEBPACK_RUNTIME__')
-      }
+      expectStaticCSS(css)
+      expect(html).not.toContain('master-css-runtime')
+      expect(js).not.toContain('__MASTER_CSS_WEBPACK_RUNTIME__')
     } finally {
       cleanupFixture(root)
     }
@@ -474,8 +470,8 @@ describe('@stet-css/webpack with Rspack', () => {
 })
 
 describe('@stet-css/webpack with Rsbuild', () => {
-  test.each(['static', 'runtime'] as const)('builds an Rsbuild React app in %s mode', async (mode) => {
-    const root = createRsbuildFixture(mode)
+  test('builds an Rsbuild React app with static CSS', async () => {
+    const root = createRsbuildFixture()
     try {
       await buildRsbuild(root)
       const html = readOutputFiles(join(root, 'dist'), (path) => path.endsWith('.html'))
@@ -483,13 +479,9 @@ describe('@stet-css/webpack with Rsbuild', () => {
       const js = readOutputFiles(join(root, 'dist'), (path) => path.endsWith('.js'))
 
       expect(html).toContain('root')
-      expectNoDuplicateRuntimeHTML(html)
-      if (mode === 'static') {
-        expectStaticCSS(css)
-      } else {
-        expect(html).toContain('master-css-runtime')
-        expect(js).toContain('__MASTER_CSS_WEBPACK_RUNTIME__')
-      }
+      expectStaticCSS(css)
+      expect(html).not.toContain('master-css-runtime')
+      expect(js).not.toContain('__MASTER_CSS_WEBPACK_RUNTIME__')
     } finally {
       cleanupFixture(root)
     }
