@@ -9,13 +9,13 @@ const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const distRoot = resolve(packageRoot, 'dist')
 const globalBundleFile = resolve(distRoot, 'global.min.js')
 const args = parseArgs(process.argv.slice(2))
-const rounds = Number(process.env.MASTER_CSS_BENCH_ROUNDS || 5)
-const warmupRounds = Number(process.env.MASTER_CSS_BENCH_WARMUP_ROUNDS || 1)
-const scanClassCount = Number(process.env.MASTER_CSS_BENCH_SCAN_CLASSES || 1000)
-const mutationClassCount = Number(process.env.MASTER_CSS_BENCH_MUTATION_CLASSES || 1000)
-const outputFile = args.get('output') || process.env.MASTER_CSS_BENCH_OUTPUT || process.env.MASTER_CSS_BENCH_JSON
-const browserName = args.get('browser') || process.env.MASTER_CSS_BENCH_BROWSER || 'chromium'
-const cpuThrottleRate = Number(args.get('cpu-throttle') || process.env.MASTER_CSS_BENCH_CPU_THROTTLE || 1)
+const rounds = Number(process.env.STET_CSS_BENCH_ROUNDS || 5)
+const warmupRounds = Number(process.env.STET_CSS_BENCH_WARMUP_ROUNDS || 1)
+const scanClassCount = Number(process.env.STET_CSS_BENCH_SCAN_CLASSES || 1000)
+const mutationClassCount = Number(process.env.STET_CSS_BENCH_MUTATION_CLASSES || 1000)
+const outputFile = args.get('output') || process.env.STET_CSS_BENCH_OUTPUT || process.env.STET_CSS_BENCH_JSON
+const browserName = args.get('browser') || process.env.STET_CSS_BENCH_BROWSER || 'chromium'
+const cpuThrottleRate = Number(args.get('cpu-throttle') || process.env.STET_CSS_BENCH_CPU_THROTTLE || 1)
 
 const nativeProperties = [
   'width',
@@ -48,7 +48,7 @@ if (!Object.hasOwn(browserTypes, browserName)) {
 }
 
 if (cpuThrottleRate !== 1 && browserName !== 'chromium') {
-  console.error('MASTER_CSS_BENCH_CPU_THROTTLE requires the chromium benchmark browser.')
+  console.error('STET_CSS_BENCH_CPU_THROTTLE requires the chromium benchmark browser.')
   process.exit(1)
 }
 
