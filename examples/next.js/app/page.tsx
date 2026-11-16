@@ -46,7 +46,7 @@ export default function Home() {
         <Image
           className={'rel ml:20x mr:0.313rem block@media(prefers-color-scheme:dark)'}
           src="/css-logotype@dark.svg"
-          alt="Master CSS Logo"
+          alt="Logo"
           width={380}
           height={48}
           priority
@@ -55,7 +55,7 @@ export default function Home() {
         <Image
           className={'rel ml:20x mr:0.313rem block@media(prefers-color-scheme:light)'}
           src="/css-logotype@light.svg"
-          alt="Master CSS Logo"
+          alt="Logo"
           width={380}
           height={48}
           priority

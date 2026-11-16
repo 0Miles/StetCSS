@@ -1,5 +1,5 @@
 import react from '@vitejs/plugin-react';
-import masterCSS from '@stet-css/vite';
+import stetCSS from '@stet-css/vite';
 import laravel from 'laravel-vite-plugin';
 import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
@@ -12,7 +12,7 @@ export default defineConfig({
       refresh: true,
     }),
     react(),
-    masterCSS(),
+    stetCSS(),
   ],
   esbuild: {
     jsx: 'automatic',

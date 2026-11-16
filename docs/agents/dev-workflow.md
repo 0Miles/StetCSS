@@ -52,8 +52,8 @@
 **判讀結果**
 
 - **已知失敗**：除了下面三項，其餘都要通過。
-  - `build:examples` 的 `master-css-angular-example#build`：Angular CLI 要求 Node 24.15 以上（見 #22）。
-  - `build:examples` 的 `master-css-nuxtjs-example#build`：nitro 打包時出現 `ENAMETOOLONG`（見 #22）。
+  - `build:examples` 的 `stet-css-angular-example#build`：Angular CLI 要求 Node 24.15 以上（見 #22）。
+  - `build:examples` 的 `stet-css-nuxtjs-example#build`：nitro 打包時出現 `ENAMETOOLONG`（見 #22）。
   - svelte 的 `check`：`packages/svelte/src/lib/vite.ts` 有 2 個型別錯誤，因為 vite 8.0.16 和 8.1.0 兩份型別互不相容。
 
   前兩項只在本機失敗：CI 的 Node 24 不低於 24.15，路徑也短，兩個範例都建置得起來。CI 上這兩項失敗，照回歸處理。

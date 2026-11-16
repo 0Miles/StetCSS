@@ -1,4 +1,4 @@
-# Master CSS Astro example
+# StetCSS Astro example
 
 This example uses `@stet-css/astro` with no options, which builds static CSS.
 
@@ -26,9 +26,9 @@ The integration:
 └── package.json
 ```
 
-`astro.config.js` registers `masterCSS()`.
+`astro.config.js` registers `stetCSS()`.
 
-`src/styles/global.css` imports the Master CSS default stylesheet, and `src/layouts/Layout.astro` imports that file:
+`src/styles/global.css` imports the StetCSS default stylesheet, and `src/layouts/Layout.astro` imports that file:
 
 ```css
 @import '@stet-css/core';
