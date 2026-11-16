@@ -106,7 +106,7 @@
 - 目前的版號是 `0.0.0`，代表還沒發佈過。release-please 把 manifest 裡的 `0.0.0` 當成沒有前一版，第一張 release PR 不看 commit 類型，直接用 config 的 `initial-version`（`0.1.0`）；changelog 從 config 的 `bootstrap-sha` 之後算起。發佈過之後 `initial-version` 不再作用，不必拿掉。
 - 之後的版號由 commit 類型決定。1.0 之前：`fix` 升 patch（`0.1.0` → `0.1.1`），`feat` 升 minor（→ `0.2.0`），帶 `!` 的破壞性變更也只升 minor（→ `0.2.0`）。
 - workflow 只在 repo 變數 `RELEASE_PLEASE_ENABLED` 是 `true` 時執行。release PR 要能觸發 CI，得有 repo secret `RELEASE_PLEASE_TOKEN`（GitHub App token 或 fine-grained PAT）；沒有時退回 `GITHUB_TOKEN`，release PR 不會有 `required`。兩者都由維護者設定。
-- 不要手改版號，版號只由 release PR 改。新增或移除套件時，在 manifest 加或刪那一行，版號照目前的共用版號。
+- 不要手改版號，版號只由 release PR 改。新增或移除套件時，在 manifest、config 的 `packages` 與 `linked-versions` 各加或刪一筆，版號照目前的共用版號。
 
 ## 實機驗收
 
