@@ -229,7 +229,7 @@ function createTanStackStartFixture() {
       '    root,',
       '    plugins: [',
       '        tanstackStart(),',
-      "        masterCSS({ mode: 'static' }),",
+      '        masterCSS(),',
       '        react()',
       '    ]',
       '})',
