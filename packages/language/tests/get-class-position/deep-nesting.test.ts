@@ -87,8 +87,9 @@ function getClassTokensOnWorkerInChild(ext: string, content: string) {
  * Guards: an open JS/TS document nested deeper than oxc-parser's native stack
  * allows kills the language server with a signal no try/catch can catch, so
  * the editor loses every StetCSS feature until it restarts. Class positions
- * must still come back through the regex scan. Reverse check: disabling the
- * prescan in `createOxcClassPositions` turns only these six cases red.
+ * must still come back. Reverse check: disabling the prescan in
+ * `parseOxcOnSourceStack` keeps these green, because the stack sized to the
+ * source now carries them; the dense-brackets case below guards the prescan.
  */
 describe.concurrent('documents nested 20,000 deep', () => {
   test.each(shapes)('%s survive class position scanning and keep their classes', async (_, ext, nest) => {
@@ -147,6 +148,26 @@ describe.concurrent('documents chained one level per line, 20,000 deep', () => {
 test('documents longer than the parse limit survive class position scanning and keep their classes', async () => {
   const content = `${'a:'.repeat(2_000_000)}x= clsx('block')`
   expect(content.length).toBeGreaterThan(MAX_PARSE_LENGTH)
+
+  const { code, signal, stdout, stderr } = await getClassTokensOnWorkerInChild('js', content)
+
+  expect({ code, signal }, stderr).toEqual({ code: 0, signal: null })
+  expect(JSON.parse(stdout)).toContain('block')
+})
+
+/**
+ * Guards: brackets written back to back cost oxc more native stack per
+ * character than the stack sized to the source provides, so past the nesting
+ * limit they must skip oxc, or the language server dies. Class positions must
+ * come back through the regex scan. The input is exactly 128 KiB, the most a
+ * 128 MiB stack is sized for, and needs about 170 MiB. Source's copy of the
+ * module is the same (`oxc-stack-copy.test.ts`); source has no such case
+ * because its text extraction is too slow on runs of brackets. Reverse check:
+ * disabling the prescan in `parseOxcOnSourceStack` turns only this case red.
+ */
+test('documents with dense brackets nested 65,528 deep survive class position scanning and keep their classes', async () => {
+  const content = `x=${'['.repeat(65_528)} clsx('block')${']'.repeat(65_528)}`
+  expect(content.length).toBe(128 * 1024)
 
   const { code, signal, stdout, stderr } = await getClassTokensOnWorkerInChild('js', content)
 
