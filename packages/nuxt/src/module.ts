@@ -20,6 +20,7 @@ export default defineNuxtModule<ModuleOptions>({
     // Nuxt sets Vite's root to `srcDir` (`app/`): the class set reads the Nuxt root instead,
     // plus every layer, which `extends` can place outside the root or under `node_modules`.
     const host: PluginHost = {
+      name,
       projectDir: rootDir,
       extraProjectDirs: [...new Set(nuxt.options._layers.flatMap((layer) => [layer.config.rootDir, layer.config.srcDir]))]
         .filter((dir) => dir && resolve(dir) !== resolve(rootDir)),
@@ -27,7 +28,7 @@ export default defineNuxtModule<ModuleOptions>({
       ignorePaths: [nuxt.options.buildDir]
     }
     nuxt.hook('vite:extendConfig', (viteConfig) => {
-      const plugins = masterCSS({ scanner: options.scanner }, host)
+      const plugins = masterCSS(options, host)
       if (viteConfig.plugins) viteConfig.plugins.push(...plugins as never[])
       else Object.assign(viteConfig, { plugins })
     })

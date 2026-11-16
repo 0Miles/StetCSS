@@ -3,10 +3,7 @@ import masterCSS from '../src'
 import { buildProject } from './plugin-test-helper'
 
 const builds = {
-  'masterCSS()': () => masterCSS(),
-  // A JavaScript config written for the removed rendering modes; types no longer accept it.
-  "masterCSS({ mode: 'runtime', injectRuntime: true, avoidFOUC: true })": () =>
-    masterCSS({ mode: 'runtime', injectRuntime: true, avoidFOUC: true } as never)
+  'masterCSS()': () => masterCSS()
 }
 const outputs: Record<string, { css: string, html: string }> = {}
 
@@ -29,14 +26,13 @@ beforeAll(async () => {
 
 describe.each(Object.keys(builds))('%s', (label) => {
   /**
-   * Guards: a Vite project gets the rules for the classes in its source in the built CSS, with
-   * no options and with a JavaScript config that still passes a removed rendering mode. If the
-   * plugin left rule generation to the browser, the stylesheet would ship without utilities and
-   * the page would render unstyled, since nothing loads the runtime any more.
+   * Guards: a Vite project gets the rules for the classes in its source in the built CSS with
+   * no options. If the plugin left rule generation to the browser, the stylesheet would ship
+   * without utilities and the page would render unstyled, since nothing loads the runtime any
+   * more. A config that still passes a removed rendering mode now throws (`options.test.ts`).
    *
-   * Reverse check: on the code before #59, where `mode: 'runtime'` still selected the runtime
-   * plugins, the second row of both tests failed and the first passed.
-   * #66 replaces the second row with an unknown-key error.
+   * Reverse check: on the code before #59, where the default `mode: 'runtime'` selected the
+   * runtime plugins, both tests failed.
    */
   test('builds CSS that contains the rules for classes in the source', () => {
     expect(outputs[label].css).toContain('.block{display:block}')
