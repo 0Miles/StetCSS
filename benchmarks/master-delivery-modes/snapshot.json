@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "suite": "master-delivery-modes",
-  "generatedAt": "2026-11-16T02:25:51.520Z",
+  "generatedAt": "2026-11-16T06:32:56.562Z",
   "sourceReport": {
     "suite": "master-delivery-modes",
-    "generatedAt": "2026-11-16T02:25:43.235Z",
+    "generatedAt": "2026-11-16T06:32:56.469Z",
     "command": "bun run --filter benchmarks bench:master-delivery-modes"
   },
   "environment": {
@@ -234,24 +234,6 @@
       "description": "Brotli bytes for the Master CSS browser runtime bundle."
     },
     {
-      "id": "manifest-json-raw-bytes",
-      "label": "Manifest JSON raw bytes",
-      "unit": "B",
-      "description": "Raw bytes for the runtime default manifest JSON payload."
-    },
-    {
-      "id": "manifest-json-gzip-bytes",
-      "label": "Manifest JSON gzip bytes",
-      "unit": "B",
-      "description": "Gzip bytes for the runtime default manifest JSON payload."
-    },
-    {
-      "id": "manifest-json-brotli-bytes",
-      "label": "Manifest JSON brotli bytes",
-      "unit": "B",
-      "description": "Brotli bytes for the runtime default manifest JSON payload."
-    },
-    {
       "id": "delivered-style-rule-count",
       "label": "Delivered style rules",
       "unit": "count",
@@ -324,12 +306,6 @@
       "description": "Time from browser runtime script execution to runtime observe completion."
     },
     {
-      "id": "manifest-load-ms",
-      "label": "Manifest load",
-      "unit": "ms",
-      "description": "Resource timing duration for the default manifest JSON fetch."
-    },
-    {
       "id": "runtime-observe-ms",
       "label": "Runtime observe",
       "unit": "ms",
@@ -369,11 +345,6 @@
               "rawBytes": 0,
               "gzipBytes": 20,
               "brotliBytes": 1
-            },
-            "manifestJSON": {
-              "rawBytes": 0,
-              "gzipBytes": 20,
-              "brotliBytes": 1
             }
           },
           "structure": {
@@ -383,42 +354,42 @@
           },
           "timing": {
             "navigationReadyMs": {
-              "min": 26.8,
-              "median": 26.9,
-              "mean": 30.7,
-              "max": 38.6,
+              "min": 27.7,
+              "median": 30.6,
+              "mean": 31.1,
+              "max": 35,
               "sampleCount": 3,
               "unit": "ms"
             },
             "stylesheetParseMs": {
               "min": 0.1,
-              "median": 0.1,
-              "mean": 0.1,
-              "max": 0.1,
+              "median": 0.2,
+              "mean": 0.2,
+              "max": 0.2,
               "sampleCount": 3,
               "unit": "ms"
             },
             "styleRecalculationMs": {
-              "min": 0.5,
-              "median": 0.5,
+              "min": 0.6,
+              "median": 0.7,
               "mean": 0.6,
-              "max": 0.6,
+              "max": 0.7,
               "sampleCount": 3,
               "unit": "ms"
             },
             "layoutMs": {
-              "min": 4.5,
-              "median": 4.6,
-              "mean": 5,
-              "max": 5.9,
+              "min": 5.6,
+              "median": 5.7,
+              "mean": 5.7,
+              "max": 5.7,
               "sampleCount": 3,
               "unit": "ms"
             },
             "paintMs": {
-              "min": 0.7,
-              "median": 0.8,
-              "mean": 1.5,
-              "max": 3,
+              "min": 0.9,
+              "median": 0.9,
+              "mean": 0.9,
+              "max": 1,
               "sampleCount": 3,
               "unit": "ms"
             },
@@ -447,14 +418,6 @@
               "unit": "ms"
             },
             "runtimeBootstrapMs": {
-              "min": 0,
-              "median": 0,
-              "mean": 0,
-              "max": 0,
-              "sampleCount": 3,
-              "unit": "ms"
-            },
-            "manifestLoadMs": {
               "min": 0,
               "median": 0,
               "mean": 0,
@@ -492,9 +455,9 @@
           "variantId": "minimal-master-runtime",
           "payload": {
             "html": {
-              "rawBytes": 4042,
-              "gzipBytes": 1353,
-              "brotliBytes": 1068
+              "rawBytes": 4478,
+              "gzipBytes": 1473,
+              "brotliBytes": 1171
             },
             "externalCSS": {
               "rawBytes": 0,
@@ -502,14 +465,9 @@
               "brotliBytes": 1
             },
             "runtimeJS": {
-              "rawBytes": 100576,
-              "gzipBytes": 27331,
-              "brotliBytes": 23776
-            },
-            "manifestJSON": {
-              "rawBytes": 82513,
-              "gzipBytes": 11747,
-              "brotliBytes": 9374
+              "rawBytes": 174570,
+              "gzipBytes": 38972,
+              "brotliBytes": 33180
             }
           },
           "structure": {
@@ -519,10 +477,10 @@
           },
           "timing": {
             "navigationReadyMs": {
-              "min": 33,
-              "median": 44,
-              "mean": 40.5,
-              "max": 44.5,
+              "min": 38.7,
+              "median": 39.2,
+              "mean": 39.2,
+              "max": 39.7,
               "sampleCount": 3,
               "unit": "ms"
             },
@@ -535,26 +493,26 @@
               "unit": "ms"
             },
             "styleRecalculationMs": {
-              "min": 0.5,
+              "min": 0.4,
               "median": 0.5,
               "mean": 0.5,
-              "max": 0.5,
+              "max": 0.7,
               "sampleCount": 3,
               "unit": "ms"
             },
             "layoutMs": {
-              "min": 2.8,
-              "median": 2.8,
-              "mean": 3.1,
-              "max": 3.6,
+              "min": 3.3,
+              "median": 3.4,
+              "mean": 3.5,
+              "max": 3.7,
               "sampleCount": 3,
               "unit": "ms"
             },
             "paintMs": {
-              "min": 0.4,
-              "median": 0.4,
-              "mean": 0.4,
-              "max": 0.4,
+              "min": 0.5,
+              "median": 0.6,
+              "mean": 0.6,
+              "max": 0.6,
               "sampleCount": 3,
               "unit": "ms"
             },
@@ -567,42 +525,34 @@
               "unit": "count"
             },
             "requestCount": {
-              "min": 3,
-              "median": 3,
-              "mean": 3,
-              "max": 3,
+              "min": 2,
+              "median": 2,
+              "mean": 2,
+              "max": 2,
               "sampleCount": 3,
               "unit": "count"
             },
             "runtimeReadyMs": {
-              "min": 19.2,
-              "median": 20.6,
-              "mean": 20.1,
-              "max": 20.6,
+              "min": 17.2,
+              "median": 17.4,
+              "mean": 17.4,
+              "max": 17.5,
               "sampleCount": 3,
               "unit": "ms"
             },
             "runtimeBootstrapMs": {
-              "min": 10.1,
-              "median": 11,
-              "mean": 10.8,
-              "max": 11.3,
-              "sampleCount": 3,
-              "unit": "ms"
-            },
-            "manifestLoadMs": {
-              "min": 1.3,
-              "median": 2.1,
-              "mean": 1.9,
-              "max": 2.3,
+              "min": 5.8,
+              "median": 5.9,
+              "mean": 5.9,
+              "max": 6,
               "sampleCount": 3,
               "unit": "ms"
             },
             "runtimeObserveMs": {
-              "min": 4.3,
-              "median": 4.4,
-              "mean": 4.4,
-              "max": 4.4,
+              "min": 0.2,
+              "median": 0.2,
+              "mean": 0.2,
+              "max": 0.3,
               "sampleCount": 3,
               "unit": "ms"
             },
@@ -615,10 +565,10 @@
               "unit": "count"
             },
             "runtimeStyleRawBytes": {
-              "min": 1940,
-              "median": 1940,
-              "mean": 1940,
-              "max": 1940,
+              "min": 0,
+              "median": 0,
+              "mean": 0,
+              "max": 0,
               "sampleCount": 3,
               "unit": "B"
             }
@@ -641,11 +591,6 @@
               "rawBytes": 0,
               "gzipBytes": 20,
               "brotliBytes": 1
-            },
-            "manifestJSON": {
-              "rawBytes": 0,
-              "gzipBytes": 20,
-              "brotliBytes": 1
             }
           },
           "structure": {
@@ -655,10 +600,10 @@
           },
           "timing": {
             "navigationReadyMs": {
-              "min": 26.3,
-              "median": 26.5,
-              "mean": 29.1,
-              "max": 34.6,
+              "min": 25.5,
+              "median": 32.2,
+              "mean": 31.2,
+              "max": 35.8,
               "sampleCount": 3,
               "unit": "ms"
             },
@@ -671,26 +616,26 @@
               "unit": "ms"
             },
             "styleRecalculationMs": {
-              "min": 0.6,
-              "median": 0.7,
-              "mean": 0.7,
-              "max": 0.7,
+              "min": 0.8,
+              "median": 0.8,
+              "mean": 0.8,
+              "max": 0.8,
               "sampleCount": 3,
               "unit": "ms"
             },
             "layoutMs": {
-              "min": 4.4,
-              "median": 4.6,
-              "mean": 4.6,
-              "max": 4.6,
+              "min": 5.6,
+              "median": 5.6,
+              "mean": 5.6,
+              "max": 5.6,
               "sampleCount": 3,
               "unit": "ms"
             },
             "paintMs": {
-              "min": 0.6,
-              "median": 0.6,
-              "mean": 0.6,
-              "max": 0.7,
+              "min": 0.7,
+              "median": 0.7,
+              "mean": 0.8,
+              "max": 0.8,
               "sampleCount": 3,
               "unit": "ms"
             },
@@ -719,14 +664,6 @@
               "unit": "ms"
             },
             "runtimeBootstrapMs": {
-              "min": 0,
-              "median": 0,
-              "mean": 0,
-              "max": 0,
-              "sampleCount": 3,
-              "unit": "ms"
-            },
-            "manifestLoadMs": {
               "min": 0,
               "median": 0,
               "mean": 0,
@@ -782,11 +719,6 @@
               "rawBytes": 0,
               "gzipBytes": 20,
               "brotliBytes": 1
-            },
-            "manifestJSON": {
-              "rawBytes": 0,
-              "gzipBytes": 20,
-              "brotliBytes": 1
             }
           },
           "structure": {
@@ -796,41 +728,41 @@
           },
           "timing": {
             "navigationReadyMs": {
-              "min": 25.4,
-              "median": 26.4,
-              "mean": 27.5,
-              "max": 30.7,
+              "min": 26.2,
+              "median": 31.8,
+              "mean": 31.6,
+              "max": 36.9,
               "sampleCount": 3,
               "unit": "ms"
             },
             "stylesheetParseMs": {
-              "min": 0.1,
-              "median": 0.1,
-              "mean": 0.1,
+              "min": 0.2,
+              "median": 0.2,
+              "mean": 0.2,
               "max": 0.2,
               "sampleCount": 3,
               "unit": "ms"
             },
             "styleRecalculationMs": {
-              "min": 0.7,
-              "median": 0.8,
-              "mean": 0.8,
-              "max": 0.8,
+              "min": 0.9,
+              "median": 0.9,
+              "mean": 0.9,
+              "max": 1,
               "sampleCount": 3,
               "unit": "ms"
             },
             "layoutMs": {
-              "min": 6.3,
-              "median": 6.3,
-              "mean": 6.4,
-              "max": 6.5,
+              "min": 7.4,
+              "median": 7.6,
+              "mean": 7.7,
+              "max": 8.1,
               "sampleCount": 3,
               "unit": "ms"
             },
             "paintMs": {
-              "min": 1.1,
-              "median": 1.3,
-              "mean": 1.3,
+              "min": 1.5,
+              "median": 1.6,
+              "mean": 1.6,
               "max": 1.6,
               "sampleCount": 3,
               "unit": "ms"
@@ -860,14 +792,6 @@
               "unit": "ms"
             },
             "runtimeBootstrapMs": {
-              "min": 0,
-              "median": 0,
-              "mean": 0,
-              "max": 0,
-              "sampleCount": 3,
-              "unit": "ms"
-            },
-            "manifestLoadMs": {
               "min": 0,
               "median": 0,
               "mean": 0,
@@ -905,9 +829,9 @@
           "variantId": "docs-master-runtime",
           "payload": {
             "html": {
-              "rawBytes": 6457,
-              "gzipBytes": 1948,
-              "brotliBytes": 1576
+              "rawBytes": 6893,
+              "gzipBytes": 2069,
+              "brotliBytes": 1659
             },
             "externalCSS": {
               "rawBytes": 0,
@@ -915,14 +839,9 @@
               "brotliBytes": 1
             },
             "runtimeJS": {
-              "rawBytes": 100576,
-              "gzipBytes": 27331,
-              "brotliBytes": 23776
-            },
-            "manifestJSON": {
-              "rawBytes": 82513,
-              "gzipBytes": 11747,
-              "brotliBytes": 9374
+              "rawBytes": 174570,
+              "gzipBytes": 38972,
+              "brotliBytes": 33180
             }
           },
           "structure": {
@@ -932,10 +851,10 @@
           },
           "timing": {
             "navigationReadyMs": {
-              "min": 37.8,
-              "median": 39.2,
-              "mean": 39.3,
-              "max": 40.8,
+              "min": 40.6,
+              "median": 42.1,
+              "mean": 44.2,
+              "max": 49.9,
               "sampleCount": 3,
               "unit": "ms"
             },
@@ -949,25 +868,25 @@
             },
             "styleRecalculationMs": {
               "min": 0.6,
-              "median": 0.7,
+              "median": 0.6,
               "mean": 0.7,
-              "max": 0.7,
+              "max": 1,
               "sampleCount": 3,
               "unit": "ms"
             },
             "layoutMs": {
-              "min": 4,
+              "min": 4.2,
               "median": 5.2,
-              "mean": 5.2,
-              "max": 6.3,
+              "mean": 5,
+              "max": 5.7,
               "sampleCount": 3,
               "unit": "ms"
             },
             "paintMs": {
-              "min": 0.7,
-              "median": 0.7,
-              "mean": 0.7,
-              "max": 0.7,
+              "min": 0.9,
+              "median": 0.9,
+              "mean": 0.9,
+              "max": 1,
               "sampleCount": 3,
               "unit": "ms"
             },
@@ -980,42 +899,34 @@
               "unit": "count"
             },
             "requestCount": {
-              "min": 3,
-              "median": 3,
-              "mean": 3,
-              "max": 3,
+              "min": 2,
+              "median": 2,
+              "mean": 2,
+              "max": 2,
               "sampleCount": 3,
               "unit": "count"
             },
             "runtimeReadyMs": {
-              "min": 20.4,
-              "median": 20.6,
-              "mean": 21,
-              "max": 21.9,
+              "min": 16.8,
+              "median": 16.9,
+              "mean": 16.9,
+              "max": 17,
               "sampleCount": 3,
               "unit": "ms"
             },
             "runtimeBootstrapMs": {
-              "min": 11,
-              "median": 11.5,
-              "mean": 11.8,
-              "max": 12.8,
-              "sampleCount": 3,
-              "unit": "ms"
-            },
-            "manifestLoadMs": {
-              "min": 1.3,
-              "median": 1.5,
-              "mean": 1.7,
-              "max": 2.3,
+              "min": 6,
+              "median": 6,
+              "mean": 6,
+              "max": 6.1,
               "sampleCount": 3,
               "unit": "ms"
             },
             "runtimeObserveMs": {
-              "min": 5.2,
-              "median": 5.4,
-              "mean": 5.4,
-              "max": 5.5,
+              "min": 0.2,
+              "median": 0.4,
+              "mean": 0.3,
+              "max": 0.4,
               "sampleCount": 3,
               "unit": "ms"
             },
@@ -1028,10 +939,10 @@
               "unit": "count"
             },
             "runtimeStyleRawBytes": {
-              "min": 2671,
-              "median": 2671,
-              "mean": 2671,
-              "max": 2671,
+              "min": 0,
+              "median": 0,
+              "mean": 0,
+              "max": 0,
               "sampleCount": 3,
               "unit": "B"
             }
@@ -1054,11 +965,6 @@
               "rawBytes": 0,
               "gzipBytes": 20,
               "brotliBytes": 1
-            },
-            "manifestJSON": {
-              "rawBytes": 0,
-              "gzipBytes": 20,
-              "brotliBytes": 1
             }
           },
           "structure": {
@@ -1068,42 +974,42 @@
           },
           "timing": {
             "navigationReadyMs": {
-              "min": 22.3,
-              "median": 32.8,
-              "mean": 29.6,
-              "max": 33.6,
+              "min": 25.5,
+              "median": 27.3,
+              "mean": 27.3,
+              "max": 29.2,
               "sampleCount": 3,
               "unit": "ms"
             },
             "stylesheetParseMs": {
-              "min": 0.2,
-              "median": 0.2,
-              "mean": 0.2,
-              "max": 0.2,
+              "min": 0.3,
+              "median": 0.3,
+              "mean": 0.3,
+              "max": 0.3,
               "sampleCount": 3,
               "unit": "ms"
             },
             "styleRecalculationMs": {
-              "min": 0.9,
-              "median": 0.9,
-              "mean": 0.9,
-              "max": 0.9,
+              "min": 1.1,
+              "median": 1.1,
+              "mean": 1.1,
+              "max": 1.2,
               "sampleCount": 3,
               "unit": "ms"
             },
             "layoutMs": {
-              "min": 6.4,
-              "median": 6.4,
-              "mean": 6.6,
-              "max": 7,
+              "min": 7.3,
+              "median": 7.5,
+              "mean": 7.6,
+              "max": 7.9,
               "sampleCount": 3,
               "unit": "ms"
             },
             "paintMs": {
-              "min": 1.1,
-              "median": 1.1,
-              "mean": 1.2,
-              "max": 1.3,
+              "min": 1.4,
+              "median": 1.5,
+              "mean": 1.4,
+              "max": 1.5,
               "sampleCount": 3,
               "unit": "ms"
             },
@@ -1132,14 +1038,6 @@
               "unit": "ms"
             },
             "runtimeBootstrapMs": {
-              "min": 0,
-              "median": 0,
-              "mean": 0,
-              "max": 0,
-              "sampleCount": 3,
-              "unit": "ms"
-            },
-            "manifestLoadMs": {
               "min": 0,
               "median": 0,
               "mean": 0,
@@ -1195,11 +1093,6 @@
               "rawBytes": 0,
               "gzipBytes": 20,
               "brotliBytes": 1
-            },
-            "manifestJSON": {
-              "rawBytes": 0,
-              "gzipBytes": 20,
-              "brotliBytes": 1
             }
           },
           "structure": {
@@ -1209,42 +1102,42 @@
           },
           "timing": {
             "navigationReadyMs": {
-              "min": 31.3,
-              "median": 34.1,
-              "mean": 34.3,
-              "max": 37.4,
+              "min": 28.9,
+              "median": 29.9,
+              "mean": 32.2,
+              "max": 37.9,
               "sampleCount": 3,
               "unit": "ms"
             },
             "stylesheetParseMs": {
-              "min": 0.1,
-              "median": 0.1,
-              "mean": 0.1,
-              "max": 0.1,
+              "min": 0.2,
+              "median": 0.2,
+              "mean": 0.2,
+              "max": 0.2,
               "sampleCount": 3,
               "unit": "ms"
             },
             "styleRecalculationMs": {
-              "min": 7.5,
-              "median": 8,
-              "mean": 8,
-              "max": 8.5,
+              "min": 9.2,
+              "median": 9.5,
+              "mean": 9.7,
+              "max": 10.4,
               "sampleCount": 3,
               "unit": "ms"
             },
             "layoutMs": {
-              "min": 2.3,
-              "median": 2.6,
-              "mean": 2.5,
-              "max": 2.7,
+              "min": 3.1,
+              "median": 3.5,
+              "mean": 3.4,
+              "max": 3.6,
               "sampleCount": 3,
               "unit": "ms"
             },
             "paintMs": {
-              "min": 1.4,
-              "median": 1.7,
-              "mean": 1.6,
-              "max": 1.7,
+              "min": 1.9,
+              "median": 2,
+              "mean": 1.9,
+              "max": 2,
               "sampleCount": 3,
               "unit": "ms"
             },
@@ -1273,14 +1166,6 @@
               "unit": "ms"
             },
             "runtimeBootstrapMs": {
-              "min": 0,
-              "median": 0,
-              "mean": 0,
-              "max": 0,
-              "sampleCount": 3,
-              "unit": "ms"
-            },
-            "manifestLoadMs": {
               "min": 0,
               "median": 0,
               "mean": 0,
@@ -1318,9 +1203,9 @@
           "variantId": "dashboard-master-runtime",
           "payload": {
             "html": {
-              "rawBytes": 10806,
-              "gzipBytes": 1928,
-              "brotliBytes": 1534
+              "rawBytes": 11242,
+              "gzipBytes": 2046,
+              "brotliBytes": 1634
             },
             "externalCSS": {
               "rawBytes": 0,
@@ -1328,14 +1213,9 @@
               "brotliBytes": 1
             },
             "runtimeJS": {
-              "rawBytes": 100576,
-              "gzipBytes": 27331,
-              "brotliBytes": 23776
-            },
-            "manifestJSON": {
-              "rawBytes": 82513,
-              "gzipBytes": 11747,
-              "brotliBytes": 9374
+              "rawBytes": 174570,
+              "gzipBytes": 38972,
+              "brotliBytes": 33180
             }
           },
           "structure": {
@@ -1345,10 +1225,10 @@
           },
           "timing": {
             "navigationReadyMs": {
-              "min": 38.1,
-              "median": 38.1,
-              "mean": 40.9,
-              "max": 46.6,
+              "min": 41.2,
+              "median": 43.6,
+              "mean": 44.5,
+              "max": 48.7,
               "sampleCount": 3,
               "unit": "ms"
             },
@@ -1361,26 +1241,26 @@
               "unit": "ms"
             },
             "styleRecalculationMs": {
-              "min": 5.6,
-              "median": 5.6,
-              "mean": 5.9,
-              "max": 6.6,
+              "min": 6.6,
+              "median": 6.9,
+              "mean": 6.8,
+              "max": 6.9,
               "sampleCount": 3,
               "unit": "ms"
             },
             "layoutMs": {
-              "min": 2.3,
-              "median": 2.4,
-              "mean": 3,
-              "max": 4.2,
+              "min": 2.6,
+              "median": 3.4,
+              "mean": 4.1,
+              "max": 6.2,
               "sampleCount": 3,
               "unit": "ms"
             },
             "paintMs": {
-              "min": 0.8,
-              "median": 0.8,
-              "mean": 0.8,
-              "max": 0.8,
+              "min": 1,
+              "median": 1.1,
+              "mean": 1.1,
+              "max": 1.1,
               "sampleCount": 3,
               "unit": "ms"
             },
@@ -1393,42 +1273,34 @@
               "unit": "count"
             },
             "requestCount": {
-              "min": 3,
-              "median": 3,
-              "mean": 3,
-              "max": 3,
+              "min": 2,
+              "median": 2,
+              "mean": 2,
+              "max": 2,
               "sampleCount": 3,
               "unit": "count"
             },
             "runtimeReadyMs": {
-              "min": 20.7,
-              "median": 21.2,
-              "mean": 21.6,
-              "max": 22.9,
+              "min": 16.9,
+              "median": 17,
+              "mean": 17.7,
+              "max": 19.2,
               "sampleCount": 3,
               "unit": "ms"
             },
             "runtimeBootstrapMs": {
-              "min": 11.3,
-              "median": 12.2,
-              "mean": 12.1,
-              "max": 12.9,
-              "sampleCount": 3,
-              "unit": "ms"
-            },
-            "manifestLoadMs": {
-              "min": 1.1,
-              "median": 2.2,
-              "mean": 1.9,
-              "max": 2.4,
+              "min": 5.9,
+              "median": 5.9,
+              "mean": 6.1,
+              "max": 6.6,
               "sampleCount": 3,
               "unit": "ms"
             },
             "runtimeObserveMs": {
-              "min": 5.2,
-              "median": 5.6,
-              "mean": 5.6,
-              "max": 5.9,
+              "min": 0.2,
+              "median": 0.3,
+              "mean": 0.3,
+              "max": 0.4,
               "sampleCount": 3,
               "unit": "ms"
             },
@@ -1441,10 +1313,10 @@
               "unit": "count"
             },
             "runtimeStyleRawBytes": {
-              "min": 2892,
-              "median": 2892,
-              "mean": 2892,
-              "max": 2892,
+              "min": 0,
+              "median": 0,
+              "mean": 0,
+              "max": 0,
               "sampleCount": 3,
               "unit": "B"
             }
@@ -1467,11 +1339,6 @@
               "rawBytes": 0,
               "gzipBytes": 20,
               "brotliBytes": 1
-            },
-            "manifestJSON": {
-              "rawBytes": 0,
-              "gzipBytes": 20,
-              "brotliBytes": 1
             }
           },
           "structure": {
@@ -1481,42 +1348,42 @@
           },
           "timing": {
             "navigationReadyMs": {
-              "min": 23.5,
-              "median": 31.7,
-              "mean": 30.2,
-              "max": 35.5,
+              "min": 23.6,
+              "median": 24.5,
+              "mean": 28.9,
+              "max": 38.7,
               "sampleCount": 3,
               "unit": "ms"
             },
             "stylesheetParseMs": {
-              "min": 0.2,
-              "median": 0.2,
-              "mean": 0.2,
+              "min": 0.3,
+              "median": 0.3,
+              "mean": 0.3,
               "max": 0.3,
               "sampleCount": 3,
               "unit": "ms"
             },
             "styleRecalculationMs": {
-              "min": 7.6,
-              "median": 7.7,
-              "mean": 7.7,
-              "max": 7.8,
+              "min": 9.4,
+              "median": 9.8,
+              "mean": 9.8,
+              "max": 10.1,
               "sampleCount": 3,
               "unit": "ms"
             },
             "layoutMs": {
-              "min": 2.2,
-              "median": 2.2,
-              "mean": 2.2,
-              "max": 2.2,
+              "min": 3,
+              "median": 3,
+              "mean": 3,
+              "max": 3.2,
               "sampleCount": 3,
               "unit": "ms"
             },
             "paintMs": {
-              "min": 1.1,
-              "median": 1.2,
-              "mean": 1.2,
-              "max": 1.2,
+              "min": 1.4,
+              "median": 1.5,
+              "mean": 1.5,
+              "max": 1.5,
               "sampleCount": 3,
               "unit": "ms"
             },
@@ -1545,14 +1412,6 @@
               "unit": "ms"
             },
             "runtimeBootstrapMs": {
-              "min": 0,
-              "median": 0,
-              "mean": 0,
-              "max": 0,
-              "sampleCount": 3,
-              "unit": "ms"
-            },
-            "manifestLoadMs": {
               "min": 0,
               "median": 0,
               "mean": 0,
@@ -1608,11 +1467,6 @@
               "rawBytes": 0,
               "gzipBytes": 20,
               "brotliBytes": 1
-            },
-            "manifestJSON": {
-              "rawBytes": 0,
-              "gzipBytes": 20,
-              "brotliBytes": 1
             }
           },
           "structure": {
@@ -1622,42 +1476,42 @@
           },
           "timing": {
             "navigationReadyMs": {
-              "min": 25.5,
-              "median": 30.2,
-              "mean": 30.8,
-              "max": 36.7,
+              "min": 25.7,
+              "median": 31.6,
+              "mean": 31,
+              "max": 35.6,
               "sampleCount": 3,
               "unit": "ms"
             },
             "stylesheetParseMs": {
               "min": 0.2,
-              "median": 0.2,
-              "mean": 0.2,
-              "max": 0.2,
+              "median": 0.3,
+              "mean": 0.3,
+              "max": 0.3,
               "sampleCount": 3,
               "unit": "ms"
             },
             "styleRecalculationMs": {
-              "min": 1.3,
-              "median": 1.3,
-              "mean": 1.3,
-              "max": 1.4,
+              "min": 1.7,
+              "median": 1.7,
+              "mean": 1.7,
+              "max": 1.7,
               "sampleCount": 3,
               "unit": "ms"
             },
             "layoutMs": {
-              "min": 5.2,
-              "median": 5.3,
-              "mean": 5.3,
-              "max": 5.5,
+              "min": 6.5,
+              "median": 6.6,
+              "mean": 6.6,
+              "max": 6.7,
               "sampleCount": 3,
               "unit": "ms"
             },
             "paintMs": {
-              "min": 1,
-              "median": 1,
-              "mean": 1,
-              "max": 1,
+              "min": 1.3,
+              "median": 1.4,
+              "mean": 1.4,
+              "max": 1.5,
               "sampleCount": 3,
               "unit": "ms"
             },
@@ -1686,14 +1540,6 @@
               "unit": "ms"
             },
             "runtimeBootstrapMs": {
-              "min": 0,
-              "median": 0,
-              "mean": 0,
-              "max": 0,
-              "sampleCount": 3,
-              "unit": "ms"
-            },
-            "manifestLoadMs": {
               "min": 0,
               "median": 0,
               "mean": 0,
@@ -1731,9 +1577,9 @@
           "variantId": "stress-css-master-runtime",
           "payload": {
             "html": {
-              "rawBytes": 18963,
-              "gzipBytes": 3153,
-              "brotliBytes": 1876
+              "rawBytes": 19399,
+              "gzipBytes": 3280,
+              "brotliBytes": 1976
             },
             "externalCSS": {
               "rawBytes": 0,
@@ -1741,14 +1587,9 @@
               "brotliBytes": 1
             },
             "runtimeJS": {
-              "rawBytes": 100576,
-              "gzipBytes": 27331,
-              "brotliBytes": 23776
-            },
-            "manifestJSON": {
-              "rawBytes": 82513,
-              "gzipBytes": 11747,
-              "brotliBytes": 9374
+              "rawBytes": 174570,
+              "gzipBytes": 38972,
+              "brotliBytes": 33180
             }
           },
           "structure": {
@@ -1758,10 +1599,10 @@
           },
           "timing": {
             "navigationReadyMs": {
-              "min": 35.9,
-              "median": 40,
-              "mean": 39,
-              "max": 41.2,
+              "min": 48.1,
+              "median": 50,
+              "mean": 50.2,
+              "max": 52.5,
               "sampleCount": 3,
               "unit": "ms"
             },
@@ -1774,26 +1615,26 @@
               "unit": "ms"
             },
             "styleRecalculationMs": {
-              "min": 1.2,
-              "median": 1.3,
-              "mean": 1.2,
-              "max": 1.3,
+              "min": 1.4,
+              "median": 1.7,
+              "mean": 1.6,
+              "max": 1.8,
               "sampleCount": 3,
               "unit": "ms"
             },
             "layoutMs": {
-              "min": 3.3,
-              "median": 3.3,
-              "mean": 3.4,
-              "max": 3.5,
+              "min": 3.9,
+              "median": 4.3,
+              "mean": 4.2,
+              "max": 4.4,
               "sampleCount": 3,
               "unit": "ms"
             },
             "paintMs": {
-              "min": 0.6,
-              "median": 0.7,
-              "mean": 0.7,
-              "max": 0.7,
+              "min": 0.8,
+              "median": 0.9,
+              "mean": 0.9,
+              "max": 0.9,
               "sampleCount": 3,
               "unit": "ms"
             },
@@ -1806,42 +1647,34 @@
               "unit": "count"
             },
             "requestCount": {
-              "min": 3,
-              "median": 3,
-              "mean": 3,
-              "max": 3,
+              "min": 2,
+              "median": 2,
+              "mean": 2,
+              "max": 2,
               "sampleCount": 3,
               "unit": "count"
             },
             "runtimeReadyMs": {
-              "min": 24.8,
-              "median": 25.5,
-              "mean": 25.7,
-              "max": 26.8,
+              "min": 16.8,
+              "median": 16.8,
+              "mean": 17.1,
+              "max": 17.6,
               "sampleCount": 3,
               "unit": "ms"
             },
             "runtimeBootstrapMs": {
-              "min": 14.9,
-              "median": 16,
-              "mean": 16.1,
-              "max": 17.4,
-              "sampleCount": 3,
-              "unit": "ms"
-            },
-            "manifestLoadMs": {
-              "min": 1.1,
-              "median": 1.2,
-              "mean": 1.6,
-              "max": 2.5,
+              "min": 5.7,
+              "median": 5.8,
+              "mean": 5.8,
+              "max": 5.9,
               "sampleCount": 3,
               "unit": "ms"
             },
             "runtimeObserveMs": {
-              "min": 9.2,
-              "median": 9.8,
-              "mean": 9.7,
-              "max": 10,
+              "min": 0.3,
+              "median": 0.3,
+              "mean": 0.3,
+              "max": 0.4,
               "sampleCount": 3,
               "unit": "ms"
             },
@@ -1854,10 +1687,10 @@
               "unit": "count"
             },
             "runtimeStyleRawBytes": {
-              "min": 8570,
-              "median": 8570,
-              "mean": 8570,
-              "max": 8570,
+              "min": 0,
+              "median": 0,
+              "mean": 0,
+              "max": 0,
               "sampleCount": 3,
               "unit": "B"
             }
@@ -1880,11 +1713,6 @@
               "rawBytes": 0,
               "gzipBytes": 20,
               "brotliBytes": 1
-            },
-            "manifestJSON": {
-              "rawBytes": 0,
-              "gzipBytes": 20,
-              "brotliBytes": 1
             }
           },
           "structure": {
@@ -1894,42 +1722,42 @@
           },
           "timing": {
             "navigationReadyMs": {
-              "min": 23.3,
-              "median": 30,
-              "mean": 29.3,
-              "max": 34.7,
+              "min": 28.3,
+              "median": 33.2,
+              "mean": 31.7,
+              "max": 33.6,
               "sampleCount": 3,
               "unit": "ms"
             },
             "stylesheetParseMs": {
               "min": 0.3,
-              "median": 0.3,
-              "mean": 0.3,
-              "max": 0.3,
+              "median": 0.4,
+              "mean": 0.4,
+              "max": 0.4,
               "sampleCount": 3,
               "unit": "ms"
             },
             "styleRecalculationMs": {
-              "min": 1.8,
-              "median": 1.8,
-              "mean": 1.8,
-              "max": 1.8,
+              "min": 2.4,
+              "median": 2.4,
+              "mean": 2.5,
+              "max": 2.6,
               "sampleCount": 3,
               "unit": "ms"
             },
             "layoutMs": {
-              "min": 5.2,
-              "median": 5.3,
-              "mean": 5.3,
-              "max": 5.4,
+              "min": 6.3,
+              "median": 6.6,
+              "mean": 6.6,
+              "max": 6.8,
               "sampleCount": 3,
               "unit": "ms"
             },
             "paintMs": {
-              "min": 0.9,
-              "median": 1,
-              "mean": 1,
-              "max": 1,
+              "min": 1.2,
+              "median": 1.2,
+              "mean": 1.2,
+              "max": 1.2,
               "sampleCount": 3,
               "unit": "ms"
             },
@@ -1958,14 +1786,6 @@
               "unit": "ms"
             },
             "runtimeBootstrapMs": {
-              "min": 0,
-              "median": 0,
-              "mean": 0,
-              "max": 0,
-              "sampleCount": 3,
-              "unit": "ms"
-            },
-            "manifestLoadMs": {
               "min": 0,
               "median": 0,
               "mean": 0,
