@@ -2,6 +2,10 @@ import type MasterCSS from './core'
 import type { Utility } from './utility'
 import type { Variable } from '@stet-css/schema/css-syntax'
 import type { MasterCSSManifestUtilityMatcher } from '@stet-css/schema/manifest'
+import { ROOT_FONT_SIZE } from './common'
+import { assertBaseUnit } from './utils/base-unit'
+
+export { ROOT_FONT_SIZE }
 
 export interface MasterCSSNormalizedNumericValue {
   kind: 'number' | 'rem'
@@ -91,9 +95,18 @@ export function normalizeMasterCSSNumericValue(css: MasterCSS, value: string | n
     case 'rem':
       return { kind: 'rem', value: numericValue }
     case 'px':
-      return { kind: 'rem', value: numericValue / css.settings.rootSize }
-    case 'x':
-      return { kind: 'rem', value: numericValue * css.settings.baseUnit / css.settings.rootSize }
+      return { kind: 'rem', value: numericValue / ROOT_FONT_SIZE }
+    case 'x': {
+      const baseUnit = assertBaseUnit(css.settings.baseUnit)
+      switch (baseUnit.unit) {
+        case 'rem':
+          return { kind: 'rem', value: numericValue * baseUnit.value }
+        case 'px':
+          return { kind: 'rem', value: numericValue * baseUnit.value / ROOT_FONT_SIZE }
+        default:
+          return
+      }
+    }
     default:
       return
   }

@@ -32,7 +32,6 @@ import { createPresetManifest } from './helpers/create-preset-manifest'
 const css = createCSSWithNativeDeclarations(createPresetManifest())
 const customManifest = createPresetManifest({
   settings: {
-    rootSize: 16,
     modes: ['dark', 'midnight']
   },
   conditions: {

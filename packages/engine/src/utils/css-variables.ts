@@ -21,16 +21,10 @@ export function createAlphaColorValue(value: string, alpha: number) {
   return `color-mix(in oklab,${value} ${formatAlphaPercentage(alpha * 100)},transparent)`
 }
 
-export function createNumberVariableReference(variable: Variable, unit: string, rootSize = 16) {
-  void unit
-  void rootSize
+export function createNumberVariableReference(variable: Variable) {
   return createCSSVariableReference(variable.name)
 }
 
-export function createNegativeNumberVariableReference(variable: Variable, unit: string, rootSize = 16) {
-  const reference = createCSSVariableReference(variable.name)
-  void variable
-  void unit
-  void rootSize
-  return `calc(${reference} * -1)`
+export function createNegativeNumberVariableReference(variable: Variable) {
+  return `calc(${createCSSVariableReference(variable.name)} * -1)`
 }

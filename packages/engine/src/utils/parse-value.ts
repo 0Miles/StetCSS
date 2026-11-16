@@ -1,10 +1,9 @@
-import { UNIT_REGEX } from '../common'
+import { ROOT_FONT_SIZE, UNIT_REGEX } from '../common'
 import type { NumberValueComponent, StringValueComponent } from '@stet-css/schema/css-syntax'
 
 export default function parseValue(
   token: string | number,
-  unit = '',
-  rootSize = 1
+  unit = ''
 ) {
   const isNumber = typeof token === 'number'
   const defaultUnit = unit
@@ -15,7 +14,7 @@ export default function parseValue(
       unit: defaultUnit,
       type: 'number',
       value: defaultUnit === 'rem' || defaultUnit === 'em'
-        ? token / rootSize
+        ? token / ROOT_FONT_SIZE
         : token
     } as NumberValueComponent
   }
@@ -26,7 +25,7 @@ export default function parseValue(
     let parsedUnit = matches[2] || ''
 
     if (!parsedUnit && (defaultUnit === 'rem' || defaultUnit === 'em')) {
-      value = value / rootSize
+      value = value / ROOT_FONT_SIZE
       parsedUnit = defaultUnit
     }
 

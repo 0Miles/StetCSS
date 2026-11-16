@@ -367,7 +367,7 @@ export default class MasterCSS {
   }
 
   parseValue(token: string | number, unit = '') {
-    return parseValue(token, unit, this.settings.rootSize)
+    return parseValue(token, unit)
   }
 
   /**

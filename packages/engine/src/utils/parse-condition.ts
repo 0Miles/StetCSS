@@ -128,7 +128,7 @@ export default function parseCondition(token: string, css: MasterCSS, isRaw = tr
               }
               return
             } else {
-              const { token, ...newNode } = parseValue(node.value, 'rem', css.settings.rootSize)
+              const { token, ...newNode } = parseValue(node.value, 'rem')
               Object.assign(node, newNode)
             }
           }

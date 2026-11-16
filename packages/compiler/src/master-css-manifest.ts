@@ -29,6 +29,7 @@ import type {
 } from '@stet-css/schema/manifest'
 import { flattenMasterCSSManifestVariables, groupMasterCSSManifestVariables } from '@stet-css/schema/manifest'
 import {
+  ROOT_FONT_SIZE,
   createCompilerCSS,
   parseCondition,
   parseSelector
@@ -259,7 +260,7 @@ function compileVariables(
   return variables.length ? variables : undefined
 }
 
-function normalizeNumericConditionValue(variable: MasterCSSManifestVariable, rootSize: number) {
+function normalizeNumericConditionValue(variable: MasterCSSManifestVariable) {
   if (variable.key.startsWith('-')) return
   const numeric = variable.numeric || (typeof variable.value === 'number' ? { value: variable.value } : undefined)
   if (!numeric) return
@@ -267,7 +268,7 @@ function normalizeNumericConditionValue(variable: MasterCSSManifestVariable, roo
     case undefined:
     case '':
     case 'px':
-      return numeric.value / rootSize
+      return numeric.value / ROOT_FONT_SIZE
     case 'rem':
       return numeric.value
     default:
@@ -275,8 +276,8 @@ function normalizeNumericConditionValue(variable: MasterCSSManifestVariable, roo
   }
 }
 
-function createVariableCondition(variable: MasterCSSManifestVariable, id: 'media' | 'container', rootSize: number): MasterCSSManifestCondition | undefined {
-  const value = normalizeNumericConditionValue(variable, rootSize)
+function createVariableCondition(variable: MasterCSSManifestVariable, id: 'media' | 'container'): MasterCSSManifestCondition | undefined {
+  const value = normalizeNumericConditionValue(variable)
   if (value === undefined) return
   return {
     id,
@@ -288,20 +289,20 @@ function createVariableCondition(variable: MasterCSSManifestVariable, id: 'media
   }
 }
 
-function compileConditions(variables: MasterCSSManifestVariableDraft[] | undefined, rootSize: number) {
+function compileConditions(variables: MasterCSSManifestVariableDraft[] | undefined) {
   const conditions: MasterCSSManifestConditions = {}
   const breakpointConditions: MasterCSSManifestConditions = {}
   const containerConditions: MasterCSSManifestConditions = {}
 
   for (const variable of variables || []) {
     if (variable.namespace === 'breakpoint') {
-      const condition = createVariableCondition(variable, 'media', rootSize)
+      const condition = createVariableCondition(variable, 'media')
       if (condition) {
         conditions[variable.key] = condition
         breakpointConditions[variable.key] = condition
       }
     } else if (variable.namespace === 'container') {
-      const condition = createVariableCondition(variable, 'container', rootSize)
+      const condition = createVariableCondition(variable, 'container')
       if (condition) {
         containerConditions[variable.key] = condition
       }
@@ -792,13 +793,11 @@ export function createMasterCSSManifest(input: CSSDirectiveManifestInput = {}, o
   setCompilerDiagnosticCount(diagnostics, 'manifest-input-variant-count', input.variants?.length || 0)
   setCompilerDiagnosticCount(diagnostics, 'manifest-input-animation-count', Object.keys(input.animations || {}).length)
 
-  const rootSize = input.rootSize ?? options.baseManifest?.settings?.rootSize ?? 16
   const resolveVariableName = timeCompilerDiagnostic(diagnostics, 'manifest-variable-name-resolver-ms', () => createVariableNameResolver(input, options))
   const variableDefinitions = timeCompilerDiagnostic(diagnostics, 'manifest-compile-variables-ms', () => compileVariables(input.variables, resolveVariableName))
   const variables = timeCompilerDiagnostic(diagnostics, 'manifest-group-variables-ms', () => groupMasterCSSManifestVariables(variableDefinitions))
-  const { conditions, breakpointConditions, containerConditions } = timeCompilerDiagnostic(diagnostics, 'manifest-compile-conditions-ms', () => compileConditions(variableDefinitions, rootSize))
+  const { conditions, breakpointConditions, containerConditions } = timeCompilerDiagnostic(diagnostics, 'manifest-compile-conditions-ms', () => compileConditions(variableDefinitions))
   const settings = {
-    ...(input.rootSize !== undefined ? { rootSize: input.rootSize } : {}),
     ...(input.baseUnit !== undefined ? { baseUnit: input.baseUnit } : {}),
     ...(input.defaultMode !== undefined ? { defaultMode: input.defaultMode } : {}),
     ...(input.scope !== undefined ? { scope: input.scope } : {}),

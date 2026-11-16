@@ -18,6 +18,7 @@ import { MATCH_NAME_BOUNDARY } from './common'
 import builtinKeyAliases from './key-aliases'
 import builtinNativeValueNamespaces, { type MasterCSSBuiltinNativeValueNamespace } from './native-value-namespaces'
 import builtinSelectorAliases from './selector-aliases'
+import { assertBaseUnit } from './utils/base-unit'
 import type { Condition } from './utils/parse-condition'
 import type { SelectorNode } from './utils/parse-selector'
 
@@ -29,16 +30,14 @@ export type CompiledUtility = Omit<MasterCSSManifestUtility, 'emit' | 'name' | '
 }
 
 export type EngineSettings = MasterCSSManifestSettings & {
-  rootSize: number
-  baseUnit: number
+  baseUnit: string
   defaultMode: NonNullable<MasterCSSManifestSettings['defaultMode']>
   modeTrigger: NonNullable<MasterCSSManifestSettings['modeTrigger']>
   modes: string[]
 }
 
 const DEFAULT_SETTINGS: EngineSettings = {
-  rootSize: 16,
-  baseUnit: 4,
+  baseUnit: '0.25rem',
   defaultMode: 'light',
   modeTrigger: 'media',
   modes: ['light', 'dark']
@@ -206,6 +205,7 @@ function canIndexStaticOnlyUtilities(utilities: CompiledUtility[]) {
 }
 
 function createCompiledSettings(manifest: MasterCSSManifest): EngineSettings {
+  if (manifest.settings?.baseUnit !== undefined) assertBaseUnit(manifest.settings.baseUnit)
   return {
     ...DEFAULT_SETTINGS,
     ...(manifest.settings || {}),

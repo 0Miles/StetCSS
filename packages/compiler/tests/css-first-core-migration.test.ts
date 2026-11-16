@@ -968,6 +968,59 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
   })
 
   /**
+   * Prevents: `@settings { root-size: … }` still being accepted after its removal, so a developer
+   * keeps a setting that no longer changes rem conversion, or gets a bare "unsupported option"
+   * error that does not say the setting is gone.
+   * Reverse-checked: in `core.ts`, deleting `case 'root-size'` so it falls through to
+   * "Unsupported @settings option" turns only this test red.
+   */
+  test('rejects @settings root-size as removed', () => {
+    expect(() => compileCSSManifest(`
+      @settings {
+        root-size: 10;
+      }
+    `, { baseManifest: defaultManifest })).toThrow('root-size was removed')
+  })
+
+  /**
+   * Prevents: `base-unit` losing its unit or its value on the way from `@settings` to the CSS, so
+   * `4x` keeps the default `1rem` under `base-unit: 4px`, or `3x` under `base-unit: 0.1rem` emits
+   * the floating-point tail `0.30000000000000004rem`; and a project without `@settings` seeing
+   * its `x` lengths or its numeric queries change. Leading zeros follow the engine's existing
+   * number formatting (`0.75rem`), unchanged here.
+   * Reverse-checked: emitting `'rem'` instead of `baseUnit.unit` in `formatBaseUnitMultiple` reds
+   * the two `4px` rows; dropping its `toPrecision(15)` rounding reds the `0.1rem` row; dividing by
+   * 10 instead of `ROOT_FONT_SIZE` in `parseValue`'s unitless-string branch reds the default
+   * `@>=768` row.
+   */
+  test.each([
+    { settings: '', className: 'p:4x', expected: '.p\\:4x{padding:1rem}' },
+    { settings: '', className: 'w:100@>=768', expected: '@media (width>=48rem){.w\\:100\\@\\>\\=768{width:100}}' },
+    { settings: 'base-unit: 0.25rem;', className: 'p:4x', expected: '.p\\:4x{padding:1rem}' },
+    { settings: 'base-unit: 4px;', className: 'p:4x', expected: '.p\\:4x{padding:16px}' },
+    { settings: 'base-unit: 4px;', className: 'p:4x|2x', expected: '.p\\:4x\\|2x{padding:16px 8px}' },
+    { settings: 'base-unit: 0.1rem;', className: 'p:3x', expected: '.p\\:3x{padding:0.3rem}' }
+  ])('resolves $className with @settings { $settings }', ({ settings, className, expected }) => {
+    const { manifest } = compileCSSManifest(`@settings { ${settings} }`, { baseManifest: defaultManifest })
+
+    expect(createTestCSS(manifest).createRules(className).map((rule) => rule.text)).toEqual([expected])
+  })
+
+  /**
+   * Prevents: `base-unit` accepting a value `x` cannot scale into a CSS length: a unitless number
+   * (the old pixel count, which would now mean nothing), a percentage, or `var()` / `calc()`,
+   * which the engine cannot multiply at build time.
+   * Reverse-checked: making the unit optional in `parseBaseUnit`'s pattern reds the `4` row only.
+   */
+  test.each(['4', '25%', 'var(--unit)', 'calc(1rem + 1px)'])('rejects @settings base-unit: %s', (value) => {
+    expect(() => compileCSSManifest(`
+      @settings {
+        base-unit: ${value};
+      }
+    `, { baseManifest: defaultManifest })).toThrow('base-unit must be a CSS length')
+  })
+
+  /**
    * Prevents: an empty `@theme sepia {}` no longer registering "sepia" as a mode. With
    * `@settings modes` removed, it is the only way to declare a mode that has no tokens yet,
    * so `fg:red@sepia` would stop generating a rule.

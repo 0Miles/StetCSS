@@ -65,10 +65,7 @@ describe('class inspection', () => {
     expect(normalizeMasterCSSNumericValue(css, 1)).toEqual({ kind: 'number', value: 1 })
     expect(normalizeMasterCSSNumericValue(css, '1rem')).toEqual({ kind: 'rem', value: 1 })
     expect(normalizeMasterCSSNumericValue(css, '16px')).toEqual({ kind: 'rem', value: 1 })
-    expect(normalizeMasterCSSNumericValue(css, '4x')).toEqual({
-      kind: 'rem',
-      value: 4 * css.settings.baseUnit / css.settings.rootSize
-    })
+    expect(normalizeMasterCSSNumericValue(css, '4x')).toEqual({ kind: 'rem', value: 1 })
     expect(normalizeMasterCSSNumericValue(css, '50%')).toBeUndefined()
   })
 })

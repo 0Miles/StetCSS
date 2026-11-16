@@ -68,8 +68,8 @@ export type MasterCSSManifestSelectorNode =
 export type MasterCSSManifestSelectors = Record<string, MasterCSSManifestSelectorNode[]>
 
 export interface MasterCSSManifestSettings {
-  rootSize?: number
-  baseUnit?: number
+  /** The length one `x` stands for, as a CSS length such as `0.25rem` or `4px`. */
+  baseUnit?: string
   defaultMode?: MasterCSSManifestDefaultMode
   scope?: string
   important?: boolean
