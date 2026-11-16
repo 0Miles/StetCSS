@@ -18,50 +18,40 @@
 // Run after `bun run build`: entry points live in each package's dist.
 
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { builtinModules } from 'node:module'
-import { join, posix } from 'node:path'
+import { isBuiltin } from 'node:module'
+import { join, posix, sep } from 'node:path'
 import { publishedPackages, root } from './published-packages.mjs'
 
 const REPO = 'https://github.com/0Miles/StetCSS'
-const DEPENDENCY_FIELDS = ['dependencies', 'peerDependencies', 'optionalDependencies', 'devDependencies']
+const INSTALLED_DEPENDENCY_FIELDS = ['dependencies', 'peerDependencies', 'optionalDependencies']
+const DEPENDENCY_FIELDS = [...INSTALLED_DEPENDENCY_FIELDS, 'devDependencies']
 const LOCAL_PROTOCOL = /^(workspace|catalog|link|file|portal):/
 const ENTRY_FIELDS = ['main', 'module', 'types', 'typings', 'style', 'browser', 'unpkg', 'jsdelivr', 'jsnext:main', 'esnext']
-const BUILTINS = new Set(builtinModules)
 const PACKAGE_NAME = /^(?:@[a-z0-9][\w.-]*\/)?[a-z0-9][\w.-]*$/
 const CODE_FILE = /\.(?:[mc]?js|d\.[mc]?ts)$/
 const SPECIFIER = /(?:\bfrom\s*|\bimport\s*\(\s*|\brequire\s*\(\s*|^\s*import\s+)(['"])([^'"\n]+)\1/gm
 
-function listFiles(dir, prefix = '') {
-    const files = []
-    for (const entry of readdirSync(join(dir, prefix), { withFileTypes: true })) {
-        const path = posix.join(prefix, entry.name)
-        if (entry.isDirectory()) files.push(...listFiles(dir, path))
-        else files.push(path)
-    }
-    return files
+function listFiles(dir) {
+    return readdirSync(dir, { recursive: true, withFileTypes: true })
+        .filter((entry) => !entry.isDirectory())
+        .map((entry) => join(entry.parentPath, entry.name).slice(dir.length + 1).split(sep).join('/'))
 }
 
-function pack(dir) {
-    const out = mkdtempSync(join(tmpdir(), 'stet-css-pack-'))
-    try {
-        execFileSync('bun', ['pm', 'pack', '--ignore-scripts', '--quiet', '--destination', out], { cwd: join(root, dir), stdio: ['ignore', 'ignore', 'pipe'] })
-        const tarball = readdirSync(out).find((name) => name.endsWith('.tgz'))
-        execFileSync('tar', ['-xzf', join(out, tarball), '-C', out])
-        return { out, packageRoot: join(out, 'package') }
-    } catch (error) {
-        rmSync(out, { recursive: true, force: true })
-        throw error
-    }
+/** Packs the package into `out` and returns the extracted package root. */
+function pack(dir, out) {
+    execFileSync('bun', ['pm', 'pack', '--ignore-scripts', '--quiet', '--destination', out], { cwd: join(root, dir), stdio: ['ignore', 'ignore', 'pipe'] })
+    const tarball = readdirSync(out).find((name) => name.endsWith('.tgz'))
+    execFileSync('tar', ['-xzf', join(out, tarball), '-C', out])
+    return join(out, 'package')
 }
 
-/** The package a bare specifier names, or undefined for builtins, virtual modules, and non-package strings. */
+/** The package a bare specifier names, or undefined for builtins and non-package strings such as `virtual:` ids. */
 function bareImportPackage(specifier) {
-    if (specifier.startsWith('node:') || specifier.startsWith('virtual:')) return
+    if (isBuiltin(specifier)) return
     const name = specifier.split('/').slice(0, specifier.startsWith('@') ? 2 : 1).join('/')
-    if (BUILTINS.has(name) || !PACKAGE_NAME.test(name)) return
-    return name
+    if (PACKAGE_NAME.test(name)) return name
 }
 
 function entryTargets(pkg) {
@@ -98,8 +88,9 @@ function checkPackage(dir, sourcePkg) {
     const errors = []
     if (!Array.isArray(sourcePkg.files)) errors.push('package.json has no "files" allowlist, so the whole directory would ship')
 
-    const { out, packageRoot } = pack(dir)
+    const out = mkdtempSync(join(tmpdir(), 'stet-css-pack-'))
     try {
+        const packageRoot = pack(dir, out)
         const pkg = JSON.parse(readFileSync(join(packageRoot, 'package.json'), 'utf8'))
         const files = new Set(listFiles(packageRoot))
 
@@ -115,7 +106,7 @@ function checkPackage(dir, sourcePkg) {
 
         if (!files.has('LICENSE')) errors.push('LICENSE is not in the tarball')
 
-        const declared = new Set([pkg.name, ...['dependencies', 'peerDependencies', 'optionalDependencies'].flatMap((field) => Object.keys(pkg[field] ?? {}))])
+        const declared = new Set([pkg.name, ...INSTALLED_DEPENDENCY_FIELDS.flatMap((field) => Object.keys(pkg[field] ?? {}))])
         const undeclared = new Map()
         for (const file of [...files].filter((path) => CODE_FILE.test(path))) {
             const code = readFileSync(join(packageRoot, file), 'utf8')
@@ -130,7 +121,7 @@ function checkPackage(dir, sourcePkg) {
             }
         }
         for (const [name, file] of undeclared) {
-            errors.push(`${file} imports ${name}, which is not in dependencies, peerDependencies, or optionalDependencies`)
+            errors.push(`${file} imports ${name}, which is not in ${INSTALLED_DEPENDENCY_FIELDS.join(', ')}`)
         }
 
         const expected = {
@@ -143,7 +134,7 @@ function checkPackage(dir, sourcePkg) {
         for (const [field, [actual, wanted]] of Object.entries(expected)) {
             if (actual !== wanted) errors.push(`${field} is ${JSON.stringify(actual)}, expected "${wanted}"`)
         }
-        return { errors, fileCount: files.size }
+        return errors
     } finally {
         rmSync(out, { recursive: true, force: true })
     }
@@ -152,15 +143,15 @@ function checkPackage(dir, sourcePkg) {
 let failed = 0
 const published = publishedPackages()
 for (const [dir, pkg] of published) {
-    let result
+    let errors
     try {
-        result = checkPackage(dir, pkg)
+        errors = checkPackage(dir, pkg)
     } catch (error) {
-        result = { errors: [`packing failed: ${error.stderr?.toString().trim() || error.message}`] }
+        errors = [`packing failed: ${error.stderr?.toString().trim() || error.message}`]
     }
-    if (result.errors.length) {
+    if (errors.length) {
         failed++
-        for (const error of result.errors) console.error(`error: ${pkg.name} (${dir}): ${error}`)
+        for (const error of errors) console.error(`error: ${pkg.name} (${dir}): ${error}`)
     }
 }
 
