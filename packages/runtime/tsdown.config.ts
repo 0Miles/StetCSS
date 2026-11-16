@@ -9,10 +9,6 @@ export default defineConfig([
     fixedExtension: false,
     dts: {
       emitDtsOnly: true
-    },
-    copy: {
-      from: '../preset/src/default-manifest.json',
-      to: 'dist'
     }
   },
   {
@@ -43,6 +39,7 @@ export default defineConfig([
     entry: {
       'global.min': 'src/global.min.ts'
     },
+    format: 'iife',
     platform: 'browser',
     tsconfig: './tsconfig.prod.json',
     dts: false,

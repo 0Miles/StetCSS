@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test'
 import { MASTER_CSS_RUNTIME_STYLE_ID } from '@stet-css/schema/runtime-style'
-import init, { DEFAULT_MANIFEST_URL, RUNTIME_SCRIPT_URL, getRuntimeLoaderURL, routeRuntimeAssets } from './init'
+import init, { RUNTIME_SCRIPT_URL, getRuntimeLoaderURL, routeRuntimeAssets } from './init'
 
 /**
  * Browsers expose elements with an `id` or `name` as same-named globals (named access on
@@ -57,9 +57,10 @@ const DOCUMENT_GUARD_CASES: ClobberingCase[] = [
 }))
 
 /**
- * Guards: the CDN script's `document.currentScript` read, shadowed by a `name`d `<img>`, which
- * stops the CDN bundle before it creates a runtime. Reading `document.currentScript` directly
- * in `global.min.ts` turns this test red. Only the CDN bundle reads it.
+ * Confirmation, not a regression guard since #88: the CDN bundle used to read
+ * `document.currentScript` to find its manifest, and a `name`d `<img>` shadowing it stopped
+ * startup. The bundle now embeds the manifest and reads no `currentScript`, so this stays green
+ * whatever `global.min.ts` does with `document`. Kept for the CMS markup it describes.
  */
 const CDN_GUARD_CASES: ClobberingCase[] = [
   { label: 'an image with name="currentScript"', markup: '<img name="currentScript" alt="">', selector: 'img[name="currentScript"]', globalOnly: true }
@@ -206,11 +207,8 @@ test('the CDN script loaded after a module copy keeps the module runtime', async
   }))
 
   await routeRuntimeAssets(page)
-  const manifestResponse = page.waitForResponse(DEFAULT_MANIFEST_URL)
+  // The bundle runs `CSSRuntime.create` while it executes, so it is done once the tag loads.
   await page.addScriptTag({ url: RUNTIME_SCRIPT_URL })
-  await manifestResponse
-  // Let the CDN bundle run `CSSRuntime.create` after its manifest import settles.
-  await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
 
   expect(await page.evaluate(moduleState => ({
     keptClass: globalThis.MasterCSSRuntime === moduleState.Runtime,
