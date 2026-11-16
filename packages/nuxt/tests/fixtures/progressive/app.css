@@ -1,9 +1,0 @@
-@import '@stet-css/core';
-@source './app.vue';
-
-@layer components {
-  .box {
-    display: flex;
-    font-size: 1em;
-  }
-}

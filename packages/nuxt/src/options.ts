@@ -1,10 +1,8 @@
-import { options as defaultPluginOptions, type PluginOptions } from '@stet-css/vite'
+import type { PluginOptions } from '@stet-css/vite'
 
-const options: ModuleOptions = {
-  ...defaultPluginOptions,
-  mode: 'progressive'
+export interface ModuleOptions {
+  /**
+   * Scanner options passed through to `@stet-css/vite`.
+   */
+  scanner?: PluginOptions['scanner']
 }
-
-export default options
-
-export declare type ModuleOptions = PluginOptions
