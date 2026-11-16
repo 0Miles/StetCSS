@@ -1,12 +1,8 @@
-import type { ScannerOptions } from '@stet-css/scanner'
 import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
 import { collectStyleCSSDependencies } from '@stet-css/stylesheet'
-import { createStaticCSS } from './static'
+import { createStaticCSS, type StaticCSSOptions } from './static'
 
-export interface GeneratedCSSLoaderOptions {
-  projectDir: string
-  scannerOptions?: ScannerOptions
-}
+export type GeneratedCSSLoaderOptions = StaticCSSOptions
 
 interface LoaderContext {
   addDependency?: (file: string) => void

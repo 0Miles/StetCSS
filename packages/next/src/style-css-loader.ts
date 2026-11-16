@@ -16,8 +16,7 @@ import { createStaticCSS, toCSSImportPath, writeStaticOutputFile } from './stati
 export interface StyleCSSLoaderOptions {
   /** The generated CSS module every stylesheet entry imports instead of `@stet-css/core`. */
   outputPath: string
-  /** Project root; defaults to the loader's `rootContext`. */
-  projectDir?: string
+  projectDir: string
   /**
    * Also write the generated CSS to `outputPath`. webpack needs it: css-loader requests
    * `@import`ed files with `-!`, which skips the generated CSS loader rule.
@@ -28,7 +27,6 @@ export interface StyleCSSLoaderOptions {
 
 interface LoaderContext {
   resourcePath: string
-  rootContext?: string
   async?: () => (error: Error | null, result?: string) => void
   addDependency?: (file: string) => void
   cacheable?: (flag?: boolean) => void
@@ -50,7 +48,7 @@ async function createGlobalStyleEntryEmittedGlobals(
   return result.emittedGlobals
 }
 
-async function transformLocalStyleSource(resourcePath: string, source: string, projectDir: string | undefined) {
+async function transformLocalStyleSource(resourcePath: string, source: string, projectDir: string) {
   const dependencies: string[] = []
   const entries = await findCSSManifestEntryFiles(projectDir)
   const projectManifest = await loadProjectManifest(projectDir, { entries })
@@ -78,13 +76,14 @@ async function transformLocalStyleSource(resourcePath: string, source: string, p
  * stylesheets; and lowers `@compose`, `@variant` and `@reference` in local stylesheets such
  * as CSS Modules. Other CSS passes through unchanged.
  */
-export async function transformStyleSource(resourcePath: string, source: string, options: StyleCSSLoaderOptions, projectDir?: string) {
+async function transformStyleSource(resourcePath: string, source: string, options: StyleCSSLoaderOptions) {
+  const { projectDir } = options
   if (isMasterCSSPackageStyleFile(resourcePath, projectDir)) {
     return { code: removeMasterStyleDirectives(source).code, dependencies: [] }
   }
   if (resolveMasterStyleSource(resourcePath, source, projectDir)) {
     const code = createStyleCSSHostSource(source, { masterImport: toCSSImportPath(resourcePath, options.outputPath) })
-    if (!options.writeOutput || !projectDir) return { code, dependencies: [], entry: true }
+    if (!options.writeOutput) return { code, dependencies: [], entry: true }
     const result = await createStaticCSS({ projectDir, scannerOptions: options.scannerOptions })
     await writeStaticOutputFile(options.outputPath, result.css)
     return { code, dependencies: result.dependencies, entry: true }
@@ -101,20 +100,19 @@ export default function masterCSSStyleCSSLoader(this: LoaderContext, source: str
     throw new Error('[@stet-css/next] Style CSS loader requires an async loader context.')
   }
   const options = this.getOptions?.()
-  if (!options?.outputPath) {
-    callback(new Error('[@stet-css/next] Missing style CSS loader outputPath option.'))
+  if (!options?.outputPath || !options.projectDir) {
+    callback(new Error('[@stet-css/next] Missing style CSS loader outputPath or projectDir option.'))
     return
   }
-  const projectDir = options.projectDir ?? this.rootContext
   // Local stylesheets resolve classes against the entries, so register their graph before
   // compiling: an invalid `@compose` must still recompile once the source is fixed.
   const dependencies = hasLocalStyleDirectives(source)
-    ? new Set(collectStyleCSSDependencies(this.resourcePath, source, projectDir))
+    ? new Set(collectStyleCSSDependencies(this.resourcePath, source, options.projectDir))
     : new Set<string>()
   for (const dependency of dependencies) {
     this.addDependency?.(dependency)
   }
-  transformStyleSource(this.resourcePath, source, options, projectDir)
+  transformStyleSource(this.resourcePath, source, options)
     .then((result) => {
       // Under webpack the entry writes the generated CSS: rerun it on every build so a new
       // source file, which touches no dependency, still reaches the CSS.
