@@ -36,6 +36,7 @@ describe.each(Object.keys(builds))('%s', (label) => {
    *
    * Reverse check: on the code before #59, where `mode: 'runtime'` still selected the runtime
    * plugins, the second row of both tests failed and the first passed.
+   * #66 replaces the second row with an unknown-key error.
    */
   test('builds CSS that contains the rules for classes in the source', () => {
     expect(outputs[label].css).toContain('.block{display:block}')

@@ -169,6 +169,11 @@ describe('ManifestLoaderPlugin', () => {
     expect(code).not.toContain('#456')
   })
 
+  /**
+   * Guards dev updates of a stylesheet read through `?master-css-manifest`: the hook must return
+   * the edited file's own modules along with the manifest query module.
+   * Reverse check: starting `modules` empty in `manifest-loader.ts` turns only this test red.
+   */
   it('updates per-file CSS manifest modules through HMR when imported', async () => {
     const context = await createContext()
     const plugin = ManifestLoaderPlugin(context)
@@ -195,8 +200,6 @@ describe('ManifestLoaderPlugin', () => {
 
     expect(invalidateModule).toHaveBeenCalledWith(module)
     expect(send).not.toHaveBeenCalled()
-    // The edited stylesheet keeps its own update. Reverse check: starting `modules` empty in
-    // `manifest-loader.ts` turns only this test red.
     expect(result).toEqual([changedModule, module])
   })
 })
