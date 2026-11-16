@@ -138,9 +138,11 @@ async function waitForOutput(doesMatch: (output: string) => boolean) {
  * Guards watch mode against an entry the user breaks while it runs, such as one rewritten with
  * the removed `@master` at-rule: the restart closed every watcher and then crashed with a
  * stack trace, so fixing the file never recovered. It must print the one-line message, keep
- * running, and rebuild once the file is fixed.
+ * running, and rebuild once the file is fixed. The message is the test's cue to save the fix, so
+ * the CLI prints it only after the entry is watched again; printed earlier, a loaded machine
+ * saved the fix before the watcher was armed and the test hung.
  * Reverse check: rethrowing `StylesheetEntryError` in `handlePlanChange` turns only this test
- * red.
+ * red; so does logging the error before `startWatchers` with a 500 ms stall at its top.
  */
 it('reports an entry that turns invalid and recovers once it is fixed', async () => {
   const outputBefore = subprocessOutput.length
