@@ -12,7 +12,7 @@ export default defineConfig({
       refresh: true,
     }),
     react(),
-    masterCSS({ mode: 'static' }),
+    masterCSS(),
   ],
   esbuild: {
     jsx: 'automatic',
