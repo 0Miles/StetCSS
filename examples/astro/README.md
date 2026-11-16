@@ -1,6 +1,6 @@
 # Master CSS Astro example
 
-This example uses `@stet-css/astro` in `static` mode.
+This example uses `@stet-css/astro` with no options, which builds static CSS.
 
 The integration:
 
@@ -26,7 +26,7 @@ The integration:
 └── package.json
 ```
 
-`astro.config.js` registers `masterCSS({ mode: 'static' })`.
+`astro.config.js` registers `masterCSS()`.
 
 `src/styles/global.css` imports the Master CSS default stylesheet, and `src/layouts/Layout.astro` imports that file:
 

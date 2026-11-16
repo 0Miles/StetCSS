@@ -8,6 +8,6 @@ export default defineConfig({
   trailingSlash: 'never',
   integrations: [
     sitemap(),
-    masterCSS({ mode: 'static' })
+    masterCSS()
   ]
 })
