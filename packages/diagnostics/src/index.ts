@@ -174,7 +174,7 @@ function createScannerClassDiagnostics(scanner: CSSScanner, firstSourceByClass: 
   return sortedValues(scanner.invalidClasses).map((className) => ({
     code: 'invalid-scanner-class',
     severity: 'warning',
-    message: `Scanner candidate "${className}" did not generate Master CSS rules.`,
+    message: `Scanner candidate "${className}" did not generate StetCSS rules.`,
     source: 'StetCSS',
     sourceKind: 'scanner',
     filePath: firstSourceByClass.get(className),

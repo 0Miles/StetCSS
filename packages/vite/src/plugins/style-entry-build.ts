@@ -20,7 +20,7 @@ function replaceSlotCSSRules(source: string, slotPattern: RegExp, realCSS: strin
 }
 
 export const NO_STYLE_ENTRY_WARNING =
-  '[stet-css.vite] No stylesheet in this build imports Master CSS, so no Master CSS rules ' +
+  '[stet-css.vite] No stylesheet in this build imports StetCSS, so no StetCSS rules ' +
   'were generated. Import \'@stet-css/core\' from a .css file that your app imports. ' +
   'Astro inlines @import inside .astro <style> blocks before Vite plugins see it, so an ' +
   'import written there ships the raw preset source instead.'
@@ -64,7 +64,7 @@ export default function StyleEntryBuildPlugin(context: PluginContext): Plugin {
       if (staleFileNames.length) {
         this.warn(
           `[stet-css.vite] ${staleFileNames.join(', ')}: the file name was hashed before ` +
-          `every stylesheet that imports Master CSS was read, so it may not change when its ` +
+          `every stylesheet that imports StetCSS was read, so it may not change when its ` +
           `CSS does and caches can keep serving the old file. Keep stylesheets that import ` +
           `'@stet-css/core' as .css, .scss or .sass files inside the project root.`
         )
@@ -82,7 +82,7 @@ export default function StyleEntryBuildPlugin(context: PluginContext): Plugin {
           `The placeholder rule "${getSlotSelector(slotCSSRule)}" was emitted but no CSS chunk in the final ` +
           `bundle still contained it — Vite's downstream CSS pipeline (a PostCSS ` +
           `plugin in your vite config, the bundler's CSS minifier, etc.) most likely ` +
-          `rewrote or dropped it. The output will be missing Master CSS output.`
+          `rewrote or dropped it. The output will be missing StetCSS output.`
         )
       }
     }

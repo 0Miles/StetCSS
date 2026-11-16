@@ -34,7 +34,7 @@ export default function ManifestLoaderPlugin(context: PluginContext): Plugin {
       const manifestPath = fromResolvedStetCSSManifestId(id)
       if (!manifestPath) return
       if (!isCSSManifestRequest(manifestPath)) {
-        throw new TypeError('Master CSS manifest queries only support CSS entry files.')
+        throw new TypeError('StetCSS manifest queries only support CSS entry files.')
       }
       const dependencies = new Set(collectStyleCSSDependencies(manifestPath, undefined, getProjectDir(context)))
       for (const dependency of dependencies) {

@@ -5,9 +5,9 @@ import { createCSSWithNativeDeclarations } from './native-declaration'
 import { tryGenerate } from '@stet-css/core'
 
 /**
- * Validates that the string is valid Master CSS class syntax.
- * @argument syntax A potential Master CSS syntactic class
- * @argument css a Master CSS instance
+ * Validates that the string is valid StetCSS class syntax.
+ * @argument syntax A potential StetCSS syntactic class
+ * @argument css a StetCSS instance
  */
 export default function isClassValid(
   syntax: string,

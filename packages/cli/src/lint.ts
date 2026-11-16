@@ -79,7 +79,7 @@ function createManifestDiagnostic(cwd: string, error: unknown): StetCSSLintSourc
     ruleId: 'manifest',
     code: 'manifest-loading-error',
     severity: 'error',
-    message: `Failed to load Master CSS manifest: ${error instanceof Error ? error.message : String(error)}`,
+    message: `Failed to load StetCSS manifest: ${error instanceof Error ? error.message : String(error)}`,
     range,
     loc: {
       start: { line: 1, column: 1 },

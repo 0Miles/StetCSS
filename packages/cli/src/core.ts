@@ -42,7 +42,7 @@ export default async function runProgram(argv: string[] = process.argv) {
     })
   program
     .command('lint')
-    .description('Run machine-readable Master CSS diagnostics for source files.')
+    .description('Run machine-readable StetCSS diagnostics for source files.')
     .argument('[source paths...]', 'The glob pattern paths to lint sources')
     .option('--stdin', 'Read source content from stdin.')
     .option('--stdin-filepath <path>', 'File path used to infer the stdin source language.')

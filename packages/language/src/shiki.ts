@@ -108,7 +108,7 @@ export interface StetCSSShikiDecoration extends Omit<ShikiDecoration, 'start' | 
 
 export interface StetCSSShikiOptions {
   /**
-   * Reuse an existing Master CSS instance when the caller already owns a
+   * Reuse an existing StetCSS instance when the caller already owns a
    * configured language engine.
    */
   css?: StetCSS
@@ -125,9 +125,9 @@ export interface StetCSSShikiOptions {
    */
   lang?: string
   /**
-   * Treat the whole source as a whitespace-separated Master CSS class list.
+   * Treat the whole source as a whitespace-separated StetCSS class list.
    * This replaces the old standalone `.mcss` TextMate grammar use case
-   * without contributing a Master CSS language.
+   * without contributing a StetCSS language.
    */
   classList?: boolean
   /**
@@ -160,7 +160,7 @@ export interface StetCSSShikiOptions {
    */
   highlightRoleStyles?: StetCSSShikiHighlightRoleStyles
   /**
-   * Resolve Master CSS semantic token scopes through the active Shiki
+   * Resolve StetCSS semantic token scopes through the active Shiki
    * theme when possible. When disabled, the transformer only splits tokens
    * and attaches semantic metadata/classes unless explicit semantic styles
    * are provided.

@@ -41,14 +41,14 @@ export function loadManifestSync(path: string, options: LoadManifestOptions = {}
   if (extname(stripResourceQuery(path)) === '.css') {
     return compileCSSManifestFile(stripResourceQuery(path), withDefaultManifest(options))
   }
-  throw new TypeError('Master CSS manifests can only be loaded from CSS files.')
+  throw new TypeError('StetCSS manifests can only be loaded from CSS files.')
 }
 
 export function loadManifestJSONSync(path: string, options: LoadManifestOptions = {}): ManifestJSONResult {
   if (extname(stripResourceQuery(path)) === '.css') {
     return compileCSSManifestJSON(stripResourceQuery(path), withDefaultManifest(options))
   }
-  throw new TypeError('Master CSS manifest JSON can only be loaded from CSS files.')
+  throw new TypeError('StetCSS manifest JSON can only be loaded from CSS files.')
 }
 
 export function loadProjectManifestSync(projectDir = process.cwd(), options: LoadProjectManifestOptions = {}): LoadProjectManifestResult {

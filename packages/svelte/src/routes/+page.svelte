@@ -7,7 +7,7 @@
 </script>
 
 <main class="max-w:40rem mx:auto p:2rem font:system">
-  <h1 class="font:700 font:2rem m:0 mb:1rem">Master CSS Svelte</h1>
+  <h1 class="font:700 font:2rem m:0 mb:1rem">StetCSS Svelte</h1>
   <p class="fg:gray-60 mb:1.5rem">
     This local page exercises Svelte source extraction without runtime provider APIs.
   </p>

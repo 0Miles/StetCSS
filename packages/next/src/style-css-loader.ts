@@ -73,7 +73,7 @@ async function transformLocalStyleSource(resourcePath: string, source: string, p
 
 /**
  * Rewrites a stylesheet entry to import the generated CSS module, which carries the entry's
- * native CSS and every generated rule; strips Master directives from the package's own
+ * native CSS and every generated rule; strips StetCSS directives from the package's own
  * stylesheets; and lowers `@compose`, `@variant` and `@reference` in local stylesheets such
  * as CSS Modules. Other CSS passes through unchanged.
  */
