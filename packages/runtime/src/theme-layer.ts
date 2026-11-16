@@ -1,5 +1,6 @@
 import { ThemeLayer, VariableRule } from '@stet-css/engine'
 import findNativeCSSRuleIndex from './utils/find-native-css-rule-index'
+import findLayerInsertIndex from './utils/find-layer-insert-index'
 import CSSRuntime from './core'
 
 interface NativeBucket {
@@ -26,7 +27,7 @@ export default class RuntimeThemeLayer extends ThemeLayer {
     super.attach()
     const nativeSheet = this.cssRuntime.style?.sheet
     if (nativeSheet && !this.native?.parentStyleSheet) {
-      const insertedIndex = nativeSheet.insertRule(this.text, nativeSheet.cssRules.length)
+      const insertedIndex = nativeSheet.insertRule(this.text, findLayerInsertIndex(nativeSheet.cssRules, this.name))
       this.native = nativeSheet.cssRules.item(insertedIndex) as CSSLayerBlockRule
       this.syncNativeBuckets()
     }
