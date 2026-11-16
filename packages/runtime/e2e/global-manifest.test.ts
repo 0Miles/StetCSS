@@ -44,16 +44,17 @@ test.beforeAll(async () => {
   server = createServer((request, response) => {
     const path = new URL(request.url || '/', 'http://localhost').pathname
     requests.push(path)
+    if (path === CDN_PACKAGE_PATHS.unpkg) {
+      response.writeHead(302, { location: `${path}/${resolveEntryPath('unpkg')}` })
+      response.end()
+      return
+    }
     for (const cdn of Object.keys(CDN_PACKAGE_PATHS) as CDNName[]) {
-      if (path === CDN_PACKAGE_PATHS[cdn] && cdn === 'unpkg') {
-        response.writeHead(302, { location: `${path}/${resolveEntryPath(cdn)}` })
-        response.end()
-        return
-      }
       const filePath = resolvePackageFile(cdn, path)
-      if (filePath?.startsWith('dist/') && existsSync(resolve(packageRoot, filePath))) {
+      const file = filePath?.startsWith('dist/') && resolve(packageRoot, filePath)
+      if (file && existsSync(file)) {
         response.writeHead(200, { 'content-type': 'text/javascript' })
-        response.end(readFileSync(resolve(packageRoot, filePath)))
+        response.end(readFileSync(file))
         return
       }
     }

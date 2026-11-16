@@ -9,7 +9,7 @@ import init, { RUNTIME_SCRIPT_URL, getRuntimeLoaderURL, routeRuntimeAssets } fro
  * can therefore occupy the names the runtime reads before it loads.
  */
 
-type ClobberingCase = { label: string, markup: string, selector: string, globalOnly?: boolean }
+type ClobberingCase = { label: string, markup: string, selector: string }
 
 /**
  * Guards: `create` reading `instances` from a page element held in the `MasterCSSRuntime`
@@ -56,16 +56,6 @@ const DOCUMENT_GUARD_CASES: ClobberingCase[] = [
   selector: `img[name="${name}"]`
 }))
 
-/**
- * Confirmation, not a regression guard since #88: the CDN bundle used to read
- * `document.currentScript` to find its manifest, and a `name`d `<img>` shadowing it stopped
- * startup. The bundle now embeds the manifest and reads no `currentScript`, so this stays green
- * whatever `global.min.ts` does with `document`. Kept for the CMS markup it describes.
- */
-const CDN_GUARD_CASES: ClobberingCase[] = [
-  { label: 'an image with name="currentScript"', markup: '<img name="currentScript" alt="">', selector: 'img[name="currentScript"]', globalOnly: true }
-]
-
 function collectMessages(page: Page) {
   const messages: string[] = []
   page.on('console', (message) => {
@@ -107,7 +97,7 @@ const expectedState = {
   clobberingElementKept: true
 }
 
-for (const { label, markup, selector, globalOnly } of [...WINDOW_GUARD_CASES, ...WINDOW_CONFIRMATION_CASES, ...DOCUMENT_GUARD_CASES, ...CDN_GUARD_CASES]) {
+for (const { label, markup, selector } of [...WINDOW_GUARD_CASES, ...WINDOW_CONFIRMATION_CASES, ...DOCUMENT_GUARD_CASES]) {
   test(`global runtime starts when ${label} precedes it`, async ({ page }) => {
     const messages = collectMessages(page)
     await routeRuntimeAssets(page)
@@ -127,8 +117,6 @@ for (const { label, markup, selector, globalOnly } of [...WINDOW_GUARD_CASES, ..
     expect(await readRuntimeState(page, selector)).toEqual(expectedState)
     expect(messages).toEqual([])
   })
-
-  if (globalOnly) continue
 
   test(`module runtime starts when ${label} exists before it loads`, async ({ page }) => {
     const messages = collectMessages(page)
