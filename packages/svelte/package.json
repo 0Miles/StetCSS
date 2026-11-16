@@ -51,13 +51,9 @@
   },
   "peerDependencies": {
     "svelte": ">=4",
-    "@sveltejs/kit": ">=2",
     "vite": ">=6"
   },
   "peerDependenciesMeta": {
-    "@sveltejs/kit": {
-      "optional": true
-    },
     "vite": {
       "optional": true
     }
