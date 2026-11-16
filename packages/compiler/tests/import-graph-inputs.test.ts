@@ -228,6 +228,8 @@ const referenceDiamondCalls = [
  * the reference tree passes 256 expansions, within 5 seconds, through every compile entry point.
  * Each level defines a component, so a shortcut that skips empty stylesheets cannot pass it.
  * Runs in a child process, so the old behaviour fails the test instead of slowing the runner.
+ * Reverse check: `MAX_CSS_REFERENCE_EXPANSIONS` set to `Infinity` fails the three rows and the
+ * 257th-reference test.
  */
 test.concurrent.each(referenceDiamondCalls)('$api stops a diamond @reference graph after 256 expansions instead of compiling 8,191 stylesheets', ({ api, args }) => withRoot(async (root) => {
   const entry = writeReferenceDiamond(root)
@@ -236,7 +238,7 @@ test.concurrent.each(referenceDiamondCalls)('$api stops a diamond @reference gra
 
   expect(result).toMatchObject({
     outcome: 'threw',
-    message: expect.stringMatching(/^CSS references compile more than 256 stylesheets, counting repeated references of the same file: .+level-\d+\.css$/)
+    message: expect.stringMatching(/^CSS references compile more than 256 stylesheets, counting repeated references of the same file: .+level-0\.css( -> .+level-\d+\.css)+$/)
   })
   expect('cpuMs' in result && result.cpuMs).toBeLessThan(5_000)
 }))
@@ -244,7 +246,8 @@ test.concurrent.each(referenceDiamondCalls)('$api stops a diamond @reference gra
 /**
  * Guards: the limit is 256 expansions across the reference tree. A project that references the
  * same stylesheet 256 times must keep compiling, and the 257th reference must fail with the path of
- * the referenced file.
+ * the reference chain that passed it.
+ * Reverse check: `expansions > MAX_CSS_REFERENCE_EXPANSIONS` turned into `>=` fails only this test.
  */
 test('a compile expands up to 256 @reference directives and fails on the 257th', () => withRoot((root) => {
   const entry = join(root, 'entry.css')
@@ -256,13 +259,15 @@ test('a compile expands up to 256 @reference directives and fails on the 257th',
   expect(compileCSSManifestFile(entry).css).toContain('.button{color:red}')
 
   writeFileSync(entry, "@reference './tokens.css';\n".repeat(257) + composeBrand)
-  expect(() => compileCSSManifestFile(entry)).toThrow(`CSS references compile more than 256 stylesheets, counting repeated references of the same file: ${tokens}`)
+  expect(() => compileCSSManifestFile(entry)).toThrow(`CSS references compile more than 256 stylesheets, counting repeated references of the same file: ${entry} -> ${tokens}`)
 }))
 
 /**
  * Guards: the stylesheets a compile's references import count toward the same 10,000-stylesheet
  * limit as the entry's own imports. Otherwise each of up to 256 references would get a limit of its
  * own, and 200 references of a stylesheet with 50 imports would inline 10,200 stylesheets unchecked.
+ * Reverse check: a fresh `createCSSImportGraphReader()` per referenced graph in
+ * `resolveCSSReferenceTree` fails only this test.
  */
 test('stylesheets imported by referenced files count toward the compile\'s 10,000-stylesheet limit', () => withRoot((root) => {
   const entry = join(root, 'entry.css')

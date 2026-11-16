@@ -416,21 +416,22 @@ function resolveCSSReferenceTree(
   options: CompileCSSManifestSourceOptions
 ): CSSReferenceExpansion[] {
   let expansions = 0
-  const expand = (references: CSSDirectiveReference[] | undefined, stack: string[]): CSSReferenceExpansion[] => {
-    return (references || []).map((reference) => {
+  const expand = (levelReferences: CSSDirectiveReference[] | undefined, levelStack: string[]): CSSReferenceExpansion[] => {
+    return (levelReferences || []).map((reference) => {
       const file = resolveCSSReferenceFile(reference, options)
-      if (normalizeReferenceStack(stack).includes(resolveComparablePath(file))) {
-        throw new Error(`Circular CSS reference: ${[...stack, file].join(' -> ')}`)
+      const chain = [...levelStack, file]
+      if (normalizeReferenceStack(levelStack).includes(resolveComparablePath(file))) {
+        throw new Error(`Circular CSS reference: ${chain.join(' -> ')}`)
       }
       expansions++
       if (expansions > MAX_CSS_REFERENCE_EXPANSIONS) {
-        throw new Error(`CSS references compile more than ${MAX_CSS_REFERENCE_EXPANSIONS} stylesheets, counting repeated references of the same file: ${file}`)
+        throw new Error(`CSS references compile more than ${MAX_CSS_REFERENCE_EXPANSIONS} stylesheets, counting repeated references of the same file: ${chain.join(' -> ')}`)
       }
       const graph = resolveCSSImportGraphWithReader(file, readCSSImport, { projectDir: options.root })
       return {
         file,
         graph,
-        references: expand(graph.references, [...stack, file])
+        references: expand(graph.references, chain)
       }
     })
   }
