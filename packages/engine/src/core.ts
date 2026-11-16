@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
 import { Utility } from './utility'
 import type { Rule } from './rule'
-import Layer, { layerOrder } from './layer'
+import Layer, { getLayerRank } from './layer'
 import ThemeLayer from './theme-layer'
 import UtilityLayer from './utility-layer'
 import NonLayer from './non-layer'
@@ -224,11 +224,7 @@ export default class MasterCSS {
 
   get text() {
     return this.rules
-      .sort((a, b) => {
-        const indexA = layerOrder.indexOf(a.name) === -1 ? Infinity : layerOrder.indexOf(a.name)
-        const indexB = layerOrder.indexOf(b.name) === -1 ? Infinity : layerOrder.indexOf(b.name)
-        return indexA - indexB
-      })
+      .sort((a, b) => getLayerRank(a.name) - getLayerRank(b.name))
       .map(({ text }) => text).join('')
   }
 

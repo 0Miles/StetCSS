@@ -7,6 +7,12 @@ type RuleHost = { rules: (Rule | VariableRule)[] }
 /** Cascade layer order, the same as the `@layer` statement in `@stet-css/preset/base.css` (checked by `packages/core/tests/facade.test.ts`). */
 export const layerOrder: readonly string[] = Object.freeze(['theme', 'base', 'defaults', 'components', 'utilities'])
 
+/** A layer's position in `layerOrder`; a name outside it ranks last. */
+export function getLayerRank(name: string) {
+  const index = layerOrder.indexOf(name)
+  return index === -1 ? layerOrder.length : index
+}
+
 const ruleMaps = new WeakMap<RuleHost, Map<string, Rule | VariableRule>>()
 
 function getRuleMap(layer: RuleHost) {
