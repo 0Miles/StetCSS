@@ -402,8 +402,7 @@ async function createRuntimeDeliveryModePage(options: {
   return writeDeliveryModePage({
     variantId: options.variantId,
     html,
-    runtimeJS: await readRuntimeBundle(),
-    manifestJSON: await readDefaultManifestJSON()
+    runtimeJS: await readRuntimeBundle()
   })
 }
 
@@ -729,13 +728,20 @@ function addRuntimeHarness(html: string) {
     '            runtimeStyleRawBytes: 0',
     '        };',
     '    </script>',
-    '    <script src="/global.min.js"></script>',
     '    <script>',
-    '        (() => {',
+    // The bundle observes while it runs, so instrument the class when it registers, before observe().
+    '        (function hookRuntimeRegistration(instrument) {',
+    '            Object.defineProperty(window, "MasterCSSRuntime", {',
+    '                configurable: true,',
+    '                get() { return undefined; },',
+    '                set(Runtime) {',
+    '                    Object.defineProperty(window, "MasterCSSRuntime", { value: Runtime, writable: true, configurable: true, enumerable: true });',
+    '                    instrument(Runtime);',
+    '                }',
+    '            });',
+    '        })((Runtime) => {',
     '            const metrics = window.__deliveryMetrics;',
     '            metrics.runtimeScriptLoadedMs = performance.now();',
-    '            const Runtime = window.MasterCSSRuntime;',
-    '            if (!Runtime) { metrics.error = "missing-runtime"; return; }',
     '            const originalObserve = Runtime.prototype.observe;',
     '            Runtime.prototype.observe = function(...args) {',
     '                const startedAt = performance.now();',
@@ -766,8 +772,10 @@ function addRuntimeHarness(html: string) {
     '                }',
     '                return total;',
     '            }',
-    '        })();',
-    '    </script>'
+    '        });',
+    '    </script>',
+    '    <script src="/global.min.js"></script>',
+    '    <script>if (!window.MasterCSSRuntime) window.__deliveryMetrics.error = "missing-runtime";</script>'
   ].join('\n'))
 }
 
