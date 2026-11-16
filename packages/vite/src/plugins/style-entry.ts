@@ -48,12 +48,13 @@ export default function StyleEntryPlugin(_options: PluginOptions, context: Plugi
     async transform(code, id) {
       if (id.startsWith('\0')) return
       if (!isStyleCSSRequest(id)) return
+      const projectDir = getProjectDir(context)
       const dependencies = new Set<string>()
       let resolvedStyleSource: ReturnType<typeof resolveMasterStyleSource>
       try {
-        resolvedStyleSource = resolveMasterStyleSource(id, code, getProjectDir(context))
+        resolvedStyleSource = resolveMasterStyleSource(id, code, projectDir)
       } catch (error) {
-        for (const dependency of collectStyleCSSDependencies(id, code, getProjectDir(context))) {
+        for (const dependency of collectStyleCSSDependencies(id, code, projectDir)) {
           dependencies.add(dependency)
           this.addWatchFile?.(dependency)
         }
@@ -61,12 +62,12 @@ export default function StyleEntryPlugin(_options: PluginOptions, context: Plugi
       }
       if (!resolvedStyleSource) return
 
-      for (const dependency of collectStyleCSSDependencies(id, code, getProjectDir(context))) {
+      for (const dependency of collectStyleCSSDependencies(id, code, projectDir)) {
         dependencies.add(dependency)
         this.addWatchFile?.(dependency)
       }
 
-      if (isMasterCSSPackageStyleFile(id, getProjectDir(context))) {
+      if (isMasterCSSPackageStyleFile(id, projectDir)) {
         return {
           code: removeMasterStyleDirectives(code).code,
           map: null
