@@ -986,8 +986,9 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
    * Prevents: `base-unit` losing its unit or its value on the way from `@settings` to the CSS, so
    * `4x` keeps the default `1rem` under `base-unit: 4px`, or `3x` under `base-unit: 0.1rem` emits
    * the floating-point tail `0.30000000000000004rem`; and a project without `@settings` seeing
-   * its `x` lengths or its numeric queries change. Leading zeros follow the engine's existing
-   * number formatting (`0.75rem`), unchanged here.
+   * its `x` lengths or its numeric queries change. The `0.25rem` row guards lightningcss
+   * reserializing the setting as `.25rem`, which the base-unit pattern must still accept.
+   * Leading zeros follow the engine's existing number formatting (`0.75rem`), unchanged here.
    * Reverse-checked: emitting `'rem'` instead of `baseUnit.unit` in `formatBaseUnitMultiple` reds
    * the two `4px` rows; dropping its `toPrecision(15)` rounding reds the `0.1rem` row; dividing by
    * 10 instead of `ROOT_FONT_SIZE` in `parseValue`'s unitless-string branch reds the default
