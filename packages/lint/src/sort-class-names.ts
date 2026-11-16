@@ -1,7 +1,6 @@
-import { compareRulePriority, type GeneratedRule, type MasterCSS } from '@stet-css/engine'
+import { compareRulePriority, layerOrder, type GeneratedRule, type MasterCSS } from '@stet-css/engine'
 import UtilityType from '@stet-css/schema/utility-type'
 
-const LAYER_ORDER = ['theme', 'base', 'defaults', 'components', 'utilities']
 const UNKNOWN_PROPERTY_GROUP_ORDER = 99
 const UNKNOWN_PROPERTY_ORDER = 99
 
@@ -22,8 +21,8 @@ interface ClassSortDescriptor extends ReadablePropertyOrder {
 }
 
 function getLayerOrder(layerName?: string) {
-  const index = LAYER_ORDER.indexOf(layerName || 'utilities')
-  return index === -1 ? LAYER_ORDER.length : index
+  const index = layerOrder.indexOf(layerName || 'utilities')
+  return index === -1 ? layerOrder.length : index
 }
 
 function getConditionGroupOrder(rule: { conditions?: unknown, mode?: unknown, selectorNodes?: unknown[] }) {
@@ -172,7 +171,7 @@ function createClassSortDescriptor(className: string, css: MasterCSS): ClassSort
       className,
       group: UNKNOWN_PROPERTY_GROUP_ORDER,
       order: UNKNOWN_PROPERTY_ORDER,
-      layerOrder: LAYER_ORDER.length,
+      layerOrder: layerOrder.length,
       conditionGroupOrder: 0,
       typeOrder: 0
     }
