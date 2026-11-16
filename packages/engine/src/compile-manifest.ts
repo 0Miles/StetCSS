@@ -19,6 +19,7 @@ import builtinKeyAliases from './key-aliases'
 import builtinNativeValueNamespaces, { type MasterCSSBuiltinNativeValueNamespace } from './native-value-namespaces'
 import builtinSelectorAliases from './selector-aliases'
 import { assertBaseUnit } from './utils/base-unit'
+import { PRESET_MODES } from './utils/undeclared-mode'
 import type { Condition } from './utils/parse-condition'
 import type { SelectorNode } from './utils/parse-selector'
 
@@ -40,7 +41,7 @@ const DEFAULT_SETTINGS: EngineSettings = {
   baseUnit: '0.25rem',
   defaultMode: 'light',
   modeTrigger: 'media',
-  modes: ['light', 'dark']
+  modes: [...PRESET_MODES]
 }
 
 export interface CompiledManifest {
