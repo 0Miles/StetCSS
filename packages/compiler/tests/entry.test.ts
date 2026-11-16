@@ -6,34 +6,43 @@ import { expect, test } from 'vitest'
 import {
   compileCSS,
   compileProjectManifest,
-  findStandaloneMasterDirectiveStatements,
-  inspectCSS,
   resolveMasterCSSPackageEntryFile
 } from '../src'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(__dirname, '../../..')
 
-test.concurrent('recognizes @master entry as the only Master entry directive', () => {
-  expect(findStandaloneMasterDirectiveStatements('@master entry;').map((statement) => statement.name)).toEqual(['entry'])
-  expect(findStandaloneMasterDirectiveStatements('@master;')).toEqual([])
-  expect(findStandaloneMasterDirectiveStatements('@master global;')).toEqual([])
-
-  expect(inspectCSS('@master entry;')).toMatchObject({
-    hasMasterEntryDirective: true,
-    hasMasterCSSImport: false,
-    hasMasterEntry: true
-  })
-  expect(inspectCSS('@master;').hasMasterEntry).toBe(false)
-  expect(inspectCSS('@master global;').hasMasterEntry).toBe(false)
-  expect(inspectCSS('@import "@stet-css/core";').hasMasterEntry).toBe(true)
+/**
+ * Prevents: a stylesheet still marked with the removed `@master entry;` compiling as if the marker
+ * did something. Only `@import '@stet-css/core'` makes an entry now, so the build must fail and
+ * name that import, and say which entry graph holds the marker.
+ */
+test.concurrent('rejects @master entry and names the @stet-css/core import that replaces it', () => {
+  expect(() => compileCSS('@master entry;\n.card { color: red; }'))
+    .toThrow(`@master entry; was removed; mark stylesheet entries with @import '@stet-css/core'; instead`)
+  expect(() => compileCSS('.card { color: red; }\n@master entry;', { from: '/app/entry.css' }))
+    .toThrow('(in /app/entry.css or a stylesheet it imports)')
 })
 
-test.concurrent('strips @master entry before CSS transform', () => {
-  const result = compileCSS('@master entry;\n.card { color: red; }')
+/**
+ * Prevents: `@master { … }` blocks and other `@master` at-rules reaching the output unchanged,
+ * where they do nothing. Settings such as `mode-trigger` belong in `@settings`.
+ */
+test.concurrent('rejects every other @master at-rule and points settings at @settings', () => {
+  expect(() => compileCSS('@import "@stet-css/core";\n@master { mode-trigger: media; }'))
+    .toThrow(`@master at-rules were removed; mark stylesheet entries with @import '@stet-css/core'; and put settings in @settings, so delete "@master { … }"`)
+  expect(() => compileCSS('@master shake;')).toThrow('so delete "@master shake;"')
+  expect(() => compileCSS('@master;')).toThrow('so delete "@master;"')
+})
 
-  expect(result.css).not.toContain('@master entry')
-  expect(result.nativeCSS).toContain('.card')
+/**
+ * Prevents: native CSS that merely contains the text `@master` failing the build, such as an
+ * image named `logo@master.png` or a comment. Only an at-rule that starts a statement is rejected.
+ */
+test.concurrent('keeps @master text that is not an at-rule', () => {
+  const result = compileCSS('/* @master entry; */\n.logo { background: url(logo@master.png); }')
+
+  expect(result.nativeCSS).toContain('logo@master.png')
 })
 
 /**

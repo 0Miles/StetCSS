@@ -41,15 +41,13 @@ import {
   type CSSDirectiveRuleRange
 } from '@stet-css/lexer'
 import {
+  assertNoMasterAtRules,
   collectStandaloneCSSDirectiveExtractionPolicy,
   createCSSDirectiveExtractionPolicy,
   findStandaloneCSSDirectiveStatements,
-  findStandaloneMasterDirectiveStatements,
   mergeCSSDirectiveExtractionPolicy,
   removeStandaloneCSSDirectives,
-  removeStandaloneMasterDirectives,
-  type StandaloneCSSDirectiveStatement,
-  type StandaloneMasterDirectiveStatement
+  type StandaloneCSSDirectiveStatement
 } from './lexer/standalone-master'
 import { combineSelectorLists } from './utils/selectors'
 import { normalizeStylesheetValue } from './stylesheet-value'
@@ -80,16 +78,15 @@ function createConditionPathProperties(conditionPath: CSSDirectiveConditionPath 
 }
 
 export {
+  assertNoMasterAtRules,
   collectStandaloneCSSDirectiveExtractionPolicy,
   createCSSDirectiveExtractionPolicy,
   findStandaloneCSSDirectiveStatements,
-  findStandaloneMasterDirectiveStatements,
   mergeCSSDirectiveExtractionPolicy,
   removeStandaloneCSSDirectives,
-  removeStandaloneMasterDirectives,
   setCSSTransform
 }
-export type { CSSTransform, StandaloneCSSDirectiveStatement, StandaloneMasterDirectiveStatement }
+export type { CSSTransform, StandaloneCSSDirectiveStatement }
 
 export interface CompileCSSOptions {
   from?: string
@@ -1474,7 +1471,7 @@ function parseNestedManagedStyleChildRule(child: Rule, parsed: ParsedDirectives,
   if (nestedAtRuleChildren) {
     const atRule = formatNestedAtRule(child)
     if (!atRule) {
-      throw new Error('Unsupported nested at-rule in @master')
+      throw new Error('Unsupported nested at-rule in a managed style definition')
     }
     parseStyleRuleBody(nestedAtRuleChildren, parsed, parentSelectorDefinition, [...conditionPath, conditionEntry(atRule)], layer)
     return

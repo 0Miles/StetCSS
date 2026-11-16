@@ -68,6 +68,22 @@ describe('withMasterCSS', () => {
   })
 
   /**
+   * Prevents: under Turbopack, a stylesheet whose only StetCSS syntax is a removed `@master`
+   * at-rule never reaching the style loader, so the build passes and the at-rule ships doing
+   * nothing. Turbopack runs the loader only on files its content condition matches.
+   */
+  it('sends stylesheets with removed @master at-rules to the style loader under Turbopack', () => {
+    const nextConfig = withMasterCSS({} as NextConfig)
+    const styleRule = (nextConfig.turbopack!.rules!['*'] as any[])
+      .find((rule) => findLoaders([rule], 'style-css-loader.js').length)
+    const content = styleRule.condition.all.find((condition: { content?: RegExp }) => condition.content).content as RegExp
+
+    expect(content.test('@master entry;\n.main { color: red; }')).toBe(true)
+    expect(content.test('@master { mode-trigger: media; }')).toBe(true)
+    expect(content.test('.main { color: red; }')).toBe(false)
+  })
+
+  /**
    * Guards the reverse order: withMasterCSS must chain the inner wrapper's webpack hook, or that
    * wrapper's loaders and aliases silently disappear.
    * Reverse check: not calling the user's `webpack` from withMasterCSS turns it red.
