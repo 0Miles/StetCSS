@@ -1,6 +1,6 @@
 import rule from '../src/rules/no-invalid-classes'
 import { RuleTester } from '@typescript-eslint/rule-tester'
-import { createCustomManifestTester, jsxTester } from './testers'
+import { createCustomManifestTester, createUndeclaredModeTester, jsxTester } from './testers'
 
 jsxTester.run('invalid', rule, {
   valid: [
@@ -98,4 +98,25 @@ createCustomManifestTester().run('invalid', rule, {
       ] as any
     },
   ],
+})
+
+/**
+ * Prevents (#69): a class naming a mode the project does not declare (`@dark` in a project that
+ * declares only `@theme sepia {}`) crashing the rule, and with it the whole ESLint run, instead
+ * of being reported at the class; reported without `disallowUnknownClass`, since it is a
+ * misconfigured mode rather than an unknown class. The neighbouring class still lints normally.
+ * Reverse-checked: removing the catch in validator `validate.ts` turns this case into a crash.
+ */
+createUndeclaredModeTester().run('undeclared mode', rule, {
+  valid: [
+    { code: `<div class="fg:red@sepia fg:blue">Declared mode</div>` }
+  ],
+  invalid: [
+    {
+      code: `<div class="fg:red@dark fg:blue">Undeclared mode</div>`,
+      errors: [
+        { messageId: 'invalidClass', column: 13, endColumn: 24 }
+      ]
+    }
+  ]
 })

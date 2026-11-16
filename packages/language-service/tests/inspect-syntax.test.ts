@@ -57,3 +57,14 @@ test.concurrent('vendor-prefixed native declarations use unprefixed MDN hover sy
     expect(contents?.value).toContain(`.${property}\\:none`)
   }
 })
+
+/**
+ * Prevents (#69): hovering a class that names a mode the project does not declare throwing out of
+ * the hover request instead of telling the developer what is wrong.
+ * Reverse-checked: removing the catch in `inspect-syntax.ts` reds this test (the hover throws).
+ */
+test('explains a class using an undeclared mode on hover', () => {
+  const hover = inspect('fg:red@dark', { manifest: { version: 1, settings: { modes: ['sepia'] } } })
+
+  expect(hover?.contents).toEqual({ kind: 'markdown', value: expect.stringContaining('mode "dark", which is not declared') })
+})

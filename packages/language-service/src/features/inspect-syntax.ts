@@ -3,6 +3,7 @@ import type CSSLanguageService from '../core'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
 import createCSSMarkdownDocumentation from '../utils/create-css-markdown-documentation'
 import { generateCSS, generateLanguageRules } from '@stet-css/language'
+import { isUndeclaredModeError } from '@stet-css/core'
 
 export default function inspectSyntax(this: CSSLanguageService, document: TextDocument, position: HoverParams['position']): Hover | undefined {
   const classPosition = this.getClassPosition(document, position)
@@ -12,7 +13,13 @@ export default function inspectSyntax(this: CSSLanguageService, document: TextDo
     start: document.positionAt(classPosition.range.start),
     end: document.positionAt(classPosition.range.end)
   }
-  const utilities = generateLanguageRules(this.css, token)
+  let utilities
+  try {
+    utilities = generateLanguageRules(this.css, token)
+  } catch (error) {
+    if (!isUndeclaredModeError(error)) throw error
+    return { contents: { kind: 'markdown', value: error.message }, range }
+  }
   const component = utilities.find((utility) => utility.type === this.runtime.UtilityType.Semantic && utility.layerName === 'components')
   if (component) {
     const documentation = createCSSMarkdownDocumentation(generateCSS([token], this.css, this.runtime))

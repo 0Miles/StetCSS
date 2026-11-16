@@ -5,6 +5,8 @@
   --spacing-card: 1.25rem;
 }
 
+@theme light {}
+@theme dark {}
 @theme midnight {}
 
 @custom-variant wide {

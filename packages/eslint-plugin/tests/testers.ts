@@ -38,6 +38,16 @@ export const createCustomManifestTester = (config: RuleTesterConfig = {}) => {
   })
 }
 
+const undeclaredModeFilename = fileURLToPath(new URL('./fixtures/undeclared-mode/index.tsx', import.meta.url))
+
+/** Lints inline code as a file of `fixtures/undeclared-mode`, whose entry declares only `@theme sepia {}`. */
+export const createUndeclaredModeTester = (config: RuleTesterConfig = {}) => {
+  return createTester({
+    ...config,
+    defaultFilenames: { ts: undeclaredModeFilename, tsx: undeclaredModeFilename }
+  })
+}
+
 export const source = (name: string, base: string) => {
   const filename = fileURLToPath(new URL(name, base))
   return {
