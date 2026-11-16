@@ -11,6 +11,8 @@ import {
   removeImportsFrom,
   removeRequireCalls,
   removeStyleTags,
+  SENTINEL_PREFIX,
+  SENTINEL_SUFFIX,
   trimTrailing
 } from './extraction-scans'
 
@@ -46,8 +48,6 @@ import {
 // ─── Sentinel (placeholder for protected string literals) ────────────────────
 // The printable form keeps debug output readable. Practical collisions with
 // real source require the user to literally write `COMPLETE-STRING--N--`.
-const SENTINEL_PREFIX = 'COMPLETE-STRING--'
-const SENTINEL_SUFFIX = '--'
 const SENTINEL_REGEX = /^COMPLETE-STRING--/
 const RESTORE_SENTINEL = /COMPLETE-STRING--(\d+)--/g
 const MANY_COMPLETE_STRINGS = 8
@@ -194,20 +194,22 @@ function peelCompleteString(content: string): Set<string> {
   return strings
 }
 
+// Run in this order: each step sees what the earlier ones left.
+const PRE_EXCLUDE_STEPS: ((content: string) => string)[] = [
+  removeBlockComments,
+  removeHTMLComments,
+  c => c.replace(PRE_EXCLUDE_LINE_COMMENT, ''),
+  removeStyleTags,
+  removeImportsFrom,
+  removeImportCalls,
+  removeRequireCalls,
+  removeDecorators
+]
+
 function preExclude(content: string): string {
   return keepCompleteStringAndProcessContent(
     content,
-    c => removeDecorators(
-      removeRequireCalls(
-        removeImportCalls(
-          removeImportsFrom(
-            removeStyleTags(
-              removeHTMLComments(removeBlockComments(c)).replace(PRE_EXCLUDE_LINE_COMMENT, '')
-            )
-          )
-        )
-      )
-    )
+    c => PRE_EXCLUDE_STEPS.reduce((result, step) => step(result), c)
   )
 }
 
