@@ -200,7 +200,7 @@ async function createBuildDiagnosticsReport(): Promise<BenchmarkReport> {
       'This suite is diagnostic and does not replace end-user production command timing from build-performance.',
       'CLI diagnostics mirror the scan and extraction pipeline in-process, so child-process startup and package loader cost are intentionally excluded.',
       'Vite diagnostics instrument Master CSS plugin hooks and include a Vite baseline metric for context.',
-      'Do not use diagnostic numbers as permission to change CSS output, cascade order, source detection, hydration, or public behavior.'
+      'Do not use diagnostic numbers as permission to change CSS output, cascade order, source detection, or public behavior.'
     ],
     artifacts
   }

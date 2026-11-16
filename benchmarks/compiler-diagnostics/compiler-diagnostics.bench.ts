@@ -107,7 +107,7 @@ async function createCompilerDiagnosticsReport(): Promise<BenchmarkReport> {
       'This suite is diagnostic and does not replace end-user production command timing from build-performance.',
       'Compiler diagnostics instrument internal source modules without adding package exports or public APIs.',
       'The diagnostic extraction path must produce the same final CSS SHA-256 as production createExtractedCSS before numbers are reported.',
-      'Do not use diagnostic numbers as permission to change directive semantics, generated CSS, cascade order, source detection, hydration, or public behavior.'
+      'Do not use diagnostic numbers as permission to change directive semantics, generated CSS, cascade order, source detection, or public behavior.'
     ],
     artifacts
   }

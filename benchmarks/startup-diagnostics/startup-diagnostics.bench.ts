@@ -119,7 +119,7 @@ async function createStartupDiagnosticsReport(): Promise<BenchmarkReport> {
       'Module import probes run in separate child processes, so each import metric is a cold diagnostic approximation, not an additive flamegraph.',
       'CLI runProgram probes use the built package core entry to split import and execution while the full CLI command metric still uses the published bin entry.',
       'Vite diagnostics include a baseline command metric because most full Vite build time is unrelated to Master CSS plugin work.',
-      'Do not use diagnostic numbers as permission to change CSS output, cascade order, source detection, hydration, or public behavior.'
+      'Do not use diagnostic numbers as permission to change CSS output, cascade order, source detection, or public behavior.'
     ],
     artifacts
   }
