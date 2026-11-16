@@ -1,5 +1,6 @@
 import { test, it, expect } from 'vitest'
-import { generateValidRules, validate } from '../src'
+import { createCSSWithNativeDeclarations, generateValidRules, validate } from '../src'
+import defaultManifest from '../src/default-manifest'
 import expectClassWithErrors from './utils/expect-class-with-errors'
 import expectClassWithoutErrors from './utils/expect-class-without-errors'
 import expectClassInvalid from './utils/expect-class-invalid'
@@ -51,6 +52,22 @@ it('validates native CSS declarations through css-tree fallback', () => {
   expect(generateValidRules('float:banana')).toHaveLength(0)
   expect(generateValidRules('display:banana')).toHaveLength(0)
   expect(generateValidRules('d:banana')).toHaveLength(0)
+})
+
+/**
+ * Guards: static CSS emits invalid native declarations such as
+ * `.display\:banana{display:banana}` when the css-tree matcher regresses.
+ * `generateValidRules` re-validates its rules afterwards, so the css-tree fallback
+ * test above stays green even with a matcher that accepts everything; this runs
+ * the instance the stylesheet, scanner and CLI build CSS with.
+ *
+ * Reverse check: making `cssTreeNativeDeclarationMatcher` in
+ * `src/native-declaration.ts` return `true` reddens all three rows.
+ */
+it.each(['display:banana', 'float:banana', 'made-up:left'])('keeps %s out of the generated CSS', (className) => {
+  const css = createCSSWithNativeDeclarations(defaultManifest)
+  css.ensureClassRules(className)
+  expect(css.text).toBe('')
 })
 
 /**
