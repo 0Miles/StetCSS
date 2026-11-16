@@ -117,6 +117,11 @@ export interface StylesheetSourceContext {
    */
   sources?: string[]
   /**
+   * More project directories whose own source files join the project's, each by the same
+   * rules with itself as the root: a framework's layers outside the project root.
+   */
+  extraProjectDirs?: string[]
+  /**
    * Absolute files or directories the class set never reads, not even through `@source`;
    * a build integration passes its output directory so emitted bundles neither feed classes
    * back nor become watched sources.
@@ -812,6 +817,7 @@ function createStylesheetSourceScope(context: StylesheetSourceContext): Styleshe
   return {
     projectDir: context.projectDir ?? scanner.cwd,
     sources: context.sources,
+    extraProjectDirs: context.extraProjectDirs,
     include: directives.include,
     exclude: directives.exclude,
     safelist: [...(scanner.options.safelist || []), ...directives.safelist],
@@ -985,6 +991,7 @@ export async function createExtractedCSSResult(options: CreateExtractedCSSOption
     includeNativeCSS = true,
     includeMasterBaseCSS = true,
     sources,
+    extraProjectDirs,
     ignorePaths,
     classes: callerClasses,
     ...compileOptions
@@ -994,6 +1001,7 @@ export async function createExtractedCSSResult(options: CreateExtractedCSSOption
     styleCSSSources,
     projectDir: compileOptions.projectDir,
     sources,
+    extraProjectDirs,
     ignorePaths
   }
   // Classes a build integration collected from its own module graph; the project's class
