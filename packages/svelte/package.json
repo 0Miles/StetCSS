@@ -38,11 +38,6 @@
       "types": "./dist/vite.d.ts",
       "import": "./dist/vite.js",
       "default": "./dist/vite.js"
-    },
-    "./hooks.server": {
-      "types": "./dist/hooks.server.d.ts",
-      "import": "./dist/hooks.server.js",
-      "default": "./dist/hooks.server.js"
     }
   },
   "files": [
@@ -68,13 +63,7 @@
     }
   },
   "dependencies": {
-    "@stet-css/core": "workspace:^",
-    "@stet-css/integration": "workspace:^",
-    "@stet-css/preset": "workspace:^",
-    "@stet-css/server": "workspace:^",
-    "@stet-css/vite": "workspace:^",
-    "@stet-css/schema": "workspace:^",
-    "@stet-css/lexer": "workspace:^"
+    "@stet-css/vite": "workspace:^"
   },
   "devDependencies": {
     "@eslint/compat": "^2.1.0",
