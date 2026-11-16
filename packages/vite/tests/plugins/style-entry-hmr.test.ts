@@ -9,9 +9,16 @@
  * These tests drive the plugin against a hand-rolled scanner +
  * ViteDevServer pair so each guarantee can be checked individually.
  */
-import { describe, test, expect, vi } from 'vitest'
+import { afterEach, describe, test, expect, vi } from 'vitest'
 import { EventEmitter } from 'node:events'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
+import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 import StyleEntryHMRPlugin from '../../src/plugins/style-entry-hmr'
+import StyleEntryPlugin from '../../src/plugins/style-entry'
+import getExtractedCSS from '../../src/utils/extracted-css'
 
 function makeScanner() {
   const scanner = new EventEmitter() as unknown as Record<string, unknown> & EventEmitter
@@ -87,6 +94,11 @@ describe('StyleEntryHMRPlugin update queue', () => {
     expect(server.reloadModule).toHaveBeenCalledWith(cssModule)
   })
 
+  /**
+   * Guards the queue's error handling: one failed reload must not stop every later CSS
+   * update for the rest of the dev session.
+   * Reverse check: dropping `.catch(onError(label))` in `queueUpdate` turns only this test red.
+   */
   test('an error in one update does not poison the queue', async () => {
     const scanner = makeScanner()
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -113,5 +125,94 @@ describe('StyleEntryHMRPlugin update queue', () => {
     expect(server.reloadModule).toHaveBeenCalledTimes(2)
 
     consoleSpy.mockRestore()
+  })
+})
+
+const roots: string[] = []
+
+afterEach(() => {
+  for (const root of roots.splice(0)) {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+/**
+ * A served dev project: `index.html` is a project source file, and the virtual CSS module
+ * was loaded once, as the browser's first request does.
+ */
+async function serveProject(html: string) {
+  const root = mkdtempSync(join(tmpdir(), 'master-css-vite-hmr-'))
+  roots.push(root)
+  const page = join(root, 'index.html')
+  writeFileSync(page, html)
+  const context: any = {
+    config: { command: 'serve', root },
+    includeGeneratedCSS: true,
+    scanner: Object.assign(new EventEmitter(), {
+      cwd: root,
+      options: {},
+      css: { text: '', manifest: defaultManifestJSON },
+      latentClasses: new Set(),
+      validClasses: new Set(),
+      nativeClassNames: new Set(),
+      usedNativeClasses: new Set()
+    })
+  }
+  await (StyleEntryPlugin({} as any, context) as any).load.call({}, '\0' + VIRTUAL_CSS_ID)
+  const server = makeServer()
+  const cssModule = { id: '\0' + VIRTUAL_CSS_ID }
+  ;(server.moduleGraph as any).getModuleById = (id: string) => id === cssModule.id ? cssModule : null
+  const plugin = StyleEntryHMRPlugin({} as any, context)
+  ;(plugin as any).configureServer.call({}, server as any)
+  ;(plugin as any).buildStart.call({})
+  return { context, page, server, cssModule }
+}
+
+describe('StyleEntryHMRPlugin source file changes', () => {
+  /**
+   * Guards against reloading the stylesheet on every save: an edit that adds no class must
+   * leave the CSS module alone, and an edit that adds one must reload it once.
+   * Reverse check: reloading without comparing the extracted CSS in `style-entry-hmr.ts`
+   * turns only this test red.
+   */
+  test('reloads the managed CSS only when an edit changes its output', async () => {
+    const { page, server, cssModule } = await serveProject('<div class="block">Hi</div>')
+
+    writeFileSync(page, '<div class="block">Hello</div>')
+    server.watcher.emit('change', page)
+    await new Promise((r) => setTimeout(r, 200))
+    expect(server.reloadModule).not.toHaveBeenCalled()
+
+    writeFileSync(page, '<div class="block italic">Hello</div>')
+    server.watcher.emit('change', page)
+    await vi.waitFor(() => expect(server.reloadModule).toHaveBeenCalledTimes(1))
+    expect(server.reloadModule).toHaveBeenCalledWith(cssModule)
+  })
+
+  /**
+   * Guards a busy update queue: when another extraction (the emittedGlobals module, an SSR
+   * transform) runs between an edit and its queued update, the client must still get the
+   * new CSS. Comparing against the latest extraction instead of the CSS before the edit
+   * skipped that reload.
+   * Reverse check: reading the baseline inside the queued update in `style-entry-hmr.ts`
+   * turns only this test red.
+   */
+  test('reloads after an edit even when another extraction ran while the update was queued', async () => {
+    const { context, page, server } = await serveProject('<div class="block"></div>')
+    let releaseFirstReload!: () => void
+    server.reloadModule = vi.fn()
+      .mockImplementationOnce(() => new Promise<void>((r) => { releaseFirstReload = r }))
+      .mockImplementation(() => Promise.resolve())
+
+    writeFileSync(page, '<div class="block italic"></div>')
+    server.watcher.emit('change', page)
+    await vi.waitFor(() => expect(server.reloadModule).toHaveBeenCalledTimes(1))
+
+    writeFileSync(page, '<div class="block italic underline"></div>')
+    server.watcher.emit('change', page)
+    await getExtractedCSS(context)
+    releaseFirstReload()
+
+    await vi.waitFor(() => expect(server.reloadModule).toHaveBeenCalledTimes(2))
   })
 })
