@@ -10,9 +10,8 @@
     "test": "vitest"
   },
   "license": "MIT",
-  "description": "Master CSS source scanner for static rendering",
+  "description": "StetCSS source scanner for static rendering",
   "author": "Aoyue Design LLC.",
-  "funding": "https://rc.css.master.co/sponsor",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/scanner#readme",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"
@@ -29,7 +28,7 @@
     "static",
     "build tools",
     "css",
-    "mastercss"
+    "stetcss"
   ],
   "sideEffects": false,
   "main": "./dist/index.js",

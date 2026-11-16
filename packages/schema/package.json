@@ -10,9 +10,8 @@
     "test": "vitest"
   },
   "license": "MIT",
-  "description": "Public Master CSS schema and wire-format contracts.",
+  "description": "Public StetCSS schema and wire-format contracts.",
   "author": "Aoyue Design LLC.",
-  "funding": "https://rc.css.master.co/sponsor",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/schema#readme",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"
@@ -26,7 +25,7 @@
     "schema",
     "manifest",
     "css",
-    "mastercss"
+    "stetcss"
   ],
   "sideEffects": false,
   "main": "./dist/index.js",

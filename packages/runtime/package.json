@@ -12,9 +12,8 @@
     "lint": "eslint"
   },
   "license": "MIT",
-  "description": "Browser runtime for Master CSS",
+  "description": "Browser runtime for StetCSS",
   "author": "Aoyue Design LLC.",
-  "funding": "https://rc.css.master.co/sponsor",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/runtime#readme",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"
@@ -28,8 +27,7 @@
     "utility",
     "css",
     "lightweight",
-    "mastercss",
-    "master",
+    "stetcss",
     "runtime",
     "cdn"
   ],

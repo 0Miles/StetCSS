@@ -11,9 +11,8 @@
     "test": "vitest run"
   },
   "license": "MIT",
-  "description": "Nuxt module for Master CSS",
+  "description": "Nuxt module for StetCSS",
   "author": "Aoyue Design LLC.",
-  "funding": "https://rc.css.master.co/sponsor",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/nuxt#readme",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"
@@ -27,7 +26,7 @@
     "vue",
     "css",
     "nuxt",
-    "mastercss",
+    "stetcss",
     "static"
   ],
   "sideEffects": false,

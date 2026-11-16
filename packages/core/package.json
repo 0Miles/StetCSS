@@ -11,9 +11,8 @@
     "lint": "eslint"
   },
   "license": "MIT",
-  "description": "The CSS language and framework for rapidly building modern and high-performance websites",
+  "description": "StetCSS: a markup-driven CSS engine where classes compile to CSS rules",
   "author": "Aoyue Design LLC.",
-  "funding": "https://rc.css.master.co/sponsor",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/core#readme",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"
@@ -41,7 +40,7 @@
     "vite",
     "parcel",
     "build-tools",
-    "mastercss"
+    "stetcss"
   ],
   "sideEffects": [
     "./src/*.css"

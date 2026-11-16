@@ -9,7 +9,7 @@
     "lint": "eslint",
     "test": "vitest"
   },
-  "description": "Master CSS Language Server",
+  "description": "StetCSS Language Server",
   "author": "Aoyue Design LLC.",
   "license": "MIT",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/language-server#readme",
