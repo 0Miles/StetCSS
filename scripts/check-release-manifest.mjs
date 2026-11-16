@@ -1,42 +1,12 @@
 // Fails when the release-please config or manifest drifts from the packages
 // that get published, so a new, renamed, or removed package cannot silently
-// fall out of (or linger in) the shared-version release.
-//
-// A published package is any workspace package named `@stet-css/*` that is
-// not `private`. Examples, benchmarks, and shared fall outside that set by
-// name or by `private`. The VS Code extension ships to the Marketplace through
-// `release:vscode`, so it stays out even if a rename puts it in the scope.
+// fall out of (or linger in) the shared-version release. The published set is
+// defined in published-packages.mjs.
 
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { publishedPackages, readJson, SCOPE } from './published-packages.mjs'
 
-const root = join(import.meta.dirname, '..')
-const SCOPE = '@stet-css/'
 const FIRST_VERSION = '0.1.0'
-const NOT_RELEASED_BY_RELEASE_PLEASE = new Set(['packages/vscode'])
-const readJson = (path) => JSON.parse(readFileSync(join(root, path), 'utf8'))
-
-function workspaceDirs() {
-    const dirs = []
-    for (const pattern of readJson('package.json').workspaces) {
-        if (pattern.endsWith('/*')) {
-            const parent = pattern.slice(0, -2)
-            for (const entry of readdirSync(join(root, parent), { withFileTypes: true })) {
-                if (entry.isDirectory()) dirs.push(`${parent}/${entry.name}`)
-            }
-        } else {
-            dirs.push(pattern)
-        }
-    }
-    return dirs.filter((dir) => existsSync(join(root, dir, 'package.json')))
-}
-
-const published = new Map()
-for (const dir of workspaceDirs()) {
-    if (NOT_RELEASED_BY_RELEASE_PLEASE.has(dir)) continue
-    const pkg = readJson(`${dir}/package.json`)
-    if (pkg.name?.startsWith(SCOPE) && !pkg.private) published.set(dir, pkg)
-}
+const published = publishedPackages()
 
 const config = readJson('release-please-config.json')
 const manifest = readJson('.release-please-manifest.json')
