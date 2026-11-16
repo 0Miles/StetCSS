@@ -11,6 +11,7 @@ import type { Variable } from '@stet-css/schema/css-syntax'
 import UtilityType from '@stet-css/schema/utility-type'
 import type { Condition } from './utils/parse-condition'
 import parseValue from './utils/parse-value'
+import exceedsClassNesting from './utils/exceeds-class-nesting'
 import type { SelectorNode } from './utils/parse-selector'
 import type { MasterCSSEmittedGlobals } from './emitted-globals'
 import { isNativeCSSShorthandProperty } from '@stet-css/schema/native-css-shorthand'
@@ -788,6 +789,7 @@ export default class MasterCSS {
    * @returns Utility
    */
   createRule(className: string, fixedClass?: string, mode?: string): Utility | undefined {
+    if (exceedsClassNesting(className)) return
     const groupUtility = this.createGroupUtility(className, fixedClass, mode)
     if (groupUtility) return groupUtility
 
@@ -831,6 +833,7 @@ export default class MasterCSS {
   }
 
   createRules(className: string, fixedClass?: string, mode?: string): Utility[] {
+    if (exceedsClassNesting(className)) return []
     const groupUtilities = this.createAllGroupUtilities(className, fixedClass, mode)
     if (groupUtilities.length) return groupUtilities
 
