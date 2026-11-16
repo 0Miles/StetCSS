@@ -16,6 +16,11 @@ function createTestCSS(manifest: MasterCSSManifest) {
   return MasterCSS.create({ manifest })
 }
 
+/** The preset manifest with some settings replaced, as a project's base manifest. */
+function withBaseSettings(settings?: object): MasterCSSManifest {
+  return settings ? { ...defaultManifest, settings: { ...defaultManifest.settings, ...settings } } as MasterCSSManifest : defaultManifest
+}
+
 function normalizeDeclarationOrder(css: string) {
   return css.replace(/\{([^{}]*)\}/g, (_, body: string) => {
     if (!body.includes(':')) return `{${body}}`
@@ -1163,7 +1168,7 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
    * the base manifest rather than this stylesheet), or for every project that never wrote
    * `default-mode`, which would fail `stet-css inspect --max-warnings 0`. `default-mode: none`
    * warns too: the ticket asks for a warning whenever `default-mode` is set under media.
-   * Reverse-checked in `warnMediaDefaultMode`: reading `input.modeTrigger` instead of the resolved
+   * Reverse-checked in `warnMediaTriggerModes`: reading `input.modeTrigger` instead of the resolved
    * trigger reds the two default-trigger rows and the diagnostics inspect test;
    * `(input.modeTrigger ?? 'media')` reds only the base-manifest row; `=== 'class'` or
    * `=== 'host'` in place of `!== 'media'` reds only the host row or the two class rows; dropping
@@ -1179,9 +1184,7 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     ['class trigger from the base manifest', 'default-mode: dark;', 'class', false],
     ['media trigger without default-mode', 'mode-trigger: media;', undefined, false]
   ] as const)('warns about default-mode only under the media trigger: %s', (_, declarations, baseModeTrigger, warns) => {
-    const baseManifest = baseModeTrigger
-      ? { ...defaultManifest, settings: { ...defaultManifest.settings, modeTrigger: baseModeTrigger } }
-      : defaultManifest
+    const baseManifest = withBaseSettings(baseModeTrigger && { modeTrigger: baseModeTrigger })
     const { warnings } = compileCSSManifest(`
       @settings {
         ${declarations}
@@ -1214,9 +1217,7 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     ['host trigger from the base manifest', '', '@theme sepia {}', { modeTrigger: 'host' }, undefined],
     ['only light and dark', '', '@theme light {}\n@theme dark {}', undefined, undefined]
   ] as const)('warns about custom modes only under the media trigger: %s', (_, declarations, themes, baseSettings, modeList) => {
-    const baseManifest = baseSettings
-      ? { ...defaultManifest, settings: { ...defaultManifest.settings, ...baseSettings } } as MasterCSSManifest
-      : defaultManifest
+    const baseManifest = withBaseSettings(baseSettings)
     const { manifest, warnings } = compileCSSManifest(`
       @settings {
         ${declarations}

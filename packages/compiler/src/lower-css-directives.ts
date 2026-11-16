@@ -300,31 +300,28 @@ function validateTokenConflicts(input: CSSDirectiveManifestInput, resolveVariabl
   }
 }
 
-/**
- * Reads the engine-resolved trigger and modes, so the default trigger and settings inherited from
- * the base manifest warn like an explicit `mode-trigger: media`. Runs after
- * `assertDeclaredDefaultMode`, which throws unless a named `default-mode` is in `css.modes`.
- */
-function warnUnsupportedMediaModes(css: MasterCSS, options: LowerCSSDirectivesOptions, warnings: string[]) {
-  if (css.settings.modeTrigger !== 'media') return
-
-  const customModes = css.modes.filter((mode) => !MEDIA_MODE_NAMES.has(mode))
-  if (!customModes.length) return
-
-  const modeList = customModes.map((mode) => `"${mode}"`).join(', ')
-  const subject = customModes.length === 1 ? 'mode' : 'modes'
-  warn(warnings, options, `Custom ${subject} ${modeList} will not work with mode-trigger: media, the default. Browsers only support light and dark prefers-color-scheme values; use mode-trigger: class or host for custom modes.`)
-}
-
 function assertDeclaredDefaultMode(input: CSSDirectiveManifestInput, css: MasterCSS) {
   if (!isNamedDefaultMode(input.defaultMode) || css.modes.includes(input.defaultMode)) return
   throw new UndeclaredModeError('default-mode', input.defaultMode, css.modes)
 }
 
-function warnMediaDefaultMode(input: CSSDirectiveManifestInput, css: MasterCSS, options: LowerCSSDirectivesOptions, warnings: string[]) {
-  if (input.defaultMode === undefined || css.settings.modeTrigger !== 'media') return
+/**
+ * Reads the engine-resolved trigger and modes, so the default trigger and settings inherited from
+ * the base manifest warn like an explicit `mode-trigger: media`. Runs after
+ * `assertDeclaredDefaultMode`, which throws unless a named `default-mode` is in `css.modes`.
+ */
+function warnMediaTriggerModes(input: CSSDirectiveManifestInput, css: MasterCSS, options: LowerCSSDirectivesOptions, warnings: string[]) {
+  if (css.settings.modeTrigger !== 'media') return
 
-  warn(warnings, options, 'default-mode has no effect with mode-trigger: media, the default, because the system color scheme preference picks the mode; use mode-trigger: class or host to set a default mode.')
+  const customModes = css.modes.filter((mode) => !MEDIA_MODE_NAMES.has(mode))
+  if (customModes.length) {
+    const modeList = customModes.map((mode) => `"${mode}"`).join(', ')
+    const subject = customModes.length === 1 ? 'mode' : 'modes'
+    warn(warnings, options, `Custom ${subject} ${modeList} will not work with mode-trigger: media, the default. Browsers only support light and dark prefers-color-scheme values; use mode-trigger: class or host for custom modes.`)
+  }
+  if (input.defaultMode !== undefined) {
+    warn(warnings, options, 'default-mode has no effect with mode-trigger: media, the default, because the system color scheme preference picks the mode; use mode-trigger: class or host to set a default mode.')
+  }
 }
 
 function createDirectiveCSS(input: CSSDirectiveManifestInput, options: LowerCSSDirectivesOptions) {
@@ -1127,8 +1124,7 @@ export default function lowerCSSDirectives(input: CSSDirectiveManifestInputSourc
 
   const css = timeCompilerDiagnostic(diagnostics, 'lower-create-directive-css-total-ms', () => createDirectiveCSS(directiveInput, options))
   assertDeclaredDefaultMode(directiveInput, css)
-  timeCompilerDiagnostic(diagnostics, 'lower-warn-media-modes-ms', () => warnUnsupportedMediaModes(css, options, warnings))
-  warnMediaDefaultMode(directiveInput, css, options, warnings)
+  timeCompilerDiagnostic(diagnostics, 'lower-warn-media-modes-ms', () => warnMediaTriggerModes(directiveInput, css, options, warnings))
   timeCompilerDiagnostic(diagnostics, 'lower-finalize-utility-definitions-ms', () => finalizeUtilityDefinitions(directiveInput, css, options))
   const initialRefreshManifest = timeCompilerDiagnostic(diagnostics, 'lower-initial-refresh-manifest-creation-ms', () => createMasterCSSManifest(directiveInput, {
     baseManifest: getResolutionManifest(options),
