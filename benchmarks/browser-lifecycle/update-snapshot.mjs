@@ -12,9 +12,6 @@ const metricIds = [
   'runtime-js-raw-bytes',
   'runtime-js-gzip-bytes',
   'runtime-js-brotli-bytes',
-  'manifest-json-raw-bytes',
-  'manifest-json-gzip-bytes',
-  'manifest-json-brotli-bytes',
   'delivered-style-rule-count',
   'delivered-selector-count',
   'delivered-declaration-count',
@@ -52,8 +49,7 @@ const metricIds = [
 const byteGroups = [
   'html',
   'external-css',
-  'runtime-js',
-  'manifest-json'
+  'runtime-js'
 ]
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
