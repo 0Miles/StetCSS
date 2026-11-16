@@ -90,12 +90,12 @@ for (const rootKind of ['shadow root', 'document without base.css'] as const) {
     const manifest = createRuntimeProjectManifest(manifestInput)
     await page.evaluate(async ({ loaderURL, manifest, inShadowRoot }) => {
       let root: Document | ShadowRoot = document
+      let container: HTMLElement | ShadowRoot = document.body
       if (inShadowRoot) {
         const host = document.createElement('div')
-        root = host.attachShadow({ mode: 'open' })
+        root = container = host.attachShadow({ mode: 'open' })
         document.body.append(host)
       }
-      const container = inShadowRoot ? root as ShadowRoot : document.body
       container.innerHTML = '<p class="color:#f00"></p>'
       const { startCSSRuntime } = await import(loaderURL)
       startCSSRuntime({ manifest, root })
