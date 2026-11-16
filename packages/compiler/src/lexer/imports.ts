@@ -1,4 +1,5 @@
 import type { Rule } from 'lightningcss'
+import { assertCSSNestingDepth } from '../css-nesting'
 import { encodeCSS, getCSSTransform } from '../css-transform'
 import { maskManagedPatternEntryNames } from '../core'
 import { createSourceLocationResolver, findAtRuleStatementEnd, removeSourceRanges, replaceSourceRanges } from './source'
@@ -12,6 +13,7 @@ export interface CSSImportStatement {
 }
 
 export function findCSSImportStatements(source: string, filename = 'master.css') {
+  assertCSSNestingDepth(source, filename)
   const statements: CSSImportStatement[] = []
   const maskedSource = maskManagedPatternEntryNames(source)
   const resolveLocation = createSourceLocationResolver(maskedSource)
