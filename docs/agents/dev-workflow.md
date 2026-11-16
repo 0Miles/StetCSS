@@ -20,6 +20,7 @@
 以下五條都要在本機跑：開 PR 前跑一次；PR 開了之後又有新的 commit，合併前在最後的 HEAD 上再跑一次。CI 會再跑第 1 到 4 條。
 
 1. `bun run check -- --continue`：所有套件的 `test`、`lint`，以及有 `type-check` script 的套件的型別檢查。`--continue` 讓所有 task 跑完再回報。
+   - 另跑 `bun run check:release`：release-please 的 config 與 manifest 要剛好列出每個要發佈的 `@stet-css/*` 套件，版號和各自的 `package.json` 相同。新增、改名或刪除套件時要一起改這兩個檔。
 2. `bun run build:examples -- --continue`：建置 `examples/` 的每個範例。
 3. `bun run e2e`：先跑建置整合的 e2e，通過後再單獨跑 runtime 的 Playwright e2e。
    - 不要加參數：參數會接到 script 最後的 runtime e2e 上。
@@ -97,6 +98,14 @@
 - 整合分支的 PR：合併進 main 之後，再逐張收它底下的票。
 
 **發佈**：npm 和 VS Code 擴充的發佈不屬於合併流程。發佈前先問維護者，見 `AGENTS.md` 的「Stop and ask」。
+
+**版號與 release PR**
+
+- 每個要發佈的 `@stet-css/*` 共用一個版號，設定在 `release-please-config.json`（`linked-versions`）與 `.release-please-manifest.json`。VS Code 擴充、examples、benchmarks、shared 不在裡面，VS Code 擴充照舊用 `release:vscode`。
+- 推到 main 時，`.github/workflows/release-please.yml` 開出或更新 release PR：新版號、各套件的 `CHANGELOG.md`，再把 `bun.lock` 同步後 commit 回 PR 分支。它不發佈任何東西。
+- 版號由 commit 類型決定。1.0 之前：`fix` 升 patch，`feat` 升 minor，帶 `!` 的破壞性變更也只升 minor。目前的版號是 `0.0.0`（還沒發佈過）；changelog 從 config 的 `bootstrap-sha` 之後算起，這段期間只要有一個 `feat` 或帶 `!` 的 commit，第一張 release PR 就是 `0.1.0`。如果它顯示的不是 `0.1.0`，在 config 頂層加 `"release-as": "0.1.0"`，release PR 合併後再拿掉。
+- workflow 只在 repo 變數 `RELEASE_PLEASE_ENABLED` 是 `true` 時執行。release PR 要能觸發 CI，得有 repo secret `RELEASE_PLEASE_TOKEN`（GitHub App token 或 fine-grained PAT）；沒有時退回 `GITHUB_TOKEN`，release PR 不會有 `required`。兩者都由維護者設定。
+- 不要手改版號或 manifest：它們只由 release PR 改。
 
 ## 實機驗收
 

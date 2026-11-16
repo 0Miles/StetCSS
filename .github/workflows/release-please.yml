@@ -1,0 +1,86 @@
+name: Release Please
+
+# Opens or updates the release PR that bumps every published @stet-css/*
+# package to one shared version and writes their changelogs. It publishes
+# nothing: merging the release PR only makes release-please tag the releases
+# on its next run; publishing to npm is a separate step.
+#
+# Repository settings this workflow reads (set by a maintainer):
+# - variable RELEASE_PLEASE_ENABLED: the job runs only when it is `true`, so
+#   main gets no failed runs before Actions may create pull requests.
+# - secret RELEASE_PLEASE_TOKEN: a GitHub App token or fine-grained PAT. PRs
+#   and pushes made with GITHUB_TOKEN start no other workflow, so without it
+#   the release PR gets no CI run and no `required` check.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Each run rewrites the same release PR branch; let one finish before the next.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    name: release-please
+    if: ${{ vars.RELEASE_PLEASE_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Open or update the release PR
+        id: release
+        uses: googleapis/release-please-action@v5
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      # bun.lock records each workspace's version, and release-please does
+      # not know the file. Bun 1.4.4's `--frozen-lockfile` lets that drift
+      # pass, but the next plain `bun install` rewrites bun.lock, leaving
+      # every contributor an unrelated diff. Rewrite it on the PR branch.
+      # release-please force-pushes that branch whenever it updates the PR,
+      # so this runs on every run that returns a PR.
+      - name: Check out the release PR branch
+        if: ${{ steps.release.outputs.prs_created == 'true' }}
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Set up Node
+        if: ${{ steps.release.outputs.prs_created == 'true' }}
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: Set up Bun
+        if: ${{ steps.release.outputs.prs_created == 'true' }}
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      # --lockfile-only resolves without downloading packages or running
+      # lifecycle scripts; only the workspace versions change.
+      - name: Sync bun.lock with the release versions
+        if: ${{ steps.release.outputs.prs_created == 'true' }}
+        env:
+          BRANCH: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
+        run: |
+          bun install --lockfile-only --ignore-scripts
+          if git diff --quiet -- bun.lock; then
+            echo "bun.lock already matches the release versions"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add bun.lock
+          git commit -m 'chore: sync bun.lock with the release versions'
+          git push origin "HEAD:refs/heads/$BRANCH"
