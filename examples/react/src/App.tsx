@@ -18,7 +18,7 @@ function App() {
         <span>StetCSS</span> <span className="fg:#00D8FF">React</span>
       </h1>
       <div className="card">
-        <button className="h:10x bg:gray-80" onClick={() => setCount((count) => count + 1)}>
+        <button className="h:2.5rem bg:gray-80" onClick={() => setCount((count) => count + 1)}>
           count is {count}
         </button>
       </div>
