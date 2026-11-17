@@ -298,6 +298,21 @@ describe.concurrent('migrated cascade and layer parity', () => {
     ])
   })
 
+  /**
+   * Prevents: `px` queries sorting by their raw number against the preset's `rem` breakpoints once
+   * query values keep their units, so `@>=600px` lands after `@sm` (52.125rem, 834px) and overrides
+   * it on wide screens. Ordering compares `px` as rem, the same as compiled style rules do.
+   */
+  test('orders px and rem width queries by their resolved width', () => {
+    const css = createDefaultCSS()
+    css.ensureClassRules('block@>=900px', 'block@sm', 'block@>=600px')
+    expect(css.utilitiesLayer.rules.map(({ name }) => name)).toEqual([
+      'block@>=600px',
+      'block@sm',
+      'block@>=900px'
+    ])
+  })
+
   test('keeps semantic component utility priority stable', () => {
     const css = createCSSWithSemanticUtilities([
       {
