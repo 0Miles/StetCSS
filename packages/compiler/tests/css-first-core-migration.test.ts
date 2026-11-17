@@ -1683,6 +1683,29 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     expect(createTestCSS(manifest).createRule('block@x')?.text).toBe('@container x{.block\\@x{display:block}}')
   })
 
+  /**
+   * Prevents: compiled component style blocks under queries in different units sorting by their
+   * raw numbers, so `@media (width >= 8in)` (768px) lands before `@media (width >= 600px)` and loses
+   * the cascade to it on wide screens. Compiler and engine share `toComparableQueryLength`.
+   * Reverse-checked: dropping `in` from its absolute-unit table reds this test and the engine
+   * `in` and `max-width` ordering rows; returning `value` unchanged reds this test and four
+   * engine ordering tests.
+   */
+  test('orders component query blocks written in different units by resolved width', () => {
+    const { manifest } = compileCSSManifest(`
+      @components {
+        card {
+          @media (width >= 600px) { color: blue; }
+          @media (width >= 8in) { color: red; }
+        }
+      }
+    `, { baseManifest: defaultManifest })
+    const css = createTestCSS(manifest)
+    css.ensureClassRules('card')
+
+    expect(css.componentsLayer.text).toBe('@layer components{@media (width>=600px){.card{color:#00f}}@media (width>=8in){.card{color:red}}}')
+  })
+
   test('lowers inline theme variables without emitting their own theme rules', () => {
     const { manifest } = compileCSSManifest(`
       @theme inline {
