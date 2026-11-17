@@ -76,36 +76,46 @@ function hasUnknownPseudoClass(nodes: SelectorNode[], css: StetCSS) {
   return false
 }
 
-const JOINING_COMBINATORS = new Set(['>', '+', '~'])
+/** A `>`, `+` or `~` with no compound after it; attribute selectors are blanked first (`[title="a>,b"]`). */
+const DANGLING_COMBINATOR = /[>+~]\s*(?:$|[,)>+~])/
 
-function isJoiningCombinator(node: SelectorNode | undefined) {
-  return node?.type === 'combinator' && JOINING_COMBINATORS.has(node.value)
+/**
+ * Whether a composed selector template leaves a `>`, `+` or `~` without a compound after it:
+ * `block+`, `block>+div`, `hidden:is(.a+)`, or `hidden>:dark` when the `:dark` variant's selector
+ * is `.dark &` (`.dark &>`). It reads the template after variants apply, so a variant that
+ * completes the combinator (`&div` in `hidden>:custom`) keeps the class.
+ */
+function hasDanglingCombinator(template: string) {
+  return DANGLING_COMBINATOR.test(template.includes('[') ? template.replace(/\[[^\]]*\]/g, '[]') : template)
 }
 
 /**
- * Whether raw selector nodes glued to a class extend it into a selector. Text scanners read code
- * such as `a.block+b`, `hidden.length,` or `x.block*2` as classes, and none of these is one: a
- * `>`, `+` or `~` needs a compound after it, a selector-list item cannot be empty (an empty one
- * emitted the bare class), and the universal selector cannot follow the class inside its
- * compound. `ends` is false when a `:` variant follows, whose selector completes a trailing
- * combinator (`hidden>:custom`). Inside a pseudo-class function only combinators are checked;
- * `:of()` takes a trailing combinator (`:of(.active>)`).
+ * A combinator node that joins compounds. `_` parses to a descendant space (`' '`), while `__`
+ * keeps each `_` as a literal name character (BEM), which joins nothing.
  */
-function isSelectorSuffix(nodes: SelectorNode[], ends: boolean, nested = false): boolean {
+function joinsCompounds(node: SelectorNode | undefined) {
+  return node?.type === 'combinator' && node.value !== '_'
+}
+
+/**
+ * Whether raw selector nodes glued to a class extend it into a selector list. Text scanners read
+ * code such as `hidden.length,` or `x.block*2` as classes: a selector-list item cannot be empty
+ * (an empty one emitted the bare class), and the universal selector cannot follow the class inside
+ * its compound. `ends` is false when a `:` variant follows the nodes. Inside `:of()` every item
+ * must be non-empty, since its list is written before the class (`:of(.a,)` emitted `.a,`); other
+ * pseudo-class functions are left to the browser. Combinators are checked on the composed
+ * template by `hasDanglingCombinator`.
+ */
+function isSelectorSuffix(nodes: SelectorNode[], ends: boolean, ofList = false): boolean {
   for (let index = 0; index < nodes.length; index++) {
     const node = nodes[index]
-    if (isJoiningCombinator(node)) {
-      let next = index + 1
-      while (nodes[next]?.type === 'combinator' && nodes[next].value === ' ') next++
-      const following = nodes[next]
-      if (following ? following.type === 'separator' || isJoiningCombinator(following) : ends) return false
-    } else if (node.type === 'separator') {
+    if (node.type === 'separator') {
       const following = nodes[index + 1]
-      if (!nested && (following ? following.type === 'separator' : ends)) return false
+      if (following ? following.type === 'separator' : ends) return false
+      if (ofList && index === 0) return false
     } else if (node.type === 'universal') {
-      const previous = nodes[index - 1]
-      if (!nested && !(previous?.type === 'combinator' && previous.value !== '_')) return false
-    } else if ('children' in node && node.value && node.value !== 'of' && node.children?.length) {
+      if (!ofList && !joinsCompounds(nodes[index - 1])) return false
+    } else if ('children' in node && node.value === 'of' && node.children?.length) {
       if (!isSelectorSuffix(node.children, true, true)) return false
     }
   }
@@ -834,7 +844,8 @@ export class Utility {
       if ((branchCount *= count) > MAX_STATE_BRANCHES) return
     }
 
-    for (const [segmentIndex, segment] of segments.entries()) {
+    for (let segmentIndex = 0; segmentIndex < segments.length; segmentIndex++) {
+      const segment = segments[segmentIndex]
       if (typeof segment === 'string') {
         const rawNodes = parseSelector(segment, this.css)
         const rawSelector = generateSelector(rawNodes, '&')
@@ -869,7 +880,10 @@ export class Utility {
         })
       )
     }
-    return branches
+    if (!segments.length) return branches
+    return branches.map((branch) => branch.selectorTemplate && hasDanglingCombinator(branch.selectorTemplate)
+      ? { ...branch, valid: false }
+      : branch)
   }
 
   /** A selector token as its raw selector text and its `:` variants, in order. */
