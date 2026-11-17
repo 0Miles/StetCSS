@@ -87,17 +87,17 @@ test('media', () => {
     expect(extractClassCandidates(`
     bg:black@xl
     font:1.5rem@media(min-width:1024px)
-    font:1rem@<789
-    font:1rem@<=789
-    font:1rem@>=789
-    font:1rem@>789
+    font:1rem@<789px
+    font:1rem@<=789px
+    font:1rem@>=789px
+    font:1rem@>789px
     `)).toEqual([
         'bg:black@xl',
         'font:1.5rem@media(min-width:1024px)',
-        'font:1rem@<789',
-        'font:1rem@<=789',
-        'font:1rem@>=789',
-        'font:1rem@>789',
+        'font:1rem@<789px',
+        'font:1rem@<=789px',
+        'font:1rem@>=789px',
+        'font:1rem@>789px',
     ])
 })
 
