@@ -115,22 +115,22 @@ describe.concurrent('createStetCSSManifest', () => {
   it('lowers breakpoint and container aliases into condition node maps', () => {
     const manifest = createStetCSSManifest({
       variables: [
-        { namespace: 'breakpoint', key: 'card', value: 777 },
-        { namespace: 'container', key: 'panel', value: 333 }
+        { namespace: 'breakpoint', key: 'card', value: '777px' },
+        { namespace: 'container', key: 'panel', value: '333px' }
       ]
     })
 
     expect(manifest.conditions?.card).toMatchObject({
       id: 'media',
-      nodes: [expect.objectContaining({ type: 'number', unit: 'rem' })]
+      nodes: [expect.objectContaining({ type: 'number', value: 777, unit: 'px' })]
     })
     expect(manifest.breakpointConditions?.card).toMatchObject({
       id: 'media',
-      nodes: [expect.objectContaining({ type: 'number', unit: 'rem' })]
+      nodes: [expect.objectContaining({ type: 'number', value: 777, unit: 'px' })]
     })
     expect(manifest.containerConditions?.panel).toMatchObject({
       id: 'container',
-      nodes: [expect.objectContaining({ type: 'number', unit: 'rem' })]
+      nodes: [expect.objectContaining({ type: 'number', value: 333, unit: 'px' })]
     })
   })
 
@@ -167,7 +167,7 @@ describe.concurrent('createStetCSSManifest', () => {
     })
     expect(manifest.containerConditions?.panel).toMatchObject({
       id: 'container',
-      nodes: [expect.objectContaining({ type: 'number', value: 32, unit: 'rem' })]
+      nodes: [expect.objectContaining({ type: 'number', value: 512, unit: 'px' })]
     })
   })
 
