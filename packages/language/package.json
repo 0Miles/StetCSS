@@ -10,7 +10,7 @@
     "test": "vitest"
   },
   "description": "StetCSS language primitives",
-  "author": "Aoyue Design LLC.",
+  "author": "Miles",
   "license": "MIT",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/language#readme",
   "bugs": {

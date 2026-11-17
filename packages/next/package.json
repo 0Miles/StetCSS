@@ -13,7 +13,7 @@
   },
   "license": "MIT",
   "description": "Next.js integration for StetCSS",
-  "author": "Aoyue Design LLC.",
+  "author": "Miles",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/next#readme",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"

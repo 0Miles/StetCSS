@@ -11,7 +11,7 @@
   },
   "license": "MIT",
   "description": "The default StetCSS preset source and compiled manifest.",
-  "author": "Aoyue Design LLC.",
+  "author": "Miles",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/preset#readme",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"

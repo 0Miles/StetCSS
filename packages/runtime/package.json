@@ -13,7 +13,7 @@
   },
   "license": "MIT",
   "description": "Browser runtime for StetCSS",
-  "author": "Aoyue Design LLC.",
+  "author": "Miles",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/runtime#readme",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"

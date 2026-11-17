@@ -11,7 +11,7 @@
   },
   "license": "MIT",
   "description": "Compile StetCSS stylesheet directives",
-  "author": "Aoyue Design LLC.",
+  "author": "Miles",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/compiler#readme",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"

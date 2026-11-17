@@ -16,7 +16,7 @@
   ],
   "license": "MIT",
   "description": "StetCSS ESLint Configuration",
-  "author": "Aoyue Design LLC.",
+  "author": "Miles",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/eslint-config#readme",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"

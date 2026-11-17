@@ -12,7 +12,7 @@
   },
   "license": "MIT",
   "description": "StetCSS: a markup-driven CSS engine where classes compile to CSS rules",
-  "author": "Aoyue Design LLC.",
+  "author": "Miles",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/core#readme",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"

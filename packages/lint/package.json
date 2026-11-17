@@ -17,7 +17,7 @@
   ],
   "license": "MIT",
   "description": "Framework-neutral StetCSS lint policy helpers",
-  "author": "Aoyue Design LLC.",
+  "author": "Miles",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/lint",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"
