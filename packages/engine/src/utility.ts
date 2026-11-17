@@ -3,7 +3,7 @@ import StetCSS from './core'
 import { cssEscape, replaceCSSVariableReferences } from '@stet-css/lexer'
 import UtilityType, { type UtilityType as UtilityTypeValue } from '@stet-css/schema/utility-type'
 import { type PropertiesHyphen } from 'csstype'
-import { VALUE_DELIMITERS, BASE_UNIT_REGEX, CONDITION_IDENTIFIERS, ROOT_FONT_SIZE } from './common'
+import { VALUE_DELIMITERS, BASE_UNIT_REGEX, CONDITION_IDENTIFIERS } from './common'
 import { formatBaseUnitMultiple } from './utils/base-unit'
 import Layer from './layer'
 import type { ValueComponent, VariableValueComponent, Variable, StringValueComponent } from '@stet-css/schema/css-syntax'
@@ -1090,47 +1090,19 @@ export class Utility {
     const functionName = data?.name ?? 'calc'
     const valueComponents: ValueComponent[] = []
     let i = 0
-    const utilityUnit = String()
-    const createUnitValueComponents = (): ValueComponent[] => {
-      const unitValueComponents: ValueComponent[] = []
-      if (utilityUnit === 'rem' || utilityUnit === 'em') {
-        unitValueComponents.push(
-          { type: 'separator', value: '/', text: ' / ', token: '/' },
-          { type: 'number', value: ROOT_FONT_SIZE, token: String(ROOT_FONT_SIZE) }
-        )
-      }
-      unitValueComponents.push(
-        { type: 'separator', value: '*', text: ' * ', token: '*' },
-        { type: 'number', value: 1, unit: utilityUnit, token: utilityUnit }
-      )
-      return unitValueComponents
-    }
-    const getSeparatorValue = (component: ValueComponent | undefined) =>
-      component?.type === 'separator' ? component.value : undefined
 
     const anaylzeDeeply = (
       currentValueComponents: ValueComponent[],
       bypassHandlingSeparator: boolean,
       parentBypassParsing: boolean,
-      parentUnitChecking: boolean,
       isVarFunction: boolean
     ) => {
       const isChildHandler = valueComponents !== currentValueComponents
       const unparsedValueComponents: StringValueComponent[] = []
       let bypassParsing = false
       let hasUnit = false
-      let currentHasUnit = false
-      let unitChecking = false
-      let childHasUnit: boolean | undefined = undefined
       let current = ''
       const clear = (separator: string, prefix = '', suffix = '') => {
-        if (childHasUnit === false && separator !== ' ' && utilityUnit) {
-          childHasUnit = undefined
-          if (!unitChecking) {
-            pushUnitValueComponents()
-          }
-        }
-
         if (current) {
           if (!isVarFunction) {
             const result = BASE_UNIT_REGEX.exec(current)
@@ -1149,25 +1121,12 @@ export class Utility {
               hasUnit = true
             }
 
-            if (unitChecking) {
-              if (isNaN(+current)) {
-                if (valueComponent.type === 'number') {
-                  currentValueComponents.push(valueComponent)
-                  currentHasUnit = true
-                } else {
-                  currentValueComponents.push(valueComponent)
-                }
-              } else {
-                currentValueComponents.push({ type: 'number', value: +current, token: current })
-              }
+            if (isChildHandler) {
+              const newValueComponent = { type: 'string', value: current, token: current } as const
+              unparsedValueComponents.push(newValueComponent)
+              currentValueComponents.push(newValueComponent)
             } else {
-              if (isChildHandler) {
-                const newValueComponent = { type: 'string', value: current, token: current } as const
-                unparsedValueComponents.push(newValueComponent)
-                currentValueComponents.push(newValueComponent)
-              } else {
-                currentValueComponents.push(valueComponent)
-              }
+              currentValueComponents.push(valueComponent)
             }
           } else {
             currentValueComponents.push({ type: 'string', value: current, token: current })
@@ -1177,10 +1136,6 @@ export class Utility {
         }
 
         if (separator) {
-          if (separator === '+' || separator === '-') {
-            handleUnitChecking()
-          }
-
           if (prefix && value[i - 1] === ' ') {
             prefix = ''
           }
@@ -1194,25 +1149,6 @@ export class Utility {
           }
         }
         bypassParsing = false
-      }
-      const pushUnitValueComponents = () => {
-        if (utilityUnit === 'rem' || utilityUnit === 'em') {
-          currentValueComponents.push(
-            { type: 'separator', value: '/', text: ' / ', token: '/' },
-            { type: 'number', value: ROOT_FONT_SIZE, token: String(ROOT_FONT_SIZE) }
-          )
-        }
-        currentValueComponents.push(
-          { type: 'separator', value: '*', text: ' * ', token: '*' },
-          { type: 'number', value: 1, unit: utilityUnit, token: utilityUnit }
-        )
-      }
-      const handleUnitChecking = () => {
-        if (unitChecking && !currentHasUnit && !parentUnitChecking && (!isChildHandler || hasUnit)) {
-          pushUnitValueComponents()
-        }
-        unitChecking = false
-        currentHasUnit = false
       }
 
       for (; i < value.length; i++) {
@@ -1238,16 +1174,14 @@ export class Utility {
             this.invalidValueSyntax = true
           }
           const nestedIsVarFunction = nestedFunctionName === 'var'
-          childHasUnit = anaylzeDeeply(
+          const childHasUnit = anaylzeDeeply(
             newValueComponent.children,
             nestedIsVarFunction,
-            bypassParsing || nestedIsVarFunction || unitChecking && currentHasUnit,
-            unitChecking,
+            bypassParsing || nestedIsVarFunction,
             nestedIsVarFunction
           ) || nestedFunctionName === 'var'
           if (childHasUnit) {
             hasUnit = true
-            currentHasUnit = true
           }
         } else if (char === ')') {
           clear('')
@@ -1279,15 +1213,9 @@ export class Utility {
               }
               break
             case '*':
-              if (utilityUnit) {
-                unitChecking = true
-              }
               clear(char, ' ', ' ')
               break
             case '/':
-              if (utilityUnit) {
-                unitChecking = true
-              }
               clear(char, ' ', ' ')
               bypassParsing = true
               break
@@ -1298,11 +1226,10 @@ export class Utility {
         }
       }
       clear('')
-      handleUnitChecking()
     }
-    anaylzeDeeply(valueComponents, false, false, false, false)
+    anaylzeDeeply(valueComponents, false, false, false)
 
-    let resolvedValue = this.resolveValue(valueComponents, utilityUnit, bypassVariableNames, true)
+    let resolvedValue = this.resolveValue(valueComponents, '', bypassVariableNames, true)
     if (data?.wrapArguments) {
       resolvedValue = wrapCalcArguments(resolvedValue)
     }
