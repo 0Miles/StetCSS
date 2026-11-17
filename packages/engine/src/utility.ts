@@ -76,6 +76,42 @@ function hasUnknownPseudoClass(nodes: SelectorNode[], css: StetCSS) {
   return false
 }
 
+const JOINING_COMBINATORS = new Set(['>', '+', '~'])
+
+function isJoiningCombinator(node: SelectorNode | undefined) {
+  return node?.type === 'combinator' && JOINING_COMBINATORS.has(node.value)
+}
+
+/**
+ * Whether raw selector nodes glued to a class extend it into a selector. Text scanners read code
+ * such as `a.block+b`, `hidden.length,` or `x.block*2` as classes, and none of these is one: a
+ * `>`, `+` or `~` needs a compound after it, a selector-list item cannot be empty (an empty one
+ * emitted the bare class), and the universal selector cannot follow the class inside its
+ * compound. `ends` is false when a `:` variant follows, whose selector completes a trailing
+ * combinator (`hidden>:custom`). Inside a pseudo-class function only combinators are checked;
+ * `:of()` takes a trailing combinator (`:of(.active>)`).
+ */
+function isSelectorSuffix(nodes: SelectorNode[], ends: boolean, nested = false): boolean {
+  for (let index = 0; index < nodes.length; index++) {
+    const node = nodes[index]
+    if (isJoiningCombinator(node)) {
+      let next = index + 1
+      while (nodes[next]?.type === 'combinator' && nodes[next].value === ' ') next++
+      const following = nodes[next]
+      if (following ? following.type === 'separator' || isJoiningCombinator(following) : ends) return false
+    } else if (node.type === 'separator') {
+      const following = nodes[index + 1]
+      if (!nested && (following ? following.type === 'separator' : ends)) return false
+    } else if (node.type === 'universal') {
+      const previous = nodes[index - 1]
+      if (!nested && !(previous?.type === 'combinator' && previous.value !== '_')) return false
+    } else if ('children' in node && node.value && node.value !== 'of' && node.children?.length) {
+      if (!isSelectorSuffix(node.children, true, true)) return false
+    }
+  }
+  return true
+}
+
 function matchesPatternUtilityName(className: string, name: string) {
   if (!className.startsWith(name)) return false
   const next = className[name.length]
@@ -798,14 +834,15 @@ export class Utility {
       if ((branchCount *= count) > MAX_STATE_BRANCHES) return
     }
 
-    for (const segment of segments) {
+    for (const [segmentIndex, segment] of segments.entries()) {
       if (typeof segment === 'string') {
         const rawNodes = parseSelector(segment, this.css)
         const rawSelector = generateSelector(rawNodes, '&')
-        const unknownPseudoClass = hasUnknownPseudoClass(rawNodes, this.css)
+        const invalid = hasUnknownPseudoClass(rawNodes, this.css)
+          || !isSelectorSuffix(rawNodes, segmentIndex === segments.length - 1)
         branches = branches.map((branch) => ({
           ...branch,
-          ...(unknownPseudoClass ? { valid: false } : {}),
+          ...(invalid ? { valid: false } : {}),
           key: branch.key + segment,
           selectorTemplate: composeSelectorTemplate(branch.selectorTemplate, rawSelector),
           selectorNodes: parseSelector((branch.selectorTemplate
