@@ -11,7 +11,6 @@ import {
 } from '@stet-css/schema/css-directives'
 import type { PropertiesHyphen } from 'csstype'
 import {
-  ROOT_FONT_SIZE,
   compareRulePriority,
   PRESET_MODES,
   UndeclaredModeError,
@@ -23,6 +22,7 @@ import {
   parseCondition,
   parseSelector,
   splitModeConjuncts,
+  toComparableQueryLength,
   type GeneratedRule,
   type StetCSS
 } from '@stet-css/engine/compiler'
@@ -743,17 +743,12 @@ function createMergedStyleDefinition(bucket: StyleMergeBucket): MergedStyleDefin
   }
 }
 
-function normalizeStyleConditionFeatureValue(value: number, unit: string) {
-  if (unit === 'px') return value / ROOT_FONT_SIZE
-  return value
-}
-
 function getStyleConditionFeatures(conditions: string[] | undefined) {
   const featureMap = new Map<string, { min?: number, max?: number }>()
   for (const condition of conditions || []) {
     for (const match of condition.matchAll(STYLE_CONDITION_FEATURE_REGEX)) {
       const [, name, operator, rawValue, unit] = match
-      const value = normalizeStyleConditionFeatureValue(Number(rawValue), unit)
+      const value = toComparableQueryLength(Number(rawValue), unit)
       const entry = featureMap.get(name) ?? {}
       switch (operator) {
         case '>':
