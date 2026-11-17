@@ -35,7 +35,7 @@ For project-aware tokens, create a CSS entry that imports `@stet-css/core`, or d
 }
 
 .button {
-  @compose inline-flex items:center gap:2x fg:primary;
+  @compose inline-flex items:center gap:0.5rem fg:primary;
 }
 ```
 

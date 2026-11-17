@@ -15,7 +15,7 @@ The StetCSS browser runtime, loaded from a CDN with no build step.
 </head>
 
 <body>
-  <h1 class="italic m:12x fg:strong font:40px font:heavy">Hello World</h1>
+  <h1 class="italic m:3rem fg:strong font:40px font:heavy">Hello World</h1>
 </body>
 
 </html>
