@@ -1,4 +1,5 @@
 import { lexer, parse, walk, property as propertyName } from 'css-tree'
+import { checkNativePropertyName, matchNativeDeclarationValue } from '@stet-css/compiler/native-declaration'
 import { type SyntaxError } from './types/syntax-error'
 
 export default function validateCSS(text: string, parseOptions = {
@@ -128,11 +129,11 @@ export function validateDeclaration(property: string, value: any) {
     return errors
   }
 
-  if (error = isTargetError((lexer as any).checkPropertyName(property))) {
+  if (error = checkNativePropertyName(property) as SyntaxError | null) {
     errors.push(Object.assign(error, {
       property
     }))
-  } else if (error = isTargetError(lexer.matchProperty(property, value).error)) {
+  } else if (error = matchNativeDeclarationValue(property, value) as SyntaxError | null) {
     errors.push(Object.assign(error, {
       property,
       ...error.rawMessage === 'Mismatch' &&

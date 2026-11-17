@@ -13,6 +13,9 @@
   },
   "references": [
     {
+      "path": "../compiler/tsconfig.typecheck.json"
+    },
+    {
       "path": "../core/tsconfig.typecheck.json"
     },
     {
