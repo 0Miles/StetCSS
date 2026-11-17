@@ -1309,14 +1309,16 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
         --color-soft: --alpha(var(--color-primary) / .14);
         --color-faint: --alpha(var(--color-primary) / .07);
         --color-trace: --alpha(var(--color-primary) / .0029);
+        --color-half: --alpha(var(--color-primary) / .5);
       }
     `, { baseManifest: defaultManifest })
     const css = createTestCSS(result.manifest)
 
-    css.ensureClassRules('bg:soft', 'bg:faint', 'bg:trace')
+    css.ensureClassRules('bg:soft', 'bg:faint', 'bg:trace', 'bg:half')
     expect(css.themeLayer.text).toContain('--color-soft:color-mix(in oklab,var(--color-primary) 14%,transparent)')
     expect(css.themeLayer.text).toContain('--color-faint:color-mix(in oklab,var(--color-primary) 7%,transparent)')
     expect(css.themeLayer.text).toContain('--color-trace:color-mix(in oklab,var(--color-primary) .29%,transparent)')
+    expect(css.themeLayer.text).toContain('--color-half:color-mix(in oklab,var(--color-primary) 50%,transparent)')
   })
 
   test('rejects stylesheet token alias syntax and invalid --alpha() alpha values', () => {
