@@ -7,7 +7,7 @@ export const VALUE_DELIMITERS = {
   '"': '"',
   '{': '}'
 }
-/** Pixels in one rem. px values and bare query numbers convert to rem with it; it is not configurable. */
+/** Pixels in one rem; it is not configurable. Query numbers are output as written; px converts to rem only where values are compared (rule priority, class inspection). */
 export const ROOT_FONT_SIZE = 16
 export const BASE_UNIT_REGEX = /^([+-]?(?:\d+(?:\.?\d+)?|\.\d+))x$/m // 1x, 1.1x, -1x, -.1x
 export const SELECTOR_SIGNS = [':', '_', '>', '+', '~']

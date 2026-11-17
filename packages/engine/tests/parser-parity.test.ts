@@ -64,6 +64,8 @@ describe.concurrent('compiled condition parser parity', () => {
  * `px` breakpoint drifts away from its pixel width once the user changes the browser's font size.
  * Numbers stay as written, unitless ones included (like `font:14`), so `@>=768` is as inert as the
  * same query in plain CSS.
+ * Reverse-checked: passing `'rem'` back to `parseValue` in `parse-condition.ts` reds the five
+ * unitless rows and nothing else; the px and em rows guard that written units survive.
  */
 describe.concurrent('query numbers keep the value and unit as written', () => {
   test.each([
