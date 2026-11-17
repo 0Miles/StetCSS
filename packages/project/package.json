@@ -11,7 +11,7 @@
   },
   "license": "MIT",
   "description": "StetCSS project entry discovery and manifest loading utilities.",
-  "author": "Aoyue Design LLC.",
+  "author": "Miles",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/project#readme",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"

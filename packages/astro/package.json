@@ -11,7 +11,7 @@
   },
   "license": "MIT",
   "description": "Astro integration for StetCSS",
-  "author": "Aoyue Design LLC.",
+  "author": "Miles",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/astro#readme",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"

@@ -11,7 +11,7 @@
   },
   "license": "MIT",
   "description": "Public StetCSS schema and wire-format contracts.",
-  "author": "Aoyue Design LLC.",
+  "author": "Miles",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/schema#readme",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"

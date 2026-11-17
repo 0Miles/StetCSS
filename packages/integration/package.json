@@ -11,7 +11,7 @@
   },
   "license": "MIT",
   "description": "Shared StetCSS integration contracts, virtual module protocols, and build helpers.",
-  "author": "Aoyue Design LLC.",
+  "author": "Miles",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/integration#readme",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"

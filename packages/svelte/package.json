@@ -15,7 +15,7 @@
   },
   "license": "MIT",
   "description": "Svelte and SvelteKit integration for StetCSS",
-  "author": "Aoyue Design LLC.",
+  "author": "Miles",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/svelte#readme",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"

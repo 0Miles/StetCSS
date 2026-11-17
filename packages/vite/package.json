@@ -11,7 +11,7 @@
   },
   "license": "MIT",
   "description": "Vite plugin for StetCSS",
-  "author": "Aoyue Design LLC.",
+  "author": "Miles",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/vite#readme",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"

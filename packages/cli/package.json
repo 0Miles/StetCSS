@@ -11,7 +11,7 @@
   "type": "module",
   "license": "MIT",
   "description": "StetCSS CLI",
-  "author": "Aoyue Design LLC.",
+  "author": "Miles",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/cli#readme",
   "bugs": {
     "url": "https://github.com/0Miles/StetCSS/issues"
