@@ -14,8 +14,9 @@ import { formatDimension, formatFractionPercentage } from './utils/format-dimens
 import { PRESET_MODES, UndeclaredModeError, isUndeclaredPresetMode } from './utils/undeclared-mode'
 import splitModeConjuncts from './utils/split-mode-conjuncts'
 import joinConditionNodes from './utils/join-condition-nodes'
+import { toComparableQueryLength } from './utils/query-length'
 
-export { StetCSS, ROOT_FONT_SIZE, PRESET_MODES, UndeclaredModeError, compareRulePriority, formatDimension, formatFractionPercentage, generateCondition, generateSelector, isUndeclaredPresetMode, joinConditionNodes, parseBaseUnit, parseCondition, parseSelector, splitModeConjuncts }
+export { StetCSS, ROOT_FONT_SIZE, PRESET_MODES, UndeclaredModeError, compareRulePriority, formatDimension, formatFractionPercentage, generateCondition, generateSelector, isUndeclaredPresetMode, joinConditionNodes, parseBaseUnit, parseCondition, parseSelector, splitModeConjuncts, toComparableQueryLength }
 export type { Utility as GeneratedRule }
 export type * from '@stet-css/schema/manifest'
 
