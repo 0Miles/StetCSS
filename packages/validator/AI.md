@@ -1,13 +1,14 @@
 # @stet-css/validator
 
-Owns **CSS validity**: whether the CSS a class generates passes `css-tree` grammars for at-rules (names, preludes, descriptors) and declarations. It also owns `createCSSWithNativeDeclarations`, which plugs the `css-tree` native declaration matcher into `StetCSS`; the scanner, stylesheet, CLI and ESLint plugin build their instances with it.
+Owns **class CSS validity**: whether the CSS a class generates is valid, judged with `css-tree` grammars for at-rules (names, preludes, descriptors) and declarations. It owns the at-rule checks; declarations go through the native declaration check in `@stet-css/compiler/native-declaration` (`checkNativePropertyName`, `matchNativeDeclarationValue`, `cssTreeNativeDeclarationMatcher`), which lives there because the compiler lowers `@compose` with it and cannot depend on this package. This package re-exports the matcher and uses the same check in `validateCSS`, so builds, lint and the compiler accept the same declarations.
 
-The native declaration check itself (`cssTreeNativeDeclarationMatcher`, `matchNativeDeclarationValue`) lives in `@stet-css/compiler/native-declaration`, because the compiler lowers `@compose` with it and cannot depend on this package. This package re-exports the matcher and validates declarations in `validateCSS` with the same check, so builds, lint and the compiler accept the same declarations.
+It also owns `createCSSWithNativeDeclarations`, which plugs that matcher into `StetCSS`; the scanner, stylesheet, CLI and ESLint plugin build their instances with it.
 
 ## Boundaries
 
 - Which rules a class generates is engine behaviour in `@stet-css/engine`; this package judges only the CSS those rules emit.
 - Lint diagnostic wording for invalid and unknown classes lives in `@stet-css/lint`.
+- Whether a native `property: value` declaration is valid, including the `css-tree` gap exceptions, is `@stet-css/compiler/native-declaration`; this package adds class and at-rule context around it.
 
 ## Risks
 
