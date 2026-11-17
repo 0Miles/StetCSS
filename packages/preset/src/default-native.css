@@ -6,13 +6,13 @@
   }
 
   body {
+    line-height: 1.2;
+    text-size-adjust: 100%;
     -webkit-text-size-adjust: 100%;
     -moz-text-size-adjust: 100%;
     -ms-text-size-adjust: 100%;
-    text-size-adjust: 100%;
     -moz-osx-font-smoothing: grayscale;
     -webkit-font-smoothing: antialiased;
-    line-height: 1.2;
   }
 
   a, button {
@@ -39,6 +39,8 @@
   }
 
   html, body {
+    height: 100dvh;
+    height: -webkit-fill-available;
     height: -moz-available;
   }
 
@@ -133,11 +135,11 @@
     font: inherit;
     font-feature-settings: inherit;
     font-variation-settings: inherit;
-    color: inherit;
-    background-color: #0000;
+    font-size: 100%;
     margin: 0;
     padding: 0;
-    font-size: 100%;
+    color: inherit;
+    background-color: #0000;
   }
 
   *, :before, :after {
