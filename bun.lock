@@ -809,6 +809,7 @@
       "name": "@stet-css/validator",
       "version": "0.1.0",
       "dependencies": {
+        "@stet-css/compiler": "workspace:^",
         "@stet-css/core": "workspace:^",
         "@stet-css/preset": "workspace:^",
         "@stet-css/schema": "workspace:^",

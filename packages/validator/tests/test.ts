@@ -158,3 +158,38 @@ it('reports a class using an undeclared mode instead of throwing', () => {
   })
   expect(isClassValid('fg:red@dark', css)).toBe(false)
 })
+
+/**
+ * Guards #164: static builds dropped native declarations that browsers ship
+ * but css-tree 3.2.1 rejects, with no warning, while the runtime kept them.
+ * The text is the scanner's build output; the empty `validate()` errors keep
+ * lint and the editor from flagging the classes the build now emits.
+ * Reverse-checked: `validateDeclaration` in `src/validate-css.ts` calling
+ * `lexer.matchProperty` directly again reds all four rows.
+ */
+it.each([
+  ['container-type:scroll-state', '.container-type\\:scroll-state{container-type:scroll-state}'],
+  ['container-type:size|scroll-state', '.container-type\\:size\\|scroll-state{container-type:size scroll-state}'],
+  ['background-image:image-set(url(a.png))', '.background-image\\:image-set\\(url\\(a\\.png\\)\\){background-image:image-set(url(a.png))}'],
+  ['height:calc-size(auto,size)', '.height\\:calc-size\\(auto\\,size\\){height:calc-size(auto,size)}']
+])('builds %s, which css-tree rejects', (className, text) => {
+  expect(generateValidRules(className).map((rule) => rule.text)).toEqual([text])
+  expect(validate(className).errors).toEqual([])
+})
+
+/**
+ * Guards #164's exceptions from widening at the class level: an invalid
+ * value of the same property, or the construct on a property that does not
+ * take it, still builds nothing and stays invalid for lint. The compiler's
+ * `tests/native-declaration.test.ts` holds the full rows per exception.
+ */
+it.each([
+  'container-type:foo',
+  'background-image:image-set(foo)',
+  'height:image-set(url(a.png))',
+  'height:calc-size(auto)',
+  'margin:calc-size(auto,size)'
+])('still rejects %s', (className) => {
+  expect(generateValidRules(className)).toHaveLength(0)
+  expectClassInvalid(className)
+})
