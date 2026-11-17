@@ -52,6 +52,7 @@ import {
 } from './lexer/standalone-directives'
 import { combineSelectorLists } from './utils/selectors'
 import { normalizeStylesheetValue } from './stylesheet-value'
+import { overridesNativeCSSProperty } from './native-css-longhands'
 
 type CSSDirectiveConditionPath = CSSDirectiveConditionPathEntry[]
 
@@ -2282,6 +2283,163 @@ export function maskManagedPatternEntryNames(source: string) {
   return replaceSourceRanges(source, replacements)
 }
 
+interface NativeFallbacks {
+  /** The stylesheet lightningcss parses, which rule locations point into. */
+  source: string
+  /** Keeps the placeholders apart from anything the stylesheet itself declares. */
+  nonce: string
+  resolveLocation?: ReturnType<typeof createSourceLocationResolver>
+  /** Each placeholder's declarations as written, in source order. */
+  declarations: string[][]
+}
+
+function createNativeFallbacks(source: string): NativeFallbacks {
+  return { source, nonce: Math.random().toString(36).slice(2, 10), declarations: [] }
+}
+
+function nativeFallbacksPlaceholder(fallbacks: NativeFallbacks) {
+  return `--stet-native-fallbacks-${fallbacks.nonce}-`
+}
+
+function getNativeDeclarationProperty(declaration: Declaration) {
+  if (declaration.property === 'unparsed') return formatPropertyId(declaration.value.propertyId)
+  return declaration.property
+}
+
+/**
+ * Whether a later declaration overrides an earlier one (`overridesNativeCSSProperty`; vendor
+ * prefixes ignored). Plain CSS keeps the earlier one as the fallback for browsers that reject the
+ * later value; lightningcss's minify merges it away.
+ */
+function hasOverriddenDeclaration(declarations: Declaration[] | undefined) {
+  const seen: string[] = []
+  for (const declaration of declarations || []) {
+    if (declaration.property === 'custom') continue
+    const property = getNativeDeclarationProperty(declaration)
+    if (seen.some((earlier) => overridesNativeCSSProperty(property, earlier))) return true
+    seen.push(property)
+  }
+  return false
+}
+
+function isCommentOnly(statement: string) {
+  return !statement.replace(/\/\*[\s\S]*?\*\//g, '').trim()
+}
+
+/**
+ * A style rule's declarations as written, grouped as lightningcss groups them: the ones the block
+ * opens with, then each run that follows a nested rule (a `nested-declarations` child).
+ */
+function readRawDeclarationGroups(rule: any, fallbacks: NativeFallbacks) {
+  const { source } = fallbacks
+  fallbacks.resolveLocation ??= createSourceLocationResolver(source)
+  const start = fallbacks.resolveLocation(rule.value.loc)
+  if (start === -1) return
+  const selectorEnd = findCSSStatementEnd(source, start)
+  if (selectorEnd.reason !== 'block' || !selectorEnd.delimiterRange) return
+  const blockEnd = findCSSBlockEnd(source, selectorEnd.delimiterRange.start)
+  if (blockEnd === -1) return
+  const block = source.slice(selectorEnd.delimiterRange.end, blockEnd)
+  const groups: string[][] = [[]]
+  for (let index = skipCSSWhitespace(block, 0); index < block.length; index = skipCSSWhitespace(block, index)) {
+    const statementEnd = findCSSStatementEnd(block, index)
+    if (statementEnd.reason === 'block') {
+      const nestedEnd = findCSSBlockEnd(block, statementEnd.end)
+      if (nestedEnd === -1) return
+      if (groups.at(-1)!.length || groups.length === 1) groups.push([])
+      index = nestedEnd + 1
+      continue
+    }
+    const statement = block.slice(index, statementEnd.delimiterRange?.start ?? statementEnd.end)
+    if (!isCommentOnly(statement)) groups.at(-1)!.push(statement)
+    index = statementEnd.end
+  }
+  if (groups.length > 1 && !groups.at(-1)!.length) groups.pop()
+  return groups
+}
+
+function countDeclarations(target: any) {
+  const block: DeclarationBlock<Declaration> = target.value.declarations
+  return (block.declarations?.length || 0) + (block.importantDeclarations?.length || 0)
+}
+
+/**
+ * lightningcss's `transform` always minifies, which keeps only the last of overriding
+ * declarations. For a native style rule holding such fallbacks, swap its declarations (and those
+ * of its `nested-declarations` children) for a placeholder and keep the declarations as written;
+ * `restoreNativeFallbacks` prints them in source order once the transform is done. Other rules,
+ * and any group whose written declarations do not line up one to one with what lightningcss
+ * parsed, keep lightningcss's printing.
+ */
+function preserveNativeFallbacks(rule: any, fallbacks: NativeFallbacks) {
+  if (rule.type !== 'style') return
+  const targets = [rule, ...(rule.value.rules || []).filter((child: any) => child.type === 'nested-declarations')]
+  const overridden = targets.map((target) => {
+    const block: DeclarationBlock<Declaration> = target.value.declarations
+    return hasOverriddenDeclaration(block.declarations) || hasOverriddenDeclaration(block.importantDeclarations)
+  })
+  if (!overridden.includes(true)) return
+  const groups = readRawDeclarationGroups(rule, fallbacks)
+  if (!groups) return
+  // The leading group always belongs to the rule; later ones map onto its children only when the counts agree.
+  const mapped = groups.length === targets.length ? targets.length : 1
+  let replaced = false
+  for (let index = 0; index < mapped; index++) {
+    if (!overridden[index] || groups[index].length !== countDeclarations(targets[index])) continue
+    fallbacks.declarations.push(groups[index])
+    targets[index].value.declarations = {
+      declarations: [{
+        property: 'custom',
+        value: {
+          name: `${nativeFallbacksPlaceholder(fallbacks)}${fallbacks.declarations.length - 1}`,
+          value: [{ type: 'token', value: { type: 'ident', value: 'x' } }]
+        }
+      }],
+      importantDeclarations: []
+    }
+    replaced = true
+  }
+  return replaced ? rule : undefined
+}
+
+/**
+ * Prints declarations as written in one lightningcss transform, so each value prints as in any
+ * other native rule. Each sits in a rule of its own, with a marker that keeps lightningcss from
+ * merging rules whose declarations are equal. Lines keep their indent relative to the declaration.
+ */
+function printNativeDeclarations(declarations: string[], nonce: string) {
+  const name = `stet-native-declaration-${nonce}-`
+  const output = decodeCSS(getCSSTransform()({
+    filename: 'stet-css-declarations.css',
+    code: encodeCSS(declarations.map((declaration, index) => `.${name}${index}{${declaration};--${name}${index}:x}`).join('\n'))
+  }).code)
+  const printed: string[][] = declarations.map(() => [])
+  const header = new RegExp(`^\\.${name}(\\d+) \\{$`)
+  const marker = new RegExp(`^ {2}--${name}\\d+: x;$`)
+  let current: string[] | undefined
+  for (const line of output.split('\n')) {
+    const match = header.exec(line)
+    if (match) {
+      current = printed[Number(match[1])]
+    } else if (line === '}') {
+      current = undefined
+    } else if (current && line.trim() && !marker.test(line)) {
+      current.push(line.replace(/^ {2}/, ''))
+    }
+  }
+  return printed
+}
+
+function restoreNativeFallbacks(css: string, fallbacks: NativeFallbacks) {
+  if (!fallbacks.declarations.length) return css
+  const printed = printNativeDeclarations(fallbacks.declarations.flat(), fallbacks.nonce)
+  let offset = 0
+  const lines = fallbacks.declarations.map((group) => printed.slice(offset, offset += group.length).flat())
+  const placeholder = new RegExp(`^([ \\t]*)${nativeFallbacksPlaceholder(fallbacks)}(\\d+): x;$`, 'gm')
+  return css.replace(placeholder, (line, indent: string, index: string) =>
+    lines[Number(index)]?.map((printedLine) => indent + printedLine).join('\n') ?? line)
+}
+
 export function compileCSS(source: string, options: CompileCSSOptions = {}): CompileCSSResult {
   const filename = options.from || 'stet.css'
   assertCSSNestingDepth(source, filename)
@@ -2304,6 +2462,8 @@ export function compileCSS(source: string, options: CompileCSSOptions = {}): Com
   validateComposeRanges(parsed)
   const preprocessedSource = maskManagedPatternEntryNames(removeStandaloneCSSDirectives(sourceWithoutReferences, filename))
   let ruleDepth = 0
+  const preserveNativeCSS = options.preserveNativeCSS !== false
+  const nativeFallbacks = createNativeFallbacks(preprocessedSource)
   const transformed = getCSSTransform()({
     filename,
     code: encodeCSS(preprocessedSource),
@@ -2370,6 +2530,7 @@ export function compileCSS(source: string, options: CompileCSSOptions = {}): Com
         }
 
         ruleDepth++
+        if (preserveNativeCSS) return preserveNativeFallbacks(rule, nativeFallbacks)
       },
       RuleExit() {
         ruleDepth--
@@ -2377,8 +2538,8 @@ export function compileCSS(source: string, options: CompileCSSOptions = {}): Com
     }
   })
   let remainingCSS = ''
-  if (options.preserveNativeCSS !== false) {
-    remainingCSS = normalizeStylesheetValue(decodeCSS(transformed.code).trim()).value
+  if (preserveNativeCSS) {
+    remainingCSS = normalizeStylesheetValue(restoreNativeFallbacks(decodeCSS(transformed.code), nativeFallbacks).trim()).value
   }
 
   return {
