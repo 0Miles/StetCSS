@@ -52,7 +52,7 @@ import {
 } from './lexer/standalone-directives'
 import { combineSelectorLists } from './utils/selectors'
 import { normalizeStylesheetValue } from './stylesheet-value'
-import { overridesNativeCSSProperty } from './native-css-longhands'
+import { expandNativeCSSProperty } from './native-css-longhands'
 
 type CSSDirectiveConditionPath = CSSDirectiveConditionPathEntry[]
 
@@ -2306,17 +2306,17 @@ function nativeFallbacksPlaceholder(fallbacks: NativeFallbacks) {
 }
 
 /**
- * Whether a later declaration overrides an earlier one (`overridesNativeCSSProperty`; vendor
- * prefixes ignored). Plain CSS keeps the earlier one as the fallback for browsers that reject the
+ * Whether a later declaration overrides an earlier one (their `expandNativeCSSProperty` names
+ * meet; vendor prefixes ignored). Plain CSS keeps the earlier one as the fallback for browsers that reject the
  * later value; lightningcss's minify merges it away.
  */
 function hasOverriddenDeclaration(declarations: Declaration[] | undefined) {
-  const seen: string[] = []
+  const covered = new Set<string>()
   for (const declaration of declarations || []) {
     if (declaration.property === 'custom') continue
-    const property = getDeclarationName(declaration)
-    if (seen.some((earlier) => overridesNativeCSSProperty(property, earlier))) return true
-    seen.push(property)
+    const properties = expandNativeCSSProperty(getDeclarationName(declaration))
+    if (properties.some((property) => covered.has(property))) return true
+    for (const property of properties) covered.add(property)
   }
   return false
 }

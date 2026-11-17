@@ -96,16 +96,15 @@ const NATIVE_CSS_LONGHANDS: Record<string, readonly string[]> = {
   'white-space': ['text-wrap-mode', 'white-space-collapse']
 }
 
-function expandNativeCSSProperty(property: string) {
-  return [property, ...(NATIVE_CSS_LONGHANDS[property] || [])]
-}
+const EXPANDED_NATIVE_CSS_PROPERTIES = new Map(
+  Object.entries(NATIVE_CSS_LONGHANDS).map(([shorthand, longhands]) => [shorthand, [shorthand, ...longhands]])
+)
 
 /**
- * Whether declaring `later` after `earlier` overrides at least part of it: the same property, a
- * shorthand and one of its longhands, or two shorthands that share a longhand.
+ * The property itself plus every longhand it sets. Declaring a property after another overrides at
+ * least part of it when their expansions share a name: the same property, a shorthand and one of
+ * its longhands, or two shorthands that share a longhand.
  */
-export function overridesNativeCSSProperty(later: string, earlier: string) {
-  if (later === earlier) return true
-  const earlierProperties = expandNativeCSSProperty(earlier)
-  return expandNativeCSSProperty(later).some((property) => earlierProperties.includes(property))
+export function expandNativeCSSProperty(property: string): readonly string[] {
+  return EXPANDED_NATIVE_CSS_PROPERTIES.get(property) ?? [property]
 }
