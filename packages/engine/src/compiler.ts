@@ -10,12 +10,12 @@ import type { StetCSSEmittedGlobals } from './emitted-globals'
 import type { StetCSSOptions } from './core'
 import { ROOT_FONT_SIZE } from './common'
 import { parseBaseUnit } from './utils/base-unit'
-import { formatFractionPercentage } from './utils/format-dimension'
+import { formatDimension, formatFractionPercentage } from './utils/format-dimension'
 import { PRESET_MODES, UndeclaredModeError, isUndeclaredPresetMode } from './utils/undeclared-mode'
 import splitModeConjuncts from './utils/split-mode-conjuncts'
 import joinConditionNodes from './utils/join-condition-nodes'
 
-export { StetCSS, ROOT_FONT_SIZE, PRESET_MODES, UndeclaredModeError, compareRulePriority, formatFractionPercentage, generateCondition, generateSelector, isUndeclaredPresetMode, joinConditionNodes, parseBaseUnit, parseCondition, parseSelector, splitModeConjuncts }
+export { StetCSS, ROOT_FONT_SIZE, PRESET_MODES, UndeclaredModeError, compareRulePriority, formatDimension, formatFractionPercentage, generateCondition, generateSelector, isUndeclaredPresetMode, joinConditionNodes, parseBaseUnit, parseCondition, parseSelector, splitModeConjuncts }
 export type { Utility as GeneratedRule }
 export type * from '@stet-css/schema/manifest'
 
