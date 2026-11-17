@@ -28,6 +28,7 @@ import type {
   StetCSSManifestVariants
 } from '@stet-css/schema/manifest'
 import { flattenStetCSSManifestVariables, groupStetCSSManifestVariables } from '@stet-css/schema/manifest'
+import { STET_CSS_LENGTH_UNITS } from '@stet-css/lexer'
 import {
   createCompilerCSS,
   parseCondition,
@@ -52,7 +53,7 @@ export interface CreateStetCSSManifestOptions {
 
 const NUMERIC_THEME_NAMESPACES = new Set(['font-size', 'radius', 'spacing', 'breakpoint', 'container'])
 const UNITFUL_NUMERIC_TOKEN = /^([+-]?(?:\d+(?:\.\d+)?|\.\d+))(px|rem)?$/
-const CONDITION_LENGTH_TOKEN = /^([+-]?(?:\d+(?:\.\d+)?|\.\d+))([a-z]+)?$/i
+const CONDITION_LENGTH_TOKEN = new RegExp(`^([+-]?(?:\\d+(?:\\.\\d+)?|\\.\\d+))(${STET_CSS_LENGTH_UNITS.join('|')})?$`, 'i')
 
 export interface ResolvedCSSDirectiveVariableName {
   name: string
@@ -260,7 +261,9 @@ function compileVariables(
   return variables.length ? variables : undefined
 }
 
-// Breakpoint and container tokens keep the value and unit as written, like a native query.
+// Breakpoint and container tokens keep the value and unit as written, like a native query. Only a
+// number with an optional length unit is a breakpoint or container size; other values (`50%`,
+// `calc()`, `var()`, `2s`) produce no condition, so `@name` falls back to a named container.
 function createVariableCondition(variable: StetCSSManifestVariable, id: 'media' | 'container'): StetCSSManifestCondition | undefined {
   if (variable.key.startsWith('-')) return
   let value: number

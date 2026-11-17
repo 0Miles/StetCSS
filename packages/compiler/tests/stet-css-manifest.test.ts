@@ -112,26 +112,28 @@ describe.concurrent('createStetCSSManifest', () => {
     expect('nativeValueNamespaces' in manifest).toBe(false)
   })
 
-  it('lowers breakpoint and container aliases into condition node maps', () => {
+  /**
+   * Prevents: number-valued breakpoint and container tokens (a JS manifest's `value: 777`) being
+   * converted to rem or dropped. They become unitless condition nodes, output as written like
+   * `font:14`; string tokens keep their unit.
+   * Reverse-checked: restoring the old px/unitless-to-rem conversion in `createVariableCondition`
+   * reds both cases (and the token tests in `css-first-core-migration.test.ts`).
+   */
+  it.each([
+    [777, 333, {}, {}],
+    ['777px', '333px', { unit: 'px' }, { unit: 'px' }]
+  ])('lowers breakpoint %s and container %s into condition node maps as written', (breakpoint, container, breakpointUnit, containerUnit) => {
     const manifest = createStetCSSManifest({
       variables: [
-        { namespace: 'breakpoint', key: 'card', value: '777px' },
-        { namespace: 'container', key: 'panel', value: '333px' }
+        { namespace: 'breakpoint', key: 'card', value: breakpoint },
+        { namespace: 'container', key: 'panel', value: container }
       ]
     })
+    const breakpointCondition = { id: 'media', nodes: [{ type: 'number', value: 777, ...breakpointUnit }] }
 
-    expect(manifest.conditions?.card).toMatchObject({
-      id: 'media',
-      nodes: [expect.objectContaining({ type: 'number', value: 777, unit: 'px' })]
-    })
-    expect(manifest.breakpointConditions?.card).toMatchObject({
-      id: 'media',
-      nodes: [expect.objectContaining({ type: 'number', value: 777, unit: 'px' })]
-    })
-    expect(manifest.containerConditions?.panel).toMatchObject({
-      id: 'container',
-      nodes: [expect.objectContaining({ type: 'number', value: 333, unit: 'px' })]
-    })
+    expect(manifest.conditions?.card).toEqual(breakpointCondition)
+    expect(manifest.breakpointConditions?.card).toEqual(breakpointCondition)
+    expect(manifest.containerConditions?.panel).toEqual({ id: 'container', nodes: [{ type: 'number', value: 333, ...containerUnit }] })
   })
 
   it('keeps unitful numeric theme tokens comparable', () => {
