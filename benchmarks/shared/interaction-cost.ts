@@ -283,21 +283,21 @@ export const interactionCostMetrics = [
 const stetClasses = {
   family: 'stet',
   body: ['m:0', 'min-h:100vh', 'bg:gray-5', 'fg:slate-90', 'font:14px', 'font:system'],
-  shell: ['max-w:1180px', 'mx:auto', 'p:6x', 'grid', 'gap:5x'],
-  header: ['p:5x', 'r:12px', 'bg:white', 'border:1px|solid|gray-20', 'grid', 'gap:2x'],
+  shell: ['max-w:1180px', 'mx:auto', 'p:1.5rem', 'grid', 'gap:1.25rem'],
+  header: ['p:1.25rem', 'r:12px', 'bg:white', 'border:1px|solid|gray-20', 'grid', 'gap:0.5rem'],
   title: ['m:0', 'font:32px', 'font:heavy', 'tracking:-.02em'],
   subtitle: ['m:0', 'fg:slate-60', 'leading:1.6'],
-  grid: ['grid', 'grid-cols:4', 'gap:3x'],
-  itemBase: ['interaction-item', 'p:3x', 'r:10px', 'border:1px|solid|gray-20', 'min-h:72px'],
+  grid: ['grid', 'grid-cols:4', 'gap:0.75rem'],
+  itemBase: ['interaction-item', 'p:0.75rem', 'r:10px', 'border:1px|solid|gray-20', 'min-h:72px'],
   itemLight: ['bg:white', 'fg:slate-80'],
   itemActive: ['bg:blue-60', 'fg:white'],
   itemDark: ['bg:slate-90', 'fg:white'],
   itemNew: ['outline:2px|solid|red-60'],
   itemTemp: ['fg:green-60', 'w:1px'],
   itemTitle: ['block', 'font:13px', 'font:semibold'],
-  itemMeta: ['block', 'font:12px', 'fg:slate-50', 'mt:1x'],
-  panel: ['p:4x', 'r:12px', 'bg:white', 'border:1px|solid|gray-20'],
-  button: ['h:40px', 'px:4x', 'r:8px', 'border:0', 'bg:blue-60', 'fg:white', 'font:13px', 'font:semibold']
+  itemMeta: ['block', 'font:12px', 'fg:slate-50', 'mt:0.25rem'],
+  panel: ['p:1rem', 'r:12px', 'bg:white', 'border:1px|solid|gray-20'],
+  button: ['h:40px', 'px:1rem', 'r:8px', 'border:0', 'bg:blue-60', 'fg:white', 'font:13px', 'font:semibold']
 } satisfies InteractionClassModel
 
 const tailwindClasses = {
