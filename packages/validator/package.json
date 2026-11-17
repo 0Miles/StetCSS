@@ -55,6 +55,7 @@
   },
   "dependencies": {
     "@stet-css/core": "workspace:^",
+    "@stet-css/compiler": "workspace:^",
     "@stet-css/preset": "workspace:^",
     "css-tree": "^3.2.1",
     "@stet-css/schema": "workspace:^"
