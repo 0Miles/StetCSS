@@ -887,6 +887,16 @@ function rawBlockContainsDeclaration(rawBlock: string, property: string) {
   return new RegExp(`(?:^|[;{])\\s*${escapeRegExp(property)}\\s*:`).test(rawBlock)
 }
 
+/** The range inside the braces of the rule whose prelude starts at `start` in `source`. */
+function findRawRuleBlockRange(source: string, start: number) {
+  if (start === -1) return
+  const preludeEnd = findCSSStatementEnd(source, start)
+  if (preludeEnd.reason !== 'block' || !preludeEnd.delimiterRange) return
+  const blockEnd = findCSSBlockEnd(source, preludeEnd.delimiterRange.start)
+  if (blockEnd === -1) return
+  return { start: preludeEnd.delimiterRange.end, end: blockEnd }
+}
+
 function restoreRawWebkitPairedDeclarations(
   rule: any,
   parsed: ParsedDirectives,
@@ -897,17 +907,13 @@ function restoreRawWebkitPairedDeclarations(
   const resolveLocation = parsed.sourceLocationResolver
   if (!source || !loc || !resolveLocation) return declarations
 
-  const start = resolveLocation({
+  const blockRange = findRawRuleBlockRange(source, resolveLocation({
     line: loc.line,
     column: loc.column
-  })
-  if (start === -1) return declarations
-  const statementEnd = findCSSStatementEnd(source, start)
-  if (statementEnd.reason !== 'block' || !statementEnd.delimiterRange) return declarations
-  const blockEnd = findCSSBlockEnd(source, statementEnd.delimiterRange.start)
-  if (blockEnd === -1) return declarations
+  }))
+  if (!blockRange) return declarations
 
-  const rawBlock = source.slice(statementEnd.delimiterRange.start + 1, blockEnd)
+  const rawBlock = source.slice(blockRange.start, blockRange.end)
   const restoredBefore = new Map<string, [string, string][]>()
   const skippedProperties = new Set<string>()
   for (const prefixedProperty in WEBKIT_ONLY_DECLARATIONS) {
@@ -2299,11 +2305,6 @@ function nativeFallbacksPlaceholder(fallbacks: NativeFallbacks) {
   return `--stet-native-fallbacks-${fallbacks.nonce}-`
 }
 
-function getNativeDeclarationProperty(declaration: Declaration) {
-  if (declaration.property === 'unparsed') return formatPropertyId(declaration.value.propertyId)
-  return declaration.property
-}
-
 /**
  * Whether a later declaration overrides an earlier one (`overridesNativeCSSProperty`; vendor
  * prefixes ignored). Plain CSS keeps the earlier one as the fallback for browsers that reject the
@@ -2313,7 +2314,7 @@ function hasOverriddenDeclaration(declarations: Declaration[] | undefined) {
   const seen: string[] = []
   for (const declaration of declarations || []) {
     if (declaration.property === 'custom') continue
-    const property = getNativeDeclarationProperty(declaration)
+    const property = getDeclarationName(declaration)
     if (seen.some((earlier) => overridesNativeCSSProperty(property, earlier))) return true
     seen.push(property)
   }
@@ -2331,13 +2332,9 @@ function isCommentOnly(statement: string) {
 function readRawDeclarationGroups(rule: any, fallbacks: NativeFallbacks) {
   const { source } = fallbacks
   fallbacks.resolveLocation ??= createSourceLocationResolver(source)
-  const start = fallbacks.resolveLocation(rule.value.loc)
-  if (start === -1) return
-  const selectorEnd = findCSSStatementEnd(source, start)
-  if (selectorEnd.reason !== 'block' || !selectorEnd.delimiterRange) return
-  const blockEnd = findCSSBlockEnd(source, selectorEnd.delimiterRange.start)
-  if (blockEnd === -1) return
-  const block = source.slice(selectorEnd.delimiterRange.end, blockEnd)
+  const blockRange = findRawRuleBlockRange(source, fallbacks.resolveLocation(rule.value.loc))
+  if (!blockRange) return
+  const block = source.slice(blockRange.start, blockRange.end)
   const groups: string[][] = [[]]
   for (let index = skipCSSWhitespace(block, 0); index < block.length; index = skipCSSWhitespace(block, index)) {
     const statementEnd = findCSSStatementEnd(block, index)
