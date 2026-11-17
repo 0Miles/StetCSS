@@ -1,6 +1,6 @@
 import type { NativeCSSDeclarationMatcher } from '@stet-css/engine'
 import { clone, generate, lexer, List, parse, property as propertyName, walk } from 'css-tree'
-import type { CssNode, FunctionNode } from 'css-tree'
+import type { CssNode, Dimension, EnterOrLeaveFn, FunctionNode, SyntaxMatchError, SyntaxReferenceError } from 'css-tree'
 
 /*
  * The one css-tree check of native `property: value` declarations. The compiler lowers
@@ -11,15 +11,21 @@ import type { CssNode, FunctionNode } from 'css-tree'
 
 const matches = new Map<string, boolean>()
 
-function isTargetError(error: unknown): error is Error {
-  return !!error
-    && typeof error === 'object'
-    && 'name' in error
-    && (
-      error.name === 'SyntaxError'
-      || error.name === 'SyntaxMatchError'
-      || error.name === 'SyntaxReferenceError'
-    )
+/** A css-tree syntax error: a parse error, a grammar mismatch or an unknown name. */
+export type CSSTreeSyntaxError = SyntaxError | SyntaxMatchError | SyntaxReferenceError
+
+/**
+ * Returns `error` when it is a css-tree syntax error, else `null`. css-tree also returns plain
+ * errors for values it cannot match at all, such as `var()`; those are not syntax errors.
+ */
+export function cssTreeSyntaxError(error: unknown): CSSTreeSyntaxError | null {
+  return error instanceof Error && (
+    error.name === 'SyntaxError'
+    || error.name === 'SyntaxMatchError'
+    || error.name === 'SyntaxReferenceError'
+  )
+    ? error as CSSTreeSyntaxError
+    : null
 }
 
 /*
@@ -62,11 +68,15 @@ function addDefaultImageSetResolutions(node: FunctionNode) {
 /** The size keywords css-tree's `<intrinsic-size-keyword>` leaves out of `<calc-size-basis>`. */
 const calcSizeBasisKeywords = new Set(['auto', 'stretch'])
 
+const isFunctionNamed = (node: CssNode, name: string) => node.type === 'Function' && node.name.toLowerCase() === name
+const isSizeKeyword = (node: CssNode) => node.type === 'Identifier' && node.name.toLowerCase() === 'size'
+const sizeKeywordStandIn = (): Dimension => ({ type: 'Dimension', value: '0', unit: 'px' })
+
 /**
  * `calc-size()` (CSS Values 5). css-tree's `<calc-size-basis>` lacks the `auto` and `stretch`
  * size keywords, valid where the property itself takes them, and its `<calc-sum>` lacks the
  * `size` keyword of the second argument, invalid after an `any` basis. The keyword basis
- * becomes `fit-content` and `size` becomes `0px`.
+ * becomes `fit-content` and `size` becomes `0px`. A nested `calc-size()` keeps its own `size`.
  */
 function substituteCalcSizeKeywords(node: FunctionNode, property: string) {
   const [basis, comma, ...calculation] = node.children.toArray()
@@ -75,24 +85,26 @@ function substituteCalcSizeKeywords(node: FunctionNode, property: string) {
     const keyword = basis.name.toLowerCase()
     if (keyword === 'any') return
     if (calcSizeBasisKeywords.has(keyword)) {
-      if (isTargetError(lexer.matchProperty(property, keyword).error)) return
+      if (cssTreeSyntaxError(lexer.matchProperty(property, keyword).error)) return
       basis.name = 'fit-content'
     }
   }
-  for (const part of calculation) {
-    walk(part, (child) => {
-      if (child.type === 'Identifier' && child.name.toLowerCase() === 'size') {
-        const dimension = child as unknown as Record<string, unknown>
-        delete dimension.name
-        Object.assign(dimension, { type: 'Dimension', value: '0', unit: 'px' })
-      }
-    })
+  const replaceSizeKeywords: EnterOrLeaveFn = (child, item) => {
+    if (isFunctionNamed(child, 'calc-size')) return walk.skip
+    if (item && isSizeKeyword(child)) item.data = sizeKeywordStandIn()
   }
+  for (const part of calculation) walk(part, { enter: replaceSizeKeywords })
+  node.children = new List<CssNode>().fromArray([
+    basis,
+    comma,
+    ...calculation.map((part) => isSizeKeyword(part) ? sizeKeywordStandIn() : part)
+  ])
 }
 
-function matchesCSSTreeGapException(property: string, value: CssNode) {
+/** Whether `value` matches once the exceptions rewrite the constructs css-tree rejects. */
+function matchesWithCSSTreeGapsRewritten(property: string, value: CssNode) {
   if (property.toLowerCase() === 'container-type') {
-    return !isTargetError(lexer.match(containerTypeSyntax, value).error)
+    return !cssTreeSyntaxError(lexer.match(containerTypeSyntax, value).error)
   }
 
   const source = generate(value)
@@ -108,11 +120,10 @@ function matchesCSSTreeGapException(property: string, value: CssNode) {
     }
   })
   for (const node of functions) {
-    const name = node.name.toLowerCase()
-    if (name === 'image-set') addDefaultImageSetResolutions(node)
-    else if (name === 'calc-size') substituteCalcSizeKeywords(node, property)
+    if (isFunctionNamed(node, 'image-set')) addDefaultImageSetResolutions(node)
+    else if (isFunctionNamed(node, 'calc-size')) substituteCalcSizeKeywords(node, property)
   }
-  return !isTargetError(lexer.matchProperty(property, substitute).error)
+  return !cssTreeSyntaxError(lexer.matchProperty(property, substitute).error)
 }
 
 /**
@@ -121,20 +132,19 @@ function matchesCSSTreeGapException(property: string, value: CssNode) {
  * node. Check the property name with `checkNativePropertyName` first. Errors css-tree raises
  * for values it cannot match at all, such as `var()`, count as a match.
  */
-export function matchNativeDeclarationValue(property: string, value: CssNode): Error | null {
-  const { error } = lexer.matchProperty(property, value)
-  if (!isTargetError(error)) return null
+export function matchNativeDeclarationValue(property: string, value: CssNode): CSSTreeSyntaxError | null {
+  const error = cssTreeSyntaxError(lexer.matchProperty(property, value).error)
+  if (!error) return null
   try {
-    return matchesCSSTreeGapException(property, value) ? null : error
+    return matchesWithCSSTreeGapsRewritten(property, value) ? null : error
   } catch {
     return error
   }
 }
 
 /** Returns css-tree's error for an unknown standard property name, or `null` for a known one. */
-export function checkNativePropertyName(property: string): Error | null {
-  const error = (lexer as any).checkPropertyName(property)
-  return isTargetError(error) ? error : null
+export function checkNativePropertyName(property: string): CSSTreeSyntaxError | null {
+  return cssTreeSyntaxError((lexer as any).checkPropertyName(property))
 }
 
 export const cssTreeNativeDeclarationMatcher: NativeCSSDeclarationMatcher = ({ property, value }) => {
