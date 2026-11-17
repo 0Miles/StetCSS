@@ -1649,6 +1649,9 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
    * drifts from 768px once the user changes the browser's font size, and an `em` token is not
    * recognised as a breakpoint at all, turning `@x` into `@container x`. Tokens keep the value and
    * unit as written, unitless ones included (like `font:14`).
+   * Reverse-checked: restoring the old px/rem-only conversion to rem in `createVariableCondition`
+   * reds every row (px and unitless rows print rem; em and in rows fall back to `@container`),
+   * plus the two unitful-token tests and both `stet-css-manifest.test.ts` condition-map rows.
    */
   test.each([
     ['--breakpoint-tab: 768px', 'block@tab', '@media (width>=768px){.block\\@tab{display:block}}'],
@@ -1656,11 +1659,28 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     ['--breakpoint-bare: 900', 'block@bare', '@media (width>=900){.block\\@bare{display:block}}'],
     ['--container-card: 400px', 'block@container(card)', '@container (width>=400px){.block\\@container\\(card\\){display:block}}'],
     ['--container-card: 25em', 'block@container(card)', '@container (width>=25em){.block\\@container\\(card\\){display:block}}'],
-    ['--container-card: 400', 'block@container(card)', '@container (width>=400){.block\\@container\\(card\\){display:block}}']
+    ['--container-card: 400', 'block@container(card)', '@container (width>=400){.block\\@container\\(card\\){display:block}}'],
+    ['--breakpoint-paper: 8in', 'block@paper', '@media (width>=8in){.block\\@paper{display:block}}']
   ])('keeps %s as written in %s', (declaration, className, expected) => {
     const { manifest } = compileCSSManifest(`@theme { ${declaration}; }`, { baseManifest: defaultManifest })
 
     expect(createTestCSS(manifest).createRule(className)?.text).toBe(expected)
+  })
+
+  /**
+   * Prevents: a breakpoint token that is not a number with a length unit (a percentage, `calc()`,
+   * `var()`, a time or angle) compiling into a query such as `(width>=2s)`. These tokens produce no
+   * condition, so `@x` stays the named container query `@container x`, as before this change; no
+   * warning is added (#161). Passing `calc()` through as written is out of scope: condition number
+   * nodes, comparison operators, and rule priority all need a numeric value.
+   * Reverse-checked: widening `CONDITION_LENGTH_TOKEN`'s unit group to any letters reds the `2s` and
+   * `90deg` rows only.
+   */
+  test.each(['50%', 'calc(40rem + 1px)', 'var(--width)', '2s', '90deg'])('compiles --breakpoint-x: %s into no breakpoint', (value) => {
+    const { manifest } = compileCSSManifest(`@theme { --breakpoint-x: ${value}; }`, { baseManifest: defaultManifest })
+
+    expect(manifest.breakpointConditions?.x).toBeUndefined()
+    expect(createTestCSS(manifest).createRule('block@x')?.text).toBe('@container x{.block\\@x{display:block}}')
   })
 
   test('lowers inline theme variables without emitting their own theme rules', () => {
