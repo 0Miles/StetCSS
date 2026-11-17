@@ -110,11 +110,6 @@ const ALLOWED = [
 
   // --- Names this repo does not own ---
   {
-    reason: 'the VS Code extension still uses the upstream Marketplace publisher `masterco`; it changes once a StetCSS publisher exists (human work, #93)',
-    paths: [/^packages\/vscode\//],
-    pattern: /\bmasterco\b/,
-  },
-  {
     reason: '`@master/styled.react` is a published third-party package that the ESLint example, the ESLint plugin tests and the language-service playground lint against',
     paths: [/^bun\.lock$/, /^examples\/eslint\//, /^packages\/eslint-plugin\/tests\//, /^packages\/language-service\/playground\//],
     pattern: /@master\/styled\.react/,
