@@ -2,6 +2,7 @@ import { Utility } from '../utility'
 import { ConditionNode } from './parse-condition'
 import { SelectorNode } from './parse-selector'
 import naturalCompare from './natural-compare'
+import { ROOT_FONT_SIZE } from '../common'
 
 // ✅ RulePriority definition
 export type RulePriority = {
@@ -40,6 +41,11 @@ const NOT_COMPARISON_OPERATORS = {
   '<': '>=',
 }
 
+// Query values keep the unit the author wrote; compare px against the preset's rem breakpoints in rem.
+function getComparableConditionValue(value: number, unit?: string) {
+  return unit === 'px' ? value / ROOT_FONT_SIZE : value
+}
+
 function getConditionEntries(nestNodes?: ConditionNode[]) {
   const featureMap = new Map<string, { min?: number; max?: number }>()
   const walk = (list?: ConditionNode[], isOutsideNot = false) => {
@@ -52,18 +58,19 @@ function getConditionEntries(nestNodes?: ConditionNode[]) {
           operator = NOT_COMPARISON_OPERATORS[operator as keyof typeof NOT_COMPARISON_OPERATORS]
         if (prev?.type === 'logical' && prev.value === 'not')
           operator = NOT_COMPARISON_OPERATORS[operator as keyof typeof NOT_COMPARISON_OPERATORS]
+        const value = getComparableConditionValue(node.value, node.unit)
         switch (operator) {
           case '>':
-            entry.min = node.value + 0.02
+            entry.min = value + 0.02
             break
           case '>=':
-            entry.min = node.value
+            entry.min = value
             break
           case '<':
-            entry.max = node.value - 0.02
+            entry.max = value - 0.02
             break
           case '<=':
-            entry.max = node.value
+            entry.max = value
             break
         }
         featureMap.set(node.name, entry)
