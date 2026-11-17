@@ -4,6 +4,7 @@ import {
   findCSSCommentEnd,
   readCSSFunction
 } from '@stet-css/lexer'
+import { formatFractionPercentage } from '@stet-css/engine/compiler'
 
 const CSS_VARIABLE_ALIAS = /\$(-?[_a-zA-Z0-9-]+)\b/g
 const CSS_NUMBER = /^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/
@@ -72,7 +73,7 @@ function isWholeCSSFunction(value: string, name: string) {
   return Boolean(fn && fn.end === trimmed.length)
 }
 
-function formatAlphaPercentage(value: number) {
+function formatPercentage(value: number) {
   return String(Object.is(value, -0) ? 0 : value).replace(/^(-?)0\./, '$1.') + '%'
 }
 
@@ -87,7 +88,7 @@ function normalizeStylesheetAlpha(value: string) {
     if (alpha < 0 || alpha > 1) {
       throw new Error(`Invalid --alpha() function: numeric alpha must be between 0 and 1: ${trimmed}`)
     }
-    return formatAlphaPercentage(alpha * 100)
+    return formatFractionPercentage(alpha)
   }
 
   if (trimmed.endsWith('%') && CSS_NUMBER.test(trimmed.slice(0, -1))) {
@@ -95,7 +96,7 @@ function normalizeStylesheetAlpha(value: string) {
     if (percentage < 0 || percentage > 100) {
       throw new Error(`Invalid --alpha() function: percentage alpha must be between 0% and 100%: ${trimmed}`)
     }
-    return formatAlphaPercentage(percentage)
+    return formatPercentage(percentage)
   }
 
   if (isWholeCSSFunction(trimmed, 'var') || isWholeCSSFunction(trimmed, 'calc')) {
