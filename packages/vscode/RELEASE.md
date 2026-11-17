@@ -17,11 +17,11 @@ bun install --os=win32 --os=darwin --os=linux --cpu=x64 --cpu=arm64 --cpu=arm --
 ```
 
 - Configure GitHub Actions OIDC through `azure/login` with `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and `AZURE_SUBSCRIPTION_ID`.
-- Add the managed identity resource ID as a Contributor of the `masterco` Visual Studio Marketplace publisher.
+- Add the managed identity resource ID as a Contributor of the `stet-css` Visual Studio Marketplace publisher.
 - Verify VSCE can publish with Microsoft Entra ID after Azure login:
 
 ```sh
-bun x --cwd packages/vscode --no-install vsce verify-pat --azure-credential masterco
+bun x --cwd packages/vscode --no-install vsce verify-pat --azure-credential stet-css
 ```
 
 If the publisher has not authorized the managed identity, Marketplace returns `InvalidAccessException: The requested operation is not allowed.`
@@ -70,4 +70,4 @@ The default target set is `win32-x64`, `win32-arm64`, `linux-x64`, `linux-arm64`
 
 Marketplace URL:
 
-https://marketplace.visualstudio.com/items?itemName=masterco.stet-css-vscode
+https://marketplace.visualstudio.com/items?itemName=stet-css.stet-css-vscode

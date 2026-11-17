@@ -256,14 +256,14 @@ test('staged extension includes runtime packages for win32-x64', async ({ skip }
 
 test('staged extension preserves the Marketplace publisher by default', async () => {
   await withStagedExtension(({ stagingDir }) => {
-    expect(readPackageJSON().publisher).toBe('masterco')
-    expect(readPackageJSON(join(stagingDir, 'package.json')).publisher).toBe('masterco')
+    expect(readPackageJSON().publisher).toBe('stet-css')
+    expect(readPackageJSON(join(stagingDir, 'package.json')).publisher).toBe('stet-css')
   })
 })
 
 test('staged extension supports an Open VSX publisher override', async () => {
   await withStagedExtension(({ stagingDir }) => {
-    expect(readPackageJSON().publisher).toBe('masterco')
+    expect(readPackageJSON().publisher).toBe('stet-css')
     expect(readPackageJSON(join(stagingDir, 'package.json')).publisher).toBe('stet')
   }, { publisher: 'stet' })
 })

@@ -18,7 +18,7 @@
   "author": "Miles",
   "homepage": "https://github.com/0Miles/StetCSS/tree/main/packages/vscode#readme",
   "license": "MIT",
-  "publisher": "masterco",
+  "publisher": "stet-css",
   "icon": "icon.png",
   "repository": {
     "type": "git",

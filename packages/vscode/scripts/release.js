@@ -7,7 +7,7 @@ import { TARGETS, assertRuntimePackagesResolvable, packageDir } from './package-
 const scriptDir = dirname(fileURLToPath(import.meta.url))
 const rootDir = resolve(scriptDir, '../../..')
 const packageJsonPath = resolve(packageDir, 'package.json')
-const marketplaceUrl = 'https://marketplace.visualstudio.com/items?itemName=masterco.stet-css-vscode'
+const marketplaceUrl = 'https://marketplace.visualstudio.com/items?itemName=stet-css.stet-css-vscode'
 const allowedReleaseChanges = new Set([
     'packages/vscode/package.json',
     'bun.lock'
