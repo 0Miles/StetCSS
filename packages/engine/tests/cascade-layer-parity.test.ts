@@ -299,18 +299,35 @@ describe.concurrent('migrated cascade and layer parity', () => {
   })
 
   /**
-   * Prevents: `px` queries sorting by their raw number against the preset's `rem` breakpoints once
-   * query values keep their units, so `@>=600px` lands after `@sm` (52.125rem, 834px) and overrides
-   * it on wide screens. Ordering compares `px` as rem, the same as compiled style rules do.
+   * Prevents: queries written in different units sorting by their raw numbers once query values
+   * keep their units, so `@>=600px` lands after `@sm` (52.125rem, 834px) and overrides it on wide
+   * screens, or `@<600px` comes first among max-width queries and loses to `@<sm`. Ordering resolves
+   * absolute units and `em` to rem through `toComparableQueryLength`, the helper compiled style
+   * rules share. Rows are listed in the expected order.
+   * Reverse-checked in `query-length.ts`: returning `value` unchanged reds the px, max-width, in,
+   * and uppercase rows plus the compiler component-ordering test (the em row stays green: em
+   * already compares as rem); dropping `in` from the table reds the max-width and in rows plus
+   * the compiler component-ordering test; removing `.toLowerCase()` reds the uppercase row only.
    */
-  test('orders px and rem width queries by their resolved width', () => {
+  test.each([
+    ['px', ['block@>=600px', 'block@sm', 'block@>=900px']],
+    ['em', ['block@>=40em', 'block@sm', 'block@>=60em']],
+    ['max-width', ['block@<sm', 'block@<=8in', 'block@<600px']],
+    ['in', ['block@>=600px', 'block@>=8in', 'block@sm']]
+  ])('orders %s width queries against rem breakpoints by resolved width', (_, expected) => {
     const css = createDefaultCSS()
-    css.ensureClassRules('block@>=900px', 'block@sm', 'block@>=600px')
-    expect(css.utilitiesLayer.rules.map(({ name }) => name)).toEqual([
-      'block@>=600px',
-      'block@sm',
-      'block@>=900px'
-    ])
+    css.ensureClassRules(...[...expected].reverse())
+    expect(css.utilitiesLayer.rules.map(({ name }) => name)).toEqual(expected)
+  })
+
+  test('orders breakpoint tokens with uppercase units by resolved width', () => {
+    const manifest = cloneManifest()
+    const tab = { id: 'media' as const, nodes: [{ type: 'number' as const, value: 600, unit: 'PX' }] }
+    manifest.conditions = { ...(manifest.conditions || {}), tab }
+    manifest.breakpointConditions = { ...(manifest.breakpointConditions || {}), tab }
+    const css = StetCSS.create({ manifest })
+    css.ensureClassRules('block@sm', 'block@tab')
+    expect(css.utilitiesLayer.rules.map(({ name }) => name)).toEqual(['block@tab', 'block@sm'])
   })
 
   test('keeps semantic component utility priority stable', () => {
