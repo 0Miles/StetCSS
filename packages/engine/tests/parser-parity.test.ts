@@ -24,7 +24,7 @@ describe.concurrent('compiled condition parser parity', () => {
     ['height>=sm', '@media (height>=52.125rem)'],
     ['w>=sm', '@media (width>=52.125rem)'],
     ['h>=sm', '@media (height>=52.125rem)'],
-    ['container(h>160)', '@container (height>10rem)'],
+    ['container(h>160px)', '@container (height>160px)'],
     ['sidebar(sm)', '@container sidebar (width>=24rem)'],
     ['screen&print', '@media screen and print'],
     ['screen,print', '@media screen or print'],
@@ -55,6 +55,27 @@ describe.concurrent('compiled condition parser parity', () => {
     expect(generateCondition(parseCondition('supports-backdrop', css))).toBe('@supports (backdrop-filter:blur(0px))')
     expect(generateCondition(parseCondition('container(sm)', css))).toBe('@container (width>=24rem)')
     expect(generateCondition(parseCondition('container(md)', css))).toBe('@container (width>=28rem)')
+  })
+})
+
+/**
+ * Prevents: query numbers being rewritten into rem, which breaks queries the way native CSS would
+ * not: a unitless media feature such as `color>=8` becomes `color>=0.5rem` and never matches, and a
+ * `px` breakpoint drifts away from its pixel width once the user changes the browser's font size.
+ * Numbers stay as written, unitless ones included (like `font:14`), so `@>=768` is as inert as the
+ * same query in plain CSS.
+ */
+describe.concurrent('query numbers keep the value and unit as written', () => {
+  test.each([
+    ['fg:red@media(color>=8)', '@media (color>=8){.fg\\:red\\@media\\(color\\>\\=8\\){color:var(--color-red)}}'],
+    ['fg:red@media(grid:1)', '@media (grid:1){.fg\\:red\\@media\\(grid\\:1\\){color:var(--color-red)}}'],
+    ['fg:red@media(-webkit-min-device-pixel-ratio:2)', '@media (-webkit-min-device-pixel-ratio:2){.fg\\:red\\@media\\(-webkit-min-device-pixel-ratio\\:2\\){color:var(--color-red)}}'],
+    ['fg:red@>=768', '@media (width>=768){.fg\\:red\\@\\>\\=768{color:var(--color-red)}}'],
+    ['fg:red@container(width>=400)', '@container (width>=400){.fg\\:red\\@container\\(width\\>\\=400\\){color:var(--color-red)}}'],
+    ['fg:red@>=768px', '@media (width>=768px){.fg\\:red\\@\\>\\=768px{color:var(--color-red)}}'],
+    ['fg:red@<50em', '@media (width<50em){.fg\\:red\\@\\<50em{color:var(--color-red)}}']
+  ])('%s', (className, expected) => {
+    expect(createDefaultCSS().createRule(className)?.text).toBe(expected)
   })
 })
 

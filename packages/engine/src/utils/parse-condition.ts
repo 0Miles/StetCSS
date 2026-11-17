@@ -128,7 +128,7 @@ export default function parseCondition(token: string, css: StetCSS, isRaw = true
               }
               return
             } else {
-              const { token, ...newNode } = parseValue(node.value, 'rem')
+              const { token, ...newNode } = parseValue(node.value)
               Object.assign(node, newNode)
             }
           }
