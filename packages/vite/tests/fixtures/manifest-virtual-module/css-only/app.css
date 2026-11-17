@@ -3,7 +3,7 @@
 
 @theme {
   --color-primary: #123;
-  --breakpoint-md: 48rem;
+  --breakpoint-md: 3rem;
 }
 
 @components {
