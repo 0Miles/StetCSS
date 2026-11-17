@@ -21,7 +21,7 @@ The build integrations generate static CSS ahead of time, and production pages s
   <script src="https://cdn.jsdelivr.net/npm/@stet-css/runtime@<version>"></script>
 </head>
 <body>
-  <h1 class="italic m:12x fg:strong font:40px font:heavy">Hello World</h1>
+  <h1 class="italic m:3rem fg:strong font:40px font:heavy">Hello World</h1>
 </body>
 </html>
 ```

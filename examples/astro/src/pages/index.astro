@@ -4,34 +4,34 @@ import Card from '../components/Card.astro';
 ---
 
 <Layout title="StetCSS Astro static rendering">
-  <main class="min-h:100vh p:10x bg:#f8fafc fg:#0f172a">
-    <section class="max-width:960px mx:auto py:12x">
-      <p class="inline-flex align-items:center h:32px px:3x r:999px bg:#eff6ff fg:royalblue font:14px font-weight:600">
+  <main class="min-h:100vh p:2.5rem bg:#f8fafc fg:#0f172a">
+    <section class="max-width:960px mx:auto py:3rem">
+      <p class="inline-flex align-items:center h:32px px:0.75rem r:999px bg:#eff6ff fg:royalblue font:14px font-weight:600">
         Astro integration
       </p>
-      <h1 class="m:0 mt:4x font:48px font-weight:800 tracking:-.015em">
+      <h1 class="m:0 mt:1rem font:48px font-weight:800 tracking:-.015em">
         Static CSS from your project files
       </h1>
       <p class="max-width:640px fg:#475569 font:18px line-height:1.7">
         In static mode the integration reads classes from the project's files, including <code>.astro</code> templates that only the server build compiles, and emits them into one CSS file.
       </p>
-      <div class="mt:6x p:5x r:10px bg:white border:1px|solid|#e2e8f0">
+      <div class="mt:1.5rem p:1.25rem r:10px bg:white border:1px|solid|#e2e8f0">
         <p class="m:0 fg:#475569 line-height:1.6">
           Click the button to toggle classes from a client script. They are written in this file, so the static CSS already has their rules.
         </p>
         <button
           data-toggle
-          class="inline-flex align-items:center h:44px px:5x mt:4x bg:black fg:white r:6px text:14px font-weight:600 border:0 cursor:pointer"
+          class="inline-flex align-items:center h:44px px:1.25rem mt:1rem bg:black fg:white r:6px text:14px font-weight:600 border:0 cursor:pointer"
         >
           Toggle classes
         </button>
-      <p data-toggle-status class="m:0 mt:3x fg:#475569 font:14px">
+      <p data-toggle-status class="m:0 mt:0.75rem fg:#475569 font:14px">
           Waiting for interaction
         </p>
       </div>
     </section>
-    <section class="max-width:960px mx:auto pb:12x">
-      <ul role="list" class="grid grid-cols:3 gap:4x p:0 m:0">
+    <section class="max-width:960px mx:auto pb:3rem">
+      <ul role="list" class="grid grid-cols:3 gap:1rem p:0 m:0">
       <Card
         href="https://github.com/0Miles/StetCSS/tree/main/packages/astro#readme"
         title="Static CSS"
