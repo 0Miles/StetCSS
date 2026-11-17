@@ -27,7 +27,6 @@ type RuntimeManifestVariableInput = StetCSSManifestVariable
 type RuntimeManifestVariable = StetCSSManifestVariable
 
 type RuntimeProjectManifestInput = Partial<Omit<StetCSSManifest, 'utilities'>> & {
-  baseUnit?: string
   defaultMode?: string
   modeTrigger?: NonNullable<StetCSSManifest['settings']>['modeTrigger']
   modes?: string[]
@@ -144,7 +143,7 @@ function normalizeUtility(utility: RuntimeProjectManifestUtilityInput, order: nu
 
 export function createRuntimeProjectManifest(manifest: RuntimeProjectManifestInput) {
   const defaultUtilities = defaultManifest.utilities || []
-  const { baseUnit, defaultMode, modeTrigger, modes, ...rest } = manifest
+  const { defaultMode, modeTrigger, modes, ...rest } = manifest
   const variables = createRuntimeVariables(flattenStetCSSManifestVariables(defaultManifest.variables), rest.variables)
   const customUtilities = (rest.utilities || []).map((utility, index) => normalizeUtility(utility, defaultUtilities.length + index))
   return {
@@ -154,7 +153,6 @@ export function createRuntimeProjectManifest(manifest: RuntimeProjectManifestInp
     settings: {
       ...defaultManifest.settings,
       ...rest.settings,
-      ...(baseUnit !== undefined ? { baseUnit } : {}),
       ...(defaultMode !== undefined ? { defaultMode } : {}),
       ...(modeTrigger !== undefined ? { modeTrigger } : {}),
       ...(modes !== undefined ? { modes } : {})

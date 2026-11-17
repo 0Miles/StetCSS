@@ -10,15 +10,15 @@ const mdxLanguageOptions = {
 }
 
 jsxTester.run('mdx sort classes', OrderRule, {
-  valid: [{ code: `<div class="m:2x p:2x font:1.5rem bg:black fg:white">Simple, basic</div>` }],
+  valid: [{ code: `<div class="m:0.5rem p:0.5rem font:1.5rem bg:black fg:white">Simple, basic</div>` }],
   invalid: [
     {
       code: `
       # Test
-      <div class="m:2x bg:black p:2x fg:white font:1.5rem">Simple</div>`,
+      <div class="m:0.5rem bg:black p:0.5rem fg:white font:1.5rem">Simple</div>`,
       output: `
       # Test
-      <div class="m:2x p:2x font:1.5rem bg:black fg:white">Simple</div>`,
+      <div class="m:0.5rem p:0.5rem font:1.5rem bg:black fg:white">Simple</div>`,
       errors: [{ messageId: 'invalidClassOrder' }],
       filename: 'test.mdx',
       languageOptions: mdxLanguageOptions
@@ -26,14 +26,14 @@ jsxTester.run('mdx sort classes', OrderRule, {
     {
       code: [
         '```html',
-        '<button class="inline-flex align-items:center gap:2x px:md py:xs r:md fg:white bg:blue-60">',
+        '<button class="inline-flex align-items:center gap:0.5rem px:md py:xs r:md fg:white bg:blue-60">',
         '    Save',
         '</button>',
         '```'
       ].join('\n'),
       output: [
         '```html',
-        '<button class="inline-flex align-items:center gap:2x px:md py:xs r:md bg:blue-60 fg:white">',
+        '<button class="inline-flex align-items:center gap:0.5rem px:md py:xs r:md bg:blue-60 fg:white">',
         '    Save',
         '</button>',
         '```'
@@ -111,7 +111,7 @@ jsxTester.run('mdx prefer canonical classes', PreferCanonicalRule, {
     {
       code: [
         '```html',
-        '<button class="inline-flex align-items:center gap:2x px:md py:xs r:md fg:white bg:blue-60">',
+        '<button class="inline-flex align-items:center gap:0.5rem px:md py:xs r:md fg:white bg:blue-60">',
         '    Save',
         '</button>',
         '```'

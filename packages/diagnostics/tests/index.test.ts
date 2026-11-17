@@ -63,22 +63,22 @@ describe('@stet-css/diagnostics', () => {
     try {
       writeFileSync(join(cwd, 'index.css'), `
         @import "@stet-css/core";
-        @safelist 'p:2x';
+        @safelist 'p:0.5rem';
         @blocklist 'block';
       `)
       writeFileSync(join(cwd, 'index.html'), '<div class="block"></div>')
       const report = await createStetCSSInspectionReport({
         cwd,
-        classes: ['block', 'p:2x']
+        classes: ['block', 'p:0.5rem']
       })
 
-      expect(report.scanner.classes.safelist).toEqual(['p:2x'])
+      expect(report.scanner.classes.safelist).toEqual(['p:0.5rem'])
       expect(report.scanner.classes.blocklist).toEqual(['block'])
       expect(report.missingCSS.missing).toEqual([
         { className: 'block', status: 'missing', reason: 'blocklisted' }
       ])
       expect(report.missingCSS.present).toEqual([
-        { className: 'p:2x', status: 'present', reason: 'safelist' }
+        { className: 'p:0.5rem', status: 'present', reason: 'safelist' }
       ])
     } finally {
       rmSync(cwd, { recursive: true, force: true })
@@ -189,18 +189,18 @@ describe('@stet-css/diagnostics', () => {
       mkdirSync(join(cwd, 'build'), { recursive: true })
       writeFileSync(join(cwd, 'src/index.css'), '@import "@stet-css/core";\n@source not \'./legacy\';')
       writeFileSync(join(cwd, 'src/page.html'), '<div class="block"></div>')
-      writeFileSync(join(cwd, 'src/legacy/page.html'), '<div class="m:4x"></div>')
-      writeFileSync(join(cwd, 'build/index.html'), '<div class="p:2x"></div>')
+      writeFileSync(join(cwd, 'src/legacy/page.html'), '<div class="m:1rem"></div>')
+      writeFileSync(join(cwd, 'build/index.html'), '<div class="p:0.5rem"></div>')
       const report = await createStetCSSInspectionReport({
         cwd,
-        classes: 'block m:4x p:2x',
+        classes: 'block m:1rem p:0.5rem',
         includeCss: true
       })
 
       expect(report.inputs.files).toStrictEqual([resolve(cwd, 'src/page.html')])
-      expect(report.css.text).not.toContain('m\\:4x')
+      expect(report.css.text).not.toContain('m\\:1rem')
       expect(report.missingCSS.present.map((result) => result.className)).toStrictEqual(['block'])
-      expect(report.missingCSS.missing.map((result) => result.className)).toStrictEqual(['m:4x', 'p:2x'])
+      expect(report.missingCSS.missing.map((result) => result.className)).toStrictEqual(['m:1rem', 'p:0.5rem'])
     } finally {
       rmSync(cwd, { recursive: true, force: true })
     }

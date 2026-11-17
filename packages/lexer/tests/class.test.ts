@@ -19,13 +19,13 @@ function texts(source: string, tokens: StetCSSLexicalTokenItem[]) {
 }
 
 test.concurrent('parses class lists with ASCII whitespace ranges', () => {
-  expect(parseStetCSSClassList('  block\tfg:red\nm:1x ', { preserveSpaces: true })).toEqual([
+  expect(parseStetCSSClassList('  block\tfg:red\nm:md ', { preserveSpaces: true })).toEqual([
     { type: 'space', start: 0, end: 2, raw: '  ', token: '  ' },
     { type: 'class', start: 2, end: 7, raw: 'block', token: 'block' },
     { type: 'space', start: 7, end: 8, raw: '\t', token: '\t' },
     { type: 'class', start: 8, end: 14, raw: 'fg:red', token: 'fg:red' },
     { type: 'space', start: 14, end: 15, raw: '\n', token: '\n' },
-    { type: 'class', start: 15, end: 19, raw: 'm:1x', token: 'm:1x' },
+    { type: 'class', start: 15, end: 19, raw: 'm:md', token: 'm:md' },
     { type: 'space', start: 19, end: 20, raw: ' ', token: ' ' }
   ])
 })
@@ -62,9 +62,9 @@ test.concurrent('unescapes configured quote characters in class list tokens', ()
 })
 
 test.concurrent('collects class list token ranges through the shared parser', () => {
-  expect(collectStetCSSClassListTokenRanges(' block  fg:red\u3000m:1x ')).toEqual([
+  expect(collectStetCSSClassListTokenRanges(' block  fg:red\u3000m:md ')).toEqual([
     { start: 1, end: 6, token: 'block' },
-    { start: 8, end: 19, token: 'fg:red\u3000m:1x' }
+    { start: 8, end: 19, token: 'fg:red\u3000m:md' }
   ])
 })
 

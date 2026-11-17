@@ -62,8 +62,8 @@ jsxTester.run('collision', rule, {
       ]
     },
     {
-      code: `<div class="block m:8x font:.75rem mb:12x"></div>`,
-      output: `<div class="block mx:8x mt:8x font:.75rem mb:12x"></div>`,
+      code: `<div class="block m:2rem font:.75rem mb:3rem"></div>`,
+      output: `<div class="block mx:2rem mt:2rem font:.75rem mb:3rem"></div>`,
       errors: [
         { messageId: 'partialCollisionClass' },
       ]

@@ -42,9 +42,9 @@ describe('scanner source adapters', () => {
     `)).resolves.toEqual(['block', 'fg:red'])
 
     await expect(scanner.collectCandidates('component.svelte', `
-      <script>const classes = 'p:4x'</script>
+      <script>const classes = 'p:1rem'</script>
       <div class="mx:auto"></div>
-    `)).resolves.toEqual(['p:4x', 'mx:auto'])
+    `)).resolves.toEqual(['p:1rem', 'mx:auto'])
 
     await expect(scanner.collectCandidates('page.astro', `---
 const classes = 'inline-flex'

@@ -81,7 +81,7 @@ test.concurrent('should ignore utility', async () => {
 })
 
 test.concurrent('should ignore number', async () => {
-  const target = '4x'
+  const target = '1rem'
   const content = `export default () => <div className='m:${target}'></div>`
   const doc = createDoc('tsx', content)
   const languageService = createLanguageService()

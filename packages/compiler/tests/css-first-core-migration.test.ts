@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { StetCSS } from '@stet-css/engine'
 import { compileCSS, compileCSSManifest } from '../src'
+import { cssTreeNativeDeclarationMatcher } from '../src/native-declaration'
 import type { CompilerDiagnosticRecorder } from '../src/diagnostics'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
 import { flattenStetCSSManifestVariables, type StetCSSManifest } from '@stet-css/schema/manifest'
@@ -394,8 +395,8 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     expect(css.createRule('grid-cols:var(--cols)')?.text).toBe('.grid-cols\\:var\\(--cols\\){display:grid;grid-template-columns:repeat(var(--cols), minmax(0, 1fr))}')
     expect(css.createRule('grid-col-span:2')?.text).toBe('.grid-col-span\\:2{grid-column:span 2/span 2}')
     expect(css.createRule('grid-col-span:var(--span)')?.text).toBe('.grid-col-span\\:var\\(--span\\){grid-column:span var(--span)/span var(--span)}')
-    expect(css.createRule('size:4x')?.text).toBe('.size\\:4x{width:1rem;height:1rem}')
-    expect(css.createRule('size:4x|8x')?.text).toBe('.size\\:4x\\|8x{width:1rem 2rem;height:1rem 2rem}')
+    expect(css.createRule('size:1rem')?.text).toBe('.size\\:1rem{width:1rem;height:1rem}')
+    expect(css.createRule('size:1rem|2rem')?.text).toBe('.size\\:1rem\\|2rem{width:1rem 2rem;height:1rem 2rem}')
     expect(css.createRule('gap:var(--gap)')?.text).toBe('.gap\\:var\\(--gap\\){gap:var(--gap)}')
     expect(css.createRule('accent:var(--accent)')?.text).toBe('.accent\\:var\\(--accent\\){accent-color:var(--accent)}')
     expect(css.createRule('user-select:none')?.text).toBe('.user-select\\:none{-webkit-user-select:none;user-select:none}')
@@ -988,40 +989,60 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
   })
 
   /**
-   * Prevents: `base-unit` losing its unit or its value on the way from `@settings` to the CSS, so
-   * `4x` keeps the default `1rem` under `base-unit: 4px`, or `3x` under `base-unit: 0.1rem` emits
-   * the floating-point tail `0.30000000000000004rem`; and a project without `@settings` seeing
-   * its `x` lengths or its queries change. The `0.25rem` row guards lightningcss
-   * reserializing the setting as `.25rem`, which the base-unit pattern must still accept.
-   * Leading zeros follow the engine's existing number formatting (`0.75rem`), unchanged here.
-   * Reverse-checked: emitting `'rem'` instead of `baseUnit.unit` in `formatBaseUnitMultiple` reds
-   * the two `4px` rows; dropping its `toPrecision(15)` rounding reds the `0.1rem` row.
+   * Prevents: `@settings { base-unit: … }` still being accepted after `x` stopped being a spacing
+   * multiple (#162), so a developer keeps a setting that no longer changes anything, or gets a
+   * bare "unsupported option" error that does not say the setting is gone.
+   * Reverse-checked: in `core.ts`, deleting `case 'base-unit'` so it falls through to
+   * "Unsupported @settings option" turns only this test red.
    */
-  test.each([
-    { settings: '', className: 'p:4x', expected: '.p\\:4x{padding:1rem}' },
-    { settings: '', className: 'w:100@>=768px', expected: '@media (width>=768px){.w\\:100\\@\\>\\=768px{width:100}}' },
-    { settings: 'base-unit: 0.25rem;', className: 'p:4x', expected: '.p\\:4x{padding:1rem}' },
-    { settings: 'base-unit: 4px;', className: 'p:4x', expected: '.p\\:4x{padding:16px}' },
-    { settings: 'base-unit: 4px;', className: 'p:4x|2x', expected: '.p\\:4x\\|2x{padding:16px 8px}' },
-    { settings: 'base-unit: 0.1rem;', className: 'p:3x', expected: '.p\\:3x{padding:0.3rem}' }
-  ])('resolves $className with @settings { $settings }', ({ settings, className, expected }) => {
-    const { manifest } = compileCSSManifest(`@settings { ${settings} }`, { baseManifest: defaultManifest })
-
-    expect(createTestCSS(manifest).createRules(className).map((rule) => rule.text)).toEqual([expected])
+  test('rejects @settings base-unit as removed', () => {
+    expect(() => compileCSSManifest(`
+      @settings {
+        base-unit: 0.25rem;
+      }
+    `, { baseManifest: defaultManifest })).toThrow('@settings base-unit was removed')
   })
 
   /**
-   * Prevents: `base-unit` accepting a value `x` cannot scale into a CSS length: a unitless number
-   * (the old pixel count, which would now mean nothing), a percentage, or `var()` / `calc()`,
-   * which the engine cannot multiply at build time.
-   * Reverse-checked: making the unit optional in `parseBaseUnit`'s pattern reds the `4` row only.
+   * Prevents: a project without `@settings` seeing its queries change; `@>=768px` stays as written
+   * instead of being converted to rem.
+   * Reverse-checked: emitting `px` query numbers as `value / 16` rem in the engine's
+   * `generate-condition.ts` reds this test and the `--breakpoint-tab` / `--container-card` as-written
+   * tests, no others.
    */
-  test.each(['4', '25%', 'var(--unit)', 'calc(1rem + 1px)'])('rejects @settings base-unit: %s', (value) => {
-    expect(() => compileCSSManifest(`
-      @settings {
-        base-unit: ${value};
-      }
-    `, { baseManifest: defaultManifest })).toThrow('base-unit must be a CSS length')
+  test('keeps query lengths as written without @settings', () => {
+    const { manifest } = compileCSSManifest('@settings { }', { baseManifest: defaultManifest })
+
+    expect(createTestCSS(manifest).createRules('w:100@>=768px').map((rule) => rule.text))
+      .toEqual(['@media (width>=768px){.w\\:100\\@\\>\\=768px{width:100}}'])
+  })
+
+  /**
+   * Prevents: the native resolution unit `x` failing the build's native declaration check (#162).
+   * `image-set(url(a.png) 2x)` is valid CSS, so `background-image:image-set(url(a.png)|2x)` must
+   * generate a rule, as `2dppx` does.
+   * Reverse-checked: restoring the `<number>x` → base-unit conversion in the engine reds the `2x`
+   * row only.
+   */
+  test.each([
+    ['background-image:image-set(url(a.png)|2x)', '.background-image\\:image-set\\(url\\(a\\.png\\)\\|2x\\){background-image:image-set(url(a.png) 2x)}'],
+    ['background-image:image-set(url(a.png)|2dppx)', '.background-image\\:image-set\\(url\\(a\\.png\\)\\|2dppx\\){background-image:image-set(url(a.png) 2dppx)}']
+  ])('generates %s through the native declaration check', (className, expected) => {
+    const css = StetCSS.create({ manifest: defaultManifest, nativeDeclarationMatcher: cssTreeNativeDeclarationMatcher })
+
+    expect(css.createRule(className)?.text).toBe(expected)
+  })
+
+  /**
+   * Prevents: a leftover spacing `x` value still producing CSS in a build (#162). `padding:4x` and
+   * `margin:-1x` are invalid native CSS, so with the build's native declaration check these
+   * classes generate no rule, as the same declarations written in a stylesheet would be dropped.
+   * Reverse-checked: restoring the `<number>x` → base-unit conversion in the engine reds both rows.
+   */
+  test.each(['p:4x', 'm:-1x'])('generates no CSS for %s through the native declaration check', (className) => {
+    const css = StetCSS.create({ manifest: defaultManifest, nativeDeclarationMatcher: cssTreeNativeDeclarationMatcher })
+
+    expect(css.generate(className)).toEqual([])
   })
 
   /**

@@ -27,19 +27,19 @@ describe('source adapters', () => {
   test('extracts static classes from JavaScript and TypeScript syntax with Oxc', () => {
     expect(extractOxcClasses('component.tsx', `
       const classes = 'block mx:auto'
-      const active = clsx('fg:red', { 'p:4x': ok })
+      const active = clsx('fg:red', { 'p:1rem': ok })
       element.classList.add('flex')
       export function App() {
-        return <div className="hidden m:2x" />
+        return <div className="hidden m:0.5rem" />
       }
     `)).toEqual([
       'block',
       'mx:auto',
       'fg:red',
-      'p:4x',
+      'p:1rem',
       'flex',
       'hidden',
-      'm:2x'
+      'm:0.5rem'
     ])
   })
 
@@ -61,14 +61,14 @@ describe('source adapters', () => {
     expect(extractHTMLClasses('index.html', `
       <div class="block mx:auto"></div>
       <script>
-        element.classList.add('fg:red', 'p:4x')
+        element.classList.add('fg:red', 'p:1rem')
         const classes = 'flex hidden'
       </script>
     `)).toEqual([
       'block',
       'mx:auto',
       'fg:red',
-      'p:4x',
+      'p:1rem',
       'flex',
       'hidden'
     ])
@@ -91,13 +91,13 @@ describe('source adapters', () => {
         const rootClasses = 'fg:red'
       </script>
       <script setup lang="ts">
-        const setupClasses = 'p:4x'
+        const setupClasses = 'p:1rem'
       </script>
     `)).resolves.toEqual([
       'block',
       'mx:auto',
       'fg:red',
-      'p:4x'
+      'p:1rem'
     ])
   })
 
@@ -107,13 +107,13 @@ describe('source adapters', () => {
         const moduleClasses = 'fg:red'
       </script>
       <script>
-        const instanceClasses = 'p:4x'
+        const instanceClasses = 'p:1rem'
         let enabled = true
       </script>
       <button class="block mx:auto" class:active={enabled}>Save</button>
     `)).resolves.toEqual([
       'fg:red',
-      'p:4x',
+      'p:1rem',
       'block',
       'mx:auto',
       'active'
@@ -125,7 +125,7 @@ describe('source adapters', () => {
 const frontmatterClasses = 'fg:red'
 ---
 <script>
-  const scriptClasses = 'p:4x'
+  const scriptClasses = 'p:1rem'
 </script>
 <style>
   .ignored { color: red; }
@@ -133,7 +133,7 @@ const frontmatterClasses = 'fg:red'
 <main class="block mx:auto">Hello</main>
     `)).toEqual([
       'fg:red',
-      'p:4x',
+      'p:1rem',
       'block',
       'mx:auto'
     ])
@@ -151,9 +151,9 @@ const frontmatterClasses = 'fg:red'
     await expect(extractVueClasses('Other.vue', '<template><div class="fg:red"></div></template>'))
       .resolves
       .toEqual(['fg:red'])
-    await expect(extractSvelteClasses('Component.svelte', '<div class="p:4x"></div>'))
+    await expect(extractSvelteClasses('Component.svelte', '<div class="p:1rem"></div>'))
       .resolves
-      .toEqual(['p:4x'])
+      .toEqual(['p:1rem'])
     await expect(extractSvelteClasses('Other.svelte', '<div class="mx:auto"></div>'))
       .resolves
       .toEqual(['mx:auto'])

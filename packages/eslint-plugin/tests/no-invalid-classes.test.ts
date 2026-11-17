@@ -5,7 +5,7 @@ import { createCustomManifestTester, createUndeclaredModeTester, jsxTester } fro
 jsxTester.run('invalid', rule, {
   valid: [
     {
-      code: `<div class="m:2x p:2x bg:black fg:white font:1.5rem">Simple, basic</div>`,
+      code: `<div class="m:0.5rem p:0.5rem bg:black fg:white font:1.5rem">Simple, basic</div>`,
     },
     {
       code: `<div class={\`f:\${ fontSize }px\`}>TemplateLiteral</div>`,

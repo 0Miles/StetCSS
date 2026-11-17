@@ -50,7 +50,7 @@ function expectToken(tokens: { text: string, type: string, modifiers: string[] }
 
 test.concurrent('renders semantic tokens for class attributes', () => {
   const { tokens } = renderTokens(
-    '<div className="fg:brand:hover@sm block block:hover block:focus-visible block:state-name hidden_div::before:of(.active) m:4x bg:rgb(0|0|0) w:0.625rem::scrollbar btn btn:hover@sm btn_div::before"></div>',
+    '<div className="fg:brand:hover@sm block block:hover block:focus-visible block:state-name hidden_div::before:of(.active) m:4rem bg:rgb(0|0|0) w:0.625rem::scrollbar btn btn:hover@sm btn_div::before"></div>',
     'tsx',
     {
       manifest: createPresetManifest({
@@ -87,7 +87,7 @@ test.concurrent('renders semantic tokens for class attributes', () => {
   expectToken(tokens, '.', 'operator', ['selector', 'selectorPunctuation'])
   expectToken(tokens, 'active', 'class', ['selector'])
   expectToken(tokens, '4', 'number')
-  expectToken(tokens, 'x', 'enumMember', ['unit'])
+  expectToken(tokens, 'rem', 'enumMember', ['unit'])
   expectToken(tokens, 'rgb', 'function')
   expectToken(tokens, 'scrollbar', 'modifier', ['pseudoElement'])
   expectToken(tokens, 'btn', 'class', ['declaration', 'component'])
@@ -215,7 +215,7 @@ test.concurrent('renders semantic tokens for internal styles dogfood directives'
 
 test.concurrent('renders semantic tokens for grouped declarations, strings, units, and important marks', () => {
   const { tokens } = renderTokens(
-    '<div class="{fg:red;bg:blue} transform:translate(10x|20px) content:\'a|b\' size:10x fg:red!"></div>',
+    '<div class="{fg:red;bg:blue} transform:translate(10rem|20px) content:\'a|b\' bg:image-set(url(a.png)|2x) fg:red!"></div>',
     'html'
   )
 
@@ -231,7 +231,7 @@ test.concurrent('renders semantic tokens for grouped declarations, strings, unit
   expectToken(tokens, 'translate', 'function')
   expectToken(tokens, '(', 'operator', ['functionPunctuation'])
   expectToken(tokens, '10', 'number')
-  expectToken(tokens, 'x', 'enumMember', ['unit'])
+  expectToken(tokens, 'rem', 'enumMember', ['unit'])
   // StetCSS uses `|` as a compact separator in places where native CSS
   // often uses whitespace or commas, so it keeps a distinct value role.
   expectToken(tokens, '|', 'operator', ['valueSeparator'])
@@ -240,6 +240,7 @@ test.concurrent('renders semantic tokens for grouped declarations, strings, unit
   expectToken(tokens, ')', 'operator', ['functionPunctuation'])
   expectToken(tokens, '\'', 'string', ['quoted'])
   expectToken(tokens, 'a|b', 'string', ['quoted'])
+  expectToken(tokens, '2', 'number')
   expectToken(tokens, 'x', 'enumMember', ['unit'])
   expectToken(tokens, '!', 'operator', ['important'])
 })
@@ -272,7 +273,7 @@ test.concurrent('renders semantic tokens only for CSS directive class-list spans
     @safelist "block fg:red:hover@md";
 
     @settings {
-      base-unit: 0.25rem;
+      mode-trigger: class;
     }
 
     @theme dark {
@@ -363,7 +364,7 @@ test.concurrent('renders semantic tokens only for CSS directive class-list spans
   expect(tokens).not.toContainEqual({ text: '@import', type: 'keyword', modifiers: ['directive'] })
   expect(tokens).not.toContainEqual({ text: '@reference', type: 'keyword', modifiers: ['directive'] })
   expect(tokens).not.toContainEqual({ text: '@settings', type: 'keyword', modifiers: ['directive'] })
-  expect(tokens).not.toContainEqual({ text: 'base-unit', type: 'property', modifiers: [] })
+  expect(tokens).not.toContainEqual({ text: 'mode-trigger', type: 'property', modifiers: [] })
   expect(tokens).not.toContainEqual({ text: '@theme', type: 'keyword', modifiers: ['directive'] })
   expect(tokens).not.toContainEqual({ text: 'dark', type: 'enumMember', modifiers: ['directive'] })
   expect(tokens).not.toContainEqual({ text: '--color-primary', type: 'variable', modifiers: [] })

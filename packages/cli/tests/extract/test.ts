@@ -13,7 +13,7 @@ it('basic extract', async () => {
   const cwd = fs.mkdtempSync(join(os.tmpdir(), 'stet-css-cli-extract-'))
   try {
     fs.writeFileSync(join(cwd, 'a.html'), '<h1 class="bg:primary fg:primary">Hello World</h1>', { flag: 'w' })
-    fs.writeFileSync(join(cwd, 'b.html'), '<h1 class="m:12x text-center font:sans font:heavy font:48px">Hello World</h1>', { flag: 'w' })
+    fs.writeFileSync(join(cwd, 'b.html'), '<h1 class="m:3rem text-center font:sans font:heavy font:48px">Hello World</h1>', { flag: 'w' })
     fs.writeFileSync(join(cwd, 'main.css'), `
       @import "@stet-css/core";
       @theme {
@@ -21,7 +21,7 @@ it('basic extract', async () => {
       }
     `, { flag: 'w' })
     execFileSync(process.execPath, ['--import', tsxLoaderURL, cliFilepath], { cwd })
-    expect(readFileSync(join(cwd, 'stet.css')).toString()).toMatch(/(fg\\:primary|m\\:12x|text-center|font\\:sans|font\\:heavy|font\\:48px)/)
+    expect(readFileSync(join(cwd, 'stet.css')).toString()).toMatch(/(fg\\:primary|m\\:3rem|text-center|font\\:sans|font\\:heavy|font\\:48px)/)
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true })
   }
@@ -40,8 +40,8 @@ it('writes the class set of the project files and the entry directives', async (
     fs.mkdirSync(join(cwd, 'src/legacy'), { recursive: true })
     fs.mkdirSync(join(cwd, 'build'), { recursive: true })
     fs.writeFileSync(join(cwd, 'src/page.astro'), '<h1 class="font:heavy">Hello</h1>')
-    fs.writeFileSync(join(cwd, 'src/legacy/page.html'), '<h1 class="m:4x">Hello</h1>')
-    fs.writeFileSync(join(cwd, 'build/index.html'), '<h1 class="p:2x">Hello</h1>')
+    fs.writeFileSync(join(cwd, 'src/legacy/page.html'), '<h1 class="m:1rem">Hello</h1>')
+    fs.writeFileSync(join(cwd, 'build/index.html'), '<h1 class="p:0.5rem">Hello</h1>')
     fs.writeFileSync(join(cwd, 'src/main.css'), `
       @import "@stet-css/core";
       @source not './legacy';
@@ -49,8 +49,8 @@ it('writes the class set of the project files and the entry directives', async (
     execFileSync(process.execPath, ['--import', tsxLoaderURL, cliFilepath], { cwd })
     const css = readFileSync(join(cwd, 'stet.css')).toString()
     expect(css).toContain('.font\\:heavy{')
-    expect(css).not.toContain('.m\\:4x{')
-    expect(css).not.toContain('.p\\:2x{')
+    expect(css).not.toContain('.m\\:1rem{')
+    expect(css).not.toContain('.p\\:0\\.5rem{')
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true })
   }
@@ -65,13 +65,13 @@ it('reads only the files named by source path arguments', async () => {
   const cwd = fs.mkdtempSync(join(os.tmpdir(), 'stet-css-cli-sources-'))
   try {
     fs.writeFileSync(join(cwd, 'a.html'), '<h1 class="font:heavy">Hello</h1>')
-    fs.writeFileSync(join(cwd, 'b.html'), '<h1 class="m:4x">Hello</h1>')
+    fs.writeFileSync(join(cwd, 'b.html'), '<h1 class="m:1rem">Hello</h1>')
     const output = execFileSync(process.execPath, ['--import', tsxLoaderURL, cliFilepath, 'a.html', '--no-export'], {
       cwd,
       encoding: 'utf8'
     })
     expect(output).toContain('.font\\:heavy{')
-    expect(output).not.toContain('.m\\:4x{')
+    expect(output).not.toContain('.m\\:1rem{')
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true })
   }

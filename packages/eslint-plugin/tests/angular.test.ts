@@ -7,9 +7,9 @@ jsxTester.run('sort classes', rule, {
     {
       code: `
           <div class="
-            m:2x
+            m:0.5rem
             bg:black
-            p:2x
+            p:0.5rem
             font:1.5rem
             fg:white
           ">
@@ -17,8 +17,8 @@ jsxTester.run('sort classes', rule, {
           </div>`,
       output: `
           <div class="
-            m:2x
-            p:2x
+            m:0.5rem
+            p:0.5rem
             font:1.5rem
             bg:black
             fg:white
