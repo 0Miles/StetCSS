@@ -87,8 +87,8 @@ const registryFieldCSS = createCSSWithNativeDeclarations(createPresetManifest({
 
 describe('class sorting', () => {
   test('sorts known classes and keeps unknown classes last', () => {
-    expect(sortClassNames(['font:1.5rem', 'fg:white', 'm:2x', 'p:2x', 'bg:black'], css))
-      .toEqual(['m:2x', 'p:2x', 'font:1.5rem', 'bg:black', 'fg:white'])
+    expect(sortClassNames(['font:1.5rem', 'fg:white', 'm:0.5rem', 'p:0.5rem', 'bg:black'], css))
+      .toEqual(['m:0.5rem', 'p:0.5rem', 'font:1.5rem', 'bg:black', 'fg:white'])
     expect(sortClassNames(['mt:0', 'hello:world', 'a', 'font:error'], css))
       .toEqual(['mt:0', 'a', 'font:error', 'hello:world'])
   })
@@ -97,7 +97,7 @@ describe('class sorting', () => {
     const classNames = [
       'font:heavy',
       'bg:black:hover',
-      'px:3x@sm',
+      'px:0.75rem@sm',
       'rel',
       'grid-cols:2@md',
       'opacity:.8',
@@ -107,19 +107,19 @@ describe('class sorting', () => {
       'text-center',
       'm:0',
       'flex',
-      'p:4x',
+      'p:1rem',
       'unknown-app-class',
       'w:full',
       'r:lg',
       'bg:blue-60',
-      'gap:2x',
+      'gap:0.5rem',
       'overflow:hidden',
       'h:full',
       'transition:opacity|.2s',
       'b:1px|solid|gray-30',
       'block@dark',
       'align-items:center',
-      'mt:2x',
+      'mt:0.5rem',
       'box-shadow:0|2px|8px|#0003',
       'font:2.5rem@xs',
       '{content:``;block;h:full;w:full;abs}::after'
@@ -131,12 +131,12 @@ describe('class sorting', () => {
       'flex',
       'overflow:hidden',
       'align-items:center',
-      'gap:2x',
+      'gap:0.5rem',
       'h:full',
       'w:full',
       'm:0',
-      'mt:2x',
-      'p:4x',
+      'mt:0.5rem',
+      'p:1rem',
       'b:1px|solid|gray-30',
       'r:lg',
       'font:heavy',
@@ -150,7 +150,7 @@ describe('class sorting', () => {
       'bg:black:hover',
       'block@dark',
       'font:2.5rem@xs',
-      'px:3x@sm',
+      'px:0.75rem@sm',
       'grid-cols:2@md',
       'hidden@<md',
       'unknown-app-class'
@@ -158,26 +158,26 @@ describe('class sorting', () => {
   })
 
   test('deduplicates repeated classes', () => {
-    expect(sortClassNames(['w:3x', 'w:0.375rem@lg', 'w:3x'], css))
-      .toEqual(['w:3x', 'w:0.375rem@lg'])
+    expect(sortClassNames(['w:0.75rem', 'w:0.375rem@lg', 'w:0.75rem'], css))
+      .toEqual(['w:0.75rem', 'w:0.375rem@lg'])
   })
 
   test('generates each unique class once while sorting', () => {
     const generate = vi.fn((className: string) => css.generate(className))
     const cssWithGenerateSpy = { generate } as unknown as typeof css
 
-    expect(sortClassNames(['w:3x', 'w:0.375rem@lg', 'w:3x'], cssWithGenerateSpy))
-      .toEqual(['w:3x', 'w:0.375rem@lg'])
+    expect(sortClassNames(['w:0.75rem', 'w:0.375rem@lg', 'w:0.75rem'], cssWithGenerateSpy))
+      .toEqual(['w:0.75rem', 'w:0.375rem@lg'])
     expect(generate).toHaveBeenCalledTimes(2)
   })
 })
 
 describe('class list edits', () => {
   test('sorts class-list text while preserving useful whitespace and raw tokens', () => {
-    expect(sortClassList('fg:white  m:2x\tfg:white', css))
-      .toBe('m:2x  fg:white')
-    expect(sortClassList('fg:white\nm:2x\nfg:white', css))
-      .toBe('m:2x\nfg:white')
+    expect(sortClassList('fg:white  m:0.5rem\tfg:white', css))
+      .toBe('m:0.5rem  fg:white')
+    expect(sortClassList('fg:white\nm:0.5rem\nfg:white', css))
+      .toBe('m:0.5rem\nfg:white')
     expect(sortClassList('content:\\`\\` block', css, { unescape: '`' }))
       .toBe('block content:\\`\\`')
   })
@@ -217,20 +217,20 @@ describe('class list edits', () => {
 
 describe('lint diagnostics', () => {
   test('reports sort diagnostics with a machine-readable fix', () => {
-    expect(createSortClassesReport('fg:white m:2x', css)).toEqual({
+    expect(createSortClassesReport('fg:white m:0.5rem', css)).toEqual({
       diagnostics: [{
         ruleId: 'sort-classes',
         code: 'invalid-class-order',
-        message: 'Sort classes into the expected order: "m:2x fg:white".',
+        message: 'Sort classes into the expected order: "m:0.5rem fg:white".',
         severity: 'warning',
-        range: { start: 0, end: 13 },
+        range: { start: 0, end: 17 },
         data: {
-          actual: 'fg:white m:2x',
-          expected: 'm:2x fg:white'
+          actual: 'fg:white m:0.5rem',
+          expected: 'm:0.5rem fg:white'
         },
         fix: {
-          range: { start: 0, end: 13 },
-          text: 'm:2x fg:white',
+          range: { start: 0, end: 17 },
+          text: 'm:0.5rem fg:white',
           scope: 'class-list'
         }
       }]
@@ -348,7 +348,7 @@ describe('source content linting', () => {
 
   test('maps class diagnostics and safe fixes onto source ranges', () => {
     const result = lintStetCSSContent({
-      content: '<div class="fg:white m:2x"></div>',
+      content: '<div class="fg:white m:0.5rem"></div>',
       filePath: '/project/index.html',
       css
     })
@@ -361,16 +361,16 @@ describe('source content linting', () => {
       sourceKind: 'class-attribute',
       loc: {
         start: { line: 1, column: 13 },
-        end: { line: 1, column: 26 }
+        end: { line: 1, column: 30 }
       },
       fixes: [expect.objectContaining({
         kind: 'class-list',
         safety: 'safe',
-        text: 'm:2x fg:white'
+        text: 'm:0.5rem fg:white'
       })]
     }))
     expect(fixStetCSSContent({
-      content: '<div class="fg:white m:2x"></div>',
+      content: '<div class="fg:white m:0.5rem"></div>',
       filePath: '/project/index.html',
       css
     })).toBe('<div class="m:xs fg:white"></div>')
@@ -384,7 +384,7 @@ describe('source content linting', () => {
   test('lints and fixes class lists inside mdx fenced html examples', () => {
     const content = [
       '```html',
-      '<button class="inline-flex align-items:center gap:2x px:md py:xs r:md fg:white bg:blue-60">',
+      '<button class="inline-flex align-items:center gap:0.5rem px:md py:xs r:md fg:white bg:blue-60">',
       '    Save',
       '</button>',
       '```'
@@ -472,14 +472,14 @@ describe('source content linting', () => {
 
   test('uses script language ids for cjs and typescript module files', () => {
     expect(lintStetCSSContent({
-      content: 'const cls = "fg:white m:2x"',
+      content: 'const cls = "fg:white m:0.5rem"',
       filePath: '/project/component.cjs',
       css
     })).toMatchObject({
       languageId: 'javascript'
     })
     expect(lintStetCSSContent({
-      content: 'const cls = "fg:white m:2x"',
+      content: 'const cls = "fg:white m:0.5rem"',
       filePath: '/project/component.mts',
       css
     })).toMatchObject({
@@ -670,6 +670,25 @@ describe('class validation issues', () => {
     ])
     expect(getClassValidationIssues('unknown-class', css, { disallowUnknownClass: true, displayClassName: 'raw-class' })[0]?.message)
       .toBe('Unknown StetCSS class "raw-class". It is not generated by the active manifest.')
+  })
+
+  /**
+   * Prevents: a leftover spacing `x` class (#162) being reported differently from any other class
+   * the manifest does not generate. `padding:4x` is invalid native CSS, so `p:4x` generates no
+   * CSS: silent by default, and the generic unknown-class message under `disallowUnknownClass`.
+   * No dedicated "x was removed" diagnostic exists (#4 ruling, precedent #17).
+   * Reverse-checked: restoring the `<number>x` → base-unit conversion in the engine (rebuilt) reds
+   * only the `disallowUnknownClass` assertion.
+   */
+  test('treats a leftover spacing x class as an unknown class', () => {
+    expect(getClassValidationIssues('p:4x', css)).toEqual([])
+    expect(getClassValidationIssues('p:4x', css, { disallowUnknownClass: true })).toEqual([
+      {
+        kind: 'unknown',
+        className: 'p:4x',
+        message: 'Unknown StetCSS class "p:4x". It is not generated by the active manifest.'
+      }
+    ])
   })
 
   test('escapes quoted class names in diagnostic messages', () => {

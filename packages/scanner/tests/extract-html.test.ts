@@ -21,7 +21,7 @@ it('extract latent classes from html', () => {
               <img src="/vite.svg" class="logo" alt="Vite logo" />
             </a>
             <a href="https://github.com/0Miles/StetCSS" target="_blank">
-              <img src="/logo.svg" class="logo size:43x" alt="StetCSS logo" />
+              <img src="/logo.svg" class="logo size:10.75rem" alt="StetCSS logo" />
             </a>
           </div>
           <h1
@@ -62,7 +62,7 @@ it('extract latent classes from html', () => {
       '_blank',
       'logo',
       'Vite',
-      'size:43x',
+      'size:10.75rem',
       'StetCSS',
       'font:sans',
       'tracking:tight',

@@ -278,7 +278,7 @@ describe('Webpack static CSS', () => {
       'app/src/index.js': 'import "./app.scss"\nimport "../../shared/extra.css"\n',
       'app/src/app.scss': '$brand: #123456;\n@import "@stet-css/core";\n@theme { --color-brand: $brand; }\n',
       'app/src/template.html': '<main class="fg:brand"></main>\n',
-      'shared/extra.css': '@import "@stet-css/core";\n@safelist \'p:2x\';\n'
+      'shared/extra.css': '@import "@stet-css/core";\n@safelist \'p:0.5rem\';\n'
     })
     const root = join(workspace, 'app')
 
@@ -296,7 +296,7 @@ describe('Webpack static CSS', () => {
       const css = readOutput(join(root, 'dist'), '.css')
       expect(css).toMatch(/--color-brand:\s*#123456/)
       expect(css).toMatch(/\.fg\\:brand\s*\{/)
-      expect(css).toMatch(/\.p\\:2x\s*\{/)
+      expect(css).toMatch(/\.p\\:0\\\.5rem\s*\{/)
     } finally {
       rmSync(workspace, { recursive: true, force: true })
     }
@@ -353,17 +353,17 @@ describe('Webpack static CSS', () => {
       expect(failure).toBeUndefined()
       expect(readOutput(output, '.css')).toMatch(/\.block\s*\{/)
 
-      writeFileSync(join(root, 'src/template.html'), '<main class="block m:4x"></main>\n')
+      writeFileSync(join(root, 'src/template.html'), '<main class="block m:1rem"></main>\n')
 
       expect(await settle()).toBe(initialBuilds + 1)
       expect(failure).toBeUndefined()
-      expect(readOutput(output, '.css')).toMatch(/\.m\\:4x\s*\{/)
+      expect(readOutput(output, '.css')).toMatch(/\.m\\:1rem\s*\{/)
 
-      writeFileSync(join(root, 'src/index.js'), 'import "./app.css"\ndocument.body.className = "p:2x"\n')
+      writeFileSync(join(root, 'src/index.js'), 'import "./app.css"\ndocument.body.className = "p:0.5rem"\n')
 
       expect(await settle()).toBe(initialBuilds + 2)
       expect(failure).toBeUndefined()
-      expect(readOutput(output, '.css')).toMatch(/\.p\\:2x\s*\{/)
+      expect(readOutput(output, '.css')).toMatch(/\.p\\:0\\\.5rem\s*\{/)
     } finally {
       await new Promise<void>((resolve) => watching ? watching.close(() => resolve()) : resolve())
       rmSync(root, { recursive: true, force: true })

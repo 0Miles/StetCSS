@@ -3,8 +3,7 @@ import StetCSS from './core'
 import { cssEscape, replaceCSSVariableReferences } from '@stet-css/lexer'
 import UtilityType, { type UtilityType as UtilityTypeValue } from '@stet-css/schema/utility-type'
 import { type PropertiesHyphen } from 'csstype'
-import { VALUE_DELIMITERS, BASE_UNIT_REGEX, CONDITION_IDENTIFIERS } from './common'
-import { formatBaseUnitMultiple } from './utils/base-unit'
+import { VALUE_DELIMITERS, CONDITION_IDENTIFIERS } from './common'
 import Layer from './layer'
 import type { ValueComponent, VariableValueComponent, Variable, StringValueComponent } from '@stet-css/schema/css-syntax'
 import { Condition, ConditionNode, ConditionStringNode, ConditionValueNode, } from './utils/parse-condition'
@@ -1145,8 +1144,7 @@ export class Utility {
     const anaylzeDeeply = (
       currentValueComponents: ValueComponent[],
       bypassHandlingSeparator: boolean,
-      parentBypassParsing: boolean,
-      isVarFunction: boolean
+      parentBypassParsing: boolean
     ) => {
       const isChildHandler = valueComponents !== currentValueComponents
       const unparsedValueComponents: StringValueComponent[] = []
@@ -1155,13 +1153,6 @@ export class Utility {
       let current = ''
       const clear = (separator: string, prefix = '', suffix = '') => {
         if (current) {
-          if (!isVarFunction) {
-            const result = BASE_UNIT_REGEX.exec(current)
-            if (result) {
-              current = formatBaseUnitMultiple(+result[1], this.css.settings.baseUnit)
-            }
-          }
-
           if (!bypassParsing && !parentBypassParsing) {
             const valueComponent = { ...this.parseValue(current), token: current }
             if (
@@ -1228,8 +1219,7 @@ export class Utility {
           const childHasUnit = anaylzeDeeply(
             newValueComponent.children,
             nestedIsVarFunction,
-            bypassParsing || nestedIsVarFunction,
-            nestedIsVarFunction
+            bypassParsing || nestedIsVarFunction
           ) || nestedFunctionName === 'var'
           if (childHasUnit) {
             hasUnit = true
@@ -1278,7 +1268,7 @@ export class Utility {
       }
       clear('')
     }
-    anaylzeDeeply(valueComponents, false, false, false)
+    anaylzeDeeply(valueComponents, false, false)
 
     let resolvedValue = this.resolveValue(valueComponents, '', bypassVariableNames, true)
     if (data?.wrapArguments) {
@@ -1367,12 +1357,6 @@ export class Utility {
         }
 
         if (!handled) {
-          if (!isVarFunction) {
-            const result = BASE_UNIT_REGEX.exec(currentValue)
-            if (result) {
-              currentValue = formatBaseUnitMultiple(+result[1], this.css.settings.baseUnit)
-            }
-          }
           if (bypassParsing) {
             currentValueComponents.push({ type: 'string', value: currentValue, token: currentValue })
           } else {

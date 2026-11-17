@@ -19,7 +19,6 @@ import { MATCH_NAME_BOUNDARY } from './common'
 import builtinKeyAliases from './key-aliases'
 import builtinNativeValueNamespaces, { type StetCSSBuiltinNativeValueNamespace } from './native-value-namespaces'
 import builtinSelectorAliases from './selector-aliases'
-import { assertBaseUnit } from './utils/base-unit'
 import { PRESET_MODES } from './utils/undeclared-mode'
 import type { Condition } from './utils/parse-condition'
 import type { SelectorNode } from './utils/parse-selector'
@@ -32,14 +31,12 @@ export type CompiledUtility = Omit<StetCSSManifestUtility, 'emit' | 'name' | 'or
 }
 
 export type EngineSettings = StetCSSManifestSettings & {
-  baseUnit: string
   defaultMode: NonNullable<StetCSSManifestSettings['defaultMode']>
   modeTrigger: NonNullable<StetCSSManifestSettings['modeTrigger']>
   modes: string[]
 }
 
 const DEFAULT_SETTINGS: EngineSettings = {
-  baseUnit: '0.25rem',
   defaultMode: 'light',
   modeTrigger: 'media',
   modes: [...PRESET_MODES]
@@ -207,7 +204,6 @@ function canIndexStaticOnlyUtilities(utilities: CompiledUtility[]) {
 }
 
 function createCompiledSettings(manifest: StetCSSManifest): EngineSettings {
-  if (manifest.settings?.baseUnit !== undefined) assertBaseUnit(manifest.settings.baseUnit)
   return {
     ...DEFAULT_SETTINGS,
     ...(manifest.settings || {}),

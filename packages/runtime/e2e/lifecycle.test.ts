@@ -127,7 +127,7 @@ test('inserts functional pseudo-class selector aliases into native CSSOM', async
     if (message.type() === 'error') consoleErrors.push(message.text())
   })
   await page.evaluate(() => {
-    document.body.innerHTML = '<div class="pb:8x:not(:last) text-center_td:not(:first)"></div>'
+    document.body.innerHTML = '<div class="pb:2rem:not(:last) text-center_td:not(:first)"></div>'
   })
   await init(page)
 
@@ -135,7 +135,7 @@ test('inserts functional pseudo-class selector aliases into native CSSOM', async
     .map((cssRule) => cssRule.cssText)
   )).toEqual([
     '.text-center_td\\:not\\(\\:first\\) td:not(:first-child) { text-align: center; }',
-    '.pb\\:8x\\:not\\(\\:last\\):not(:last-child) { padding-bottom: 2rem; }'
+    '.pb\\:2rem\\:not\\(\\:last\\):not(:last-child) { padding-bottom: 2rem; }'
   ])
   expect(consoleErrors.find((message) => message.includes('insertRule'))).toBeUndefined()
 })

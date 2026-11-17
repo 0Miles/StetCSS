@@ -23,8 +23,8 @@ jsxTester.run('adapter source matching defaults', rule, {
       errors: [{ messageId: 'invalidClassOrder' }]
     },
     {
-      code: `classList.replace('fg:white block', 'p:2x m:2x')`,
-      output: `classList.replace('block fg:white', 'm:2x p:2x')`,
+      code: `classList.replace('fg:white block', 'p:0.5rem m:0.5rem')`,
+      output: `classList.replace('block fg:white', 'm:0.5rem p:0.5rem')`,
       errors: [
         { messageId: 'invalidClassOrder' },
         { messageId: 'invalidClassOrder' },
@@ -55,8 +55,8 @@ createTester({
   ],
   invalid: [
     {
-      code: `<div data-class="fg:white block" data-tw="p:2x m:2x" />`,
-      output: `<div data-class="block fg:white" data-tw="m:2x p:2x" />`,
+      code: `<div data-class="fg:white block" data-tw="p:0.5rem m:0.5rem" />`,
+      output: `<div data-class="block fg:white" data-tw="m:0.5rem p:0.5rem" />`,
       errors: [
         { messageId: 'invalidClassOrder' },
         { messageId: 'invalidClassOrder' },

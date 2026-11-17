@@ -56,7 +56,7 @@ test('recommended config autofixes mdx fenced examples', async () => {
   })
   const source = [
     '```html',
-    '<button class="inline-flex align-items:center gap:2x px:md py:xs r:md fg:white bg:blue-60">',
+    '<button class="inline-flex align-items:center gap:0.5rem px:md py:xs r:md fg:white bg:blue-60">',
     '    Save',
     '</button>',
     '```'

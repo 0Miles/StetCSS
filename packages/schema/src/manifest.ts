@@ -68,8 +68,6 @@ export type StetCSSManifestSelectorNode =
 export type StetCSSManifestSelectors = Record<string, StetCSSManifestSelectorNode[]>
 
 export interface StetCSSManifestSettings {
-  /** The length one `x` stands for, as a CSS length such as `0.25rem` or `4px`. */
-  baseUnit?: string
   defaultMode?: StetCSSManifestDefaultMode
   scope?: string
   important?: boolean

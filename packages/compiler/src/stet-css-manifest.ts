@@ -795,7 +795,6 @@ export function createStetCSSManifest(input: CSSDirectiveManifestInput = {}, opt
   const variables = timeCompilerDiagnostic(diagnostics, 'manifest-group-variables-ms', () => groupStetCSSManifestVariables(variableDefinitions))
   const { conditions, breakpointConditions, containerConditions } = timeCompilerDiagnostic(diagnostics, 'manifest-compile-conditions-ms', () => compileConditions(variableDefinitions))
   const settings = {
-    ...(input.baseUnit !== undefined ? { baseUnit: input.baseUnit } : {}),
     ...(input.defaultMode !== undefined ? { defaultMode: input.defaultMode } : {}),
     ...(input.scope !== undefined ? { scope: input.scope } : {}),
     ...(input.important !== undefined ? { important: input.important } : {}),

@@ -183,14 +183,11 @@ function splitTopLevelValueSegments(value: string) {
   return values
 }
 
-function getVariableNumericValue(variable: Variable, css: StetCSS) {
+function getVariableNumericValue(variable: Variable) {
   if (variable.numeric) {
-    return normalizeStetCSSNumericValue(
-      css,
-      `${variable.numeric.value}${variable.numeric.unit || ''}`,
-    )
+    return normalizeStetCSSNumericValue(`${variable.numeric.value}${variable.numeric.unit || ''}`)
   }
-  if (variable.value !== undefined) return normalizeStetCSSNumericValue(css, variable.value)
+  if (variable.value !== undefined) return normalizeStetCSSNumericValue(variable.value)
 }
 
 function valuesMatch(a: ReturnType<typeof normalizeStetCSSNumericValue>, b: ReturnType<typeof normalizeStetCSSNumericValue>) {
@@ -204,10 +201,9 @@ function getVariableReferenceName(value: string) {
 function getMatchingVariableKeys(
   variables: Map<string, Variable>,
   rawValue: string,
-  css: StetCSS,
   options: ResolvedCanonicalClassNameOptions
 ) {
-  const sourceValue = normalizeStetCSSNumericValue(css, rawValue)
+  const sourceValue = normalizeStetCSSNumericValue(rawValue)
   const variableReferenceName = options.preferVariableReferences ? getVariableReferenceName(rawValue) : undefined
   const tokenKeys = new Set<string>()
   const numericKeys = new Set<string>()
@@ -217,7 +213,7 @@ function getMatchingVariableKeys(
       tokenKeys.add(key)
     }
     if (!sourceValue) continue
-    if (valuesMatch(sourceValue, getVariableNumericValue(variable, css))) {
+    if (valuesMatch(sourceValue, getVariableNumericValue(variable))) {
       numericKeys.add(key)
     }
   }
@@ -232,7 +228,6 @@ function getMatchingVariableKeys(
 function getMatchingMultiValueVariableKeys(
   variables: Map<string, Variable>,
   rawValue: string,
-  css: StetCSS,
   options: ResolvedCanonicalClassNameOptions
 ): MatchingVariableKeys | undefined {
   if (!options.preferMultiValueTokens) return
@@ -242,7 +237,7 @@ function getMatchingMultiValueVariableKeys(
   const segmentKeys: string[] = []
   let kind: MatchingVariableKeys['kind'] = 'token'
   for (const segment of segments) {
-    const match = getMatchingVariableKeys(variables, segment, css, options)
+    const match = getMatchingVariableKeys(variables, segment, options)
     if (!match.keys.length) return
     if (match.kind === 'numeric') kind = 'numeric'
     segmentKeys.push(match.keys[0])
@@ -374,8 +369,8 @@ export default function suggestCanonicalClassName(
 
   if (parts.key && parts.value) {
     if (resolvedOptions.preferThemeTokens) {
-      const variableMatch = getMatchingMultiValueVariableKeys(parts.variables, parts.value, css, resolvedOptions)
-        || getMatchingVariableKeys(parts.variables, parts.value, css, resolvedOptions)
+      const variableMatch = getMatchingMultiValueVariableKeys(parts.variables, parts.value, resolvedOptions)
+        || getMatchingVariableKeys(parts.variables, parts.value, resolvedOptions)
       for (const rule of sourceRules) {
         const propertySignature = getDeclarationPropertySignature(rule)
         for (const key of getVariableCandidateKeys(index, propertySignature, parts.key, variableMatch, resolvedOptions.preferPropertyAliases)) {
