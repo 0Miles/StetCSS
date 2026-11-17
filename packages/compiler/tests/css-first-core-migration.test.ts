@@ -1297,6 +1297,28 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     expect(result.nativeCSS).toContain('color: color-mix(in oklab,var(--color-muted) var(--opacity-muted),transparent);')
   })
 
+  /**
+   * Guards the stylesheet `--alpha()` percentage text (#166): `.14 * 100` is `14.000000000000002` in
+   * binary floating point, so a numeric alpha must print as its written decimal moved two places.
+   * Reverting engine `formatFractionPercentage` to `fraction * 100` reddens only this test in compiler.
+   */
+  test('writes stylesheet --alpha() numeric alpha as the decimal percentage', () => {
+    const result = compileCSSManifest(`
+      @theme {
+        --color-primary: #123456;
+        --color-soft: --alpha(var(--color-primary) / .14);
+        --color-faint: --alpha(var(--color-primary) / .07);
+        --color-trace: --alpha(var(--color-primary) / .0029);
+      }
+    `, { baseManifest: defaultManifest })
+    const css = createTestCSS(result.manifest)
+
+    css.ensureClassRules('bg:soft', 'bg:faint', 'bg:trace')
+    expect(css.themeLayer.text).toContain('--color-soft:color-mix(in oklab,var(--color-primary) 14%,transparent)')
+    expect(css.themeLayer.text).toContain('--color-faint:color-mix(in oklab,var(--color-primary) 7%,transparent)')
+    expect(css.themeLayer.text).toContain('--color-trace:color-mix(in oklab,var(--color-primary) .29%,transparent)')
+  })
+
   test('rejects stylesheet token alias syntax and invalid --alpha() alpha values', () => {
     expect(() => compileCSSManifest('@theme { --color-brand: $color-blue-60; }', { baseManifest: defaultManifest }))
       .toThrow('Replace "$color-blue-60" with "var(--color-blue-60)"')
