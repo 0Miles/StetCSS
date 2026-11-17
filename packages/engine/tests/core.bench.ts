@@ -15,8 +15,8 @@ const runtimeClassNames = [
   'text-center',
   'bg:red-60',
   'fg:primary',
-  'm:4x',
-  'pb:8x:not(:last)',
+  'm:1rem',
+  'pb:2rem:not(:last)',
   'text-center_td:not(:first)',
   'w:calc(var(--h)|/|var(--w)*100%)',
   'grid-cols:3',
@@ -29,7 +29,7 @@ const runtimeClassNames = [
   'translate:-md',
   'bg:linear-gradient(current,black)',
   'user-select:none',
-  'width:4x',
+  'width:1rem',
   'flex@sm'
 ]
 

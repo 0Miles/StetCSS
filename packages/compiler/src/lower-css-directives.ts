@@ -223,7 +223,6 @@ function normalizeDirectiveInput(input: CSSDirectiveManifestInputSource = {}, op
   const source = getDirectiveInput(input)
   const resolveVariableName = createVariableNameResolver(source, { baseManifest: getResolutionManifest(options) })
   const normalized: CSSDirectiveManifestInput = {}
-  if (source.baseUnit !== undefined) normalized.baseUnit = source.baseUnit
   if (source.defaultMode !== undefined) normalized.defaultMode = source.defaultMode
   if (source.modeTrigger !== undefined) normalized.modeTrigger = source.modeTrigger
   if (source.scope !== undefined) normalized.scope = source.scope

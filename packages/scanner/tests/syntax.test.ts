@@ -6,10 +6,10 @@ import { join } from 'node:path'
 test('syntax', async () => {
   const scanner = await new CSSScanner({}, __dirname).init()
   const testClasses = [
-    '{fg:blue-40/.5;font:2rem;p:4x;w:full;text-center}>li:hover@md',
+    '{fg:blue-40/.5;font:2rem;p:1rem;w:full;text-center}>li:hover@md',
     'w:calc(+100%-1.25rem)',
-    'p:0.625rem|5x|1.875rem|10x',
-    'm:5x|1.875rem',
+    'p:0.625rem|1.25rem|1.875rem|2.5rem',
+    'm:1.25rem|1.875rem',
     'transition:transform|.1s|ease-out,width|.1s|ease-out',
     'bg:rgb(51|170|51|.4)',
     'width:51px',
@@ -29,7 +29,7 @@ test('syntax', async () => {
     'font:1.5rem:hover@sm',
     'text-center:hover@sm',
     'fg:sky-60/.5:hover@sm',
-    '{p:0.625rem|5x|1.875rem|10x;text-center;fg:sky-60/.5}:hover@sm',
+    '{p:0.625rem|1.25rem|1.875rem|2.5rem;text-center;fg:sky-60/.5}:hover@sm',
     'width:2.125rem:active:not([disabled])+svg>rect',
     'cursor:no-drop[disabled]+svg',
     'transform:translateX(20px)',
@@ -57,7 +57,7 @@ test('syntax', async () => {
     'bg:transparent::-webkit-scrollbar-corner',
     'rounded::scrollbar-thumb',
     'bg:gray-60::scrollbar-thumb:active@dark',
-    'm:0.625rem|5x',
+    'm:0.625rem|1.25rem',
     'bg:blue-60',
     'outline:3px|solid|red:hover',
     'text-center@sm',

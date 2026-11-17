@@ -189,7 +189,7 @@ describe('StyleEntryPlugin', () => {
 
     const result = await (plugin as any).transform.call(
       {},
-      '@settings { base-unit: 0.25rem; }\n.card { color: red }',
+      '@settings { mode-trigger: class; }\n.card { color: red }',
       '/project/src/style.css'
     )
 

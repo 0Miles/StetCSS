@@ -890,3 +890,22 @@ test('inlines variables without runtime theme counts', async ({ page }) => {
     counts: {}
   })
 })
+
+/**
+ * Prevents: a leftover spacing `x` class (#162) still producing a rule in the browser. The runtime
+ * checks native declarations with `CSS.supports`, and `padding:4x` is invalid CSS, so `p:4x`
+ * makes no rule; `bg:image-set(...|2x)` keeps `x` as the resolution unit and does.
+ * Reverse-checked: restoring the `<number>x` → base-unit conversion in the engine (rebuilt) reds
+ * this test only.
+ */
+test('drops spacing x and keeps resolution x in the browser', async ({ page }) => {
+  await init(page)
+  await page.evaluate(() => {
+    document.body.innerHTML = '<div class="p:4x bg:image-set(url(a.png)|2x)"></div>'
+  })
+  // Rules are inserted on the runtime's animation-frame flush, not on the next task.
+  await waitForRuntimeRuleFlush(page)
+  const text = await page.evaluate(() => globalThis.stetCSSRuntime.text)
+  expect(text).not.toContain('.p\\:4x')
+  expect(text).toContain('.bg\\:image-set\\(url\\(a\\.png\\)\\|2x\\){background-image:image-set(url(a.png) 2x)}')
+})

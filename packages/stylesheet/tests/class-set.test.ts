@@ -56,16 +56,16 @@ describe('static class set', () => {
   it('includes classes from Astro, Svelte and Vue files that no module imports', async () => {
     const root = createProject({
       'src/pages/index.astro': '---\nconst title = "Home"\n---\n<h1 class="font:heavy">{title}</h1>',
-      'src/components/Card.svelte': '<div class:block={open} class="m:4x"></div>',
-      'src/components/Panel.vue': '<template><div :class="[\'p:2x\']"></div></template>'
+      'src/components/Card.svelte': '<div class:block={open} class="m:1rem"></div>',
+      'src/components/Panel.vue': '<template><div :class="[\'p:0.5rem\']"></div></template>'
     })
 
     const css = await extract(root, '@import "@stet-css/core";')
 
     expect(css).toContain(rule('font:heavy'))
     expect(css).toContain(rule('block'))
-    expect(css).toContain(rule('m:4x'))
-    expect(css).toContain(rule('p:2x'))
+    expect(css).toContain(rule('m:1rem'))
+    expect(css).toContain(rule('p:0.5rem'))
   })
 
   /**
@@ -81,16 +81,16 @@ describe('static class set', () => {
   it('skips dependency and build output directories unless @source names them', async () => {
     const files = {
       'src/app.tsx': 'export const App = () => <main class="block"></main>',
-      'node_modules/ui-kit/index.js': 'export const button = "m:4x"',
-      'dist/index.html': '<div class="p:2x"></div>',
+      'node_modules/ui-kit/index.js': 'export const button = "m:1rem"',
+      'dist/index.html': '<div class="p:0.5rem"></div>',
       'build/index.html': '<div class="font:heavy"></div>'
     }
 
     const defaultCSS = await extract(createProject(files), '@import "@stet-css/core";')
 
     expect(defaultCSS).toContain(rule('block'))
-    expect(defaultCSS).not.toContain(rule('m:4x'))
-    expect(defaultCSS).not.toContain(rule('p:2x'))
+    expect(defaultCSS).not.toContain(rule('m:1rem'))
+    expect(defaultCSS).not.toContain(rule('p:0.5rem'))
     expect(defaultCSS).not.toContain(rule('font:heavy'))
 
     const sourcedCSS = await extract(createProject(files), `
@@ -100,8 +100,8 @@ describe('static class set', () => {
       @source '../build/**/*.html';
     `)
 
-    expect(sourcedCSS).toContain(rule('m:4x'))
-    expect(sourcedCSS).toContain(rule('p:2x'))
+    expect(sourcedCSS).toContain(rule('m:1rem'))
+    expect(sourcedCSS).toContain(rule('p:0.5rem'))
     expect(sourcedCSS).toContain(rule('font:heavy'))
   })
 
@@ -115,8 +115,8 @@ describe('static class set', () => {
   it('drops classes from files excluded with @source not', async () => {
     const root = createProject({
       'src/app.tsx': 'export const App = () => <main class="block"></main>',
-      'src/legacy/page.html': '<div class="m:4x"></div>',
-      'src/stories/card.stories.tsx': 'export default { args: { className: "p:2x" } }'
+      'src/legacy/page.html': '<div class="m:1rem"></div>',
+      'src/stories/card.stories.tsx': 'export default { args: { className: "p:0.5rem" } }'
     })
 
     const css = await extract(root, `
@@ -126,8 +126,8 @@ describe('static class set', () => {
     `)
 
     expect(css).toContain(rule('block'))
-    expect(css).not.toContain(rule('m:4x'))
-    expect(css).not.toContain(rule('p:2x'))
+    expect(css).not.toContain(rule('m:1rem'))
+    expect(css).not.toContain(rule('p:0.5rem'))
   })
 
   /**
@@ -144,12 +144,12 @@ describe('static class set', () => {
     const css = await extract(root, `
       @import "@stet-css/core";
       @blocklist 'fg:red';
-      @safelist 'p:2x';
+      @safelist 'p:0.5rem';
     `)
 
     expect(css).not.toContain(rule('fg:red'))
     expect(css).toContain(rule('block'))
-    expect(css).toContain(rule('p:2x'))
+    expect(css).toContain(rule('p:0.5rem'))
   })
 
   /**
@@ -164,15 +164,15 @@ describe('static class set', () => {
     })
     const scanner = new CSSScanner({}, root)
     await scanner.init()
-    await scanner.scan(join(root, 'node_modules/widget/index.js'), 'export const widget = "m:4x"')
+    await scanner.scan(join(root, 'node_modules/widget/index.js'), 'export const widget = "m:1rem"')
     const styleCSSSources: StyleCSSSources = new Map()
     await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'src/index.css'), '@import "@stet-css/core";', { projectDir: root })
 
     const css = await createExtractedCSS({ scanner, styleCSSSources, projectDir: root })
 
-    expect(scanner.validClasses.has('m:4x')).toBe(true)
+    expect(scanner.validClasses.has('m:1rem')).toBe(true)
     expect(css).toContain(rule('block'))
-    expect(css).not.toContain(rule('m:4x'))
+    expect(css).not.toContain(rule('m:1rem'))
   })
 
   /**
@@ -185,7 +185,7 @@ describe('static class set', () => {
   it('applies one entry\'s @blocklist and @source not to every entry', async () => {
     const root = createProject({
       'src/app.tsx': 'export const App = () => <main class="fg:red block"></main>',
-      'src/legacy/page.html': '<div class="m:4x legacy-card"></div>'
+      'src/legacy/page.html': '<div class="m:1rem legacy-card"></div>'
     })
     const scanner = new CSSScanner({}, root)
     await scanner.init()
@@ -203,7 +203,7 @@ describe('static class set', () => {
 
     expect(css).toContain(rule('block'))
     expect(css).not.toContain(rule('fg:red'))
-    expect(css).not.toContain(rule('m:4x'))
+    expect(css).not.toContain(rule('m:1rem'))
   })
 
   /**
@@ -242,7 +242,7 @@ describe('static class set', () => {
   it('generates project classes without a stylesheet entry for a caller that scans no modules', async () => {
     const root = createProject({
       'index.html': '<h1 class="font:heavy"></h1>',
-      'dist/index.html': '<h1 class="m:4x"></h1>'
+      'dist/index.html': '<h1 class="m:1rem"></h1>'
     })
     const scanner = new CSSScanner({}, root)
     await scanner.init()
@@ -250,7 +250,7 @@ describe('static class set', () => {
     const css = await createExtractedCSS({ scanner, styleCSSSources: new Map(), projectDir: root })
 
     expect(css).toContain(rule('font:heavy'))
-    expect(css).not.toContain(rule('m:4x'))
+    expect(css).not.toContain(rule('m:1rem'))
   })
 
   /**
@@ -262,7 +262,7 @@ describe('static class set', () => {
   it('applies a Sass entry\'s directives and theme', async () => {
     const root = createProject({
       'src/app.html': '<div class="fg:brand"></div>',
-      'templates/page.html': '<div class="m:4x"></div>'
+      'templates/page.html': '<div class="m:1rem"></div>'
     })
     const loadSass = () => ({
       compileStringAsync: async (source: string) => ({ css: source.replace(/\$brand/g, '#123456') })
@@ -273,7 +273,7 @@ describe('static class set', () => {
     await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'src/index.scss'), `
       @import "@stet-css/core";
       @source '../templates';
-      @safelist 'p:2x';
+      @safelist 'p:0.5rem';
       @theme { --color-brand: $brand; }
     `, { projectDir: root, loadSass })
 
@@ -281,8 +281,8 @@ describe('static class set', () => {
 
     expect(css).toContain(rule('fg:brand'))
     expect(css).toContain('--color-brand:#123456')
-    expect(css).toContain(rule('p:2x'))
-    expect(css).toContain(rule('m:4x'))
+    expect(css).toContain(rule('p:0.5rem'))
+    expect(css).toContain(rule('m:1rem'))
   })
 
   /**
@@ -295,7 +295,7 @@ describe('static class set', () => {
   it('never reads the ignored paths, even through @source', async () => {
     const root = createProject({
       'src/app.html': '<div class="block"></div>',
-      'www/main.js': 'document.body.className = "m:4x"'
+      'www/main.js': 'document.body.className = "m:1rem"'
     })
     const scanner = new CSSScanner({}, root)
     await scanner.init()
@@ -309,7 +309,7 @@ describe('static class set', () => {
     const css = await createExtractedCSS(context)
 
     expect(css).toContain(rule('block'))
-    expect(css).not.toContain(rule('m:4x'))
+    expect(css).not.toContain(rule('m:1rem'))
     expect(await resolveStylesheetSourceFiles(context)).toStrictEqual([join(root, 'src/app.html')])
     expect(isStylesheetSourceFile(join(root, 'www/main.js'), context)).toBe(false)
   })
@@ -321,7 +321,7 @@ describe('static class set', () => {
    */
   it('reads project files with the scanner\'s custom adapters', async () => {
     const root = createProject({
-      'src/page.html': '<div data-classes="m:4x"></div>'
+      'src/page.html': '<div data-classes="m:1rem"></div>'
     })
     const scanner = new CSSScanner({
       adapters: [{
@@ -339,7 +339,7 @@ describe('static class set', () => {
 
     const css = await createExtractedCSS({ scanner, styleCSSSources, projectDir: root })
 
-    expect(css).toContain(rule('m:4x'))
+    expect(css).toContain(rule('m:1rem'))
   })
 
   /**
@@ -436,11 +436,11 @@ describe('static source files', () => {
   it('reads extra project directories by the project rules', async () => {
     const workspace = createProject({
       'app/src/page.html': '<div class="block"></div>',
-      'base/components/Card.vue': '<template><div class="m:4x"></div></template>',
-      'base/node_modules/dep/index.js': 'const c = "p:2x"',
-      'base/.output/index.html': '<div class="p:3x"></div>',
-      'app/node_modules/layer/Button.vue': '<template><div class="m:5x"></div></template>',
-      'app/node_modules/layer/node_modules/dep/index.js': 'const c = "p:6x"'
+      'base/components/Card.vue': '<template><div class="m:1rem"></div></template>',
+      'base/node_modules/dep/index.js': 'const c = "p:0.5rem"',
+      'base/.output/index.html': '<div class="p:0.75rem"></div>',
+      'app/node_modules/layer/Button.vue': '<template><div class="m:1.25rem"></div></template>',
+      'app/node_modules/layer/node_modules/dep/index.js': 'const c = "p:1.5rem"'
     })
     const root = join(workspace, 'app')
     const scanner = new CSSScanner({}, root)
@@ -457,8 +457,8 @@ describe('static source files', () => {
     const css = await createExtractedCSS(context)
     const files = await resolveStylesheetSourceFiles(context)
 
-    for (const className of ['block', 'm:4x', 'm:5x']) expect(css).toContain(rule(className))
-    for (const className of ['p:2x', 'p:3x', 'p:6x']) expect(css).not.toContain(rule(className))
+    for (const className of ['block', 'm:1rem', 'm:1.25rem']) expect(css).toContain(rule(className))
+    for (const className of ['p:0.5rem', 'p:0.75rem', 'p:1.5rem']) expect(css).not.toContain(rule(className))
     expect(files).toStrictEqual([
       join(root, 'node_modules/layer/Button.vue'),
       join(root, 'src/page.html'),

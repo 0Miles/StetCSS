@@ -18,8 +18,8 @@ describe.concurrent('migrated complex utility parity', () => {
       .toBe('.\\{pt\\:calc\\(2\\.5em\\+3\\.75rem\\)\\;mt\\:-3\\.75rem\\}_\\:where\\(h1\\,h2\\,h3\\,h4\\,h5\\,h6\\) :where(h1,h2,h3,h4,h5,h6){padding-top:calc(2.5em + 3.75rem);margin-top:-3.75rem}')
     expect(css.createRule('{line-height:calc(32-16);font-size:calc(2rem-1rem)}')?.text)
       .toBe('.\\{line-height\\:calc\\(32-16\\)\\;font-size\\:calc\\(2rem-1rem\\)\\}{line-height:calc(32 - 16);font-size:calc(2rem - 1rem)}')
-    expect(css.createRule('{m:8x;leading:1.5}')?.text)
-      .toBe('.\\{m\\:8x\\;leading\\:1\\.5\\}{margin:2rem;line-height:1.5}')
+    expect(css.createRule('{m:2rem;leading:1.5}')?.text)
+      .toBe('.\\{m\\:2rem\\;leading\\:1\\.5\\}{margin:2rem;line-height:1.5}')
     expect(css.createRule('{form}')?.text).toBe('')
     expect(css.createRule('{form;block}')?.text).toBe('.\\{form\\;block\\}{display:block}')
   })
@@ -97,9 +97,9 @@ describe.concurrent('migrated complex utility parity', () => {
   test('keeps inset utilities values and priority order', () => {
     const css = createDefaultCSS()
 
-    expect(css.createRule('top:5x')?.text).toBe('.top\\:5x{top:1.25rem}')
-    expect(css.createRule('bottom:2.5x')?.text).toBe('.bottom\\:2\\.5x{bottom:0.625rem}')
-    expect(css.createRule('inset:4x')?.text).toBe('.inset\\:4x{inset:1rem}')
+    expect(css.createRule('top:1.25rem')?.text).toBe('.top\\:1\\.25rem{top:1.25rem}')
+    expect(css.createRule('bottom:0.625rem')?.text).toBe('.bottom\\:0\\.625rem{bottom:0.625rem}')
+    expect(css.createRule('inset:1rem')?.text).toBe('.inset\\:1rem{inset:1rem}')
     expect(css.createRule('left:1.875rem')?.text).toBe('.left\\:1\\.875rem{left:1.875rem}')
     expect(css.createRule('right:max(0px,calc(50%-45.3125rem))')?.text)
       .toBe('.right\\:max\\(0px\\,calc\\(50\\%-45\\.3125rem\\)\\){right:max(0px,calc(50% - 45.3125rem))}')
@@ -122,18 +122,18 @@ describe.concurrent('migrated complex utility parity', () => {
   test('keeps size max and min single-value utility parsing', () => {
     const css = createDefaultCSS()
 
-    expect(css.createRule('size:4x')?.declarations).toStrictEqual({ width: '1rem', height: '1rem' })
+    expect(css.createRule('size:1rem')?.declarations).toStrictEqual({ width: '1rem', height: '1rem' })
     expect(css.createRule('size:md')?.declarations).toStrictEqual({
       width: 'var(--container-md)',
       height: 'var(--container-md)'
     })
-    expect(css.createRule('size:min(2.5x,calc(6.25x-2.5x))')?.declarations)
+    expect(css.createRule('size:min(0.625rem,calc(1.5625rem-0.625rem))')?.declarations)
       .toStrictEqual({
         width: 'min(0.625rem,calc(1.5625rem - 0.625rem))',
         height: 'min(0.625rem,calc(1.5625rem - 0.625rem))'
       })
-    expect(css.createRule('max:4x')?.declarations).toStrictEqual({ 'max-width': '1rem', 'max-height': '1rem' })
-    expect(css.createRule('min:4x')?.declarations).toStrictEqual({ 'min-width': '1rem', 'min-height': '1rem' })
+    expect(css.createRule('max:1rem')?.declarations).toStrictEqual({ 'max-width': '1rem', 'max-height': '1rem' })
+    expect(css.createRule('min:1rem')?.declarations).toStrictEqual({ 'min-width': '1rem', 'min-height': '1rem' })
   })
 
   test('keeps transition multi-value syntax and rejects removed shorthand prefix', () => {

@@ -3,8 +3,7 @@ import {
   inspectStetCSSClass,
   normalizeStetCSSNumericValue
 } from '../src/inspect'
-import { StetCSS } from '../src'
-import { cloneManifest, createDefaultCSS } from './helpers/css-tester'
+import { createDefaultCSS } from './helpers/css-tester'
 
 describe('class inspection', () => {
   test('inspects key/value utilities with variants and token metadata', () => {
@@ -60,31 +59,16 @@ describe('class inspection', () => {
     })
   })
 
-  test('normalizes number, rem, px, and base-unit numeric values', () => {
-    const css = createDefaultCSS()
-
-    expect(normalizeStetCSSNumericValue(css, 1)).toEqual({ kind: 'number', value: 1 })
-    expect(normalizeStetCSSNumericValue(css, '1rem')).toEqual({ kind: 'rem', value: 1 })
-    expect(normalizeStetCSSNumericValue(css, '16px')).toEqual({ kind: 'rem', value: 1 })
-    expect(normalizeStetCSSNumericValue(css, '4x')).toEqual({ kind: 'rem', value: 1 })
-    expect(normalizeStetCSSNumericValue(css, '50%')).toBeUndefined()
-  })
-
   /**
-   * Prevents: lint's canonical-class suggestions treating `x` values as equal to the wrong rem
-   * length under a non-default `base-unit`: under `4px`, `4x` must equal `1rem`; under `1em`,
-   * `4x` has no fixed rem length, so it must not count as equal to any rem or px value.
-   * Reverse-checked: in `inspect.ts`, dropping `/ ROOT_FONT_SIZE` from the px branch reds the
-   * `4px` row only; returning `{ kind: 'rem', value: numericValue * baseUnit.value }` from the
-   * default branch reds the `1em` row only.
+   * Prevents: lint's canonical-class suggestions treating `4x` as a length after `x` stopped
+   * being a spacing multiple (#162), so `m:4x` would still be offered as `m:1rem`'s token.
+   * Reverse-checked: returning `{ kind: 'rem', value: numericValue / 4 }` for `x` reds only this test.
    */
-  test.each([
-    { baseUnit: '4px', expected: { kind: 'rem', value: 1 } },
-    { baseUnit: '1em', expected: undefined }
-  ])('normalizes 4x under base-unit $baseUnit', ({ baseUnit, expected }) => {
-    const manifest = cloneManifest()
-    manifest.settings = { ...manifest.settings, baseUnit }
-
-    expect(normalizeStetCSSNumericValue(StetCSS.create({ manifest }), '4x')).toEqual(expected)
+  test('normalizes number, rem and px numeric values, and leaves x alone', () => {
+    expect(normalizeStetCSSNumericValue(1)).toEqual({ kind: 'number', value: 1 })
+    expect(normalizeStetCSSNumericValue('1rem')).toEqual({ kind: 'rem', value: 1 })
+    expect(normalizeStetCSSNumericValue('16px')).toEqual({ kind: 'rem', value: 1 })
+    expect(normalizeStetCSSNumericValue('4x')).toBeUndefined()
+    expect(normalizeStetCSSNumericValue('50%')).toBeUndefined()
   })
 })

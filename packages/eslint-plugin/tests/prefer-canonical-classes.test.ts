@@ -104,7 +104,7 @@ jsxTester.run('prefer canonical classes', rule, {
             ]
         },
         {
-            code: `<div class="m:4x margin:md padding-inline:md color:red-60">Aliases</div>`,
+            code: `<div class="m:1rem margin:md padding-inline:md color:red-60">Aliases</div>`,
             output: `<div class="m:md m:md px:md fg:red-60">Aliases</div>`,
             errors: [
                 { messageId: 'preferClass' },

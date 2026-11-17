@@ -25,7 +25,7 @@ import type {
   Token,
   TokenOrValue
 } from 'lightningcss'
-import { ROOT_FONT_SIZE, parseBaseUnit } from '@stet-css/engine/compiler'
+import { ROOT_FONT_SIZE } from '@stet-css/engine/compiler'
 import { assertCSSNestingDepth } from './css-nesting'
 import { decodeCSS, encodeCSS, getCSSTransform, setCSSTransform, type CSSTransform } from './css-transform'
 import {
@@ -320,9 +320,7 @@ function parseStetOption(manifestInput: CSSDirectiveManifestInput, property: str
     case 'root-size':
       throw new Error(`@settings root-size was removed; rem conversion always uses ${ROOT_FONT_SIZE}px`)
     case 'base-unit':
-      if (!parseBaseUnit(value)) throw new Error('base-unit must be a CSS length such as 0.25rem or 4px')
-      manifestInput.baseUnit = value
-      return true
+      throw new Error('@settings base-unit was removed; x is the native CSS resolution unit, so write spacing as a length, for example p:1rem instead of p:4x')
     case 'default-mode':
       manifestInput.defaultMode = parseDefaultMode(value)
       return true

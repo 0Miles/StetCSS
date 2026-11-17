@@ -46,12 +46,12 @@ const migratedRuleExpectations = [
   {
     source: "legacy core tests/rules/border-radius.test.ts",
     cases: [
-      ["r:4x", "border-radius:1rem"],
+      ["r:1rem", "border-radius:1rem"],
       ["border-radius:1rem", "border-radius:1rem"],
-      ["border-top-left-radius:4x", "border-top-left-radius:1rem"],
-      ["border-top-right-radius:4x", "border-top-right-radius:1rem"],
-      ["border-bottom-left-radius:4x", "border-bottom-left-radius:1rem"],
-      ["border-bottom-right-radius:4x", "border-bottom-right-radius:1rem"],
+      ["border-top-left-radius:1rem", "border-top-left-radius:1rem"],
+      ["border-top-right-radius:1rem", "border-top-right-radius:1rem"],
+      ["border-bottom-left-radius:1rem", "border-bottom-left-radius:1rem"],
+      ["border-bottom-right-radius:1rem", "border-bottom-right-radius:1rem"],
     ]
   },
   {
@@ -166,40 +166,40 @@ const migratedRuleExpectations = [
   {
     source: "legacy core tests/rules/gap.test.ts",
     cases: [
-      ["gap:4x", "gap:1rem"],
+      ["gap:1rem", "gap:1rem"],
     ]
   },
   {
     source: "legacy core tests/rules/logical-properties.test.ts",
     cases: [
-      ["mys:4x", "margin-block-start:1rem"],
-      ["mye:4x", "margin-block-end:1rem"],
-      ["margin-block:4x", "margin-block:1rem"],
-      ["pys:4x", "padding-block-start:1rem"],
-      ["pye:4x", "padding-block-end:1rem"],
-      ["padding-block:4x", "padding-block:1rem"],
-      ["ixs:4x", "inset-inline-start:1rem"],
-      ["ixe:4x", "inset-inline-end:1rem"],
-      ["ix:4x", "inset-inline:1rem"],
-      ["iys:4x", "inset-block-start:1rem"],
-      ["iye:4x", "inset-block-end:1rem"],
-      ["iy:4x", "inset-block:1rem"],
-      ["contain-intrinsic-inline-size:4x", "contain-intrinsic-inline-size:1rem"],
-      ["contain-intrinsic-block-size:4x", "contain-intrinsic-block-size:1rem"],
+      ["mys:1rem", "margin-block-start:1rem"],
+      ["mye:1rem", "margin-block-end:1rem"],
+      ["margin-block:1rem", "margin-block:1rem"],
+      ["pys:1rem", "padding-block-start:1rem"],
+      ["pye:1rem", "padding-block-end:1rem"],
+      ["padding-block:1rem", "padding-block:1rem"],
+      ["ixs:1rem", "inset-inline-start:1rem"],
+      ["ixe:1rem", "inset-inline-end:1rem"],
+      ["ix:1rem", "inset-inline:1rem"],
+      ["iys:1rem", "inset-block-start:1rem"],
+      ["iye:1rem", "inset-block-end:1rem"],
+      ["iy:1rem", "inset-block:1rem"],
+      ["contain-intrinsic-inline-size:1rem", "contain-intrinsic-inline-size:1rem"],
+      ["contain-intrinsic-block-size:1rem", "contain-intrinsic-block-size:1rem"],
     ]
   },
   {
     source: "legacy core tests/rules/margin.test.ts",
     cases: [
-      ["ml:4x", "margin-left:1rem"],
-      ["mr:4x", "margin-right:1rem"],
-      ["mt:4x", "margin-top:1rem"],
-      ["mb:4x", "margin-bottom:1rem"],
-      ["m:4x", "margin:1rem"],
+      ["ml:1rem", "margin-left:1rem"],
+      ["mr:1rem", "margin-right:1rem"],
+      ["mt:1rem", "margin-top:1rem"],
+      ["mb:1rem", "margin-bottom:1rem"],
+      ["m:1rem", "margin:1rem"],
       ["m:1px", "margin:1px"],
-      ["mxs:4x", "margin-inline-start:1rem"],
-      ["mxe:4x", "margin-inline-end:1rem"],
-      ["mx:4x", "margin-inline:1rem"],
+      ["mxs:1rem", "margin-inline-start:1rem"],
+      ["mxe:1rem", "margin-inline-end:1rem"],
+      ["mx:1rem", "margin-inline:1rem"],
     ]
   },
   {
@@ -235,34 +235,34 @@ const migratedRuleExpectations = [
   {
     source: "legacy core tests/rules/padding.test.ts",
     cases: [
-      ["pl:4x", "padding-left:1rem"],
-      ["pr:4x", "padding-right:1rem"],
-      ["pt:4x", "padding-top:1rem"],
-      ["pb:4x", "padding-bottom:1rem"],
-      ["p:4x", "padding:1rem"],
-      ["pxs:4x", "padding-inline-start:1rem"],
-      ["pxe:4x", "padding-inline-end:1rem"],
-      ["px:4x", "padding-inline:1rem"],
+      ["pl:1rem", "padding-left:1rem"],
+      ["pr:1rem", "padding-right:1rem"],
+      ["pt:1rem", "padding-top:1rem"],
+      ["pb:1rem", "padding-bottom:1rem"],
+      ["p:1rem", "padding:1rem"],
+      ["pxs:1rem", "padding-inline-start:1rem"],
+      ["pxe:1rem", "padding-inline-end:1rem"],
+      ["px:1rem", "padding-inline:1rem"],
     ]
   },
   {
     source: "legacy core tests/rules/scroll-margin.test.ts",
     cases: [
-      ["scroll-ml:4x", "scroll-margin-left:1rem"],
-      ["scroll-mr:4x", "scroll-margin-right:1rem"],
-      ["scroll-mt:4x", "scroll-margin-top:1rem"],
-      ["scroll-mb:4x", "scroll-margin-bottom:1rem"],
-      ["scroll-m:4x", "scroll-margin:1rem"],
+      ["scroll-ml:1rem", "scroll-margin-left:1rem"],
+      ["scroll-mr:1rem", "scroll-margin-right:1rem"],
+      ["scroll-mt:1rem", "scroll-margin-top:1rem"],
+      ["scroll-mb:1rem", "scroll-margin-bottom:1rem"],
+      ["scroll-m:1rem", "scroll-margin:1rem"],
     ]
   },
   {
     source: "legacy core tests/rules/scroll-padding.test.ts",
     cases: [
-      ["scroll-pl:4x", "scroll-padding-left:1rem"],
-      ["scroll-pr:4x", "scroll-padding-right:1rem"],
-      ["scroll-pt:4x", "scroll-padding-top:1rem"],
-      ["scroll-pb:4x", "scroll-padding-bottom:1rem"],
-      ["scroll-p:4x", "scroll-padding:1rem"],
+      ["scroll-pl:1rem", "scroll-padding-left:1rem"],
+      ["scroll-pr:1rem", "scroll-padding-right:1rem"],
+      ["scroll-pt:1rem", "scroll-padding-top:1rem"],
+      ["scroll-pb:1rem", "scroll-padding-bottom:1rem"],
+      ["scroll-p:1rem", "scroll-padding:1rem"],
     ]
   },
   {

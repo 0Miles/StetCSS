@@ -1,4 +1,4 @@
-/** CSS `<length>` units: what a length such as the `base-unit` setting may end in. */
+/** CSS `<length>` units. */
 export const STET_CSS_LENGTH_UNITS = [
   'cm',
   'mm',

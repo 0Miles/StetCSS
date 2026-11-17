@@ -103,13 +103,13 @@ test('media', () => {
 
 test('wxh', () => {
     expect(extractClassCandidates(`
-        min:10x
+        min:2.5rem
         calc(100vw-3.75rem)x20rem
         15pxxcalc(100vh-100px)
         calc(100vw-3.75rem)xcalc(100vh-100px)
         class="logo"
     `)).toEqual([
-        'min:10x',
+        'min:2.5rem',
         'calc(100vw-3.75rem)x20rem',
         '15pxxcalc(100vh-100px)',
         'calc(100vw-3.75rem)xcalc(100vh-100px)',

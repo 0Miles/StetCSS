@@ -205,7 +205,7 @@ describe('lint command', () => {
   it('prints machine-readable diagnostics as json', () => {
     const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'stet-css-cli-lint-json-'))
     try {
-      fs.writeFileSync(resolve(cwd, 'index.html'), '<div class="fg:white m:2x text-decoration:bad()"></div>')
+      fs.writeFileSync(resolve(cwd, 'index.html'), '<div class="fg:white m:0.5rem text-decoration:bad()"></div>')
       const error = runFailedCLI(['lint', 'index.html'], { cwd })
       expect(error.status).toBe(1)
       const report = JSON.parse(String(error.stdout))
@@ -236,7 +236,7 @@ describe('lint command', () => {
         'never'
       ], {
         cwd,
-        input: '<div className="fg:white m:2x"></div>'
+        input: '<div className="fg:white m:0.5rem"></div>'
       })
       const report = JSON.parse(output)
       expect(report.files).toHaveLength(1)
@@ -293,7 +293,7 @@ describe('lint command', () => {
     const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'stet-css-cli-lint-fix-'))
     try {
       const file = resolve(cwd, 'index.html')
-      fs.writeFileSync(file, '<div class="fg:white m:2x"></div>')
+      fs.writeFileSync(file, '<div class="fg:white m:0.5rem"></div>')
       runCLI(['lint', '--fix', 'index.html'], { cwd })
       expect(fs.readFileSync(file, 'utf8')).toBe('<div class="m:xs fg:white"></div>')
     } finally {
