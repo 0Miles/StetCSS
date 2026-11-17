@@ -52,8 +52,9 @@ export interface CreateStetCSSManifestOptions {
 }
 
 const NUMERIC_THEME_NAMESPACES = new Set(['font-size', 'radius', 'spacing', 'breakpoint', 'container'])
-const UNITFUL_NUMERIC_TOKEN = /^([+-]?(?:\d+(?:\.\d+)?|\.\d+))(px|rem)?$/
-const CONDITION_LENGTH_TOKEN = new RegExp(`^([+-]?(?:\\d+(?:\\.\\d+)?|\\.\\d+))(${STET_CSS_LENGTH_UNITS.join('|')})?$`, 'i')
+const NUMBER_PATTERN = String.raw`[+-]?(?:\d+(?:\.\d+)?|\.\d+)`
+const UNITFUL_NUMERIC_TOKEN = new RegExp(`^(${NUMBER_PATTERN})(px|rem)?$`)
+const CONDITION_LENGTH_TOKEN = new RegExp(`^(${NUMBER_PATTERN})(${STET_CSS_LENGTH_UNITS.join('|')})?$`, 'i')
 
 export interface ResolvedCSSDirectiveVariableName {
   name: string
