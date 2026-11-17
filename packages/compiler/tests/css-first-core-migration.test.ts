@@ -1636,12 +1636,31 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     })
     expect(manifest.containerConditions?.panel).toMatchObject({
       id: 'container',
-      nodes: [expect.objectContaining({ value: 32, unit: 'rem' })]
+      nodes: [expect.objectContaining({ value: 512, unit: 'px' })]
     })
     expect(css.createRule('m:card')?.text).toBe('.m\\:card{margin:var(--spacing-card)}')
     expect(css.createRule('m:-card')?.text).toBe('.m\\:-card{margin:calc(var(--spacing-card) * -1)}')
     expect(css.createRule('r:card')?.text).toBe('.r\\:card{border-radius:var(--radius-card)}')
     expect(css.createRule('block@card')?.text).toContain('@media (width>=48rem)')
+  })
+
+  /**
+   * Prevents: breakpoint and container tokens being rewritten into rem, so a `768px` breakpoint
+   * drifts from 768px once the user changes the browser's font size, and an `em` token is not
+   * recognised as a breakpoint at all, turning `@x` into `@container x`. Tokens keep the value and
+   * unit as written, unitless ones included (like `font:14`).
+   */
+  test.each([
+    ['--breakpoint-tab: 768px', 'block@tab', '@media (width>=768px){.block\\@tab{display:block}}'],
+    ['--breakpoint-x: 50em', 'block@x', '@media (width>=50em){.block\\@x{display:block}}'],
+    ['--breakpoint-bare: 900', 'block@bare', '@media (width>=900){.block\\@bare{display:block}}'],
+    ['--container-card: 400px', 'block@container(card)', '@container (width>=400px){.block\\@container\\(card\\){display:block}}'],
+    ['--container-card: 25em', 'block@container(card)', '@container (width>=25em){.block\\@container\\(card\\){display:block}}'],
+    ['--container-card: 400', 'block@container(card)', '@container (width>=400){.block\\@container\\(card\\){display:block}}']
+  ])('keeps %s as written in %s', (declaration, className, expected) => {
+    const { manifest } = compileCSSManifest(`@theme { ${declaration}; }`, { baseManifest: defaultManifest })
+
+    expect(createTestCSS(manifest).createRule(className)?.text).toBe(expected)
   })
 
   test('lowers inline theme variables without emitting their own theme rules', () => {

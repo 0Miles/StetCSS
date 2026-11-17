@@ -29,7 +29,6 @@ import type {
 } from '@stet-css/schema/manifest'
 import { flattenStetCSSManifestVariables, groupStetCSSManifestVariables } from '@stet-css/schema/manifest'
 import {
-  ROOT_FONT_SIZE,
   createCompilerCSS,
   parseCondition,
   parseSelector
@@ -53,6 +52,7 @@ export interface CreateStetCSSManifestOptions {
 
 const NUMERIC_THEME_NAMESPACES = new Set(['font-size', 'radius', 'spacing', 'breakpoint', 'container'])
 const UNITFUL_NUMERIC_TOKEN = /^([+-]?(?:\d+(?:\.\d+)?|\.\d+))(px|rem)?$/
+const CONDITION_LENGTH_TOKEN = /^([+-]?(?:\d+(?:\.\d+)?|\.\d+))([a-z]+)?$/i
 
 export interface ResolvedCSSDirectiveVariableName {
   name: string
@@ -260,31 +260,25 @@ function compileVariables(
   return variables.length ? variables : undefined
 }
 
-function normalizeNumericConditionValue(variable: StetCSSManifestVariable) {
-  if (variable.key.startsWith('-')) return
-  const numeric = variable.numeric || (typeof variable.value === 'number' ? { value: variable.value } : undefined)
-  if (!numeric) return
-  switch (numeric.unit) {
-    case undefined:
-    case '':
-    case 'px':
-      return numeric.value / ROOT_FONT_SIZE
-    case 'rem':
-      return numeric.value
-    default:
-      return
-  }
-}
-
+// Breakpoint and container tokens keep the value and unit as written, like a native query.
 function createVariableCondition(variable: StetCSSManifestVariable, id: 'media' | 'container'): StetCSSManifestCondition | undefined {
-  const value = normalizeNumericConditionValue(variable)
-  if (value === undefined) return
+  if (variable.key.startsWith('-')) return
+  let value: number
+  let unit: string | undefined
+  if (typeof variable.value === 'number') {
+    value = variable.value
+  } else {
+    const match = CONDITION_LENGTH_TOKEN.exec(String(variable.value).trim())
+    if (!match) return
+    value = Number(match[1])
+    unit = match[2]
+  }
   return {
     id,
     nodes: [{
       type: 'number',
       value,
-      unit: 'rem'
+      ...(unit ? { unit } : {})
     }]
   }
 }
