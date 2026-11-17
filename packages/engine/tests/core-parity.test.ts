@@ -257,6 +257,28 @@ describe.concurrent('default manifest utility parity', () => {
     ]) {
       expect(css.createRule(invalidAlphaClass), invalidAlphaClass).toBeUndefined()
     }
+  })
+
+  /**
+   * Guards the alpha modifier's percentage text (#166): multiplying the binary alpha by 100 printed
+   * `.14` as `14.000000000000002%` and `.07` as `7.000000000000001%`, so the percentage must be the
+   * written decimal moved two places. Covers both the variable and the inline color path.
+   * Reverting `formatFractionPercentage` to `fraction * 100` reddens only this test in engine.
+   */
+  test('writes alpha modifiers as the decimal percentage', () => {
+    const css = createDefaultCSS()
+
+    expectClassText(css, 'bg:red/.14', 'background-color:color-mix(in oklab,var(--color-red) 14%,transparent)')
+    expectClassText(css, 'fg:blue/.07', 'color:color-mix(in oklab,var(--color-blue) 7%,transparent)')
+    expectClassText(css, 'bg:red/.5', 'background-color:color-mix(in oklab,var(--color-red) 50%,transparent)')
+    expectClassText(css, 'bg:red/.145', 'background-color:color-mix(in oklab,var(--color-red) 14.5%,transparent)')
+    expectClassText(css, 'bg:red/.0007', 'background-color:color-mix(in oklab,var(--color-red) .07%,transparent)')
+    expectClassText(css, 'fg:$color-white/.29', 'color:color-mix(in oklab,oklch(100% 0 none) 29%,transparent)')
+  })
+
+  test('executes compiled layout utilities', () => {
+    const css = createDefaultCSS()
+
     expectClassText(css, 'grid-cols:3', 'grid-template-columns:repeat(3, minmax(0, 1fr))')
     expectClassText(css, 'line-clamp:3', '-webkit-line-clamp:3')
     expectClassText(css, 'text:2xl', 'font-size:var(--font-size-2xl)')
