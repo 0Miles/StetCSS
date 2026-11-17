@@ -3,7 +3,6 @@ import type { Utility } from './utility'
 import type { Variable } from '@stet-css/schema/css-syntax'
 import type { StetCSSManifestUtilityMatcher } from '@stet-css/schema/manifest'
 import { ROOT_FONT_SIZE } from './common'
-import { assertBaseUnit } from './utils/base-unit'
 
 export interface StetCSSNormalizedNumericValue {
   kind: 'number' | 'rem'
@@ -82,7 +81,7 @@ function inspectClassNameParts(className: string) {
   }
 }
 
-export function normalizeStetCSSNumericValue(css: StetCSS, value: string | number): StetCSSNormalizedNumericValue | undefined {
+export function normalizeStetCSSNumericValue(value: string | number): StetCSSNormalizedNumericValue | undefined {
   if (typeof value === 'number') return { kind: 'number', value }
   const matches = /^([+-]?(?:\d+(?:\.\d+)?|\.\d+))([a-z%]*)$/i.exec(value)
   if (!matches) return
@@ -94,17 +93,6 @@ export function normalizeStetCSSNumericValue(css: StetCSS, value: string | numbe
       return { kind: 'rem', value: numericValue }
     case 'px':
       return { kind: 'rem', value: numericValue / ROOT_FONT_SIZE }
-    case 'x': {
-      const baseUnit = assertBaseUnit(css.settings.baseUnit)
-      switch (baseUnit.unit) {
-        case 'rem':
-          return { kind: 'rem', value: numericValue * baseUnit.value }
-        case 'px':
-          return { kind: 'rem', value: numericValue * baseUnit.value / ROOT_FONT_SIZE }
-        default:
-          return
-      }
-    }
     default:
       return
   }

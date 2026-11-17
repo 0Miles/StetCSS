@@ -266,14 +266,14 @@ describe.concurrent('migrated cascade and layer parity', () => {
 
   test('keeps declaration and media priority order', () => {
     const css = createDefaultCSS()
-    css.ensureClassRules('font:.75rem', 'font:2rem@md', 'font:1.5rem@sm', 'm:8x', 'block', 'px:4x', 'bg:blue-60:hover', 'round', 'mb:12x')
+    css.ensureClassRules('font:.75rem', 'font:2rem@md', 'font:1.5rem@sm', 'm:2rem', 'block', 'px:1rem', 'bg:blue-60:hover', 'round', 'mb:3rem')
     expect(css.utilitiesLayer.rules.map(({ name }) => name)).toEqual([
       'block',
       'round',
-      'm:8x',
-      'px:4x',
+      'm:2rem',
+      'px:1rem',
       'font:.75rem',
-      'mb:12x',
+      'mb:3rem',
       'bg:blue-60:hover',
       'font:1.5rem@sm',
       'font:2rem@md'

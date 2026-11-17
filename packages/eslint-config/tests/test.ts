@@ -9,15 +9,15 @@ test('ESLint Configuration is valid', async () => {
   expect(result[0].warningCount).toBe(9)
   expect(result[0].messages.map((eachMessage) => eachMessage.message)).toEqual(
     [
-      'Sort classes into the expected order: "m:0.625rem m:1.875rem m:5x m:3.125rem@sm m:10x@sm".',
-      'Remove classes "m:0.625rem m:5x m:10x@sm"; they are overridden by later classes "m:1.875rem m:3.125rem@sm".',
-      'Sort classes into the expected order: "block m:8x mb:12x font:.75rem font:1.5rem@sm font:2rem@md".',
+      'Sort classes into the expected order: "m:0.625rem m:1.25rem m:1.875rem m:2.5rem@sm m:3.125rem@sm".',
+      'Remove classes "m:0.625rem m:1.875rem m:3.125rem@sm"; they are overridden by later classes "m:1.25rem m:2.5rem@sm".',
+      'Sort classes into the expected order: "block m:2rem mb:3rem font:.75rem font:1.5rem@sm font:2rem@md".',
       'Use canonical class "font:xs" instead of "font:.75rem".',
       'Use canonical class "font:2xl@sm" instead of "font:1.5rem@sm".',
-      'Replace "m:8x" with "mx:8x mt:8x"; later class "mb:12x" overrides part of "m:8x".',
-      'Use canonical class "m:xl" instead of "m:8x".',
+      'Replace "m:2rem" with "mx:2rem mt:2rem"; later class "mb:3rem" overrides part of "m:2rem".',
+      'Use canonical class "m:xl" instead of "m:2rem".',
       'Use canonical class "font:3xl@md" instead of "font:2rem@md".',
-      'Use canonical class "mb:2xl" instead of "mb:12x".',
+      'Use canonical class "mb:2xl" instead of "mb:3rem".',
     ]
   )
 })
