@@ -1,5 +1,5 @@
 import { lexer, parse, walk, property as propertyName } from 'css-tree'
-import { checkNativePropertyName, matchNativeDeclarationValue } from '@stet-css/compiler/native-declaration'
+import { checkNativePropertyName, cssTreeSyntaxError, matchNativeDeclarationValue } from '@stet-css/compiler/native-declaration'
 import { type SyntaxError } from './types/syntax-error'
 
 export default function validateCSS(text: string, parseOptions = {
@@ -33,26 +33,12 @@ export default function validateCSS(text: string, parseOptions = {
 }
 
 
-export function isTargetError(error: SyntaxError | null) {
-  if (!error) {
-    return null
-  }
-
-  if (error.name !== 'SyntaxError' &&
-    error.name !== 'SyntaxMatchError' &&
-    error.name !== 'SyntaxReferenceError') {
-    return null
-  }
-
-  return error
-}
-
 export function validateAtrule(node: { name: any; prelude: any; block: { children: any[] } }) {
   const atrule = node.name
   const errors = []
   let error
 
-  if (error = isTargetError((lexer as any).checkAtruleName(atrule))) {
+  if (error = cssTreeSyntaxError((lexer as any).checkAtruleName(atrule))) {
     errors.push(Object.assign(error, {
       atrule
     }))
@@ -84,11 +70,11 @@ export function validateAtrulePrelude(atrule: string, prelude: any) {
   const errors = []
   let error: SyntaxError | null
 
-  if (error = isTargetError((lexer as any).checkAtrulePrelude(atrule, prelude))) {
+  if (error = cssTreeSyntaxError((lexer as any).checkAtrulePrelude(atrule, prelude))) {
     errors.push(Object.assign(error, {
       atrule
     }))
-  } else if (error = isTargetError(lexer.matchAtrulePrelude(atrule, prelude).error)) {
+  } else if (error = cssTreeSyntaxError(lexer.matchAtrulePrelude(atrule, prelude).error)) {
     errors.push(Object.assign(error, {
       atrule,
       ...error.rawMessage === 'Mismatch' &&
@@ -100,15 +86,15 @@ export function validateAtrulePrelude(atrule: string, prelude: any) {
 
 export function validateAtruleDescriptor(atrule: any, descriptor: string, value: any) {
   const errors = []
-  let error
+  let error: SyntaxError | null
 
-  if (error = isTargetError((lexer as any).checkAtruleDescriptorName(atrule, descriptor))) {
+  if (error = cssTreeSyntaxError((lexer as any).checkAtruleDescriptorName(atrule, descriptor))) {
     errors.push(Object.assign(error, {
       atrule,
       descriptor
     }))
   } else {
-    if (error = isTargetError(lexer.matchAtruleDescriptor(atrule, descriptor, value).error)) {
+    if (error = cssTreeSyntaxError(lexer.matchAtruleDescriptor(atrule, descriptor, value).error)) {
       errors.push(Object.assign(error, {
         atrule,
         descriptor,
@@ -129,11 +115,11 @@ export function validateDeclaration(property: string, value: any) {
     return errors
   }
 
-  if (error = checkNativePropertyName(property) as SyntaxError | null) {
+  if (error = checkNativePropertyName(property)) {
     errors.push(Object.assign(error, {
       property
     }))
-  } else if (error = matchNativeDeclarationValue(property, value) as SyntaxError | null) {
+  } else if (error = matchNativeDeclarationValue(property, value)) {
     errors.push(Object.assign(error, {
       property,
       ...error.rawMessage === 'Mismatch' &&

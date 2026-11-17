@@ -6,6 +6,7 @@ The CSS source compiler: parses StetCSS directives and native CSS, resolves the 
 
 - Entry discovery: `@stet-css/project` decides which files are project entries; the compiler compiles the entries it is given (`compileProjectManifest()`).
 - Class usage: the compiler reads only the CSS import graph; finding used classes in source files is `@stet-css/scanner`.
+- Native declaration validity: the compiler owns the one `css-tree` check of native `property: value` declarations, public as `@stet-css/compiler/native-declaration` (`checkNativePropertyName`, `matchNativeDeclarationValue`, `cssTreeNativeDeclarationMatcher`, `cssTreeSyntaxError`). Class and at-rule validity around it is `@stet-css/validator`.
 
 ## Risks
 
