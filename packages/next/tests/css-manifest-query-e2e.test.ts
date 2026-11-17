@@ -68,7 +68,7 @@ describe('css manifest query e2e', () => {
     )
 
     expect(html).toContain('data-color="#4b6fff"')
-    expect(html).toContain('data-breakpoint="1234"')
+    expect(html).toContain('data-breakpoint="1234px"')
     expect(manifestJSONFiles.length).toBeGreaterThan(0)
     expect(hasVariable('font-weight', 'bold')).toBe(true)
     expect(hasVariable('color', 'e2e')).toBe(true)
