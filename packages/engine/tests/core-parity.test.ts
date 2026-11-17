@@ -257,6 +257,9 @@ describe.concurrent('default manifest utility parity', () => {
     ]) {
       expect(css.createRule(invalidAlphaClass), invalidAlphaClass).toBeUndefined()
     }
+    expectClassText(css, 'grid-cols:3', 'grid-template-columns:repeat(3, minmax(0, 1fr))')
+    expectClassText(css, 'line-clamp:3', '-webkit-line-clamp:3')
+    expectClassText(css, 'text:2xl', 'font-size:var(--font-size-2xl)')
   })
 
   /**
@@ -274,14 +277,6 @@ describe.concurrent('default manifest utility parity', () => {
     expectClassText(css, 'bg:red/.145', 'background-color:color-mix(in oklab,var(--color-red) 14.5%,transparent)')
     expectClassText(css, 'bg:red/.0007', 'background-color:color-mix(in oklab,var(--color-red) .07%,transparent)')
     expectClassText(css, 'fg:$color-white/.29', 'color:color-mix(in oklab,oklch(100% 0 none) 29%,transparent)')
-  })
-
-  test('executes compiled layout utilities', () => {
-    const css = createDefaultCSS()
-
-    expectClassText(css, 'grid-cols:3', 'grid-template-columns:repeat(3, minmax(0, 1fr))')
-    expectClassText(css, 'line-clamp:3', '-webkit-line-clamp:3')
-    expectClassText(css, 'text:2xl', 'font-size:var(--font-size-2xl)')
   })
 
   test('resolves negative numeric aliases without synthetic variables', () => {
