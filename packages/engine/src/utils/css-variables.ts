@@ -1,4 +1,4 @@
-import { formatDimension } from './format-dimension'
+import { formatFractionPercentage } from './format-dimension'
 
 export function normalizeEngineVariableValue(value: string | number) {
   return typeof value === 'number'
@@ -14,6 +14,6 @@ export function createCSSVariableReference(name: string, alpha?: number, fallbac
 }
 
 export function createAlphaColorValue(value: string, alpha: number) {
-  return `color-mix(in oklab,${value} ${formatDimension(alpha * 100, '%')},transparent)`
+  return `color-mix(in oklab,${value} ${formatFractionPercentage(alpha)},transparent)`
 }
 
