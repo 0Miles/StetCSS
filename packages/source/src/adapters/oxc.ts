@@ -1,3 +1,4 @@
+import { decodeStetCSSJSXAttributeString } from '@stet-css/lexer'
 import { visitorKeys, type ParserOptions } from 'oxc-parser'
 import { addClassString } from './class-string'
 import { parseOxcOnSourceStack, type OxcErrorFilter } from './oxc-stack'
@@ -9,6 +10,7 @@ export const OXC_SOURCE_EXT = /\.(?:(?:[cm]?[jt]s)|(?:[jt]sx))(?:\?|$)/
 interface OxcNode {
   type: string
   value?: unknown
+  raw?: unknown
   directive?: unknown
   expressions?: unknown[]
   quasis?: {
@@ -65,6 +67,16 @@ function shouldSkipNode(node: OxcNode) {
     isRequireCall(node)
 }
 
+/**
+ * The value a JSX attribute string compiles to. Oxc keeps its character references as written,
+ * so they are decoded from the source spelling between the quotes.
+ */
+function getJSXAttributeStringValue(node: OxcNode) {
+  const value = node.value
+  if (!isOxcNode(value) || value.type !== 'Literal' || typeof value.raw !== 'string') return
+  return decodeStetCSSJSXAttributeString(value.raw.slice(1, -1)).value
+}
+
 function getTemplateLiteralValue(node: OxcNode) {
   if (node.expressions?.length) return
   const quasis = node.quasis || []
@@ -103,6 +115,14 @@ export function extractParsedOxcClasses(source: string, content: string, parse: 
     const node = stack.pop()
     if (!isOxcNode(node)) continue
     if (shouldSkipNode(node)) continue
+
+    if (node.type === 'JSXAttribute') {
+      const value = getJSXAttributeStringValue(node)
+      if (value !== undefined) {
+        addClassString(classes, value, classStringCache)
+        continue
+      }
+    }
 
     if (node.type === 'Literal' && typeof node.value === 'string') {
       addClassString(classes, node.value, classStringCache)

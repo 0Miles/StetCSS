@@ -1,9 +1,12 @@
+import { decodeStetCSSHTMLAttributeValue } from '@stet-css/lexer'
 import { extractClassCandidates } from '../extract-class-candidates'
 import { extractOxcClasses, extractParsedOxcClasses } from './oxc'
 import type { SourceAdapter, SourceAdapterInput } from './types'
 
 const SCRIPT_BLOCK = /<script\b[^>]*>([\s\S]*?)<\/script>/gi
 const STYLE_BLOCK = /<style\b[^>]*>[\s\S]*?<\/style>/gi
+// A static `class` attribute: quoted, or unquoted up to the characters that end an unquoted value.
+const STATIC_CLASS_ATTRIBUTE = /(?<=\s)class\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`{]+))/g
 
 export const ASTRO_SOURCE_EXT = /\.astro(?:\?|$)/
 
@@ -127,6 +130,18 @@ function extractFrontmatterClasses(source: string, frontmatter: string) {
   })
 }
 
+/**
+ * The Astro compiler decodes the character references in a static attribute value as the browser
+ * does, while the markup text extraction reads them as written. Adds the decoded value of every
+ * static class attribute written with a reference.
+ */
+function addDecodedClassAttributes(classes: Set<string>, markup: string) {
+  for (const match of markup.matchAll(STATIC_CLASS_ATTRIBUTE)) {
+    const value = match[1] ?? match[2] ?? match[3]!
+    if (value.includes('&')) add(classes, extractClassCandidates(decodeStetCSSHTMLAttributeValue(value).value))
+  }
+}
+
 export function extractAstroClasses(source: string, content: string): string[] {
   const classes = new Set<string>()
   const { frontmatter, markup } = extractFrontmatter(content)
@@ -144,6 +159,7 @@ export function extractAstroClasses(source: string, content: string): string[] {
   })
   template = template.replace(STYLE_BLOCK, '')
   add(classes, extractClassCandidates(template))
+  addDecodedClassAttributes(classes, template)
 
   return [...classes]
 }

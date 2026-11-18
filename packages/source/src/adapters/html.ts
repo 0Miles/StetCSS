@@ -1,3 +1,4 @@
+import { decodeStetCSSHTMLAttributeValue } from '@stet-css/lexer'
 import { Parser } from 'htmlparser2'
 import { addClassString } from './class-string'
 import { extractOxcClasses } from './oxc'
@@ -25,7 +26,9 @@ export function extractHTMLClasses(source: string, content: string): string[] {
         scriptDepth++
         return
       }
-      addClassString(classes, attributes.class, classStringCache)
+      // The parser hands the value over as written; the browser reads its character references.
+      const classList = attributes.class
+      if (classList) addClassString(classes, decodeStetCSSHTMLAttributeValue(classList).value, classStringCache)
     },
     ontext(text) {
       if (scriptDepth > 0) {

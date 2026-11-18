@@ -53,7 +53,8 @@ const RESTORE_SENTINEL = /COMPLETE-STRING--(\d+)--/g
 const MANY_COMPLETE_STRINGS = 8
 
 // ─── Hoisted regexes ─────────────────────────────────────────────────────────
-const NON_WHITESPACE_RUN = /\S+/g
+// Split on ASCII whitespace only, as the DOM splits a class list: a no-break space joins classes.
+const NON_WHITESPACE_RUN = /[^\t\n\f\r ]+/g
 const COMPLETE_STRING = /((?<!\\)["'`])(?:\\\1|(?:(?!\1))[\S\s])*(?<!\\)\1/g
 const NON_QUOTE_RUN = /[^"'`]+/g
 const SPLIT_SENTINEL_TEXT = 'SPLIT_BY_THIS'
