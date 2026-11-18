@@ -470,6 +470,42 @@ describe('source content linting', () => {
     })).toBe('<div class="block size:md"></div>')
   })
 
+  /**
+   * #196: class lists in JavaScript strings were split on their source spelling, so a sort fix
+   * moved a line continuation's backslash before the closing quote (an unterminated string) and
+   * escaped classes were checked as written. Reverse check: dropping `scriptString` from the
+   * source contexts turns both tests red. Markup attribute values hold no JavaScript escapes.
+   */
+  test('fixes JavaScript strings by their decoded classes and keeps their source spelling', () => {
+    expect(fixStetCSSContent({
+      content: 'clsx("fg:white\\\n bg:black")',
+      filePath: '/project/component.ts',
+      css
+    })).toBe('clsx("bg:black\\\n fg:white")')
+    expect(fixStetCSSContent({
+      content: '<div className={clsx("fg:white\\\n bg:black")} />',
+      filePath: '/project/content.mdx',
+      css
+    })).toBe('<div className={clsx("bg:black\\\n fg:white")} />')
+  })
+
+  test('checks escaped classes in JavaScript strings by their decoded value', () => {
+    const unknownClassNames = (content: string, filePath: string) => lintStetCSSContent({
+      content,
+      filePath,
+      css,
+      rules: { 'no-invalid-classes': true },
+      ruleOptions: { 'no-invalid-classes': { disallowUnknownClass: true } }
+    }).diagnostics
+      .filter((diagnostic) => diagnostic.code === 'unknown-class')
+      .map((diagnostic) => diagnostic.data?.className)
+
+    expect(unknownClassNames('clsx("\\x62lock")', '/project/component.ts')).toEqual([])
+    expect(unknownClassNames('<div className={clsx("\\x62lock")} />', '/project/content.mdx')).toEqual([])
+    expect(unknownClassNames('<div class="\\x62lock"></div>', '/project/index.html')).toEqual(['\\x62lock'])
+    expect(unknownClassNames('<div className="\\x62lock" />', '/project/component.tsx')).toEqual(['\\x62lock'])
+  })
+
   test('uses script language ids for cjs and typescript module files', () => {
     expect(lintStetCSSContent({
       content: 'const cls = "fg:white m:0.5rem"',
