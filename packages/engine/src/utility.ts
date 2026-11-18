@@ -101,8 +101,8 @@ function joinsCompounds(node: SelectorNode | undefined) {
  * code such as `hidden.length,` or `x.block*2` as classes: a selector-list item cannot be empty
  * (an empty one emitted the bare class), and the universal selector cannot follow the class inside
  * its compound. `ends` is false when a `:` variant follows the nodes. Inside `:of()` every item
- * must be non-empty, since its list is written before the class (`:of(.a,)` emitted `.a,`); other
- * pseudo-class functions are left to the browser. Combinators are checked on the composed
+ * must be non-empty, since each item scopes the class on its own and an empty one leaves the bare
+ * class (`:of(,.a)`); other pseudo-class functions are left to the browser. Combinators are checked on the composed
  * template by `hasDanglingCombinator`.
  */
 function isSelectorSuffix(nodes: SelectorNode[], ends: boolean, ofList = false): boolean {
