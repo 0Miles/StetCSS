@@ -29,9 +29,9 @@ describe('template literal placeholders', () => {
   })
 
   /**
-   * Reverse check: dropping the string literals of an expression turns this test and the
-   * existing nested-template-literal test red; keeping the expression code turns every test here but
-   * the unclosed-placeholder one red.
+   * Reverse check: dropping the string literals of an expression turns this test, the braces test
+   * and the nested template literals case of `tests/deep-nesting.test.ts` red; keeping the expression code turns
+   * every test here but the unclosed-placeholder ones red.
    */
   test('extracts the strings inside a placeholder expression, not its code', () => {
     expect(extractClassCandidates('`block ${on ? \'fg:red\' : "bg:blue"} ${size > 1 ? `p:${size}x mt:2` : \'\'}`')).toEqual([
@@ -43,11 +43,20 @@ describe('template literal placeholders', () => {
   })
 
   /**
-   * Reverse check: letting the closing-brace scan read a `}` inside a string turns only this test
-   * red, with the code after that brace (`size`) as a candidate.
+   * Reverse check: letting the walk read a `}` inside a string closes the placeholder early and
+   * turns this test red with the code after that brace (`size`) as a candidate.
    */
   test('closes a placeholder after the braces and strings its expression holds', () => {
     expect(extractClassCandidates('`a ${f({ k: \'}\' }) ? \'fg:red\' : size }x b`')).toEqual(['a', 'fg:red', 'b'])
+  })
+
+  /**
+   * Guards the CSS output change: an identifier in placeholder code that names a class (`block`,
+   * `hidden`) generated its rule although the host only fills in its value. Reverse check: keeping
+   * the expression code turns this test red.
+   */
+  test('extracts no class from the identifiers of placeholder code', () => {
+    expect(extractClassCandidates('`flex ${on ? block : hidden}`')).toEqual(['flex'])
   })
 
   /**
@@ -58,10 +67,27 @@ describe('template literal placeholders', () => {
     expect(extractClassCandidates('m:1 ${size fg:red')).toEqual(['m:1', 'fg:red'])
   })
 
+  /**
+   * Guards: prose that writes a lone `${`, as MDX and Astro docs pages do, ended the pass there,
+   * so every later placeholder came back as a candidate. Reverse check: stopping the pass at the
+   * first unclosed `${` turns this test red with `${size}`.
+   */
+  test('reads the placeholders after an unclosed `${`', () => {
+    expect(extractClassCandidates('Type `${` to start one.\n\n<div class={`grid ${size}`} />')).toEqual([
+      'Type',
+      'to',
+      'start',
+      'one',
+      'grid'
+    ])
+  })
+
+  /** The ticket's repro, through the adapter that reported it. */
   test('extracts only the classes beside a placeholder in Astro markup', () => {
     expect(extractAstroClasses('Page.astro', '<div class={`grid ${size}`}></div>')).toEqual(['grid'])
   })
 
+  /** The ticket's repro in a Vue class binding, which reaches text extraction the same way. */
   test('extracts only the classes beside a placeholder in a Vue class binding', async () => {
     await expect(extractVueClasses('App.vue', '<template><div :class="`grid ${size}`"></div></template>')).resolves.toEqual(['grid'])
   })

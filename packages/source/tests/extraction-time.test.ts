@@ -21,7 +21,9 @@ const shapes: [name: string, nest: (depth: number) => string][] = [
   ['unclosed style tags', (depth) => `x='block' ${'<style>'.repeat(depth)}`],
   ['unclosed HTML comments', (depth) => `x='block' ${'<!--'.repeat(depth)}`],
   ['decorator lines without a declaration', (depth) => `x='block'\n${'@x\n'.repeat(depth)}`],
-  ['a long line of at signs', (depth) => `x='block'\n${'@'.repeat(depth)}\n`]
+  ['a long line of at signs', (depth) => `x='block'\n${'@'.repeat(depth)}\n`],
+  ['unclosed placeholders', (depth) => `x='block' ${'${'.repeat(depth)}`],
+  ['unclosed placeholders in template literals', (depth) => `x='block' ${'${`'.repeat(depth)}`]
 ]
 
 /**
@@ -37,7 +39,11 @@ const shapes: [name: string, nest: (depth: number) => string][] = [
  * object-argument case; each pre-exclusion scan the case named after what it
  * strips. The braces, parentheses-before-a-colon and at-sign cases exceed the
  * budget only with several of them back; the class-attribute case pins the
- * input the deep-nesting tests hand to text extraction.
+ * input the deep-nesting tests hand to text extraction. In
+ * `src/template-placeholders.ts`, walking on past a `${` in placeholder code
+ * or scanning back for the fragment before every unclosed `${` turns the
+ * unclosed-placeholder case red, and re-walking the `${` left open inside an
+ * unclosed placeholder the template-literal case.
  */
 describe('text extraction of runs 20,000 long without whitespace', () => {
   test.each(shapes)('%s finish within a second and keep their classes', (_, nest) => {

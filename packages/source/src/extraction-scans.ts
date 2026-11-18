@@ -15,7 +15,7 @@ export const SENTINEL_PREFIX = 'COMPLETE-STRING--'
 export const SENTINEL_SUFFIX = '--'
 
 const WHITESPACE = /\s/
-const LINE_TERMINATORS = new Set(['\n', '\r', ' ', ' '])
+export const LINE_TERMINATORS = new Set(['\n', '\r', ' ', ' '])
 const TRIM_TRAILING_CHARS = new Set(['(', '[', '{', '\\', ':', '#', '=', '.'])
 const DECORATED_KEYWORDS = ['export', 'function', 'class']
 // A decorator match always ends in a line starting with one of the keywords.
