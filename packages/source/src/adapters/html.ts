@@ -28,7 +28,9 @@ export function extractHTMLClasses(source: string, content: string): string[] {
       }
       // The parser hands the value over as written; the browser reads its character references.
       const classList = attributes.class
-      if (classList) addClassString(classes, decodeStetCSSHTMLAttributeValue(classList).value, classStringCache)
+      if (classList) {
+        addClassString(classes, classList.includes('&') ? decodeStetCSSHTMLAttributeValue(classList).value : classList, classStringCache)
+      }
     },
     ontext(text) {
       if (scriptDepth > 0) {
