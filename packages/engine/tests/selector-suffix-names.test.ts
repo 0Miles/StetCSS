@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { createDefaultCSS } from './helpers/css-tester'
+import { StetCSS } from '../src'
+import { cloneManifest, createDefaultCSS } from './helpers/css-tester'
 
 function generateText(className: string) {
   const css = createDefaultCSS()
@@ -50,6 +51,25 @@ describe.concurrent('names in a selector suffix', () => {
   })
 
   /**
+   * Guards: a top-level list item made only of `_`. The descendant space adds no compound, so
+   * `hidden.a,_` emitted `.hidden\.a\,_ {display:none}`, the bare class, and every element
+   * carrying it matched, as an empty item did before #165.
+   *
+   * Reverse check: in `isSelectorSuffix` (`src/utility.ts`), ending without the last-item check
+   * outside `:of()` reddens only the three trailing `_` rows here and the trailing-`,` rows of
+   * `code-fragment-selectors.test.ts`; skipping the item check at a `,` outside `:of()` reddens
+   * only `hidden.a,_,.b` here and `hidden.a,,.b` there.
+   */
+  test.each([
+    'hidden.a,_',
+    'hidden_div,_',
+    'hidden:hover,_',
+    'hidden.a,_,.b'
+  ])('%s generates no CSS', (className) => {
+    expect(generateText(className)).toBe('')
+  })
+
+  /**
    * Guards: the checks above rejecting real selectors. Names starting with a letter, `-letter`
    * or `--`, a BEM `__` name part starting with a digit, a type selector after `_` or at the start
    * of an `:of()` item, an `:of()` item after a leading `_` or starting with `__` (the type
@@ -74,5 +94,21 @@ describe.concurrent('names in a selector suffix', () => {
     ['hidden:of(.a,__b)', '.a .hidden\\:of\\(\\.a\\,__b\\),__b .hidden\\:of\\(\\.a\\,__b\\){display:none}']
   ])('%s keeps its rule', (className, rule) => {
     expect(generateText(className)).toBe(`@layer utilities{${rule}}`)
+  })
+
+  /**
+   * Guards: the `_`-only item check rejecting an item a `:` variant completes. With the variant
+   * `&:hover`, `hidden.a,_:ho` emits `….a:hover,… :hover`, a real selector, so the last item may
+   * lack a compound when a `:` variant follows it.
+   *
+   * Reverse check: dropping `!ends` from the last-item check in `isSelectorSuffix` reddens only
+   * this test.
+   */
+  test('a `_` item a `:` variant completes keeps its rule', () => {
+    const manifest = cloneManifest()
+    manifest.variants = [...(manifest.variants || []), { token: ':ho', branches: [{ selector: '&:hover' }] }]
+    const css = StetCSS.create({ manifest })
+    css.ensureClassRules('hidden.a,_:ho')
+    expect(css.text).toBe('@layer utilities{.hidden\\.a\\,_\\:ho.a:hover,.hidden\\.a\\,_\\:ho :hover{display:none}}')
   })
 })

@@ -125,31 +125,28 @@ function continuesName(node: SelectorNode | undefined) {
 /**
  * Whether raw selector nodes glued to a class extend it into a selector list. Text scanners read
  * code such as `hidden.length,` or `x.block*2` as classes, and `_` makes a value such as
- * `transition:all_.3s` a selector: a selector-list item cannot be empty (an empty one emitted the
- * bare class), every class, id and type selector name must be a CSS identifier (`.3s` is not),
- * and a universal or type selector cannot follow the class inside its compound (`hidden.a,div`
- * emitted the class `.hidden\.a\,divdiv`). A literal `_` (BEM `__`) is a name character, not a
- * combinator. `ends` is false when a `:` variant follows the nodes. Inside `:of()` each item scopes
- * the class on its own, written before it, so every item needs a compound before any `>`, `+` or
- * `~` (`:of(,.a)`, `:of(_)` left the bare class; `:of(>)` started the rule with `>`; `:of(__a)` is
- * the type selector `__a`), and `:of` needs a selector. Other pseudo-class functions are left to the
- * browser. Combinators with nothing after them are checked on the composed template by
- * `hasDanglingCombinator`.
+ * `transition:all_.3s` a selector. A selector-list item needs a compound: an empty item or one of
+ * only a descendant space emitted the bare class (`hidden.a,,.b`, `hidden.a,_`), except a last
+ * item a `:` variant completes (`ends` is false when one follows the nodes). Every class, id and
+ * type selector name must be a CSS identifier (`.3s` is not), and a universal or type selector
+ * cannot follow the class inside its compound (`hidden.a,div` emitted the class
+ * `.hidden\.a\,divdiv`). A literal `_` (BEM `__`) is a name character, not a combinator. Inside
+ * `:of()` each item scopes the class on its own, written before it, so every item needs a compound
+ * before any `>`, `+` or `~` (`:of(,.a)`, `:of(_)` left the bare class; `:of(>)` started the rule
+ * with `>`; `:of(__a)` is the type selector `__a`), and `:of` needs a selector. Other pseudo-class
+ * functions are left to the browser. Combinators with nothing after them are checked on the
+ * composed template by `hasDanglingCombinator`.
  */
 function isSelectorSuffix(nodes: SelectorNode[], ends: boolean, ofList = false): boolean {
-  let itemHasCompound = false
+  /** Whether the current list item has a compound; outside `:of()` the first item is the class. */
+  let itemHasCompound = !ofList
   for (let index = 0; index < nodes.length; index++) {
     const node = nodes[index]
     const previous = nodes[index - 1]
     if (hasInvalidName(node, previous)) return false
     if (node.type === 'separator') {
-      if (ofList) {
-        if (!itemHasCompound) return false
-        itemHasCompound = false
-        continue
-      }
-      const following = nodes[index + 1]
-      if (following ? following.type === 'separator' : ends) return false
+      if (!itemHasCompound) return false
+      itemHasCompound = false
       continue
     }
     if (node.type === 'combinator' && !continuesName(node)) {
@@ -165,7 +162,7 @@ function isSelectorSuffix(nodes: SelectorNode[], ends: boolean, ofList = false):
       if (!node.children?.length || !isSelectorSuffix(node.children, true, true)) return false
     }
   }
-  return !ofList || itemHasCompound
+  return itemHasCompound || !ofList && !ends
 }
 
 /** Functions whose arguments may hold empty items: `var(--x,)`, `env(a,)`, unquoted `url(a,)`. */
