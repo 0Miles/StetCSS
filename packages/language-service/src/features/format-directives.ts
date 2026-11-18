@@ -4,16 +4,9 @@ import {
 } from '@stet-css/language'
 import type { Range, TextEdit } from 'vscode-languageserver-protocol'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
+import { collectSFCStyleBlocks, CSS_STYLE_LANGUAGE_IDS } from '../utils/sfc-style-blocks'
 
-const CSS_FORMAT_LANGUAGE_IDS = new Set(['css', 'scss', 'less'])
 const SFC_FORMAT_LANGUAGE_IDS = new Set(['vue', 'svelte', 'astro'])
-// quoted attribute values may contain `>`, so they are matched whole
-const STYLE_BLOCK_RE = /<style\b((?:[^>"']|"[^"]*"|'[^']*')*)>([\s\S]*?)<\/style>/gi
-
-function getSFCStyleLanguage(attributes: string) {
-  const match = /\blang\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s>]+))/i.exec(attributes)
-  return (match?.[1] || match?.[2] || match?.[3] || 'css').toLowerCase()
-}
 
 function toOffsetRange(document: TextDocument, range?: Range) {
   if (!range) return
@@ -47,13 +40,7 @@ function collectSFCFormatEdits(document: TextDocument, range?: Range) {
   const source = document.getText()
   const offsetRange = toOffsetRange(document, range)
   const edits: StetCSSDirectiveFormatEdit[] = []
-  STYLE_BLOCK_RE.lastIndex = 0
-  for (const match of source.matchAll(STYLE_BLOCK_RE)) {
-    const styleLanguage = getSFCStyleLanguage(match[1])
-    if (!CSS_FORMAT_LANGUAGE_IDS.has(styleLanguage)) continue
-    const styleText = match[2]
-    // content starts right after the opening tag `<style${attributes}>`, which an attribute may repeat
-    const styleStart = (match.index || 0) + '<style'.length + match[1].length + '>'.length
+  for (const { content: styleText, start: styleStart } of collectSFCStyleBlocks(source)) {
     const styleEnd = styleStart + styleText.length
     const styleRange = { start: styleStart, end: styleEnd }
     if (offsetRange && !intersects(offsetRange, styleRange)) continue
@@ -75,7 +62,7 @@ function collectSFCFormatEdits(document: TextDocument, range?: Range) {
 }
 
 export default function formatDirectives(document: TextDocument, range?: Range): TextEdit[] | undefined {
-  if (CSS_FORMAT_LANGUAGE_IDS.has(document.languageId)) {
+  if (CSS_STYLE_LANGUAGE_IDS.has(document.languageId)) {
     return collectCSSDocumentFormatEdits(document, range)
   }
   if (SFC_FORMAT_LANGUAGE_IDS.has(document.languageId)) {
