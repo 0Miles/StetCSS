@@ -21,4 +21,4 @@ const report = await createStetCSSInspectionReport({
 
 The report uses `version: 1` and includes scanner state, stylesheet entries, generated CSS metadata, missing CSS checks, per-file discoveries, diagnostics, and summary counts.
 
-Each file's `discovered` classes are the candidates that file contains, so a class several files use is listed under each of them. An invalid-class diagnostic points at the first file, in input order, that contains the class. A file's `changed` flag says whether it brought classes no earlier-scanned file had, so it can be `false` for a file whose classes another file already brought.
+Each file's `discovered` classes are the candidates that file contains, so a class several files use is listed under each of them. An invalid-class diagnostic points at the first file, in input order, that contains the class. A file's `changed` flag says whether its scan brought classes no other scan had brought yet, in the order scans finish rather than input order, so it can be `false` for a file whose classes another file already brought.
