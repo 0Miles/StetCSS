@@ -1,4 +1,4 @@
-import CSSScanner from '@stet-css/scanner'
+import CSSScanner, { type ScannerSourceResult } from '@stet-css/scanner'
 import {
   createExtractedCSSResult,
   getStyleCSSSourcesDirectives,
@@ -158,10 +158,6 @@ async function resolveSourcePaths(
 
 function sortedValues(values: Iterable<string>) {
   return [...new Set(values)].sort()
-}
-
-function diffSet(after: Set<string>, before: Set<string>) {
-  return sortedValues([...after].filter((value) => !before.has(value)))
 }
 
 function parseClassChecks(value: string[] | string | undefined) {
@@ -332,27 +328,28 @@ async function registerManagedCSSEntries(
   }
 }
 
-async function scanSourceFile(
+/**
+ * One file's own candidates, classified by the scanner's class sets once every file is
+ * scanned, so a class several files use is listed under each of them.
+ */
+function inspectSourceFile(
   scanner: CSSScanner,
   source: string,
   filePath: string,
+  scan: ScannerSourceResult,
   firstSourceByClass: Map<string, string>
-): Promise<StetCSSSourceInspection> {
-  const beforeLatent = new Set(scanner.latentClasses)
-  const beforeValid = new Set(scanner.validClasses)
-  const beforeInvalid = new Set(scanner.invalidClasses)
-  const changed = await scanner.scan(source, fs.readFileSync(filePath, 'utf8'))
-  const latent = diffSet(scanner.latentClasses, beforeLatent)
-  const valid = diffSet(scanner.validClasses, beforeValid)
-  const invalid = diffSet(scanner.invalidClasses, beforeInvalid)
-  for (const className of [...latent, ...valid, ...invalid]) {
+): StetCSSSourceInspection {
+  const latent = sortedValues(scan.candidates)
+  const valid = latent.filter((className) => scanner.validClasses.has(className))
+  const invalid = latent.filter((className) => scanner.invalidClasses.has(className))
+  for (const className of latent) {
     if (!firstSourceByClass.has(className)) firstSourceByClass.set(className, filePath)
   }
   return {
     filePath,
     source,
     scanned: true,
-    changed,
+    changed: scan.changed,
     discovered: {
       latent,
       valid,
@@ -463,7 +460,12 @@ export async function createStetCSSInspectionReport(options: CreateStetCSSInspec
     })))
     const sourcePaths = await resolveSourcePaths(scanner, styleCSSSources, sources, options.ignore)
     const resolvedSourcePaths = await Promise.all(sourcePaths.map((source) => resolveFilePath(cwd, source, options.resolveExistingFile)))
-    const files = await Promise.all(sourcePaths.map((source, index) => scanSourceFile(scanner, source, resolvedSourcePaths[index], firstSourceByClass)))
+    const scans = await Promise.all(sourcePaths.map((source, index) => scanner.scanSource(
+      source, fs.readFileSync(resolvedSourcePaths[index], 'utf8')
+    )))
+    const files = sourcePaths.map((source, index) => inspectSourceFile(
+      scanner, source, resolvedSourcePaths[index], scans[index], firstSourceByClass
+    ))
     const cssResult = await createExtractedCSSResult({
       scanner,
       styleCSSSources,
