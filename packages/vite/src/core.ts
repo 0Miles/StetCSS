@@ -36,6 +36,8 @@ export interface PluginContext {
   virtualCSSImporters?: Set<string>
   /** Vite environments whose managed CSS imports emitted the slot placeholder. */
   virtualCSSPlaceholderEnvironments?: Set<string>
+  /** Names of the `@layer` statements build host sources lead their kept `@import` statements with. */
+  hostLayerStatements?: Set<string>
   styleCSSSources?: StyleCSSSources
   emittedGlobals?: StetCSSEmittedGlobals
   /** The last extracted CSS, compared on source file changes to skip no-op HMR updates. */
