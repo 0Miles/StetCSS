@@ -1,6 +1,7 @@
 import { RuleContext } from '@typescript-eslint/utils/ts-eslint'
 import {
   decodeStetCSSScriptString,
+  isASCIIWhitespace,
   parseStetCSSClassList,
   type StetCSSScriptStringQuote
 } from '@stet-css/lexer'
@@ -44,7 +45,6 @@ export interface ExpressionNeighbours {
 }
 
 const QUOTED_RE = /^(['"`])([\s\S]*)\1$/
-const WHITESPACE_RE = /\s/
 
 /**
  * The `[start, end)` part of `text` that holds only whole classes. Text touching an expression
@@ -52,16 +52,19 @@ const WHITESPACE_RE = /\s/
  * deduplicating or validating it would split or delete that class. Undefined when no whole class
  * remains.
  */
-export function getWholeClassRange(text: string, neighbours: ExpressionNeighbours = {}): [number, number] | undefined {
+function getWholeClassRange(text: string, neighbours: ExpressionNeighbours = {}): [number, number] | undefined {
   let start = 0
   let end = text.length
+  // Split where the lexer splits classes: ASCII whitespace only, so NBSP stays inside a fragment.
   if (neighbours.before) {
-    while (start < end && !WHITESPACE_RE.test(text[start])) start++
+    while (start < end && !isASCIIWhitespace(text[start])) start++
   }
   if (neighbours.after) {
-    while (end > start && !WHITESPACE_RE.test(text[end - 1])) end--
+    while (end > start && !isASCIIWhitespace(text[end - 1])) end--
   }
-  return /\S/.test(text.slice(start, end)) ? [start, end] : undefined
+  for (let index = start; index < end; index++) {
+    if (!isASCIIWhitespace(text[index])) return [start, end]
+  }
 }
 
 /**
