@@ -28,10 +28,15 @@ function isConditionFeatureName(value: string) {
   return CONDITION_COMPARABLE_FEATURES.includes(resolveConditionFeatureName(value))
 }
 
-/** `min-resolution:1.5dppx` names the `resolution` feature, so it queries the viewport like `resolution>=1.5dppx`. */
-function isConditionFeatureToken(raw: string) {
-  const [name] = splitCharOutsideQuotes(raw, ':')
-  return isConditionFeatureName(name.replace(/^(?:min|max)-/, ''))
+/**
+ * Whether a leading token queries the viewport. A colon-form feature (`min-width:600px`) keeps the
+ * `@container` default unless it is `resolution`, which a container query cannot test.
+ */
+function isMediaFeatureToken(raw: string) {
+  const [name, value] = splitCharOutsideQuotes(raw, ':')
+  return value
+    ? name.replace(/^(?:min|max)-/, '') === 'resolution'
+    : isConditionFeatureName(name)
 }
 
 function isConditionIdentifier(value: string): value is StetCSSManifestConditionIdentifier {
@@ -96,7 +101,7 @@ export default function parseCondition(token: string, css: StetCSS, isRaw = true
             return
           } else if (definedCondition) {
             id = definedCondition.id
-          } else if (isConditionFeatureToken(firstToken)) {
+          } else if (isMediaFeatureToken(firstToken)) {
             id = 'media'
           } else if (firstToken.charAt(0).match(/[a-zA-Z-]/)) {
             id = 'container'
