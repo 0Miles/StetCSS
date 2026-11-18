@@ -19,6 +19,13 @@ interface ScannerResetOptions {
   emit?: boolean
 }
 
+export interface ScannerSourceResult {
+  /** Whether the source brought candidates this scanner had not seen, as `scan` returns. */
+  changed: boolean
+  /** Every unique class candidate the source contains, in source order. */
+  candidates: string[]
+}
+
 /**
  * What a first-party caller validates candidates against. Not a user option: projects
  * configure classes in their CSS entry.
@@ -125,15 +132,50 @@ export default class CSSScanner extends EventEmitter {
    * @returns Promise<string[]> Latent classes
    */
   async collectCandidates(source: string, content: string): Promise<string[]> {
+    return this.addLatentClasses(await this.extractCandidates(source, content))
+  }
+
+  /**
+   * @description Extract trusted content candidates and scan.
+   * @param source
+   * @param content
+   * @returns Whether the content brought candidates this scanner had not seen
+   */
+  async scan(source: string, content: string): Promise<boolean> {
+    if (!content || this.isUnchangedSource(source, content)) {
+      return false
+    }
+    return this.validateCandidates(await this.extractCandidates(source, content))
+  }
+
+  /**
+   * Scans like `scan` and also returns every unique candidate this source contains, including
+   * ones another source already brought, so a caller can tell which classes each source uses.
+   */
+  async scanSource(source: string, content: string): Promise<ScannerSourceResult> {
+    if (!content) {
+      return { changed: false, candidates: [] }
+    }
+    const unchanged = this.isUnchangedSource(source, content)
+    const candidates = await this.extractCandidates(source, content)
+    return {
+      changed: unchanged ? false : this.validateCandidates(candidates),
+      candidates
+    }
+  }
+
+  private async extractCandidates(source: string, content: string): Promise<string[]> {
     if (!source || !content) {
       return []
     }
-    const extractedClasses = await extractSourceClassCandidates({ source, content }, this.options.adapters)
+    return [...new Set(await extractSourceClassCandidates({ source, content }, this.options.adapters))]
+  }
+
+  /** Adds candidates to the latent classes and returns the ones this scanner had not seen. */
+  private addLatentClasses(candidates: Iterable<string>): string[] {
     const latentClasses: string[] = []
-    for (const eachLatentClasses of extractedClasses) {
-      if (this.latentClasses.has(eachLatentClasses)) {
-        continue
-      } else {
+    for (const eachLatentClasses of candidates) {
+      if (!this.latentClasses.has(eachLatentClasses)) {
         this.latentClasses.add(eachLatentClasses)
         latentClasses.push(eachLatentClasses)
       }
@@ -142,30 +184,29 @@ export default class CSSScanner extends EventEmitter {
   }
 
   /**
-   * @description Extract trusted content candidates and scan.
-   * @param source
-   * @param content
-   * @returns string[] Latent classes
+   * Whether this exact (source, content) pair was already processed; records it otherwise.
+   * HMR commonly re-fires unchanged files; vite can also call `transform` on the same module
+   * twice. Hashing 1 KB of source via SHA-1 is ~2 µs; running scan + validate on it is ms.
    */
-  async scan(source: string, content: string): Promise<boolean> {
-    if (!content) {
+  private isUnchangedSource(source: string, content: string): boolean {
+    if (!source) {
       return false
     }
-
-    // Skip the whole pipeline when this exact (source, content) pair has
-    // already been processed. HMR commonly re-fires unchanged files; vite
-    // can also call `transform` on the same module twice. Hashing 1 KB of
-    // source via SHA-1 is ~2 µs; running scan + validate on it is ms.
-    if (source) {
-      const hash = createHash('sha1').update(content).digest('hex')
-      if (this.contentHashes.get(source) === hash) {
-        return false
-      }
-      this.contentHashes.set(source, hash)
+    const hash = createHash('sha1').update(content).digest('hex')
+    if (this.contentHashes.get(source) === hash) {
+      return true
     }
+    this.contentHashes.set(source, hash)
+    return false
+  }
 
+  /**
+   * Validates the candidates this scanner has not seen yet and inserts their rules.
+   * @returns Whether any candidate was new
+   */
+  private validateCandidates(candidates: Iterable<string>): boolean {
     // Only candidates this scanner has not seen yet; valid and invalid classes are subsets.
-    const latentClasses = await this.collectCandidates(source, content)
+    const latentClasses = this.addLatentClasses(candidates)
     if (!latentClasses.length) {
       return false
     }
