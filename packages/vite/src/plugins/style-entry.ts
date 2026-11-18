@@ -15,6 +15,7 @@ import { getScanner } from '../utils/scanner-context'
 import { getEnvironmentName } from '../utils/environment'
 import { getProjectDir } from '../utils/project-dir'
 import { createSlotCSSRule } from '../utils/slot'
+import { collectLayerStatementsBeforeImports } from '../utils/layer-order'
 import { createBuildDigest } from '../utils/build-digest'
 
 const RESOLVED_VIRTUAL_CSS_ID = '\0' + VIRTUAL_CSS_ID
@@ -93,12 +94,20 @@ export default function StyleEntryPlugin(context: PluginContext): Plugin {
         markPlaceholderEmitted(context, this)
       }
 
+      const isServe = context.config?.command === 'serve'
+      const hostSource = createStyleCSSHostSource(code, {
+        stetSource,
+        // A build splices the CSS into the placeholder later; its layers come from the entry.
+        ...(isServe ? {} : { stetLayerSource: resolvedStyleSource.source })
+      })
+      if (!isServe) {
+        // Vite hoists the kept imports past these statements; generateBundle moves them back.
+        for (const statement of collectLayerStatementsBeforeImports(hostSource)) {
+          (context.hostLayerStatements ??= new Set()).add(statement)
+        }
+      }
       return {
-        code: createStyleCSSHostSource(code, {
-          stetSource,
-          // A build splices the CSS into the placeholder later; its layers come from the entry.
-          ...(context.config?.command === 'serve' ? {} : { stetLayerSource: resolvedStyleSource.source })
-        }),
+        code: hostSource,
         map: null
       }
     }

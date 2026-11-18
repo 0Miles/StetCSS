@@ -41,6 +41,34 @@ describe('StyleEntryPlugin Vite build integration', () => {
     expect(css).not.toContain('@stet-css/core')
   })
 
+  /**
+   * Guards #183 in a production build: Vite's CSS finalizer hoists every `@import` to the start of
+   * the asset, past the `@layer` statement the host source put first, so `layer(b)` was declared
+   * before every preset layer and lost to all of them. The built asset declares the preset layers
+   * first again. Dev hands the host source over as written and needs no repair.
+   * Reverse check: splicing without `restoreLayerStatementsBeforeImports` in `generateBundle` reds
+   * only this test.
+   */
+  test('keeps a layered @import written after @stet-css/core after the preset layers', async () => {
+    const { css } = await buildProject({
+      appClass: 'block',
+      plugins: [
+        stetCSS()
+      ],
+      prefix: 'stet-css-vite-import-layer-order-',
+      styleCSS: [
+        '@import "@stet-css/core";',
+        '@import url("https://example.com/b.css") layer(b);',
+        '',
+        'body { margin: 0; }'
+      ].join('\n')
+    })
+
+    expect(css.slice(0, css.indexOf('@layer base'))).toMatch(
+      /^@layer theme,base,defaults,components,utilities;@import ("https:\/\/example\.com\/b\.css"|url\("?https:\/\/example\.com\/b\.css"?\)) layer\(b\);/
+    )
+  })
+
   test('emits preset base CSS for the root StetCSS import', async () => {
     const { css } = await buildProject({
       appClass: 'block',
