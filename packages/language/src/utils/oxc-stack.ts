@@ -220,9 +220,9 @@ function parseOnStackWorker(
  * source. oxc recurses once per nesting level, and overflowing the native stack
  * kills the host process, which no try/catch can stop. Returns the program,
  * or `undefined` for callers to fall back on: when the source has syntax
- * errors that `allowsError` does not accept, nests past `exceedsScriptNestingLimit` or is longer than
- * `MAX_PARSE_LENGTH`, or when a parse thread fails, times out, or cannot get
- * the stack it needs. Where no
+ * errors that `allowsError` does not accept, nests past
+ * `exceedsScriptNestingLimit` or is longer than `MAX_PARSE_LENGTH`, or when a
+ * parse thread fails, times out, or cannot get the stack it needs. Where no
  * parse thread can start at all (browsers, hosts without worker threads) it
  * parses inline.
  *
