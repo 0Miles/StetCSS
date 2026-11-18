@@ -238,7 +238,7 @@ test.concurrent('renders semantic tokens for grouped declarations, strings, unit
   expectToken(tokens, '20', 'number')
   expectToken(tokens, 'px', 'enumMember', ['unit'])
   expectToken(tokens, ')', 'operator', ['functionPunctuation'])
-  expectToken(tokens, '\'', 'string', ['quoted'])
+  expectToken(tokens, '\'', 'string', ['quoted', 'stringDelimiter'])
   expectToken(tokens, 'a|b', 'string', ['quoted'])
   expectToken(tokens, '2', 'number')
   expectToken(tokens, 'x', 'enumMember', ['unit'])

@@ -17,9 +17,12 @@ export type HighlightTokenRole =
   | 'query.number'
   | 'query.unit'
   | 'selector.attribute'
+  | 'selector.attribute.operator'
+  | 'selector.attribute.value'
   | 'selector.class'
   | 'selector.combinator'
   | 'selector.id'
+  | 'selector.nth'
   | 'selector.pseudoClass.delimiter'
   | 'selector.pseudoClass.name'
   | 'selector.pseudoElement.delimiter'
@@ -53,13 +56,15 @@ const ROLE_TOKEN_MODIFIERS: Partial<Record<HighlightTokenRole, SemanticTokenModi
   'directive.terminator': 'directiveTerminator',
   'query.operator': 'queryOperator',
   'query.punctuation': 'queryPunctuation',
+  'selector.attribute.operator': 'attributeOperator',
   'selector.combinator': 'selectorCombinator',
   'selector.punctuation': 'selectorPunctuation',
   'selector.pseudoClass.delimiter': 'pseudoClassDelimiter',
   'selector.pseudoElement.delimiter': 'pseudoElementDelimiter',
   'value.function.punctuation': 'functionPunctuation',
   'value.operator': 'valueOperator',
-  'value.separator': 'valueSeparator'
+  'value.separator': 'valueSeparator',
+  'value.string.quote': 'stringDelimiter'
 }
 
 function withRoleModifier(role: HighlightTokenRole, modifiers: SemanticTokenModifier[] = []) {
