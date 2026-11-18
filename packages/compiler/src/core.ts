@@ -1573,7 +1573,8 @@ function parseNativeRuleBody(
       continue
     }
 
-    if (child.type === 'keyframes') {
+    // In a native block it stays native CSS where the author wrote it (`keepsNativeStatement`).
+    if (child.type === 'keyframes' && (parentSelectorDefinition || conditionPath.some((entry) => entry.type === 'variant'))) {
       throw new Error('@keyframes is not allowed inside @variant. Move managed animation definitions to top-level @theme.')
     }
 
@@ -2095,8 +2096,23 @@ function parseManagedPatternDefinitionRule(
   parsed.manifestInput.utilities.push(definition)
 }
 
+function isNativeStyleDirective(rule: Rule) {
+  return (rule.type === 'unknown' || rule.type === 'custom') && (rule.value?.name === 'compose' || rule.value?.name === 'variant' || rule.value?.name === 'slot')
+}
+
+/**
+ * Whether a statement in a native at-rule block that `parseNativeRuleBody` lowered stays in the
+ * native CSS: anything it does not lower (`@keyframes`, `@font-face`, `@property` and the like),
+ * and the nested condition blocks that hold one.
+ */
+function keepsNativeStatement(rule: Rule): boolean {
+  if (rule.type === 'style' || rule.type === 'nested-declarations' || isNativeStyleDirective(rule)) return false
+  const children = getNestedAtRuleChildren(rule)
+  return !children || children.some(keepsNativeStatement)
+}
+
 function containsNativeStyleDirective(rule: Rule): boolean {
-  if ((rule.type === 'unknown' || rule.type === 'custom') && (rule.value?.name === 'compose' || rule.value?.name === 'variant' || rule.value?.name === 'slot')) {
+  if (isNativeStyleDirective(rule)) {
     return true
   }
   if (rule.type === 'style') {
@@ -2458,6 +2474,10 @@ export function compileCSS(source: string, options: CompileCSSOptions = {}): Com
   validateComposeRanges(parsed)
   const preprocessedSource = maskManagedPatternEntryNames(removeStandaloneCSSDirectives(sourceWithoutReferences, filename))
   let ruleDepth = 0
+  // Depths of native at-rule blocks whose style rules were lowered. Their remaining statements are
+  // left in place rather than returned as a rebuilt block: lightningcss cannot read back the AST it
+  // gives for some of them (`@font-face` without `format()`, `@scope`).
+  const loweredBlockDepths = new Set<number>()
   const preserveNativeCSS = options.preserveNativeCSS !== false
   const nativeFallbacks = createNativeFallbacks(preprocessedSource)
   const transformed = getCSSTransform()({
@@ -2467,6 +2487,10 @@ export function compileCSS(source: string, options: CompileCSSOptions = {}): Com
     visitor: {
       Rule(rule: any) {
         assertNotRemovedVariantShorthand(rule)
+        if (loweredBlockDepths.has(ruleDepth - 1)) {
+          if (!keepsNativeStatement(rule)) return []
+          if (getNestedAtRuleChildren(rule)) loweredBlockDepths.add(ruleDepth)
+        }
         if (ruleDepth === 0) {
           if (isCustomVariantDefinition(rule)) {
             parseVariantDefinition(rule, parsed)
@@ -2484,7 +2508,10 @@ export function compileCSS(source: string, options: CompileCSSOptions = {}): Com
               throw new Error('Unsupported nested at-rule in native CSS')
             }
             parseNativeRuleBody(nestedAtRuleChildren, parsed, [conditionEntry(atRule)])
-            return []
+            if (!keepsNativeStatement(rule)) return []
+            loweredBlockDepths.add(ruleDepth)
+            ruleDepth++
+            return
           }
           if (rule.type === 'style' && containsNativeStyleDirective(rule)) {
             parseNativeStyleRule(rule, parsed)
@@ -2524,6 +2551,7 @@ export function compileCSS(source: string, options: CompileCSSOptions = {}): Com
       },
       RuleExit() {
         ruleDepth--
+        loweredBlockDepths.delete(ruleDepth)
       }
     }
   })
