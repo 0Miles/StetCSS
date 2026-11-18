@@ -41,10 +41,13 @@ function nativeScope(code: string, text: string, occurrence = 0) {
   return scopes?.[scopes.length - 1]?.scopeName
 }
 
-/** The TextMate scope a theme colours this semantic token with: the first scope of its most specific mapped key. */
+/**
+ * The innermost TextMate scope a theme colours this semantic token with: the first scope of its most
+ * specific mapped key, or the leaf of that scope path.
+ */
 function semanticScope(token: Pick<SemanticTokenItem, 'type' | 'modifiers'>) {
   const [key] = getStetCSSSemanticTokenScopeKeys(token.type, token.modifiers)
-  return key ? STET_CSS_SEMANTIC_TOKEN_SCOPE_MAP[key][0] : undefined
+  return key ? STET_CSS_SEMANTIC_TOKEN_SCOPE_MAP[key][0].split(' ').pop() : undefined
 }
 
 /** A theme rule that colours the mapped scope also colours the native one: same scope, or a dotted prefix of it. */
@@ -58,7 +61,7 @@ function expectNativeScope(classList: string, text: string, native: string) {
 /**
  * Guards: an attribute selector in a class state got tokens only for its brackets, so the name,
  * operator and value kept the host string colour instead of the native selector colours.
- * Skipping `tokenizeAttributeSelector` in lexer `class.ts` reds this and the Shiki attribute colour test.
+ * Skipping `tokenizeAttributeSelector` in lexer `class.ts` reds this, the lexer attribute test and the Shiki selector colour test.
  */
 test.concurrent('tokenizes every part of an attribute selector like the native CSS selector', () => {
   const classList = 'block[data-state=open] block[data-x^="a"]'
@@ -85,7 +88,7 @@ test.concurrent('tokenizes every part of an attribute selector like the native C
 /**
  * Guards: `nth-child(2n+1)` left `2n` and `1` without tokens and coloured `+` as a combinator;
  * native CSS colours the whole `an+b` expression as one number.
- * Turning off the `NTH_PSEUDO_CLASSES` check in lexer `class.ts` reds this and the Shiki an+b colour test.
+ * Turning off the `NTH_PSEUDO_CLASSES` check in lexer `class.ts` reds this, the lexer an+b test and the Shiki selector colour test.
  */
 test.concurrent('tokenizes an an+b argument as one number, not a combinator', () => {
   const classList = 'fg:red:nth-child(2n+1) hidden:nth-last-of-type(-n+3) block:nth-child(odd)'
@@ -106,7 +109,7 @@ test.concurrent('tokenizes an an+b argument as one number, not a combinator', ()
 
 /**
  * Guards: the `|` between a container name and its condition had no token.
- * Dropping `|` from the query punctuation in lexer `class.ts` reds only this test.
+ * Dropping `|` from the query punctuation in lexer `class.ts` reds this and the lexer `|` test.
  */
 test.concurrent('tokenizes the container name separator in a query', () => {
   expect(classTokens('hidden@container(card|w>=600)')).toContainEqual({
@@ -132,4 +135,32 @@ test.concurrent('places tokens at raw offsets when the class contains escaped qu
   expect(tokens.map((token) => source.slice(token.start, token.end))).toEqual([
     'content', ':', '\\"', 'x', '\\"', ':', 'hover'
   ])
+})
+
+/**
+ * Guards: VS Code and Shiki picking different scope keys for one token. Every key with one modifier
+ * scores the same in VS Code, which then applies the matching default rule contributed last
+ * (`semanticTokenScopes` order), while Shiki tries the role-derived key first. A role key listed
+ * above a lexical modifier key, as `operator.attributeOperator` was above `operator.selector`,
+ * made VS Code colour `=` as a combinator. Moving `operator.attributeOperator` back above
+ * `operator.selector` in `scopes.ts` reds this test.
+ */
+test.concurrent('orders scope keys so VS Code resolves the key Shiki resolves', () => {
+  const classList = [
+    'block[data-state=open]:nth-child(2n+1):is(.a,#b)::before',
+    'content:"x":hover@sm',
+    'hidden@container(card|w>=600)',
+    '{fg:red;bg:blue}>li',
+    'w:calc(100%-2rem)!',
+    'grid-cols:2@<md'
+  ].join(' ')
+  const keys = Object.keys(STET_CSS_SEMANTIC_TOKEN_SCOPE_MAP)
+  const mismatches = collectClassListSemanticTokenItems(css, classList).flatMap((token) => {
+    const modifiers = token.modifiers ?? []
+    const [shikiKey] = getStetCSSSemanticTokenScopeKeys(token.type, modifiers)
+    const vscodeKey = keys.filter((key) => modifiers.some((modifier) => key === `${token.type}.${modifier}`)).pop() ?? token.type
+    return shikiKey === vscodeKey ? [] : [`${classList.slice(token.start, token.end)}: Shiki ${shikiKey}, VS Code ${vscodeKey}`]
+  })
+
+  expect(mismatches).toEqual([])
 })

@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { createHighlighter, type BundledLanguage, type BundledTheme } from 'shiki'
+import { bundledThemes, createHighlighter, type BundledLanguage, type BundledTheme } from 'shiki'
 import sharedTextMateGrammar from '../syntaxes/stet-css.tmLanguage.json' with { type: 'json' }
 
 import stetCSSShikiLanguages, {
@@ -771,7 +771,8 @@ test.concurrent('uses semantic token scope styles for CSS directive class-list t
   expect(tokens?.some((token) => token.content === 'sm' && token.className)).toBe(false)
 })
 
-const nativeColorThemes = ['github-dark', 'dark-plus', 'vitesse-dark', 'nord'] as const
+const allBundledThemes = Object.keys(bundledThemes) as BundledTheme[]
+const queryValueThemes = ['github-dark', 'dark-plus', 'vitesse-dark', 'nord'] as const
 
 type ShikiColorHighlighter = Awaited<ReturnType<typeof createHighlighter>>
 // Shiki's ThemedToken lacks the index signature the transformer's structural token type declares.
@@ -804,11 +805,11 @@ function transformedColors(highlighter: ShikiColorHighlighter, code: string, lan
  * Moving the keyword scope back to capture 2 reds this and the grammar scope test.
  */
 test('colours a directive @ and its name like a native at-rule', async () => {
-  const highlighter = await createHighlighter({ themes: [...nativeColorThemes], langs: ['css', stetCSSShikiLanguage] })
+  const highlighter = await createHighlighter({ themes: [...allBundledThemes], langs: ['css', stetCSSShikiLanguage] })
   try {
     const native = '@import "x.css";'
     const code = '@components { btn { @compose block; } }'
-    for (const theme of nativeColorThemes) {
+    for (const theme of allBundledThemes) {
       const nativeTokens = textMateColors(highlighter, native, theme)
       const tokens = textMateColors(highlighter, code, theme)
       const compose = code.indexOf('@compose')
@@ -825,10 +826,11 @@ test('colours a directive @ and its name like a native at-rule', async () => {
  * Dropping the identifier pattern from `stet-variant-prelude` reds only this test.
  */
 test('colours a @variant name like a query value', async () => {
-  const highlighter = await createHighlighter({ themes: [...nativeColorThemes], langs: ['css', stetCSSShikiLanguage] })
+  const highlighter = await createHighlighter({ themes: [...queryValueThemes], langs: ['css', stetCSSShikiLanguage] })
   try {
     const code = '@components { btn { @variant sm { @compose hidden@<sm; } } }'
-    for (const theme of nativeColorThemes) {
+    // Themes that colour query values apart from plain text.
+    for (const theme of queryValueThemes) {
       const tokens = textMateColors(highlighter, code, theme)
       const variantName = code.indexOf('sm')
       expect(colorAt(tokens, variantName), theme).toBe(colorAt(tokens, code.lastIndexOf('sm')))
@@ -842,15 +844,16 @@ test('colours a @variant name like a query value', async () => {
 /**
  * Guards: a quoted value in a class took the colour of the native string's quote for its body too,
  * and its quotes took the string body colour, in themes that tell the two apart.
- * Resolving probe scopes without the innermost pass, or without role modifiers, in `shiki.ts` reds this test.
+ * Resolving probe scopes without the innermost pass, or without role modifiers, in `shiki.ts` reds this and
+ * the selector colour test.
  */
 test('colours a string in a class like a native CSS string', async () => {
-  const highlighter = await createHighlighter({ themes: [...nativeColorThemes], langs: ['css', 'html', stetCSSShikiLanguage] })
+  const highlighter = await createHighlighter({ themes: [...allBundledThemes], langs: ['css', 'html', stetCSSShikiLanguage] })
   try {
     const native = 'a { content: \'x\'; }'
     const code = '<div class="content:\'x\':hover"></div>'
     const quote = code.indexOf('\'')
-    for (const theme of nativeColorThemes) {
+    for (const theme of allBundledThemes) {
       const nativeTokens = textMateColors(highlighter, native, theme)
       const nativeQuote = native.indexOf('\'')
       const tokens = transformedColors(highlighter, code, 'html', theme)
@@ -866,22 +869,31 @@ test('colours a string in a class like a native CSS string', async () => {
 })
 
 /**
- * Guards: attribute selectors and `an+b` arguments in a class drew in colours native CSS does not use for them.
- * The brackets are left out: they share the selector punctuation scopes with `.`, `,` and `()`.
- * Dropping the attribute selector from the scope probe in `shiki.ts` reds only this test (dark-plus).
+ * Guards: attribute selectors, `an+b` arguments and selector punctuation in a class drew in colours
+ * native CSS does not use for them: brackets, parentheses, `.` and `#` took the selector list comma's
+ * scope, and `:`/`::` matched whichever `punctuation.definition.entity` the probe met first.
+ * Checked character by character against the same selector in native CSS, in every bundled theme.
+ * Dropping the attribute selector from the scope probe, or the scope-path entries, in `shiki.ts`
+ * reds this test.
  */
-test('colours attribute selectors and an+b arguments in a class like native CSS selectors', async () => {
-  const highlighter = await createHighlighter({ themes: [...nativeColorThemes], langs: ['css', 'html', stetCSSShikiLanguage] })
+test('colours attribute selectors, an+b and selector punctuation in a class like native CSS selectors', async () => {
+  const highlighter = await createHighlighter({ themes: allBundledThemes, langs: ['css', 'html', stetCSSShikiLanguage] })
   try {
-    const native = 'a[data-state=open]:nth-child(2n+1) {}'
-    const code = '<div class="block[data-state=open]:nth-child(2n+1)"></div>'
-    const parts = ['data-state', '=', 'open', 'nth-child', '2n+1']
-    for (const theme of nativeColorThemes) {
+    const selector = '[data-state=open]:nth-child(2n+1):is(.a,#b)::before'
+    const native = `a${selector} {}`
+    const code = `<div class="block${selector}"></div>`
+    const offset = code.indexOf(selector)
+    const mismatches: string[] = []
+    for (const theme of allBundledThemes) {
       const nativeTokens = textMateColors(highlighter, native, theme)
       const tokens = transformedColors(highlighter, code, 'html', theme)
-      expect(parts.map((part) => colorAt(tokens, code.indexOf(part, code.indexOf('[')))), theme)
-        .toEqual(parts.map((part) => colorAt(nativeTokens, native.indexOf(part))))
+      for (let index = 0; index < selector.length; index++) {
+        const actual = colorAt(tokens, offset + index)
+        const expected = colorAt(nativeTokens, 1 + index)
+        if (actual?.toLowerCase() !== expected?.toLowerCase()) mismatches.push(`${theme} ${selector[index]}@${index}: ${actual} != ${expected}`)
+      }
     }
+    expect(mismatches).toEqual([])
   } finally {
     highlighter.dispose()
   }
@@ -892,13 +904,13 @@ test('colours attribute selectors and an+b arguments in a class like native CSS 
  * Removing the `stet-class-value-string` includes reds only this test.
  */
 test('colours a quoted value in a directive class like a native CSS string with TextMate only', async () => {
-  const highlighter = await createHighlighter({ themes: [...nativeColorThemes], langs: ['css', stetCSSShikiLanguage] })
+  const highlighter = await createHighlighter({ themes: [...allBundledThemes], langs: ['css', stetCSSShikiLanguage] })
   try {
     const native = 'a { content: "x"; }'
     const code = '@components { btn { @compose content:"x":hover; } }'
     const quote = code.indexOf('"')
     const nativeQuote = native.indexOf('"')
-    for (const theme of nativeColorThemes) {
+    for (const theme of allBundledThemes) {
       const nativeTokens = textMateColors(highlighter, native, theme)
       const tokens = textMateColors(highlighter, code, theme)
       expect([0, 1, 2].map((index) => colorAt(tokens, quote + index)), theme)

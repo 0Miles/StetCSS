@@ -84,7 +84,7 @@ test.concurrent('renders semantic tokens for class attributes', () => {
   expectToken(tokens, '::', 'operator', ['pseudoElement', 'selector', 'pseudoElementDelimiter'])
   expectToken(tokens, 'before', 'modifier', ['pseudoElement'])
   expectToken(tokens, 'of', 'modifier', ['pseudoClass'])
-  expectToken(tokens, '.', 'operator', ['selector', 'selectorPunctuation'])
+  expectToken(tokens, '.', 'operator', ['selector', 'classDelimiter'])
   expectToken(tokens, 'active', 'class', ['selector'])
   expectToken(tokens, '4', 'number')
   expectToken(tokens, 'rem', 'enumMember', ['unit'])
@@ -125,7 +125,7 @@ test.concurrent('renders semantic tokens for CSS-like values', () => {
   expectToken(tokens, ')', 'operator', ['selector', 'selectorPunctuation'])
   expectToken(tokens, 'is', 'modifier', ['pseudoClass'])
   expectToken(tokens, 'code', 'type', ['selector'])
-  expectToken(tokens, ',', 'operator', ['selector', 'selectorPunctuation'])
+  expectToken(tokens, ',', 'operator', ['selector', 'valueSeparator'])
   expectToken(tokens, 'pre', 'type', ['selector'])
   // `:headings` is no pseudo-class, so `font:semibold_:headings` generates no rule and is not highlighted.
   expect(tokens.some(({ text }) => text === 'headings')).toBe(false)
