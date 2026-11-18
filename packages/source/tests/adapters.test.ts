@@ -74,6 +74,30 @@ describe('source adapters', () => {
     ])
   })
 
+  /**
+   * Locks: HTML `<script>` blocks parse under a synthetic `.js` name, which
+   * enables JSX, so an in-browser Babel script holding JSX parses instead of
+   * leaking `hidden` as a class, and plain scripts with comparisons and
+   * HTML-like comments still parse. Reverse check: limiting JSX to real file
+   * names in `src/adapters/oxc.ts` turns this test red.
+   */
+  test('parses HTML scripts as JavaScript with JSX', () => {
+    expect(extractHTMLClasses('index.html', `
+      <script type="text/babel">
+        const hidden = isHidden()
+        ReactDOM.render(<div className="block" hidden={hidden} />, root)
+      </script>
+      <script>
+        <!--
+        if (a < b && c > d) element.classList.add('fg:red')
+        //-->
+      </script>
+    `)).toEqual([
+      'block',
+      'fg:red'
+    ])
+  })
+
   test('extracts class attributes and script strings from HTML', () => {
     expect(extractHTMLClasses('index.html', `
       <div class="block mx:auto"></div>
