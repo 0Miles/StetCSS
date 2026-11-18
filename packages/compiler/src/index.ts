@@ -8,6 +8,7 @@ import { stringifyStetCSSManifestJSON } from '@stet-css/schema/manifest-json'
 import type { CSSDirectiveReference } from '@stet-css/schema/css-directives'
 import { collectCSSDirectiveRanges } from '@stet-css/lexer'
 import { createCSSImportGraphReader, type CSSImportGraphReader } from './css-import-graph-reader'
+import { applyCSSImportConditions, hoistCSSImportStatements } from './css-import-conditions'
 import { createStetCSSManifest } from './stet-css-manifest'
 import lowerCSSDirectives from './lower-css-directives'
 import type { CompilerDiagnosticRecorder } from './diagnostics'
@@ -33,6 +34,12 @@ import {
 
 export * from './core'
 export { createCSSImportGraphReader, type CSSImportGraphReader } from './css-import-graph-reader'
+export {
+  applyCSSImportConditions,
+  hoistCSSImportStatements,
+  parseCSSImportConditions,
+  type CSSImportConditions
+} from './css-import-conditions'
 export type {
   CompileCSSFileOptions,
   CompileCSSOptions,
@@ -256,30 +263,19 @@ function resolveCSSImportGraphFile(
   }
   const sourceWithoutReferences = removeCSSReferenceStatements(source, absoluteFile)
   options.onSource?.(sourceWithoutReferences, Boolean(options.inPackage))
-  const imports = findCSSImportStatements(sourceWithoutReferences, absoluteFile)
-  if (!imports.length) return sourceWithoutReferences
-
-  const preservedImports: string[] = []
-  const resolvedSource = replaceCSSImportStatements(sourceWithoutReferences, absoluteFile, (importStatement: CSSImportStatement): string | undefined => {
+  return replaceCSSImportStatements(sourceWithoutReferences, absoluteFile, (importStatement: CSSImportStatement): string | undefined => {
     const importSource = importStatement.source
     const packageFile = options.expandPackageImports !== false
       ? resolveStetCSSPackageEntryFile(importSource, absoluteFile, options.projectDir)
       : undefined
-    if (packageFile || isExpandableImportSource(importSource)) {
-      const importedFile = packageFile || resolve(dirname(absoluteFile), importSource)
-      return resolveCSSImportGraphFile(importedFile, readCSSImport, dependencies, dependencySet, [...stack, absoluteFile], packageFile ? { ...options, inPackage: true } : options)
+    if (packageFile) {
+      return resolveCSSImportGraphFile(packageFile, readCSSImport, dependencies, dependencySet, [...stack, absoluteFile], { ...options, inPackage: true })
     }
-    preservedImports.push(importStatement.statement.trim())
-    return ''
+    if (isExpandableImportSource(importSource)) {
+      const importedSource = resolveCSSImportGraphFile(resolve(dirname(absoluteFile), importSource), readCSSImport, dependencies, dependencySet, [...stack, absoluteFile], options)
+      return applyCSSImportConditions(importedSource, importStatement.statement)
+    }
   })
-  if (!preservedImports.length) return resolvedSource
-
-  const firstImportStart = imports[0].start
-  const afterImports = resolvedSource.slice(firstImportStart)
-  return resolvedSource.slice(0, firstImportStart)
-    + preservedImports.join('\n')
-    + (afterImports ? '\n' : '')
-    + afterImports
 }
 
 export function resolveCSSImportGraph(file: string, options: ResolveCSSImportGraphOptions = {}): ResolvedCSSImportGraph {
@@ -295,7 +291,7 @@ function resolveCSSImportGraphWithReader(
   const references: CSSReferenceStatement[] = []
   const packageModes = new Set<string>()
   const ownModes = new Set<string>()
-  const source = resolveCSSImportGraphFile(file, readCSSImport, dependencies, new Set(), [], {
+  const source = hoistCSSImportStatements(resolveCSSImportGraphFile(file, readCSSImport, dependencies, new Set(), [], {
     ...options,
     onReference(reference, fromFile) {
       references.push(reference)
@@ -304,7 +300,7 @@ function resolveCSSImportGraphWithReader(
     onSource(fileSource, inPackage) {
       collectThemeModeNames(fileSource, inPackage ? packageModes : ownModes)
     }
-  })
+  }))
   const implicitModes = [...packageModes].filter((mode) => !ownModes.has(mode))
   return {
     source,
