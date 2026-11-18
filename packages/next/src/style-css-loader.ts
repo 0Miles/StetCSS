@@ -1,15 +1,13 @@
 import {
   createStyleCSSHostSource,
-  createStyleEntryEmittedGlobals,
   hasLocalStyleDirectives,
   isStetCSSPackageStyleFile,
+  loadLocalStyleContext,
   removeStetStyleDirectives,
   resolveStetStyleSource,
   transformLocalStyleCSS,
   collectStyleCSSDependencies
 } from '@stet-css/stylesheet'
-import { loadProjectManifest } from '@stet-css/project/manifest'
-import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
 import type { ScannerOptions } from '@stet-css/scanner'
 import { createStaticCSS, toCSSImportPath, writeStaticOutputFile } from './static'
 
@@ -34,40 +32,17 @@ interface LoaderContext {
   getOptions?: () => StyleCSSLoaderOptions
 }
 
-async function createGlobalStyleEntryEmittedGlobals(
-  entries: string[],
-  baseManifest: Awaited<ReturnType<typeof loadProjectManifest>>['manifest'],
-  projectDir: string | undefined,
-  dependencies: string[]
-) {
-  if (!entries.length) return
-  const result = await createStyleEntryEmittedGlobals(entries, {
-    baseManifest,
-    projectDir
-  })
-  dependencies.push(...result.dependencies)
-  return result.emittedGlobals
-}
-
+/** Lowers a local stylesheet against the project context every local stylesheet shares (#202). */
 async function transformLocalStyleSource(resourcePath: string, source: string, projectDir: string) {
-  const dependencies: string[] = []
-  const entries = await findCSSManifestEntryFiles(projectDir)
-  const projectManifest = await loadProjectManifest(projectDir, { entries })
-  const emittedGlobals = await createGlobalStyleEntryEmittedGlobals(
-    entries,
-    projectManifest.manifest,
-    projectDir,
-    dependencies
-  )
+  const context = await loadLocalStyleContext(projectDir)
   const result = await transformLocalStyleCSS(resourcePath, source, {
-    baseManifest: projectManifest.manifest,
+    baseManifest: context.manifest,
     projectDir,
-    emittedGlobals
+    emittedGlobals: context.emittedGlobals
   })
-  dependencies.push(...projectManifest.dependencies, ...(result.dependencies || []))
   return {
     code: result.code,
-    dependencies
+    dependencies: [...context.dependencies, ...result.dependencies]
   }
 }
 
