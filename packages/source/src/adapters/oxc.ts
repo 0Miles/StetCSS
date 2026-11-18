@@ -20,8 +20,16 @@ interface OxcNode {
   [key: string]: unknown
 }
 
+// JavaScript files commonly hold JSX, which OXC parses only in `jsx` mode, and
+// that mode still accepts plain JavaScript.
+const JSX_JAVASCRIPT_EXT = /\.[cm]?js$/
+
 function normalizeSource(source: string) {
   return source.split('?')[0] || source
+}
+
+function getParserLang(filename: string) {
+  return JSX_JAVASCRIPT_EXT.test(filename) ? 'jsx' as const : undefined
 }
 
 function isOxcNode(value: unknown): value is OxcNode {
@@ -65,9 +73,12 @@ function getTemplateLiteralValue(node: OxcNode) {
 }
 
 export function extractOxcClasses(source: string, content: string): string[] {
-  const program = parseOxcOnSourceStack(normalizeSource(source), content, {
+  const filename = normalizeSource(source)
+  const lang = getParserLang(filename)
+  const program = parseOxcOnSourceStack(filename, content, {
     range: false,
-    sourceType: 'unambiguous'
+    sourceType: 'unambiguous',
+    ...lang && { lang }
   })
   if (!program) return extractClassCandidates(content)
 
