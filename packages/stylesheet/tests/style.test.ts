@@ -447,6 +447,45 @@ describe('style CSS extraction helpers', () => {
       .rejects.toThrow('so delete "@master shake;"')
   })
 
+  /**
+   * Prevents (#189): Vue's scoped style compiler runs after this transform and appends the
+   * component attribute to every selector, so referenced theme variables emitted on `:root`
+   * (or on the class trigger's `.dark,:root`) become `[data-v-…]:root` and never apply.
+   * Generated rules are wrapped in `:global()` for scoped Vue style requests only; the
+   * component's own rules and keyframe selectors stay as written.
+   * Reverse check: making `isScopedVueStyleRequest` return false turns only this test red.
+   */
+  it.each([
+    ['media', '@layer theme{@media (prefers-color-scheme:light){:global(:root){--color-brand:#123456}}@media (prefers-color-scheme:dark){:global(:root){--color-brand:#abcdef}}}'],
+    ['class', '@layer theme{:global(.light),:global(:root){color-scheme:light;--color-brand:#123456}:global(.dark){color-scheme:dark;--color-brand:#abcdef}}']
+  ])('keeps referenced theme variables global in a scoped Vue style (mode-trigger: %s)', async (modeTrigger, generatedCSS) => {
+    const root = createFixture()
+    writeFileSync(join(root, 'app/tokens.css'), [
+      `@settings { mode-trigger: ${modeTrigger}; default-mode: light; }`,
+      '@theme light { --color-brand: #123456; }',
+      '@theme dark { --color-brand: #abcdef; }',
+      '@theme { @keyframes pop { to { opacity: 1; } } }',
+      '@components { panel { animation: pop 1s; } }'
+    ].join('\n'))
+    const source = '@reference "./tokens.css"; .button { color: var(--color-brand); } .panel { @compose panel; }'
+
+    const scoped = await transformLocalStyleCSS(join(root, 'app/Button.vue') + '?vue&type=style&index=0&scoped=7a7a37b1&lang.css', source, {
+      projectDir: root
+    })
+
+    expect(scoped.code).toContain(generatedCSS)
+    expect(scoped.code).toMatch(/@keyframes pop\{to\{opacity:1\}\}/)
+    expect(scoped.code).toMatch(/\.button\s*\{\s*color:\s*var\(--color-brand\);?\s*\}/)
+    expect(scoped.code).toContain('.panel{animation:1s pop}')
+    expect(scoped.result?.generatedCSS && scoped.code.endsWith(scoped.result.generatedCSS)).toBe(true)
+
+    const unscoped = await transformLocalStyleCSS(join(root, 'app/Button.vue') + '?vue&type=style&index=0&lang.css', source, {
+      projectDir: root
+    })
+    expect(unscoped.code).not.toContain(':global(')
+    expect(unscoped.code).toBe(scoped.code.replace(/:global\(([^()]*(?:\([^()]*\))?)\)/g, '$1'))
+  })
+
   it('leaves ordinary local CSS unchanged', async () => {
     const source = '.button { color: red; }'
     const result = await transformLocalStyleCSS('/project/src/Button.module.css', source)
