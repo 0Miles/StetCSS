@@ -1,6 +1,8 @@
 import {
   compileCSS,
+  createFileStampCache,
   createManifestFromCSSResult,
+  type FileStampCache,
   REMOVED_MASTER_AT_RULE_ERROR_CODE,
   type CompileCSSOptions,
   type CompileCSSResult
@@ -37,6 +39,8 @@ import {
   parseCSSImportSource
 } from '@stet-css/lexer'
 import type { SourceAdapter } from '@stet-css/source'
+import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
+import { loadProjectManifest } from '@stet-css/project/manifest'
 import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
 import { createRequire } from 'node:module'
 import { dirname, extname, join, resolve } from 'node:path'
@@ -107,6 +111,16 @@ export type CreateStyleEntryEmittedGlobalsOptions = CompileStyleCSSOptions
 
 export interface CreateStyleEntryEmittedGlobalsResult {
   emittedGlobals: Required<StetCSSEmittedGlobals>
+  dependencies: string[]
+}
+
+/** What a local stylesheet (a CSS Module, a stylesheet with `@reference`) is lowered against. */
+export interface LocalStyleContext {
+  /** The project manifest, which `@compose` and `@variant` resolve against. */
+  manifest: StetCSSManifest
+  /** What the stylesheet entries already emit, so local stylesheets leave it out. */
+  emittedGlobals?: StetCSSEmittedGlobals
+  /** The entries and every file they import: a change to any of them changes the context. */
   dependencies: string[]
 }
 
@@ -725,6 +739,43 @@ export async function createStyleEntryEmittedGlobals(
   return {
     emittedGlobals,
     dependencies: [...dependencies]
+  }
+}
+
+/** Emitted globals by project manifest, then by project directory and entries. */
+const styleEntryEmittedGlobalsCaches = new WeakMap<StetCSSManifest, FileStampCache<CreateStyleEntryEmittedGlobalsResult>>()
+
+async function loadStyleEntryEmittedGlobals(entries: string[], baseManifest: StetCSSManifest, projectDir: string) {
+  let cache = styleEntryEmittedGlobalsCaches.get(baseManifest)
+  if (!cache) {
+    cache = createFileStampCache()
+    styleEntryEmittedGlobalsCaches.set(baseManifest, cache)
+  }
+  const key = JSON.stringify([resolve(projectDir), entries])
+  const cached = cache.get(key)
+  if (cached) return cached
+  const startedAt = Date.now()
+  const result = await createStyleEntryEmittedGlobals(entries, { baseManifest, projectDir })
+  cache.set(key, result, [...entries, ...result.dependencies], startedAt)
+  return result
+}
+
+/**
+ * Loads the project's manifest and the globals its stylesheet entries emit, for lowering local
+ * stylesheets. The result is shared by every local stylesheet while none of its `dependencies`
+ * change, so a build with many CSS Modules compiles the project once (#202): read it, never change it.
+ */
+export async function loadLocalStyleContext(projectDir = process.cwd()): Promise<LocalStyleContext> {
+  const entries = await findCSSManifestEntryFiles(projectDir)
+  const projectManifest = await loadProjectManifest(projectDir, { entries, cache: true })
+  if (!entries.length) {
+    return { manifest: projectManifest.manifest, dependencies: projectManifest.dependencies }
+  }
+  const emittedGlobals = await loadStyleEntryEmittedGlobals(entries, projectManifest.manifest, projectDir)
+  return {
+    manifest: projectManifest.manifest,
+    emittedGlobals: emittedGlobals.emittedGlobals,
+    dependencies: [...new Set([...emittedGlobals.dependencies, ...projectManifest.dependencies])]
   }
 }
 
