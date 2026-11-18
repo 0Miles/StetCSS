@@ -1,13 +1,21 @@
-import { mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import * as core from '../src/core'
 import { compileCSSManifestFile } from '../src'
 
+const hooks = vi.hoisted(() => ({ beforeCompile: undefined as ((from: string | undefined) => void) | undefined }))
+
 vi.mock('../src/core', async (importOriginal) => {
   const original = await importOriginal<typeof import('../src/core')>()
-  return { ...original, compileCSS: vi.fn(original.compileCSS) }
+  return {
+    ...original,
+    compileCSS: vi.fn((source: string, options?: Parameters<typeof original.compileCSS>[1]) => {
+      hooks.beforeCompile?.(options?.from)
+      return original.compileCSS(source, options)
+    })
+  }
 })
 
 /** How many times the stylesheet at `file` was compiled. */
@@ -15,8 +23,13 @@ function countCompiles(file: string) {
   return vi.mocked(core.compileCSS).mock.calls.filter(([, options]) => options?.from === file).length
 }
 
-/** Waits until the files' last change lies in the past, as for files saved before the build starts. */
+/**
+ * Dates the files' last modification ten seconds back, as for files saved before the build
+ * starts, and waits until their change time lies in the past.
+ */
 function settle(...files: string[]) {
+  const past = new Date(Date.now() - 10_000)
+  for (const file of files) utimesSync(file, past, past)
   const newest = Math.max(...files.map((file) => statSync(file).ctimeMs))
   while (Date.now() <= newest) { /* a millisecond at most */ }
 }
@@ -27,6 +40,7 @@ beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), 'stet-css-reference-cache-'))
   mkdirSync(join(root, 'src'), { recursive: true })
   vi.mocked(core.compileCSS).mockClear()
+  hooks.beforeCompile = undefined
 })
 
 afterEach(() => {
@@ -80,5 +94,36 @@ describe('CSS @reference compile cache', () => {
     writeFileSync(colorsPath, '@components { accent { border-color: #222222; } }')
     settle(colorsPath)
     expect(compileCSSManifestFile(modulePath).css).toContain('border-color:#222')
+  })
+
+  /**
+   * Guards: caching a reference compiled from text read before a file changed. The entry and its
+   * reference share one import graph reader, which keeps the text it read first, so a file the
+   * entry imports and edited while the entry compiles reaches the reference compile unchanged;
+   * stored under the new stamp, that stale compile would serve every later stylesheet.
+   * Reverse check: taking the reference tree's `startedAt` after the entry graph is read
+   * (`Date.now()` at the `resolveCSSReferenceTree` call in `compileCSSManifestEntry`) turns only this test red.
+   */
+  test('does not keep a reference compiled while a file it read changed', () => {
+    const tokensPath = join(root, 'tokens.css')
+    const themePath = join(root, 'theme.css')
+    const entryPath = join(root, 'entry.css')
+    const modulePath = join(root, 'src/m.module.css')
+    writeFileSync(tokensPath, '@components { brand { color: #111111; } }')
+    writeFileSync(themePath, '@import "./tokens.css";')
+    writeFileSync(entryPath, '@import "./tokens.css"; @reference "./theme.css"; .e { @compose brand; }')
+    writeFileSync(modulePath, '@reference "../theme.css"; .m { @compose brand; }')
+    settle(tokensPath, themePath, entryPath, modulePath)
+    hooks.beforeCompile = (from) => {
+      if (from !== entryPath) return
+      hooks.beforeCompile = undefined
+      // The editor saves while the entry compiles; only the change time tells.
+      writeFileSync(tokensPath, '@components { brand { color: #222222; } }')
+      settle(tokensPath)
+    }
+
+    compileCSSManifestFile(entryPath)
+
+    expect(compileCSSManifestFile(modulePath).css).toContain('.m{color:#222}')
   })
 })
