@@ -28,6 +28,10 @@ interface SvelteAttribute {
 interface SvelteMarkupNode {
   attributes?: SvelteAttribute[]
   children?: SvelteMarkupNode[]
+  else?: SvelteMarkupNode
+  pending?: SvelteMarkupNode
+  then?: SvelteMarkupNode
+  catch?: SvelteMarkupNode
 }
 
 export const SVELTE_SOURCE_EXT = /\.svelte(?:\?|$)/
@@ -75,6 +79,11 @@ function visitMarkup(node: SvelteMarkupNode | undefined, source: string, content
   for (const child of node.children || []) {
     visitMarkup(child, source, content, classes)
   }
+  // `{:else}` / `{:else if}` / each-else and the `{#await}` branches hang off these keys, not `children`.
+  visitMarkup(node.else, source, content, classes)
+  visitMarkup(node.pending, source, content, classes)
+  visitMarkup(node.then, source, content, classes)
+  visitMarkup(node.catch, source, content, classes)
 }
 
 async function loadSvelteCompiler() {

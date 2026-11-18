@@ -120,6 +120,23 @@ describe('source adapters', () => {
     ])
   })
 
+  test('extracts classes from every Svelte block branch, not only the first', async () => {
+    await expect(extractSvelteClasses('Component.svelte', `
+      {#if a}<div class="p:1px"></div>{:else if b}<div class="p:2px"></div>{:else}<div class="p:3px"></div>{/if}
+      {#each items as item}<i class="p:4px"></i>{:else}<i class="p:5px"></i>{/each}
+      {#await p}<i class="p:6px"></i>{:then v}<i class="p:7px"></i>{:catch e}<i class="p:8px"></i>{/await}
+    `)).resolves.toEqual([
+      'p:1px',
+      'p:2px',
+      'p:3px',
+      'p:4px',
+      'p:5px',
+      'p:6px',
+      'p:7px',
+      'p:8px'
+    ])
+  })
+
   test('extracts frontmatter, script, and markup classes from Astro files while ignoring styles', () => {
     expect(extractAstroClasses('Page.astro', `---
 const frontmatterClasses = 'fg:red'
