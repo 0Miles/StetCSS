@@ -576,6 +576,58 @@ describe('source content linting', () => {
       .replace("class: 'fg:white bg:black'", "class: 'bg:black fg:white'")
       .replaceAll("intent: 'primary danger'", "intent: 'danger primary'"))
   })
+
+  /**
+   * Fault (#198): text beside a runtime expression was linted as part of one class list, so
+   * `stetcss lint --fix` sorted expression source into the class list (Svelte
+   * `class="x {cond ? 'a b' : ''}"` became `class=": ? ''} 'a {cond b' x"`) and sorted or
+   * deleted class fragments that join the expression at runtime (`x` in `` `x${on ? 'a b' : ''}` ``
+   * and `flex` in `` `${on ? 'block flex' : ''}x` ``). Expression spans now bound class lists and
+   * the classes touching them are fragments, neither reported nor fixed. Covers the regex scan
+   * (Svelte, Vue, Astro, MDX) and the oxc scan (.tsx, .ts).
+   *
+   * Reverse check (language rebuilt for each): dropping the fragment skip in
+   * collectClassListContexts turns the two reporting cases red (a fragment's context holds one
+   * class, so its fixes stay inert); finding no expression spans turns seven regex-scan cases and
+   * the Svelte reporting case red; giving oxc template expressions no neighbours turns the four
+   * .tsx and .ts cases red.
+   */
+  const fragmentRules = {
+    'sort-classes': true,
+    'no-conflicting-classes': true,
+    'no-invalid-classes': false,
+    'prefer-canonical-classes': false
+  }
+  test.each([
+    ['a Svelte expression in an attribute', '/project/a.svelte', `<div class="x {cond ? 'fg:white m:0.5rem' : ''}"></div>`, undefined],
+    ['whole classes on both sides of a Svelte expression', '/project/a.svelte', `<div class="fg:white m:0.5rem {on ? 'a' : ''} fg:white p:0.5rem"></div>`, `<div class="m:0.5rem fg:white {on ? 'a' : ''} p:0.5rem fg:white"></div>`],
+    ['Svelte fragments beside a whole list', '/project/a.svelte', '<div class="bg:{color}-50 fg:white m:0.5rem"></div>', '<div class="bg:{color}-50 m:0.5rem fg:white"></div>'],
+    ['a Svelte conflict with a fragment', '/project/a.svelte', '<div class="block flex{x}"></div>', undefined],
+    ['a Svelte class template', '/project/a.svelte', "<div class={`x${on ? 'fg:white m:0.5rem' : ''}`}></div>", undefined],
+    ['a Vue :class template', '/project/a.vue', "<template><div :class=\"`x${on ? 'fg:white m:0.5rem' : ''}`\"></div></template>", undefined],
+    ['whole classes before a Vue template expression', '/project/a.vue', '<template><div :class="`fg:white m:0.5rem ${x}`"></div></template>', '<template><div :class="`m:0.5rem fg:white ${x}`"></div></template>'],
+    ['an Astro class:list template', '/project/a.astro', "<div class:list={`x${on ? 'fg:white m:0.5rem' : ''}`} />", undefined],
+    ['an MDX className template', '/project/a.mdx', "<div className={`x${on ? 'fg:white m:0.5rem' : ''}`} />", undefined],
+    ['a .tsx className template', '/project/d.tsx', "<div className={`x${on ? 'fg:white m:0.5rem' : ''}`} />", undefined],
+    ['a .tsx conflict with a fragment', '/project/d.tsx', "<div className={`${on ? 'block flex' : ''}x`} />", undefined],
+    ['whole classes after a .tsx fragment', '/project/d.tsx', "<div className={`bg:${dark ? 'black fg:white m:0.5rem' : 'white'}`} />", "<div className={`bg:${dark ? 'black m:0.5rem fg:white' : 'white'}`} />"],
+    ['a .ts classList template', '/project/a.ts', "el.classList.add(`x${on ? 'fg:white m:0.5rem' : ''}`)", undefined]
+  ])('leaves class fragments beside expressions alone: %s', (_, filePath, content, fixed) => {
+    expect(fixStetCSSContent({ content, filePath, css, rules: fragmentRules })).toBe(fixed ?? content)
+  })
+
+  test.each([
+    ['/project/a.svelte', '<div class="bg:{color}-50"></div>'],
+    ['/project/d.tsx', '<div className={`bg:${color}-50`} />']
+  ])('does not report class fragments in %s', (filePath, content) => {
+    expect(lintStetCSSContent({
+      content,
+      filePath,
+      css,
+      rules: { 'no-invalid-classes': true },
+      ruleOptions: { 'no-invalid-classes': { disallowUnknownClass: true } }
+    }).diagnostics).toEqual([])
+  })
 })
 
 describe('class conflicts', () => {
