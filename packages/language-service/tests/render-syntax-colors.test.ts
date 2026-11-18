@@ -100,7 +100,7 @@ test.concurrent('box-shadow', async () => {
       range: getRange(target1, doc)
     },
     {
-      color: { red: 1.0000000000000007, green: 0.9999999999999994, blue: 0.9999999999999999, alpha: 1 },
+      color: { red: 1, green: 0.9999999999999994, blue: 0.9999999999999999, alpha: 1 },
       range: getRange(target2, doc)
     }
   ])
@@ -118,7 +118,7 @@ test.concurrent('gradient', async () => {
       range: getRange(target1, doc)
     },
     {
-      color: { red: 1.0000000000000007, green: 0.9999999999999994, blue: 0.9999999999999999, alpha: 1 },
+      color: { red: 1, green: 0.9999999999999994, blue: 0.9999999999999999, alpha: 1 },
       range: getRange(target2, doc)
     }
   ])
@@ -199,6 +199,17 @@ describe.concurrent('color space', () => {
     const languageService = createLanguageService()
     expect(await languageService.renderSyntaxColors(doc)).toStrictEqual([{
       color: { red: 0, green: 0, blue: 0, alpha: 1 },
+      range: getRange(target, doc)
+    }])
+  })
+
+  test.concurrent('clamps an out-of-sRGB-gamut color to the LSP 0..1 channel range', async () => {
+    const target = 'oklch(70%|0.4|30)'
+    const content = `export default () => <div className='fg:${target}'></div>`
+    const doc = createDoc('tsx', content)
+    const languageService = createLanguageService()
+    expect(await languageService.renderSyntaxColors(doc)).toStrictEqual([{
+      color: { red: 1, green: 0, blue: 0, alpha: 1 },
       range: getRange(target, doc)
     }])
   })
