@@ -7,6 +7,7 @@ import {
 } from '@stet-css/compiler'
 import {
   applyCSSImportConditions,
+  collectCSSLayerOrder,
   createCSSImportGraphReader,
   hoistCSSImportStatements,
   isStetCSSPackageStyleFile as isStetCSSCompilerPackageStyleFile,
@@ -173,6 +174,8 @@ export interface ResolveStyleCSSImportGraphOptions {
 export interface CreateStyleCSSHostSourceOptions {
   stetImport?: string
   stetSource?: string
+  /** CSS whose top-level layers `stetSource` declares when it stands in for CSS spliced in later. */
+  stetLayerSource?: string
 }
 
 interface DefaultStetCSSPackageArtifact {
@@ -460,37 +463,53 @@ function isStyleCSSHostImport(importSource: string, stetImport: string) {
   return importSource === stetImport || (stetImport === '@stet-css/core' && normalizeStyleCSSModuleIds().has(importSource))
 }
 
+/**
+ * The stylesheet a build integration hands back to the bundler for an entry: the entry's kept
+ * `@import` statements in the order they were written, with the StetCSS import replaced by
+ * `stetSource` (or by an `@import` of `stetImport`) where it stood. Kept imports then move to the
+ * start with the layers declared ahead of them, as `hoistCSSImportStatements` does for an import
+ * graph, so `@import url(b) layer(b)` after `@import '@stet-css/core'` still sorts `b` after the
+ * preset's layers. A `stetSource` that stands in for CSS spliced in later declares no layers itself:
+ * pass that CSS's layers as `stetLayerSource`.
+ */
 export function createStyleCSSHostSource(source: string, options: CreateStyleCSSHostSourceOptions = {}) {
   const stetImport = options.stetImport || '@stet-css/core'
-  const stetSource = options.stetSource
   const hasStetSource = Object.prototype.hasOwnProperty.call(options, 'stetSource')
   const cleanSource = removeStetStyleDirectives(source).code
-  const imports = findImportStatements(cleanSource)
-  const preservedImports: string[] = []
-  for (const importStatement of imports) {
+  const hostParts: string[] = []
+  let hostIndex = -1
+  let hostStatement: string | undefined
+  for (const importStatement of findImportStatements(cleanSource)) {
     const importSource = parseCSSImportSource(importStatement.statement)
     if (!importSource) continue
     if (importSource === VIRTUAL_CSS_ID || normalizeStyleCSSModuleIds().has(importSource)) {
-      if (!hasStetSource && isStyleCSSHostImport(importSource, stetImport)) {
-        preservedImports.push(importStatement.statement.trim())
+      if (hostIndex === -1) {
+        hostIndex = hostParts.push('') - 1
+        if (isStyleCSSHostImport(importSource, stetImport)) hostStatement = importStatement.statement.trim()
       }
       continue
     }
     if (!isExpandableStyleImportSource(importSource)) {
-      preservedImports.push(importStatement.statement.trim())
+      hostParts.push(importStatement.statement.trim())
     }
   }
-  if (hasStetSource) {
-    if (stetSource) {
-      preservedImports.push(stetSource)
-    }
-  } else if (!preservedImports.some((statement) => {
-    const importSource = parseCSSImportSource(statement)
-    return importSource && isStyleCSSHostImport(importSource, stetImport)
-  })) {
-    preservedImports.unshift(`@import "${stetImport}";`)
+  if (hostIndex === -1) {
+    hostParts.unshift('')
+    hostIndex = 0
   }
-  return preservedImports.join('\n')
+  if (!hasStetSource) {
+    hostParts[hostIndex] = hostStatement ?? `@import "${stetImport}";`
+  } else {
+    // Layers only matter here when a kept import follows the StetCSS CSS.
+    const stetLayers = options.stetLayerSource !== undefined && hostIndex < hostParts.length - 1
+      ? collectCSSLayerOrder(options.stetLayerSource)
+      : []
+    hostParts[hostIndex] = [
+      ...(stetLayers.length ? [`@layer ${stetLayers.join(', ')};`] : []),
+      ...(options.stetSource ? [options.stetSource] : [])
+    ].join('\n')
+  }
+  return hoistCSSImportStatements(hostParts.filter(Boolean).join('\n'))
 }
 
 function canUseDefaultStetCSSPackageArtifact(options: CompileStyleCSSOptions = {}) {
