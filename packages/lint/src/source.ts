@@ -27,6 +27,7 @@ import {
   type StetCSSLintRuleId,
   type StetCSSUnapprovedRawValueClassesReportOptions
 } from './diagnostics'
+import { defaultClassLintSettings } from './constants'
 
 const MAX_FIX_PASSES = 10
 
@@ -107,6 +108,11 @@ export interface StetCSSLintContentOptions {
   rules?: Partial<Record<StetCSSLintRuleId, boolean>>
   ruleOptions?: StetCSSLintContentRuleOptions
   severities?: Partial<Record<StetCSSLintRuleId, StetCSSLintDiagnosticSeverity>>
+  /**
+   * Object keys whose values hold no classes; defaults to `defaultClassLintSettings.ignoredKeys`
+   * (cva's `compoundVariants` and `defaultVariants`).
+   */
+  ignoredKeys?: string[]
 }
 
 export interface StetCSSFixContentOptions extends StetCSSLintContentOptions {
@@ -223,9 +229,13 @@ function inferClassSourceKind(content: string, range: SourceRange): Exclude<Stet
     : 'class-expression'
 }
 
-function collectClassListContexts(content: string, filePath: string): ClassListContext[] {
+function collectClassListContexts(
+  content: string,
+  filePath: string,
+  ignoredKeys: string[] = defaultClassLintSettings.ignoredKeys
+): ClassListContext[] {
   const textDocument = createTextDocument(filePath, content)
-  const positions = getClassPositions(textDocument as any, languageSettings)
+  const positions = getClassPositions(textDocument as any, { ...languageSettings, ignoredKeys })
   const contexts = new Map<string, ClassListContext>()
   const directives = collectCSSDirectiveRanges(content)
   for (const position of positions) {
@@ -400,7 +410,7 @@ function toSourceDiagnostic(
 export function lintStetCSSContent(options: StetCSSLintContentOptions): StetCSSLintFileResult {
   const diagnostics: StetCSSLintSourceDiagnostic[] = []
   const rules = resolveRules(options.rules)
-  for (const context of collectClassListContexts(options.content, options.filePath)) {
+  for (const context of collectClassListContexts(options.content, options.filePath, options.ignoredKeys)) {
     diagnostics.push(...createContextLintDiagnostics(context, options.css, rules, options).map((diagnostic) => toSourceDiagnostic(options.content, context, diagnostic)))
   }
   const languageId = getLanguageId(options.filePath)
@@ -460,7 +470,7 @@ function fixClassListText(context: ClassListContext, css: StetCSS, rules: Record
 }
 
 function fixSafeClassLists(content: string, filePath: string, css: StetCSS, rules: Record<StetCSSLintRuleId, boolean>, options: StetCSSLintContentOptions) {
-  const replacements = collectClassListContexts(content, filePath)
+  const replacements = collectClassListContexts(content, filePath, options.ignoredKeys)
     .map((context) => ({
       range: context.range,
       text: fixClassListText(context, css, rules, options)
