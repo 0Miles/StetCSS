@@ -293,15 +293,18 @@ const size = 'p:1px'
   })
 
   /**
-   * Guards: the Astro compiler opens the frontmatter after a BOM or blank
-   * lines, allows spaces after either fence, closes it at a `---` that starts
-   * a line outside strings, template literals and comments, and lets that fence
-   * end the file or run into markup. Splitting anywhere else turned the script
-   * into markup, so identifiers such as `flex` and `block` emitted
-   * `.flex{display:flex}` and `.block{display:block}`. Reverse check: requiring
-   * an exact `\n---\n` closing fence again in `src/adapters/astro.ts` turns
-   * every case but CRLF red; CRLF locks the line ending the old split already
-   * accepted.
+   * Guards: the Astro compiler opens the frontmatter after a BOM, whitespace
+   * and HTML comments, closes it at the first `---` outside strings, template
+   * literals, comments and regular expressions wherever it stands on its line,
+   * and lets that fence end the file or run into markup. Splitting anywhere
+   * else turned the script into markup, so identifiers such as `flex` and
+   * `block` emitted `.flex{display:flex}` and `.block{display:block}`. Reverse
+   * check: requiring an exact `\n---\n` closing fence again in
+   * `src/adapters/astro.ts` turns every case but CRLF and the regular
+   * expressions red; those lock behaviour the old split already had. Reading
+   * every `/` that is not a comment as a division turns the regular expression
+   * cases red, and reading every one as a regular expression turns the
+   * division case red.
    */
   test.each([
     ['follows a BOM', `\uFEFF---\nconst { flex } = Astro.props\nconst size = 'p:1px'\n---\n<div class="p:2px"></div>`, ['p:1px', 'p:2px']],
@@ -310,7 +313,13 @@ const size = 'p:1px'
     ['uses CRLF line endings', `---\r\nconst { flex } = Astro.props\r\nconst size = 'p:1px'\r\n---\r\n<div class="p:2px"></div>`, ['p:1px', 'p:2px']],
     ['closes on markup on the same line', `---\nconst { flex } = Astro.props\nconst size = 'p:1px'\n---<div class="p:2px"></div>`, ['p:1px', 'p:2px']],
     ['holds --- in a template literal', `---\nconst { flex } = Astro.props\nconst size = \`p:1px\n---\n\`\n---\n<div class="p:2px"></div>`, ['p:1px', '---', 'p:2px']],
-    ['holds --- in a block comment', `---\nconst { flex } = Astro.props\n/*\n---\n*/\nconst size = 'p:1px'\n---\n<div class="p:2px"></div>`, ['p:1px', 'p:2px']]
+    ['holds --- in a block comment', `---\nconst { flex } = Astro.props\n/*\n---\n*/\nconst size = 'p:1px'\n---\n<div class="p:2px"></div>`, ['p:1px', 'p:2px']],
+    ['holds /* in a regular expression', `---\nconst { block } = Astro.props\nconst path = Astro.url.pathname.replace(/\\/*$/, '')\nconst size = 'p:1px'\n---\n<div class="p:2px"></div>`, ['p:1px', 'p:2px']],
+    ['holds a backtick in a regular expression', `---\nconst { block } = Astro.props\nconst tick = /\\\`/\nconst size = 'p:1px'\n---\n<div class="p:2px"></div>`, ['p:1px', 'p:2px']],
+    ['holds / in a regular expression character class', `---\nconst { block } = Astro.props\nconst slash = /[/]\`/\nconst size = 'p:1px'\n---\n<div class="p:2px"></div>`, ['p:1px', 'p:2px']],
+    ['holds --- in a template literal after a division', `---\nconst { flex } = Astro.props\nconst half = Astro.props.width / 2, size = \`p:1px\n---\n\`\n---\n<div class="p:2px"></div>`, ['p:1px', '---', 'p:2px']],
+    ['follows an HTML comment', `<!-- page -->\n---\nconst { flex } = Astro.props\nconst size = 'p:1px'\n---\n<div class="p:2px"></div>`, ['p:1px', 'p:2px']],
+    ['closes on an indented fence', `---\nconst { flex } = Astro.props\nconst size = 'p:1px'\n  ---\n<div class="p:2px"></div>`, ['p:1px', 'p:2px']]
   ])('splits Astro frontmatter that %s as the Astro compiler does', (_, content, expected) => {
     expect(extractAstroClasses('Page.astro', content)).toEqual(expected)
   })
@@ -323,6 +332,15 @@ const size = 'p:1px'
   test('closes Astro frontmatter on a fence that ends the file', () => {
     expect(extractAstroClasses('Page.astro', `---\nconst { flex } = Astro.props\nconst size = 'p:1px'\n---`)).toEqual(['p:1px'])
     expect(extractAstroClasses('Empty.astro', '---\n---')).toEqual([])
+  })
+
+  /**
+   * Guards: the Astro compiler reads a file whose frontmatter never closes as
+   * all script; reading it as markup emitted `.flex{display:flex}`. Reverse
+   * check: treating an unclosed frontmatter as markup again turns this red.
+   */
+  test('reads the rest of the file as Astro frontmatter when no fence closes it', () => {
+    expect(extractAstroClasses('Page.astro', `---\nconst { flex } = Astro.props\nconst size = 'p:1px'\n`)).toEqual(['p:1px'])
   })
 
   test('extracts frontmatter, script, and markup classes from Astro files while ignoring styles', () => {
