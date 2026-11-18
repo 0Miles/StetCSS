@@ -1,6 +1,7 @@
 import {
   collectCSSDirectiveRanges,
   collectCSSQuotedStringRanges,
+  splitASCIIWhitespace,
   type CSSDirectiveRuleRange,
   type SourceRange
 } from '@stet-css/lexer'
@@ -28,7 +29,7 @@ function isDetachedImportantSuffix(token: string) {
 }
 
 export function formatStetCSSClassList(classList: string) {
-  const tokens = classList.trim().split(/\s+/).filter(Boolean)
+  const tokens = splitASCIIWhitespace(classList)
   const formatted: string[] = []
   for (const token of tokens) {
     const previousIndex = formatted.length - 1

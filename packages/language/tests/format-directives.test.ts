@@ -13,6 +13,11 @@ test.concurrent('repairs detached important suffixes in class lists', () => {
   expect(formatStetCSSClassList(' bg:transparent !   fg:red !@sm  block!:hover ')).toBe('bg:transparent! fg:red!@sm block!:hover')
 })
 
+test.concurrent('splits class lists on ASCII whitespace only, as the DOM does', () => {
+  // A no-break space belongs to the class it sits in, so `!` after it is not a detached suffix.
+  expect(formatStetCSSClassList('\u00A0fg:red\u00A0!  block')).toBe('\u00A0fg:red\u00A0! block')
+})
+
 test.concurrent('formats @compose class-list preludes', () => {
   expect(format('.btn { @compose  bg:transparent !   fg:red !@sm ; }'))
     .toBe('.btn { @compose bg:transparent! fg:red!@sm; }')
