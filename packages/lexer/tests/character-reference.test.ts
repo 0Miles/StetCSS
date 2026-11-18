@@ -1,11 +1,16 @@
 import { expect, test } from 'vitest'
-import { decodeStetCSSHTMLAttributeValue, decodeStetCSSJSXAttributeString } from '../src'
+import { decodeStetCSSHTMLAttributeValue, decodeStetCSSJSXAttributeString } from '../src/character-reference'
 
 /**
  * Source extraction reads class attributes by these decoders (#194), and editor tooling maps
  * decoded classes back onto the source through their ranges. A wrong decode extracts a class the
  * browser or the JSX compiler never sees; a wrong range points a diagnostic or edit elsewhere.
  * Expected values follow the HTML tokenizer's character reference state and Babel's JSX reader.
+ * Reverse checks (each turned only its own test red):
+ * - dropping the attribute rule for a legacy name before `=` or an alphanumeric → the HTML test
+ *   (and the source ampersand test);
+ * - accepting an uppercase `X` in JSX hex references → the JSX test;
+ * - ending each reference's range one character early → the mapping test.
  */
 
 test.concurrent('decodes HTML attribute values the way the HTML tokenizer does', () => {
