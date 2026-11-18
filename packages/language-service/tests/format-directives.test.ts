@@ -84,3 +84,10 @@ test.concurrent('formats the SFC style content, not an opening-tag attribute rep
   expect(format('vue', source))
     .toBe(`<style data-source="${css}">.btn { @compose bg:transparent!; }</style>`)
 })
+
+test.concurrent('ends the SFC style opening tag after a quoted attribute containing >', () => {
+  const css = '.a > .b { @compose bg:red !; }'
+  const source = `<style data-source="${css}">${css}</style>`
+  expect(format('vue', source))
+    .toBe(`<style data-source="${css}">.a > .b { @compose bg:red!; }</style>`)
+})
