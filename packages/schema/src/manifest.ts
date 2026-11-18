@@ -21,7 +21,7 @@ export interface StetCSSManifestVariableNumericValue {
 
 export interface StetCSSManifestConditionBooleanNode { raw?: string, name: string, type: 'boolean' }
 export interface StetCSSManifestConditionNumberNode { raw?: string, name?: string, type: 'number', value: number, unit?: string, operator?: string }
-export interface StetCSSManifestConditionStringNode { raw?: string, name?: string, type: 'string', value: string }
+export interface StetCSSManifestConditionStringNode { raw?: string, name?: string, type: 'string', value: string, operator?: string }
 export type StetCSSManifestConditionValueNode = StetCSSManifestConditionNumberNode | StetCSSManifestConditionStringNode
 export interface StetCSSManifestConditionComparisonOperatorNode { type: 'comparison', raw?: string, value: string }
 export interface StetCSSManifestConditionLogicalOperatorNode { type: 'logical', raw?: string, value: string }
