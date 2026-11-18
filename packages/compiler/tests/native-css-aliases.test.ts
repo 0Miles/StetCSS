@@ -1,10 +1,11 @@
 import { expect, test } from 'vitest'
 import { compileCSS } from '../src'
 
+/** #178's rule shape, with one declaration varied so lightningcss cannot merge the rules. */
 function createNativeCSS(size: number) {
   let css = ''
   for (let index = 0; css.length < size; index++) {
-    css += `.card-${index} { color: var(--color-red); background: oklch(60% .2 30); padding: 1rem 2rem; font-family: "Inter", sans-serif; }\n`
+    css += `.card-${index} { color: var(--color-red); background: oklch(60% .2 30); padding: ${index}px 2rem; font-family: "Inter", sans-serif; }\n`
   }
   return css
 }
@@ -39,8 +40,8 @@ function countRegExpScannedCharacters(run: () => void) {
  * about 5 s per compile and a Vite build 30 s. Counts the characters regexes scan instead of
  * timing, so the test cannot flake: doubling the native CSS must about double the work, where the
  * quadratic scan quadruples it. Trade-off: it sees only regex scans, not hand-written loops.
- * Reverse check: `CSS_VARIABLE_ALIAS` in `stylesheet-value.ts` back on the `g` flag reds only this
- * test.
+ * Reverse check: `CSS_VARIABLE_ALIAS` in `stylesheet-value.ts` back on the `g` flag reds this test
+ * (ratio 4.02) and the string and escape rows below, which a forward-searching regex then misreads.
  */
 test('compiling native CSS scans each character a bounded number of times as the stylesheet grows', () => {
   const small = createNativeCSS(16 * 1024)
@@ -59,13 +60,20 @@ const preservedAliases = [
 /**
  * Guards #181's third criterion: making the `$alias` scan linear must not change which `$name`
  * counts as an alias. One inside a string, a kept comment or after `\` is native CSS and passes
- * through; an unquoted one fails with its replacement, even after a long stretch of native CSS.
+ * through.
  * Reverse check: dropping the escape filter in `collectCSSVariableAliases` reds only the escape row.
  */
 test.each(preservedAliases)('an alias inside $place stays native CSS', ({ css, nativeCSS }) => {
   expect(compileCSS(css).nativeCSS).toBe(nativeCSS)
 })
 
+/**
+ * Guards the scan's position handling: a sticky regex tests only `lastIndex`, so an alias deep in
+ * the native CSS is found only if the scan moves `lastIndex` along with it. A missed alias lets
+ * `$late` reach the browser as an invalid value instead of failing with its replacement.
+ * Reverse check: deleting `CSS_VARIABLE_ALIAS.lastIndex = index` in `stylesheet-value.ts` reds
+ * this test and the alias rejections in `css-first-core-migration.test.ts`.
+ */
 test('an unquoted $name after a long stretch of native CSS fails with its replacement', () => {
   expect(() => compileCSS(`${createNativeCSS(16 * 1024)}.z { color: $late }`))
     .toThrow('Replace "$late" with "var(--late)"')
