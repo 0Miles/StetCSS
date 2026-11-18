@@ -28,7 +28,7 @@ import type {
   StetCSSManifestVariants
 } from '@stet-css/schema/manifest'
 import { flattenStetCSSManifestVariables, groupStetCSSManifestVariables } from '@stet-css/schema/manifest'
-import { STET_CSS_LENGTH_UNITS } from '@stet-css/lexer'
+import { skipCSSEscapeStringOrComment, STET_CSS_LENGTH_UNITS } from '@stet-css/lexer'
 import {
   createCompilerCSS,
   parseCondition,
@@ -433,35 +433,12 @@ function isCSSIdentifierCharacter(value: string | undefined) {
   return value !== undefined && /[-_a-zA-Z0-9]/.test(value)
 }
 
-function skipQuotedText(value: string, index: number) {
-  const quote = value[index]
-  index++
-  while (index < value.length) {
-    if (value[index] === '\\') {
-      index += 2
-      continue
-    }
-    if (value[index] === quote) return index + 1
-    index++
-  }
-  return index
-}
-
-function skipComment(value: string, index: number) {
-  const end = value.indexOf('*/', index + 2)
-  return end === -1 ? value.length : end + 2
-}
-
 function containsValuePlaceholderReference(value: string) {
   if (!value.includes(VALUE_PLACEHOLDER_NAME)) return false
   for (let index = 0; index < value.length;) {
-    const character = value[index]
-    if (character === '"' || character === "'") {
-      index = skipQuotedText(value, index)
-      continue
-    }
-    if (character === '/' && value[index + 1] === '*') {
-      index = skipComment(value, index)
+    const skipped = skipCSSEscapeStringOrComment(value, index)
+    if (skipped !== index) {
+      index = skipped
       continue
     }
     if (value.startsWith(VALUE_PLACEHOLDER_NAME, index)) return true
@@ -499,13 +476,9 @@ function compilePatternDeclarationValue(value: string): StetCSSManifestCSSDeclar
   let lastIndex = 0
   let matched = false
   for (let index = 0; index < value.length;) {
-    const character = value[index]
-    if (character === '"' || character === "'") {
-      index = skipQuotedText(value, index)
-      continue
-    }
-    if (character === '/' && value[index + 1] === '*') {
-      index = skipComment(value, index)
+    const skipped = skipCSSEscapeStringOrComment(value, index)
+    if (skipped !== index) {
+      index = skipped
       continue
     }
     if (!value.startsWith(VALUE_PLACEHOLDER_NAME, index)) {

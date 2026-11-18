@@ -1,8 +1,7 @@
 import {
   collectCSSVariableReferences,
-  findCSSClosingQuote,
-  findCSSCommentEnd,
-  readCSSFunction
+  readCSSFunction,
+  skipCSSEscapeStringOrComment
 } from '@stet-css/lexer'
 import { formatDimension, formatFractionPercentage } from '@stet-css/engine/compiler'
 
@@ -13,13 +12,10 @@ const CSS_NUMBER = /^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/
 function collectCSSVariableAliases(value: string) {
   const aliases: RegExpExecArray[] = []
   for (let index = 0; index < value.length;) {
-    const char = value[index]
-    if (char === '"' || char === '\'') {
-      index = findCSSClosingQuote(value, index, char) + 1
-      continue
-    }
-    if (char === '/' && value[index + 1] === '*') {
-      index = findCSSCommentEnd(value, index)
+    // A `$name` in a string or a comment, or escaped as `\$name`, is native CSS.
+    const skipped = skipCSSEscapeStringOrComment(value, index)
+    if (skipped !== index) {
+      index = skipped
       continue
     }
     CSS_VARIABLE_ALIAS.lastIndex = index
@@ -28,7 +24,7 @@ function collectCSSVariableAliases(value: string) {
       index++
       continue
     }
-    if (value[index - 1] !== '\\') aliases.push(match)
+    aliases.push(match)
     index = CSS_VARIABLE_ALIAS.lastIndex
   }
   return aliases
@@ -38,15 +34,12 @@ function findTopLevelAlphaSeparator(value: string) {
   let separatorIndex = -1
   let depth = 0
   for (let index = 0; index < value.length; index++) {
+    const skipped = skipCSSEscapeStringOrComment(value, index)
+    if (skipped !== index) {
+      index = skipped - 1
+      continue
+    }
     const char = value[index]
-    if (char === '"' || char === '\'') {
-      index = findCSSClosingQuote(value, index, char)
-      continue
-    }
-    if (char === '/' && value[index + 1] === '*') {
-      index = findCSSCommentEnd(value, index) - 1
-      continue
-    }
     if (char === '(') {
       depth++
       continue
@@ -129,16 +122,10 @@ export function normalizeStylesheetValue(value: string | number, options: { repl
   let result = ''
   for (let index = 0; index < value.length;) {
     const char = value[index]
-    if (char === '"' || char === '\'') {
-      const end = findCSSClosingQuote(value, index, char) + 1
-      result += value.slice(index, end)
-      index = end
-      continue
-    }
-    if (char === '/' && value[index + 1] === '*') {
-      const end = findCSSCommentEnd(value, index)
-      result += value.slice(index, end)
-      index = end
+    const skipped = skipCSSEscapeStringOrComment(value, index)
+    if (skipped !== index) {
+      result += value.slice(index, skipped)
+      index = skipped
       continue
     }
     if (value.startsWith('--alpha(', index)) {
