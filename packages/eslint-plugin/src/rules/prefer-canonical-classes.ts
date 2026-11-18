@@ -56,12 +56,12 @@ export default createRule({
       })
     }
 
-    const reportCanonicalClassList = (node, { raw, start, end, unescape, classNodes, classValues }: ResolvedClassNode) => {
+    const reportCanonicalClassList = (node, resolved: ResolvedClassNode) => {
       reportLintDiagnostics(
         context,
         node,
-        { raw, start, end, unescape, classNodes, classValues, nodes: [], value: raw },
-        createCanonicalClassesReport(raw, css, { ...options, unescape }).diagnostics
+        resolved,
+        createCanonicalClassesReport(resolved.raw, css, { ...options, ...resolved.options }).diagnostics
       )
     }
 

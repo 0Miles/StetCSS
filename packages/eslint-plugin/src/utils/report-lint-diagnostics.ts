@@ -56,10 +56,11 @@ export default function reportLintDiagnostics(
 ) {
   const { sourceCode } = context
   for (const diagnostic of diagnostics) {
-    const start = resolved.start + diagnostic.range.start
-    const end = resolved.start + diagnostic.range.end
+    // A class list that does not map back onto its source is reported as a whole, without a fix.
+    const start = resolved.fixable ? resolved.start + diagnostic.range.start : resolved.start
+    const end = resolved.fixable ? resolved.start + diagnostic.range.end : resolved.end
     const messageId = messageIdByCode[diagnostic.code]
-    const fix = diagnostic.fix
+    const fix = diagnostic.fix && resolved.fixable
       ? options.getFix?.(diagnostic, diagnostic.fix) || defaultFix(resolved, diagnostic.fix)
       : undefined
 

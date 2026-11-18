@@ -24,13 +24,13 @@ export default createRule({
     if (shouldUseSourceVisitors(context)) {
       return defineSourceVisitors({ context, css, ruleId: 'sort-classes' })
     }
-    return defineVisitors({ context, settings }, (node, { raw, start, end, nodes, unescape }) => {
-      if (nodes.length <= 1) return
+    return defineVisitors({ context, settings }, (node, resolved) => {
+      if (resolved.nodes.length <= 1) return
       reportLintDiagnostics(
         context,
         node,
-        { raw, start, end, nodes, unescape, value: raw, classNodes: [], classValues: [] },
-        createSortClassesReport(raw, css, { unescape }).diagnostics
+        resolved,
+        createSortClassesReport(resolved.raw, css, resolved.options).diagnostics
       )
     })
   },
