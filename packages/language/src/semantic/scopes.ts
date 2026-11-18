@@ -1,5 +1,15 @@
 import type { SemanticTokenModifier, SemanticTokenType } from './types'
 
+/**
+ * TextMate scopes each semantic token selector is coloured with, most specific first. An entry may
+ * be a space-separated scope path (parent, then leaf), as VS Code's `semanticTokenScopes` accepts,
+ * for punctuation whose native colour depends on the scope it sits in.
+ *
+ * Order matters in VS Code: selectors with one modifier tie, and among tied default rules the one
+ * contributed last wins. Role-derived modifier keys (see `ROLE_TOKEN_MODIFIERS` in `highlight.ts`)
+ * therefore come after the lexical modifier keys, so a token's role decides its colour in VS Code
+ * as it does in Shiki, which tries the role key first.
+ */
 export const STET_CSS_SEMANTIC_TOKEN_SCOPE_MAP = {
   class: ['entity.other.attribute-name.class.css'],
   'class.component': ['entity.other.attribute-name.class.css'],
@@ -20,14 +30,10 @@ export const STET_CSS_SEMANTIC_TOKEN_SCOPE_MAP = {
   function: ['support.function.misc.css'],
   number: ['constant.numeric.css'],
   'number.query': ['constant.numeric.css'],
+  'number.selector': ['meta.selector.css constant.numeric.css', 'constant.numeric.css'],
   string: ['string.quoted.css', 'string.quoted.html'],
   'string.quoted': ['string.quoted.css', 'string.quoted.html'],
   'string.selector': ['string.unquoted.attribute-value.css', 'string.quoted.css'],
-  'string.stringDelimiter': [
-    'punctuation.definition.string.begin.css',
-    'punctuation.definition.string.end.css',
-    'string.quoted.css'
-  ],
   keyword: ['keyword.control.at-rule'],
   'keyword.directive': ['keyword.control.at-rule.stet-css.css'],
   'keyword.query': ['keyword.control.at-rule'],
@@ -36,12 +42,31 @@ export const STET_CSS_SEMANTIC_TOKEN_SCOPE_MAP = {
   'modifier.pseudoClass': ['entity.other.attribute-name.pseudo-class.css'],
   'modifier.pseudoElement': ['entity.other.attribute-name.pseudo-element.css'],
   operator: ['keyword.operator.css'],
-  'operator.attributeOperator': ['keyword.operator.pattern.css', 'keyword.operator.css'],
   'operator.directive': ['punctuation.section.property-list.begin.bracket.curly.css'],
+  'operator.important': ['keyword.other.important.css', 'keyword.operator.important.css'],
+  'operator.pseudoClass': ['entity.other.attribute-name.pseudo-class.css'],
+  'operator.pseudoElement': ['entity.other.attribute-name.pseudo-element.css'],
+  'operator.query': ['keyword.operator.css'],
+  'operator.selector': ['keyword.operator.combinator.css'],
+  'operator.unit': ['keyword.operator.css'],
+  type: ['entity.name.tag.css'],
+  'type.selector': ['entity.name.tag.css'],
+  // Role-derived modifier keys: keep them below every lexical modifier key.
+  'string.stringDelimiter': [
+    'punctuation.definition.string.begin.css',
+    'punctuation.definition.string.end.css',
+    'string.quoted.css'
+  ],
+  'operator.attributeBracket': [
+    'punctuation.definition.entity.begin.bracket.square.css',
+    'punctuation.definition.entity.end.bracket.square.css'
+  ],
+  'operator.attributeOperator': ['keyword.operator.pattern.css', 'keyword.operator.css'],
   'operator.blockBrace': [
     'punctuation.section.property-list.begin.bracket.curly.css',
     'punctuation.section.property-list.end.bracket.curly.css'
   ],
+  'operator.classDelimiter': ['entity.other.attribute-name.class.css punctuation.definition.entity.css'],
   'operator.declarationSeparator': ['punctuation.separator.key-value.css'],
   'operator.declarationTerminator': ['punctuation.terminator.rule.css'],
   'operator.directiveTerminator': ['punctuation.terminator.rule.css'],
@@ -49,12 +74,9 @@ export const STET_CSS_SEMANTIC_TOKEN_SCOPE_MAP = {
     'punctuation.section.function.begin.bracket.round.css',
     'punctuation.section.function.end.bracket.round.css'
   ],
-  'operator.important': ['keyword.other.important.css', 'keyword.operator.important.css'],
-  'operator.pseudoClass': ['entity.other.attribute-name.pseudo-class.css'],
-  'operator.pseudoClassDelimiter': ['punctuation.definition.entity.css'],
-  'operator.pseudoElement': ['entity.other.attribute-name.pseudo-element.css'],
-  'operator.pseudoElementDelimiter': ['punctuation.definition.entity.css'],
-  'operator.query': ['keyword.operator.css'],
+  'operator.idDelimiter': ['entity.other.attribute-name.id.css punctuation.definition.entity.css'],
+  'operator.pseudoClassDelimiter': ['entity.other.attribute-name.pseudo-class.css punctuation.definition.entity.css'],
+  'operator.pseudoElementDelimiter': ['entity.other.attribute-name.pseudo-element.css punctuation.definition.entity.css'],
   'operator.queryOperator': ['keyword.operator.comparison.css', 'keyword.operator.css'],
   'operator.queryPunctuation': [
     'punctuation.separator.list.comma.css',
@@ -64,21 +86,15 @@ export const STET_CSS_SEMANTIC_TOKEN_SCOPE_MAP = {
     'punctuation.section.function.begin.bracket.round.css',
     'punctuation.section.function.end.bracket.round.css'
   ],
-  'operator.selector': ['keyword.operator.combinator.css'],
   'operator.selectorCombinator': ['keyword.operator.combinator.css'],
   'operator.selectorPunctuation': [
-    'punctuation.separator.list.comma.css',
-    'punctuation.definition.entity.css',
+    'meta.selector.css punctuation.section.function.begin.bracket.round.css',
+    'meta.selector.css punctuation.section.function.end.bracket.round.css',
     'punctuation.section.function.begin.bracket.round.css',
-    'punctuation.section.function.end.bracket.round.css',
-    'punctuation.definition.entity.begin.bracket.square.css',
-    'punctuation.definition.entity.end.bracket.square.css'
+    'punctuation.section.function.end.bracket.round.css'
   ],
-  'operator.unit': ['keyword.operator.css'],
   'operator.valueOperator': ['keyword.operator.css'],
-  'operator.valueSeparator': ['punctuation.separator.list.comma.css'],
-  type: ['entity.name.tag.css'],
-  'type.selector': ['entity.name.tag.css']
+  'operator.valueSeparator': ['punctuation.separator.list.comma.css']
 } as const satisfies Record<string, string[]>
 
 export type StetCSSSemanticTokenScopeKey = keyof typeof STET_CSS_SEMANTIC_TOKEN_SCOPE_MAP

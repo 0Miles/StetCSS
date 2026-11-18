@@ -46,7 +46,10 @@ export const SEMANTIC_TOKEN_MODIFIERS = [
   'pseudoClassDelimiter',
   'pseudoElementDelimiter',
   'attributeOperator',
-  'stringDelimiter'
+  'stringDelimiter',
+  'attributeBracket',
+  'classDelimiter',
+  'idDelimiter'
 ] as const
 export const SEMANTIC_TOKENS_LEGEND = {
   tokenTypes: [...SEMANTIC_TOKEN_TYPES],
