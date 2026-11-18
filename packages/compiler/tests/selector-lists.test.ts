@@ -61,11 +61,23 @@ describe.concurrent('selector lists in lowered rules', () => {
   })
 
   /**
-   * Guards: an escaped colon outside a string, as in `.a\:pair`, is part of the class name, not
-   * a `:` selector alias; nor does an escaped quote open a string that hides a later alias.
-   * Reverse check: dropping the `\\` branch of `resolveSelectorAliases` reddens only this test.
+   * Guards #186 and #188: a `\` outside a string escapes the character after it, so an escaped
+   * colon (`.a\:pair`, `.literal\:first`, and `\3a `, which lightningcss writes as `\:`) is part
+   * of the class name, not a `:` selector alias, and an escaped quote opens no string that hides a
+   * later alias. lightningcss writes `[data-state="escaped\":first"]` unquoted as
+   * `[data-state=escaped\"\:first]`, so a quote escaped inside a string reaches the alias scan as
+   * one escaped outside it. The `@compose` host rows are #188's repros: the user's class lost its
+   * name (`.literal\:first-child`), or `:last` stayed unexpanded and the browser dropped the rule.
+   * Reverse check: dropping the `\` branch of `skipCSSEscapeStringOrComment` (`@stet-css/lexer`),
+   * which `resolveSelectorAliases` skips escapes through, reddens every row here and no other test
+   * in this file.
    */
-  test('an escaped colon or quote is not read as a selector alias or a string', () => {
+  test.each([
+    ['a nested rule beside @compose', ".card { @compose block; &.a\\:pair, &.b\\':pair { color: red; } }", ".card{display:block}.card.a\\:pair,.card.b\\'>li{color:red}"],
+    ['an escaped colon in a @compose host', '.literal\\:first:first { @compose block; }', '.literal\\:first:first-child{display:block}'],
+    ['a hex-escaped colon in a @compose host', '.literal\\3a first:first { @compose block; }', '.literal\\:first:first-child{display:block}'],
+    ['an escaped quote inside an attribute string of a @compose host', '[data-state="escaped\\":first"]:last { @compose block; }', '[data-state=escaped\\"\\:first]:last-child{display:block}']
+  ])('an escaped colon or quote is not read as a selector alias or a string: %s', (_, source, expected) => {
     const baseManifest = {
       ...defaultManifest,
       selectors: {
@@ -73,7 +85,7 @@ describe.concurrent('selector lists in lowered rules', () => {
         ':pair': [{ type: 'combinator', value: '>' }, { value: 'li' }]
       }
     } as StetCSSManifest
-    const { css } = compileCSSManifest(".card { @compose block; &.a\\:pair, &.b\\':pair { color: red; } }", { baseManifest })
-    expect(css.trim()).toBe(".card{display:block}.card.a\\:pair,.card.b\\'>li{color:red}")
+    const { css } = compileCSSManifest(source, { baseManifest })
+    expect(css.trim()).toBe(expected)
   })
 })
