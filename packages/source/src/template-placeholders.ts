@@ -1,9 +1,24 @@
 import { isASCIIWhitespace } from '@stet-css/lexer'
+import { LINE_TERMINATORS } from './extraction-scans'
 
-const LINE_TERMINATORS = new Set(['\n', '\r', '\u2028', '\u2029'])
 const QUOTES = new Set(['"', '\'', '`'])
-/** The brace depth of an open placeholder's expression, or `IN_TEMPLATE` inside a template literal. */
-const IN_TEMPLATE = -1
+
+/** An open template literal, or the code of an open placeholder with its unclosed `{` count. */
+type Frame = { template: true } | { template: false, braces: number }
+
+/** What `walkPlaceholder` meets inside a placeholder expression, by index into the content. */
+interface PlaceholderVisitor {
+  /** A `'` or `"` string in code, `[start, end)`. */
+  string(start: number, end: number): void
+  /** The opening backtick of a template literal in code. */
+  templateStart(index: number): void
+  /** The closing backtick of a template literal. */
+  templateEnd(index: number): void
+  /** The `$` of a placeholder in a template literal. */
+  placeholderStart(index: number): void
+  /** The `}` that closes a placeholder in a template literal. */
+  placeholderEnd(index: number): void
+}
 
 /** A character that joins the class touching a placeholder: neither a class-list separator nor a quote. */
 function joinsClass(ch: string): boolean {
@@ -17,50 +32,63 @@ function fragmentStart(content: string, from: number, index: number): number {
 }
 
 /** Where the class fragment that starts at `index` ends: before a separator, a quote or the next `${`. */
-function fragmentEnd(content: string, index: number, to: number): number {
-  while (index < to && joinsClass(content[index]) && !content.startsWith('${', index)) index++
+function fragmentEnd(content: string, index: number): number {
+  while (index < content.length && joinsClass(content[index]) && !content.startsWith('${', index)) index++
   return index
 }
 
 /** The index after the `'` or `"` string that starts at `index`; an unterminated one ends at its line. */
-function quotedStringEnd(content: string, index: number, to: number): number {
+function quotedStringEnd(content: string, index: number): number {
   const quote = content[index]
-  for (index++; index < to; index++) {
+  for (index++; index < content.length; index++) {
     const ch = content[index]
     if (ch === quote) return index + 1
     if (LINE_TERMINATORS.has(ch)) return index
     if (ch === '\\') index++
   }
-  return to
+  return content.length
 }
 
 /**
- * The `}` that closes the placeholder whose expression starts at `index`, skipping the braces,
- * strings and template literals (with their own placeholders) inside it, or -1 when none does.
+ * Walks the expression of a placeholder from `index`, just after its `${`, through the strings,
+ * braces and template literals (with their own placeholders) inside it, and returns the index of
+ * the `}` that closes it. Returns -1 when none does, or at a `${` in code, which JavaScript never
+ * has there: an unclosed `${` in prose ends at the next one instead of reading on to the end.
  */
-function findPlaceholderEnd(content: string, index: number): number {
-  const stack = [0]
+function walkPlaceholder(content: string, index: number, visitor: PlaceholderVisitor): number {
+  const frames: Frame[] = [{ template: false, braces: 0 }]
   for (; index < content.length; index++) {
     const ch = content[index]
-    const top = stack[stack.length - 1]
-    if (top === IN_TEMPLATE) {
-      if (ch === '\\') index++
-      else if (ch === '`') stack.pop()
-      else if (content.startsWith('${', index)) {
-        stack.push(0)
+    const frame = frames[frames.length - 1]
+    if (frame.template) {
+      if (ch === '\\') {
+        index++
+      } else if (ch === '`') {
+        frames.pop()
+        visitor.templateEnd(index)
+      } else if (content.startsWith('${', index)) {
+        visitor.placeholderStart(index)
+        frames.push({ template: false, braces: 0 })
         index++
       }
+    } else if (content.startsWith('${', index)) {
+      return -1
     } else if (ch === '"' || ch === '\'') {
-      index = quotedStringEnd(content, index, content.length) - 1
+      const end = quotedStringEnd(content, index)
+      visitor.string(index, end)
+      index = end - 1
     } else if (ch === '`') {
-      stack.push(IN_TEMPLATE)
+      frames.push({ template: true })
+      visitor.templateStart(index)
     } else if (ch === '{') {
-      stack[stack.length - 1]++
+      frame.braces++
     } else if (ch === '}') {
-      if (top) stack[stack.length - 1]--
-      else {
-        stack.pop()
-        if (!stack.length) return index
+      if (frame.braces) {
+        frame.braces--
+      } else {
+        frames.pop()
+        if (!frames.length) return index
+        visitor.placeholderEnd(index)
       }
     }
   }
@@ -68,50 +96,32 @@ function findPlaceholderEnd(content: string, index: number): number {
 }
 
 /**
- * Pushes the string literals and template literals of the closed placeholder expression
- * `content[index, end)` to `parts`, each followed by a space, with the placeholders of those
- * templates and their touching fragments left out as `removeTemplatePlaceholders` leaves them out.
+ * Pushes to `parts` the strings and template literals of the placeholder whose `$` is at `start`,
+ * each followed by a space, with the placeholders of those templates and the fragments touching
+ * them left out. Returns the index of its closing `}`, or -1 with `unclosed` holding the
+ * placeholders still open inside it.
  */
-function pushExpressionStrings(content: string, index: number, end: number, parts: string[]) {
-  const stack = [0]
-  let textStart = index
-  while (index < end) {
-    const ch = content[index]
-    const top = stack[stack.length - 1]
-    if (top === IN_TEMPLATE) {
-      if (ch === '\\') {
-        index += 2
-        continue
-      }
-      if (ch === '`') {
-        parts.push(content.slice(textStart, index + 1), ' ')
-        stack.pop()
-      } else if (content.startsWith('${', index)) {
-        parts.push(content.slice(textStart, fragmentStart(content, textStart, index)), ' ')
-        stack.push(0)
-        index++
-      }
-    } else if (ch === '"' || ch === '\'') {
-      const stringEnd = quotedStringEnd(content, index, end)
-      parts.push(content.slice(index, stringEnd), ' ')
-      index = stringEnd
-      continue
-    } else if (ch === '`') {
-      stack.push(IN_TEMPLATE)
+function readPlaceholder(content: string, start: number, parts: string[], unclosed: number[]): number {
+  let textStart = start
+  return walkPlaceholder(content, start + 2, {
+    string(stringStart, stringEnd) {
+      parts.push(content.slice(stringStart, stringEnd), ' ')
+    },
+    templateStart(index) {
       textStart = index
-    } else if (ch === '{') {
-      stack[stack.length - 1]++
-    } else if (ch === '}') {
-      if (top) stack[stack.length - 1]--
-      else {
-        // A nested placeholder closes back into its template; the outer one closes at `end`.
-        stack.pop()
-        index = textStart = fragmentEnd(content, index + 1, end)
-        continue
-      }
+    },
+    templateEnd(index) {
+      parts.push(content.slice(textStart, index + 1), ' ')
+    },
+    placeholderStart(index) {
+      parts.push(content.slice(textStart, fragmentStart(content, textStart, index)), ' ')
+      unclosed.push(index)
+    },
+    placeholderEnd(index) {
+      unclosed.pop()
+      textStart = fragmentEnd(content, index + 1)
     }
-    index++
-  }
+  })
 }
 
 /**
@@ -119,21 +129,35 @@ function pushExpressionStrings(content: string, index: number, end: number, part
  * The expression is code the host fills in at runtime, and the text touching a placeholder is a
  * fragment of a class that only exists then (`grid-` in `grid-${size}`), so neither is a class
  * candidate; a string in the expression may be a whole class (`${on ? 'fg:red' : ''}`). A
- * fragment runs to ASCII whitespace or a quote, as a class does. An unclosed placeholder stays
- * text.
+ * fragment runs to ASCII whitespace, a quote or the next `${`. An unclosed `${` stays text.
  */
 export function removeTemplatePlaceholders(content: string): string {
   let start = content.indexOf('${')
   if (start < 0) return content
   const parts: string[] = []
+  // `${` left open inside an unclosed placeholder: their own walk would follow the same frames
+  // and fail too, so skipping them keeps the pass linear.
+  const unclosed = new Set<number>()
+  const open: number[] = []
   let pos = 0
   while (start >= 0) {
-    const end = findPlaceholderEnd(content, start + 2)
-    if (end < 0) break
-    parts.push(content.slice(pos, fragmentStart(content, pos, start)), ' ')
-    pushExpressionStrings(content, start + 2, end, parts)
-    pos = fragmentEnd(content, end + 1, content.length)
-    start = content.indexOf('${', pos)
+    if (!unclosed.has(start)) {
+      const mark = parts.length
+      // The text before it is filled in once the placeholder closes: scanning back for its
+      // fragment on every unclosed `${` would rescan the same text.
+      parts.push('', ' ')
+      open.length = 0
+      const end = readPlaceholder(content, start, parts, open)
+      if (end >= 0) {
+        parts[mark] = content.slice(pos, fragmentStart(content, pos, start))
+        pos = fragmentEnd(content, end + 1)
+        start = content.indexOf('${', pos)
+        continue
+      }
+      parts.length = mark
+      for (const index of open) unclosed.add(index)
+    }
+    start = content.indexOf('${', start + 2)
   }
   parts.push(content.slice(pos))
   return parts.join('')
