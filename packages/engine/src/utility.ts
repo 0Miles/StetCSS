@@ -121,6 +121,26 @@ function isSelectorSuffix(nodes: SelectorNode[], ends: boolean, ofList = false):
   return true
 }
 
+/**
+ * Whether a value's top-level comma list has an empty item: `red,`, `,red` or `a,,b`. Native CSS
+ * drops such a declaration, so `fg:red,` emitted dead CSS and its theme variables. `|` spaces are
+ * not items (`a,|b` is `a, b`); commas inside functions are left alone, since `var(--x,)` is valid.
+ */
+function hasEmptyListItem(valueComponents: ValueComponent[]) {
+  let hasComma = false
+  let itemHasValue = false
+  for (const valueComponent of valueComponents) {
+    if (valueComponent.type !== 'separator') {
+      itemHasValue = true
+    } else if (valueComponent.value === ',') {
+      if (!itemHasValue) return true
+      hasComma = true
+      itemHasValue = false
+    }
+  }
+  return hasComma && !itemHasValue
+}
+
 function matchesPatternUtilityName(className: string, name: string) {
   if (!className.startsWith(name)) return false
   const next = className[name.length]
@@ -1444,6 +1464,7 @@ export class Utility {
       }
     }
     parse()
+    if (root && hasEmptyListItem(currentValueComponents)) this.invalidValueSyntax = true
     return i
   }
 
