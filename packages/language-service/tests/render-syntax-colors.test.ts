@@ -203,6 +203,11 @@ describe.concurrent('color space', () => {
     }])
   })
 
+  /**
+   * Prevents: an out-of-sRGB-gamut color reaching the editor with channels outside LSP's 0..1
+   * (oklch(70%|0.4|30) converts to red 1.32, green -0.45), which breaks the color picker.
+   * Reverse check: removing the channel clamp in render-syntax-colors turns this test red.
+   */
   test.concurrent('clamps an out-of-sRGB-gamut color to the LSP 0..1 channel range', async () => {
     const target = 'oklch(70%|0.4|30)'
     const content = `export default () => <div className='fg:${target}'></div>`
