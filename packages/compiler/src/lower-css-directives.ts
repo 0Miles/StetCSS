@@ -28,7 +28,7 @@ import {
 } from '@stet-css/engine/compiler'
 import type { StetCSSManifest, StetCSSManifestUtilityLayerName } from '@stet-css/schema/manifest'
 import { createStetCSSManifest, createVariableNameResolver, type CSSDirectiveVariableNameResolver } from './stet-css-manifest'
-import { combineStyleSelectors } from './utils/selectors'
+import { combineStyleSelectors, replaceSelectorNesting, splitSelectorList } from './utils/selectors'
 import wrapConditions from './utils/wrap-conditions'
 import { cssTreeNativeDeclarationMatcher } from './native-declaration'
 import {
@@ -357,7 +357,7 @@ function getComposedUtilitySelector(utility: GeneratedRule, css: StetCSS) {
   }
   if (utility.mode && css.settings.modeTrigger !== 'media') {
     const modeSelector = css.getModeSelector(utility.mode)
-    if (modeSelector) selector = `${modeSelector} ${selector}`
+    if (modeSelector) selector = replaceSelectorNesting(`${modeSelector} &`, selector)
   }
   return selector
 }
@@ -401,24 +401,34 @@ function createStyleDefinitionsFromCompose(definition: Extract<CSSDirectiveStyle
 }
 
 function combineSelectorWrapper(selector: string, wrapper: string) {
-  return wrapper.replace(/&/g, selector)
+  return replaceSelectorNesting(wrapper, selector)
 }
 
+/**
+ * `selector` with its `:` selector aliases replaced by their selectors. An alias that is a list
+ * (`>li,+li`) at the top level expands the selector item it sits in once per alias item:
+ * `.card:pair` is `.card>li,.card+li`, not `.card>li,+li`, which left `+li` unscoped.
+ */
 function resolveSelectorAliases(selector: string, css: StetCSS) {
   const selectorTokens = [...css.selectors.keys()]
     .filter((token) => token.startsWith(':'))
     .sort((a, b) => b.length - a.length)
   if (!selectorTokens.length) return selector
 
-  let result = ''
+  const items: string[] = []
+  let alternatives = ['']
+  const append = (text: string) => {
+    alternatives = alternatives.map((alternative) => alternative + text)
+  }
   let quote = ''
   let attributeDepth = 0
+  let parenDepth = 0
   for (let index = 0; index < selector.length;) {
     const char = selector[index]
     if (quote) {
-      result += char
+      append(char)
       if (char === '\\') {
-        result += selector[++index] || ''
+        append(selector[++index] || '')
       } else if (char === quote) {
         quote = ''
       }
@@ -427,23 +437,31 @@ function resolveSelectorAliases(selector: string, css: StetCSS) {
     }
     if (char === '"' || char === '\'') {
       quote = char
-      result += char
+      append(char)
       index++
       continue
     }
     if (char === '[') {
       attributeDepth++
-      result += char
+      append(char)
       index++
       continue
     }
     if (char === ']') {
       if (attributeDepth > 0) attributeDepth--
-      result += char
+      append(char)
       index++
       continue
     }
     if (!attributeDepth) {
+      if (char === '(') parenDepth++
+      else if (char === ')' && parenDepth > 0) parenDepth--
+      else if (char === ',' && !parenDepth) {
+        items.push(...alternatives)
+        alternatives = ['']
+        index++
+        continue
+      }
       const matchedToken = selectorTokens.find((token) => {
         if (!selector.startsWith(token, index)) return false
         const next = selector[index + token.length]
@@ -452,17 +470,21 @@ function resolveSelectorAliases(selector: string, css: StetCSS) {
       if (matchedToken) {
         const nodes = css.selectors.get(matchedToken)
         if (nodes?.length) {
-          result += generateSelector(nodes, '')
+          const text = generateSelector(nodes, '')
+          const aliasItems = parenDepth ? [] : splitSelectorList(text)
+          alternatives = aliasItems.length > 1
+            ? alternatives.flatMap((alternative) => aliasItems.map((aliasItem) => alternative + aliasItem))
+            : alternatives.map((alternative) => alternative + text)
           index += matchedToken.length
           continue
         }
       }
     }
-    result += char
+    append(char)
     index++
   }
 
-  return result
+  return [...items, ...alternatives].join(',')
 }
 
 interface ResolvedStyleBranch {
