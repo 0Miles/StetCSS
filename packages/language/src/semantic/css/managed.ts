@@ -2,10 +2,10 @@ import { pushHighlightToken, type HighlightTokenItem } from '../highlight'
 import { tokenizeDeclarations } from './native'
 import {
   findCSSBlockEnd,
-  findCSSClosingQuote,
   findCSSStatementEnd,
   isCSSIdentStart,
   readCSSIdent,
+  skipCSSEscapeStringOrComment,
   skipCSSWhitespace
 } from '@stet-css/lexer'
 
@@ -137,15 +137,10 @@ function tokenizeManagedEntryName(source: string, start: number, end: number, to
 function tokenizeManagedEntryBody(source: string, start: number, end: number, tokens: HighlightTokenItem[]) {
   for (let index = start; index < end; index++) {
     const char = source[index]
-    const next = source[index + 1]
     if (/\s/.test(char)) continue
-    if (char === '/' && next === '*') {
-      const close = source.indexOf('*/', index + 2)
-      index = close === -1 ? end : close + 1
-      continue
-    }
-    if (char === '"' || char === '\'') {
-      index = findCSSClosingQuote(source, index, char, end)
+    const skipped = skipCSSEscapeStringOrComment(source, index, end)
+    if (skipped !== index) {
+      index = skipped - 1
       continue
     }
 
@@ -181,17 +176,12 @@ function tokenizeManagedEntryBody(source: string, start: number, end: number, to
 
 export function tokenizeManagedDefinitionBlock(source: string, start: number, end: number, tokens: HighlightTokenItem[]) {
   for (let index = start; index < end; index++) {
+    const skipped = skipCSSEscapeStringOrComment(source, index, end)
+    if (skipped !== index) {
+      index = skipped - 1
+      continue
+    }
     const char = source[index]
-    const next = source[index + 1]
-    if (char === '/' && next === '*') {
-      const close = source.indexOf('*/', index + 2)
-      index = close === -1 ? end : close + 1
-      continue
-    }
-    if (char === '"' || char === '\'') {
-      index = findCSSClosingQuote(source, index, char, end)
-      continue
-    }
     if (char === '@') {
       const atName = readCSSIdent(source, index + 1)
       const statementEnd = findCSSStatementEnd(source, atName.end)
