@@ -1,3 +1,4 @@
+import { decodeStetCSSScriptString, type StetCSSDecodedSource, type StetCSSScriptStringQuote } from './script-string'
 import { STET_CSS_VALUE_UNITS } from './units'
 
 export type StetCSSLexicalTokenType =
@@ -102,6 +103,13 @@ export interface StetCSSClassListParseOptions {
   preserveSpaces?: boolean
   includeEmpty?: boolean
   unescape?: string | readonly string[] | false
+  /**
+   * Treats the class list as the source body of a JavaScript string literal or template quoted by
+   * this character: classes split on the decoded text and carry decoded tokens, while `start`,
+   * `end` and `raw` stay in source, so joining every item's `raw` rebuilds the source spelling.
+   * A body that does not decode falls back to `unescape: scriptString`.
+   */
+  scriptString?: StetCSSScriptStringQuote
 }
 
 export interface StetCSSValueTokenizeOptions {
@@ -224,6 +232,11 @@ export function parseStetCSSClassList(
   classList: string,
   options: StetCSSClassListParseOptions = {}
 ): StetCSSClassListItem[] {
+  if (options.scriptString) {
+    const decoded = decodeStetCSSScriptString(classList, options.scriptString)
+    if (decoded) return parseDecodedStetCSSClassList(classList, decoded, options)
+    return parseStetCSSClassList(classList, { ...options, scriptString: undefined, unescape: options.scriptString })
+  }
   const items: StetCSSClassListItem[] = []
   const pushClass = (start: number, end: number) => {
     const raw = classList.slice(start, end)
@@ -267,6 +280,61 @@ export function parseStetCSSClassList(
   }
 
   if (options.includeEmpty) pushClass(classList.length, classList.length)
+  return items
+}
+
+/**
+ * Splits `decoded.value` like `parseStetCSSClassList` and maps each item back onto `source`.
+ * Source text that decodes to nothing (a line continuation) joins the neighbouring space, or the
+ * class it leads or trails at either end of the list, so no source text falls between items.
+ */
+function parseDecodedStetCSSClassList(
+  source: string,
+  decoded: StetCSSDecodedSource,
+  options: StetCSSClassListParseOptions
+): StetCSSClassListItem[] {
+  const { value, starts, ends } = decoded
+  const items: StetCSSClassListItem[] = []
+  const sourceOffsetAt = (index: number) => index < value.length ? starts[index] : source.length
+  const push = (type: StetCSSClassListItem['type'], start: number, end: number, sourceStart: number, sourceEnd: number) => {
+    items.push({
+      type,
+      start: sourceStart,
+      end: sourceEnd,
+      raw: source.slice(sourceStart, sourceEnd),
+      token: value.slice(start, end)
+    })
+  }
+
+  if (!value) {
+    if (options.includeEmpty) push('class', 0, 0, 0, source.length)
+    return items
+  }
+
+  let sourceStart = 0
+  for (let index = 0; index < value.length;) {
+    const start = index
+    if (isASCIIWhitespace(value[index])) {
+      while (isASCIIWhitespace(value[index])) {
+        if (options.includeEmpty) {
+          const offset = sourceOffsetAt(index)
+          push('class', index, index, offset, offset)
+        }
+        index++
+      }
+      const sourceEnd = sourceOffsetAt(index)
+      if (options.preserveSpaces) push('space', start, index, sourceStart, sourceEnd)
+      sourceStart = sourceEnd
+      continue
+    }
+
+    while (index < value.length && !isASCIIWhitespace(value[index])) index++
+    const sourceEnd = index < value.length ? ends[index - 1] : source.length
+    push('class', start, index, sourceStart, sourceEnd)
+    sourceStart = sourceEnd
+  }
+
+  if (options.includeEmpty) push('class', value.length, value.length, source.length, source.length)
   return items
 }
 
