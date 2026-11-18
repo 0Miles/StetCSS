@@ -73,7 +73,9 @@ describe('StyleEntryPlugin', () => {
       '/project/src/style.css'
     )
 
-    expect(result.code).toBe('@import "@fontsource/fira-mono";\n' + await slotFor(context))
+    // The spliced CSS declares the preset layers after the import; the host declares them first,
+    // where `@import '@stet-css/core'` put them (#183).
+    expect(result.code).toBe('@layer theme, base, defaults, components, utilities;\n@import "@fontsource/fira-mono";\n' + await slotFor(context))
     expect(context.styleCSSSources.get('/project/src/style.css')).toMatchObject({
       source: expect.stringContaining('.card')
     })
@@ -128,7 +130,8 @@ describe('StyleEntryPlugin', () => {
 
     expect(result.code).toContain('.fg\\:red')
     expect(result.code).not.toContain('@stet-css/core')
-    expect(result.code.indexOf('@import "@fontsource/fira-mono";')).toBe(0)
+    // Only the layer statements of the generated CSS, which were written before the import, precede it (#183).
+    expect(result.code.slice(0, result.code.indexOf('@import "@fontsource/fira-mono";'))).toBe('@layer theme;\n@layer base;\n@layer defaults, components, utilities;\n')
     expect(result.code.match(/@fontsource\/fira-mono/g)).toHaveLength(1)
     expect(context.virtualCSSImporters).toEqual(new Set(['/project/src/style.css']))
     expect(context.virtualCSSPlaceholderEnvironments).toBeUndefined()
