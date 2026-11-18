@@ -1573,8 +1573,10 @@ function parseNativeRuleBody(
       continue
     }
 
-    // In a native block it stays native CSS where the author wrote it (`keepsNativeStatement`).
-    if (child.type === 'keyframes' && (parentSelectorDefinition || conditionPath.some((entry) => entry.type === 'variant'))) {
+    // Only a native at-rule block keeps other statements, as native CSS where the author wrote
+    // them (`keepsNativeStatement`); under `@variant` or a style rule nothing would emit them.
+    const lowersEveryStatement = parentSelectorDefinition !== undefined || conditionPath.some((entry) => entry.type === 'variant')
+    if (child.type === 'keyframes' && lowersEveryStatement) {
       throw new Error('@keyframes is not allowed inside @variant. Move managed animation definitions to top-level @theme.')
     }
 
@@ -1582,7 +1584,7 @@ function parseNativeRuleBody(
       throw new CSSDirectiveError('compose-placement', '@compose requires a style rule', compose.directiveSource)
     }
 
-    if (child.type === 'nested-declarations') {
+    if (child.type === 'nested-declarations' || (lowersEveryStatement && child.type !== 'ignored')) {
       throw new Error('Native @variant blocks only accept style rules, declarations, @compose, and nested at-rules')
     }
   }
