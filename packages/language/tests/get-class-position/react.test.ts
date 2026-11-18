@@ -1,4 +1,5 @@
 import { test, it, expect, describe } from 'vitest'
+import { TextDocument } from 'vscode-languageserver-textdocument'
 import { getClassPositions, languageSettings } from '../../src'
 import createDoc from '../helpers/create-doc'
 import { expectClassPosition, getClassPosition } from './test'
@@ -64,6 +65,25 @@ test.concurrent('template literal expressions use quasi ranges', () => {
     'class-b',
     'hidden',
     'class-c'
+  ])
+})
+
+/**
+ * Guards: `.js`, `.mjs` and `.cjs` files often hold JSX, and editors open
+ * them as `javascript`. Parsed as plain JavaScript, the JSX fails and the
+ * regex fallback, which finds class functions only after whitespace or `.`,
+ * misses `c=clsx(...)`, so the editor loses the class. Reverse check:
+ * dropping the `jsx` language for these names in
+ * `src/utils/get-class-positions.ts` turns this test red.
+ */
+test.concurrent.each([
+  'file:///abc.js',
+  'file:///abc.mjs',
+  'file:///abc.cjs'
+])('parses JSX in a javascript document at %s', (uri) => {
+  const doc = TextDocument.create(uri, 'javascript', 0, "const c=clsx(on && 'fg:red')\nexport default () => <div className={c}></div>")
+  expect(getClassPositions(doc, languageSettings).map((classPosition) => classPosition.token)).toEqual([
+    'fg:red'
   ])
 })
 
