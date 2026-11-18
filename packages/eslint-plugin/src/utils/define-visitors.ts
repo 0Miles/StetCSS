@@ -8,7 +8,8 @@ export default function defineVisitors({ context, settings }: { context: RuleCon
   const classAttributeRegex = new RegExp(`^(?:${settings.classAttributes.join('|')})$`)
   const classFunctionsRegex = new RegExp(`^(?:${settings.classFunctions.join('|')})$`)
   const classDeclarationsRegex = new RegExp(`^(?:${settings.classDeclarations.join('|')})$`)
-  const visitClassNode = withVisitClassNode(visitNode, context)
+  const ignoredKeysRegex = settings.ignoredKeys?.length ? new RegExp(`^(?:${settings.ignoredKeys.join('|')})$`) : undefined
+  const visitClassNode = withVisitClassNode(visitNode, context, ignoredKeysRegex)
 
   const getStaticName = (node: any): string | undefined => {
     if (!node) return
@@ -73,9 +74,12 @@ export default function defineVisitors({ context, settings }: { context: RuleCon
     },
     SvelteAttribute: function (node: any) {
       if (!node.key?.name || !classAttributeRegex.test(node.key.name)) return
-      for (const eachValue of node.value) {
-        visitClassNode(eachValue)
-      }
+      node.value.forEach((eachValue: any, index: number) => {
+        visitClassNode(eachValue, {
+          before: index > 0 && node.value[index - 1].type !== 'SvelteLiteral',
+          after: index < node.value.length - 1 && node.value[index + 1].type !== 'SvelteLiteral'
+        })
+      })
     },
     TextAttribute: function (node: any) {
       if (!node.name || !classAttributeRegex.test(node.name)) return
