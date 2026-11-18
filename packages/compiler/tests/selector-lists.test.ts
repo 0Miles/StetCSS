@@ -61,6 +61,24 @@ describe.concurrent('selector lists in lowered rules', () => {
   })
 
   /**
+   * Guards: a comma inside a comment in a manifest alias's selector text is not a list separator.
+   * Alias text comes from the manifest, not from lightningcss, so it can carry a comment:
+   * `:pair` = `>li/*,*\/` lowered to `.card>li/*,.card*\/`, copying the host into the comment.
+   * Both select the same elements; the generated CSS text is the contract, so this locks the
+   * comment as opaque.
+   * Reverse check: `splitSelectorList` (`src/utils/selectors.ts`) not skipping a comment at
+   * `index` reddens only this test.
+   */
+  test('a comment in a selector alias is not split as a list', () => {
+    const baseManifest = {
+      ...defaultManifest,
+      selectors: { ...defaultManifest.selectors, ':pair': [{ value: '>li/*,*/' }] }
+    } as StetCSSManifest
+    const { css } = compileCSSManifest('.card { @compose block; &:pair { color: red; } }', { baseManifest })
+    expect(css.trim()).toBe('.card{display:block}.card>li/*,*/{color:red}')
+  })
+
+  /**
    * Guards #186 and #188: a `\` outside a string escapes the character after it, so an escaped
    * colon (`.a\:pair`, `.literal\:first`, and `\3a `, which lightningcss writes as `\:`) is part
    * of the class name, not a `:` selector alias, and an escaped quote opens no string that hides a
