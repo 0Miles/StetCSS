@@ -96,6 +96,25 @@ describe('style CSS extraction helpers', () => {
     expect(result.generatedCSS).toContain('--color-primary:red')
   })
 
+  // Guards #185: a theme token a native CSS reference reaches only through an `@theme inline`
+  // variable is emitted, or the lowered `var(--color-base)` resolves to nothing.
+  it('emits theme variables reached from native CSS through an inline theme variable', () => {
+    const compiled = compileCSSManifest(`
+      @theme { --color-base: red; }
+      @theme inline { --color-alias: var(--color-base); }
+      @theme { --color-brand: var(--color-alias); }
+
+      .native { color: var(--color-brand); }
+    `, { baseManifest: defaultManifest })
+    const result = renderCompiledManifestCSS({
+      manifest: compiled.manifest,
+      nativeCSS: compiled.nativeCSS,
+      includeGeneratedCSS: false
+    })
+
+    expect(result.generatedCSS).toBe('@layer theme{:root{--color-brand:var(--color-base);--color-base:red}}')
+  })
+
   it('replaces @stet-css/core imports with CSS import modifiers', () => {
     const result = replaceStyleCSSImports([
       '@import "@stet-css/core" layer(stet);',
