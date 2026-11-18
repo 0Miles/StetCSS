@@ -259,6 +259,40 @@ describe('source adapters', () => {
   })
 
   /**
+   * Guards: Astro runs the frontmatter inside an async render function, so it
+   * may `return` early and `await` at the top level. A parse error there fell
+   * back to text extraction, and the identifier `block` in
+   * `const { block } = Astro.props` emitted `.block{display:block}`. Reverse
+   * check: no longer accepting the top-level `return` diagnostic in
+   * `src/adapters/astro.ts` turns the `return` cases red; parsing the
+   * frontmatter as CommonJS, which allows `return` but not `await`, turns the
+   * `await` cases red.
+   */
+  test.each([
+    ['a top-level return', `---
+const { block } = Astro.props
+if (!block) return Astro.redirect('/')
+const size = 'p:1px'
+---
+<div class="p:2px"></div>`],
+    ['a top-level await and return', `---
+import { getEntry } from 'astro:content'
+const block = await getEntry(Astro.params.slug)
+if (!block) return Astro.redirect('/404')
+const size = 'p:1px'
+export const prerender = true
+---
+<div class="p:2px"></div>`],
+    ['a top-level await', `---
+const block = await fetch('/api').then(response => response.json())
+const size = 'p:1px'
+---
+<div class="p:2px"></div>`]
+  ])('parses Astro frontmatter with %s as the body of the render function', (_, content) => {
+    expect(extractAstroClasses('Page.astro', content)).toEqual(['p:1px', 'p:2px'])
+  })
+
+  /**
    * Guards: the Astro compiler opens the frontmatter after a BOM or blank
    * lines, allows spaces after either fence, closes it at a `---` that starts
    * a line outside strings, template literals and comments, and lets that fence

@@ -1,5 +1,5 @@
 import { extractClassCandidates } from '../extract-class-candidates'
-import { extractOxcClasses } from './oxc'
+import { extractOxcClasses, extractParsedOxcClasses } from './oxc'
 import type { SourceAdapter, SourceAdapterInput } from './types'
 
 const SCRIPT_BLOCK = /<script\b[^>]*>([\s\S]*?)<\/script>/gi
@@ -16,6 +16,8 @@ function add(classes: Set<string>, classNames: string[]) {
 // Whitespace, and a BOM, the Astro compiler skips before the opening fence.
 const LEADING_SPACE = /^[\uFEFF\s]*/
 const FENCE_SPACE = /^[ \t]*/
+// TypeScript's "A 'return' statement can only be used within a function body."
+const RETURN_OUTSIDE_FUNCTION = 'TS(1108)'
 
 /**
  * The index of the last character of the string, template literal or comment
@@ -71,12 +73,26 @@ function extractFrontmatter(content: string) {
   return none
 }
 
+/**
+ * Astro compiles the frontmatter into the body of an async render function,
+ * so it may `await` at the top level and `return` early. oxc parses such a
+ * `return` into the program and only reports where it stands.
+ */
+function extractFrontmatterClasses(source: string, frontmatter: string) {
+  return extractParsedOxcClasses(`${source}.ts`, frontmatter, {
+    sourceType: 'module',
+    allowsError: error => error.labels.length === 1 &&
+      !!error.codeframe?.includes(RETURN_OUTSIDE_FUNCTION) &&
+      frontmatter.slice(error.labels[0]!.start, error.labels[0]!.end) === 'return'
+  })
+}
+
 export function extractAstroClasses(source: string, content: string): string[] {
   const classes = new Set<string>()
   const { frontmatter, markup } = extractFrontmatter(content)
 
   if (frontmatter) {
-    add(classes, extractOxcClasses(`${source}.ts`, frontmatter))
+    add(classes, extractFrontmatterClasses(source, frontmatter))
   }
 
   let template = markup

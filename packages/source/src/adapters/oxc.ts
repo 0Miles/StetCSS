@@ -1,6 +1,6 @@
-import { visitorKeys } from 'oxc-parser'
+import { visitorKeys, type ParserOptions } from 'oxc-parser'
 import { addClassString } from './class-string'
-import { parseOxcOnSourceStack } from './oxc-stack'
+import { parseOxcOnSourceStack, type OxcErrorFilter } from './oxc-stack'
 import { extractClassCandidates } from '../extract-class-candidates'
 import type { SourceAdapter } from './types'
 
@@ -72,14 +72,28 @@ function getTemplateLiteralValue(node: OxcNode) {
   return quasis[0]?.value?.cooked ?? quasis[0]?.value?.raw
 }
 
+export interface OxcParse {
+  sourceType?: ParserOptions['sourceType']
+  allowsError?: OxcErrorFilter
+}
+
 export function extractOxcClasses(source: string, content: string): string[] {
+  return extractParsedOxcClasses(source, content, {})
+}
+
+/**
+ * `extractOxcClasses` for adapters that know how their host compiles the
+ * script: `sourceType` replaces `unambiguous`, and `allowsError` accepts the
+ * parse errors that still leave a program the host compiles.
+ */
+export function extractParsedOxcClasses(source: string, content: string, parse: OxcParse): string[] {
   const filename = normalizeSource(source)
   const lang = getParserLang(filename)
   const program = parseOxcOnSourceStack(filename, content, {
     range: false,
-    sourceType: 'unambiguous',
+    sourceType: parse.sourceType ?? 'unambiguous',
     ...lang && { lang }
-  })
+  }, parse.allowsError)
   if (!program) return extractClassCandidates(content)
 
   const classes = new Set<string>()
