@@ -32,7 +32,7 @@ Common API areas:
 | API area | Purpose |
 | --- | --- |
 | Style request helpers | Detect and resolve StetCSS stylesheet requests. |
-| Local CSS transforms | Lower local `@compose` and `@reference` directives. |
+| Local CSS transforms | Lower local `@compose` and `@reference` directives; `loadLocalStyleContext()` loads the project manifest and emitted globals they lower against, shared while the entries' files keep their stamps. |
 | Source registration | Register stylesheet sources and dependency metadata. |
 | Manifest creation | Build stylesheet-local manifests from compiled CSS. |
 | Extracted CSS composition | Combine generated CSS, native CSS, and emittedGlobals counts. |
