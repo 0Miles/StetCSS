@@ -2,12 +2,17 @@ import type { RuleContext } from '@typescript-eslint/utils/ts-eslint'
 import settings, { Settings } from '../settings'
 import { StetCSS, createCSSWithNativeDeclarations, defaultManifest } from './stet-css'
 import { findStetCSSWorkspaceDirectoriesSync } from '@stet-css/project/entries'
-import { loadProjectManifestSync } from '@stet-css/project/manifest-sync'
+import { loadProjectManifestSync, type LoadProjectManifestResult } from '@stet-css/project/manifest-sync'
 import path from 'node:path'
 import { existsSync } from 'node:fs'
 import isSameOrChildPath from './is-same-or-child-path'
 
-const cssByWorkspaceDirectory = new Map<string, StetCSS>()
+/**
+ * CSS derived from a project manifest result. The cached load returns the same result while the
+ * workspace's entries and every file they import keep their stamps, and a new one after an edit,
+ * so a long-running ESLint (an editor, eslint_d) follows CSS entry edits without a restart.
+ */
+const cssByManifestResult = new WeakMap<LoadProjectManifestResult, StetCSS>()
 const workspaceDirectoriesByCwd = new Map<string, string[]>()
 
 function getContextFilename(context: RuleContext<any, any[]>) {
@@ -58,11 +63,28 @@ function resolveWorkspaceDirectory(context: RuleContext<any, any[]>, filename: s
 }
 
 function getWorkspaceCSS(workspaceDir: string) {
-  let css = cssByWorkspaceDirectory.get(workspaceDir)
+  const result = loadProjectManifestSync(workspaceDir, { cache: true })
+  let css = cssByManifestResult.get(result)
   if (!css) {
-    const result = loadProjectManifestSync(workspaceDir)
     css = createCSSWithNativeDeclarations(result.entries.length ? result.manifest : defaultManifest)
-    cssByWorkspaceDirectory.set(workspaceDir, css)
+    cssByManifestResult.set(result, css)
+  }
+  return css
+}
+
+/**
+ * The CSS each linted file resolved, so every rule on one file reads the same manifest, and a file
+ * linted in the seconds after a CSS edit, while the manifest cache will not yet keep the result,
+ * compiles the project once rather than once per rule.
+ */
+const cssBySourceCode = new WeakMap<object, StetCSS>()
+
+function getFileCSS(context: RuleContext<any, any[]>, filename: string) {
+  const sourceCode = context.sourceCode as object | undefined
+  let css = sourceCode && cssBySourceCode.get(sourceCode)
+  if (!css) {
+    css = getWorkspaceCSS(resolveWorkspaceDirectory(context, filename))
+    if (sourceCode) cssBySourceCode.set(sourceCode, css)
   }
   return css
 }
@@ -82,7 +104,7 @@ export default function resolveContext(context: RuleContext<any, any[]>) {
   const resolvedSettings = Object.assign({}, settings, userSettings)
   const filename = getContextFilename(context)
   const css = filename
-    ? getWorkspaceCSS(resolveWorkspaceDirectory(context, filename))
+    ? getFileCSS(context, filename)
     : getDefaultCSS()
 
   return {
