@@ -132,14 +132,16 @@ function extractFrontmatterClasses(source: string, frontmatter: string) {
 
 /**
  * The Astro compiler decodes the character references in a static attribute value as the browser
- * does, while the markup text extraction reads them as written. Adds the decoded value of every
- * static class attribute written with a reference.
+ * does. Extracts every static class attribute written with a reference by its decoded value and
+ * removes it from the markup, so the markup text extraction does not read it as written.
  */
-function addDecodedClassAttributes(classes: Set<string>, markup: string) {
-  for (const match of markup.matchAll(STATIC_CLASS_ATTRIBUTE)) {
-    const value = match[1] ?? match[2] ?? match[3]!
-    if (value.includes('&')) add(classes, extractClassCandidates(decodeStetCSSHTMLAttributeValue(value).value))
-  }
+function extractDecodedClassAttributes(classes: Set<string>, markup: string) {
+  return markup.replace(STATIC_CLASS_ATTRIBUTE, (attribute, doubleQuoted?: string, singleQuoted?: string, unquoted?: string) => {
+    const value = doubleQuoted ?? singleQuoted ?? unquoted!
+    if (!value.includes('&')) return attribute
+    add(classes, extractClassCandidates(decodeStetCSSHTMLAttributeValue(value).value))
+    return ''
+  })
 }
 
 export function extractAstroClasses(source: string, content: string): string[] {
@@ -158,8 +160,8 @@ export function extractAstroClasses(source: string, content: string): string[] {
     return ''
   })
   template = template.replace(STYLE_BLOCK, '')
+  template = extractDecodedClassAttributes(classes, template)
   add(classes, extractClassCandidates(template))
-  addDecodedClassAttributes(classes, template)
 
   return [...classes]
 }
