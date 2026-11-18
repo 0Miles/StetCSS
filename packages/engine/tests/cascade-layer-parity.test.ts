@@ -154,6 +154,42 @@ describe.concurrent('migrated cascade and layer parity', () => {
     })
   })
 
+  describe('dependency chains through inline variables', () => {
+    // Guards: a token reached only through an inline variable (`@theme inline`) is emitted, or the
+    // lowered `var(--color-base)` in --color-brand resolves to nothing and the colour is unset.
+    const createInlineChainManifest = (brandOptions: { static?: true } = {}) => createManifestWithVariables([
+      { name: 'color-base', key: 'base', namespace: 'color', type: 'string', value: 'red' },
+      { name: 'color-alias', key: 'alias', namespace: 'color', type: 'string', value: 'var(--color-base)', dependencies: ['color-base'], inline: true },
+      { name: 'color-brand', key: 'brand', namespace: 'color', type: 'string', value: 'var(--color-alias)', dependencies: ['color-alias'], ...brandOptions }
+    ])
+
+    test('ensure emits the token behind an inline variable and delete removes it', () => {
+      const css = StetCSS.create({ manifest: createInlineChainManifest() })
+
+      css.ensureClassRules('fg:brand')
+      expect(css.themeLayer.text).toBe('@layer theme{:root{--color-brand:var(--color-base);--color-base:red}}')
+
+      css.deleteClassRules('fg:brand')
+      expect(css.text).toBe('')
+      expect(Object.fromEntries(css.themeLayer.tokenCounts)).toEqual({})
+    })
+
+    test('static initialization emits the token behind an inline variable and keeps it through ensure and delete', () => {
+      const css = StetCSS.create({ manifest: createInlineChainManifest({ static: true }) })
+      const staticThemeText = '@layer theme{:root{--color-brand:var(--color-base);--color-base:red}}'
+
+      expect(css.themeLayer.text).toBe(staticThemeText)
+
+      css.ensureClassRules('fg:brand')
+      expect(css.themeLayer.text).toBe(staticThemeText)
+      expect(Object.fromEntries(css.themeLayer.tokenCounts)).toEqual({ 'color-brand': 2, 'color-base': 2 })
+
+      css.deleteClassRules('fg:brand')
+      expect(css.themeLayer.text).toBe(staticThemeText)
+      expect(Object.fromEntries(css.themeLayer.tokenCounts)).toEqual({ 'color-brand': 1, 'color-base': 1 })
+    })
+  })
+
   test('does not duplicate emittedGlobals static variables and keyframes', () => {
     const manifest = createManifestWithVariables([
       {
