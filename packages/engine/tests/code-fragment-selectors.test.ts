@@ -22,8 +22,9 @@ describe.concurrent('code fragments read as classes', () => {
    * Reverse check: `hasDanglingCombinator` in `src/utility.ts` returning `false` reddens only the
    * combinator cases here and the `:dk` test; `isSelectorSuffix` returning `true` reddens the
    * comma and `*` cases here and the rejection rows of `selector-suffix-names.test.ts` and
-   * `of-selector-list.test.ts`; dropping its empty-item check at a `,` in `:of()` reddens only
-   * `hidden:of(,.a)` and `hidden:of(.a,,.b)`.
+   * `of-selector-list.test.ts`; dropping its empty-item check at a `,` reddens only
+   * `hidden.a,,.b`, `hidden:of(,.a)` and `hidden:of(.a,,.b)` here and `hidden.a,_,.b` in
+   * `selector-suffix-names.test.ts`.
    */
   test.each([
     'block+',
