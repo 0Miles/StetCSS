@@ -3,7 +3,7 @@ import type { Position } from 'vscode-languageserver-protocol'
 import findMatchingPairs from './find-matching-brackets'
 import escapeRegexp from 'lodash.escaperegexp'
 import { visitorKeys } from 'oxc-parser'
-import { collectCSSDirectiveRanges, parseStetCSSClassList } from '@stet-css/lexer'
+import { collectCSSDirectiveRanges, parseStetCSSClassList, type StetCSSScriptStringQuote } from '@stet-css/lexer'
 import { parseOxcOnSourceStack } from './oxc-stack'
 
 export interface ClassPosition {
@@ -11,6 +11,12 @@ export interface ClassPosition {
   contextRange: { start: number, end: number }
   raw: string
   token: string
+  /**
+   * Set when the context is the body of a JavaScript string literal or template quoted by this
+   * character, where escapes and line continuations are decoded. Markup attribute values, JSX
+   * attribute strings and CSS directives leave it unset.
+   */
+  scriptString?: StetCSSScriptStringQuote
 }
 
 export interface ClassPositionSettings {
@@ -234,7 +240,8 @@ function collectClassPositions(
   contextRange: SourceRange = {
     start: classNameStart,
     end: classNameStart + className.length
-  }
+  },
+  scriptString?: StetCSSScriptStringQuote
 ) {
   const classPositions: ClassPosition[] = []
   for (const item of parseStetCSSClassList(className, {
@@ -251,7 +258,8 @@ function collectClassPositions(
       range: { start: classStartIndex, end: classEndIndex },
       contextRange,
       raw: item.raw,
-      token: item.token
+      token: item.token,
+      ...(scriptString ? { scriptString } : {})
     })
   }
   return classPositions
@@ -416,7 +424,8 @@ function collectOxcStringLiteral(
   source: string,
   node: OxcNode,
   includeEmpty: boolean,
-  accept?: ClassPositionAccept
+  accept?: ClassPositionAccept,
+  script = true
 ) {
   if (typeof node.value !== 'string') return []
   const range = getNodeRange(node)
@@ -432,7 +441,8 @@ function collectOxcStringLiteral(
     quote,
     includeEmpty,
     accept,
-    { start: classNameStart, end: classNameEnd }
+    { start: classNameStart, end: classNameEnd },
+    script ? quote : undefined
   )
 }
 
@@ -455,7 +465,8 @@ function collectOxcTemplateLiteral(
       '`',
       includeEmpty,
       accept,
-      { start: classNameStart, end: classNameEnd }
+      { start: classNameStart, end: classNameEnd },
+      '`'
     ))
   }
   return classPositions
@@ -532,7 +543,8 @@ function createOxcClassPositions(
       const attributeName = getJSXAttributeName(node.name)
       const attributeValue = node.value
       if (attributeName && classAttributes.has(attributeName) && isOxcNode(attributeValue) && attributeValue.type === 'Literal') {
-        collect(attributeValue)
+        // JSX attribute strings hold no JavaScript escapes.
+        classPositions.push(...collectOxcStringLiteral(source, attributeValue, true, undefined, false))
       }
       if (attributeName && classAttributeBindings.has(attributeName) && isOxcNode(attributeValue) && attributeValue.type === 'JSXExpressionContainer') {
         collect(attributeValue.expression)
@@ -688,11 +700,12 @@ export default function getClassPositions(
   const stringExpressions: ClassMatcher[] = []
   const assignmentExpressions: ClassMatcher[] = []
 
+  const markupStringExpressions = new Set<ClassMatcher>()
   classAttributes?.forEach((eachClassAttribute) => {
-    stringExpressions.push(
-      [eachClassAttribute + '=', '"', '"'],
-      [eachClassAttribute + '=', '\'', '\''],
-    )
+    const doubleQuoted: ClassMatcher = [eachClassAttribute + '=', '"', '"']
+    const singleQuoted: ClassMatcher = [eachClassAttribute + '=', '\'', '\'']
+    markupStringExpressions.add(doubleQuoted).add(singleQuoted)
+    stringExpressions.push(doubleQuoted, singleQuoted)
   })
 
   classDeclarations?.forEach((eachClassDeclaration) => {
@@ -718,7 +731,8 @@ export default function getClassPositions(
   })
 
   if (stringExpressions.length) {
-    resolve(stringExpressions, (eachAttrStart, eachClassPositionEnd, [, pair]) => {
+    resolve(stringExpressions, (eachAttrStart, eachClassPositionEnd, eachClassMatcher) => {
+      const [, pair] = eachClassMatcher
       const eachClassName = sourceText.substring(eachAttrStart, eachClassPositionEnd)
       classPositions.push(...collectClassPositions(
         eachClassName,
@@ -726,7 +740,8 @@ export default function getClassPositions(
         pair,
         includeEmpty,
         acceptsClassRange,
-        { start: eachAttrStart, end: eachClassPositionEnd }
+        { start: eachAttrStart, end: eachClassPositionEnd },
+        markupStringExpressions.has(eachClassMatcher) ? undefined : pair as StetCSSScriptStringQuote
       ))
     })
   }
@@ -765,7 +780,8 @@ export default function getClassPositions(
           '"',
           includeEmpty,
           acceptsClassRange,
-          { start: classNameStart, end: classNameStart + eachClassName.length }
+          { start: classNameStart, end: classNameStart + eachClassName.length },
+          '"'
         ))
       }
 
@@ -779,7 +795,8 @@ export default function getClassPositions(
           '\'',
           includeEmpty,
           acceptsClassRange,
-          { start: classNameStart, end: classNameStart + eachClassName.length }
+          { start: classNameStart, end: classNameStart + eachClassName.length },
+          '\''
         ))
       }
 
@@ -793,7 +810,8 @@ export default function getClassPositions(
           '`',
           includeEmpty,
           acceptsClassRange,
-          { start: classNameStart, end: classNameStart + eachClassName.length }
+          { start: classNameStart, end: classNameStart + eachClassName.length },
+          '`'
         ))
       }
     })
