@@ -733,12 +733,7 @@ export function tokenizeStetCSSState(token: string, stateStart: number, offset: 
       i++
     } else if (char === '_' || char === '>' || char === '+' || char === '~') {
       pushStetCSSLexicalToken(tokens, offset + i, 1, 'operator', 'selector.combinator', ['selector'])
-      i++
-      const match = token.slice(i).match(/^\*?[A-Za-z][\w-]*/)
-      if (match) {
-        pushStetCSSLexicalToken(tokens, offset + i, match[0].length, 'type', 'selector.type', ['selector'])
-        i += match[0].length
-      }
+      i = pushTypeSelector(tokens, token, i + 1, offset)
     } else if (char === '.' || char === '#') {
       const role = char === '.' ? 'selector.class' : 'selector.id'
       pushStetCSSLexicalToken(tokens, offset + i, 1, 'operator', char === '.' ? 'selector.class.delimiter' : 'selector.id.delimiter', ['selector'])
@@ -752,12 +747,7 @@ export function tokenizeStetCSSState(token: string, stateStart: number, offset: 
       }
     } else if (char === '(' || char === ',') {
       pushStetCSSLexicalToken(tokens, offset + i, 1, 'operator', char === '(' ? 'selector.function.punctuation' : 'selector.separator', ['selector'])
-      i++
-      const match = token.slice(i).match(/^\*?[A-Za-z][\w-]*/)
-      if (match) {
-        pushStetCSSLexicalToken(tokens, offset + i, match[0].length, 'type', 'selector.type', ['selector'])
-        i += match[0].length
-      }
+      i = pushTypeSelector(tokens, token, i + 1, offset)
     } else if (char === '[') {
       pushStetCSSLexicalToken(tokens, offset + i, 1, 'operator', 'selector.attribute.bracket', ['selector'])
       i = tokenizeAttributeSelector(tokens, token, i + 1, offset)
