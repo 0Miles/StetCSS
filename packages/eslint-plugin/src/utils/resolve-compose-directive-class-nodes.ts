@@ -162,7 +162,8 @@ function resolveComposeDirectiveClassNode(
     end,
     raw,
     value: raw,
-    unescape: false,
+    options: {},
+    fixable: true,
     classNodes,
     classValues: classNodes.map((node) => node.value),
   }
