@@ -1,4 +1,4 @@
-import { findCSSClosingQuote, isCSSIdentChar } from './source'
+import { isCSSIdentChar, skipCSSEscapeStringOrComment } from './source'
 
 export interface CSSFunctionToken {
   body: string
@@ -6,23 +6,15 @@ export interface CSSFunctionToken {
   text: string
 }
 
-export function findCSSCommentEnd(source: string, start: number, limit = source.length) {
-  const end = source.indexOf('*/', start + 2)
-  return end === -1 || end + 2 > limit ? limit : end + 2
-}
-
 export function findCSSFunctionEnd(source: string, openIndex: number, limit = source.length) {
   let depth = 1
   for (let index = openIndex + 1; index < limit; index++) {
+    const skipped = skipCSSEscapeStringOrComment(source, index, limit)
+    if (skipped !== index) {
+      index = skipped - 1
+      continue
+    }
     const char = source[index]
-    if (char === '"' || char === '\'') {
-      index = findCSSClosingQuote(source, index, char, limit)
-      continue
-    }
-    if (char === '/' && source[index + 1] === '*') {
-      index = findCSSCommentEnd(source, index, limit) - 1
-      continue
-    }
     if (char === '(') {
       depth++
       continue
@@ -53,13 +45,9 @@ export function readCSSFunction(source: string, start: number, name: string, lim
 export function collectCSSVariableReferences(source: string) {
   const references = new Set<string>()
   for (let index = 0; index < source.length;) {
-    const char = source[index]
-    if (char === '"' || char === '\'') {
-      index = findCSSClosingQuote(source, index, char) + 1
-      continue
-    }
-    if (char === '/' && source[index + 1] === '*') {
-      index = findCSSCommentEnd(source, index)
+    const skipped = skipCSSEscapeStringOrComment(source, index)
+    if (skipped !== index) {
+      index = skipped
       continue
     }
     const variableFunction = readCSSFunction(source, index, 'var')
@@ -81,34 +69,13 @@ export function collectCSSVariableReferences(source: string) {
 
 export function replaceCSSVariableReferences(source: string, replacer: (name: string, text: string) => string | undefined) {
   let result = ''
-  let quote = ''
 
   for (let index = 0; index < source.length;) {
     const char = source[index]
-
-    if (quote) {
-      result += char
-      if (char === '\\') {
-        result += source[index + 1] || ''
-        index += 2
-        continue
-      }
-      if (char === quote) quote = ''
-      index++
-      continue
-    }
-
-    if (char === '/' && source[index + 1] === '*') {
-      const end = findCSSCommentEnd(source, index)
-      result += source.slice(index, end)
-      index = end
-      continue
-    }
-
-    if (char === '"' || char === '\'') {
-      quote = char
-      result += char
-      index++
+    const skipped = skipCSSEscapeStringOrComment(source, index)
+    if (skipped !== index) {
+      result += source.slice(index, skipped)
+      index = skipped
       continue
     }
 
@@ -131,26 +98,14 @@ export function replaceCSSVariableReferences(source: string, replacer: (name: st
       }
 
       let depth = 1
-      let innerQuote = ''
       let closeIndex = -1
       for (let nextIndex = cursor; nextIndex < source.length; nextIndex++) {
+        const skipped = skipCSSEscapeStringOrComment(source, nextIndex)
+        if (skipped !== nextIndex) {
+          nextIndex = skipped - 1
+          continue
+        }
         const nextChar = source[nextIndex]
-        if (innerQuote) {
-          if (nextChar === '\\') {
-            nextIndex++
-            continue
-          }
-          if (nextChar === innerQuote) innerQuote = ''
-          continue
-        }
-        if (nextChar === '"' || nextChar === '\'') {
-          innerQuote = nextChar
-          continue
-        }
-        if (nextChar === '/' && source[nextIndex + 1] === '*') {
-          nextIndex = findCSSCommentEnd(source, nextIndex) - 1
-          continue
-        }
         if (nextChar === '(') {
           depth++
           continue

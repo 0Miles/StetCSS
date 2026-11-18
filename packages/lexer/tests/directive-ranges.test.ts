@@ -143,3 +143,19 @@ test.concurrent('returns eof for incomplete directive statements', () => {
     reason: 'eof'
   })
 })
+
+/**
+ * Prevents: a backslash-escaped quote in a selector opening a string for the directive scan, so a
+ * CSS module with `.a\'b{}` before `@compose` reported no directives. A quote escaped inside a
+ * string still leaves the string open.
+ */
+test.concurrent('locates directives after escaped quotes outside strings', () => {
+  const source = String.raw`.a\'b{} .c{content:'it\'s'} .x{@compose block;}`
+  const ranges = collectCSSDirectiveRanges(source)
+
+  expect(ranges.map((range) => range.name)).toEqual(['compose'])
+  expect(source.slice(ranges[0].start, ranges[0].end)).toBe('@compose block;')
+  expect(collectCSSDirectiveRanges(String.raw`.a\'b{} @master entry;`).map((range) => range.name)).toEqual(['master'])
+  expect(collectCSSDeclarationRanges(String.raw`a: \'x; b: 'y\';z'; c: 1`, 0, 24).map((range) => range.end))
+    .toEqual([7, 19, 24])
+})

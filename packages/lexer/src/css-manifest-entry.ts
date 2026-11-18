@@ -1,4 +1,4 @@
-import { escapeRegExp, findCSSStatementEnd } from './source'
+import { escapeRegExp, findCSSStatementEnd, skipCSSEscapeStringOrComment } from './source'
 
 export const STET_CSS_PACKAGE_MODULE_IDS = ['@stet-css/core'] as const
 
@@ -40,36 +40,14 @@ export function parseCSSImportSource(statement: string) {
 
 export function findCSSImportStatements(source: string) {
   const imports: CSSImportStatement[] = []
-  let quote = ''
-  let comment = false
   let depth = 0
   for (let index = 0; index < source.length; index++) {
+    const skipped = skipCSSEscapeStringOrComment(source, index)
+    if (skipped !== index) {
+      index = skipped - 1
+      continue
+    }
     const char = source[index]
-    const next = source[index + 1]
-    if (comment) {
-      if (char === '*' && next === '/') {
-        comment = false
-        index++
-      }
-      continue
-    }
-    if (quote) {
-      if (char === '\\') {
-        index++
-      } else if (char === quote) {
-        quote = ''
-      }
-      continue
-    }
-    if (char === '/' && next === '*') {
-      comment = true
-      index++
-      continue
-    }
-    if (char === '"' || char === '\'') {
-      quote = char
-      continue
-    }
     if (char === '{') {
       depth++
       continue
