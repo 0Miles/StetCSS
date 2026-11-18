@@ -324,6 +324,10 @@ describe.concurrent('migrated cascade and layer parity', () => {
    * Prevents (#184): ratio queries sorting by their class names, so `@aspect-ratio>=3/1` lands
    * before `@aspect-ratio>=16/9` and loses to it on the widest screens. Ratios order by their
    * quotient. Rows are listed in the expected order; their class names sort differently.
+   * Reverse-checked: making `toComparableRatio` in `compare-rule-priority.ts` return `NaN` reds this
+   * test only; dropping `/` from the token regex in `parse-condition.ts` reds it and the 16/9 row
+   * in `parser-parity.test.ts`. Quotients sit at least 1 apart: closer min-only values tie in
+   * `compareFeatureTuples` (a separate precision defect).
    */
   test('orders aspect-ratio queries by ratio', () => {
     const expected = ['block@aspect-ratio>=1/2', 'block@aspect-ratio>=16/9', 'block@aspect-ratio>=3/1']
