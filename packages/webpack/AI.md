@@ -20,3 +20,5 @@ Owns the Webpack plugin. It only builds static CSS: before each compilation it g
 ## Validation
 
 Build `examples/webpack` when plugin behaviour changes. `tests/static-e2e.test.ts` builds it with `style-loader`, builds native CSS (extracted) fixtures, including a Sass entry and an entry outside the root, and runs watch mode with real webpack against `dist`.
+
+`bun run --filter @stet-css/webpack bench` (`tests/transform-style-source.bench.ts`) measures what one CSS Module and one `@reference` stylesheet cost the style transform once the project is compiled (#202); its numbers are evidence, not a gate.
