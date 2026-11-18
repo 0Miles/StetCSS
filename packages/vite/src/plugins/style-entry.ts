@@ -94,7 +94,11 @@ export default function StyleEntryPlugin(context: PluginContext): Plugin {
       }
 
       return {
-        code: createStyleCSSHostSource(code, { stetSource }),
+        code: createStyleCSSHostSource(code, {
+          stetSource,
+          // A build splices the CSS into the placeholder later; its layers come from the entry.
+          ...(context.config?.command === 'serve' ? {} : { stetLayerSource: resolvedStyleSource.source })
+        }),
         map: null
       }
     }
