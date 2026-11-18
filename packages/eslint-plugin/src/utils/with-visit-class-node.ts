@@ -1,5 +1,6 @@
 import { RuleContext } from '@typescript-eslint/utils/ts-eslint'
 import resolveClassNode, { type ExpressionNeighbours } from './resolve-class-node'
+import { isASCIIWhitespace } from '@stet-css/lexer'
 import { TSESTree } from '@typescript-eslint/utils'
 
 export default function withVisitClassNode(
@@ -9,8 +10,8 @@ export default function withVisitClassNode(
 ) {
   /**
    * `neighbours` says which ends of the expression's string value touch text around it, as in
-   * Svelte's `x{on ? 'a b' : ''}`. Only branches that yield the string itself carry them; arrays,
-   * objects and templates with expressions in such a place are skipped.
+   * Svelte's `x{on ? 'a b' : ''}` or `` `x${on ? 'a b' : ''}` ``. Only branches that yield the
+   * string itself carry them; arrays and objects in such a place are skipped.
    */
   const visitNode = (node, neighbours?: ExpressionNeighbours) => {
     if (!node) return
@@ -19,14 +20,25 @@ export default function withVisitClassNode(
       case 'BinaryExpression':
       case 'Identifier':
         return
-      case 'TemplateLiteral':
-        if (touches) {
-          if (!node.expressions?.length) visitNode(node.quasis[0], neighbours)
+      case 'TemplateLiteral': {
+        const { quasis, expressions = [] } = node
+        if (!expressions.length) {
+          visitNode(quasis[0], neighbours)
           return
         }
-        node.expressions?.forEach((expression) => visitNode(expression))
-        node.quasis.forEach((quasi) => visitNode(quasi))
+        // An expression's string joins the template text beside it; an empty quasi passes the
+        // touch on to the next expression or to the template's own neighbour.
+        expressions.forEach((expression, index) => {
+          const before: string | null = quasis[index].value.cooked
+          const after: string | null = quasis[index + 1].value.cooked
+          visitNode(expression, {
+            before: before === '' ? index > 0 || !!neighbours?.before : !isASCIIWhitespace(before?.at(-1)),
+            after: after === '' ? index < expressions.length - 1 || !!neighbours?.after : !isASCIIWhitespace(after?.[0])
+          })
+        })
+        quasis.forEach((quasi) => visitNode(quasi))
         return
+      }
       case 'JSXExpressionContainer':
         visitNode(node.expression)
         return
