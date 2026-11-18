@@ -4,6 +4,12 @@ import { extractAstroClasses, extractHTMLClasses, extractOxcClasses, extractSvel
 /**
  * A browser decodes character references in a class attribute before it splits the classes
  * (#194). Extracting the source spelling instead drops the CSS of every class spelled with one.
+ * Reverse checks (each restored afterwards):
+ * - HTML adapter passing the value as written → the three HTML tests;
+ * - oxc adapter not decoding JSX attribute strings → the JSX test;
+ * - Astro or Vue keeping the raw attribute next to the decoded one → its own test;
+ * - Vue decoding every directive, not only `:class` → the Vue test;
+ * - candidates splitting on `\S+` again → the five tests with `&nbsp;`.
  */
 
 test.concurrent('extracts HTML class attributes by the classes the browser reads', () => {
@@ -39,14 +45,14 @@ test.concurrent('extracts JSX attribute strings by the classes the compiled elem
 })
 
 test('extracts Vue class attributes and bindings by the classes Vue renders', async () => {
-  const classes = await extractVueClasses('App.vue', `
+  // Vue decodes every attribute value, but only `class` and `:class` name classes; the click
+  // handler is read as written by the template text extraction.
+  await expect(extractVueClasses('App.vue', `
     <template>
       <div class="block&#32;hidden c&nbsp;d a&copyb"><p class=inline&#x2d;flex /></div>
-      <span :class="ok &amp;&amp; 'flex&#32;grid'" />
+      <span :class="ok &amp;&amp; 'flex&#32;grid'" @click="go('m&#32;n')" />
     </template>
-  `)
-  expect(classes).toEqual(expect.arrayContaining(['block', 'hidden', 'c\u00A0d', 'a&copyb', 'inline-flex', 'flex', 'grid']))
-  expect(classes).not.toContain('c')
+  `)).resolves.toEqual(['ok', 'flex', 'grid', 'block', 'hidden', 'c\u00A0d', 'a&copyb', 'inline-flex', 'go(\'m&#32;n\')', 'm&#32;n'])
 })
 
 test('extracts Svelte class attributes by the classes Svelte renders', async () => {
@@ -56,13 +62,11 @@ test('extracts Svelte class attributes by the classes Svelte renders', async () 
 })
 
 test.concurrent('extracts Astro static class attributes by the classes the browser reads', () => {
-  const classes = extractAstroClasses('Page.astro', `---
+  // Frontmatter and script strings are JavaScript, where an `&` is just a character.
+  expect(extractAstroClasses('Page.astro', `---
 const label = 'x&#32;y'
 ---
-<div class="block&#32;hidden c&nbsp;d a&copyb"><p class=inline&#x2d;flex></p></div>
+<div class="block&#32;hidden c&nbsp;d a&copyb" title="t&#32;u"><p class=inline&#x2d;flex></p></div>
 <script>const classes = 'p&#32;q'</script>
-`)
-  expect(classes).toEqual(expect.arrayContaining(['block', 'hidden', 'c\u00A0d', 'a&copyb', 'inline-flex']))
-  // Frontmatter and script strings are JavaScript, where an `&` is just a character.
-  for (const split of ['c', 'x', 'p']) expect(classes).not.toContain(split)
+`)).toEqual(['x&#32;y', 'p&#32;q', 'block', 'hidden', 'c\u00A0d', 'a&copyb', 'inline-flex', 't&#32;u'])
 })
