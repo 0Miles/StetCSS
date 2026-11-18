@@ -370,16 +370,18 @@ describe.concurrent('StetCSSManifest execution', () => {
   })
 
   /**
-   * Prevents: a manifest written before #162 that still carries `settings.baseUnit` failing to load
-   * or bringing the `x` multiple back. The key is ignored like any other unknown setting, and `x`
-   * stays as written.
-   * Reverse-checked: restoring the `<number>x` → rem conversion in `Utility` reds this test and the
-   * `keeps … as written` rows in `core-parity.test.ts`.
+   * Prevents: a hand-written manifest from before #162 that still carries `settings.baseUnit`
+   * loading silently, so a developer believes `p:4x` still means a spacing multiple while it now
+   * emits `padding:4x`. Mirrors the compiler's `@settings base-unit was removed` error (#64
+   * precedent).
+   * Reverse-checked: deleting the `baseUnit` check in `assertStetCSSManifest` reds this test; after a
+   * rebuild it also reds the language-server `settings.baseUnit` row in `tests/manifest.test.ts`.
    */
-  it('ignores a leftover settings.baseUnit and keeps x as written', () => {
+  it('rejects a leftover settings.baseUnit as removed', () => {
     const manifest = { version: 1, settings: { baseUnit: '4px' } } as unknown as StetCSSManifest
 
-    expect(StetCSS.create({ manifest }).createRule('padding:4x')?.text).toBe('.padding\\:4x{padding:4x}')
+    expect(() => StetCSS.create({ manifest }))
+      .toThrow('StetCSSManifest settings.baseUnit was removed; x is the native CSS resolution unit, so write spacing as a length, for example p:1rem instead of p:4x')
   })
 
   it('ignores manifest-carried registry fields', () => {
