@@ -17,17 +17,22 @@ export type HighlightTokenRole =
   | 'query.number'
   | 'query.unit'
   | 'selector.attribute'
+  | 'selector.attribute.bracket'
   | 'selector.attribute.operator'
   | 'selector.attribute.value'
   | 'selector.class'
+  | 'selector.class.delimiter'
   | 'selector.combinator'
+  | 'selector.function.punctuation'
   | 'selector.id'
+  | 'selector.id.delimiter'
   | 'selector.nth'
   | 'selector.pseudoClass.delimiter'
   | 'selector.pseudoClass.name'
   | 'selector.pseudoElement.delimiter'
   | 'selector.pseudoElement.name'
   | 'selector.punctuation'
+  | 'selector.separator'
   | 'selector.type'
   | 'theme.variable'
   | 'utility.component'
@@ -56,9 +61,14 @@ const ROLE_TOKEN_MODIFIERS: Partial<Record<HighlightTokenRole, SemanticTokenModi
   'directive.terminator': 'directiveTerminator',
   'query.operator': 'queryOperator',
   'query.punctuation': 'queryPunctuation',
+  'selector.attribute.bracket': 'attributeBracket',
   'selector.attribute.operator': 'attributeOperator',
+  'selector.class.delimiter': 'classDelimiter',
   'selector.combinator': 'selectorCombinator',
+  'selector.function.punctuation': 'selectorPunctuation',
+  'selector.id.delimiter': 'idDelimiter',
   'selector.punctuation': 'selectorPunctuation',
+  'selector.separator': 'valueSeparator',
   'selector.pseudoClass.delimiter': 'pseudoClassDelimiter',
   'selector.pseudoElement.delimiter': 'pseudoElementDelimiter',
   'value.function.punctuation': 'functionPunctuation',
