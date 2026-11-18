@@ -1,39 +1,4 @@
-import { skipCSSEscapeStringOrComment } from '@stet-css/lexer'
-
-export function splitSelectorList(selectorText: string) {
-  const selectors: string[] = []
-  let current = ''
-  let depth = 0
-
-  for (let index = 0; index < selectorText.length; index++) {
-    const skipped = skipCSSEscapeStringOrComment(selectorText, index)
-    if (skipped !== index) {
-      current += selectorText.slice(index, skipped)
-      index = skipped - 1
-      continue
-    }
-    const char = selectorText[index]
-    if (char === '(' || char === '[') {
-      depth++
-      current += char
-      continue
-    }
-    if (char === ')' || char === ']') {
-      depth--
-      current += char
-      continue
-    }
-    if (char === ',' && depth === 0) {
-      selectors.push(current.trim())
-      current = ''
-      continue
-    }
-    current += char
-  }
-
-  if (current.trim()) selectors.push(current.trim())
-  return selectors
-}
+import { splitCSSSelectorList } from '@stet-css/lexer'
 
 export function combineSelectorLists(parentSelectors: string[], childSelectors: string[]) {
   const selectors: string[] = []
@@ -55,8 +20,8 @@ function combineSelector(parent: string, child: string) {
 
 export function combineStyleSelectors(parentSelector: string, childSelector: string) {
   return combineSelectorLists(
-    splitSelectorList(parentSelector),
-    splitSelectorList(childSelector)
+    splitCSSSelectorList(parentSelector),
+    splitCSSSelectorList(childSelector)
   ).join(',')
 }
 
@@ -66,7 +31,7 @@ export function combineStyleSelectors(parentSelector: string, childSelector: str
  * condition. Unlike `combineStyleSelectors`, a template without `&` stays as written.
  */
 export function replaceSelectorNesting(template: string, selector: string) {
-  const items = splitSelectorList(selector)
+  const items = splitCSSSelectorList(selector)
   return items.length > 1
     ? items.map((item) => template.replace(/&/g, item)).join(',')
     : template.replace(/&/g, selector)
