@@ -435,6 +435,11 @@ function resolveSelectorAliases(selector: string, css: StetCSS) {
       index++
       continue
     }
+    if (char === '\\') {
+      append(selector.slice(index, index + 2))
+      index += 2
+      continue
+    }
     if (char === '"' || char === '\'') {
       quote = char
       append(char)

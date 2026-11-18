@@ -3,7 +3,13 @@ import {
   CSSDirectiveError,
   type CSSDirectiveExtractionPolicy
 } from '@stet-css/schema/css-directives'
-import { escapeRegExp, findMasterAtRule, type CSSDirectiveRuleRange, type SourceRange } from '@stet-css/lexer'
+import {
+  escapeRegExp,
+  findMasterAtRule,
+  skipCSSEscapeStringOrComment,
+  type CSSDirectiveRuleRange,
+  type SourceRange
+} from '@stet-css/lexer'
 import { countSourcePatternExpansions, MAX_SOURCE_PATTERN_EXPANSIONS } from './source-pattern'
 import { findAtRuleStatementEnd, removeSourceRanges } from './source'
 
@@ -110,7 +116,9 @@ function parseQuotedStrings(source: string) {
   for (let index = 0; index < source.length; index++) {
     const char = source[index]
     if (!quote) {
-      if (char === '"' || char === '\'') {
+      if (char === '\\') {
+        index++
+      } else if (char === '"' || char === '\'') {
         quote = char
         value = ''
       }
@@ -133,35 +141,17 @@ function parseQuotedStrings(source: string) {
 
 function parseUnquotedWords(source: string) {
   const words: string[] = []
-  let quote = ''
-  let comment = false
   let word = ''
   for (let index = 0; index < source.length; index++) {
     const char = source[index]
-    const next = source[index + 1]
-    if (comment) {
-      if (char === '*' && next === '/') {
-        comment = false
-        index++
-      }
-      continue
-    }
-    if (quote) {
-      if (char === '\\') index++
-      else if (char === quote) quote = ''
-      continue
-    }
-    if (char === '/' && next === '*') {
-      comment = true
-      index++
-      continue
-    }
-    if (char === '"' || char === '\'') {
-      quote = char
-      if (word) {
+    const skipped = skipCSSEscapeStringOrComment(source, index)
+    if (skipped !== index) {
+      // A string or an escape ends the word before it; a comment leaves it open.
+      if (char !== '/' && word) {
         words.push(word)
         word = ''
       }
+      index = skipped - 1
       continue
     }
     if (isIdentChar(char)) {
@@ -249,36 +239,14 @@ function parseStandaloneCSSDirectiveStatement(
 export function findStandaloneCSSDirectiveStatements(source: string, filename = 'stet.css') {
   void filename
   const statements: StandaloneCSSDirectiveStatement[] = []
-  let quote = ''
-  let comment = false
   let depth = 0
   for (let index = 0; index < source.length; index++) {
+    const skipped = skipCSSEscapeStringOrComment(source, index)
+    if (skipped !== index) {
+      index = skipped - 1
+      continue
+    }
     const char = source[index]
-    const next = source[index + 1]
-    if (comment) {
-      if (char === '*' && next === '/') {
-        comment = false
-        index++
-      }
-      continue
-    }
-    if (quote) {
-      if (char === '\\') {
-        index++
-      } else if (char === quote) {
-        quote = ''
-      }
-      continue
-    }
-    if (char === '/' && next === '*') {
-      comment = true
-      index++
-      continue
-    }
-    if (char === '"' || char === '\'') {
-      quote = char
-      continue
-    }
     if (char === '{') {
       depth++
       continue

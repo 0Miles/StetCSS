@@ -9,6 +9,7 @@ import {
   readCSSFunction,
   readCSSIdent,
   removeSourceRanges,
+  skipCSSEscapeStringOrComment,
   skipCSSWhitespace,
   type SourceRange
 } from '@stet-css/lexer'
@@ -81,9 +82,13 @@ function parseCSSImportConditions(statement: string): CSSImportConditions | unde
 function hasTopLevelComma(source: string) {
   let depth = 0
   for (let index = 0; index < source.length; index++) {
+    const skipped = skipCSSEscapeStringOrComment(source, index)
+    if (skipped !== index) {
+      index = skipped - 1
+      continue
+    }
     const char = source[index]
-    if (char === '"' || char === '\'') index = findCSSClosingQuote(source, index, char)
-    else if (char === '(') depth++
+    if (char === '(') depth++
     else if (char === ')') depth--
     else if (char === ',' && depth === 0) return true
   }

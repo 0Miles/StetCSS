@@ -59,4 +59,21 @@ describe.concurrent('selector lists in lowered rules', () => {
     const { css } = compileCSSManifest('.card { @compose block; &:pair, .z { color: red; } }', { baseManifest })
     expect(css.trim()).toBe('.card{display:block}.card>li,.card+li,.card .z{color:red}')
   })
+
+  /**
+   * Guards: an escaped colon outside a string, as in `.a\:pair`, is part of the class name, not
+   * a `:` selector alias; nor does an escaped quote open a string that hides a later alias.
+   * Reverse check: dropping the `\\` branch of `resolveSelectorAliases` reddens only this test.
+   */
+  test('an escaped colon or quote is not read as a selector alias or a string', () => {
+    const baseManifest = {
+      ...defaultManifest,
+      selectors: {
+        ...defaultManifest.selectors,
+        ':pair': [{ type: 'combinator', value: '>' }, { value: 'li' }]
+      }
+    } as StetCSSManifest
+    const { css } = compileCSSManifest(".card { @compose block; &.a\\:pair, &.b\\':pair { color: red; } }", { baseManifest })
+    expect(css.trim()).toBe(".card{display:block}.card.a\\:pair,.card.b\\'>li{color:red}")
+  })
 })
