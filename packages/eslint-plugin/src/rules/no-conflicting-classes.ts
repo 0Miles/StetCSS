@@ -30,7 +30,7 @@ export default createRule({
         context,
         node,
         resolved,
-        createConflictingClassesReport(resolved.raw, css, { unescape: resolved.unescape }).diagnostics
+        createConflictingClassesReport(resolved.raw, css, resolved.options).diagnostics
       )
     })
   },

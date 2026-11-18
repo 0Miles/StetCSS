@@ -61,7 +61,7 @@ export default createRule({
         resolved,
         createUnapprovedRawValueClassesReport(resolved.raw, css, {
           ...options,
-          unescape: resolved.unescape
+          ...resolved.options
         }).diagnostics
       )
     })
