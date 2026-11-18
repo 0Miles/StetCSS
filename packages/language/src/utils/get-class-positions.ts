@@ -24,6 +24,12 @@ export interface ClassPositionSettings {
   classFunctions?: string[]
   classDeclarations?: string[]
   classAttributeBindings?: Record<string, [string, string] | false>
+  /**
+   * Object keys whose values hold no classes, such as cva's `compoundVariants` and
+   * `defaultVariants`: no class position is read anywhere inside them. Patterns, like
+   * `classFunctions`.
+   */
+  ignoredKeys?: string[]
 }
 
 export interface GetClassPositionsOptions {
@@ -223,6 +229,44 @@ function createExactMatchers(patterns: string[] | undefined) {
       return []
     }
   })
+}
+
+/** `key`, `'key'` and `['key']` name a property statically; `[key]` reads a variable. */
+function getStaticPropertyKey(node: OxcNode) {
+  const key = node.key
+  if (!isOxcNode(key)) return
+  if (key.type === 'Identifier') return !node.computed && typeof key.name === 'string' ? key.name : undefined
+  if (key.type === 'Literal' && typeof key.value === 'string') return key.value
+}
+
+function createIgnoredKeyValuePattern(ignoredKeys: string[] | undefined) {
+  if (!ignoredKeys?.length) return
+  try {
+    const keys = `(?:${ignoredKeys.join('|')})`
+    return new RegExp(`(?:^|[\\s{,(])(?:(['"]?)${keys}\\1|\\[\\s*(['"])${keys}\\2\\s*\\])\\s*:\\s*`, 'g')
+  } catch {
+    return
+  }
+}
+
+const VALUE_CLOSERS: Record<string, string> = { '{': '}', '[': ']', '"': '"', '\'': '\'', '`': '`' }
+
+/** Ranges of `expression` holding an ignored key and its value, for the regex scan. */
+function collectIgnoredKeyValueRanges(expression: string, pattern: RegExp | undefined) {
+  const ranges: SourceRange[] = []
+  if (!pattern) return ranges
+  for (const match of expression.matchAll(pattern)) {
+    if (match.index === undefined) continue
+    const valueStart = match.index + match[0].length
+    const opener = expression[valueStart]
+    const closer = VALUE_CLOSERS[opener]
+    if (!closer) continue
+    const valueEnd = findMatchingPairs(expression, valueStart + 1, opener, closer)
+    if (valueEnd === undefined) continue
+    // From the key on: a quoted key is a string the scan would read too.
+    ranges.push({ start: match.index, end: valueEnd + 1 })
+  }
+  return ranges
 }
 
 function matchesAny(source: string | undefined, matchers: RegExp[]) {
@@ -476,11 +520,13 @@ function collectOxcClassStrings(
   source: string,
   node: unknown,
   includeEmpty: boolean,
-  accept?: ClassPositionAccept
+  accept?: ClassPositionAccept,
+  ignoredKeyMatchers: RegExp[] = []
 ) {
   const classPositions: ClassPosition[] = []
   const visit = (eachNode: unknown) => {
     if (!isOxcNode(eachNode)) return
+    if (eachNode.type === 'Property' && matchesAny(getStaticPropertyKey(eachNode), ignoredKeyMatchers)) return
     if (eachNode.type === 'Literal') {
       classPositions.push(...collectOxcStringLiteral(source, eachNode, includeEmpty, accept))
       return
@@ -531,9 +577,10 @@ function createOxcClassPositions(
     .map(([key]) => key))
   const classFunctionMatchers = createExactMatchers(settings.classFunctions)
   const classDeclarationMatchers = createExactMatchers(settings.classDeclarations)
+  const ignoredKeyMatchers = createExactMatchers(settings.ignoredKeys)
 
   const collect = (node: unknown) => {
-    classPositions.push(...collectOxcClassStrings(source, node, true))
+    classPositions.push(...collectOxcClassStrings(source, node, true, undefined, ignoredKeyMatchers))
   }
 
   const visit = (node: unknown) => {
@@ -755,8 +802,11 @@ export default function getClassPositions(
   }
 
   if (assignmentExpressions.length) {
+    const ignoredKeyValuePattern = createIgnoredKeyValuePattern(settings.ignoredKeys)
     resolve(assignmentExpressions, (eachAttrStart, eachClassPositionEnd) => {
       const eachClassPositionExpression = sourceText.substring(eachAttrStart, eachClassPositionEnd)
+      const ignoredRanges = collectIgnoredKeyValueRanges(eachClassPositionExpression, ignoredKeyValuePattern)
+      const isIgnored = (index: number) => ignoredRanges.some((range) => range.start <= index && index < range.end)
       if (['""', '\'\'', '``'].includes(eachClassPositionExpression)) {
         const contextRange = { start: eachAttrStart + 1, end: eachAttrStart + 1 }
         if (includeEmpty && acceptsClassRange(eachAttrStart + 1, eachAttrStart + 1, contextRange)) {
@@ -771,7 +821,7 @@ export default function getClassPositions(
       }
 
       for (const classExpressionMatch of eachClassPositionExpression.matchAll(/(?<!\\)"([\s\S]*?)(?<!\\)"/g)) {
-        if (classExpressionMatch.index === undefined) continue
+        if (classExpressionMatch.index === undefined || isIgnored(classExpressionMatch.index)) continue
         const eachClassName = classExpressionMatch[1]
         const classNameStart = eachAttrStart + classExpressionMatch.index + 1
         classPositions.push(...collectClassPositions(
@@ -786,7 +836,7 @@ export default function getClassPositions(
       }
 
       for (const classExpressionMatch of eachClassPositionExpression.matchAll(/(?<!\\)'([\s\S]*?)(?<!\\)'/g)) {
-        if (classExpressionMatch.index === undefined) continue
+        if (classExpressionMatch.index === undefined || isIgnored(classExpressionMatch.index)) continue
         const eachClassName = classExpressionMatch[1]
         const classNameStart = eachAttrStart + classExpressionMatch.index + 1
         classPositions.push(...collectClassPositions(
@@ -801,7 +851,7 @@ export default function getClassPositions(
       }
 
       for (const classExpressionMatch of eachClassPositionExpression.matchAll(/(?<!\\)`([\s\S]*?)(?<!\\)`/g)) {
-        if (classExpressionMatch.index === undefined) continue
+        if (classExpressionMatch.index === undefined || isIgnored(classExpressionMatch.index)) continue
         const eachClassName = classExpressionMatch[1]
         const classNameStart = eachAttrStart + classExpressionMatch.index + 1
         classPositions.push(...collectClassPositions(
