@@ -356,6 +356,18 @@ describe.concurrent('migrated cascade and layer parity', () => {
     expect(css.utilitiesLayer.rules.map(({ name }) => name)).toEqual(expected)
   })
 
+  /**
+   * Prevents (#184): ratio queries sorting by their class names, so `@aspect-ratio>=3/1` lands
+   * before `@aspect-ratio>=16/9` and loses to it on the widest screens. Ratios order by their
+   * quotient. Rows are listed in the expected order; their class names sort differently.
+   */
+  test('orders aspect-ratio queries by ratio', () => {
+    const expected = ['block@aspect-ratio>=1/2', 'block@aspect-ratio>=16/9', 'block@aspect-ratio>=3/1']
+    const css = createDefaultCSS()
+    css.ensureClassRules(...[...expected].reverse())
+    expect(css.utilitiesLayer.rules.map(({ name }) => name)).toEqual(expected)
+  })
+
   test('orders breakpoint tokens with uppercase units by resolved width', () => {
     const manifest = cloneManifest()
     const tab = { id: 'media' as const, nodes: [{ type: 'number' as const, value: 600, unit: 'PX' }] }

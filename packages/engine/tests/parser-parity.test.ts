@@ -81,6 +81,23 @@ describe.concurrent('query numbers keep the value and unit as written', () => {
   })
 })
 
+/**
+ * Prevents (#184): a decimal or ratio in a query being split into two queries, such as
+ * `@w>=600.5` compiling to `@media (width>=600) (width>=5)`, which no browser matches; and a
+ * viewport feature written without `@media(...)` (`min-resolution:`, `aspect-ratio>=`) landing in
+ * `@container`, where `resolution` does not exist. The value stays as written, unit included.
+ */
+describe.concurrent('query decimals and ratios stay one value', () => {
+  test.each([
+    ['block@w>=600.5', '@media (width>=600.5){.block\\@w\\>\\=600\\.5{display:block}}'],
+    ['block@media(width>=37.5rem)', '@media (width>=37.5rem){.block\\@media\\(width\\>\\=37\\.5rem\\){display:block}}'],
+    ['block@min-resolution:1.5dppx', '@media (min-resolution:1.5dppx){.block\\@min-resolution\\:1\\.5dppx{display:block}}'],
+    ['block@aspect-ratio>=16/9', '@media (aspect-ratio>=16/9){.block\\@aspect-ratio\\>\\=16\\/9{display:block}}']
+  ])('%s', (className, expected) => {
+    expect(createDefaultCSS().createRule(className)?.text).toBe(expected)
+  })
+})
+
 describe.concurrent('compiled selector parser parity', () => {
   const cases = [
     ['.class', '&.class'],

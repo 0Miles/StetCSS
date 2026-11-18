@@ -41,6 +41,12 @@ const NOT_COMPARISON_OPERATORS = {
   '<': '>=',
 }
 
+// Orders a ratio query such as `aspect-ratio>=16/9` by the quotient of its ratio.
+function toComparableRatio(value: string) {
+  const [numerator, denominator] = value.split('/')
+  return Number(numerator) / Number(denominator)
+}
+
 function getConditionEntries(nestNodes?: ConditionNode[]) {
   const featureMap = new Map<string, { min?: number; max?: number }>()
   const walk = (list?: ConditionNode[], isOutsideNot = false) => {
@@ -53,7 +59,10 @@ function getConditionEntries(nestNodes?: ConditionNode[]) {
           operator = NOT_COMPARISON_OPERATORS[operator as keyof typeof NOT_COMPARISON_OPERATORS]
         if (prev?.type === 'logical' && prev.value === 'not')
           operator = NOT_COMPARISON_OPERATORS[operator as keyof typeof NOT_COMPARISON_OPERATORS]
-        const value = toComparableQueryLength(node.value, node.unit)
+        const value = node.type === 'number'
+          ? toComparableQueryLength(node.value, node.unit)
+          : toComparableRatio(node.value)
+        if (Number.isNaN(value)) return
         switch (operator) {
           case '>':
             entry.min = value + 0.02
