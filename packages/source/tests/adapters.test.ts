@@ -120,6 +120,14 @@ describe('source adapters', () => {
     ])
   })
 
+  /**
+   * Guards: the Svelte AST keeps `{:else}`, `{:else if}`, each-block `{:else}`
+   * and the `{#await}` pending, `{:then}` and `{:catch}` branches outside
+   * `children`, so a walk over `children` alone drops every class in them and
+   * those elements render unstyled. Reverse check: dropping any one of
+   * `else`, `pending`, `then` or `catch` from the branch walk in
+   * `src/adapters/svelte.ts` turns only this test red.
+   */
   test('extracts classes from every Svelte block branch, not only the first', async () => {
     await expect(extractSvelteClasses('Component.svelte', `
       {#if a}<div class="p:1px"></div>{:else if b}<div class="p:2px"></div>{:else}<div class="p:3px"></div>{/if}
