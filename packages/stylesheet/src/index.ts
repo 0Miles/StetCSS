@@ -2,7 +2,6 @@ import {
   compileCSS,
   createFileStampCache,
   createManifestFromCSSResult,
-  type FileStampCache,
   REMOVED_MASTER_AT_RULE_ERROR_CODE,
   type CompileCSSOptions,
   type CompileCSSResult
@@ -743,20 +742,15 @@ export async function createStyleEntryEmittedGlobals(
 }
 
 /** Emitted globals by project manifest, then by project directory and entries. */
-const styleEntryEmittedGlobalsCaches = new WeakMap<StetCSSManifest, FileStampCache<CreateStyleEntryEmittedGlobalsResult>>()
+const styleEntryEmittedGlobalsCache = createFileStampCache<CreateStyleEntryEmittedGlobalsResult>(16)
 
 async function loadStyleEntryEmittedGlobals(entries: string[], baseManifest: StetCSSManifest, projectDir: string) {
-  let cache = styleEntryEmittedGlobalsCaches.get(baseManifest)
-  if (!cache) {
-    cache = createFileStampCache()
-    styleEntryEmittedGlobalsCaches.set(baseManifest, cache)
-  }
   const key = JSON.stringify([resolve(projectDir), entries])
-  const cached = cache.get(key)
+  const cached = styleEntryEmittedGlobalsCache.get(key, baseManifest)
   if (cached) return cached
   const startedAt = Date.now()
   const result = await createStyleEntryEmittedGlobals(entries, { baseManifest, projectDir })
-  cache.set(key, result, [...entries, ...result.dependencies], startedAt)
+  styleEntryEmittedGlobalsCache.set(key, result, [...entries, ...result.dependencies], startedAt, baseManifest)
   return result
 }
 
