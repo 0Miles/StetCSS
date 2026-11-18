@@ -44,17 +44,22 @@ export type StetCSSLexicalTokenRole =
   | 'query.number'
   | 'query.unit'
   | 'selector.attribute'
+  | 'selector.attribute.bracket'
   | 'selector.attribute.operator'
   | 'selector.attribute.value'
   | 'selector.class'
+  | 'selector.class.delimiter'
   | 'selector.combinator'
+  | 'selector.function.punctuation'
   | 'selector.id'
+  | 'selector.id.delimiter'
   | 'selector.nth'
   | 'selector.pseudoClass.delimiter'
   | 'selector.pseudoClass.name'
   | 'selector.pseudoElement.delimiter'
   | 'selector.pseudoElement.name'
   | 'selector.punctuation'
+  | 'selector.separator'
   | 'selector.type'
   | 'theme.variable'
   | 'utility.component'
@@ -641,8 +646,10 @@ export function tokenizeStetCSSAtQuery(queryText: string, queryStart: number): S
 }
 
 const NTH_PSEUDO_CLASSES = new Set(['nth-child', 'nth-last-child', 'nth-of-type', 'nth-last-of-type', 'nth-col', 'nth-last-col'])
-const NTH_AN_PLUS_B_RE = /^(?:[+-]?\d*n(?:[+-]\d+)?|[+-]?\d+)(?![\w-])/i
-const NTH_PARITY_RE = /^(?:odd|even)(?![\w-])/i
+// The argument ends at `)` or at `_of_` (the `of S` form); `_` is a word character, so a bare
+// `(?![\w-])` would reject `2n+1_of_li`.
+const NTH_AN_PLUS_B_RE = /^(?:[+-]?\d*n(?:[+-]\d+)?|[+-]?\d+)(?=_of_|[^\w-]|$)/i
+const NTH_PARITY_RE = /^(?:odd|even)(?=_of_|[^\w-]|$)/i
 const NTH_OF_RE = /^_of_/i
 const TYPE_SELECTOR_RE = /^\*?[A-Za-z][\w-]*/
 const ATTRIBUTE_NAME_RE = /^[A-Za-z_-][\w-]*/
@@ -673,14 +680,23 @@ function tokenizeNthArgument(tokens: StetCSSLexicalTokenItem[], token: string, s
   return i
 }
 
-/** Tokenizes an attribute selector from just after its `[`, leaving the `]` to the caller. */
+function findAttributeSelectorClose(token: string, start: number) {
+  const close = token.indexOf(']', start)
+  return close === -1 ? token.length : close
+}
+
+/**
+ * Tokenizes an attribute selector from just after its `[` and returns the offset of its `]`, which
+ * the caller tokenizes. Text after the value, such as `_i`, gets no tokens: the engine keeps `_`
+ * inside brackets as written, so it is neither a combinator nor a case flag.
+ */
 function tokenizeAttributeSelector(tokens: StetCSSLexicalTokenItem[], token: string, start: number, offset: number) {
   const name = token.slice(start).match(ATTRIBUTE_NAME_RE)
-  if (!name) return start
+  if (!name) return findAttributeSelectorClose(token, start)
   pushStetCSSLexicalToken(tokens, offset + start, name[0].length, 'property', 'selector.attribute', ['selector'])
   let i = start + name[0].length
   const operator = token.slice(i).match(ATTRIBUTE_OPERATOR_RE)
-  if (!operator) return i
+  if (!operator) return findAttributeSelectorClose(token, i)
   pushStetCSSLexicalToken(tokens, offset + i, operator[0].length, 'operator', 'selector.attribute.operator', ['selector'])
   i += operator[0].length
   const quote = token[i]
@@ -690,12 +706,14 @@ function tokenizeAttributeSelector(tokens: StetCSSLexicalTokenItem[], token: str
     if (token[end] !== quote || end === i) return token.length
     pushStetCSSLexicalToken(tokens, offset + i + 1, end - i - 1, 'string', 'value.string', ['quoted'])
     pushStetCSSLexicalToken(tokens, offset + end, 1, 'string', 'value.string.quote', ['quoted'])
-    return end + 1
+    return findAttributeSelectorClose(token, end + 1)
   }
   const value = token.slice(i).match(ATTRIBUTE_UNQUOTED_VALUE_RE)
-  if (!value) return i
-  pushStetCSSLexicalToken(tokens, offset + i, value[0].length, 'string', 'selector.attribute.value', ['selector'])
-  return i + value[0].length
+  if (value) {
+    pushStetCSSLexicalToken(tokens, offset + i, value[0].length, 'string', 'selector.attribute.value', ['selector'])
+    i += value[0].length
+  }
+  return findAttributeSelectorClose(token, i)
 }
 
 export function tokenizeStetCSSState(token: string, stateStart: number, offset: number): StetCSSLexicalTokenItem[] {
@@ -715,7 +733,7 @@ export function tokenizeStetCSSState(token: string, stateStart: number, offset: 
       }
     } else if (char === '.' || char === '#') {
       const role = char === '.' ? 'selector.class' : 'selector.id'
-      pushStetCSSLexicalToken(tokens, offset + i, 1, 'operator', 'selector.punctuation', ['selector'])
+      pushStetCSSLexicalToken(tokens, offset + i, 1, 'operator', char === '.' ? 'selector.class.delimiter' : 'selector.id.delimiter', ['selector'])
       const nameStart = i + 1
       const match = token.slice(nameStart).match(/^[\w-]+/)
       if (match) {
@@ -725,7 +743,7 @@ export function tokenizeStetCSSState(token: string, stateStart: number, offset: 
         i = nameStart
       }
     } else if (char === '(' || char === ',') {
-      pushStetCSSLexicalToken(tokens, offset + i, 1, 'operator', 'selector.punctuation', ['selector'])
+      pushStetCSSLexicalToken(tokens, offset + i, 1, 'operator', char === '(' ? 'selector.function.punctuation' : 'selector.separator', ['selector'])
       i++
       const match = token.slice(i).match(/^\*?[A-Za-z][\w-]*/)
       if (match) {
@@ -733,10 +751,10 @@ export function tokenizeStetCSSState(token: string, stateStart: number, offset: 
         i += match[0].length
       }
     } else if (char === '[') {
-      pushStetCSSLexicalToken(tokens, offset + i, 1, 'operator', 'selector.punctuation', ['selector'])
+      pushStetCSSLexicalToken(tokens, offset + i, 1, 'operator', 'selector.attribute.bracket', ['selector'])
       i = tokenizeAttributeSelector(tokens, token, i + 1, offset)
     } else if (char === ')' || char === ']') {
-      pushStetCSSLexicalToken(tokens, offset + i, 1, 'operator', 'selector.punctuation', ['selector'])
+      pushStetCSSLexicalToken(tokens, offset + i, 1, 'operator', char === ')' ? 'selector.function.punctuation' : 'selector.attribute.bracket', ['selector'])
       i++
     } else if (char === '@') {
       const nextAt = token.indexOf('@', i + 1)
@@ -755,7 +773,7 @@ export function tokenizeStetCSSState(token: string, stateStart: number, offset: 
         pushStetCSSLexicalToken(tokens, offset + nameStart, match[0].length, 'modifier', nameRole, [pseudoModifier])
         i = nameStart + match[0].length
         if (colonLength === 1 && token[i] === '(' && NTH_PSEUDO_CLASSES.has(match[0].toLowerCase())) {
-          pushStetCSSLexicalToken(tokens, offset + i, 1, 'operator', 'selector.punctuation', ['selector'])
+          pushStetCSSLexicalToken(tokens, offset + i, 1, 'operator', 'selector.function.punctuation', ['selector'])
           i = tokenizeNthArgument(tokens, token, i + 1, offset)
         }
       } else {
