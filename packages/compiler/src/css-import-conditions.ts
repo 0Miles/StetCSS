@@ -2,7 +2,6 @@ import {
   collectCSSDirectiveRanges,
   findCSSBlockEnd,
   findCSSClosingQuote,
-  findCSSCommentEnd,
   findCSSFunctionEnd,
   findCSSImportStatements,
   findCSSStatementEnd,
@@ -10,7 +9,7 @@ import {
   readCSSIdent,
   removeSourceRanges,
   skipCSSEscapeStringOrComment,
-  skipCSSWhitespace,
+  skipCSSWhitespaceAndComments,
   type SourceRange
 } from '@stet-css/lexer'
 import { TOP_LEVEL_CSS_DIRECTIVE_NAMES } from './lexer/standalone-directives'
@@ -25,15 +24,6 @@ interface CSSImportConditions {
   layer?: string
   supports?: string
   media?: string
-}
-
-/** Skips whitespace and comments from `index`. */
-function skipCSSTrivia(source: string, index: number, end = source.length) {
-  for (;;) {
-    index = skipCSSWhitespace(source, index)
-    if (index >= end || !source.startsWith('/*', index)) return Math.min(index, end)
-    index = findCSSCommentEnd(source, index, end)
-  }
 }
 
 /** The index just past the URL of the `@import` statement, or -1 when it has none. */
@@ -57,22 +47,22 @@ function parseCSSImportConditions(statement: string): CSSImportConditions | unde
   const semicolon = statement.lastIndexOf(';')
   const end = semicolon === -1 ? statement.length : semicolon
   const conditions: CSSImportConditions = { url: statement.slice(urlStart, urlEnd) }
-  let index = skipCSSTrivia(statement, urlEnd, end)
+  let index = skipCSSWhitespaceAndComments(statement, urlEnd, end)
   const layer = readCSSFunction(statement, index, 'layer', end)
   if (layer) {
     conditions.layer = layer.body.trim()
-    index = skipCSSTrivia(statement, layer.end, end)
+    index = skipCSSWhitespaceAndComments(statement, layer.end, end)
   } else {
     const ident = readCSSIdent(statement, index)
     if (ident.value.toLowerCase() === 'layer') {
       conditions.layer = ''
-      index = skipCSSTrivia(statement, ident.end, end)
+      index = skipCSSWhitespaceAndComments(statement, ident.end, end)
     }
   }
   const supports = readCSSFunction(statement, index, 'supports', end)
   if (supports) {
     conditions.supports = supports.body.trim()
-    index = skipCSSTrivia(statement, supports.end, end)
+    index = skipCSSWhitespaceAndComments(statement, supports.end, end)
   }
   const media = statement.slice(index, end).replace(/\/\*[\s\S]*?\*\//g, ' ').trim()
   if (media) conditions.media = media
@@ -186,7 +176,7 @@ interface TopLevelStatement extends SourceRange {
 
 /** Walks the top-level statements of `source` that start before `limit`. */
 function* walkTopLevelStatements(source: string, limit = source.length): Generator<TopLevelStatement> {
-  let index = skipCSSTrivia(source, 0)
+  let index = skipCSSWhitespaceAndComments(source, 0)
   while (index < limit) {
     const ident = source[index] === '@' ? readCSSIdent(source, index + 1) : undefined
     const preludeStart = ident ? ident.end : index
@@ -203,7 +193,7 @@ function* walkTopLevelStatements(source: string, limit = source.length): Generat
       prelude: source.slice(preludeStart, isBlock ? statementEnd.end : statementEnd.end - 1),
       isBlock
     }
-    index = skipCSSTrivia(source, end)
+    index = skipCSSWhitespaceAndComments(source, end)
   }
 }
 
