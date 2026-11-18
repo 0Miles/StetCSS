@@ -39,8 +39,12 @@ export default function withVisitClassNode(
         return
       case 'Property': {
         if (node.shorthand) return
-        // Keys such as cva's compoundVariants and defaultVariants hold variant names, not classes.
-        const key = node.computed ? undefined : node.key?.type === 'Identifier' ? node.key.name : node.key?.value
+        // Keys such as cva's compoundVariants and defaultVariants hold variant names, not classes;
+        // the whole value is skipped, `class` entries inside compoundVariants included.
+        // `key`, `'key'` and `['key']` name the same property; `[key]` reads a variable.
+        const key = node.key?.type === 'Identifier'
+          ? node.computed ? undefined : node.key.name
+          : node.key?.type === 'Literal' ? node.key.value : undefined
         if (ignoredKeys && typeof key === 'string' && ignoredKeys.test(key)) return
         if (node.value && ['Literal', 'ArrayExpression', 'ObjectExpression'].includes(node.value.type) && typeof node.value?.value !== 'boolean') {
           visitNode(node.value)
