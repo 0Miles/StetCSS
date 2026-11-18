@@ -83,6 +83,22 @@ const STANDALONE_CSS_DIRECTIVE_NAMES = new Set<StandaloneCSSDirectiveName>([
   'preserve'
 ])
 
+/**
+ * StetCSS directives a stylesheet accepts only at its top level: the standalone statements, which
+ * are read only there, and the blocks the compile rejects anywhere else. They configure the manifest
+ * rather than emit CSS where they stand.
+ */
+export const TOP_LEVEL_CSS_DIRECTIVE_NAMES: ReadonlySet<string> = new Set([
+  ...STANDALONE_CSS_DIRECTIVE_NAMES,
+  'settings',
+  'theme',
+  'defaults',
+  'components',
+  'utilities',
+  'custom-variant',
+  'reference'
+])
+
 function isIdentChar(char: string | undefined) {
   return Boolean(char && /[-_a-zA-Z0-9]/.test(char))
 }
