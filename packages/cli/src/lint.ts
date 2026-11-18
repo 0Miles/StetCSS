@@ -16,7 +16,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 const REPORT_VERSION = 1
-/** The project's own sources, as the build reads them, plus the stylesheets lint checks. */
+/** The source extensions the build reads, plus the stylesheets lint checks. */
 const DEFAULT_SOURCE_EXTENSIONS = [...PROJECT_SOURCE_EXTENSIONS, '.css', '.scss', '.less']
 const DEFAULT_SOURCE_PATTERNS = [`**/*.{${DEFAULT_SOURCE_EXTENSIONS.map((extension) => extension.slice(1)).join(',')}}`]
 const DEFAULT_IGNORE_PATTERNS = ['**/node_modules/**', 'node_modules']
