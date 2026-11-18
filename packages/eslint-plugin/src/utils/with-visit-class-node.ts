@@ -7,13 +7,23 @@ export default function withVisitClassNode(
   context: RuleContext<any, any[]>,
   ignoredKeys?: RegExp
 ) {
+  /**
+   * `neighbours` says which ends of the expression's string value touch text around it, as in
+   * Svelte's `x{on ? 'a b' : ''}`. Only branches that yield the string itself carry them; arrays,
+   * objects and templates with expressions in such a place are skipped.
+   */
   const visitNode = (node, neighbours?: ExpressionNeighbours) => {
     if (!node) return
+    const touches = !!(neighbours?.before || neighbours?.after)
     switch (node.type) {
       case 'BinaryExpression':
       case 'Identifier':
         return
       case 'TemplateLiteral':
+        if (touches) {
+          if (!node.expressions?.length) visitNode(node.quasis[0], neighbours)
+          return
+        }
         node.expressions?.forEach((expression) => visitNode(expression))
         node.quasis.forEach((quasi) => visitNode(quasi))
         return
@@ -21,18 +31,20 @@ export default function withVisitClassNode(
         visitNode(node.expression)
         return
       case 'ConditionalExpression':
-        visitNode(node.consequent)
-        visitNode(node.alternate)
+        visitNode(node.consequent, neighbours)
+        visitNode(node.alternate, neighbours)
         return
       case 'ArrayExpression':
+        if (touches) return
         node.elements.forEach((el) => {
           visitNode(el)
         })
         return
       case 'LogicalExpression':
-        visitNode(node.right)
+        visitNode(node.right, neighbours)
         return
       case 'ObjectExpression':
+        if (touches) return
         node.properties.forEach((prop) => {
           visitNode(prop)
         })
