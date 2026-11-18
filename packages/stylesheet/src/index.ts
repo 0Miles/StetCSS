@@ -18,7 +18,14 @@ import type { StetCSSEmittedGlobals } from '@stet-css/core'
 import type { createCSSWithNativeDeclarations } from '@stet-css/validator/native-declaration'
 import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import { renderCompiledManifestCSS, type RenderCompiledManifestCSSResult } from './render'
-import { globalizeVueScopedCSS, isScopedVueStyleRequest } from './vue-scoped-style'
+import { scopeVueGeneratedCSS } from './vue-scoped-style'
+import {
+  STYLE_CSS_REQUEST_RE,
+  cleanStyleRequest,
+  getStyleRequestExtension,
+  getVueScopedStyleId,
+  isStyleCSSRequest
+} from './style-request'
 import {
   findCSSImportStatements,
   collectCSSDirectiveRanges,
@@ -53,8 +60,7 @@ import {
 export * from './directives'
 export { isClassBlocklisted } from './class-exclusion'
 export { collectCSSVariableReferences } from '@stet-css/lexer'
-
-export const STYLE_CSS_REQUEST_RE = /\.(css|scss|sass)(?:[?#].*)?$/
+export { STYLE_CSS_REQUEST_RE, cleanStyleRequest, isStyleCSSRequest } from './style-request'
 
 const CSS_IMPORT_RE = /@import\s+(?:url\(\s*)?(["'])([^"']+)\1\s*\)?[^;]*;/g
 const require = createRequire(import.meta.url)
@@ -214,35 +220,6 @@ export function createStyleCSSImportPattern() {
 
 export function createStetStyleCSSPattern() {
   return createStyleCSSImportPattern()
-}
-
-export function cleanStyleRequest(id: string) {
-  return id.replace(/[?#].*$/, '')
-}
-
-function getStyleRequestSearchParams(id: string) {
-  const queryStart = id.indexOf('?')
-  return queryStart === -1 ? new URLSearchParams() : new URLSearchParams(id.slice(queryStart + 1))
-}
-
-function getStyleRequestExtension(id: string) {
-  const cleanExtension = extname(cleanStyleRequest(id))
-  if (cleanExtension === '.css' || cleanExtension === '.scss' || cleanExtension === '.sass') {
-    return cleanExtension
-  }
-  const lang = getStyleRequestSearchParams(id).get('lang')
-  if (lang === 'css' || lang === 'scss' || lang === 'sass') {
-    return '.' + lang
-  }
-  return cleanExtension
-}
-
-function isStyleModuleRequest(source: string) {
-  return getStyleRequestSearchParams(source).get('type') === 'style'
-}
-
-export function isStyleCSSRequest(id: string) {
-  return STYLE_CSS_REQUEST_RE.test(id) || (isStyleModuleRequest(id) && ['.css', '.scss', '.sass'].includes(getStyleRequestExtension(id)))
 }
 
 export function replaceStyleCSSImports(source: string, replacement: string) {
@@ -777,17 +754,20 @@ export async function transformLocalStyleCSS(
     includeGeneratedCSS: false,
     emittedGlobals
   })
-  // The generated rules (referenced theme variables and keyframes) are global; Vue's scoped
-  // style compiler runs next and would bind their selectors to the component (#189).
-  const generatedCSS = renderedCSS.generatedCSS && isScopedVueStyleRequest(id)
-    ? globalizeVueScopedCSS(renderedCSS.generatedCSS)
-    : renderedCSS.generatedCSS
+  // Vue's scoped style compiler runs next: keep the generated rules global and their
+  // keyframes reachable from global variables (#189).
+  const vueScopeId = renderedCSS.generatedCSS ? getVueScopedStyleId(id) : undefined
+  const scopedCSS = vueScopeId
+    ? scopeVueGeneratedCSS(renderedCSS.nativeCSS, renderedCSS.generatedCSS, vueScopeId)
+    : undefined
   const transformedResult = {
     ...result,
     dependencies: finalizedResult.dependencies,
     warnings: finalizedResult.warnings,
-    css: [renderedCSS.nativeCSS, generatedCSS].filter(Boolean).join('\n\n'),
-    generatedCSS
+    css: scopedCSS
+      ? [scopedCSS.nativeCSS, scopedCSS.generatedCSS].filter(Boolean).join('\n\n')
+      : renderedCSS.css,
+    generatedCSS: scopedCSS?.generatedCSS ?? renderedCSS.generatedCSS
   }
   return {
     code: transformedResult.css || transformedResult.nativeCSS || '',
