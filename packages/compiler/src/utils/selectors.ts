@@ -1,29 +1,18 @@
+import { skipCSSEscapeStringOrComment } from '@stet-css/lexer'
+
 export function splitSelectorList(selectorText: string) {
   const selectors: string[] = []
   let current = ''
   let depth = 0
-  let quote = ''
 
   for (let index = 0; index < selectorText.length; index++) {
+    const skipped = skipCSSEscapeStringOrComment(selectorText, index)
+    if (skipped !== index) {
+      current += selectorText.slice(index, skipped)
+      index = skipped - 1
+      continue
+    }
     const char = selectorText[index]
-    if (quote) {
-      current += char
-      if (char === '\\') {
-        current += selectorText[++index] || ''
-      } else if (char === quote) {
-        quote = ''
-      }
-      continue
-    }
-    if (char === '\\') {
-      current += char + (selectorText[++index] || '')
-      continue
-    }
-    if (char === '"' || char === '\'') {
-      quote = char
-      current += char
-      continue
-    }
     if (char === '(' || char === '[') {
       depth++
       current += char
