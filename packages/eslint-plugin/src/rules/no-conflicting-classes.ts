@@ -23,7 +23,7 @@ export default createRule({
   create(context) {
     const { settings, css } = resolveContext(context)
     if (shouldUseSourceVisitors(context)) {
-      return defineSourceVisitors({ context, css, ruleId: 'no-conflicting-classes' })
+      return defineSourceVisitors({ context, settings, css, ruleId: 'no-conflicting-classes' })
     }
     return defineVisitors({ context, settings }, (node, resolved) => {
       reportLintDiagnostics(
