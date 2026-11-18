@@ -22,11 +22,11 @@
         {
           "begin": "(@)(source)\\b",
           "beginCaptures": {
+            "0": {
+              "name": "keyword.control.at-rule.stet-css"
+            },
             "1": {
               "name": "punctuation.definition.keyword.stet-css"
-            },
-            "2": {
-              "name": "keyword.control.at-rule.stet-css"
             }
           },
           "end": "(;)|$",
@@ -44,11 +44,11 @@
         {
           "begin": "(@)(reference|blocklist)\\b",
           "beginCaptures": {
+            "0": {
+              "name": "keyword.control.at-rule.stet-css"
+            },
             "1": {
               "name": "punctuation.definition.keyword.stet-css"
-            },
-            "2": {
-              "name": "keyword.control.at-rule.stet-css"
             }
           },
           "end": "(;)|$",
@@ -70,11 +70,11 @@
         {
           "begin": "(@)(theme)\\b",
           "beginCaptures": {
+            "0": {
+              "name": "keyword.control.at-rule.stet-css"
+            },
             "1": {
               "name": "punctuation.definition.keyword.stet-css"
-            },
-            "2": {
-              "name": "keyword.control.at-rule.stet-css"
             }
           },
           "end": "(;)|(?<=\\})|$",
@@ -95,11 +95,11 @@
         {
           "begin": "(@)(settings)\\b",
           "beginCaptures": {
+            "0": {
+              "name": "keyword.control.at-rule.stet-css"
+            },
             "1": {
               "name": "punctuation.definition.keyword.stet-css"
-            },
-            "2": {
-              "name": "keyword.control.at-rule.stet-css"
             }
           },
           "end": "(;)|(?<=\\})|$",
@@ -121,11 +121,11 @@
         {
           "begin": "(@)(safelist)\\b",
           "beginCaptures": {
+            "0": {
+              "name": "keyword.control.at-rule.stet-css"
+            },
             "1": {
               "name": "punctuation.definition.keyword.stet-css"
-            },
-            "2": {
-              "name": "keyword.control.at-rule.stet-css"
             }
           },
           "end": "(;)|$",
@@ -147,11 +147,11 @@
         {
           "begin": "(@)(defaults|components|utilities)\\b",
           "beginCaptures": {
+            "0": {
+              "name": "keyword.control.at-rule.stet-css"
+            },
             "1": {
               "name": "punctuation.definition.keyword.stet-css"
-            },
-            "2": {
-              "name": "keyword.control.at-rule.stet-css"
             }
           },
           "end": "(;)|(?<=\\})|$",
@@ -173,11 +173,11 @@
         {
           "begin": "(@)(custom-variant)\\b",
           "beginCaptures": {
+            "0": {
+              "name": "keyword.control.at-rule.stet-css"
+            },
             "1": {
               "name": "punctuation.definition.keyword.stet-css"
-            },
-            "2": {
-              "name": "keyword.control.at-rule.stet-css"
             }
           },
           "end": "(;)|(?<=\\})|$",
@@ -198,11 +198,11 @@
         {
           "begin": "(@)(compose)\\b",
           "beginCaptures": {
+            "0": {
+              "name": "keyword.control.at-rule.stet-css"
+            },
             "1": {
               "name": "punctuation.definition.keyword.stet-css"
-            },
-            "2": {
-              "name": "keyword.control.at-rule.stet-css"
             }
           },
           "end": "(;)|$",
@@ -220,11 +220,11 @@
         {
           "begin": "(@)(variant)\\b",
           "beginCaptures": {
+            "0": {
+              "name": "keyword.control.at-rule.stet-css"
+            },
             "1": {
               "name": "punctuation.definition.keyword.stet-css"
-            },
-            "2": {
-              "name": "keyword.control.at-rule.stet-css"
             }
           },
           "end": "(;)|(?<=\\})|$",
@@ -245,11 +245,11 @@
         {
           "begin": "(@)(slot)\\b",
           "beginCaptures": {
+            "0": {
+              "name": "keyword.control.at-rule.stet-css"
+            },
             "1": {
               "name": "punctuation.definition.keyword.stet-css"
-            },
-            "2": {
-              "name": "keyword.control.at-rule.stet-css"
             }
           },
           "end": "(;)|(?<=\\})|$",
@@ -272,6 +272,9 @@
     },
     "stet-compose-prelude": {
       "patterns": [
+        {
+          "include": "#stet-class-value-string"
+        },
         {
           "include": "#stet-string"
         },
@@ -311,6 +314,10 @@
           "include": "#stet-query"
         },
         {
+          "match": "(?<![-_a-zA-Z0-9])[_a-zA-Z-][_a-zA-Z0-9-]*(?![-_a-zA-Z0-9])",
+          "name": "support.constant.property-value.stet-css.query"
+        },
+        {
           "match": "[;{}]",
           "name": "punctuation.section.stet-css"
         }
@@ -318,6 +325,9 @@
     },
     "stet-prelude": {
       "patterns": [
+        {
+          "include": "#stet-class-value-string"
+        },
         {
           "include": "#stet-string"
         },
@@ -884,7 +894,7 @@
           "match": "(@)([a-zA-Z])?(>=|<=|>|<|=)([_a-zA-Z-][_a-zA-Z0-9-]*)",
           "captures": {
             "1": {
-              "name": "punctuation.definition.keyword.stet-css"
+              "name": "keyword.control.at-rule.stet-css.query punctuation.definition.keyword.stet-css"
             },
             "2": {
               "name": "keyword.control.at-rule.stet-css.query"
@@ -900,11 +910,11 @@
         {
           "match": "(@)(media|container|supports|layer|starting-style|[_a-zA-Z-][_a-zA-Z0-9-]*)\\b",
           "captures": {
+            "0": {
+              "name": "keyword.control.at-rule.stet-css.query"
+            },
             "1": {
               "name": "punctuation.definition.keyword.stet-css"
-            },
-            "2": {
-              "name": "keyword.control.at-rule.stet-css.query"
             }
           }
         },
@@ -925,6 +935,52 @@
         {
           "match": "(>=|<=|>|<|=)",
           "name": "keyword.operator.stet-css.query"
+        }
+      ]
+    },
+    "stet-class-value-string": {
+      "patterns": [
+        {
+          "begin": "(?<=:)\"",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.stet-css"
+            }
+          },
+          "end": "\"",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.stet-css"
+            }
+          },
+          "name": "string.quoted.double.stet-css",
+          "patterns": [
+            {
+              "match": "\\\\.",
+              "name": "constant.character.escape.stet-css"
+            }
+          ]
+        },
+        {
+          "begin": "(?<=:)'",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.stet-css"
+            }
+          },
+          "end": "'",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.stet-css"
+            }
+          },
+          "name": "string.quoted.single.stet-css",
+          "patterns": [
+            {
+              "match": "\\\\.",
+              "name": "constant.character.escape.stet-css"
+            }
+          ]
         }
       ]
     },
@@ -996,6 +1052,9 @@
               "name": "constant.character.escape.stet-css"
             },
             {
+              "include": "#stet-class-value-string"
+            },
+            {
               "include": "#stet-class-fragment"
             }
           ]
@@ -1018,6 +1077,9 @@
             {
               "match": "\\\\.",
               "name": "constant.character.escape.stet-css"
+            },
+            {
+              "include": "#stet-class-value-string"
             },
             {
               "include": "#stet-class-fragment"
