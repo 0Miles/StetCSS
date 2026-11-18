@@ -74,7 +74,8 @@ function shouldSkipNode(node: OxcNode) {
 function getJSXAttributeStringValue(node: OxcNode) {
   const value = node.value
   if (!isOxcNode(value) || value.type !== 'Literal' || typeof value.raw !== 'string') return
-  return decodeStetCSSJSXAttributeString(value.raw.slice(1, -1)).value
+  const body = value.raw.slice(1, -1)
+  return body.includes('&') ? decodeStetCSSJSXAttributeString(body).value : body
 }
 
 function getTemplateLiteralValue(node: OxcNode) {
