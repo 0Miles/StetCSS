@@ -3,6 +3,7 @@ import { dirname, isAbsolute, matchesGlob, relative, resolve } from 'node:path'
 import fg from 'fast-glob'
 import { findProjectSourceFiles, isIgnoredProjectDirectory, isProjectSourceFile } from '@stet-css/project/sources'
 import { extractSourceClassCandidates, type SourceAdapter } from '@stet-css/source'
+import { createFileStampCache } from '@stet-css/compiler'
 import { filterExcludedClasses, type ClassExcludePattern } from './class-exclusion'
 
 /**
@@ -37,16 +38,13 @@ export interface StylesheetSourceScope {
   ignorePaths?: string[]
 }
 
-interface CachedCandidates {
-  mtimeMs: number
-  ctimeMs: number
-  size: number
-  candidates: string[]
-}
-
 /** Cache key for scopes without custom adapters: only the built-in ones apply. */
 const NO_CUSTOM_ADAPTERS: SourceAdapter[] = []
-const candidateCaches = new WeakMap<readonly SourceAdapter[], Map<string, CachedCandidates>>()
+/**
+ * Each source file's candidates by adapters, kept while the file keeps its stamp. The bound only
+ * stops a long session growing without end: it is far above a project's source file count.
+ */
+const candidateCache = createFileStampCache<string[]>(100_000)
 
 function toPosixPath(path: string) {
   return path.replace(/\\/g, '/')
@@ -183,38 +181,19 @@ export function isStylesheetScopeFile(file: string, scope: StylesheetSourceScope
 }
 
 async function readCandidates(file: string, adapters: readonly SourceAdapter[]) {
-  let cache = candidateCaches.get(adapters)
-  if (!cache) {
-    cache = new Map()
-    candidateCaches.set(adapters, cache)
-  }
-  let stats
-  try {
-    stats = statSync(file)
-  } catch {
-    cache.delete(file)
-    return []
-  }
-  const cached = cache.get(file)
-  if (cached && cached.mtimeMs === stats.mtimeMs && cached.ctimeMs === stats.ctimeMs && cached.size === stats.size) {
-    return cached.candidates
-  }
+  const cached = candidateCache.get(file, adapters)
+  if (cached) return cached
+  const startedAt = Date.now()
   let content: string
   try {
     content = readFileSync(file, 'utf-8')
   } catch {
-    cache.delete(file)
     return []
   }
   const candidates = content
     ? await extractSourceClassCandidates({ source: file, content }, adapters)
     : []
-  cache.set(file, {
-    mtimeMs: stats.mtimeMs,
-    ctimeMs: stats.ctimeMs,
-    size: stats.size,
-    candidates
-  })
+  candidateCache.set(file, candidates, [file], startedAt, adapters)
   return candidates
 }
 
