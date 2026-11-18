@@ -60,13 +60,16 @@ function insertVariableReferences(css: StylesheetCSS, references: Set<string>) {
     if (visited.has(name)) return
     visited.add(name)
     const variable = css.variables.get(name)
-    if (!variable || variable.inline) return
-    if (css.themeLayer.get(name) || css.isEmittedGlobalsVariable(name)) {
-      const count = css.themeLayer.tokenCounts.get(name) || 0
-      css.themeLayer.tokenCounts.set(name, count + 1)
-    } else {
-      css.themeLayer.insert(new VariableRule(name, variable, css))
-      css.themeLayer.tokenCounts.set(name, 1)
+    if (!variable) return
+    // An inline variable is lowered into its referrers: skip its own rule, still emit what it references.
+    if (!variable.inline) {
+      if (css.themeLayer.get(name) || css.isEmittedGlobalsVariable(name)) {
+        const count = css.themeLayer.tokenCounts.get(name) || 0
+        css.themeLayer.tokenCounts.set(name, count + 1)
+      } else {
+        css.themeLayer.insert(new VariableRule(name, variable, css))
+        css.themeLayer.tokenCounts.set(name, 1)
+      }
     }
     variable.dependencies?.forEach((dependency) => insert(dependency, visited))
   }
