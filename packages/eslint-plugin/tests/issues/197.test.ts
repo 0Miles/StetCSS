@@ -103,8 +103,9 @@ const cvaCode = `cva('inline-flex', {
  * accepted but never applied, so cva variant names were sorted (`'primary danger'` became
  * `'danger primary'`, changing which variant applies) and reported as unknown classes.
  *
- * Reverse check: skipping the ignoredKeys test in with-visit-class-node turns the four ignored-key
- * cases red and leaves the Svelte cases green.
+ * Reverse check: skipping the ignoredKeys test in with-visit-class-node turns the six ignored-key
+ * cases red and leaves the Svelte cases green; reading only non-computed keys (as before) turns the
+ * computed string key case red.
  */
 jsxTester.run('#197 sort-classes skips ignoredKeys', sortClasses, {
   valid: [
@@ -112,6 +113,14 @@ jsxTester.run('#197 sort-classes skips ignoredKeys', sortClasses, {
     {
       name: 'a quoted ignored key',
       code: `cva('inline-flex', { 'defaultVariants': { intent: 'primary danger' } })`
+    },
+    {
+      name: 'a computed string ignored key',
+      code: `cva('inline-flex', { ['defaultVariants']: { intent: 'primary danger' } })`
+    },
+    {
+      name: 'class lists inside an ignored key are skipped with the variant names',
+      code: `cva('inline-flex', { compoundVariants: [{ intent: 'primary', class: 'fg:white m:0.5rem' }] })`
     },
     {
       name: 'a configured ignored key',
@@ -124,6 +133,12 @@ jsxTester.run('#197 sort-classes skips ignoredKeys', sortClasses, {
       name: 'a key outside ignoredKeys is still a class list',
       code: `cva('inline-flex', { variantNames: { intent: 'fg:white m:0.5rem' } })`,
       output: `cva('inline-flex', { variantNames: { intent: 'm:0.5rem fg:white' } })`,
+      errors: [{ messageId: 'invalidClassOrder' }]
+    },
+    {
+      name: 'a computed identifier key reads a variable, not an ignored key',
+      code: `cva('inline-flex', { [defaultVariants]: 'fg:white m:0.5rem' })`,
+      output: `cva('inline-flex', { [defaultVariants]: 'm:0.5rem fg:white' })`,
       errors: [{ messageId: 'invalidClassOrder' }]
     }
   ]
