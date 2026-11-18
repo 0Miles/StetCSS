@@ -103,6 +103,10 @@ export default class CSSRuntime extends StetCSS {
     })
   }
 
+  get rootSelector() {
+    return isDocumentRoot(this.root) ? ':root' : ':host'
+  }
+
   register(): this {
     const registered = CSSRuntime.instances.get(this.root) === this
     CSSRuntime.instances.set(this.root, this)
