@@ -1,8 +1,10 @@
 import { RuleContext } from '@typescript-eslint/utils/ts-eslint'
 import {
   decodeStetCSSScriptString,
+  getStetCSSWholeClassRange,
   isASCIIWhitespace,
   parseStetCSSClassList,
+  type StetCSSExpressionNeighbours,
   type StetCSSScriptStringQuote
 } from '@stet-css/lexer'
 import type { StetCSSClassListEditOptions } from '@stet-css/lint'
@@ -38,12 +40,6 @@ export interface ResolvedClassNode {
   classValues: string[]
 }
 
-/** Which ends of a static text part touch a runtime expression, as `{color}` does in `bg:{color}-50`. */
-export interface ExpressionNeighbours {
-  before?: boolean
-  after?: boolean
-}
-
 const QUOTED_RE = /^(['"`])([\s\S]*)\1$/
 
 /**
@@ -52,16 +48,8 @@ const QUOTED_RE = /^(['"`])([\s\S]*)\1$/
  * deduplicating or validating it would split or delete that class. Undefined when no whole class
  * remains.
  */
-function getWholeClassRange(text: string, neighbours: ExpressionNeighbours = {}): [number, number] | undefined {
-  let start = 0
-  let end = text.length
-  // Split where the lexer splits classes: ASCII whitespace only, so NBSP stays inside a fragment.
-  if (neighbours.before) {
-    while (start < end && !isASCIIWhitespace(text[start])) start++
-  }
-  if (neighbours.after) {
-    while (end > start && !isASCIIWhitespace(text[end - 1])) end--
-  }
+function getWholeClassRange(text: string, neighbours?: StetCSSExpressionNeighbours): [number, number] | undefined {
+  const [start, end] = getStetCSSWholeClassRange(text, neighbours)
   for (let index = start; index < end; index++) {
     if (!isASCIIWhitespace(text[index])) return [start, end]
   }
@@ -74,7 +62,7 @@ function getWholeClassRange(text: string, neighbours: ExpressionNeighbours = {})
 export default function resolveClassNode(
   node: any,
   context: RuleContext<any, any[]>,
-  neighbours?: ExpressionNeighbours
+  neighbours?: StetCSSExpressionNeighbours
 ): ResolvedClassNode | undefined {
   const { sourceCode } = context
   let value: string = null

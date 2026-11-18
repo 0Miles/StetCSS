@@ -1,6 +1,6 @@
 import { RuleContext } from '@typescript-eslint/utils/ts-eslint'
-import resolveClassNode, { type ExpressionNeighbours } from './resolve-class-node'
-import { isASCIIWhitespace } from '@stet-css/lexer'
+import resolveClassNode from './resolve-class-node'
+import { getStetCSSTemplateExpressionNeighbours, type StetCSSExpressionNeighbours } from '@stet-css/lexer'
 import { TSESTree } from '@typescript-eslint/utils'
 
 export default function withVisitClassNode(
@@ -13,7 +13,7 @@ export default function withVisitClassNode(
    * Svelte's `x{on ? 'a b' : ''}` or `` `x${on ? 'a b' : ''}` ``. Only branches that yield the
    * string itself carry them; arrays and objects in such a place are skipped.
    */
-  const visitNode = (node, neighbours?: ExpressionNeighbours) => {
+  const visitNode = (node, neighbours?: StetCSSExpressionNeighbours) => {
     if (!node) return
     const touches = !!(neighbours?.before || neighbours?.after)
     switch (node.type) {
@@ -26,16 +26,8 @@ export default function withVisitClassNode(
           visitNode(quasis[0], neighbours)
           return
         }
-        // An expression's string joins the template text beside it; an empty quasi passes the
-        // touch on to the next expression or to the template's own neighbour.
-        expressions.forEach((expression, index) => {
-          const before: string | null = quasis[index].value.cooked
-          const after: string | null = quasis[index + 1].value.cooked
-          visitNode(expression, {
-            before: before === '' ? index > 0 || !!neighbours?.before : !isASCIIWhitespace(before?.at(-1)),
-            after: after === '' ? index < expressions.length - 1 || !!neighbours?.after : !isASCIIWhitespace(after?.[0])
-          })
-        })
+        const expressionNeighbours = getStetCSSTemplateExpressionNeighbours(quasis.map((quasi) => quasi.value.cooked), neighbours)
+        expressions.forEach((expression, index) => visitNode(expression, expressionNeighbours[index]))
         quasis.forEach((quasi) => visitNode(quasi))
         return
       }
