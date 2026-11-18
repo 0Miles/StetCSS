@@ -52,8 +52,9 @@ export default class CSSScanner extends EventEmitter {
 
   /**
    * Per-source content-hash cache. When the same `source` arrives with the
-   * same `content` (a caller re-reads an unchanged file), we skip re-running
-   * extraction and re-validating every class.
+   * same `content` (a caller re-reads an unchanged file), `scan` skips
+   * extraction and validation; `scanSource` skips validation but re-extracts
+   * to return the source's candidates.
    */
   private contentHashes = new Map<string, string>()
 
