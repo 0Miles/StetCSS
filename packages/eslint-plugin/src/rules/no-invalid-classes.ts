@@ -39,7 +39,7 @@ export default createRule({
         node,
         resolved,
         createInvalidClassesReport(resolved.raw, css, {
-          unescape: resolved.unescape,
+          ...resolved.options,
           disallowUnknownClass: options.disallowUnknownClass
         }).diagnostics
       )
