@@ -126,7 +126,8 @@ const SIZE_PAIR_RE = /^([+-]?(?:\d+\.\d+|\.\d+|\d+))x([+-]?(?:\d+\.\d+|\.\d+|\d+
 const STET_CSS_VALUE_UNIT_SET = new Set<string>(STET_CSS_VALUE_UNITS)
 const ASCII_WHITESPACE = new Set(['\t', '\n', '\f', '\r', ' '])
 
-function isASCIIWhitespace(char: string | undefined) {
+/** Whether `char` separates classes in a class list: HTML's ASCII whitespace, not NBSP or other Unicode spaces. */
+export function isASCIIWhitespace(char: string | undefined) {
   return char !== undefined && ASCII_WHITESPACE.has(char)
 }
 
