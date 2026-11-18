@@ -20,9 +20,10 @@ describe.concurrent('code fragments read as classes', () => {
    * every `.a` element.
    *
    * Reverse check: `hasDanglingCombinator` in `src/utility.ts` returning `false` reddens only the
-   * combinator cases here and the `:dk` test; `isSelectorSuffix` returning `true` reddens only
-   * the comma and `*` cases; dropping its leading-comma check in `:of()` reddens only
-   * `hidden:of(,.a)`.
+   * combinator cases here and the `:dk` test; `isSelectorSuffix` returning `true` reddens the
+   * comma and `*` cases here and the rejection rows of `selector-suffix-names.test.ts` and
+   * `of-selector-list.test.ts`; dropping its empty-item check at a `,` in `:of()` reddens only
+   * `hidden:of(,.a)` and `hidden:of(.a,,.b)`.
    */
   test.each([
     'block+',
