@@ -452,8 +452,9 @@ describe('style CSS extraction helpers', () => {
    * component attribute to every selector, so referenced theme variables emitted on `:root`
    * (or on the class trigger's `.dark,:root`) become `[data-v-…]:root` and never apply.
    * Generated rules are wrapped in `:global()` for scoped Vue style requests only; the
-   * component's own rules and keyframe selectors stay as written.
-   * Reverse check: making `isScopedVueStyleRequest` return false turns only this test red.
+   * component's own rules stay as written.
+   * Reverse check: making `getVueScopedStyleId` return undefined turns this test and the
+   * keyframes test below red.
    */
   it.each([
     ['media', '@layer theme{@media (prefers-color-scheme:light){:global(:root){--color-brand:#123456}}@media (prefers-color-scheme:dark){:global(:root){--color-brand:#abcdef}}}'],
@@ -463,27 +464,60 @@ describe('style CSS extraction helpers', () => {
     writeFileSync(join(root, 'app/tokens.css'), [
       `@settings { mode-trigger: ${modeTrigger}; default-mode: light; }`,
       '@theme light { --color-brand: #123456; }',
-      '@theme dark { --color-brand: #abcdef; }',
-      '@theme { @keyframes pop { to { opacity: 1; } } }',
-      '@components { panel { animation: pop 1s; } }'
+      '@theme dark { --color-brand: #abcdef; }'
     ].join('\n'))
-    const source = '@reference "./tokens.css"; .button { color: var(--color-brand); } .panel { @compose panel; }'
+    const source = '@reference "./tokens.css"; .button { color: var(--color-brand); } .label { @compose fg:brand; }'
 
     const scoped = await transformLocalStyleCSS(join(root, 'app/Button.vue') + '?vue&type=style&index=0&scoped=7a7a37b1&lang.css', source, {
       projectDir: root
     })
 
     expect(scoped.code).toContain(generatedCSS)
-    expect(scoped.code).toMatch(/@keyframes pop\{to\{opacity:1\}\}/)
     expect(scoped.code).toMatch(/\.button\s*\{\s*color:\s*var\(--color-brand\);?\s*\}/)
-    expect(scoped.code).toContain('.panel{animation:1s pop}')
-    expect(scoped.result?.generatedCSS && scoped.code.endsWith(scoped.result.generatedCSS)).toBe(true)
+    expect(scoped.code).toContain('.label{color:var(--color-brand)}')
 
     const unscoped = await transformLocalStyleCSS(join(root, 'app/Button.vue') + '?vue&type=style&index=0&lang.css', source, {
       projectDir: root
     })
     expect(unscoped.code).not.toContain(':global(')
     expect(unscoped.code).toBe(scoped.code.replace(/:global\(([^()]*(?:\([^()]*\))?)\)/g, '$1'))
+  })
+
+  /**
+   * Prevents (#189): Vue renames every `@keyframes` of a scoped block to `<name>-<id>` and
+   * rewrites only that block's `animation` declarations, so a global theme variable such as
+   * `--animate-fade: fade 1s infinite` pointed at keyframes that no longer existed. Generated
+   * keyframes take the `-<id>` suffix themselves (Vue leaves those alone) and every generated
+   * variable and native `animation` that names them follows; the component's own keyframes
+   * stay for Vue to rename. Both Vite's `scoped=<id>` and vue-loader's `id=<id>&scoped=true`.
+   * Reverse check: dropping the keyframe rename in `scopeVueGeneratedCSS` turns only this test red.
+   */
+  it.each([
+    '?vue&type=style&index=0&scoped=7a7a37b1&lang.css',
+    '?vue&type=style&index=0&id=7a7a37b1&scoped=true&lang=css'
+  ])('suffixes generated keyframes with the scope id in a scoped Vue style (%s)', async (query) => {
+    const root = createFixture()
+    writeFileSync(join(root, 'app/globals.css'), '@import "@stet-css/core";')
+    const source = [
+      '@reference "./globals.css";',
+      '.x { @compose animate:fade; }',
+      '.y { animation: fade 2s, spin 1s; }',
+      '@keyframes spin { to { rotate: 1turn; } }'
+    ].join('\n')
+
+    const scoped = await transformLocalStyleCSS(join(root, 'app/Button.vue') + query, source, { projectDir: root })
+
+    expect(scoped.code).toContain('.x{animation:var(--animate-fade)}')
+    expect(scoped.code).toMatch(/\.y\s*\{\s*animation:\s*2s fade-7a7a37b1,\s*1s spin;?\s*\}/)
+    expect(scoped.code).toMatch(/@keyframes spin\s*\{/)
+    expect(scoped.code).toMatch(/:global\(:root\)\{[^}]*--animate-fade:fade-7a7a37b1 /)
+    expect(scoped.code).toMatch(/@keyframes fade-7a7a37b1\{/)
+    expect(scoped.code).not.toMatch(/@keyframes fade\{/)
+
+    const unscoped = await transformLocalStyleCSS(join(root, 'app/Button.vue') + '?vue&type=style&index=0&lang.css', source, { projectDir: root })
+    expect(unscoped.code).toMatch(/:root\{[^}]*--animate-fade:fade /)
+    expect(unscoped.code).toMatch(/@keyframes fade\{/)
+    expect(unscoped.code).not.toContain('7a7a37b1')
   })
 
   it('leaves ordinary local CSS unchanged', async () => {
