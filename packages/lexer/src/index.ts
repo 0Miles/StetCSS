@@ -1,3 +1,4 @@
+export * from './character-reference'
 export * from './class'
 export * from './css-value'
 export * from './css-manifest-entry'
