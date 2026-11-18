@@ -69,6 +69,32 @@ describe('static class set', () => {
   })
 
   /**
+   * Guards that every JavaScript and TypeScript module extension feeds the class set: an ES
+   * module written as `.mjs` (or CommonJS as `.cjs`, TypeScript as `.mts`/`.cts`) is a source
+   * like `.js`, and a project that names its files that way must not lose their rules.
+   * Issue #192: `src/d.mjs` was never read, so its classes had no CSS.
+   * Reverse check: removing `.mjs` from `PROJECT_SOURCE_EXTENSIONS` turns only this test red.
+   */
+  it('includes classes from every JavaScript and TypeScript module extension', async () => {
+    const files = {
+      'src/a.js': 'export const a = "m:1rem"',
+      'src/b.jsx': 'export const B = () => <b class="p:1rem" />',
+      'src/c.cjs': 'module.exports = "fg:red"',
+      'src/d.mjs': 'export const D = () => <div className="font:heavy" />',
+      'src/e.ts': 'export const e: string = "b:1px|solid"',
+      'src/f.tsx': 'export const F = () => <i className="w:1rem" />',
+      'src/g.mts': 'export const g: string = "h:1rem"',
+      'src/h.cts': 'export const h: string = "gap:1rem"'
+    }
+
+    const css = await extract(createProject(files), '@import "@stet-css/core";')
+
+    for (const className of ['m:1rem', 'p:1rem', 'fg:red', 'font:heavy', 'b:1px|solid', 'w:1rem', 'h:1rem', 'gap:1rem']) {
+      expect(css, className).toContain(rule(className))
+    }
+  })
+
+  /**
    * Guards the built-in exclusions and their only override: dependencies and build output
    * must not leak classes into the CSS, yet a component library in `node_modules` or a
    * prebuilt `dist` must be reachable by naming it with `@source`, even though the
