@@ -506,21 +506,24 @@ describe('source content linting', () => {
     expect(unknownClassNames('<div className="\\x62lock" />', '/project/component.tsx')).toEqual(['\\x62lock'])
   })
 
-  test('uses script language ids for cjs and typescript module files', () => {
-    expect(lintStetCSSContent({
-      content: 'const cls = "fg:white m:0.5rem"',
-      filePath: '/project/component.cjs',
+  /**
+   * Guards that a module file is linted as script, not HTML: read as HTML, the class lists in
+   * its strings are never found. Issue #192: `.mjs` fell back to HTML.
+   * Reverse check: removing `.mjs` from `languageByExtension` turns only this test red.
+   */
+  test.each([
+    ['component.mjs', 'javascript'],
+    ['component.cjs', 'javascript'],
+    ['component.mts', 'typescript'],
+    ['component.cts', 'typescript']
+  ])('lints %s as %s', (file, languageId) => {
+    const result = lintStetCSSContent({
+      content: 'const cls = clsx("fg:white m:0.5rem")',
+      filePath: `/project/${file}`,
       css
-    })).toMatchObject({
-      languageId: 'javascript'
     })
-    expect(lintStetCSSContent({
-      content: 'const cls = "fg:white m:0.5rem"',
-      filePath: '/project/component.mts',
-      css
-    })).toMatchObject({
-      languageId: 'typescript'
-    })
+    expect(result.languageId).toBe(languageId)
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain('invalid-class-order')
   })
 
   test('reports and applies structural compose directive fixes when allowed', () => {
