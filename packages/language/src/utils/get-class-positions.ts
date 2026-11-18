@@ -195,13 +195,6 @@ function getNodeRange(node: OxcNode): [number, number] | undefined {
   if (typeof node.start === 'number' && typeof node.end === 'number') return [node.start, node.end]
 }
 
-function getNodeSource(source: string, node: unknown) {
-  if (!isOxcNode(node)) return
-  const range = getNodeRange(node)
-  if (!range) return
-  return source.slice(range[0], range[1])
-}
-
 function getIdentifierName(node: unknown): string | undefined {
   if (!isOxcNode(node)) return
   if (node.type === 'Identifier' || node.type === 'JSXIdentifier') {
