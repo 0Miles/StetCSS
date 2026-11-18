@@ -80,10 +80,9 @@ function visitMarkup(node: SvelteMarkupNode | undefined, source: string, content
     visitMarkup(child, source, content, classes)
   }
   // `{:else}` / `{:else if}` / each-else and the `{#await}` branches hang off these keys, not `children`.
-  visitMarkup(node.else, source, content, classes)
-  visitMarkup(node.pending, source, content, classes)
-  visitMarkup(node.then, source, content, classes)
-  visitMarkup(node.catch, source, content, classes)
+  for (const branch of [node.else, node.pending, node.then, node.catch]) {
+    visitMarkup(branch, source, content, classes)
+  }
 }
 
 async function loadSvelteCompiler() {
