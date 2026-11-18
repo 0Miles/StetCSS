@@ -61,7 +61,8 @@ const preservedAliases = [
  * Guards #181's third criterion: making the `$alias` scan linear must not change which `$name`
  * counts as an alias. One inside a string, a kept comment or after `\` is native CSS and passes
  * through.
- * Reverse check: dropping the escape filter in `collectCSSVariableAliases` reds only the escape row.
+ * Reverse check: dropping the `\` branch of `skipCSSEscapeStringOrComment` (`@stet-css/lexer`)
+ * reds only the escape row here.
  */
 test.each(preservedAliases)('an alias inside $place stays native CSS', ({ css, nativeCSS }) => {
   expect(compileCSS(css).nativeCSS).toBe(nativeCSS)
