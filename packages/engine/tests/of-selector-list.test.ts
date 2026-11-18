@@ -41,7 +41,8 @@ describe.concurrent(':of() selector lists', () => {
    *
    * Reverse check: in `isSelectorSuffix` (`src/utility.ts`), ignoring a combinator that starts an
    * item reddens only `hidden:of(>.a)` and `hidden:of(.a,+.b)`; skipping the last-item check
-   * reddens only `hidden:of(_)` here and `hidden:of(.a,)` in `code-fragment-selectors.test.ts`;
+   * reddens only `hidden:of(_)` here and the trailing-`,` and `_`-item rows of
+   * `code-fragment-selectors.test.ts` and `selector-suffix-names.test.ts`;
    * accepting `:of` without a selector reddens only the three `:of()`/`:of` rows.
    */
   test.each([
