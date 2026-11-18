@@ -121,10 +121,17 @@ function isSelectorSuffix(nodes: SelectorNode[], ends: boolean, ofList = false):
   return true
 }
 
+/** Functions whose arguments may hold empty items: `var(--x,)`, `env(a,)`, unquoted `url(a,)`. */
+const OPAQUE_ARGUMENT_FUNCTIONS = new Set(['var', 'env', 'attr', 'url', 'inherit'])
+
+function hasOpaqueArguments(functionName: string) {
+  return OPAQUE_ARGUMENT_FUNCTIONS.has(functionName) || functionName.startsWith('--')
+}
+
 /**
- * Whether a value's top-level comma list has an empty item: `red,`, `,red` or `a,,b`. Native CSS
- * drops such a declaration, so `fg:red,` emitted dead CSS and its theme variables. `|` spaces are
- * not items (`a,|b` is `a, b`); commas inside functions are left alone, since `var(--x,)` is valid.
+ * Whether a comma list, a value's top level or a function's arguments, has an empty item:
+ * `red,`, `,red`, `a,,b` or `rgb(1,2,)`. Native CSS drops such a declaration, so `fg:red,`
+ * emitted dead CSS and its theme variables. `|` spaces are not items (`a,|b` is `a, b`).
  */
 function hasEmptyListItem(valueComponents: ValueComponent[]) {
   let hasComma = false
@@ -1408,6 +1415,13 @@ export class Utility {
           }
         } else {
           parse()
+          // Unnamed parentheses pass down the nearest function name, so `calc((1,))` is checked.
+          if (
+            !root
+            && endSymbol === ')'
+            && !hasOpaqueArguments(parentFunctionName)
+            && hasEmptyListItem(currentValueComponents)
+          ) this.invalidValueSyntax = true
         }
 
         return i
