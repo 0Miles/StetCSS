@@ -11,6 +11,7 @@ import {
   type CSSImportGraphReader,
   type StandaloneCSSDirectiveStatement
 } from '@stet-css/compiler'
+import { findCSSImportStatements, parseCSSImportSource } from '@stet-css/lexer'
 import type { CSSDirectiveExtractionPolicy } from '@stet-css/schema/css-directives'
 
 export type StylesheetDirectives = CSSDirectiveExtractionPolicy
@@ -98,111 +99,8 @@ export function collectStylesheetDirectives(source: string, file?: string, cwd =
   return directives
 }
 
-function findImportEnd(source: string, start: number) {
-  let quote = ''
-  let comment = false
-  let depth = 0
-  for (let index = start; index < source.length; index++) {
-    const char = source[index]
-    const next = source[index + 1]
-    if (comment) {
-      if (char === '*' && next === '/') {
-        comment = false
-        index++
-      }
-      continue
-    }
-    if (quote) {
-      if (char === '\\') {
-        index++
-      } else if (char === quote) {
-        quote = ''
-      }
-      continue
-    }
-    if (char === '/' && next === '*') {
-      comment = true
-      index++
-      continue
-    }
-    if (char === '"' || char === '\'') {
-      quote = char
-      continue
-    }
-    if (char === '(') {
-      depth++
-      continue
-    }
-    if (char === ')') {
-      depth--
-      continue
-    }
-    if (char === ';' && depth === 0) return index + 1
-  }
-  return -1
-}
-
-function parseImportSource(statement: string) {
-  const match = /^\s*@import\s+(?:(["'])(.*?)\1|url\(\s*(?:(["'])(.*?)\3|([^'")\s]+))\s*\))[^;]*;\s*$/s.exec(statement)
-  return match?.[2] || match?.[4] || match?.[5]
-}
-
 function isExpandableStyleImportSource(source: string) {
   return (source.startsWith('./') || source.startsWith('../')) && extname(source) === '.css'
-}
-
-function findImportStatements(source: string) {
-  const imports: { start: number, end: number, statement: string }[] = []
-  let quote = ''
-  let comment = false
-  let depth = 0
-  for (let index = 0; index < source.length; index++) {
-    const char = source[index]
-    const next = source[index + 1]
-    if (comment) {
-      if (char === '*' && next === '/') {
-        comment = false
-        index++
-      }
-      continue
-    }
-    if (quote) {
-      if (char === '\\') {
-        index++
-      } else if (char === quote) {
-        quote = ''
-      }
-      continue
-    }
-    if (char === '/' && next === '*') {
-      comment = true
-      index++
-      continue
-    }
-    if (char === '"' || char === '\'') {
-      quote = char
-      continue
-    }
-    if (char === '{') {
-      depth++
-      continue
-    }
-    if (char === '}') {
-      depth--
-      continue
-    }
-    if (depth === 0 && source.startsWith('@import', index) && /\s/.test(source[index + '@import'.length] || '')) {
-      const end = findImportEnd(source, index)
-      if (end === -1) continue
-      imports.push({
-        start: index,
-        end,
-        statement: source.slice(index, end)
-      })
-      index = end - 1
-    }
-  }
-  return imports
 }
 
 function collectCSSGraphDirectivesFile(
@@ -224,8 +122,8 @@ function collectCSSGraphDirectivesFile(
   }
 
   let directives = collectStylesheetDirectives(source, absoluteFile, cwd)
-  for (const importStatement of findImportStatements(source)) {
-    const importSource = parseImportSource(importStatement.statement)
+  for (const importStatement of findCSSImportStatements(source)) {
+    const importSource = parseCSSImportSource(importStatement.statement)
     if (!importSource || !isExpandableStyleImportSource(importSource)) continue
     const importedFile = resolve(dirname(absoluteFile), importSource)
     if (!existsSync(importedFile)) {

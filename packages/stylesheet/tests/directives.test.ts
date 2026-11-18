@@ -191,6 +191,35 @@ describe('stylesheet CSS directives', () => {
     expect(css).toContain('.unused')
   })
 
+  /**
+   * Prevents: a backslash-escaped quote in a selector, as in `.a\'b`, opening a string for the
+   * directive scanner, which then skipped every later `@safelist` and left it in the output CSS.
+   * A quote escaped inside a string still ends nowhere but at its matching quote.
+   */
+  it('reads directives after escaped quotes outside strings', async () => {
+    const root = createFixture()
+    const scanner = new CSSScanner({}, root)
+    await scanner.init()
+    const styleCSSSources = new Map()
+    await registerStyleCSSSource(scanner, styleCSSSources, join(root, 'app/entry.css'), `
+      @import "@stet-css/core";
+      .a\\'b { color: red }
+      .c { content: 'it\\'s' }
+      @safelist 'fg:blue';
+    `)
+
+    const css = await createExtractedCSS({
+      scanner,
+      styleCSSSources,
+      projectDir: root
+    })
+
+    expect(css).toContain('.fg\\:blue{color:var(--color-blue)}')
+    expect(css).not.toContain('@safelist')
+    expect(css).toContain(".a\\'b {\n  color: red;\n}")
+    expect(css).toContain('content: "it\'s";')
+  })
+
   it('merges imported stylesheet class directives into the parent root scope', async () => {
     const root = createFixture()
     writeFileSync(join(root, 'app/shared.css'), `
