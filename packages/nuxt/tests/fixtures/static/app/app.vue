@@ -13,5 +13,6 @@
 
 .probe {
   color: var(--color-probe);
+  @compose animate:fade;
 }
 </style>
