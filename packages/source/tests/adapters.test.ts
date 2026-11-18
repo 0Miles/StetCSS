@@ -57,6 +57,23 @@ describe('source adapters', () => {
     ])
   })
 
+  /**
+   * Guards: `.js`, `.mjs` and `.cjs` files often hold JSX. Parsed as plain JS,
+   * the JSX fails, extraction falls back to text, and the identifier `hidden`
+   * becomes a class that emits `.hidden{display:none}`. Reverse check: dropping
+   * the `jsx` language for these extensions in `src/adapters/oxc.ts` turns
+   * this test red.
+   */
+  test.each(['component.js', 'component.mjs', 'component.cjs', 'component.js?v=1'])('parses JSX in %s instead of falling back to text extraction', (source) => {
+    expect(extractOxcClasses(source, `
+      const hidden = isHidden()
+      export const App = () => <div className="block fg:red" hidden={hidden} />
+    `)).toEqual([
+      'block',
+      'fg:red'
+    ])
+  })
+
   test('extracts class attributes and script strings from HTML', () => {
     expect(extractHTMLClasses('index.html', `
       <div class="block mx:auto"></div>
