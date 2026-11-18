@@ -302,4 +302,38 @@ describe('@stet-css/diagnostics', () => {
       rmSync(cwd, { recursive: true, force: true })
     }
   })
+  /**
+   * Guards that each file lists its own candidates (#193): a class one file uses is not
+   * credited to another, a class several files use is listed under each, and an invalid-class
+   * diagnostic points at the first file in input order that contains it.
+   * Reverse check: computing each file's classes as the scanner's growth around a concurrent
+   * scan (the pre-fix code) lists every project class under every file and turns only this test red.
+   */
+  it('lists only each file\'s own classes and points diagnostics at the file that has them', async () => {
+    const cwd = createTempDir('stet-css-diagnostics-per-file-')
+    try {
+      writeFileSync(join(cwd, 'a.html'), '<div class="block"></div>')
+      writeFileSync(join(cwd, 'b.html'), '<div class="hidden block text-decoration:bad()"></div>')
+      writeFileSync(join(cwd, 'c.html'), '<div class="m:1rem text-decoration:bad()"></div>')
+      const report = await createStetCSSInspectionReport({ cwd, patterns: ['a.html', 'b.html', 'c.html'] })
+
+      const discovered = Object.fromEntries(report.files.map((file) => [file.source, file.discovered]))
+      expect(discovered['a.html']).toEqual({ latent: ['block'], valid: ['block'], invalid: [] })
+      expect(discovered['b.html']).toEqual({
+        latent: ['block', 'hidden', 'text-decoration:bad()'],
+        valid: ['block', 'hidden'],
+        invalid: ['text-decoration:bad()']
+      })
+      expect(discovered['c.html']).toEqual({
+        latent: ['m:1rem', 'text-decoration:bad()'],
+        valid: ['m:1rem'],
+        invalid: ['text-decoration:bad()']
+      })
+      expect(report.diagnostics.filter((diagnostic) => diagnostic.code === 'invalid-scanner-class')).toEqual([
+        expect.objectContaining({ filePath: resolve(cwd, 'b.html') })
+      ])
+    } finally {
+      rmSync(cwd, { recursive: true, force: true })
+    }
+  })
 })
