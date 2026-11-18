@@ -190,6 +190,27 @@ describe.concurrent('migrated cascade and layer parity', () => {
     })
   })
 
+  /**
+   * Guards #186 in the engine: inline references are resolved by `replaceCSSVariableReferences`
+   * (`@stet-css/lexer`), which let an escaped quote outside a string, as in an unquoted font name
+   * `Foo\'s`, open a string. The `var(--color-alias)` after it stayed unresolved, pointing at an
+   * inline variable that is never emitted, and `--color-base` was dropped.
+   * Reverse check: dropping the `\` branch of `skipCSSEscapeStringOrComment` in lexer `src`, then
+   * `bun run build`, reds this test (engine tests read lexer `dist`).
+   */
+  test('resolves an inline variable after an escaped quote outside a string', () => {
+    const css = StetCSS.create({
+      manifest: createManifestWithVariables([
+        { name: 'color-base', key: 'base', namespace: 'color', type: 'string', value: 'red' },
+        { name: 'color-alias', key: 'alias', namespace: 'color', type: 'string', value: 'var(--color-base)', dependencies: ['color-base'], inline: true },
+        { name: 'color-brand', key: 'brand', namespace: 'color', type: 'string', value: "Foo\\'s, var(--color-alias)", dependencies: ['color-alias'] }
+      ])
+    })
+
+    css.ensureClassRules('fg:brand')
+    expect(css.themeLayer.text).toBe("@layer theme{:root{--color-brand:Foo\\'s, var(--color-base);--color-base:red}}")
+  })
+
   test('does not duplicate emittedGlobals static variables and keyframes', () => {
     const manifest = createManifestWithVariables([
       {
