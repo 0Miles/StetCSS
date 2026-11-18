@@ -77,3 +77,10 @@ test.concurrent('respects range formatting', () => {
   }) ?? []
   expect(applyTextEdits(source, edits, doc)).toBe('.a { @compose bg:red !; }\n.b { @compose bg:blue!; }')
 })
+
+test.concurrent('formats the SFC style content, not an opening-tag attribute repeating it', () => {
+  const css = '.btn { @compose bg:transparent !; }'
+  const source = `<style data-source="${css}">${css}</style>`
+  expect(format('vue', source))
+    .toBe(`<style data-source="${css}">.btn { @compose bg:transparent!; }</style>`)
+})
