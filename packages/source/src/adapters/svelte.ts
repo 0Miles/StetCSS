@@ -68,13 +68,10 @@ function isTypeScriptScript(content: string, script: SvelteScript | null | undef
 function addScript(classes: Set<string>, source: string, content: string, script: SvelteScript | null | undefined) {
   const range = script?.content
   if (range?.start == null || range.end == null) return
-  addOxc(classes, `${source}.${isTypeScriptScript(content, script) ? 'ts' : 'js'}`, content.slice(range.start, range.end))
+  addOxc(classes, source, content.slice(range.start, range.end))
 }
 
-/**
- * `source` carries the extension markup expressions parse as: a component
- * whose script is TypeScript may use TypeScript in its markup too.
- */
+/** `source` carries the extension the component's markup expressions parse as. */
 function visitMarkup(node: SvelteMarkupNode | undefined, source: string, content: string, classes: Set<string>) {
   if (!node || typeof node !== 'object') return
 
@@ -122,10 +119,13 @@ export async function extractSvelteClasses(source: string, content: string): Pro
 
     const module = ast.module as SvelteScript | null | undefined
     const instance = ast.instance as SvelteScript | null | undefined
-    addScript(classes, source, content, module)
-    addScript(classes, source, content, instance)
-    const markupExt = isTypeScriptScript(content, module) || isTypeScriptScript(content, instance) ? 'ts' : 'js'
-    visitMarkup(ast.html as SvelteMarkupNode, `${source}.${markupExt}`, content, classes)
+    // Like Svelte itself, treat the whole component, both scripts and the
+    // markup, as TypeScript when any script has `lang="ts"`.
+    const isTypeScript = isTypeScriptScript(content, module) || isTypeScriptScript(content, instance)
+    const componentSource = `${source}.${isTypeScript ? 'ts' : 'js'}`
+    addScript(classes, componentSource, content, module)
+    addScript(classes, componentSource, content, instance)
+    visitMarkup(ast.html as SvelteMarkupNode, componentSource, content, classes)
 
     return [...classes]
   } catch {
