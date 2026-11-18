@@ -7,7 +7,8 @@ import type { TextDocument } from 'vscode-languageserver-textdocument'
 
 const CSS_FORMAT_LANGUAGE_IDS = new Set(['css', 'scss', 'less'])
 const SFC_FORMAT_LANGUAGE_IDS = new Set(['vue', 'svelte', 'astro'])
-const STYLE_BLOCK_RE = /<style\b([^>]*)>([\s\S]*?)<\/style>/gi
+// quoted attribute values may contain `>`, so they are matched whole
+const STYLE_BLOCK_RE = /<style\b((?:[^>"']|"[^"]*"|'[^']*')*)>([\s\S]*?)<\/style>/gi
 
 function getSFCStyleLanguage(attributes: string) {
   const match = /\blang\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s>]+))/i.exec(attributes)
