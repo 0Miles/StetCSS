@@ -459,26 +459,50 @@ export default class CSSLanguageServer {
 
   async initWorkspaceLanguageService(workspace: Workspace) {
     workspace.languageRuntime = await this.loadWorkspaceLanguageRuntime(workspace)
+    const languageRuntime = workspace.languageRuntime
+    const createLanguageService = (manifest?: StetCSSManifest) => new CSSLanguageService(
+      { ...workspace.languageServiceSettings, manifest },
+      { runtime: languageRuntime }
+    )
+    const reportManifestError = (error: any) => {
+      workspace.manifestErrors = [error]
+      this.console.info(`Failed to load manifest from ${workspace.uri}`)
+      this.console.error(error instanceof Error ? error.stack : error.toString())
+    }
     let workspacePlan: StetCSSManifest | undefined
     workspace.manifestErrors = []
     if (workspace !== this.globalWorkspace) {
       try {
         workspacePlan = await this.loadWorkspacePlan(workspace)
       } catch (e: any) {
-        workspace.manifestErrors = [e]
-        this.console.info(`Failed to load manifest from ${workspace.uri}`)
-        this.console.error(e instanceof Error ? e.stack : e.toString())
-      }
-      if (workspacePlan) {
-        this.console.info(`Initialized workspace ${workspace.planEntries?.length ? '(with manifest entry)' : '(with manifest)'} ${workspace.uri}`)
-      } else {
-        this.console.info(`Initialized workspace ${workspace.uri}`)
+        reportManifestError(e)
       }
     }
-    workspace.languageService = new CSSLanguageService(
-      { ...workspace.languageServiceSettings, manifest: workspacePlan },
-      { runtime: workspace.languageRuntime }
-    )
+    if (workspacePlan) {
+      try {
+        workspace.languageService = createLanguageService(workspacePlan)
+        this.console.info(`Initialized workspace ${workspace.planEntries?.length ? '(with manifest entry)' : '(with manifest)'} ${workspace.uri}`)
+        return
+      } catch (manifestError) {
+        // The engine validates a manifest when the service compiles it: a `manifest` setting with
+        // the removed `settings.baseUnit`, or `version: 2`, throws here. It is the manifest's fault
+        // only if the default manifest still builds; otherwise the runtime is broken and the
+        // original error propagates as before.
+        let fallback: CSSLanguageService
+        try {
+          fallback = createLanguageService()
+        } catch {
+          throw manifestError
+        }
+        reportManifestError(manifestError)
+        workspace.languageService = fallback
+        return
+      }
+    }
+    if (workspace !== this.globalWorkspace) {
+      this.console.info(`Initialized workspace ${workspace.uri}`)
+    }
+    workspace.languageService = createLanguageService()
   }
 
   private async loadWorkspacePlan(workspace: Workspace) {
