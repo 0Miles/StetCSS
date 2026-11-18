@@ -34,6 +34,12 @@ const result = loadProjectManifestSync('/project')
 const jsonResult = loadProjectManifestJSONSync('/project')
 ```
 
+Pass `cache: true` when a long-running process loads the manifest repeatedly, such as a bundler loader per CSS module or a linter per file. The call then returns the result it last compiled for the same directory, entries and base manifest while every entry and every file it imports keeps its modification time, change time and size; any change compiles again and returns a new object. A cached result is shared, so read it without changing it.
+
+```ts
+const result = await loadProjectManifest('/project', { cache: true })
+```
+
 ## Load explicit CSS resources
 
 Use `loadManifest()` when the CSS resource path is already known and should be compiled directly.
