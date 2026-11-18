@@ -48,6 +48,7 @@ import {
   findStandaloneCSSDirectiveStatements,
   mergeCSSDirectiveExtractionPolicy,
   removeStandaloneCSSDirectives,
+  TOP_LEVEL_CSS_DIRECTIVE_NAMES,
   type StandaloneCSSDirectiveStatement
 } from './lexer/standalone-directives'
 import { combineSelectorLists } from './utils/selectors'
@@ -2492,25 +2493,19 @@ export function compileCSS(source: string, options: CompileCSSOptions = {}): Com
         }
 
         if (rule.type === 'custom') {
+          if (TOP_LEVEL_CSS_DIRECTIVE_NAMES.has(rule.value.name) && ruleDepth !== 0) {
+            throw new Error(`@${rule.value.name} must be top-level`)
+          }
           switch (rule.value.name) {
             case 'settings':
-              if (ruleDepth !== 0) {
-                throw new Error('@settings must be top-level')
-              }
               parseSettingsRule(rule, parsed)
               return []
             case 'theme':
-              if (ruleDepth !== 0) {
-                throw new Error('@theme must be top-level')
-              }
               parseThemeRule(rule, parsed)
               return []
             case 'defaults':
             case 'components':
             case 'utilities':
-              if (ruleDepth !== 0) {
-                throw new Error(`@${rule.value.name} must be top-level`)
-              }
               parseManagedDefinitionDirectiveRule(rule, parsed)
               return []
             case 'compose':
