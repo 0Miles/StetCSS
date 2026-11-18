@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { createHighlighter } from 'shiki'
+import { createHighlighter, type BundledLanguage, type BundledTheme } from 'shiki'
 import sharedTextMateGrammar from '../syntaxes/stet-css.tmLanguage.json' with { type: 'json' }
 
 import stetCSSShikiLanguages, {
@@ -769,4 +769,79 @@ test.concurrent('uses semantic token scope styles for CSS directive class-list t
   ]))
   expect(tokens?.some((token) => token.content === '<' && token.className)).toBe(false)
   expect(tokens?.some((token) => token.content === 'sm' && token.className)).toBe(false)
+})
+
+const nativeColorThemes = ['github-dark', 'dark-plus', 'vitesse-dark', 'nord'] as const
+
+type ShikiColorHighlighter = Awaited<ReturnType<typeof createHighlighter>>
+// Shiki's ThemedToken lacks the index signature the transformer's structural token type declares.
+type StetCSSTransformerContext = ThisParameterType<ReturnType<typeof transformerStetCSS>['tokens']>
+type StetCSSTransformerTokens = Parameters<ReturnType<typeof transformerStetCSS>['tokens']>[0]
+
+function colorAt(tokens: { offset: number, content: string, color?: string, htmlStyle?: Record<string, string> }[], offset: number) {
+  const token = tokens.find((each) => each.offset <= offset && offset < each.offset + each.content.length)
+  return token?.htmlStyle?.color ?? token?.color
+}
+
+function textMateColors(highlighter: ShikiColorHighlighter, code: string, theme: BundledTheme) {
+  return highlighter.codeToTokens(code, { lang: 'css', theme }).tokens.flat()
+}
+
+function transformedColors(highlighter: ShikiColorHighlighter, code: string, lang: BundledLanguage, theme: BundledTheme) {
+  const tokens = highlighter.codeToTokens(code, { lang, theme }).tokens as unknown as StetCSSTransformerTokens
+  const transformed = transformerStetCSS().tokens.call({
+    source: code,
+    options: { lang, theme },
+    // The transformer probes the theme with CSS and scope explanations.
+    codeToTokens: ((source: string) => highlighter.codeToTokens(source, { lang: 'css', theme, includeExplanation: 'scopeName' })) as unknown as StetCSSTransformerContext['codeToTokens']
+  }, tokens)
+  return (transformed ?? tokens).flat()
+}
+
+/**
+ * Guards: a quoted value in a class took the colour of the native string's quote for its body too,
+ * and its quotes took the string body colour, in themes that tell the two apart.
+ * Resolving probe scopes without the innermost pass, or without role modifiers, in `shiki.ts` reds this test.
+ */
+test('colours a string in a class like a native CSS string', async () => {
+  const highlighter = await createHighlighter({ themes: [...nativeColorThemes], langs: ['css', 'html', stetCSSShikiLanguage] })
+  try {
+    const native = 'a { content: \'x\'; }'
+    const code = '<div class="content:\'x\':hover"></div>'
+    const quote = code.indexOf('\'')
+    for (const theme of nativeColorThemes) {
+      const nativeTokens = textMateColors(highlighter, native, theme)
+      const nativeQuote = native.indexOf('\'')
+      const tokens = transformedColors(highlighter, code, 'html', theme)
+      expect([colorAt(tokens, quote), colorAt(tokens, quote + 1), colorAt(tokens, quote + 2)], theme).toEqual([
+        colorAt(nativeTokens, nativeQuote),
+        colorAt(nativeTokens, nativeQuote + 1),
+        colorAt(nativeTokens, nativeQuote + 2)
+      ])
+    }
+  } finally {
+    highlighter.dispose()
+  }
+})
+
+/**
+ * Guards: attribute selectors and `an+b` arguments in a class drew in colours native CSS does not use for them.
+ * The brackets are left out: they share the selector punctuation scopes with `.`, `,` and `()`.
+ * Dropping the attribute selector from the scope probe in `shiki.ts` reds only this test (dark-plus).
+ */
+test('colours attribute selectors and an+b arguments in a class like native CSS selectors', async () => {
+  const highlighter = await createHighlighter({ themes: [...nativeColorThemes], langs: ['css', 'html', stetCSSShikiLanguage] })
+  try {
+    const native = 'a[data-state=open]:nth-child(2n+1) {}'
+    const code = '<div class="block[data-state=open]:nth-child(2n+1)"></div>'
+    const parts = ['data-state', '=', 'open', 'nth-child', '2n+1']
+    for (const theme of nativeColorThemes) {
+      const nativeTokens = textMateColors(highlighter, native, theme)
+      const tokens = transformedColors(highlighter, code, 'html', theme)
+      expect(parts.map((part) => colorAt(tokens, code.indexOf(part, code.indexOf('[')))), theme)
+        .toEqual(parts.map((part) => colorAt(nativeTokens, native.indexOf(part))))
+    }
+  } finally {
+    highlighter.dispose()
+  }
 })

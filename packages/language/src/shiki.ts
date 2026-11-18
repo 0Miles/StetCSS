@@ -3,7 +3,7 @@ import stetCSSTextMateGrammar from '../syntaxes/stet-css.tmLanguage.json' with {
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import languageSettings, { type LanguageSettings } from './settings'
 import { collectHighlightTokenItems } from './render-semantic-tokens'
-import type { HighlightTokenItem, HighlightTokenRole } from './semantic/highlight'
+import { toSemanticTokenItems, type HighlightTokenItem, type HighlightTokenRole } from './semantic/highlight'
 import { collectClassListHighlightTokenItems } from './semantic/tokenize-class'
 import getClassPositions from './utils/get-class-positions'
 import { createLanguageCSS, defaultManifest, type StetCSS } from './stet-css'
@@ -418,7 +418,7 @@ const SEMANTIC_SCOPE_STYLE_PROBE = [
   '@components {',
   '  btn { @compose block fg:red:hover@md; }',
   '}',
-  '.x, div > li:hover::before {',
+  '.x, div > li:hover::before, a[data-x=y]:nth-child(odd) {',
   '  color: red !important;',
   '  width: 1.5rem;',
   '  background: rgb(0 0 0 / .5);',
@@ -464,21 +464,33 @@ function getScopePrefixes(scope: string) {
   return [...new Set(prefixes)]
 }
 
+/**
+ * Records the style each probe scope is drawn with. A scope takes its style from a token where it is
+ * the innermost scope first, so `string.quoted.double.css` resolves to the string body's colour rather
+ * than to its quote's, which nests `punctuation.definition.string` inside it. Scopes that are never
+ * innermost fall back to the first token that carries them.
+ */
 function collectScopeStyleEntries(tokens: ShikiToken[]): ScopeStyleEntry[] {
   const entries: ScopeStyleEntry[] = []
   const seenScopes = new Set<string>()
-  for (const token of tokens) {
-    const style = getTokenStyleObject(token)
-    if (!style) continue
-    for (const explanation of token.explanation ?? []) {
-      for (const { scopeName } of explanation.scopes ?? []) {
-        if (seenScopes.has(scopeName)) continue
-        seenScopes.add(scopeName)
-        entries.push({
-          scope: scopeName,
-          normalizedScope: normalizeScope(scopeName),
-          style
-        })
+  const addEntry = (scope: string, style: Record<string, string>) => {
+    if (seenScopes.has(scope)) return
+    seenScopes.add(scope)
+    entries.push({
+      scope,
+      normalizedScope: normalizeScope(scope),
+      style
+    })
+  }
+  for (const innermostOnly of [true, false]) {
+    for (const token of tokens) {
+      const style = getTokenStyleObject(token)
+      if (!style) continue
+      for (const explanation of token.explanation ?? []) {
+        const scopes = explanation.scopes ?? []
+        for (const { scopeName } of innermostOnly ? scopes.slice(-1) : scopes) {
+          addEntry(scopeName, style)
+        }
       }
     }
   }
@@ -515,7 +527,10 @@ function createSemanticScopeStyleResolver(
     }).tokens.flat())
 
     return (_token: ShikiToken, decoration: StetCSSShikiDecoration) => {
-      for (const key of getStetCSSSemanticTokenScopeKeys(decoration.type, decoration.modifiers)) {
+      // Resolve through the same role-derived modifiers the semantic token legend sends to editors,
+      // so a string quote resolves to the quote's scope as it does in VS Code.
+      const [{ modifiers }] = toSemanticTokenItems([decoration])
+      for (const key of getStetCSSSemanticTokenScopeKeys(decoration.type, modifiers)) {
         for (const scope of STET_CSS_SEMANTIC_TOKEN_SCOPE_MAP[key]) {
           const style = findStyleByScope(scopeStyleEntries, scope)
           if (style) return style
