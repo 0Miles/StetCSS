@@ -6,7 +6,9 @@ import {
   type CompileCSSResult
 } from '@stet-css/compiler'
 import {
+  applyCSSImportConditions,
   createCSSImportGraphReader,
+  hoistCSSImportStatements,
   isStetCSSPackageStyleFile as isStetCSSCompilerPackageStyleFile,
   resolveStetCSSPackageImportGraph,
   type CSSImportGraphReader
@@ -304,7 +306,7 @@ function resolveStyleCSSImportGraphFile(
       if (!existsSync(importedFile)) {
         throw new Error(`CSS file not found: ${importedFile}`)
       }
-      output += resolveStyleCSSImportGraphFile(
+      output += applyCSSImportConditions(resolveStyleCSSImportGraphFile(
         importedFile,
         readCSSImport(importedFile),
         readCSSImport,
@@ -313,7 +315,7 @@ function resolveStyleCSSImportGraphFile(
         [...stack, absoluteFile],
         projectDir,
         options
-      )
+      ), importStatement.statement)
     } else {
       output += importStatement.statement
     }
@@ -338,7 +340,7 @@ export function resolveStyleCSSImportGraph(
   const filename = cleanStyleRequest(file)
   const readCSSImport = createCSSImportGraphReader()
   return {
-    source: resolveStyleCSSImportGraphFile(filename, readCSSImport(filename, source), readCSSImport, dependencies, new Set(), [], projectDir, options),
+    source: hoistCSSImportStatements(resolveStyleCSSImportGraphFile(filename, readCSSImport(filename, source), readCSSImport, dependencies, new Set(), [], projectDir, options)),
     dependencies
   }
 }
