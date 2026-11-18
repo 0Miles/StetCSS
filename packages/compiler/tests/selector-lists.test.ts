@@ -16,9 +16,8 @@ describe.concurrent('selector lists in lowered rules', () => {
    *
    * Reverse check in `src/lower-css-directives.ts`: `combineSelectorWrapper` replacing `&` in the
    * whole list reddens the native, component and escaped rows; prefixing the mode selector to the
-   * whole list in `getComposedUtilitySelector` reddens the two `@compose` rows; dropping the `\` branch
-   * of `skipCSSEscapeStringOrComment` (`@stet-css/lexer`), which `splitSelectorList` skips escapes
-   * through, reddens the escaped row here and the escaped-colon rows below.
+   * whole list in `getComposedUtilitySelector` reddens the two `@compose` rows; `splitSelectorList`
+   * (`src/utils/selectors.ts`) not skipping a `\` at `index` reddens only the escaped row.
    */
   test.each([
     ['a native rule list under @variant', '.x, .y { @variant dark { color: red; } }', '.dark .x,.dark .y{color:red}'],
@@ -69,9 +68,9 @@ describe.concurrent('selector lists in lowered rules', () => {
    * `[data-state=escaped\"\:first]`, so a quote escaped inside a string reaches the alias scan as
    * one escaped outside it. The `@compose` host rows are #188's repros: the user's class lost its
    * name (`.literal\:first-child`), or `:last` stayed unexpanded and the browser dropped the rule.
-   * Reverse check: dropping the `\` branch of `skipCSSEscapeStringOrComment` (`@stet-css/lexer`),
-   * which `resolveSelectorAliases` skips escapes through, reddens every row here and the
-   * escaped-comma row above.
+   * Reverse check: `resolveSelectorAliases` not skipping a `\` at `index` (it still skips strings
+   * through `skipCSSEscapeStringOrComment`, so `\"` opens one) reddens these four rows and no
+   * other compiler test.
    */
   test.each([
     ['a nested rule beside @compose', ".card { @compose block; &.a\\:pair, &.b\\':pair { color: red; } }", ".card{display:block}.card.a\\:pair,.card.b\\'>li{color:red}"],
