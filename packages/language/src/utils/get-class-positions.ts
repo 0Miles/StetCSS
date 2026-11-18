@@ -294,6 +294,15 @@ function getOxcSource(textDocument: TextDocument) {
   return textDocument.uri.split(/[?#]/)[0] || 'document.js'
 }
 
+// JavaScript files commonly hold JSX, which OXC parses only in `jsx` mode, and
+// that mode still accepts plain JavaScript. Mirrors `getParserLang` in
+// `@stet-css/source`'s OXC adapter, which this package does not import.
+const JSX_JAVASCRIPT_EXT = /\.[cm]?js$/
+
+function getParserLang(filename: string) {
+  return JSX_JAVASCRIPT_EXT.test(filename) ? 'jsx' as const : undefined
+}
+
 function hasClassPositionLookaround(text: string, settings: ClassPositionSettings) {
   for (const eachClassAttribute of settings.classAttributes ?? []) {
     if (new RegExp(`${escapeRegexp(eachClassAttribute)}\\s*=`).test(text)) return true
@@ -517,9 +526,12 @@ function createOxcClassPositions(
     parseFailed: true,
     positions: []
   }
-  const program = parseOxcOnSourceStack(getOxcSource(textDocument), source, {
+  const filename = getOxcSource(textDocument)
+  const lang = getParserLang(filename)
+  const program = parseOxcOnSourceStack(filename, source, {
     range: true,
-    sourceType: 'unambiguous'
+    sourceType: 'unambiguous',
+    ...lang && { lang }
   })
   if (!program) return failedResult
 
