@@ -6,6 +6,16 @@ import {
   parseCSSImportSource
 } from '../src'
 
+/**
+ * Prevents: a backslash-escaped quote outside a string opening one, which hid the `@import`
+ * statements after it from the import scan.
+ */
+test.concurrent('finds CSS imports after escaped quotes outside strings', () => {
+  const source = String.raw`@layer a\'b; @import './a.css';`
+
+  expect(findCSSImportStatements(source).map((item) => item.statement)).toEqual([`@import './a.css';`])
+})
+
 test.concurrent('finds top-level CSS imports without splitting quoted semicolons', () => {
   const source = [
     '@import url("@stet-css/core") layer(theme);',
