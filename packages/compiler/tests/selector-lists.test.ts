@@ -16,8 +16,9 @@ describe.concurrent('selector lists in lowered rules', () => {
    *
    * Reverse check in `src/lower-css-directives.ts`: `combineSelectorWrapper` replacing `&` in the
    * whole list reddens the native, component and escaped rows; prefixing the mode selector to the
-   * whole list in `getComposedUtilitySelector` reddens the two `@compose` rows; dropping the escape
-   * skip in `splitSelectorList` (`src/utils/selectors.ts`) reddens only the escaped row.
+   * whole list in `getComposedUtilitySelector` reddens the two `@compose` rows; dropping the `\` branch
+   * of `skipCSSEscapeStringOrComment` (`@stet-css/lexer`), which `splitSelectorList` skips escapes
+   * through, reddens the escaped row here and the escaped-colon rows below.
    */
   test.each([
     ['a native rule list under @variant', '.x, .y { @variant dark { color: red; } }', '.dark .x,.dark .y{color:red}'],
@@ -69,8 +70,8 @@ describe.concurrent('selector lists in lowered rules', () => {
    * one escaped outside it. The `@compose` host rows are #188's repros: the user's class lost its
    * name (`.literal\:first-child`), or `:last` stayed unexpanded and the browser dropped the rule.
    * Reverse check: dropping the `\` branch of `skipCSSEscapeStringOrComment` (`@stet-css/lexer`),
-   * which `resolveSelectorAliases` skips escapes through, reddens every row here and no other test
-   * in this file.
+   * which `resolveSelectorAliases` skips escapes through, reddens every row here and the
+   * escaped-comma row above.
    */
   test.each([
     ['a nested rule beside @compose', ".card { @compose block; &.a\\:pair, &.b\\':pair { color: red; } }", ".card{display:block}.card.a\\:pair,.card.b\\'>li{color:red}"],
