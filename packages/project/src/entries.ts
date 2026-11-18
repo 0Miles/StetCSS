@@ -3,7 +3,9 @@ import { readFile, readdir } from 'node:fs/promises'
 import { dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import {
   inspectCSS,
-  resolveStetCSSPackageEntryFile
+  readFileStamp,
+  resolveStetCSSPackageEntryFile,
+  type FileStamp
 } from '@stet-css/compiler'
 import {
   createStetCSSManifestEntryPattern,
@@ -73,6 +75,33 @@ function isDiscoveredCSSManifestEntry(source: string) {
   return hasStetCSSManifestEntrypoint(source) || Boolean(findMasterAtRule(source))
 }
 
+/**
+ * What discovery last read about each CSS file, kept while the file keeps its stamp: every CSS
+ * module transform discovers the entries again, and most files never change between them (#202).
+ */
+const discoveredFiles = new Map<string, { stamp: FileStamp, entry: boolean }>()
+
+/**
+ * The stamp of `file`, taken before discovery reads it so a write during the read changes it, and
+ * the answer last read while the file had that stamp.
+ */
+function lookupDiscoveredFile(file: string) {
+  const stamp = readFileStamp(file)
+  const cached = discoveredFiles.get(file)
+  if (!stamp) discoveredFiles.delete(file)
+  const unchanged = stamp && cached
+    && cached.stamp.mtimeMs === stamp.mtimeMs
+    && cached.stamp.ctimeMs === stamp.ctimeMs
+    && cached.stamp.size === stamp.size
+  return { stamp, entry: unchanged ? cached.entry : undefined }
+}
+
+function storeDiscoveredFile(file: string, stamp: FileStamp, source: string) {
+  const entry = isDiscoveredCSSManifestEntry(source)
+  discoveredFiles.set(file, { stamp, entry })
+  return entry
+}
+
 async function collectCSSManifestEntryFiles(root: string, directory: string, entries: string[], extensions: readonly string[]) {
   try {
     for (const dirent of await readdir(directory, { withFileTypes: true })) {
@@ -84,7 +113,9 @@ async function collectCSSManifestEntryFiles(root: string, directory: string, ent
       }
       if (!dirent.isFile() || !extensions.includes(extname(dirent.name))) continue
       try {
-        if (isDiscoveredCSSManifestEntry(await readFile(file, 'utf8'))) {
+        const { stamp, entry } = lookupDiscoveredFile(file)
+        if (!stamp) continue
+        if (entry ?? storeDiscoveredFile(file, stamp, await readFile(file, 'utf8'))) {
           entries.push(file)
         }
       } catch {
@@ -107,7 +138,9 @@ function collectCSSManifestEntryFilesSync(root: string, directory: string, entri
       }
       if (!dirent.isFile() || !extensions.includes(extname(dirent.name))) continue
       try {
-        if (isDiscoveredCSSManifestEntry(readFileSync(file, 'utf8'))) {
+        const { stamp, entry } = lookupDiscoveredFile(file)
+        if (!stamp) continue
+        if (entry ?? storeDiscoveredFile(file, stamp, readFileSync(file, 'utf8'))) {
           entries.push(file)
         }
       } catch {
