@@ -275,6 +275,35 @@ function matchesAny(source: string | undefined, matchers: RegExp[]) {
   return matchers.some((matcher) => matcher.test(trimmedSource))
 }
 
+/**
+ * The static names a callee ends with: `document.body.classList?.add` gives
+ * `['document', 'body', 'classList', 'add']` and `getElement().classList.add` gives
+ * `['classList', 'add']`. Keep in step with `getCalleeNames` in @stet-css/eslint-plugin's
+ * define-visitors.ts.
+ */
+function getCalleeNames(node: unknown): string[] {
+  if (!isOxcNode(node)) return []
+  if (node.type === 'TSNonNullExpression') return getCalleeNames(node.expression)
+  if (node.type === 'Identifier') return typeof node.name === 'string' ? [node.name] : []
+  if (node.type !== 'MemberExpression') return []
+  const property = node.property
+  if (!isOxcNode(property)) return []
+  const name = node.computed
+    ? property.type === 'Literal' && typeof property.value === 'string' ? property.value : undefined
+    : property.type === 'Identifier' && typeof property.name === 'string' ? property.name : undefined
+  return name === undefined ? [] : [...getCalleeNames(node.object), name]
+}
+
+/**
+ * A callee is a class function when a dotted suffix of its names matches, as the regex scan's
+ * `(?:\s|\.)` boundary does: `element.classList.add` matches `classList.add` and `utils.clsx`
+ * matches `clsx`.
+ */
+function matchesCallee(callee: unknown, matchers: RegExp[]) {
+  const names = getCalleeNames(callee)
+  return names.some((_, index) => matchesAny(names.slice(index).join('.'), matchers))
+}
+
 function collectClassPositions(
   className: string,
   classNameStart: number,
@@ -609,13 +638,13 @@ function createOxcClassPositions(
         collect(attributeValue.expression)
       }
     } else if (node.type === 'CallExpression') {
-      if (matchesAny(getNodeSource(source, node.callee), classFunctionMatchers)) {
+      if (matchesCallee(node.callee, classFunctionMatchers)) {
         for (const eachArgument of node.arguments ?? []) {
           collect(eachArgument)
         }
       }
     } else if (node.type === 'TaggedTemplateExpression') {
-      if (matchesAny(getNodeSource(source, node.tag), classFunctionMatchers)) {
+      if (matchesCallee(node.tag, classFunctionMatchers)) {
         collect(node.quasi)
       }
     } else if (node.type === 'VariableDeclarator') {
