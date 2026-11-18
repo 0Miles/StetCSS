@@ -10,6 +10,7 @@ export const PROJECT_SOURCE_EXTENSIONS: readonly string[] = [
   '.htm',
   '.js',
   '.jsx',
+  '.mjs',
   '.cjs',
   '.ts',
   '.tsx',
