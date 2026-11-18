@@ -193,3 +193,22 @@ it.each([
   expect(generateValidRules(className)).toHaveLength(0)
   expectClassInvalid(className)
 })
+
+/**
+ * Guards: lint accepting a class whose selector suffix is not a selector. `validateCSS` checks
+ * declarations only, so `transition:all_.3s,color_1s` (`.3s` and `1s` after `_`) and
+ * `hidden:of(.a,>)` (a rule starting with `>`) passed while the browser dropped their rules.
+ * Trade-off: the full rows live in the engine's `selector-suffix-names.test.ts` and
+ * `of-selector-list.test.ts`; this test only keeps the validator on the engine's verdict.
+ *
+ * Reverse check: the engine's `isSelectorSuffix` returning `true` reddens only these two rows
+ * among the validator tests.
+ */
+it.each([
+  'transition:all_.3s,color_1s',
+  'hidden:of(.a,>)'
+])('reports %s as invalid', (className) => {
+  expect(generateValidRules(className)).toHaveLength(0)
+  expectClassInvalid(className)
+  expect(validate(className).matched).toBe(false)
+})
