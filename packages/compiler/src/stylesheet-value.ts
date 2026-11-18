@@ -6,11 +6,12 @@ import {
 } from '@stet-css/lexer'
 import { formatDimension, formatFractionPercentage } from '@stet-css/engine/compiler'
 
+// Sticky: each `exec` tests only an alias starting at `lastIndex`, which keeps the scan linear.
 const CSS_VARIABLE_ALIAS = /\$(-?[_a-zA-Z0-9-]+)\b/y
 const CSS_NUMBER = /^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/
 
-function collectUnquotedMatches(value: string, pattern: RegExp) {
-  const matches: RegExpMatchArray[] = []
+function collectCSSVariableAliases(value: string) {
+  const aliases: RegExpExecArray[] = []
   for (let index = 0; index < value.length;) {
     const char = value[index]
     if (char === '"' || char === '\'') {
@@ -21,21 +22,16 @@ function collectUnquotedMatches(value: string, pattern: RegExp) {
       index = findCSSCommentEnd(value, index)
       continue
     }
-    pattern.lastIndex = index
-    const match = pattern.exec(value)
-    if (!match || match.index !== index) {
+    CSS_VARIABLE_ALIAS.lastIndex = index
+    const match = CSS_VARIABLE_ALIAS.exec(value)
+    if (!match) {
       index++
       continue
     }
-    matches.push(match)
-    index = pattern.lastIndex
+    if (value[index - 1] !== '\\') aliases.push(match)
+    index = CSS_VARIABLE_ALIAS.lastIndex
   }
-  return matches
-}
-
-function collectCSSVariableAliases(value: string) {
-  return collectUnquotedMatches(value, CSS_VARIABLE_ALIAS)
-    .filter((match) => value[match.index! - 1] !== '\\')
+  return aliases
 }
 
 function findTopLevelAlphaSeparator(value: string) {
