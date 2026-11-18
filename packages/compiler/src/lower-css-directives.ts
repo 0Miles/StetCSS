@@ -10,6 +10,7 @@ import {
   type CSSDirectiveVariableDefinition
 } from '@stet-css/schema/css-directives'
 import type { PropertiesHyphen } from 'csstype'
+import { skipCSSEscapeStringOrComment } from '@stet-css/lexer'
 import {
   compareRulePriority,
   PRESET_MODES,
@@ -420,32 +421,16 @@ function resolveSelectorAliases(selector: string, css: StetCSS) {
   const append = (text: string) => {
     alternatives = alternatives.map((alternative) => alternative + text)
   }
-  let quote = ''
   let attributeDepth = 0
   let parenDepth = 0
   for (let index = 0; index < selector.length;) {
+    const skipped = skipCSSEscapeStringOrComment(selector, index)
+    if (skipped !== index) {
+      append(selector.slice(index, skipped))
+      index = skipped
+      continue
+    }
     const char = selector[index]
-    if (quote) {
-      append(char)
-      if (char === '\\') {
-        append(selector[++index] || '')
-      } else if (char === quote) {
-        quote = ''
-      }
-      index++
-      continue
-    }
-    if (char === '\\') {
-      append(selector.slice(index, index + 2))
-      index += 2
-      continue
-    }
-    if (char === '"' || char === '\'') {
-      quote = char
-      append(char)
-      index++
-      continue
-    }
     if (char === '[') {
       attributeDepth++
       append(char)
