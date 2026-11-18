@@ -1004,7 +1004,8 @@ export default function getClassPositions(
 
       // Strings inside a template's `${…}` join its text at runtime; this scan cannot tell which
       // ends touch it, so it leaves them out.
-      const templateRanges = [...eachClassPositionExpression.matchAll(/(?<!\\)`([\s\S]*?)(?<!\\)`/g)]
+      const templateMatches = [...eachClassPositionExpression.matchAll(/(?<!\\)`([\s\S]*?)(?<!\\)`/g)]
+      const templateRanges = templateMatches
         .map((match) => ({ start: match.index ?? 0, end: (match.index ?? 0) + match[0].length }))
       const isInTemplate = (index: number) => templateRanges.some((range) => range.start < index && index < range.end)
 
@@ -1038,7 +1039,7 @@ export default function getClassPositions(
         ))
       }
 
-      for (const classExpressionMatch of eachClassPositionExpression.matchAll(/(?<!\\)`([\s\S]*?)(?<!\\)`/g)) {
+      for (const classExpressionMatch of templateMatches) {
         if (classExpressionMatch.index === undefined || isIgnored(classExpressionMatch.index)) continue
         const eachClassName = classExpressionMatch[1]
         const classNameStart = eachAttrStart + classExpressionMatch.index + 1
