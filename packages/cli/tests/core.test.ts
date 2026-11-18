@@ -269,6 +269,28 @@ describe('lint command', () => {
     }
   })
 
+  /**
+   * Guards that `stetcss lint` with no pattern reads every file the build reads: an `.mjs`
+   * module left out of the default set is never checked, so its class lists go unlinted while
+   * their classes still reach the CSS. Issue #192.
+   * Reverse check: removing `.mjs` from `PROJECT_SOURCE_EXTENSIONS` turns only this test and the
+   * stylesheet module-extension test red.
+   */
+  it('lints .mjs files in the default source set', () => {
+    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'stet-css-cli-lint-mjs-'))
+    try {
+      fs.mkdirSync(resolve(cwd, 'src'))
+      fs.writeFileSync(resolve(cwd, 'src/d.mjs'), 'export const D = () => <div className="fg:white m:0.5rem" />')
+      const output = runCLI(['lint', '--exit-code', 'never'], { cwd })
+      const report = JSON.parse(output)
+      expect(report.files).toHaveLength(1)
+      expect(report.files[0].filePath).toMatch(/src[/\\]d\.mjs$/)
+      expect(report.files[0].diagnostics.some((diagnostic: TestDiagnostic) => diagnostic.code === 'invalid-class-order')).toBe(true)
+    } finally {
+      fs.rmSync(cwd, { recursive: true, force: true })
+    }
+  })
+
   it('reports manifest preflight diagnostics', () => {
     const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'stet-css-cli-lint-manifest-'))
     try {
