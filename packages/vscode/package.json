@@ -295,6 +295,14 @@
       {
         "id": "pseudoElementDelimiter",
         "description": "StetCSS pseudoElementDelimiter semantic token modifier."
+      },
+      {
+        "id": "attributeOperator",
+        "description": "StetCSS attributeOperator semantic token modifier."
+      },
+      {
+        "id": "stringDelimiter",
+        "description": "StetCSS stringDelimiter semantic token modifier."
       }
     ],
     "semanticTokenScopes": [
@@ -321,6 +329,10 @@
           "enumMember.query": [
             "support.constant.property-value.css"
           ],
+          "enumMember.selector": [
+            "support.constant.parity.css",
+            "support.constant.property-value.css"
+          ],
           "enumMember.unit": [
             "keyword.other.unit"
           ],
@@ -332,6 +344,9 @@
           ],
           "property.query": [
             "support.type.property-name.css"
+          ],
+          "property.selector": [
+            "entity.other.attribute-name.css"
           ],
           "variable": [
             "variable.other.stet-css.css",
@@ -360,6 +375,15 @@
             "string.quoted.css",
             "string.quoted.html"
           ],
+          "string.selector": [
+            "string.unquoted.attribute-value.css",
+            "string.quoted.css"
+          ],
+          "string.stringDelimiter": [
+            "punctuation.definition.string.begin.css",
+            "punctuation.definition.string.end.css",
+            "string.quoted.css"
+          ],
           "keyword": [
             "keyword.control.at-rule"
           ],
@@ -382,6 +406,10 @@
             "entity.other.attribute-name.pseudo-element.css"
           ],
           "operator": [
+            "keyword.operator.css"
+          ],
+          "operator.attributeOperator": [
+            "keyword.operator.pattern.css",
             "keyword.operator.css"
           ],
           "operator.directive": [

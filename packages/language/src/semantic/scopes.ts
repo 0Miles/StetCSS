@@ -8,10 +8,12 @@ export const STET_CSS_SEMANTIC_TOKEN_SCOPE_MAP = {
   enumMember: ['support.constant.property-value.css'],
   'enumMember.directive': ['support.constant.property-value.css'],
   'enumMember.query': ['support.constant.property-value.css'],
+  'enumMember.selector': ['support.constant.parity.css', 'support.constant.property-value.css'],
   'enumMember.unit': ['keyword.other.unit'],
   property: ['support.type.property-name.css'],
   'property.directive': ['support.type.property-name.css'],
   'property.query': ['support.type.property-name.css'],
+  'property.selector': ['entity.other.attribute-name.css'],
   variable: ['variable.other.stet-css.css', 'variable.css'],
   'variable.directive': ['variable.parameter.stet-css.css'],
   'variable.selector': ['entity.other.attribute-name.id.css'],
@@ -20,6 +22,12 @@ export const STET_CSS_SEMANTIC_TOKEN_SCOPE_MAP = {
   'number.query': ['constant.numeric.css'],
   string: ['string.quoted.css', 'string.quoted.html'],
   'string.quoted': ['string.quoted.css', 'string.quoted.html'],
+  'string.selector': ['string.unquoted.attribute-value.css', 'string.quoted.css'],
+  'string.stringDelimiter': [
+    'punctuation.definition.string.begin.css',
+    'punctuation.definition.string.end.css',
+    'string.quoted.css'
+  ],
   keyword: ['keyword.control.at-rule'],
   'keyword.directive': ['keyword.control.at-rule.stet-css.css'],
   'keyword.query': ['keyword.control.at-rule'],
@@ -28,6 +36,7 @@ export const STET_CSS_SEMANTIC_TOKEN_SCOPE_MAP = {
   'modifier.pseudoClass': ['entity.other.attribute-name.pseudo-class.css'],
   'modifier.pseudoElement': ['entity.other.attribute-name.pseudo-element.css'],
   operator: ['keyword.operator.css'],
+  'operator.attributeOperator': ['keyword.operator.pattern.css', 'keyword.operator.css'],
   'operator.directive': ['punctuation.section.property-list.begin.bracket.curly.css'],
   'operator.blockBrace': [
     'punctuation.section.property-list.begin.bracket.curly.css',
