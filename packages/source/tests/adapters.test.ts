@@ -266,7 +266,9 @@ describe('source adapters', () => {
    * check: no longer accepting the top-level `return` diagnostic in
    * `src/adapters/astro.ts` turns the `return` cases red; parsing the
    * frontmatter as CommonJS, which allows `return` but not `await`, turns the
-   * `await` cases red.
+   * `await` cases red; accepting it only on the inline path in
+   * `src/adapters/oxc-stack.ts` turns the case longer than 1 KiB, which parses
+   * on a worker thread, red.
    */
   test.each([
     ['a top-level return', `---
@@ -285,6 +287,12 @@ export const prerender = true
 <div class="p:2px"></div>`],
     ['a top-level await', `---
 const block = await fetch('/api').then(response => response.json())
+const size = 'p:1px'
+---
+<div class="p:2px"></div>`],
+    ['a top-level return past 1 KiB', `---
+const { block } = Astro.props
+${'Astro.props.notes?.push(block)\n'.repeat(40)}if (!block) return Astro.redirect('/')
 const size = 'p:1px'
 ---
 <div class="p:2px"></div>`]
