@@ -1,245 +1,258 @@
 import {
   collectCSSDirectiveRanges,
   findCSSBlockEnd,
+  findCSSClosingQuote,
+  findCSSCommentEnd,
+  findCSSFunctionEnd,
   findCSSImportStatements,
   findCSSStatementEnd,
+  readCSSFunction,
   readCSSIdent,
   removeSourceRanges,
-  type CSSDirectiveRangeName,
+  skipCSSWhitespace,
   type SourceRange
 } from '@stet-css/lexer'
+import { TOP_LEVEL_CSS_DIRECTIVE_NAMES } from './lexer/standalone-directives'
+import wrapConditions from './utils/wrap-conditions'
 
 /**
  * The conditions an `@import` statement puts its stylesheet under, as written. `layer` is `''` for
  * an anonymous `layer` and absent when the import names no layer.
  */
-export interface CSSImportConditions {
+interface CSSImportConditions {
+  url: string
   layer?: string
   supports?: string
   media?: string
 }
 
-/**
- * Directives the compiler accepts only at the top level of a stylesheet. They configure the
- * manifest rather than emit CSS where they stand, so an import's conditions never wrap them.
- */
-const TOP_LEVEL_DIRECTIVE_NAMES = new Set<CSSDirectiveRangeName>([
-  'settings',
-  'source',
-  'safelist',
-  'blocklist',
-  'preserve',
-  'reference',
-  'theme',
-  'defaults',
-  'components',
-  'utilities',
-  'custom-variant'
-])
-
 /** Skips whitespace and comments from `index`. */
 function skipCSSTrivia(source: string, index: number, end = source.length) {
-  while (index < end) {
-    if (/\s/.test(source[index])) {
-      index++
-    } else if (source.startsWith('/*', index)) {
-      const close = source.indexOf('*/', index + 2)
-      index = close === -1 ? end : close + 2
-    } else {
-      break
-    }
+  for (;;) {
+    index = skipCSSWhitespace(source, index)
+    if (index >= end || !source.startsWith('/*', index)) return Math.min(index, end)
+    index = findCSSCommentEnd(source, index, end)
   }
-  return index
-}
-
-/** The index just past the `(`…`)` group that opens at `open`, or -1 when it never closes. */
-function findParenthesisEnd(source: string, open: number) {
-  let depth = 0
-  let quote = ''
-  for (let index = open; index < source.length; index++) {
-    const char = source[index]
-    if (quote) {
-      if (char === '\\') index++
-      else if (char === quote) quote = ''
-      continue
-    }
-    if (char === '"' || char === '\'') {
-      quote = char
-    } else if (char === '(') {
-      depth++
-    } else if (char === ')') {
-      depth--
-      if (depth === 0) return index + 1
-    }
-  }
-  return -1
 }
 
 /** The index just past the URL of the `@import` statement, or -1 when it has none. */
-function findImportURLEnd(statement: string) {
-  const match = /^\s*@import\s*/i.exec(statement)
-  if (!match) return -1
-  let index = match[0].length
-  const char = statement[index]
+function findImportURLEnd(statement: string, start: number) {
+  const char = statement[start]
   if (char === '"' || char === '\'') {
-    for (index++; index < statement.length; index++) {
-      if (statement[index] === '\\') index++
-      else if (statement[index] === char) return index + 1
-    }
-    return -1
+    const close = findCSSClosingQuote(statement, start, char)
+    return statement[close] === char && close > start ? close + 1 : -1
   }
-  if (/^url\(/i.test(statement.slice(index))) return findParenthesisEnd(statement, index + 3)
-  return -1
+  if (statement.slice(start, start + 4).toLowerCase() !== 'url(') return -1
+  return findCSSFunctionEnd(statement, start + 3) ?? -1
 }
 
-function readFunction(source: string, index: number, name: string) {
-  if (source.slice(index, index + name.length + 1).toLowerCase() !== `${name}(`) return
-  const end = findParenthesisEnd(source, index + name.length)
-  if (end === -1) return
-  return { value: source.slice(index + name.length + 1, end - 1).trim(), end }
-}
-
-/** Reads the `layer`, `supports()` and media conditions of one `@import` statement. */
-export function parseCSSImportConditions(statement: string): CSSImportConditions {
-  const conditions: CSSImportConditions = {}
-  const urlEnd = findImportURLEnd(statement)
-  if (urlEnd === -1) return conditions
-  const tail = statement.slice(0, statement.lastIndexOf(';') === -1 ? statement.length : statement.lastIndexOf(';'))
-  let index = skipCSSTrivia(tail, urlEnd)
-  const layer = readFunction(tail, index, 'layer')
+/** Reads the URL and the `layer`, `supports()` and media conditions of one `@import` statement. */
+function parseCSSImportConditions(statement: string): CSSImportConditions | undefined {
+  const keyword = /^\s*@import\s*/i.exec(statement)
+  if (!keyword) return
+  const urlStart = keyword[0].length
+  const urlEnd = findImportURLEnd(statement, urlStart)
+  if (urlEnd === -1) return
+  const semicolon = statement.lastIndexOf(';')
+  const end = semicolon === -1 ? statement.length : semicolon
+  const conditions: CSSImportConditions = { url: statement.slice(urlStart, urlEnd) }
+  let index = skipCSSTrivia(statement, urlEnd, end)
+  const layer = readCSSFunction(statement, index, 'layer', end)
   if (layer) {
-    conditions.layer = layer.value
-    index = skipCSSTrivia(tail, layer.end)
+    conditions.layer = layer.body.trim()
+    index = skipCSSTrivia(statement, layer.end, end)
   } else {
-    const ident = readCSSIdent(tail, index)
-    if (ident.value.toLowerCase() === 'layer' && tail[ident.end] !== '(') {
+    const ident = readCSSIdent(statement, index)
+    if (ident.value.toLowerCase() === 'layer') {
       conditions.layer = ''
-      index = skipCSSTrivia(tail, ident.end)
+      index = skipCSSTrivia(statement, ident.end, end)
     }
   }
-  const supports = readFunction(tail, index, 'supports')
+  const supports = readCSSFunction(statement, index, 'supports', end)
   if (supports) {
-    conditions.supports = supports.value
-    index = skipCSSTrivia(tail, supports.end)
+    conditions.supports = supports.body.trim()
+    index = skipCSSTrivia(statement, supports.end, end)
   }
-  const media = tail.slice(index).replace(/\/\*[\s\S]*?\*\//g, ' ').trim()
+  const media = statement.slice(index, end).replace(/\/\*[\s\S]*?\*\//g, ' ').trim()
   if (media) conditions.media = media
   return conditions
+}
+
+function hasTopLevelComma(source: string) {
+  let depth = 0
+  for (let index = 0; index < source.length; index++) {
+    const char = source[index]
+    if (char === '"' || char === '\'') index = findCSSClosingQuote(source, index, char)
+    else if (char === '(') depth++
+    else if (char === ')') depth--
+    else if (char === ',' && depth === 0) return true
+  }
+  return false
+}
+
+/**
+ * Combines two media query lists so a stylesheet matches only where both match, or returns
+ * `undefined` when one media query cannot say it: lists of several queries, queries that start with
+ * `not` or `only`, and two queries that each name a media type.
+ */
+function combineMediaQueries(outer: string | undefined, inner: string | undefined): string | null | undefined {
+  if (!outer || !inner) return outer || inner
+  if (outer === inner) return outer
+  if (hasTopLevelComma(outer) || hasTopLevelComma(inner) || /^(?:not|only)\b/i.test(outer) || /^(?:not|only)\b/i.test(inner)) return null
+  const outerIsCondition = outer.startsWith('(')
+  const innerIsCondition = inner.startsWith('(')
+  if (outerIsCondition && innerIsCondition) return `(${outer}) and (${inner})`
+  if (innerIsCondition) return `${outer} and (${inner})`
+  if (outerIsCondition) return `${inner} and (${outer})`
+  return null
+}
+
+/**
+ * Rewrites an `@import` statement a conditioned stylesheet keeps so it carries the conditions of
+ * the import that inlined that stylesheet too, as CSS would apply both: layers nest, `supports()`
+ * and media conditions must all hold.
+ */
+function addCSSImportConditions(statement: string, outer: CSSImportConditions, outerStatement: string) {
+  const inner = parseCSSImportConditions(statement)
+  if (!inner) return statement.trim()
+  const fail = (reason: string) => new Error(
+    `${statement.trim()} is kept as an @import inside ${outerStatement.trim()}, but ${reason}; move the import into the importing stylesheet`
+  )
+  let layer = inner.layer
+  if (outer.layer !== undefined) {
+    if (outer.layer === '') throw fail('an anonymous layer cannot be named on the kept import')
+    if (inner.layer === '') throw fail('an anonymous layer cannot be named inside a named one')
+    layer = inner.layer === undefined ? outer.layer : `${outer.layer}.${inner.layer}`
+  }
+  const supports = outer.supports && inner.supports
+    ? `(${outer.supports}) and (${inner.supports})`
+    : outer.supports || inner.supports
+  const media = combineMediaQueries(outer.media, inner.media)
+  if (media === null) throw fail(`one media query cannot require both "${outer.media}" and "${inner.media}"`)
+  return [
+    `@import ${inner.url}`,
+    ...(layer !== undefined ? [layer ? `layer(${layer})` : 'layer'] : []),
+    ...(supports ? [`supports(${supports})`] : []),
+    ...(media ? [media] : [])
+  ].join(' ') + ';'
 }
 
 /**
  * Puts an inlined stylesheet under the conditions of the `@import` statement that inlined it, as
  * native CSS applies them: `@import "./a.css" layer(a) supports(x) print;` becomes
- * `@media print { @supports (x) { @layer a { … } } }`. Top-level StetCSS directives and the
- * stylesheet's own `@import` statements stay outside those blocks, where they remain valid.
+ * `@media print { @supports (x) { @layer a { … } } }`. Top-level StetCSS directives stay outside
+ * those blocks, where the compiler accepts them, and so do the stylesheet's own `@import`
+ * statements, which take the outer conditions on top of theirs. Throws when CSS cannot express
+ * a kept import under both sets of conditions.
  */
 export function applyCSSImportConditions(source: string, statement: string) {
   const conditions = parseCSSImportConditions(statement)
-  const openers = [
-    ...(conditions.media ? [`@media ${conditions.media} {`] : []),
-    ...(conditions.supports ? [`@supports (${conditions.supports}) {`] : []),
-    ...(conditions.layer !== undefined ? [conditions.layer ? `@layer ${conditions.layer} {` : '@layer {'] : [])
+  if (!conditions) return source
+  const wrappers = [
+    ...(conditions.media ? [`@media ${conditions.media}`] : []),
+    ...(conditions.supports ? [`@supports (${conditions.supports})`] : []),
+    ...(conditions.layer !== undefined ? [conditions.layer ? `@layer ${conditions.layer}` : '@layer'] : [])
   ]
-  if (!openers.length) return source
-  const kept: SourceRange[] = [
-    ...collectCSSDirectiveRanges(source).filter((range) => range.depth === 0 && TOP_LEVEL_DIRECTIVE_NAMES.has(range.name)),
-    ...findCSSImportStatements(source)
+  if (!wrappers.length) return source
+  const directives = collectCSSDirectiveRanges(source)
+    .filter((range) => range.depth === 0 && TOP_LEVEL_CSS_DIRECTIVE_NAMES.has(range.name))
+  const imports = findCSSImportStatements(source)
+  const kept: (SourceRange & { text: string })[] = [
+    ...directives.map((range) => ({ ...range, text: source.slice(range.start, range.end) })),
+    ...imports.map((range) => ({ ...range, text: addCSSImportConditions(range.statement, conditions, statement) }))
   ].sort((a, b) => a.start - b.start)
-  const keptSource = kept.map((range) => source.slice(range.start, range.end)).join('\n')
-  const body = removeSourceRanges(source, kept)
-  if (!body.trim() && conditions.layer === undefined) return keptSource
-  return (keptSource ? keptSource + '\n' : '')
-    + openers.join('\n') + '\n'
-    + body.trim() + '\n'
-    + '}'.repeat(openers.length)
+  const body = removeSourceRanges(source, kept).trim()
+  // An empty stylesheet still declares its layer where it is imported.
+  const wrapped = body || conditions.layer !== undefined ? wrapConditions(`\n${body}\n`, wrappers) : ''
+  return [...kept.map((range) => range.text), wrapped].filter(Boolean).join('\n')
 }
 
-interface CSSLayerDeclaration {
-  start: number
+/** Reads the names a top-level `@layer` statement or block prelude declares. */
+function readLayerNames(prelude: string) {
+  return prelude.split(',').map((name) => name.trim()).filter(Boolean)
+}
+
+interface TopLevelStatement extends SourceRange {
+  /** The at-rule name in lower case, or `''` for a style rule. */
   name: string
+  prelude: string
+  isBlock: boolean
 }
 
-const CONDITIONAL_GROUP_AT_RULES = new Set(['media', 'supports', 'container'])
-
-/**
- * Collects the layer names that `@layer` rules declare at the top level of `source`, including inside
- * conditional group rules. A layer a conditional rule declares is declared in the same place when
- * its condition holds and does not exist otherwise, so declaring it unconditionally keeps the order.
- */
-function collectCSSLayerDeclarations(source: string, start: number, end: number, declarations: CSSLayerDeclaration[]) {
-  let index = skipCSSTrivia(source, start, end)
-  while (index < end) {
-    const isAtRule = source[index] === '@'
-    const name = isAtRule ? readCSSIdent(source, index + 1) : undefined
-    const statementEnd = findCSSStatementEnd(source, name ? name.end : index)
-    if (statementEnd.end > end) break
-    let next = statementEnd.end
-    let blockEnd = -1
-    if (statementEnd.reason === 'block') {
-      blockEnd = findCSSBlockEnd(source, statementEnd.end)
-      if (blockEnd === -1 || blockEnd >= end) break
-      next = blockEnd + 1
+/** Walks the top-level statements of `source` that start before `limit`. */
+function* walkTopLevelStatements(source: string, limit = source.length): Generator<TopLevelStatement> {
+  let index = skipCSSTrivia(source, 0)
+  while (index < limit) {
+    const ident = source[index] === '@' ? readCSSIdent(source, index + 1) : undefined
+    const preludeStart = ident ? ident.end : index
+    const statementEnd = findCSSStatementEnd(source, preludeStart)
+    if (statementEnd.reason === 'eof') return
+    const isBlock = statementEnd.reason === 'block'
+    const blockEnd = isBlock ? findCSSBlockEnd(source, statementEnd.end) : -1
+    if (isBlock && blockEnd === -1) return
+    const end = isBlock ? blockEnd + 1 : statementEnd.end
+    yield {
+      start: index,
+      end,
+      name: ident ? ident.value.toLowerCase() : '',
+      prelude: source.slice(preludeStart, isBlock ? statementEnd.end : statementEnd.end - 1),
+      isBlock
     }
-    const atRuleName = name?.value.toLowerCase()
-    if (name && atRuleName === 'layer') {
-      const preludeEnd = statementEnd.reason === 'semicolon' ? statementEnd.end - 1 : statementEnd.end
-      for (const layer of source.slice(name.end, preludeEnd).split(',')) {
-        const layerName = layer.trim()
-        if (layerName) declarations.push({ start: index, name: layerName })
-      }
-    } else if (atRuleName && CONDITIONAL_GROUP_AT_RULES.has(atRuleName) && blockEnd !== -1) {
-      collectCSSLayerDeclarations(source, statementEnd.end + 1, blockEnd, declarations)
-    }
-    index = skipCSSTrivia(source, next, end)
+    index = skipCSSTrivia(source, end)
   }
-  return declarations
-}
-
-/** Whether only whitespace, comments, `@charset`, `@layer` statements and `@import` statements precede `end`. */
-function hasOnlyImportPreludeBefore(source: string, end: number, imports: SourceRange[]) {
-  let index = skipCSSTrivia(source, 0, end)
-  let importIndex = 0
-  while (index < end) {
-    if (imports[importIndex]?.start === index) {
-      index = skipCSSTrivia(source, imports[importIndex++].end, end)
-      continue
-    }
-    const name = source[index] === '@' ? readCSSIdent(source, index + 1).value.toLowerCase() : ''
-    if (name !== 'charset' && name !== 'layer') return false
-    const statementEnd = findCSSStatementEnd(source, index)
-    if (statementEnd.reason !== 'semicolon') return false
-    index = skipCSSTrivia(source, statementEnd.end, end)
-  }
-  return true
 }
 
 /**
- * Moves the top-level `@import` statements an expanded import graph keeps (packages, URLs and other
- * stylesheets the graph does not inline) to its start, where CSS accepts them. Layers the moved
- * imports would now declare first keep the author's order: when any layer is declared before the
- * last of them, the stylesheet starts with an `@layer` statement listing the layers in the order the
- * graph as written declares them.
+ * Moves the top-level `@import` statements an expanded import graph keeps (packages, URLs and
+ * stylesheets the graph does not inline) to its start, where CSS accepts them, and keeps the layer
+ * order the graph was written in. Every layer declared before the last kept import moves ahead with
+ * the imports, in written order: top-level `@layer` statements move as they are, and a layer that
+ * only a top-level `@layer` block declares (such as the wrapper of a conditioned import) gets an
+ * `@layer <name>;` statement there while its block stays where it was.
+ *
+ * Layers declared only inside conditional rules (`@media`, `@supports`, `@container`) stay put:
+ * declaring them up front would place them ahead of later layers where the condition fails. Where
+ * the condition holds, a kept layered import that followed them now declares its layer first.
  */
 export function hoistCSSImportStatements(source: string) {
   const imports = findCSSImportStatements(source)
   if (!imports.length) return source
   const lastImport = imports[imports.length - 1]
-  if (hasOnlyImportPreludeBefore(source, lastImport.start, imports)) return source
+  const statements = [...walkTopLevelStatements(source, lastImport.end)]
+  if (statements.every((statement) => !statement.isBlock && ['charset', 'import', 'layer'].includes(statement.name))) return source
 
-  const contentLayers = collectCSSLayerDeclarations(source, 0, lastImport.start, [])
-  const layerOrder: string[] = []
-  if (contentLayers.length) {
-    const importLayers = imports.flatMap((statement) => {
-      const layer = parseCSSImportConditions(statement.statement).layer
-      return layer ? [{ start: statement.start, name: layer }] : []
-    })
-    for (const { name } of [...contentLayers, ...importLayers].sort((a, b) => a.start - b.start)) {
-      if (!layerOrder.includes(name)) layerOrder.push(name)
+  const moved: SourceRange[] = []
+  const prelude: string[] = []
+  const declared = new Set<string>()
+  for (const statement of statements) {
+    if (statement.name === 'import') {
+      const layer = parseCSSImportConditions(source.slice(statement.start, statement.end))?.layer
+      if (layer) declared.add(layer)
+    } else if (statement.name === 'layer') {
+      const names = readLayerNames(statement.prelude)
+      if (statement.isBlock) {
+        const undeclared = names.filter((name) => !declared.has(name))
+        if (undeclared.length) prelude.push(`@layer ${undeclared.join(', ')};`)
+      }
+      for (const name of names) declared.add(name)
+      if (statement.isBlock) continue
+    } else {
+      continue
     }
+    moved.push(statement)
+    prelude.push(source.slice(statement.start, statement.end).trim())
   }
-  return [
-    ...(layerOrder.length ? [`@layer ${layerOrder.join(', ')};`] : []),
-    ...imports.map((statement) => statement.statement.trim()),
-    removeSourceRanges(source, imports).trim()
-  ].join('\n')
+  return [...prelude, removeSourceRanges(source, moved).trim()].filter(Boolean).join('\n')
+}
+
+/**
+ * The layers `source` declares at its top level, outside conditional rules, in order: the names of
+ * its `@layer` statements and blocks. Layers of `@import` statements are not counted.
+ */
+export function collectCSSLayerOrder(source: string) {
+  const order = new Set<string>()
+  for (const statement of walkTopLevelStatements(source)) {
+    if (statement.name === 'layer') readLayerNames(statement.prelude).forEach((name) => order.add(name))
+  }
+  return [...order]
 }
