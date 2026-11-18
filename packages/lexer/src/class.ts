@@ -249,6 +249,10 @@ export function parseStetCSSClassList(
   options: StetCSSClassListParseOptions = {}
 ): StetCSSClassListItem[] {
   if (options.scriptString) {
+    // Without a `\` or a carriage return the body cooks to itself unit for unit, so skip the decode.
+    if (!classList.includes('\\') && !classList.includes('\r')) {
+      return parseStetCSSClassList(classList, { ...options, scriptString: undefined })
+    }
     const decoded = decodeStetCSSScriptString(classList, options.scriptString)
     if (decoded) return parseDecodedStetCSSClassList(classList, decoded, options)
     return parseStetCSSClassList(classList, { ...options, scriptString: undefined, unescape: options.scriptString })
