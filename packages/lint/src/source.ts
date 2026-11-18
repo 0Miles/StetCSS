@@ -2,7 +2,8 @@ import type { StetCSS } from '@stet-css/engine'
 import {
   collectCSSDirectiveRanges,
   type CSSDirectiveRuleRange,
-  type SourceRange
+  type SourceRange,
+  type StetCSSScriptStringQuote
 } from '@stet-css/lexer'
 import { getClassPositions, languageSettings } from '@stet-css/language'
 import { extname } from 'node:path'
@@ -130,6 +131,7 @@ interface ClassListContext {
   text: string
   sourceKind: Exclude<StetCSSLintDiagnosticSourceKind, 'manifest'>
   unescape?: string | false
+  scriptString?: StetCSSScriptStringQuote
   directive?: CSSDirectiveRuleRange
 }
 
@@ -236,6 +238,7 @@ function collectClassListContexts(content: string, filePath: string): ClassListC
       text: content.slice(contextRange.start, contextRange.end),
       sourceKind: directive ? 'compose-directive' : inferClassSourceKind(content, contextRange),
       unescape: detectClassListUnescape(content, contextRange),
+      scriptString: position.scriptString,
       ...(directive ? { directive } : {})
     })
   }
@@ -309,7 +312,8 @@ function createClassListLintOptions(
 ): StetCSSClassListLintReportOptions {
   return {
     ...getRuleOptions(options),
-    unescape: context.unescape
+    unescape: context.unescape,
+    scriptString: context.scriptString
   }
 }
 
@@ -322,7 +326,8 @@ function withSourceRuleOptions(
     ...getRuleOptions(options),
     ...getSpecificRuleOptions(options, ruleId),
     severity: options.severities?.[ruleId],
-    unescape: context.unescape
+    unescape: context.unescape,
+    scriptString: context.scriptString
   }
 }
 
