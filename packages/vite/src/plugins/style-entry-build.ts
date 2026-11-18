@@ -5,6 +5,7 @@ import { getScanner } from '../utils/scanner-context'
 import { getEnvironmentName } from '../utils/environment'
 import { createSlotCSSRulePattern, getSlotSelector } from '../utils/slot'
 import { createBuildDigest } from '../utils/build-digest'
+import { restoreLayerStatementsBeforeImports } from '../utils/layer-order'
 
 /**
  * Puts the generated CSS where the first placeholder was and drops the others; `digests` are
@@ -52,7 +53,7 @@ export default function StyleEntryBuildPlugin(context: PluginContext): Plugin {
           const oldSource = String(chunk.source)
           const result = replaceSlotCSSRules(oldSource, slotPattern, realCSS)
           if (!result.digests.length) continue
-          chunk.source = result.source
+          chunk.source = restoreLayerStatementsBeforeImports(result.source, context.hostLayerStatements ?? new Set())
           replacedAny = true
           if (!result.digests.includes(buildDigest)) staleFileNames.push(eachCssFileName)
         }
