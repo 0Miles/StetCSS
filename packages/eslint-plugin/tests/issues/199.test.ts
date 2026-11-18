@@ -1,10 +1,16 @@
 import { ESLint } from 'eslint'
-import { mkdtempSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, beforeEach, expect, test } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import * as entries from '@stet-css/project/entries'
 import plugin from '../../src'
-import resolveContext from '../../src/utils/resolve-context'
+import resolveContext, { ENTRY_DISCOVERY_TTL_MS } from '../../src/utils/resolve-context'
+
+vi.mock('@stet-css/project/entries', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@stet-css/project/entries')>()
+  return { ...original, findCSSManifestEntryFilesSync: vi.fn(original.findCSSManifestEntryFilesSync) }
+})
 
 /**
  * Dates the files' last modification ten seconds back, as for files saved well before a lint, and
@@ -54,11 +60,13 @@ const unknownBadge = 'Unknown StetCSS class "fixture-badge". It is not generated
 let cwd: string
 
 beforeEach(() => {
+  vi.mocked(entries.findCSSManifestEntryFilesSync).mockClear()
   cwd = mkdtempSync(join(tmpdir(), 'stet-css-eslint-199-'))
   writeFileSync(join(cwd, 'index.jsx'), `<div className="fixture-badge"></div>`)
 })
 
 afterEach(() => {
+  vi.useRealTimers()
   rmSync(cwd, { force: true, recursive: true })
 })
 
@@ -137,4 +145,72 @@ test('builds the CSS once per linted file while a fresh edit keeps the manifest 
   const context = { cwd, filename: join(cwd, 'index.jsx'), sourceCode, options: [], settings: {} } as any
 
   expect(resolveContext(context).css).toBe(resolveContext({ ...context }).css)
+})
+
+function resolveFileCSS() {
+  return resolveContext({ cwd, filename: join(cwd, 'index.jsx'), sourceCode: {}, options: [], settings: {} } as any).css
+}
+
+function definesUtility(css: ReturnType<typeof resolveFileCSS>, name: string) {
+  return css.definedUtilities.some((utility) => utility.name === name)
+}
+
+/**
+ * Guards: entry discovery walks the whole workspace (about 17 ms on this repo's root), so running
+ * it for every linted file would add tens of seconds to `eslint .` over a few thousand files.
+ * Trade-off (testing.md 6): counts discovery calls through a module mock, because walking again
+ * lints exactly like reusing the entries.
+ *
+ * Reverse check: discovering the entries on every load in `src/utils/resolve-context.ts` turns
+ * this test red, and the expiry test's step that locks the remembered entries within the TTL.
+ */
+test('discovers a workspace\'s entries once for every file it lints', async () => {
+  writeFileSync(join(cwd, 'index.css'), '@import "@stet-css/core";\n@components { fixture-badge { display: inline-flex; } }')
+  writeFileSync(join(cwd, 'other.jsx'), `<div className="fixture-badge"></div>`)
+
+  const results = await createWorkspaceESLint(cwd).lintFiles(['index.jsx', 'other.jsx'])
+
+  expect(results.map((result) => result.messages)).toStrictEqual([[], []])
+  expect(entries.findCSSManifestEntryFilesSync).toHaveBeenCalledTimes(1)
+})
+
+/**
+ * Guards: remembering the entries must not hide a CSS entry added during the session for good; it
+ * reaches the lint once the discovered entries are `ENTRY_DISCOVERY_TTL_MS` old. The step before
+ * the clock moves locks the decision that it is not seen sooner, which keeps the walk off every file.
+ *
+ * Reverse check: never rediscovering known entries in `src/utils/resolve-context.ts` turns only
+ * this test red.
+ */
+test('picks up a new CSS entry once the discovered entries expire', () => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  writeFileSync(join(cwd, 'index.css'), '@import "@stet-css/core";\n@components { fixture-button { display: inline-flex; } }')
+  expect(definesUtility(resolveFileCSS(), 'fixture-button')).toBe(true)
+
+  mkdirSync(join(cwd, 'theme'))
+  writeFileSync(join(cwd, 'theme/index.css'), '@import "@stet-css/core";\n@components { fixture-badge { display: inline-flex; } }')
+  expect(definesUtility(resolveFileCSS(), 'fixture-badge')).toBe(false)
+
+  vi.setSystemTime(Date.now() + ENTRY_DISCOVERY_TTL_MS)
+  expect(definesUtility(resolveFileCSS(), 'fixture-badge')).toBe(true)
+})
+
+/**
+ * Guards: a CSS entry deleted while its path is still remembered must not fail every lint of the
+ * workspace until the remembered entries expire.
+ *
+ * Reverse check: rethrowing the load error without rediscovering in
+ * `src/utils/resolve-context.ts` turns only this test red.
+ */
+test('rediscovers the entries when a remembered one was deleted', () => {
+  writeFileSync(join(cwd, 'index.css'), '@import "@stet-css/core";\n@components { fixture-button { display: inline-flex; } }')
+  mkdirSync(join(cwd, 'theme'))
+  writeFileSync(join(cwd, 'theme/index.css'), '@import "@stet-css/core";\n@components { fixture-badge { display: inline-flex; } }')
+  expect(definesUtility(resolveFileCSS(), 'fixture-badge')).toBe(true)
+
+  rmSync(join(cwd, 'theme'), { recursive: true })
+  const css = resolveFileCSS()
+
+  expect(definesUtility(css, 'fixture-button')).toBe(true)
+  expect(definesUtility(css, 'fixture-badge')).toBe(false)
 })

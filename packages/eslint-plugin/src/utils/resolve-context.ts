@@ -1,7 +1,7 @@
 import type { RuleContext } from '@typescript-eslint/utils/ts-eslint'
 import settings, { Settings } from '../settings'
 import { StetCSS, createCSSWithNativeDeclarations, defaultManifest } from './stet-css'
-import { findStetCSSWorkspaceDirectoriesSync } from '@stet-css/project/entries'
+import { findCSSManifestEntryFilesSync, findStetCSSWorkspaceDirectoriesSync } from '@stet-css/project/entries'
 import { loadProjectManifestSync, type LoadProjectManifestResult } from '@stet-css/project/manifest-sync'
 import path from 'node:path'
 import { existsSync } from 'node:fs'
@@ -62,8 +62,38 @@ function resolveWorkspaceDirectory(context: RuleContext<any, any[]>, filename: s
   return closestDirectory || cwd
 }
 
+/**
+ * How long a workspace's discovered entry files are trusted. Discovery walks the whole workspace,
+ * so it runs at most this often per workspace rather than once per linted file; a CSS entry added
+ * in between reaches the lint after at most this long.
+ */
+export const ENTRY_DISCOVERY_TTL_MS = 5000
+
+const entriesByWorkspaceDirectory = new Map<string, { entries: string[], discoveredAt: number }>()
+
+function discoverEntries(workspaceDir: string) {
+  const entries = findCSSManifestEntryFilesSync(workspaceDir)
+  entriesByWorkspaceDirectory.set(workspaceDir, { entries, discoveredAt: Date.now() })
+  return entries
+}
+
+function loadWorkspaceManifest(workspaceDir: string) {
+  const known = entriesByWorkspaceDirectory.get(workspaceDir)
+  if (!known || Date.now() - known.discoveredAt >= ENTRY_DISCOVERY_TTL_MS) {
+    return loadProjectManifestSync(workspaceDir, { entries: discoverEntries(workspaceDir), cache: true })
+  }
+  try {
+    return loadProjectManifestSync(workspaceDir, { entries: known.entries, cache: true })
+  } catch (error) {
+    // A known entry may be gone; only an error that fresh entries reproduce is the project's.
+    const entries = discoverEntries(workspaceDir)
+    if (entries.length === known.entries.length && entries.every((entry, index) => entry === known.entries[index])) throw error
+    return loadProjectManifestSync(workspaceDir, { entries, cache: true })
+  }
+}
+
 function getWorkspaceCSS(workspaceDir: string) {
-  const result = loadProjectManifestSync(workspaceDir, { cache: true })
+  const result = loadWorkspaceManifest(workspaceDir)
   let css = cssByManifestResult.get(result)
   if (!css) {
     css = createCSSWithNativeDeclarations(result.entries.length ? result.manifest : defaultManifest)
