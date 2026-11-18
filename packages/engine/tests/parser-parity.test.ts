@@ -150,6 +150,8 @@ describe.concurrent('compiled selector parser parity', () => {
     [':of(active)', 'active &'],
     [':of(.active_)', '.active &'],
     [':of(.active>)', '.active>&'],
+    [':of(.a,.b)', '.a &,.b &'],
+    [':of(.a>,.b)', '.a>&,.b &'],
     [':first:focus:disabled', '&:first-child:focus:disabled'],
     [':not(:last)', '&:not(:last-child)'],
     [':has(:first)', '&:has(:first-child)'],

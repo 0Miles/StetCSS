@@ -25,33 +25,46 @@ export default function generateSelector(nodes: SelectorNode[], body = ''): stri
     return base
   }
 
-  let pre = ''
-  let current = ''
-  const groups: string[] = []
-  const flatNodes = nodes.flatMap(node => (!('value' in node) && 'children' in node && node.children?.length) ? node.children : node)
-
-  flatNodes
-    .forEach(node => {
+  const flatten = (eachNodes: SelectorNode[]) => eachNodes.flatMap(node => (!('value' in node) && 'children' in node && node.children?.length) ? node.children : node)
+  /** Splits nodes at their top-level `,` into the generated text of each list item. */
+  const splitList = (eachNodes: SelectorNode[]) => {
+    const items: string[] = []
+    let current = ''
+    for (const node of eachNodes) {
       if (node.value === ',') {
-        groups.push(current)
+        items.push(current)
         current = ''
-      } else if (node.value === 'of' && 'children' in node) {
-        pre += node.children!.map(generate).join('')
       } else {
         current += generate(node)
       }
-    })
-
-  if (current) groups.push(current)
-  if (pre) {
-    const lastChar = pre.charAt(pre.length - 1)
-    if (!SELECTOR_COMBINATORS.includes(lastChar) && lastChar !== ' ') {
-      pre += ' '
     }
+    if (current) items.push(current)
+    return items
   }
-  const result = groups.length
-    ? groups.map(text => pre + body + text).join(',')
-    : pre + body
+
+  /**
+   * Each `:of()` list item is an ancestor condition of its own, so the selector expands per item
+   * as plain CSS writes it: `:of(.a,.b)` is `.a &,.b &`, not `.a,.b &`. Consecutive `:of()`s
+   * join their items into one compound (`:of(.a,.b):of(.c)` is `.a.c &,.b.c &`).
+   */
+  let pres = ['']
+  const flatNodes = flatten(nodes)
+  const groups = splitList(flatNodes.filter(node => {
+    if (node.value === 'of' && 'children' in node) {
+      const items = splitList(flatten(node.children!))
+      if (items.length) pres = pres.flatMap(pre => items.map(item => pre + item))
+      return false
+    }
+    return true
+  }))
+
+  pres = pres.map(pre => {
+    const lastChar = pre.charAt(pre.length - 1)
+    return pre && !SELECTOR_COMBINATORS.includes(lastChar) && lastChar !== ' ' ? pre + ' ' : pre
+  })
+  const result = pres
+    .flatMap(pre => groups.length ? groups.map(text => pre + body + text) : pre + body)
+    .join(',')
 
   if (process.env.NODE_ENV === 'development') {
     /** Warning: Nodes before `:of()` cannot contain combinators or other ::pseudo-element nodes */
