@@ -1,6 +1,9 @@
 /** Style languages whose blocks hold StetCSS directives. */
 export const CSS_STYLE_LANGUAGE_IDS: ReadonlySet<string> = new Set(['css', 'scss', 'less'])
 
+/** Single-file component languages whose `<style>` blocks `collectSFCStyleBlocks` reads. */
+export const SFC_LANGUAGE_IDS: ReadonlySet<string> = new Set(['vue', 'svelte', 'astro'])
+
 // quoted attribute values may contain `>`, so they are matched whole
 const STYLE_BLOCK_RE = /<style\b((?:[^>"']|"[^"]*"|'[^']*')*)>([\s\S]*?)<\/style>/gi
 
