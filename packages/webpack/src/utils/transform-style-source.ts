@@ -1,17 +1,15 @@
 import {
   compileStyleCSS,
-  createStyleEntryEmittedGlobals,
   createStyleCSSHostSource,
   hasLocalStyleDirectives,
   isStetCSSPackageStyleFile,
   isStyleCSSRequest,
+  loadLocalStyleContext,
   removeStetStyleDirectives,
   resolveStetStyleSource,
   transformLocalStyleCSS
 } from '@stet-css/stylesheet'
 import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
-import { loadProjectManifest } from '@stet-css/project/manifest'
-import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
 
 interface TransformStyleSourceResult {
   code: string
@@ -27,21 +25,6 @@ interface TransformStyleSourceOptions {
 
 function hasStetStyleManifestDirective(source: string) {
   return source.includes('@settings') || source.includes('@theme')
-}
-
-async function createGlobalStyleEntryEmittedGlobals(
-  entries: string[],
-  baseManifest: Awaited<ReturnType<typeof loadProjectManifest>>['manifest'],
-  projectDir: string | undefined,
-  dependencies: string[]
-) {
-  if (!entries.length) return
-  const result = await createStyleEntryEmittedGlobals(entries, {
-    baseManifest,
-    projectDir
-  })
-  dependencies.push(...result.dependencies)
-  return result.emittedGlobals
 }
 
 export async function transformStyleSource(
@@ -75,23 +58,16 @@ export async function transformStyleSource(
   const resolvedSource = resolveStetStyleSource(resourcePath, source, projectDir)
   if (!resolvedSource) {
     if (hasLocalStyleDirectives(source)) {
-      const entries = await findCSSManifestEntryFiles(projectDir)
-      const projectManifest = await loadProjectManifest(projectDir, { entries })
-      const emittedGlobals = await createGlobalStyleEntryEmittedGlobals(
-        entries,
-        projectManifest.manifest,
-        projectDir,
-        dependencies
-      )
+      const context = await loadLocalStyleContext(projectDir)
       const result = await transformLocalStyleCSS(resourcePath, source, {
-        baseManifest: projectManifest.manifest,
+        baseManifest: context.manifest,
         projectDir,
-        emittedGlobals
+        emittedGlobals: context.emittedGlobals
       })
       return {
         code: result.code,
         dependencies: [...new Set([
-          ...projectManifest.dependencies,
+          ...context.dependencies,
           ...result.dependencies
         ])]
       }
