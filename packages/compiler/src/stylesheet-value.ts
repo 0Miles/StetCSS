@@ -6,7 +6,7 @@ import {
 } from '@stet-css/lexer'
 import { formatDimension, formatFractionPercentage } from '@stet-css/engine/compiler'
 
-const CSS_VARIABLE_ALIAS = /\$(-?[_a-zA-Z0-9-]+)\b/g
+const CSS_VARIABLE_ALIAS = /\$(-?[_a-zA-Z0-9-]+)\b/y
 const CSS_NUMBER = /^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/
 
 function collectUnquotedMatches(value: string, pattern: RegExp) {
