@@ -17,6 +17,7 @@ export {
   replaceSourceRanges,
   skipCSSEscapeStringOrComment,
   skipCSSWhitespace,
+  skipCSSWhitespaceAndComments,
   type CSSStatementEnd,
   type SourceLocation,
   type SourceRange
