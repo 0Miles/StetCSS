@@ -411,6 +411,12 @@ interface ScopeStyleEntry {
   style: Record<string, string>
 }
 
+interface ScopeStyles {
+  entries: ScopeStyleEntry[]
+  /** Styles by `<ancestor> <innermost>` scope path. */
+  paths: Map<string, Record<string, string>>
+}
+
 const SEMANTIC_SCOPE_STYLE_PROBE = [
   '@theme light inline {',
   '  --token: var(--value);',
@@ -418,7 +424,7 @@ const SEMANTIC_SCOPE_STYLE_PROBE = [
   '@components {',
   '  btn { @compose block fg:red:hover@md; }',
   '}',
-  '.x, div > li:hover::before, a[data-x=y]:nth-child(odd) {',
+  '.x, #y, div > li:hover::before, a[data-x=y]:nth-child(2n+1):nth-child(odd) {',
   '  color: red !important;',
   '  width: 1.5rem;',
   '  background: rgb(0 0 0 / .5);',
@@ -468,10 +474,13 @@ function getScopePrefixes(scope: string) {
  * Records the style each probe scope is drawn with. A scope takes its style from a token where it is
  * the innermost scope first, so `string.quoted.double.css` resolves to the string body's colour rather
  * than to its quote's, which nests `punctuation.definition.string` inside it. Scopes that are never
- * innermost fall back to the first token that carries them.
+ * innermost fall back to the first token that carries them. Each innermost scope is also recorded
+ * under `<ancestor> <innermost>` paths, so `entity.other.attribute-name.pseudo-class.css
+ * punctuation.definition.entity.css` resolves to a pseudo-class colon, not a class dot.
  */
-function collectScopeStyleEntries(tokens: ShikiToken[]): ScopeStyleEntry[] {
+function collectScopeStyles(tokens: ShikiToken[]): ScopeStyles {
   const entries: ScopeStyleEntry[] = []
+  const paths = new Map<string, Record<string, string>>()
   const seenScopes = new Set<string>()
   const addEntry = (scope: string, style: Record<string, string>) => {
     if (seenScopes.has(scope)) return
@@ -491,13 +500,22 @@ function collectScopeStyleEntries(tokens: ShikiToken[]): ScopeStyleEntry[] {
         for (const { scopeName } of innermostOnly ? scopes.slice(-1) : scopes) {
           addEntry(scopeName, style)
         }
+        const innermost = scopes[scopes.length - 1]?.scopeName
+        if (innermostOnly && innermost) {
+          for (const { scopeName } of scopes.slice(0, -1)) {
+            const path = `${scopeName} ${innermost}`
+            if (!paths.has(path)) paths.set(path, style)
+          }
+        }
       }
     }
   }
-  return entries
+  return { entries, paths }
 }
 
-function findStyleByScope(entries: ScopeStyleEntry[], scope: string) {
+function findStyleByScope({ entries, paths }: ScopeStyles, scope: string) {
+  // A scope path names one parent and leaf pairing; widening it would match other parents.
+  if (scope.includes(' ')) return paths.get(scope)
   for (const candidate of getScopeCandidates(scope)) {
     const exact = entries.find((entry) => entry.scope === candidate || entry.normalizedScope === candidate)
     if (exact) return exact.style
@@ -520,7 +538,7 @@ function createSemanticScopeStyleResolver(
   if (options.matchCSSSyntaxStyles === false || typeof context.codeToTokens !== 'function') return
   try {
     const { lang: _lang, decorations: _decorations, transformers: _transformers, ...tokenOptions } = context.options
-    const scopeStyleEntries = collectScopeStyleEntries(context.codeToTokens(SEMANTIC_SCOPE_STYLE_PROBE, {
+    const scopeStyles = collectScopeStyles(context.codeToTokens(SEMANTIC_SCOPE_STYLE_PROBE, {
       ...tokenOptions,
       lang: 'css',
       includeExplanation: 'scopeName'
@@ -532,7 +550,7 @@ function createSemanticScopeStyleResolver(
       const [{ modifiers }] = toSemanticTokenItems([decoration])
       for (const key of getStetCSSSemanticTokenScopeKeys(decoration.type, modifiers)) {
         for (const scope of STET_CSS_SEMANTIC_TOKEN_SCOPE_MAP[key]) {
-          const style = findStyleByScope(scopeStyleEntries, scope)
+          const style = findStyleByScope(scopeStyles, scope)
           if (style) return style
         }
       }
