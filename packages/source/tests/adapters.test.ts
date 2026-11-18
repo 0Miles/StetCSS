@@ -200,6 +200,25 @@ describe('source adapters', () => {
     ])
   })
 
+  /**
+   * Guards: Astro processes every `<script>` as TypeScript, so a
+   * `<HTMLElement>` cast is valid there; parsed as JS it failed, extraction
+   * fell back to text, and the identifier `block` emitted
+   * `.block{display:block}`. Reverse check: parsing Astro scripts as `.js`
+   * again in `src/adapters/astro.ts` turns this test red.
+   */
+  test('parses Astro scripts as TypeScript', () => {
+    expect(extractAstroClasses('Page.astro', `<main class="mx:auto"></main>
+<script>
+  const block = <HTMLElement>document.body.firstElementChild
+  block.classList.add('fg:red')
+</script>
+    `)).toEqual([
+      'fg:red',
+      'mx:auto'
+    ])
+  })
+
   test('extracts frontmatter, script, and markup classes from Astro files while ignoring styles', () => {
     expect(extractAstroClasses('Page.astro', `---
 const frontmatterClasses = 'fg:red'
