@@ -187,14 +187,29 @@ describe('source adapters', () => {
     ])
   })
 
-  test('keeps parsing Svelte scripts without a lang attribute as JavaScript', async () => {
+  /**
+   * Guards: Svelte treats the whole component as TypeScript when any of its
+   * scripts has `lang="ts"`, so an untyped script beside a typed one may hold
+   * type annotations too. Deciding per script parses that script as JS, which
+   * fails and leaks `const`, `hidden` and `boolean` as classes. Reverse check:
+   * choosing the language per script in `src/adapters/svelte.ts` turns this
+   * test red.
+   */
+  test.each([
+    ['module', '<script context="module" lang="ts">', '<script>'],
+    ['instance', '<script context="module">', '<script lang="ts">']
+  ])('parses every Svelte script as TypeScript when the %s script names lang="ts"', async (_, moduleTag, instanceTag) => {
     await expect(extractSvelteClasses('Component.svelte', `
-      <script>
-        const hidden = isHidden()
+      ${moduleTag}
+        export const size: string = 'p:1rem'
+      </script>
+      ${instanceTag}
+        const hidden: boolean = isHidden()
         const classes = 'fg:red'
       </script>
       <div class="block">Save</div>
     `)).resolves.toEqual([
+      'p:1rem',
       'fg:red',
       'block'
     ])
