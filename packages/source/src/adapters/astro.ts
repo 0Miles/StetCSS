@@ -35,7 +35,8 @@ export function extractAstroClasses(source: string, content: string): string[] {
 
   let template = markup
   template = template.replace(SCRIPT_BLOCK, (_, scriptContent: string) => {
-    add(classes, extractOxcClasses(`${source}.js`, scriptContent))
+    // Astro processes every `<script>` as TypeScript.
+    add(classes, extractOxcClasses(`${source}.ts`, scriptContent))
     return ''
   })
   template = template.replace(STYLE_BLOCK, '')
