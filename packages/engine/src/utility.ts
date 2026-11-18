@@ -221,9 +221,48 @@ function getVariableAliasRefNamespace(ref: string) {
   return ref[0] === '=' || ref[0] === '~' ? ref.slice(1) : ref
 }
 
+/**
+ * `template` with each `&` replaced by `selector`, once per item when `selector` is a list:
+ * `&:hover` over `.a &,.b &` is `.a &:hover,.b &:hover`, not `.a &,.b &:hover`, which left
+ * `.a &` without the state.
+ */
+function replaceSelectorNesting(template: string, selector: string) {
+  const items = splitSelectorList(selector)
+  return items.length > 1
+    ? items.map((item) => template.replace(/&/g, item)).join(',')
+    : template.replace(/&/g, selector)
+}
+
+/** Top-level items of a selector list; escaped commas (`.a\,b`) and commas in strings, `()` and `[]` stay. */
+function splitSelectorList(selector: string) {
+  const items: string[] = []
+  let quote = ''
+  let depth = 0
+  let start = 0
+  for (let index = 0; index < selector.length; index++) {
+    const char = selector[index]
+    if (char === '\\') {
+      index++
+    } else if (quote) {
+      if (char === quote) quote = ''
+    } else if (char === '"' || char === '\'') {
+      quote = char
+    } else if (char === '(' || char === '[') {
+      depth++
+    } else if (char === ')' || char === ']') {
+      if (depth) depth--
+    } else if (char === ',' && !depth) {
+      items.push(selector.slice(start, index))
+      start = index + 1
+    }
+  }
+  items.push(selector.slice(start))
+  return items
+}
+
 function composeSelectorTemplate(current: string | undefined, next: string | undefined) {
   if (!next || next === '&') return current
-  return next.replace(/&/g, current || '&')
+  return current ? replaceSelectorNesting(next, current) : next
 }
 
 function cloneConditions(conditions?: Partial<Record<StetCSSManifestConditionIdentifier, ConditionNode[]>>) {
@@ -1023,7 +1062,7 @@ export class Utility {
       base = this.selectorTemplate.replace(/&/g, base)
     }
     return selector
-      ? selector.replace(/&/g, base)
+      ? replaceSelectorNesting(selector, base)
       : base
   }
 
