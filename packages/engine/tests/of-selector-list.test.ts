@@ -32,6 +32,32 @@ describe.concurrent(':of() selector lists', () => {
   })
 
   /**
+   * Guards: an `:of()` item that is not a selector. Each item is written before the class, so an
+   * item made only of a combinator, or starting with one, made the rule start with it:
+   * `hidden:of(.a,>)` emitted `….a .hidden…,>.hidden…`, which the browser drops whole, losing the
+   * `.a` item too. An item of only `_` emitted the bare class, as an empty item does. An item
+   * needs a compound before `>`, `+` or `~`; a leading `_` is a space and stays. `:of` without a
+   * selector (`hidden:of()`) emitted `.hidden\:of\(\):of`, and `:of` is no browser pseudo-class.
+   *
+   * Reverse check: in `isSelectorSuffix` (`src/utility.ts`), ignoring a combinator that starts an
+   * item reddens only `hidden:of(>.a)` and `hidden:of(.a,+.b)`; skipping the last-item check
+   * reddens only `hidden:of(_)` here and `hidden:of(.a,)` in `code-fragment-selectors.test.ts`;
+   * accepting `:of` without a selector reddens only the three `:of()`/`:of` rows.
+   */
+  test.each([
+    'hidden:of(>)',
+    'hidden:of(.a,>)',
+    'hidden:of(>.a)',
+    'hidden:of(.a,+.b)',
+    'hidden:of(_)',
+    'hidden:of()',
+    'hidden:of',
+    'hidden:of(.a):of()'
+  ])('%s generates no CSS', (className) => {
+    expect(generateText(className)).toBe('')
+  })
+
+  /**
    * Guards: a `:` variant or a nested utility rule applied after the selector became a list.
    * Its `&` was replaced with the whole list text, so the variant reached only the item it
    * touched: `&:hover` gave `.a X,.b X:hover` (`.a X` matched without hover) and `.dark &` gave
