@@ -117,7 +117,7 @@ test.concurrent('tokenizes at queries and selector state', () => {
     { text: ':', type: 'operator', role: 'selector.pseudoClass.delimiter', modifiers: ['selector', 'pseudoClass'] },
     { text: 'hover', type: 'modifier', role: 'selector.pseudoClass.name', modifiers: ['pseudoClass'] },
     { text: '>', type: 'operator', role: 'selector.combinator', modifiers: ['selector'] },
-    { text: '.', type: 'operator', role: 'selector.punctuation', modifiers: ['selector'] },
+    { text: '.', type: 'operator', role: 'selector.class.delimiter', modifiers: ['selector'] },
     { text: 'item', type: 'class', role: 'selector.class', modifiers: ['selector'] }
   ])
 })
@@ -140,16 +140,68 @@ test.concurrent('tokenizes native-like query and selector punctuation roles', ()
     { text: '_', type: 'operator', role: 'selector.combinator', modifiers: ['selector'] },
     { text: ':', type: 'operator', role: 'selector.pseudoClass.delimiter', modifiers: ['selector', 'pseudoClass'] },
     { text: 'is', type: 'modifier', role: 'selector.pseudoClass.name', modifiers: ['pseudoClass'] },
-    { text: '(', type: 'operator', role: 'selector.punctuation', modifiers: ['selector'] },
-    { text: '.', type: 'operator', role: 'selector.punctuation', modifiers: ['selector'] },
+    { text: '(', type: 'operator', role: 'selector.function.punctuation', modifiers: ['selector'] },
+    { text: '.', type: 'operator', role: 'selector.class.delimiter', modifiers: ['selector'] },
     { text: 'active', type: 'class', role: 'selector.class', modifiers: ['selector'] },
-    { text: ',', type: 'operator', role: 'selector.punctuation', modifiers: ['selector'] },
-    { text: '#', type: 'operator', role: 'selector.punctuation', modifiers: ['selector'] },
+    { text: ',', type: 'operator', role: 'selector.separator', modifiers: ['selector'] },
+    { text: '#', type: 'operator', role: 'selector.id.delimiter', modifiers: ['selector'] },
     { text: 'target', type: 'variable', role: 'selector.id', modifiers: ['selector'] },
-    { text: ',', type: 'operator', role: 'selector.punctuation', modifiers: ['selector'] },
+    { text: ',', type: 'operator', role: 'selector.separator', modifiers: ['selector'] },
     { text: 'button', type: 'type', role: 'selector.type', modifiers: ['selector'] },
-    { text: ')', type: 'operator', role: 'selector.punctuation', modifiers: ['selector'] }
+    { text: ')', type: 'operator', role: 'selector.function.punctuation', modifiers: ['selector'] }
   ])
+})
+
+/**
+ * Guards: an attribute selector got tokens only for its brackets, and text after its value (`_i`)
+ * was read as a `_` combinator and a type selector although the engine keeps it inside the brackets.
+ * Skipping `tokenizeAttributeSelector` in `class.ts` reds this test.
+ */
+test.concurrent('tokenizes every part of an attribute selector', () => {
+  const source = '[data-state=open][data-x^="a]"_i][hidden]'
+  expect(texts(source, tokenizeStetCSSState(source, 0, 0))).toEqual([
+    { text: '[', type: 'operator', role: 'selector.attribute.bracket', modifiers: ['selector'] },
+    { text: 'data-state', type: 'property', role: 'selector.attribute', modifiers: ['selector'] },
+    { text: '=', type: 'operator', role: 'selector.attribute.operator', modifiers: ['selector'] },
+    { text: 'open', type: 'string', role: 'selector.attribute.value', modifiers: ['selector'] },
+    { text: ']', type: 'operator', role: 'selector.attribute.bracket', modifiers: ['selector'] },
+    { text: '[', type: 'operator', role: 'selector.attribute.bracket', modifiers: ['selector'] },
+    { text: 'data-x', type: 'property', role: 'selector.attribute', modifiers: ['selector'] },
+    { text: '^=', type: 'operator', role: 'selector.attribute.operator', modifiers: ['selector'] },
+    { text: '"', type: 'string', role: 'value.string.quote', modifiers: ['quoted'] },
+    { text: 'a]', type: 'string', role: 'value.string', modifiers: ['quoted'] },
+    { text: '"', type: 'string', role: 'value.string.quote', modifiers: ['quoted'] },
+    { text: ']', type: 'operator', role: 'selector.attribute.bracket', modifiers: ['selector'] },
+    { text: '[', type: 'operator', role: 'selector.attribute.bracket', modifiers: ['selector'] },
+    { text: 'hidden', type: 'property', role: 'selector.attribute', modifiers: ['selector'] },
+    { text: ']', type: 'operator', role: 'selector.attribute.bracket', modifiers: ['selector'] }
+  ])
+})
+
+/**
+ * Guards: an `:nth-*()` argument read `+` as a combinator and left `2n` and `1` without tokens,
+ * and the `of S` form (`_of_`) dropped the argument's token. Turning off the `NTH_PSEUDO_CLASSES`
+ * check, or restoring the `(?![\w-])` lookahead, in `class.ts` reds this test.
+ */
+test.concurrent('tokenizes an+b and parity arguments, with or without of S', () => {
+  const source = ':nth-child(2n+1):nth-last-of-type(-n+3_of_li):nth-child(odd_of_.x)'
+  expect(texts(source, tokenizeStetCSSState(source, 0, 0)).filter(({ role }) => role.startsWith('selector.nth') || role === 'selector.type' || role === 'selector.combinator')).toEqual([
+    { text: '2n+1', type: 'number', role: 'selector.nth', modifiers: ['selector'] },
+    { text: '-n+3', type: 'number', role: 'selector.nth', modifiers: ['selector'] },
+    { text: 'li', type: 'type', role: 'selector.type', modifiers: ['selector'] },
+    { text: 'odd', type: 'enumMember', role: 'selector.nth', modifiers: ['selector'] }
+  ])
+})
+
+/**
+ * Guards: the `|` between a container name and its condition had no token.
+ * Dropping `|` from the query punctuation in `class.ts` reds this test.
+ */
+test.concurrent('tokenizes the container name separator in a query', () => {
+  const source = '@container(card|w>=600)'
+  expect(texts(source, tokenizeStetCSSAtQuery(source, 0))).toContainEqual(
+    { text: '|', type: 'operator', role: 'query.punctuation', modifiers: ['query'] }
+  )
 })
 
 test.concurrent('tokenizes named query ranges with matching endpoint values', () => {
