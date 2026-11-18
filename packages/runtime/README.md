@@ -80,6 +80,10 @@ import emittedGlobals from 'virtual:stet-css-emitted-globals'
 class MyElement extends LitElement { /* … */ }
 ```
 
+In a shadow root the runtime puts theme variables on `:host`, because `:root` never matches inside a shadow tree. That pins each variable it writes to the host element: a value the page sets on `:root`, by hand or through a runtime for the document, no longer reaches the shadow tree for that variable. To override a theme variable for a component, target its host element from the page, for example `my-element { --color-primary: #0af }`; the page's rule beats the shadow root's `:host` rule.
+
+With `mode-trigger: class`, the default mode covers the whole shadow tree and another mode applies only below an element inside it that carries the mode class; a class outside the shadow root, such as `<html class="dark">`, does not reach it. With `mode-trigger: host`, put the mode class on the host element. Both hold for variables your build already emitted: the page's mode rules never match inside a shadow tree, so the runtime writes mode variables there again.
+
 [`examples/lit`](../../examples/lit) uses both modules this way. A project without a build integration can pass the default preset's manifest instead, as [`examples/angular`](../../examples/angular) does; it then knows only the default preset, like the CDN:
 
 ```ts
