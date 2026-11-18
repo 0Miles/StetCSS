@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
@@ -14,8 +14,13 @@ vi.mock('@stet-css/compiler', async (importOriginal) => {
   }
 })
 
-/** Waits until the files' last change lies in the past, as for files saved before the build starts. */
+/**
+ * Dates the files' last modification ten seconds back, as for files saved before the build
+ * starts, and waits until their change time lies in the past.
+ */
 function settle(...files: string[]) {
+  const past = new Date(Date.now() - 10_000)
+  for (const file of files) utimesSync(file, past, past)
   const newest = Math.max(...files.map((file) => statSync(file).ctimeMs))
   while (Date.now() <= newest) { /* a millisecond at most */ }
 }
