@@ -51,7 +51,8 @@ function collectSFCFormatEdits(document: TextDocument, range?: Range) {
     const styleLanguage = getSFCStyleLanguage(match[1])
     if (!CSS_FORMAT_LANGUAGE_IDS.has(styleLanguage)) continue
     const styleText = match[2]
-    const styleStart = (match.index || 0) + match[0].indexOf(styleText)
+    // content starts right after the opening tag `<style${attributes}>`, which an attribute may repeat
+    const styleStart = (match.index || 0) + '<style'.length + match[1].length + '>'.length
     const styleEnd = styleStart + styleText.length
     const styleRange = { start: styleStart, end: styleEnd }
     if (offsetRange && !intersects(offsetRange, styleRange)) continue
