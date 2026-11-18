@@ -18,6 +18,11 @@ function resolveVariableColorValue(variable: Variable | undefined, variables: Ma
   }
 }
 
+// LSP color channels are 0..1; out-of-sRGB-gamut colors convert outside that range
+function toChannel(value: number | null | undefined) {
+  return Math.min(1, Math.max(0, value ?? 0))
+}
+
 export default async function renderSyntaxColors(this: CSSLanguageService, document: TextDocument): Promise<ColorInformation[] | undefined> {
   const text = document.getText() ?? ''
   const colorInformations: ColorInformation[] = []
@@ -68,9 +73,9 @@ export default async function renderSyntaxColors(this: CSSLanguageService, docum
                 end: document.positionAt(startOffset + valueComponentTokenLength)
               },
               color: {
-                red: rgbaColor.r ?? 0,
-                green: rgbaColor.g ?? 0,
-                blue: rgbaColor.b ?? 0,
+                red: toChannel(rgbaColor.r),
+                green: toChannel(rgbaColor.g),
+                blue: toChannel(rgbaColor.b),
                 alpha: Number(rgbaColor.alpha)
               }
             })
