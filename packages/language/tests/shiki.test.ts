@@ -559,6 +559,17 @@ test.concurrent('applies semantic decorations in the Shiki tokens hook', () => {
   ]))
 })
 
+test.concurrent('keeps a no-break space inside an existing token class when merging decorations', () => {
+  const code = '<div className="btn"></div>'
+  const transformer = transformerStetCSS({ manifest, classPrefix: 'stet-css-token', dataAttributes: false })
+  const transformedTokens = transformer.tokens.call({ source: code, options: { lang: 'tsx' } }, [[
+    { content: code, offset: 0, htmlAttrs: { class: 'own\u00A0class' } }
+  ]])
+  const btn = transformedTokens?.flat().find((token) => token.content === 'btn')
+
+  expect(btn?.htmlAttrs?.class).toBe('own\u00A0class stet-css-token stet-css-token-class stet-css-token-role-utility-component stet-css-token-class-declaration stet-css-token-class-component')
+})
+
 test.concurrent('uses semantic token scope styles for selector semantic tokens', () => {
   const code = '<div class="block>li:hover@md"></div>'
   const options = {

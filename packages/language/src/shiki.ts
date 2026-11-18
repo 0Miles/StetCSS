@@ -1,3 +1,4 @@
+import { splitASCIIWhitespace } from '@stet-css/lexer'
 import { SEMANTIC_TOKEN_MODIFIERS } from './common'
 import stetCSSTextMateGrammar from '../syntaxes/stet-css.tmLanguage.json' with { type: 'json' }
 import { TextDocument } from 'vscode-languageserver-textdocument'
@@ -336,7 +337,7 @@ function parseStyleProperty(style: unknown) {
 
 function resolveClassNames(value: unknown): string[] {
   if (Array.isArray(value)) return value.flatMap(resolveClassNames)
-  return typeof value === 'string' ? value.split(/\s+/).filter(Boolean) : []
+  return typeof value === 'string' ? splitASCIIWhitespace(value) : []
 }
 
 function mergeClassProperty(current: unknown, next: unknown) {
