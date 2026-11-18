@@ -258,6 +258,39 @@ describe('source adapters', () => {
     ])
   })
 
+  /**
+   * Guards: the Astro compiler opens the frontmatter after a BOM or blank
+   * lines, allows spaces after either fence, closes it at a `---` that starts
+   * a line outside strings, template literals and comments, and lets that fence
+   * end the file or run into markup. Splitting anywhere else turned the script
+   * into markup, so identifiers such as `flex` and `block` emitted
+   * `.flex{display:flex}` and `.block{display:block}`. Reverse check: requiring
+   * an exact `\n---\n` closing fence again in `src/adapters/astro.ts` turns
+   * every case but CRLF red; CRLF locks the line ending the old split already
+   * accepted.
+   */
+  test.each([
+    ['follows a BOM', `\uFEFF---\nconst { flex } = Astro.props\nconst size = 'p:1px'\n---\n<div class="p:2px"></div>`, ['p:1px', 'p:2px']],
+    ['follows blank lines', `\n\n---\nconst { flex } = Astro.props\nconst size = 'p:1px'\n---\n<div class="p:2px"></div>`, ['p:1px', 'p:2px']],
+    ['has trailing spaces on its fences', `--- \nconst { flex } = Astro.props\nconst size = 'p:1px'\n---\t \n<div class="p:2px"></div>`, ['p:1px', 'p:2px']],
+    ['uses CRLF line endings', `---\r\nconst { flex } = Astro.props\r\nconst size = 'p:1px'\r\n---\r\n<div class="p:2px"></div>`, ['p:1px', 'p:2px']],
+    ['closes on markup on the same line', `---\nconst { flex } = Astro.props\nconst size = 'p:1px'\n---<div class="p:2px"></div>`, ['p:1px', 'p:2px']],
+    ['holds --- in a template literal', `---\nconst { flex } = Astro.props\nconst size = \`p:1px\n---\n\`\n---\n<div class="p:2px"></div>`, ['p:1px', '---', 'p:2px']],
+    ['holds --- in a block comment', `---\nconst { flex } = Astro.props\n/*\n---\n*/\nconst size = 'p:1px'\n---\n<div class="p:2px"></div>`, ['p:1px', 'p:2px']]
+  ])('splits Astro frontmatter that %s as the Astro compiler does', (_, content, expected) => {
+    expect(extractAstroClasses('Page.astro', content)).toEqual(expected)
+  })
+
+  /**
+   * Guards: a closing fence with no line break after it, at the end of the
+   * file, was taken as unclosed, so the whole script became markup. Reverse
+   * check: requiring a line break after the closing fence turns this red.
+   */
+  test('closes Astro frontmatter on a fence that ends the file', () => {
+    expect(extractAstroClasses('Page.astro', `---\nconst { flex } = Astro.props\nconst size = 'p:1px'\n---`)).toEqual(['p:1px'])
+    expect(extractAstroClasses('Empty.astro', '---\n---')).toEqual([])
+  })
+
   test('extracts frontmatter, script, and markup classes from Astro files while ignoring styles', () => {
     expect(extractAstroClasses('Page.astro', `---
 const frontmatterClasses = 'fg:red'
