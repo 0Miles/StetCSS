@@ -3,7 +3,7 @@ import type { Position } from 'vscode-languageserver-protocol'
 import findMatchingPairs from './find-matching-brackets'
 import escapeRegexp from 'lodash.escaperegexp'
 import { visitorKeys } from 'oxc-parser'
-import { collectCSSDirectiveRanges, parseStetCSSClassList, type StetCSSScriptStringQuote } from '@stet-css/lexer'
+import { collectCSSDirectiveRanges, isASCIIWhitespace, parseStetCSSClassList, type StetCSSScriptStringQuote } from '@stet-css/lexer'
 import { parseOxcOnSourceStack } from './oxc-stack'
 
 export interface ClassPosition {
@@ -17,6 +17,13 @@ export interface ClassPosition {
    * attribute strings and CSS directives leave it unset.
    */
   scriptString?: StetCSSScriptStringQuote
+  /**
+   * Set when the class touches a runtime expression with no whitespace between, as `-50` does in
+   * Svelte's `bg:{color}-50` or `x` in `` `x${on ? 'a' : ''}` ``: it is part of a class that only
+   * exists at runtime. Its context holds the fragment alone, so editing the whole classes beside
+   * it never moves it; lint neither reports nor fixes it.
+   */
+  fragment?: true
 }
 
 export interface ClassPositionSettings {
@@ -338,6 +345,103 @@ function collectClassPositions(
   return classPositions
 }
 
+/** Which ends of a static text part touch a runtime expression. */
+interface ExpressionNeighbours {
+  before?: boolean
+  after?: boolean
+}
+
+/**
+ * Class positions of `text`, a static part of a class list whose ends may touch runtime
+ * expressions. Classes touching one are fragments, each its own context; the whole classes
+ * between them share one context. Splits on ASCII whitespace, as the lexer does.
+ */
+function collectSegmentClassPositions(
+  text: string,
+  start: number,
+  escapeCharacter: string,
+  includeEmpty: boolean,
+  accept: ClassPositionAccept | undefined,
+  neighbours: ExpressionNeighbours = {},
+  scriptString?: StetCSSScriptStringQuote
+) {
+  let wholeStart = 0
+  let wholeEnd = text.length
+  if (neighbours.before) {
+    while (wholeStart < wholeEnd && !isASCIIWhitespace(text[wholeStart])) wholeStart++
+  }
+  if (neighbours.after) {
+    while (wholeEnd > wholeStart && !isASCIIWhitespace(text[wholeEnd - 1])) wholeEnd--
+  }
+  const collect = (from: number, to: number, fragment: boolean) => {
+    // An empty text still yields its empty class for completion; empty parts of a longer one do not.
+    if (from === to && (fragment || text.length)) return []
+    const positions = collectClassPositions(
+      text.slice(from, to),
+      start + from,
+      escapeCharacter,
+      includeEmpty,
+      accept,
+      { start: start + from, end: start + to },
+      scriptString
+    )
+    return fragment ? positions.map((position) => ({ ...position, fragment: true as const })) : positions
+  }
+  return [
+    ...collect(0, wholeStart, true),
+    ...collect(wholeStart, wholeEnd, false),
+    ...collect(wholeEnd, text.length, true)
+  ]
+}
+
+/**
+ * `[start, end)` spans of runtime expressions in a class list: Svelte's `{…}` in markup or a
+ * template literal's `${…}`. An unclosed span runs to the end.
+ */
+function collectExpressionSpans(text: string, opener: '{' | '${') {
+  const spans: [number, number][] = []
+  for (let index = 0; index < text.length; index++) {
+    if (!text.startsWith(opener, index) || text[index - 1] === '\\') continue
+    const end = findMatchingPairs(text, index + opener.length, '{', '}')
+    spans.push([index, end === undefined ? text.length : end + 1])
+    if (end === undefined) break
+    index = end
+  }
+  return spans
+}
+
+/** Class positions of a class list whose expression spans are skipped; text beside a span is a fragment. */
+function collectSpannedClassPositions(
+  text: string,
+  start: number,
+  spans: [number, number][],
+  escapeCharacter: string,
+  includeEmpty: boolean,
+  accept: ClassPositionAccept | undefined,
+  scriptString?: StetCSSScriptStringQuote
+) {
+  if (!spans.length) {
+    return collectClassPositions(text, start, escapeCharacter, includeEmpty, accept, undefined, scriptString)
+  }
+  const classPositions: ClassPosition[] = []
+  let segmentStart = 0
+  for (const [spanStart, spanEnd] of [...spans, [text.length, text.length] as [number, number]]) {
+    if (spanStart > segmentStart) {
+      classPositions.push(...collectSegmentClassPositions(
+        text.slice(segmentStart, spanStart),
+        start + segmentStart,
+        escapeCharacter,
+        includeEmpty,
+        accept,
+        { before: segmentStart > 0, after: spanStart < text.length },
+        scriptString
+      ))
+    }
+    segmentStart = spanEnd
+  }
+  return classPositions
+}
+
 function sortAndDeduplicate(classPositions: ClassPosition[]) {
   const seen = new Set<string>()
   return classPositions
@@ -507,7 +611,8 @@ function collectOxcStringLiteral(
   node: OxcNode,
   includeEmpty: boolean,
   accept?: ClassPositionAccept,
-  script = true
+  script = true,
+  neighbours?: ExpressionNeighbours
 ) {
   if (typeof node.value !== 'string') return []
   const range = getNodeRange(node)
@@ -517,41 +622,64 @@ function collectOxcStringLiteral(
   const classNameStart = range[0] + 1
   const classNameEnd = range[1] - 1
   if (classNameEnd < classNameStart) return []
-  return collectClassPositions(
+  return collectSegmentClassPositions(
     source.slice(classNameStart, classNameEnd),
     classNameStart,
     quote,
     includeEmpty,
     accept,
-    { start: classNameStart, end: classNameEnd },
+    neighbours,
     script ? quote : undefined
   )
+}
+
+/**
+ * Whether the text beside a template expression touches it: `undefined` for an empty quasi, which
+ * passes the touch on to the next expression or the template's own neighbour.
+ */
+function touchesExpression(text: string | null | undefined, end: 'start' | 'end') {
+  if (text === '') return
+  return !isASCIIWhitespace(end === 'start' ? text?.[0] : text?.at(-1))
 }
 
 function collectOxcTemplateLiteral(
   source: string,
   node: OxcNode,
   includeEmpty: boolean,
-  accept?: ClassPositionAccept
+  accept?: ClassPositionAccept,
+  neighbours: ExpressionNeighbours = {}
 ) {
   const classPositions: ClassPosition[] = []
-  for (const eachQuasi of node.quasis ?? []) {
+  const quasis = node.quasis ?? []
+  quasis.forEach((eachQuasi, index) => {
     const range = getNodeRange(eachQuasi)
     const raw = eachQuasi.value?.raw
-    if (!range || raw === undefined) continue
+    if (!range || raw === undefined) return
     const classNameStart = range[0] + 1
-    const classNameEnd = classNameStart + raw.length
-    classPositions.push(...collectClassPositions(
-      source.slice(classNameStart, classNameEnd),
+    classPositions.push(...collectSegmentClassPositions(
+      source.slice(classNameStart, classNameStart + raw.length),
       classNameStart,
       '`',
       includeEmpty,
       accept,
-      { start: classNameStart, end: classNameEnd },
+      {
+        before: index > 0 || neighbours.before,
+        after: index < quasis.length - 1 || neighbours.after
+      },
       '`'
     ))
-  }
+  })
   return classPositions
+}
+
+/** Neighbours of each expression in a template literal, from the quasis beside it. */
+function getTemplateExpressionNeighbours(node: OxcNode, neighbours: ExpressionNeighbours = {}): ExpressionNeighbours[] {
+  const quasis = node.quasis ?? []
+  const expressions = node.expressions ?? []
+  return expressions.map((_, index) => ({
+    before: touchesExpression(quasis[index]?.value?.cooked, 'end') ?? (index > 0 || !!neighbours.before),
+    after: touchesExpression(quasis[index + 1]?.value?.cooked, 'start') ?? (index < expressions.length - 1 || !!neighbours.after)
+  }))
 }
 
 function collectOxcClassStrings(
@@ -562,17 +690,32 @@ function collectOxcClassStrings(
   ignoredKeyMatchers: RegExp[] = []
 ) {
   const classPositions: ClassPosition[] = []
-  const visit = (eachNode: unknown) => {
+  /**
+   * `neighbours` says which ends of the node's string value touch template text, as in
+   * `` `x${on ? 'a b' : ''}` ``. Only branches that yield the string itself carry them; anything
+   * else in such a place is skipped.
+   */
+  const visit = (eachNode: unknown, neighbours?: ExpressionNeighbours) => {
     if (!isOxcNode(eachNode)) return
     if (eachNode.type === 'Property' && matchesAny(getStaticPropertyKey(eachNode), ignoredKeyMatchers)) return
     if (eachNode.type === 'Literal') {
-      classPositions.push(...collectOxcStringLiteral(source, eachNode, includeEmpty, accept))
+      classPositions.push(...collectOxcStringLiteral(source, eachNode, includeEmpty, accept, true, neighbours))
       return
     }
     if (eachNode.type === 'TemplateLiteral') {
-      classPositions.push(...collectOxcTemplateLiteral(source, eachNode, includeEmpty, accept))
-      for (const expression of eachNode.expressions ?? []) {
-        visit(expression)
+      classPositions.push(...collectOxcTemplateLiteral(source, eachNode, includeEmpty, accept, neighbours))
+      const expressionNeighbours = getTemplateExpressionNeighbours(eachNode, neighbours)
+      eachNode.expressions?.forEach((expression, index) => visit(expression, expressionNeighbours[index]))
+      return
+    }
+    if (neighbours?.before || neighbours?.after) {
+      if (eachNode.type === 'ConditionalExpression') {
+        visit(eachNode.consequent, neighbours)
+        visit(eachNode.alternate, neighbours)
+      } else if (eachNode.type === 'LogicalExpression') {
+        visit(eachNode.right, neighbours)
+      } else if (eachNode.type === 'ParenthesizedExpression') {
+        visit(eachNode.expression, neighbours)
       }
       return
     }
@@ -822,14 +965,19 @@ export default function getClassPositions(
     resolve(stringExpressions, (eachAttrStart, eachClassPositionEnd, eachClassMatcher) => {
       const [, pair] = eachClassMatcher
       const eachClassName = sourceText.substring(eachAttrStart, eachClassPositionEnd)
-      classPositions.push(...collectClassPositions(
+      const markup = markupStringExpressions.has(eachClassMatcher)
+      // Svelte reads `{…}` in an attribute value as an expression; elsewhere markup text is literal.
+      const spans = markup
+        ? textDocument.languageId === 'svelte' ? collectExpressionSpans(eachClassName, '{') : []
+        : pair === '`' ? collectExpressionSpans(eachClassName, '${') : []
+      classPositions.push(...collectSpannedClassPositions(
         eachClassName,
         eachAttrStart,
+        spans,
         pair,
         includeEmpty,
         acceptsClassRange,
-        { start: eachAttrStart, end: eachClassPositionEnd },
-        markupStringExpressions.has(eachClassMatcher) ? undefined : pair as StetCSSScriptStringQuote
+        markup ? undefined : pair as StetCSSScriptStringQuote
       ))
     })
   }
@@ -861,8 +1009,14 @@ export default function getClassPositions(
         return
       }
 
+      // Strings inside a template's `${…}` join its text at runtime; this scan cannot tell which
+      // ends touch it, so it leaves them out.
+      const templateRanges = [...eachClassPositionExpression.matchAll(/(?<!\\)`([\s\S]*?)(?<!\\)`/g)]
+        .map((match) => ({ start: match.index ?? 0, end: (match.index ?? 0) + match[0].length }))
+      const isInTemplate = (index: number) => templateRanges.some((range) => range.start < index && index < range.end)
+
       for (const classExpressionMatch of eachClassPositionExpression.matchAll(/(?<!\\)"([\s\S]*?)(?<!\\)"/g)) {
-        if (classExpressionMatch.index === undefined || isIgnored(classExpressionMatch.index)) continue
+        if (classExpressionMatch.index === undefined || isIgnored(classExpressionMatch.index) || isInTemplate(classExpressionMatch.index)) continue
         const eachClassName = classExpressionMatch[1]
         const classNameStart = eachAttrStart + classExpressionMatch.index + 1
         classPositions.push(...collectClassPositions(
@@ -877,7 +1031,7 @@ export default function getClassPositions(
       }
 
       for (const classExpressionMatch of eachClassPositionExpression.matchAll(/(?<!\\)'([\s\S]*?)(?<!\\)'/g)) {
-        if (classExpressionMatch.index === undefined || isIgnored(classExpressionMatch.index)) continue
+        if (classExpressionMatch.index === undefined || isIgnored(classExpressionMatch.index) || isInTemplate(classExpressionMatch.index)) continue
         const eachClassName = classExpressionMatch[1]
         const classNameStart = eachAttrStart + classExpressionMatch.index + 1
         classPositions.push(...collectClassPositions(
@@ -895,13 +1049,13 @@ export default function getClassPositions(
         if (classExpressionMatch.index === undefined || isIgnored(classExpressionMatch.index)) continue
         const eachClassName = classExpressionMatch[1]
         const classNameStart = eachAttrStart + classExpressionMatch.index + 1
-        classPositions.push(...collectClassPositions(
+        classPositions.push(...collectSpannedClassPositions(
           eachClassName,
           classNameStart,
+          collectExpressionSpans(eachClassName, '${'),
           '`',
           includeEmpty,
           acceptsClassRange,
-          { start: classNameStart, end: classNameStart + eachClassName.length },
           '`'
         ))
       }
