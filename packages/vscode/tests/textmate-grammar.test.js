@@ -327,6 +327,7 @@ test('does not highlight @dark or @light as directives', () => {
   const directiveTokens = tokens.filter((token) => token.scopes.includes('keyword.control.at-rule.stet-css'))
 
   expect(directiveTokens).toEqual([
+    expect.objectContaining({ text: '@' }),
     expect.objectContaining({ text: 'variant' })
   ])
 })
@@ -345,6 +346,7 @@ test('does not highlight @master as a directive', () => {
   const directiveTokens = tokens.filter((token) => token.scopes.includes('keyword.control.at-rule.stet-css'))
 
   expect(directiveTokens).toEqual([
+    expect.objectContaining({ text: '@' }),
     expect.objectContaining({ text: 'source' })
   ])
 })
@@ -362,6 +364,7 @@ test('does not highlight @preserve as a directive', () => {
   const directiveTokens = tokens.filter((token) => token.scopes.includes('keyword.control.at-rule.stet-css'))
 
   expect(directiveTokens).toEqual([
+    expect.objectContaining({ text: '@' }),
     expect.objectContaining({ text: 'source' })
   ])
 })
@@ -524,6 +527,7 @@ test('does not highlight directives inside comments or quoted strings', () => {
   const directiveTokens = tokens.filter((token) => token.scopes.includes('keyword.control.at-rule.stet-css'))
 
   expect(directiveTokens).toEqual([
+    expect.objectContaining({ text: '@' }),
     expect.objectContaining({ text: 'theme' })
   ])
 })

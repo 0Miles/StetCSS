@@ -126,9 +126,9 @@ test.concurrent('defines deterministic TextMate grammar scopes for CSS directive
   const managedDirective = findGrammarPattern(directive, (pattern) => pattern.begin === '(@)(defaults|components|utilities)\\b')
   const composeDirective = findGrammarPattern(directive, (pattern) => pattern.begin === '(@)(compose)\\b')
 
-  expect(themeDirective.beginCaptures?.['2']?.name).toBe('keyword.control.at-rule.stet-css')
-  expect(managedDirective.beginCaptures?.['2']?.name).toBe('keyword.control.at-rule.stet-css')
-  expect(composeDirective.beginCaptures?.['2']?.name).toBe('keyword.control.at-rule.stet-css')
+  expect(themeDirective.beginCaptures?.['0']?.name).toBe('keyword.control.at-rule.stet-css')
+  expect(managedDirective.beginCaptures?.['0']?.name).toBe('keyword.control.at-rule.stet-css')
+  expect(composeDirective.beginCaptures?.['0']?.name).toBe('keyword.control.at-rule.stet-css')
   expectGrammarIncludes({ patterns: themeDirective.patterns ?? [] }, ['#stet-theme-block', '#stet-theme-prelude'])
   expectGrammarIncludes({ patterns: managedDirective.patterns ?? [] }, ['#stet-managed-block'])
   expectGrammarIncludes({ patterns: composeDirective.patterns ?? [] }, ['#stet-compose-prelude'])
@@ -799,6 +799,47 @@ function transformedColors(highlighter: ShikiColorHighlighter, code: string, lan
 }
 
 /**
+ * Guards: the injection grammar scoped a directive's `@` apart from its name, so themes that colour
+ * only `keyword.control.at-rule` drew `@` in the plain text colour while native `@import` is one colour.
+ * Moving the keyword scope back to capture 2 reds this and the grammar scope test.
+ */
+test('colours a directive @ and its name like a native at-rule', async () => {
+  const highlighter = await createHighlighter({ themes: [...nativeColorThemes], langs: ['css', stetCSSShikiLanguage] })
+  try {
+    const native = '@import "x.css";'
+    const code = '@components { btn { @compose block; } }'
+    for (const theme of nativeColorThemes) {
+      const nativeTokens = textMateColors(highlighter, native, theme)
+      const tokens = textMateColors(highlighter, code, theme)
+      const compose = code.indexOf('@compose')
+      expect([colorAt(tokens, 0), colorAt(tokens, 1)], theme).toEqual([colorAt(nativeTokens, 0), colorAt(nativeTokens, 1)])
+      expect([colorAt(tokens, compose), colorAt(tokens, compose + 1)], theme).toEqual([colorAt(nativeTokens, 0), colorAt(nativeTokens, 1)])
+    }
+  } finally {
+    highlighter.dispose()
+  }
+})
+
+/**
+ * Guards: the variant name after `@variant` had no scope and kept the plain text colour.
+ * Dropping the identifier pattern from `stet-variant-prelude` reds only this test.
+ */
+test('colours a @variant name like a query value', async () => {
+  const highlighter = await createHighlighter({ themes: [...nativeColorThemes], langs: ['css', stetCSSShikiLanguage] })
+  try {
+    const code = '@components { btn { @variant sm { @compose hidden@<sm; } } }'
+    for (const theme of nativeColorThemes) {
+      const tokens = textMateColors(highlighter, code, theme)
+      const variantName = code.indexOf('sm')
+      expect(colorAt(tokens, variantName), theme).toBe(colorAt(tokens, code.lastIndexOf('sm')))
+      expect(colorAt(tokens, variantName), theme).not.toBe(colorAt(tokens, code.indexOf(' {')))
+    }
+  } finally {
+    highlighter.dispose()
+  }
+})
+
+/**
  * Guards: a quoted value in a class took the colour of the native string's quote for its body too,
  * and its quotes took the string body colour, in themes that tell the two apart.
  * Resolving probe scopes without the innermost pass, or without role modifiers, in `shiki.ts` reds this test.
@@ -840,6 +881,28 @@ test('colours attribute selectors and an+b arguments in a class like native CSS 
       const tokens = transformedColors(highlighter, code, 'html', theme)
       expect(parts.map((part) => colorAt(tokens, code.indexOf(part, code.indexOf('[')))), theme)
         .toEqual(parts.map((part) => colorAt(nativeTokens, native.indexOf(part))))
+    }
+  } finally {
+    highlighter.dispose()
+  }
+})
+
+/**
+ * Guards: without semantic tokens, the grammar drew a quoted value inside a directive's class as a class name.
+ * Removing the `stet-class-value-string` includes reds only this test.
+ */
+test('colours a quoted value in a directive class like a native CSS string with TextMate only', async () => {
+  const highlighter = await createHighlighter({ themes: [...nativeColorThemes], langs: ['css', stetCSSShikiLanguage] })
+  try {
+    const native = 'a { content: "x"; }'
+    const code = '@components { btn { @compose content:"x":hover; } }'
+    const quote = code.indexOf('"')
+    const nativeQuote = native.indexOf('"')
+    for (const theme of nativeColorThemes) {
+      const nativeTokens = textMateColors(highlighter, native, theme)
+      const tokens = textMateColors(highlighter, code, theme)
+      expect([0, 1, 2].map((index) => colorAt(tokens, quote + index)), theme)
+        .toEqual([0, 1, 2].map((index) => colorAt(nativeTokens, nativeQuote + index)))
     }
   } finally {
     highlighter.dispose()
