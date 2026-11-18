@@ -37,9 +37,42 @@ export interface ResolvedClassNode {
   classValues: string[]
 }
 
-const QUOTED_RE = /^(['"`])([\s\S]*)\1$/
+/** Which ends of a static text part touch a runtime expression, as `{color}` does in `bg:{color}-50`. */
+export interface ExpressionNeighbours {
+  before?: boolean
+  after?: boolean
+}
 
-export default function resolveClassNode(node: any, context: RuleContext<any, any[]>): ResolvedClassNode | undefined {
+const QUOTED_RE = /^(['"`])([\s\S]*)\1$/
+const WHITESPACE_RE = /\s/
+
+/**
+ * The `[start, end)` part of `text` that holds only whole classes. Text touching an expression
+ * with no whitespace between them is a fragment of a class that only exists at runtime: sorting,
+ * deduplicating or validating it would split or delete that class. Undefined when no whole class
+ * remains.
+ */
+export function getWholeClassRange(text: string, neighbours: ExpressionNeighbours = {}): [number, number] | undefined {
+  let start = 0
+  let end = text.length
+  if (neighbours.before) {
+    while (start < end && !WHITESPACE_RE.test(text[start])) start++
+  }
+  if (neighbours.after) {
+    while (end > start && !WHITESPACE_RE.test(text[end - 1])) end--
+  }
+  return /\S/.test(text.slice(start, end)) ? [start, end] : undefined
+}
+
+/**
+ * Resolves a class-bearing node into a class list with source ranges. Pass `neighbours` for a
+ * static part of a value that also holds expressions; fragments touching them are left out.
+ */
+export default function resolveClassNode(
+  node: any,
+  context: RuleContext<any, any[]>,
+  neighbours?: ExpressionNeighbours
+): ResolvedClassNode | undefined {
   const { sourceCode } = context
   let value: string = null
   let start: number = null
@@ -91,6 +124,17 @@ export default function resolveClassNode(node: any, context: RuleContext<any, an
     raw = quoted[2]
     start = start + 1
     end = end - 1
+  }
+
+  if (neighbours?.before || neighbours?.after) {
+    // Trim the source and the parsed value alike; where they differ the list is not fixable anyway.
+    const rawRange = getWholeClassRange(raw, neighbours)
+    const valueRange = getWholeClassRange(value, neighbours)
+    if (!rawRange || !valueRange) return
+    start += rawRange[0]
+    end = start + rawRange[1] - rawRange[0]
+    raw = raw.slice(...rawRange)
+    value = value.slice(...valueRange)
   }
 
   const options: StetCSSClassListEditOptions = script && quote

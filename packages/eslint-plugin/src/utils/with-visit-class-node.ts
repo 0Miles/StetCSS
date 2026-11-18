@@ -1,20 +1,21 @@
 import { RuleContext } from '@typescript-eslint/utils/ts-eslint'
-import resolveClassNode from './resolve-class-node'
+import resolveClassNode, { type ExpressionNeighbours } from './resolve-class-node'
 import { TSESTree } from '@typescript-eslint/utils'
 
 export default function withVisitClassNode(
   visit: (node: TSESTree.Node, resolved: ReturnType<typeof resolveClassNode>) => void,
-  context: RuleContext<any, any[]>
+  context: RuleContext<any, any[]>,
+  ignoredKeys?: RegExp
 ) {
-  const visitNode = (node) => {
+  const visitNode = (node, neighbours?: ExpressionNeighbours) => {
     if (!node) return
     switch (node.type) {
       case 'BinaryExpression':
       case 'Identifier':
         return
       case 'TemplateLiteral':
-        node.expressions?.forEach(visitNode)
-        node.quasis.forEach(visitNode)
+        node.expressions?.forEach((expression) => visitNode(expression))
+        node.quasis.forEach((quasi) => visitNode(quasi))
         return
       case 'JSXExpressionContainer':
         visitNode(node.expression)
@@ -36,16 +37,20 @@ export default function withVisitClassNode(
           visitNode(prop)
         })
         return
-      case 'Property':
+      case 'Property': {
         if (node.shorthand) return
+        // Keys such as cva's compoundVariants and defaultVariants hold variant names, not classes.
+        const key = node.computed ? undefined : node.key?.type === 'Identifier' ? node.key.name : node.key?.value
+        if (ignoredKeys && typeof key === 'string' && ignoredKeys.test(key)) return
         if (node.value && ['Literal', 'ArrayExpression', 'ObjectExpression'].includes(node.value.type) && typeof node.value?.value !== 'boolean') {
           visitNode(node.value)
         } else if (node.key.type === 'Literal') {
           visitNode(node.key)
         }
         return
+      }
       default:
-        const resolved = resolveClassNode(node, context)
+        const resolved = resolveClassNode(node, context, neighbours)
         if (!resolved) return
         visit(node, resolved)
     }
