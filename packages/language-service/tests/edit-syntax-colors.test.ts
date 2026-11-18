@@ -62,6 +62,21 @@ test.concurrent('oklab', async () => {
   await expectEditedColors({ before: 'oklab(50%|0.1|0.11)', after: 'oklab(54%|0.06|-0.12)' })
 })
 
+/**
+ * Prevents: picking on an out-of-sRGB-gamut class writing back a color the picker never showed.
+ * The picker receives the clamped sRGB red, so accepting it writes that red back in the class's space.
+ * Reverse check: removing the channel clamp in render-syntax-colors turns this test red.
+ */
+test.concurrent('picking on an out-of-gamut color writes back the clamped sRGB color', async () => {
+  const doc = createDoc('tsx', `export default () => <div className='fg:oklch(70%|0.4|30)'></div>`)
+  const languageService = new CSSLanguageService({ manifest: createPresetManifest() })
+  const { color, range } = (await languageService.renderSyntaxColors(doc))?.[0] as ColorInformation
+  expect(languageService.editSyntaxColors(doc, color, range)).toStrictEqual([{
+    label: 'oklch(62.8%|0.2577|29.23)',
+    textEdit: { newText: 'oklch(62.8%|0.2577|29.23)', range }
+  }])
+})
+
 test.concurrent('oklch', async () => {
   await expectEditedColors({ before: 'oklch(40%|0.1|21)', after: 'oklch(54%|0.0951|115)' })
 })
