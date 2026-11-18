@@ -25,12 +25,12 @@ export default function generateSelector(nodes: SelectorNode[], body = ''): stri
     return base
   }
 
-  const flatten = (eachNodes: SelectorNode[]) => eachNodes.flatMap(node => (!('value' in node) && 'children' in node && node.children?.length) ? node.children : node)
+  const flatten = (selectorNodes: SelectorNode[]) => selectorNodes.flatMap(node => (!('value' in node) && 'children' in node && node.children?.length) ? node.children : node)
   /** Splits nodes at their top-level `,` into the generated text of each list item. */
-  const splitList = (eachNodes: SelectorNode[]) => {
+  const splitList = (selectorNodes: SelectorNode[]) => {
     const items: string[] = []
     let current = ''
-    for (const node of eachNodes) {
+    for (const node of selectorNodes) {
       if (node.value === ',') {
         items.push(current)
         current = ''
@@ -47,23 +47,25 @@ export default function generateSelector(nodes: SelectorNode[], body = ''): stri
    * as plain CSS writes it: `:of(.a,.b)` is `.a &,.b &`, not `.a,.b &`. Consecutive `:of()`s
    * join their items into one compound (`:of(.a,.b):of(.c)` is `.a.c &,.b.c &`).
    */
-  let pres = ['']
+  let ancestors = ['']
   const flatNodes = flatten(nodes)
-  const groups = splitList(flatNodes.filter(node => {
+  const ownNodes: SelectorNode[] = []
+  for (const node of flatNodes) {
     if (node.value === 'of' && 'children' in node) {
       const items = splitList(flatten(node.children!))
-      if (items.length) pres = pres.flatMap(pre => items.map(item => pre + item))
-      return false
+      if (items.length) ancestors = ancestors.flatMap(ancestor => items.map(item => ancestor + item))
+    } else {
+      ownNodes.push(node)
     }
-    return true
-  }))
+  }
+  const groups = splitList(ownNodes)
 
-  pres = pres.map(pre => {
-    const lastChar = pre.charAt(pre.length - 1)
-    return pre && !SELECTOR_COMBINATORS.includes(lastChar) && lastChar !== ' ' ? pre + ' ' : pre
-  })
-  const result = pres
-    .flatMap(pre => groups.length ? groups.map(text => pre + body + text) : pre + body)
+  const result = ancestors
+    .flatMap(ancestor => {
+      const lastChar = ancestor.charAt(ancestor.length - 1)
+      const pre = ancestor && !SELECTOR_COMBINATORS.includes(lastChar) && lastChar !== ' ' ? ancestor + ' ' : ancestor
+      return groups.length ? groups.map(text => pre + body + text) : pre + body
+    })
     .join(',')
 
   if (process.env.NODE_ENV === 'development') {
