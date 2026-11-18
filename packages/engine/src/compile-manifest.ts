@@ -82,6 +82,9 @@ function assertStetCSSManifest(manifest: StetCSSManifest): asserts manifest is S
   if ('utilityBuckets' in manifest) {
     throw new TypeError('Unsupported StetCSSManifest utilityBuckets field. Matcher indexes are engine-derived.')
   }
+  if (manifest.settings && 'baseUnit' in manifest.settings) {
+    throw new TypeError('StetCSSManifest settings.baseUnit was removed; x is the native CSS resolution unit, so write spacing as a length, for example p:1rem instead of p:4x')
+  }
 }
 
 function pushUnique(target: string[], values: string[]) {
