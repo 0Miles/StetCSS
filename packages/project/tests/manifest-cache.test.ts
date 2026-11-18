@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
@@ -12,8 +12,13 @@ vi.mock('@stet-css/compiler', async (importOriginal) => {
   return { ...original, compileProjectManifest: vi.fn(original.compileProjectManifest) }
 })
 
-/** Waits until the files' last change lies in the past, as for files saved before the build starts. */
+/**
+ * Dates the files' last modification ten seconds back, as for files saved before the build
+ * starts, and waits until their change time lies in the past.
+ */
 function settle(...files: string[]) {
+  const past = new Date(Date.now() - 10_000)
+  for (const file of files) utimesSync(file, past, past)
   const newest = Math.max(...files.map((file) => statSync(file).ctimeMs))
   while (Date.now() <= newest) { /* a millisecond at most */ }
 }
@@ -87,7 +92,7 @@ describe('entry discovery', () => {
   /**
    * Guards: discovery reusing what it read about a file after the file gained or lost its
    * `@import "@stet-css/core"`, or after a new entry appeared.
-   * Reverse check: reusing a file's inspection without comparing its stamp turns only this test red.
+   * Reverse check: storing a discovery answer without its file (`[file]` to `[]`) turns only this test red.
    */
   test('finds entries that were added or edited since the last discovery', async () => {
     const globalsPath = join(root, 'app/globals.css')
