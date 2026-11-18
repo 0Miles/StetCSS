@@ -2,21 +2,16 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { expect, test } from 'vitest'
-import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
-import type { StetCSSManifest } from '@stet-css/schema/manifest'
-import { compileCSS, compileCSSFile, compileCSSManifest } from '../src'
-
-const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
+import { compileCSS, compileCSSFile } from '../src'
 
 /**
  * Guards #186: a backslash-escaped quote outside a string, as in the selector `.a\'b`, opened a
- * string for the directive scans, so every later `@source`, `@safelist`, `@blocklist` and
- * `@compose` was skipped and reached the output CSS. A quote escaped inside a string (`'it\'s'`)
- * still leaves that string open.
- * Reverse check: dropping the `\` branch of `skipCSSEscapeStringOrComment` (`@stet-css/lexer`)
- * reds the two directive tests here. The `@compose` test stays green: lowering reads rules through
- * lightningcss, and the scan that skipped it (CSS module routing) is guarded in
+ * string for the directive scan, so every later `@source`, `@safelist` and `@blocklist` was
+ * skipped and reached the output CSS. A quote escaped inside a string (`'it\'s'`) still leaves
+ * that string open. The `@compose` half of #186 (CSS module routing) is guarded in
  * `@stet-css/stylesheet`'s `tests/style.test.ts`.
+ * Reverse check: dropping the `\` branch of `skipCSSEscapeStringOrComment` (`@stet-css/lexer`)
+ * reds this test.
  */
 test('directives after an escaped quote outside a string still apply', () => {
   const result = compileCSS([
@@ -44,13 +39,13 @@ test('directives after an escaped quote outside a string still apply', () => {
   ].join('\n'))
 })
 
-test('@compose after an escaped quote outside a string is lowered', () => {
-  const { css } = compileCSSManifest(".a\\'b { color: red }\n.x { @compose block; }", { baseManifest: defaultManifest })
-
-  expect(css).toContain('.x{display:block}')
-  expect(css).not.toContain('@compose')
-})
-
+/**
+ * Guards #186 through #183's import conditions: an inlined `@import` wrapped in its `layer()`
+ * keeps its top-level directives outside the wrapper, so the directive scans must still find the
+ * `@safelist` after `.a\'b` in the imported file, or it never applies.
+ * Reverse check: dropping the `\` branch of `skipCSSEscapeStringOrComment` (`@stet-css/lexer`)
+ * reds this test.
+ */
 test('a conditioned @import keeps the directives after an escaped quote outside its conditions', () => {
   const root = mkdtempSync(join(tmpdir(), 'stet-css-escaped-quotes-'))
   try {
