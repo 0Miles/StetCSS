@@ -97,14 +97,17 @@ export default class UtilityLayer extends Layer {
       if (visited.has(eachVariableName)) return
       visited.add(eachVariableName)
       const variable = this.css.variables.get(eachVariableName)
-      if (!variable || variable.inline) return
-      if (this.css.themeLayer.rules.find(({ name }) => name === eachVariableName) || this.css.isEmittedGlobalsVariable(eachVariableName)) {
-        const count = this.css.themeLayer.tokenCounts.get(eachVariableName) || 0
-        this.css.themeLayer.tokenCounts.set(eachVariableName, count + 1)
-      } else {
-        const newRule = new VariableRule(eachVariableName, variable, this.css)
-        this.css.themeLayer.insert(newRule)
-        this.css.themeLayer.tokenCounts.set(eachVariableName, 1)
+      if (!variable) return
+      // An inline variable is lowered into its referrers: skip its own rule, still emit what it references.
+      if (!variable.inline) {
+        if (this.css.themeLayer.rules.find(({ name }) => name === eachVariableName) || this.css.isEmittedGlobalsVariable(eachVariableName)) {
+          const count = this.css.themeLayer.tokenCounts.get(eachVariableName) || 0
+          this.css.themeLayer.tokenCounts.set(eachVariableName, count + 1)
+        } else {
+          const newRule = new VariableRule(eachVariableName, variable, this.css)
+          this.css.themeLayer.insert(newRule)
+          this.css.themeLayer.tokenCounts.set(eachVariableName, 1)
+        }
       }
       variable.dependencies?.forEach((dependency) => insertVariable(dependency, visited))
     }

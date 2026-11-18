@@ -311,9 +311,9 @@ export default class StetCSS {
     if (visited.has(name)) return
     visited.add(name)
     const variable = this.variables.get(name)
-    if (!variable || variable.inline) return
+    if (!variable) return
 
-    if (!this.staticVariableTokens.has(name)) {
+    if (!variable.inline && !this.staticVariableTokens.has(name)) {
       if (!this.isEmittedGlobalsVariable(name)) {
         if (!this.themeLayer.get(name)) {
           this.themeLayer.insert(new VariableRule(name, variable, this))
