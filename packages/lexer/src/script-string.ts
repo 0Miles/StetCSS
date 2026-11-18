@@ -10,8 +10,6 @@ export interface StetCSSDecodedSource {
   starts: number[]
   /** `ends[i]` is the source offset where decoded unit `i` ends. */
   ends: number[]
-  /** Length of the source span. */
-  length: number
 }
 
 const SINGLE_ESCAPES: Record<string, string> = {
@@ -135,5 +133,5 @@ export function decodeStetCSSScriptString(source: string, quote: StetCSSScriptSt
     index += 1 + escaped.length
   }
 
-  return { value, starts, ends, length: source.length }
+  return { value, starts, ends }
 }
