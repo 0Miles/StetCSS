@@ -8,6 +8,7 @@ import { stringifyStetCSSManifestJSON } from '@stet-css/schema/manifest-json'
 import type { CSSDirectiveReference } from '@stet-css/schema/css-directives'
 import { collectCSSDirectiveRanges } from '@stet-css/lexer'
 import { createCSSImportGraphReader, type CSSImportGraphReader } from './css-import-graph-reader'
+import { createFileStampCache, type FileStampCache } from './file-stamps'
 import { applyCSSImportConditions, hoistCSSImportStatements } from './css-import-conditions'
 import { createStetCSSManifest } from './stet-css-manifest'
 import lowerCSSDirectives from './lower-css-directives'
@@ -34,6 +35,7 @@ import {
 
 export * from './core'
 export { createCSSImportGraphReader, type CSSImportGraphReader } from './css-import-graph-reader'
+export { createFileStampCache, readFileStamp, type FileStamp, type FileStampCache } from './file-stamps'
 export { applyCSSImportConditions, collectCSSLayerOrder, hoistCSSImportStatements } from './css-import-conditions'
 export type {
   CompileCSSFileOptions,
@@ -405,6 +407,8 @@ const MAX_CSS_REFERENCE_EXPANSIONS = 256
 /** One `@reference` a compile expands: the referenced stylesheet's import graph and its own references. */
 interface CSSReferenceExpansion {
   file: string
+  /** `Date.now()` before the graph was read, so a compiled reference can tell a file changed while it compiled. */
+  readAt: number
   graph: ResolvedCSSImportGraph
   references: CSSReferenceExpansion[]
 }
@@ -438,9 +442,11 @@ function resolveCSSReferenceTree(
       if (expansions > MAX_CSS_REFERENCE_EXPANSIONS) {
         throw new Error(`CSS references compile more than ${MAX_CSS_REFERENCE_EXPANSIONS} stylesheets, counting repeated references of the same file: ${chain.join(' -> ')}`)
       }
+      const readAt = Date.now()
       const graph = resolveCSSImportGraphWithReader(file, readCSSImport, { projectDir: options.root })
       return {
         file,
+        readAt,
         graph,
         references: expand(graph.references, chain, [...comparableStack, comparableFile])
       }
@@ -449,11 +455,55 @@ function resolveCSSReferenceTree(
   return expand(references, stack, stack.map((file) => resolveComparablePath(file)))
 }
 
-/** Compiles resolved references in order; each one sees the definitions of the references before it. */
+interface CSSReferenceContext {
+  dependencies: string[]
+  warnings: string[]
+  manifest?: StetCSSManifest
+}
+
+/**
+ * Compiled reference contexts by base manifest, then by the referenced files: every CSS module that
+ * references the same stylesheet shares one compile of it while none of its files change (#202).
+ */
+const cssReferenceContextCaches = new WeakMap<object, FileStampCache<CSSReferenceContext>>()
+const NO_BASE_MANIFEST = {}
+
+function getCSSReferenceTreeKey(references: CSSReferenceExpansion[]): unknown[] {
+  return references.map((reference) => [reference.file, getCSSReferenceTreeKey(reference.references)])
+}
+
+/**
+ * Compiles resolved references once per base manifest and set of referenced files, reusing the
+ * result while every file it read keeps its stamp. Warnings of a reused result reach `onWarning` again.
+ */
 function compileCSSReferences(
   references: CSSReferenceExpansion[],
   options: CompileCSSManifestInternalOptions = {}
-) {
+): CSSReferenceContext {
+  if (!references.length || options.diagnostics) return compileCSSReferencesUncached(references, options)
+  const baseManifestKey = options.baseManifest ?? NO_BASE_MANIFEST
+  let cache = cssReferenceContextCaches.get(baseManifestKey)
+  if (!cache) {
+    cache = createFileStampCache()
+    cssReferenceContextCaches.set(baseManifestKey, cache)
+  }
+  const key = JSON.stringify([options.root ?? '', getCSSReferenceTreeKey(references)])
+  const cached = cache.get(key)
+  if (cached) {
+    for (const warning of cached.warnings) options.onWarning?.(warning)
+    return cached
+  }
+  const startedAt = Math.min(...references.map((reference) => reference.readAt))
+  const context = compileCSSReferencesUncached(references, options)
+  cache.set(key, context, context.dependencies, startedAt)
+  return context
+}
+
+/** Compiles resolved references in order; each one sees the definitions of the references before it. */
+function compileCSSReferencesUncached(
+  references: CSSReferenceExpansion[],
+  options: CompileCSSManifestInternalOptions = {}
+): CSSReferenceContext {
   const dependencies: string[] = []
   const warnings: string[] = []
   let manifest = options.baseManifest
