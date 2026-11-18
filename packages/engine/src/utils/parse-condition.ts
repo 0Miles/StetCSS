@@ -12,7 +12,7 @@ export type Condition = {
 }
 export declare type ConditionBooleanNode = { raw?: string, name: string, type: 'boolean' }
 export declare type ConditionNumberNode = { raw?: string, name: string, type: 'number', value: number, unit?: string, operator?: string }
-export declare type ConditionStringNode = { raw?: string, name: string, type: 'string', value: string }
+export declare type ConditionStringNode = { raw?: string, name: string, type: 'string', value: string, operator?: string }
 export declare type ConditionValueNode = ConditionNumberNode | ConditionStringNode
 export interface ConditionComparisonOperatorNode { type: 'comparison', raw?: string, value: string }
 export interface ConditionLogicalOperatorNode { type: 'logical', raw?: string, value: string }
@@ -28,6 +28,12 @@ function isConditionFeatureName(value: string) {
   return CONDITION_COMPARABLE_FEATURES.includes(resolveConditionFeatureName(value))
 }
 
+/** `min-resolution:1.5dppx` names the `resolution` feature, so it queries the viewport like `resolution>=1.5dppx`. */
+function isConditionFeatureToken(raw: string) {
+  const [name] = splitCharOutsideQuotes(raw, ':')
+  return isConditionFeatureName(name.replace(/^(?:min|max)-/, ''))
+}
+
 function isConditionIdentifier(value: string): value is StetCSSManifestConditionIdentifier {
   return (CONDITION_IDENTIFIERS as string[]).includes(value)
 }
@@ -36,12 +42,13 @@ export default function parseCondition(token: string, css: StetCSS, isRaw = true
   let id: StetCSSManifestConditionIdentifier | undefined
   let firstToken: string | undefined
   const resolve = (token: string) => {
-    const regex = /([a-zA-Z0-9-:%|]+|[&|!|,|>|<|=][=]?)/g
+    const regex = /([a-zA-Z0-9-:%|./]+|[&|!|,|>|<|=][=]?)/g
     const raws = [...token.matchAll(regex)].map(match => match[0])
     let nodes: ConditionNode[] = []
     const addNode = (node: ConditionNode) => {
       let prev = nodes[nodes.length - 1]
-      if (node.type === 'number' && !node.name) {
+      // A ratio such as `16/9` is a string value, compared like a number once an operator precedes it.
+      if ((node.type === 'number' || node.type === 'string' && prev?.type === 'comparison') && !node.name) {
         if (prev?.type === 'comparison') {
           node.operator = prev.value
           if (node.raw && prev.raw) {
@@ -89,7 +96,7 @@ export default function parseCondition(token: string, css: StetCSS, isRaw = true
             return
           } else if (definedCondition) {
             id = definedCondition.id
-          } else if (isConditionFeatureName(firstToken)) {
+          } else if (isConditionFeatureToken(firstToken)) {
             id = 'media'
           } else if (firstToken.charAt(0).match(/[a-zA-Z-]/)) {
             id = 'container'

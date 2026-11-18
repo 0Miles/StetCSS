@@ -38,7 +38,7 @@ export const CONDITION_LOGICAL_OPERATORS = {
 // the order is intentional and should not be changed
 export const CONDITION_IDENTIFIERS: StetCSSManifestConditionIdentifier[] = ['container', 'starting-style', 'supports', 'media', 'layer']
 export const COMPARISION_OPERATORS = ['>=', '<=', '>', '<', '=']
-export const CONDITION_COMPARABLE_FEATURES = ['width', 'height', 'resolution']
+export const CONDITION_COMPARABLE_FEATURES = ['width', 'height', 'resolution', 'aspect-ratio']
 export const CONDITION_FEATURE_ALIASES = {
   w: 'width',
   h: 'height'
