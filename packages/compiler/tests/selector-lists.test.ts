@@ -16,7 +16,7 @@ describe.concurrent('selector lists in lowered rules', () => {
    *
    * Reverse check in `src/lower-css-directives.ts`: `combineSelectorWrapper` replacing `&` in the
    * whole list reddens the native, component and escaped rows; prefixing the mode selector to the
-   * whole list in `getComposedUtilitySelector` reddens the two `@compose` rows; `splitSelectorList`
+   * whole list in `getComposedUtilitySelector` reddens the two `@compose` rows; `splitCSSSelectorList`
    * (`src/utils/selectors.ts`) not skipping a `\` at `index` reddens only the escaped row.
    */
   test.each([
@@ -66,7 +66,7 @@ describe.concurrent('selector lists in lowered rules', () => {
    * `:pair` = `>li/*,*\/` lowered to `.card>li/*,.card*\/`, copying the host into the comment.
    * Both select the same elements; the generated CSS text is the contract, so this locks the
    * comment as opaque.
-   * Reverse check: `splitSelectorList` (`src/utils/selectors.ts`) not skipping a comment at
+   * Reverse check: `splitCSSSelectorList` (`@stet-css/lexer`) not skipping a comment at
    * `index` reddens only this test.
    */
   test('a comment in a selector alias is not split as a list', () => {

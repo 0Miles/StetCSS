@@ -190,6 +190,45 @@ export function skipCSSEscapeStringOrComment(source: string, index: number, limi
   return index
 }
 
+/**
+ * The trimmed top-level items of a CSS selector list. Commas escaped (`.a\,b`) or inside strings,
+ * comments, `()` or `[]` stay in their item; an empty last item is dropped.
+ */
+export function splitCSSSelectorList(selectorText: string): string[] {
+  const selectors: string[] = []
+  let current = ''
+  let depth = 0
+
+  for (let index = 0; index < selectorText.length; index++) {
+    const skipped = skipCSSEscapeStringOrComment(selectorText, index)
+    if (skipped !== index) {
+      current += selectorText.slice(index, skipped)
+      index = skipped - 1
+      continue
+    }
+    const char = selectorText[index]
+    if (char === '(' || char === '[') {
+      depth++
+      current += char
+      continue
+    }
+    if (char === ')' || char === ']') {
+      depth--
+      current += char
+      continue
+    }
+    if (char === ',' && depth === 0) {
+      selectors.push(current.trim())
+      current = ''
+      continue
+    }
+    current += char
+  }
+
+  if (current.trim()) selectors.push(current.trim())
+  return selectors
+}
+
 export function findCSSBlockEnd(source: string, open: number) {
   if (source[open] !== '{') return -1
   let depth = 0

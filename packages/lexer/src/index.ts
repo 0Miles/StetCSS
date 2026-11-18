@@ -18,6 +18,7 @@ export {
   skipCSSEscapeStringOrComment,
   skipCSSWhitespace,
   skipCSSWhitespaceAndComments,
+  splitCSSSelectorList,
   type CSSStatementEnd,
   type SourceLocation,
   type SourceRange

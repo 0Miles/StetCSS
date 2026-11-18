@@ -10,7 +10,7 @@ import {
   type CSSDirectiveVariableDefinition
 } from '@stet-css/schema/css-directives'
 import type { PropertiesHyphen } from 'csstype'
-import { skipCSSEscapeStringOrComment } from '@stet-css/lexer'
+import { skipCSSEscapeStringOrComment, splitCSSSelectorList } from '@stet-css/lexer'
 import {
   compareRulePriority,
   PRESET_MODES,
@@ -29,7 +29,7 @@ import {
 } from '@stet-css/engine/compiler'
 import type { StetCSSManifest, StetCSSManifestUtilityLayerName } from '@stet-css/schema/manifest'
 import { createStetCSSManifest, createVariableNameResolver, type CSSDirectiveVariableNameResolver } from './stet-css-manifest'
-import { combineStyleSelectors, replaceSelectorNesting, splitSelectorList } from './utils/selectors'
+import { combineStyleSelectors, replaceSelectorNesting } from './utils/selectors'
 import wrapConditions from './utils/wrap-conditions'
 import { cssTreeNativeDeclarationMatcher } from './native-declaration'
 import {
@@ -461,7 +461,7 @@ function resolveSelectorAliases(selector: string, css: StetCSS) {
         const nodes = css.selectors.get(matchedToken)
         if (nodes?.length) {
           const text = generateSelector(nodes, '')
-          const aliasItems = parenDepth ? [] : splitSelectorList(text)
+          const aliasItems = parenDepth ? [] : splitCSSSelectorList(text)
           alternatives = aliasItems.length > 1
             ? alternatives.flatMap((alternative) => aliasItems.map((aliasItem) => alternative + aliasItem))
             : alternatives.map((alternative) => alternative + text)
