@@ -241,6 +241,22 @@ describe('style CSS extraction helpers', () => {
     expect(result.code).not.toContain('@compose')
   })
 
+  /**
+   * Prevents: a backslash-escaped quote in a CSS module selector opening a string for the local
+   * directive scan, which then reported no directives and sent `@compose` through unlowered.
+   */
+  it('locally lowers @compose after an escaped quote in a selector', async () => {
+    expect(hasLocalStyleDirectives(".a\\'b{} .x{@compose block;}")).toBe(true)
+
+    const result = await transformLocalStyleCSS('/project/src/Button.module.css', ".a\\'b{color:red} .x{@compose block;}", {
+      baseManifest: defaultManifest
+    })
+
+    expect(result.transformed).toBe(true)
+    expect(result.code).toContain('.x{display:block}')
+    expect(result.code).not.toContain('@compose')
+  })
+
   it('locally lowers explicit @reference styles without emitting referenced CSS', async () => {
     const root = createFixture()
     const tokenPath = join(root, 'app/tokens.css')
