@@ -168,6 +168,15 @@ export function findCSSCommentEnd(source: string, start: number, limit = source.
   return end === -1 || end + 2 > limit ? limit : end + 2
 }
 
+/** Skips whitespace and comments from `index`, stopping at `limit`. */
+export function skipCSSWhitespaceAndComments(source: string, index: number, limit = source.length) {
+  for (;;) {
+    index = skipCSSWhitespace(source, index)
+    if (index >= limit || !source.startsWith('/*', index)) return Math.min(index, limit)
+    index = findCSSCommentEnd(source, index, limit)
+  }
+}
+
 /**
  * The index just past the escape, string or comment that starts at `index`, or `index` itself when
  * none starts there. A `\` escapes the character after it outside a string as inside one, so the
