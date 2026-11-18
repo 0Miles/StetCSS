@@ -1,0 +1,62 @@
+import { describe, expect, test } from 'vitest'
+import { StetCSS } from '@stet-css/engine'
+import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
+import type { StetCSSManifest } from '@stet-css/schema/manifest'
+import { compileCSSManifest } from '../src'
+
+const defaultManifest = defaultManifestJSON as unknown as StetCSSManifest
+const classModes = '@settings { mode-trigger: class; }\n'
+
+describe.concurrent('selector lists in lowered rules', () => {
+  /**
+   * Guards: a mode or `@variant` wrapper applied to a selector list reached only its first item.
+   * `.x, .y { @variant dark { … } }` lowered to `.dark .x,.y` and `@compose hidden:of(.a,.b)@dark`
+   * to `.dark .a .card,.b .card`, so the second item matched in every mode. Each item takes the
+   * wrapper, and an escaped comma (`.a\,b`) is not a list separator.
+   *
+   * Reverse check in `src/lower-css-directives.ts`: `combineSelectorWrapper` replacing `&` in the
+   * whole list reddens the native, component and escaped rows; prefixing the mode selector to the
+   * whole list in `getComposedUtilitySelector` reddens the two `@compose` rows; dropping the escape
+   * skip in `splitSelectorList` (`src/utils/selectors.ts`) reddens only the escaped row.
+   */
+  test.each([
+    ['a native rule list under @variant', '.x, .y { @variant dark { color: red; } }', '.dark .x,.dark .y{color:red}'],
+    ['an escaped comma in a class', '.a\\,b, .y { @variant dark { color: red; } }', '.dark .a\\,b,.dark .y{color:red}'],
+    ['@compose of an :of() list in a mode', '.card { @compose hidden:of(.a,.b)@dark; }', '.dark .a .card,.dark .b .card{display:none}'],
+    ['@compose of a top-level list in a mode', '.card { @compose hidden>li,+li@dark; }', '.dark .card>li,.dark .card+li{display:none}']
+  ])('%s', (_, source, expected) => {
+    const { css } = compileCSSManifest(classModes + source, { baseManifest: defaultManifest })
+    expect(css.trim()).toBe(expected)
+  })
+
+  test('a component rule list under @variant', () => {
+    const { manifest } = compileCSSManifest(classModes + '@components { card { &>li, &+li { @variant dark { color: red; } } } }', { baseManifest: defaultManifest })
+    const css = StetCSS.create({ manifest })
+    css.ensureClassRules('card')
+    expect(css.text).toBe('@layer components{.dark .card>li,.dark .card+li{color:red}}')
+  })
+
+  /**
+   * Guards: a `:` selector alias whose selector is a list was pasted into the larger selector as
+   * text, so `.card:pair` with `:pair` = `>li,+li` lowered to `.card>li,+li`, leaving `+li`
+   * unscoped. The selector item expands once per alias item; other items stay as written.
+   *
+   * Reverse check: pasting the alias text without splitting it in `resolveSelectorAliases`
+   * reddens only this test.
+   */
+  test('a selector alias that is a list expands the item it sits in', () => {
+    const baseManifest = {
+      ...defaultManifest,
+      selectors: {
+        ...defaultManifest.selectors,
+        ':pair': [
+          { type: 'combinator', value: '>' }, { value: 'li' },
+          { type: 'separator', value: ',' },
+          { type: 'combinator', value: '+' }, { value: 'li' }
+        ]
+      }
+    } as StetCSSManifest
+    const { css } = compileCSSManifest('.card { @compose block; &:pair, .z { color: red; } }', { baseManifest })
+    expect(css.trim()).toBe('.card{display:block}.card>li,.card+li,.card .z{color:red}')
+  })
+})
