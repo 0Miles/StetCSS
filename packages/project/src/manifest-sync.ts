@@ -16,6 +16,7 @@ import {
   type LoadProjectManifestOptions,
   type LoadProjectManifestResult
 } from './options'
+import { loadCachedProjectManifest } from './manifest-cache'
 import { findCSSManifestEntryFilesSync } from './entries'
 
 const require = createRequire(import.meta.url)
@@ -53,10 +54,11 @@ export function loadManifestJSONSync(path: string, options: LoadManifestOptions 
 
 export function loadProjectManifestSync(projectDir = process.cwd(), options: LoadProjectManifestOptions = {}): LoadProjectManifestResult {
   const entries = options.entries ?? findCSSManifestEntryFilesSync(projectDir)
-  return compileProjectManifest(entries, {
-    ...withDefaultManifest(options),
+  const manifestOptions = withDefaultManifest(options)
+  return loadCachedProjectManifest(projectDir, entries, manifestOptions, () => compileProjectManifest(entries, {
+    ...manifestOptions,
     root: projectDir
-  })
+  }))
 }
 
 export function loadProjectManifestJSONSync(projectDir = process.cwd(), options: LoadProjectManifestOptions = {}) {
