@@ -97,28 +97,74 @@ function joinsCompounds(node: SelectorNode | undefined) {
 }
 
 /**
+ * The start of a CSS identifier. Selector names hold only `[-a-zA-Z0-9]`, so a name that starts
+ * with a digit or `-digit` (`.3s`, `1s`, `-1a`), or is a bare `-`, is not one.
+ */
+const SELECTOR_IDENTIFIER = /^(?:-?[a-zA-Z]|--)/
+
+/**
+ * Whether a selector node is a class, id or type selector whose name is not a CSS identifier. A
+ * type selector after a literal `_` (BEM `__`) continues the name before it (`block__1`), so it
+ * starts no name of its own.
+ */
+function hasInvalidName(node: SelectorNode, previous: SelectorNode | undefined) {
+  if (!node.value) return false
+  if (node.type === undefined) {
+    if ('children' in node || continuesName(previous)) return false
+  } else if (node.type !== 'class' && node.type !== 'id') {
+    return false
+  }
+  return !SELECTOR_IDENTIFIER.test(node.value)
+}
+
+/** A literal `_`, which joins nothing: `__` keeps both as name characters (BEM). */
+function continuesName(node: SelectorNode | undefined) {
+  return node?.type === 'combinator' && node.value === '_'
+}
+
+/**
  * Whether raw selector nodes glued to a class extend it into a selector list. Text scanners read
- * code such as `hidden.length,` or `x.block*2` as classes: a selector-list item cannot be empty
- * (an empty one emitted the bare class), and the universal selector cannot follow the class inside
- * its compound. `ends` is false when a `:` variant follows the nodes. Inside `:of()` every item
- * must be non-empty, since each item scopes the class on its own and an empty one leaves the bare
- * class (`:of(,.a)`); other pseudo-class functions are left to the browser. Combinators are checked on the composed
- * template by `hasDanglingCombinator`.
+ * code such as `hidden.length,` or `x.block*2` as classes, and `_` makes a value such as
+ * `transition:all_.3s` a selector: a selector-list item cannot be empty (an empty one emitted the
+ * bare class), every class, id and type selector name must be a CSS identifier (`.3s` is not),
+ * and a universal or type selector cannot follow the class inside its compound (`hidden.a,div`
+ * emitted the class `.hidden\.a\,divdiv`). `ends` is false when a `:` variant follows the nodes.
+ * Inside `:of()` each item scopes the class on its own, written before it, so every item needs a
+ * compound before any `>`, `+` or `~` (`:of(,.a)`, `:of(_)` left the bare class; `:of(>)` started
+ * the rule with `>`), and `:of` needs a selector. Other pseudo-class functions are left to the
+ * browser. Combinators with nothing after them are checked on the composed template by
+ * `hasDanglingCombinator`.
  */
 function isSelectorSuffix(nodes: SelectorNode[], ends: boolean, ofList = false): boolean {
+  let itemHasCompound = false
   for (let index = 0; index < nodes.length; index++) {
     const node = nodes[index]
+    const previous = nodes[index - 1]
+    if (hasInvalidName(node, previous)) return false
     if (node.type === 'separator') {
+      if (ofList) {
+        if (!itemHasCompound) return false
+        itemHasCompound = false
+        continue
+      }
       const following = nodes[index + 1]
       if (following ? following.type === 'separator' : ends) return false
-      if (ofList && index === 0) return false
-    } else if (node.type === 'universal') {
-      if (!ofList && !joinsCompounds(nodes[index - 1])) return false
-    } else if ('children' in node && node.value === 'of' && node.children?.length) {
-      if (!isSelectorSuffix(node.children, true, true)) return false
+      continue
+    }
+    if (node.type === 'combinator') {
+      if (ofList && !itemHasCompound && node.value !== ' ') return false
+      continue
+    }
+    itemHasCompound = true
+    if (node.type === 'universal') {
+      if (!ofList && !joinsCompounds(previous)) return false
+    } else if (node.type === undefined && node.value) {
+      if (!ofList && !joinsCompounds(previous) && !continuesName(previous)) return false
+    } else if (node.value === 'of' && (node.type === 'pseudo-class' || node.type === 'pseudo-element')) {
+      if (!node.children?.length || !isSelectorSuffix(node.children, true, true)) return false
     }
   }
-  return true
+  return !ofList || itemHasCompound
 }
 
 /** Functions whose arguments may hold empty items: `var(--x,)`, `env(a,)`, unquoted `url(a,)`. */
