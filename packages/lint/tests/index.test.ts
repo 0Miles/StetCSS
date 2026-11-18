@@ -549,6 +549,30 @@ describe('source content linting', () => {
       includeDirectiveFixes: true
     })).toBe('.btn { contain: content; }')
   })
+
+  /**
+   * Fault (#197): the source path read cva variant names under `compoundVariants` and
+   * `defaultVariants` as class lists, so `stetcss lint --fix` and ESLint's MDX path rewrote
+   * `'primary danger'` to `'danger primary'`, changing which variant applies. Covers the oxc scan
+   * (`.ts`) and the regex scan (`.mdx`).
+   */
+  test.each([
+    ['/project/button.ts', ''],
+    ['/project/content.mdx', '<div className={button} />\n\n']
+  ])('leaves ignored cva keys in %s alone', (filePath, prefix) => {
+    const content = prefix + [
+      "export const button = cva('inline-flex', {",
+      "  compoundVariants: [{ intent: 'primary danger', class: 'fg:white bg:black' }],",
+      "  defaultVariants: { intent: 'primary danger' }",
+      '})'
+    ].join('\n')
+    const rules = { 'sort-classes': true, 'no-invalid-classes': true }
+    expect(lintStetCSSContent({ content, filePath, css, rules, ruleOptions: { 'no-invalid-classes': { disallowUnknownClass: true } } }).diagnostics).toEqual([])
+    expect(fixStetCSSContent({ content, filePath, css, rules })).toBe(content)
+    expect(fixStetCSSContent({ content, filePath, css, rules, ignoredKeys: [] })).toBe(content
+      .replace("class: 'fg:white bg:black'", "class: 'bg:black fg:white'")
+      .replaceAll("intent: 'primary danger'", "intent: 'danger primary'"))
+  })
 })
 
 describe('class conflicts', () => {
