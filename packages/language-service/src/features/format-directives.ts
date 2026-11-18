@@ -4,9 +4,7 @@ import {
 } from '@stet-css/language'
 import type { Range, TextEdit } from 'vscode-languageserver-protocol'
 import type { TextDocument } from 'vscode-languageserver-textdocument'
-import { collectSFCStyleBlocks, CSS_STYLE_LANGUAGE_IDS } from '../utils/sfc-style-blocks'
-
-const SFC_FORMAT_LANGUAGE_IDS = new Set(['vue', 'svelte', 'astro'])
+import { collectSFCStyleBlocks, CSS_STYLE_LANGUAGE_IDS, SFC_LANGUAGE_IDS } from '../utils/sfc-style-blocks'
 
 function toOffsetRange(document: TextDocument, range?: Range) {
   if (!range) return
@@ -65,7 +63,7 @@ export default function formatDirectives(document: TextDocument, range?: Range):
   if (CSS_STYLE_LANGUAGE_IDS.has(document.languageId)) {
     return collectCSSDocumentFormatEdits(document, range)
   }
-  if (SFC_FORMAT_LANGUAGE_IDS.has(document.languageId)) {
+  if (SFC_LANGUAGE_IDS.has(document.languageId)) {
     return collectSFCFormatEdits(document, range)
   }
 }
