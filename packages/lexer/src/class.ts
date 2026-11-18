@@ -146,6 +146,51 @@ export function splitASCIIWhitespace(value: string): string[] {
   return value.split(ASCII_WHITESPACE_RUN).filter(Boolean)
 }
 
+/** Which ends of a static text part touch a runtime expression, as `{color}` does in `bg:{color}-50`. */
+export interface StetCSSExpressionNeighbours {
+  before?: boolean
+  after?: boolean
+}
+
+/**
+ * The `[start, end)` part of `text`, a static part of a class list, that holds only whole classes.
+ * Text touching an expression with no ASCII whitespace between them is a fragment of a class that
+ * only exists at runtime, so it is left out on that side.
+ */
+export function getStetCSSWholeClassRange(text: string, neighbours: StetCSSExpressionNeighbours = {}): [number, number] {
+  let start = 0
+  let end = text.length
+  if (neighbours.before) {
+    while (start < end && !isASCIIWhitespace(text[start])) start++
+  }
+  if (neighbours.after) {
+    while (end > start && !isASCIIWhitespace(text[end - 1])) end--
+  }
+  return [start, end]
+}
+
+/**
+ * Neighbours of each expression of a template literal, from the cooked text of its quasis: an
+ * expression's string joins the template text beside it, and an empty quasi passes the touch on to
+ * the next expression or to the template's own `neighbours`.
+ */
+export function getStetCSSTemplateExpressionNeighbours(
+  cookedQuasis: readonly (string | null | undefined)[],
+  neighbours: StetCSSExpressionNeighbours = {}
+): StetCSSExpressionNeighbours[] {
+  const expressionCount = cookedQuasis.length - 1
+  const neighbourList: StetCSSExpressionNeighbours[] = []
+  for (let index = 0; index < expressionCount; index++) {
+    const before = cookedQuasis[index]
+    const after = cookedQuasis[index + 1]
+    neighbourList.push({
+      before: before === '' ? index > 0 || !!neighbours.before : !isASCIIWhitespace(before?.at(-1)),
+      after: after === '' ? index < expressionCount - 1 || !!neighbours.after : !isASCIIWhitespace(after?.[0])
+    })
+  }
+  return neighbourList
+}
+
 export function unescapeStetCSSClassListToken(raw: string, unescape: StetCSSClassListParseOptions['unescape']) {
   if (!unescape) return raw
   const characters = Array.isArray(unescape) ? unescape : [unescape]

@@ -3,7 +3,14 @@ import type { Position } from 'vscode-languageserver-protocol'
 import findMatchingPairs from './find-matching-brackets'
 import escapeRegexp from 'lodash.escaperegexp'
 import { visitorKeys } from 'oxc-parser'
-import { collectCSSDirectiveRanges, isASCIIWhitespace, parseStetCSSClassList, type StetCSSScriptStringQuote } from '@stet-css/lexer'
+import {
+  collectCSSDirectiveRanges,
+  getStetCSSTemplateExpressionNeighbours,
+  getStetCSSWholeClassRange,
+  parseStetCSSClassList,
+  type StetCSSExpressionNeighbours,
+  type StetCSSScriptStringQuote
+} from '@stet-css/lexer'
 import { parseOxcOnSourceStack } from './oxc-stack'
 
 export interface ClassPosition {
@@ -338,12 +345,6 @@ function collectClassPositions(
   return classPositions
 }
 
-/** Which ends of a static text part touch a runtime expression. */
-interface ExpressionNeighbours {
-  before?: boolean
-  after?: boolean
-}
-
 /**
  * Class positions of `text`, a static part of a class list whose ends may touch runtime
  * expressions. Classes touching one are fragments, each its own context; the whole classes
@@ -355,17 +356,10 @@ function collectSegmentClassPositions(
   escapeCharacter: string,
   includeEmpty: boolean,
   accept: ClassPositionAccept | undefined,
-  neighbours: ExpressionNeighbours = {},
+  neighbours: StetCSSExpressionNeighbours = {},
   scriptString?: StetCSSScriptStringQuote
 ) {
-  let wholeStart = 0
-  let wholeEnd = text.length
-  if (neighbours.before) {
-    while (wholeStart < wholeEnd && !isASCIIWhitespace(text[wholeStart])) wholeStart++
-  }
-  if (neighbours.after) {
-    while (wholeEnd > wholeStart && !isASCIIWhitespace(text[wholeEnd - 1])) wholeEnd--
-  }
+  const [wholeStart, wholeEnd] = getStetCSSWholeClassRange(text, neighbours)
   const collect = (from: number, to: number, fragment: boolean) => {
     // An empty text still yields its empty class for completion; empty parts of a longer one do not.
     if (from === to && (fragment || text.length)) return []
@@ -605,7 +599,7 @@ function collectOxcStringLiteral(
   includeEmpty: boolean,
   accept?: ClassPositionAccept,
   script = true,
-  neighbours?: ExpressionNeighbours
+  neighbours?: StetCSSExpressionNeighbours
 ) {
   if (typeof node.value !== 'string') return []
   const range = getNodeRange(node)
@@ -626,21 +620,12 @@ function collectOxcStringLiteral(
   )
 }
 
-/**
- * Whether the text beside a template expression touches it: `undefined` for an empty quasi, which
- * passes the touch on to the next expression or the template's own neighbour.
- */
-function touchesExpression(text: string | null | undefined, end: 'start' | 'end') {
-  if (text === '') return
-  return !isASCIIWhitespace(end === 'start' ? text?.[0] : text?.at(-1))
-}
-
 function collectOxcTemplateLiteral(
   source: string,
   node: OxcNode,
   includeEmpty: boolean,
   accept?: ClassPositionAccept,
-  neighbours: ExpressionNeighbours = {}
+  neighbours: StetCSSExpressionNeighbours = {}
 ) {
   const classPositions: ClassPosition[] = []
   const quasis = node.quasis ?? []
@@ -665,16 +650,6 @@ function collectOxcTemplateLiteral(
   return classPositions
 }
 
-/** Neighbours of each expression in a template literal, from the quasis beside it. */
-function getTemplateExpressionNeighbours(node: OxcNode, neighbours: ExpressionNeighbours = {}): ExpressionNeighbours[] {
-  const quasis = node.quasis ?? []
-  const expressions = node.expressions ?? []
-  return expressions.map((_, index) => ({
-    before: touchesExpression(quasis[index]?.value?.cooked, 'end') ?? (index > 0 || !!neighbours.before),
-    after: touchesExpression(quasis[index + 1]?.value?.cooked, 'start') ?? (index < expressions.length - 1 || !!neighbours.after)
-  }))
-}
-
 function collectOxcClassStrings(
   source: string,
   node: unknown,
@@ -688,7 +663,7 @@ function collectOxcClassStrings(
    * `` `x${on ? 'a b' : ''}` ``. Only branches that yield the string itself carry them; anything
    * else in such a place is skipped.
    */
-  const visit = (eachNode: unknown, neighbours?: ExpressionNeighbours) => {
+  const visit = (eachNode: unknown, neighbours?: StetCSSExpressionNeighbours) => {
     if (!isOxcNode(eachNode)) return
     if (eachNode.type === 'Property' && matchesAny(getStaticPropertyKey(eachNode), ignoredKeyMatchers)) return
     if (eachNode.type === 'Literal') {
@@ -697,7 +672,10 @@ function collectOxcClassStrings(
     }
     if (eachNode.type === 'TemplateLiteral') {
       classPositions.push(...collectOxcTemplateLiteral(source, eachNode, includeEmpty, accept, neighbours))
-      const expressionNeighbours = getTemplateExpressionNeighbours(eachNode, neighbours)
+      const expressionNeighbours = getStetCSSTemplateExpressionNeighbours(
+        (eachNode.quasis ?? []).map((quasi) => quasi.value?.cooked),
+        neighbours
+      )
       eachNode.expressions?.forEach((expression, index) => visit(expression, expressionNeighbours[index]))
       return
     }
