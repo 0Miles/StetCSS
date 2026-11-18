@@ -8,7 +8,7 @@ import { stringifyStetCSSManifestJSON } from '@stet-css/schema/manifest-json'
 import type { CSSDirectiveReference } from '@stet-css/schema/css-directives'
 import { collectCSSDirectiveRanges } from '@stet-css/lexer'
 import { createCSSImportGraphReader, type CSSImportGraphReader } from './css-import-graph-reader'
-import { createFileStampCache, type FileStampCache } from './file-stamps'
+import { createFileStampCache } from './file-stamps'
 import { applyCSSImportConditions, hoistCSSImportStatements } from './css-import-conditions'
 import { createStetCSSManifest } from './stet-css-manifest'
 import lowerCSSDirectives from './lower-css-directives'
@@ -407,8 +407,11 @@ const MAX_CSS_REFERENCE_EXPANSIONS = 256
 /** One `@reference` a compile expands: the referenced stylesheet's import graph and its own references. */
 interface CSSReferenceExpansion {
   file: string
-  /** `Date.now()` before the graph was read, so a compiled reference can tell a file changed while it compiled. */
-  readAt: number
+  /**
+   * `Date.now()` before the compile's import graph reader read its first file. The reader keeps the
+   * text it read, so a reference compile may see a file as it was then (#202).
+   */
+  startedAt: number
   graph: ResolvedCSSImportGraph
   references: CSSReferenceExpansion[]
 }
@@ -417,12 +420,14 @@ interface CSSReferenceExpansion {
  * Resolves the whole reference tree of one compile before any referenced stylesheet is compiled,
  * so an oversized tree fails after reading at most 256 import graphs. Every graph reads through the
  * compile's `readCSSImport`, so referenced stylesheets' imports count toward the compile's import
- * limits. `stack` lists the stylesheets being compiled around `references`.
+ * limits. `stack` lists the stylesheets being compiled around `references`; `startedAt` is
+ * `Date.now()` taken before `readCSSImport` read its first file.
  */
 function resolveCSSReferenceTree(
   references: CSSDirectiveReference[] | undefined,
   readCSSImport: CSSImportGraphReader,
   stack: string[],
+  startedAt: number,
   options: CompileCSSManifestSourceOptions
 ): CSSReferenceExpansion[] {
   let expansions = 0
@@ -442,11 +447,10 @@ function resolveCSSReferenceTree(
       if (expansions > MAX_CSS_REFERENCE_EXPANSIONS) {
         throw new Error(`CSS references compile more than ${MAX_CSS_REFERENCE_EXPANSIONS} stylesheets, counting repeated references of the same file: ${chain.join(' -> ')}`)
       }
-      const readAt = Date.now()
       const graph = resolveCSSImportGraphWithReader(file, readCSSImport, { projectDir: options.root })
       return {
         file,
-        readAt,
+        startedAt,
         graph,
         references: expand(graph.references, chain, [...comparableStack, comparableFile])
       }
@@ -465,8 +469,7 @@ interface CSSReferenceContext {
  * Compiled reference contexts by base manifest, then by the referenced files: every CSS module that
  * references the same stylesheet shares one compile of it while none of its files change (#202).
  */
-const cssReferenceContextCaches = new WeakMap<object, FileStampCache<CSSReferenceContext>>()
-const NO_BASE_MANIFEST = {}
+const cssReferenceContextCache = createFileStampCache<CSSReferenceContext>(64)
 
 function getCSSReferenceTreeKey(references: CSSReferenceExpansion[]): unknown[] {
   return references.map((reference) => [reference.file, getCSSReferenceTreeKey(reference.references)])
@@ -481,21 +484,14 @@ function compileCSSReferences(
   options: CompileCSSManifestInternalOptions = {}
 ): CSSReferenceContext {
   if (!references.length || options.diagnostics) return compileCSSReferencesUncached(references, options)
-  const baseManifestKey = options.baseManifest ?? NO_BASE_MANIFEST
-  let cache = cssReferenceContextCaches.get(baseManifestKey)
-  if (!cache) {
-    cache = createFileStampCache()
-    cssReferenceContextCaches.set(baseManifestKey, cache)
-  }
   const key = JSON.stringify([options.root ?? '', getCSSReferenceTreeKey(references)])
-  const cached = cache.get(key)
+  const cached = cssReferenceContextCache.get(key, options.baseManifest)
   if (cached) {
     for (const warning of cached.warnings) options.onWarning?.(warning)
     return cached
   }
-  const startedAt = Math.min(...references.map((reference) => reference.readAt))
   const context = compileCSSReferencesUncached(references, options)
-  cache.set(key, context, context.dependencies, startedAt)
+  cssReferenceContextCache.set(key, context, context.dependencies, references[0].startedAt, options.baseManifest)
   return context
 }
 
@@ -572,7 +568,7 @@ export function createManifestFromCSSResult(
   result: CompileCSSResult,
   options: CompileCSSManifestSourceOptions = {}
 ) {
-  return toCompileCSSManifestResult(result, options, resolveCSSReferenceTree(result.references, createCSSImportGraphReader(), [], options))
+  return toCompileCSSManifestResult(result, options, resolveCSSReferenceTree(result.references, createCSSImportGraphReader(), [], Date.now(), options))
 }
 
 export function compileCSSManifest(source: string, options: CompileCSSManifestSourceOptions = {}): CompileCSSManifestResult {
@@ -586,7 +582,7 @@ export function compileCSSManifest(source: string, options: CompileCSSManifestSo
     ...options,
     ...(fromFile ? { from: fromFile } : {})
   }
-  const references = resolveCSSReferenceTree(result.references, createCSSImportGraphReader(), fromFile ? [fromFile] : [], manifestOptions)
+  const references = resolveCSSReferenceTree(result.references, createCSSImportGraphReader(), fromFile ? [fromFile] : [], Date.now(), manifestOptions)
   return toCompileCSSManifestResult(result, manifestOptions, references)
 }
 
@@ -598,11 +594,12 @@ export function compileCSSManifest(source: string, options: CompileCSSManifestSo
 function compileCSSManifestEntry(file: string, options: CompileCSSManifestOptions) {
   const absoluteFile = isAbsolute(file) ? file : resolve(options.root || '', file)
   const readCSSImport = createCSSImportGraphReader()
+  const startedAt = Date.now()
   const result = compileCSSFileWithReader(absoluteFile, readCSSImport, {
     ...options,
     preserveNativeCSS: options.preserveNativeCSS ?? false
   })
-  const references = resolveCSSReferenceTree(result.references, readCSSImport, [absoluteFile], options)
+  const references = resolveCSSReferenceTree(result.references, readCSSImport, [absoluteFile], startedAt, options)
   return { result, manifestResult: toCompileCSSManifestResult(result, options, references) }
 }
 
