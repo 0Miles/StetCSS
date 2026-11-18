@@ -3,6 +3,14 @@
  * (https://html.spec.whatwg.org/multipage/named-characters.html), which the standard
  * keeps fixed. Entries are `name:codePoints`, code points in hex joined by `.`;
  * every name is written with its terminating `;` in HTML.
+ *
+ * Generated from character-entities@2.0.2, character-entities-legacy@3.0.0 and
+ * character-entities-html4@2.1.0 (MIT, (c) Titus Wormer). The JSX names are the html4 set plus
+ * `apos`, which is the `xhtml` table of @babel/parser (MIT); see `JSX_NAMED_REFERENCE_NAMES`.
+ * To regenerate, install those three packages in a scratch directory and run this there; it
+ * prints the three strings below, one per line, unwrapped:
+ *
+ *   node --input-type=module -e "const[{characterEntities:a},{characterEntitiesLegacy:l},{characterEntitiesHtml4:h}]=await Promise.all(['character-entities','character-entities-legacy','character-entities-html4'].map(n=>import(n)));console.log(Object.keys(a).sort().map(n=>n+':'+[...a[n]].map(c=>c.codePointAt(0).toString(16)).join('.')).join(','));console.log([...l].sort().join(' '));console.log([...Object.keys(h),'apos'].sort().join(' '))"
  */
 export const HTML_NAMED_REFERENCES =
   'AElig:c6,AMP:26,Aacute:c1,Abreve:102,Acirc:c2,Acy:410,Afr:1d504,Agrave:c0,Alpha:391,Amacr:100,' +
