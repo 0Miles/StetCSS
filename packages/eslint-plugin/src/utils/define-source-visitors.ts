@@ -8,12 +8,14 @@ import {
 import type { StetCSS } from '@stet-css/core'
 import type { RuleContext, RuleFixer, RuleListener } from '@typescript-eslint/utils/ts-eslint'
 import { messageIdByCode, stringifyLintDiagnosticMessageData } from './report-lint-diagnostics'
+import type { Settings } from '../settings'
 
 type FixRange = [number, number]
 type SourceRuleOptions = StetCSSLintContentRuleOptions[keyof StetCSSLintContentRuleOptions]
 
 interface DefineSourceVisitorsOptions {
   context: RuleContext<any, any[]>
+  settings: Settings
   css: StetCSS
   ruleId: StetCSSLintRuleId
   ruleOptions?: SourceRuleOptions
@@ -77,6 +79,7 @@ function reportSourceDiagnostic(
 
 export default function defineSourceVisitors({
   context,
+  settings,
   css,
   ruleId,
   ruleOptions
@@ -88,7 +91,8 @@ export default function defineSourceVisitors({
         filePath: getFilename(context),
         css,
         rules: createSingleRuleSet(ruleId),
-        ruleOptions: createRuleOptions(ruleId, ruleOptions)
+        ruleOptions: createRuleOptions(ruleId, ruleOptions),
+        ignoredKeys: settings.ignoredKeys
       })
       for (const diagnostic of result.diagnostics) {
         if (diagnostic.ruleId !== ruleId) continue

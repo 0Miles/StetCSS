@@ -144,6 +144,46 @@ jsxTester.run('#197 sort-classes skips ignoredKeys', sortClasses, {
   ]
 })
 
+const mdx = {
+  filename: 'test.mdx',
+  languageOptions: { parser: await import('eslint-mdx') }
+}
+
+/**
+ * Fault: `.mdx` files lint through `@stet-css/lint`'s source path, which never received
+ * `ignoredKeys`, so the same cva variant names were sorted there. The configured list, not just the
+ * default, must reach it.
+ *
+ * Reverse check: dropping `ignoredKeys: settings.ignoredKeys` in define-source-visitors turns the
+ * two configured-key cases red; the default-key case stays green because @stet-css/lint defaults
+ * to the same keys.
+ */
+jsxTester.run('#197 sort-classes skips ignoredKeys in MDX', sortClasses, {
+  valid: [
+    {
+      name: 'cva variant names under the default ignored keys',
+      code: `export const button = cva('inline-flex', { compoundVariants: [{ intent: 'primary danger' }], defaultVariants: { intent: 'primary danger' } })`,
+      ...mdx
+    },
+    {
+      name: 'a configured ignored key',
+      code: `export const button = cva('inline-flex', { variantNames: { intent: 'fg:white m:0.5rem' } })`,
+      settings: { '@stet-css': { ignoredKeys: ['variantNames'] } },
+      ...mdx
+    }
+  ],
+  invalid: [
+    {
+      name: 'a key outside the configured ignoredKeys is still a class list',
+      code: `export const button = cva('inline-flex', { defaultVariants: { intent: 'fg:white m:0.5rem' } })`,
+      output: `export const button = cva('inline-flex', { defaultVariants: { intent: 'm:0.5rem fg:white' } })`,
+      settings: { '@stet-css': { ignoredKeys: ['variantNames'] } },
+      errors: [{ messageId: 'invalidClassOrder' }],
+      ...mdx
+    }
+  ]
+})
+
 jsxTester.run('#197 no-invalid-classes skips ignoredKeys', noInvalidClasses, {
   valid: [
     { name: 'cva variant names under the default ignored keys', code: cvaCode, options: [{ disallowUnknownClass: true }] }
