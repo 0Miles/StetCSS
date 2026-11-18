@@ -18,6 +18,7 @@ import type { StetCSSEmittedGlobals } from '@stet-css/core'
 import type { createCSSWithNativeDeclarations } from '@stet-css/validator/native-declaration'
 import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import { renderCompiledManifestCSS, type RenderCompiledManifestCSSResult } from './render'
+import { globalizeVueScopedCSS, isScopedVueStyleRequest } from './vue-scoped-style'
 import {
   findCSSImportStatements,
   collectCSSDirectiveRanges,
@@ -776,12 +777,17 @@ export async function transformLocalStyleCSS(
     includeGeneratedCSS: false,
     emittedGlobals
   })
+  // The generated rules (referenced theme variables and keyframes) are global; Vue's scoped
+  // style compiler runs next and would bind their selectors to the component (#189).
+  const generatedCSS = renderedCSS.generatedCSS && isScopedVueStyleRequest(id)
+    ? globalizeVueScopedCSS(renderedCSS.generatedCSS)
+    : renderedCSS.generatedCSS
   const transformedResult = {
     ...result,
     dependencies: finalizedResult.dependencies,
     warnings: finalizedResult.warnings,
-    css: renderedCSS.css,
-    generatedCSS: renderedCSS.generatedCSS
+    css: [renderedCSS.nativeCSS, generatedCSS].filter(Boolean).join('\n\n'),
+    generatedCSS
   }
   return {
     code: transformedResult.css || transformedResult.nativeCSS || '',
