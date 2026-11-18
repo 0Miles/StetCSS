@@ -4,26 +4,18 @@ import {
   splitStetCSSTopLevel
 } from '@stet-css/lexer'
 
-/**
- * Whether the request is a Vue SFC `<style scoped>` block: Vite's `scoped=<hash>` and
- * vue-loader's `scoped=true` both carry the `scoped` key beside `vue&type=style`.
- */
-export function isScopedVueStyleRequest(id: string) {
-  const queryStart = id.indexOf('?')
-  if (queryStart === -1) return false
-  const params = new URLSearchParams(id.slice(queryStart + 1))
-  return params.has('vue') && params.get('type') === 'style' && params.has('scoped')
-}
-
 const KEYFRAMES_AT_RULE_RE = /^@(?:-[a-z]+-)?keyframes\b/i
+const KEYFRAMES_NAME_RE = /(@(?:-[a-z]+-)?keyframes\s+)(-?[_a-zA-Z][-\w]*)/g
+const CSS_IDENT_RE = /(?<![-\w])-?[_a-zA-Z][-\w]*/g
+const CUSTOM_PROPERTY_VALUE_RE = /(--[-\w]+\s*:)([^;{}]*)/g
+const ANIMATION_VALUE_RE = /((?<![-\w])(?:-[a-z]+-)?animation(?:-name)?\s*:)([^;{}]*)/g
 
 /**
  * Wraps every selector of the CSS's style rules in `:global()`, so Vue's scoped style
- * compiler, which runs after this transform, keeps them as written instead of appending
- * the component attribute. It descends into conditional at-rule blocks; keyframe selectors
- * and declarations are left alone.
+ * compiler keeps them as written instead of appending the component attribute. It descends
+ * into conditional at-rule blocks; keyframe selectors and declarations are left alone.
  */
-export function globalizeVueScopedCSS(css: string) {
+function globalizeSelectors(css: string): string {
   let output = ''
   let index = 0
   while (index < css.length) {
@@ -43,7 +35,7 @@ export function globalizeVueScopedCSS(css: string) {
     const body = css.slice(open + 1, close)
     const trimmedPrelude = prelude.trim()
     if (trimmedPrelude.startsWith('@')) {
-      output += prelude + '{' + (KEYFRAMES_AT_RULE_RE.test(trimmedPrelude) ? body : globalizeVueScopedCSS(body)) + '}'
+      output += prelude + '{' + (KEYFRAMES_AT_RULE_RE.test(trimmedPrelude) ? body : globalizeSelectors(body)) + '}'
     } else {
       const leading = prelude.slice(0, prelude.length - prelude.trimStart().length)
       const trailing = prelude.slice(prelude.trimEnd().length)
@@ -54,4 +46,35 @@ export function globalizeVueScopedCSS(css: string) {
     index = close + 1
   }
   return output
+}
+
+/**
+ * Prepares a scoped Vue style block's generated CSS for Vue's scoped style compiler, which
+ * runs after this transform:
+ * - generated rules (referenced theme variables) are wrapped in `:global()`, since Vue would
+ *   otherwise bind `:root` to the component as `[data-v-<id>]:root`;
+ * - generated keyframes are renamed `<name>-<id>`, the name Vue gives a scoped block's
+ *   keyframes and then leaves alone, and the generated variables and native `animation`
+ *   declarations that name them follow. Vue rewrites only `animation` declarations, so a
+ *   global variable such as `--animate-fade: fade 1s` would otherwise name keyframes Vue
+ *   had renamed. The block's own keyframes are left for Vue to rename.
+ */
+export function scopeVueGeneratedCSS(nativeCSS: string, generatedCSS: string, scopeId: string) {
+  const keyframeNames = new Set(Array.from(generatedCSS.matchAll(KEYFRAMES_NAME_RE), (match) => match[2]))
+  const renameKeyframes = (value: string) => value.replace(
+    CSS_IDENT_RE,
+    (name) => keyframeNames.has(name) ? `${name}-${scopeId}` : name
+  )
+  const renameValue = (_: string, property: string, value: string) => property + renameKeyframes(value)
+  const scopedGeneratedCSS = keyframeNames.size
+    ? generatedCSS
+      .replace(KEYFRAMES_NAME_RE, (_, atRule: string, name: string) => `${atRule}${name}-${scopeId}`)
+      .replace(CUSTOM_PROPERTY_VALUE_RE, renameValue)
+    : generatedCSS
+  return {
+    nativeCSS: keyframeNames.size
+      ? nativeCSS.replace(ANIMATION_VALUE_RE, renameValue)
+      : nativeCSS,
+    generatedCSS: globalizeSelectors(scopedGeneratedCSS)
+  }
 }
