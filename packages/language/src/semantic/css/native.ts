@@ -1,7 +1,7 @@
 import { pushHighlightToken, type HighlightTokenItem } from '../highlight'
 import {
   collectCSSDeclarationRanges,
-  findCSSClosingQuote
+  skipCSSEscapeStringOrComment
 } from '@stet-css/lexer'
 
 type DeclarationPropertyMode = 'none' | 'settings' | 'theme'
@@ -44,17 +44,9 @@ function readStetVariable(source: string, index: number) {
 
 function tokenizeStetCSSValueSyntax(source: string, start: number, end: number, tokens: HighlightTokenItem[]) {
   for (let cursor = start; cursor < end; cursor++) {
-    const char = source[cursor]
-    const next = source[cursor + 1]
-
-    if (char === '/' && next === '*') {
-      const close = source.indexOf('*/', cursor + 2)
-      cursor = close === -1 ? end : close + 1
-      continue
-    }
-
-    if (char === '"' || char === '\'') {
-      cursor = findCSSClosingQuote(source, cursor, char, end)
+    const skipped = skipCSSEscapeStringOrComment(source, cursor, end)
+    if (skipped !== cursor) {
+      cursor = skipped - 1
       continue
     }
 

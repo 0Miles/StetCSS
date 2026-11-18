@@ -127,6 +127,27 @@ test.concurrent('collects browser semantic tokens only for CSS directive class-l
   expect(mapped).not.toContainEqual({ text: '@keyframes', type: 'keyword', modifiers: [] })
 })
 
+/**
+ * Guards #186 in the editor: CSS directive highlighting locates directives with the lexer's
+ * `collectCSSDirectiveRanges`, which let an escaped quote outside a string (`.a\\'b`) open a
+ * string, so the `@safelist` and `@compose` class lists after it lost their tokens.
+ * Reverse check: dropping the `\\` branch of `skipCSSEscapeStringOrComment` in lexer `src`, then
+ * `bun run build`, reds this test.
+ */
+test.concurrent('collects browser semantic tokens for directives after an escaped quote outside a string', () => {
+  const source = ".a\\'b { color: red }\n@safelist 'hidden';\n.x { @compose block; }"
+  const mapped = collectBrowserSemanticTokenItems(source, 'css', { manifest }).map((token) => ({
+    text: tokenText(source, token),
+    type: token.type,
+    modifiers: token.modifiers || []
+  }))
+
+  expect(mapped).toEqual([
+    { text: 'hidden', type: 'enumMember', modifiers: [] },
+    { text: 'block', type: 'enumMember', modifiers: [] }
+  ])
+})
+
 test.concurrent('does not collect browser semantic tokens for managed syntax without class-list spans', () => {
   const source = `
     @custom-variant motion-safe {
