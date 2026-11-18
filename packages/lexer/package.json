@@ -40,6 +40,21 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./character-reference": {
+      "types": "./dist/character-reference.d.ts",
+      "import": "./dist/character-reference.js",
+      "default": "./dist/character-reference.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      ".": [
+        "./dist/index.d.ts"
+      ],
+      "./character-reference": [
+        "./dist/character-reference.d.ts"
+      ]
     }
   },
   "files": [

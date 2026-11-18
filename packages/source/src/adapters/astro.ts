@@ -1,4 +1,4 @@
-import { decodeStetCSSHTMLAttributeValue } from '@stet-css/lexer'
+import { decodeStetCSSHTMLAttributeValue } from '@stet-css/lexer/character-reference'
 import { extractClassCandidates } from '../extract-class-candidates'
 import { extractOxcClasses, extractParsedOxcClasses } from './oxc'
 import type { SourceAdapter, SourceAdapterInput } from './types'
