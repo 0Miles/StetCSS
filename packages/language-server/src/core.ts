@@ -3,7 +3,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument'
 import path from 'node:path'
 import { readFile } from 'node:fs/promises'
 import { pathToFileURL } from 'node:url'
-import CSSLanguageService from '@stet-css/language-service'
+import CSSLanguageService, { collectSFCStyleBlocks, CSS_STYLE_LANGUAGE_IDS } from '@stet-css/language-service'
 import { compileCSSManifest } from '@stet-css/compiler'
 import { cssTreeNativeDeclarationMatcher, generateValidRules } from '@stet-css/validator'
 import { Settings } from './settings'
@@ -96,9 +96,7 @@ const bundledLanguageRuntime: CSSLanguageRuntime = {
   ...buildValidity
 }
 
-const CSS_DIAGNOSTIC_LANGUAGE_IDS = new Set(['css', 'scss', 'less'])
 const SFC_DIAGNOSTIC_LANGUAGE_IDS = new Set(['vue', 'svelte', 'astro'])
-const STYLE_BLOCK_RE = /<style\b([^>]*)>([\s\S]*?)<\/style>/gi
 
 interface CSSDiagnosticSource {
   source: string
@@ -106,31 +104,17 @@ interface CSSDiagnosticSource {
 }
 
 function isCSSDiagnosticDocument(textDocument: TextDocument) {
-  return CSS_DIAGNOSTIC_LANGUAGE_IDS.has(textDocument.languageId)
+  return CSS_STYLE_LANGUAGE_IDS.has(textDocument.languageId)
     || SFC_DIAGNOSTIC_LANGUAGE_IDS.has(textDocument.languageId)
-}
-
-function getSFCStyleLanguage(attributes: string) {
-  const match = /\blang\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s>]+))/i.exec(attributes)
-  return (match?.[1] || match?.[2] || match?.[3] || 'css').toLowerCase()
 }
 
 function getCSSDiagnosticSources(textDocument: TextDocument): CSSDiagnosticSource[] {
   const text = textDocument.getText()
-  if (CSS_DIAGNOSTIC_LANGUAGE_IDS.has(textDocument.languageId)) {
+  if (CSS_STYLE_LANGUAGE_IDS.has(textDocument.languageId)) {
     return [{ source: text, offset: 0 }]
   }
   if (!SFC_DIAGNOSTIC_LANGUAGE_IDS.has(textDocument.languageId)) return []
-  const sources: CSSDiagnosticSource[] = []
-  STYLE_BLOCK_RE.lastIndex = 0
-  for (const match of text.matchAll(STYLE_BLOCK_RE)) {
-    const styleLanguage = getSFCStyleLanguage(match[1])
-    if (!CSS_DIAGNOSTIC_LANGUAGE_IDS.has(styleLanguage)) continue
-    const source = match[2]
-    const offset = (match.index || 0) + match[0].indexOf(source)
-    sources.push({ source, offset })
-  }
-  return sources
+  return collectSFCStyleBlocks(text).map(({ content, start }) => ({ source: content, offset: start }))
 }
 
 function isCSSDirectiveError(error: unknown): error is CSSDirectiveError {
