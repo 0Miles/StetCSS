@@ -13,18 +13,45 @@ function add(classes: Set<string>, classNames: string[]) {
   }
 }
 
-// Whitespace, and a BOM, the Astro compiler skips before the opening fence.
-const LEADING_SPACE = /^[\uFEFF\s]*/
-const FENCE_SPACE = /^[ \t]*/
+// The whitespace the Astro compiler skips before the opening fence.
+const LEADING_SPACE = /[ \t\r\n\f]*/y
 // TypeScript's "A 'return' statement can only be used within a function body."
 const RETURN_OUTSIDE_FUNCTION = 'TS(1108)'
+// A `/` after one of these words starts a regular expression, not a division.
+const REGEX_KEYWORD = /(?:^|[^\p{ID_Continue}$])(?:await|case|delete|do|else|in|instanceof|new|of|return|throw|typeof|void|yield)$/u
+const VALUE_END = /[\p{ID_Continue}$)\]'"`]$/u
 
 /**
- * The index of the last character of the string, template literal or comment
- * that starts at `cursor`, or `cursor` when none does. A quoted string stops
- * before a line break, so the fence on the next line still closes the script.
+ * The index right after the opening fence, or `undefined` when the component
+ * has no frontmatter. Like the Astro compiler, the fence may follow a BOM,
+ * whitespace and HTML comments, and opens on its first three dashes.
  */
-function skipLiteral(content: string, cursor: number) {
+function getFrontmatterStart(content: string) {
+  let cursor = content.startsWith('\uFEFF') ? 1 : 0
+  for (;;) {
+    LEADING_SPACE.lastIndex = cursor
+    cursor += LEADING_SPACE.exec(content)![0].length
+    if (content.startsWith('---', cursor)) return cursor + 3
+    if (!content.startsWith('<!--', cursor)) return
+    const commentEnd = content.indexOf('-->', cursor + 4)
+    if (commentEnd === -1) return
+    cursor = commentEnd + 3
+  }
+}
+
+/** Whether a `/` after `before`, the script on its line so far, starts a regular expression. */
+function startsRegex(before: string) {
+  const code = before.trimEnd()
+  return !VALUE_END.test(code) || REGEX_KEYWORD.test(code)
+}
+
+/**
+ * The index of the last character of the string, template literal, comment or
+ * regular expression that starts at `cursor`, or `cursor` when none does. A
+ * quoted string or a regular expression stops before a line break, as the
+ * Astro compiler reads them.
+ */
+function skipLiteral(content: string, cursor: number, lineStart: number) {
   const char = content[cursor]
   let end = cursor + 1
   if (char === '\'' || char === '"') {
@@ -37,40 +64,53 @@ function skipLiteral(content: string, cursor: number) {
     while (end < content.length && content[end] !== '`') end += content[end] === '\\' ? 2 : 1
     return end
   }
-  if (char === '/' && content[end] === '/') {
+  if (char !== '/') return cursor
+  if (content[end] === '/') {
     const lineEnd = content.indexOf('\n', end)
     return (lineEnd === -1 ? content.length : lineEnd) - 1
   }
-  if (char === '/' && content[end] === '*') {
+  if (content[end] === '*') {
     const commentEnd = content.indexOf('*/', end + 1)
     return commentEnd === -1 ? content.length : commentEnd + 1
   }
-  return cursor
+  if (!startsRegex(content.slice(lineStart, cursor))) return cursor
+  let inClass = false
+  while (end < content.length && content[end] !== '\n') {
+    const regexChar = content[end]
+    if (regexChar === '\\') {
+      end += 2
+      continue
+    }
+    if (regexChar === '/' && !inClass) return end
+    if (regexChar === '[') inClass = true
+    else if (regexChar === ']') inClass = false
+    end++
+  }
+  return end - 1
 }
 
 /**
  * Splits a component into its frontmatter script and its markup as the Astro
- * compiler does: the opening fence may follow a BOM or blank lines, either
- * fence may carry trailing spaces, and the script closes at the first `---`
- * that starts a line outside a string, template literal or comment, which may
- * end the file or run into markup on the same line.
+ * compiler does: the opening fence may follow a BOM, whitespace and HTML
+ * comments, and the script closes at the first `---` outside a string,
+ * template literal, comment or regular expression, wherever it stands on its
+ * line. Without a closing fence the rest of the file is the script.
  */
 function extractFrontmatter(content: string) {
-  const none = { frontmatter: '', markup: content }
-  const open = LEADING_SPACE.exec(content)![0].length
-  if (!content.startsWith('---', open)) return none
-  const start = open + 3 + FENCE_SPACE.exec(content.slice(open + 3))![0].length
-  if (start < content.length && content[start] !== '\n' && !content.startsWith('\r\n', start)) return none
+  const start = getFrontmatterStart(content)
+  if (start === undefined) return { frontmatter: '', markup: content }
+  let lineStart = start
   for (let cursor = start; cursor < content.length; cursor++) {
-    if (content[cursor] === '\n' && content.startsWith('---', cursor + 1)) {
+    if (content.startsWith('---', cursor)) {
       return {
-        frontmatter: content.slice(start, cursor + 1),
-        markup: content.slice(cursor + 4)
+        frontmatter: content.slice(start, cursor),
+        markup: content.slice(cursor + 3)
       }
     }
-    cursor = skipLiteral(content, cursor)
+    if (content[cursor] === '\n') lineStart = cursor + 1
+    else cursor = skipLiteral(content, cursor, lineStart)
   }
-  return none
+  return { frontmatter: content.slice(start), markup: '' }
 }
 
 /**
