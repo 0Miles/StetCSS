@@ -1,6 +1,16 @@
 import { expect, test } from 'vitest'
 import { decodeStetCSSScriptString, parseStetCSSClassList, type StetCSSScriptStringQuote } from '../src'
 
+/**
+ * Lint and the ESLint plugin check classes by their decoded value and rebuild fixes from each
+ * item's source spelling (#196). A wrong decode checks the wrong class; a wrong source range
+ * corrupts the literal on autofix. Reverse checks (each turned only its own test red):
+ * - writing a template's CRLF through undecoded → the cooking and mapping tests;
+ * - accepting an unescaped closing quote → the rejection test;
+ * - letting a class absorb a following line continuation → the mapping test;
+ * - dropping the fallback for undecodable bodies → the fallback test.
+ */
+
 function cook(body: string, quote: StetCSSScriptStringQuote) {
   return new Function(`return ${quote}${body}${quote}`)() as string
 }
