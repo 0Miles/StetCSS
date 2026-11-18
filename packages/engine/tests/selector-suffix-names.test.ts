@@ -52,12 +52,14 @@ describe.concurrent('names in a selector suffix', () => {
   /**
    * Guards: the checks above rejecting real selectors. Names starting with a letter, `-letter`
    * or `--`, a BEM `__` name part starting with a digit, a type selector after `_` or at the start
-   * of an `:of()` item, and an `:of()` item after a leading `_` keep their output.
+   * of an `:of()` item, an `:of()` item after a leading `_` or starting with `__` (the type
+   * selector `__a`) keep their output.
    *
-   * Reverse check: each exemption, dropped alone, reddens only its own row: `-?` or `--` in
+   * Reverse check: each exemption, dropped alone, reddens only its own rows: `-?` or `--` in
    * `SELECTOR_IDENTIFIER` (`hidden_.-a`, `hidden_--a`), the `__` continuation in `hasInvalidName`
-   * (`hidden__1`), `!ofList` in the type-selector check (both `:of()` rows); the leading-`_`
-   * exemption in `:of()` is guarded by the `hidden:of(_.a)` row.
+   * (`hidden__1`), `!ofList` in the type-selector check (`hidden:of(h1)`, `hidden:of(.a,div)`),
+   * the leading-`_` exemption in `:of()` (`hidden:of(_.a)`), and a literal `_` counting as a name
+   * character (`hidden:of(__a)`, `hidden:of(.a,__b)`).
    */
   test.each([
     ['hidden_div', '.hidden_div div{display:none}'],
@@ -67,7 +69,9 @@ describe.concurrent('names in a selector suffix', () => {
     ['hidden__1', '.hidden__1__1{display:none}'],
     ['hidden:of(h1)', 'h1 .hidden\\:of\\(h1\\){display:none}'],
     ['hidden:of(.a,div)', '.a .hidden\\:of\\(\\.a\\,div\\),div .hidden\\:of\\(\\.a\\,div\\){display:none}'],
-    ['hidden:of(_.a)', ' .a .hidden\\:of\\(_\\.a\\){display:none}']
+    ['hidden:of(_.a)', ' .a .hidden\\:of\\(_\\.a\\){display:none}'],
+    ['hidden:of(__a)', '__a .hidden\\:of\\(__a\\){display:none}'],
+    ['hidden:of(.a,__b)', '.a .hidden\\:of\\(\\.a\\,__b\\),__b .hidden\\:of\\(\\.a\\,__b\\){display:none}']
   ])('%s keeps its rule', (className, rule) => {
     expect(generateText(className)).toBe(`@layer utilities{${rule}}`)
   })
