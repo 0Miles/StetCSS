@@ -15,6 +15,7 @@ import {
   SENTINEL_SUFFIX,
   trimTrailing
 } from './extraction-scans'
+import { removeTemplatePlaceholders } from './template-placeholders'
 
 /**
  * Extract class-like candidates from arbitrary source content (HTML, JSX, TS,
@@ -22,7 +23,9 @@ import {
  * callers validate each candidate.
  *
  * Pipeline:
- *   1. preExclude — strip JS/HTML comments, <style> blocks, import/require
+ *   1. preExclude — strip JS/HTML comments, <style> blocks, import/require;
+ *      then removeTemplatePlaceholders — replace each `${…}` with the strings
+ *      its expression holds and drop the class fragments touching it
  *   2. tokenize — split by whitespace into "blocks"
  *   3. for each block — split by quotation, peel out string contents
  *   4. trimString — remove leading `name=` and trailing punctuation
@@ -257,7 +260,7 @@ function hasUnclosedBrackets(content: string): boolean {
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 export function extractClassCandidates(content: string): string[] {
-  content = preExclude(content)
+  content = removeTemplatePlaceholders(preExclude(content))
   // Split on ASCII whitespace only, as the DOM splits a class list: a no-break space joins classes.
   const blocks = splitASCIIWhitespace(content)
   const classCandidates = new Set<string>()
