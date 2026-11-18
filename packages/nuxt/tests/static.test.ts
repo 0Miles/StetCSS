@@ -27,16 +27,22 @@ it('builds static CSS that covers server components and layers', async () => {
 
 /**
  * Guards #189 through Vue's real scoped style compiler: a `<style scoped>` block that
- * `@reference`s the entry and reads a theme variable carries that variable's `:root` rules,
- * and Vue must leave them global; as `[data-v-…]:root` they match no element.
- * Reverse check: making the stylesheet's `isScopedVueStyleRequest` return false (then
+ * `@reference`s the entry, reads a theme variable and composes `animate:fade` carries those
+ * variables' `:root` rules and the `fade` keyframes. Vue must leave the variables global (as
+ * `[data-v-…]:root` they match no element), and `--animate-fade` must name the keyframes by
+ * the scoped name they end up with (Vue renames a scoped block's keyframes to `<name>-<id>`).
+ * Reverse check: making the stylesheet's `getVueScopedStyleId` return undefined (then
  * `bun run build`) turns only this test red.
  */
-it('keeps theme variables a scoped Vue style references on :root', async () => {
+it('keeps theme variables and keyframes a scoped Vue style references reachable', async () => {
   const html = await $fetch<string>('/')
   const css = (await Promise.all(expectStaticFixtureHTML(html).map((href) => $fetch<string>(href)))).join('\n')
-  expect(css).toMatch(/\.probe\[data-v-[^\]]+\]\s*\{[^}]*color:\s*var\(--color-probe\)/)
+  const scopeId = css.match(/\.probe\[data-v-([^\]]+)\]\s*\{[^}]*color:\s*var\(--color-probe\)/)?.[1]
+  expect(scopeId).toBeTruthy()
   expect(css).toMatch(/prefers-color-scheme:\s*light\)\s*\{\s*:root\s*\{[^}]*--color-probe:\s*#123456/)
   expect(css).toMatch(/prefers-color-scheme:\s*dark\)\s*\{\s*:root\s*\{[^}]*--color-probe:\s*#abcdef/)
   expect(css).not.toMatch(/\[data-v-[^\]]+\]:root/)
+  expect(css).toMatch(/\.probe\[data-v-[^\]]+\]\s*\{[^}]*animation:\s*var\(--animate-fade\)/)
+  expect(css).toMatch(new RegExp(`:root\\s*\\{[^}]*--animate-fade:\\s*fade-${scopeId}\\s`))
+  expect(css).toMatch(new RegExp(`@keyframes fade-${scopeId}\\s*\\{`))
 })
