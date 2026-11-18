@@ -215,3 +215,65 @@ jsxTester.run('#198 no-invalid-classes checks the missed class contexts', noInva
     }
   ]
 })
+
+
+/**
+ * Fault: a string inside a template literal's `${…}` that touches the template text, as in
+ * `` `x${on ? 'a b' : ''}` ``, joins the class around it at runtime, yet it was linted as a whole
+ * class list: sort-classes moved the fragment (`xfg:white` became `xm:0.5rem`) and
+ * no-conflicting-classes deleted `block` from `` `${on ? 'block flex' : ''}x` ``. Each expression
+ * now gets neighbours from the quasis beside it, falling back to the template's own neighbours at
+ * either end, as the Svelte mustache branch does.
+ *
+ * Reverse check: visiting template expressions without neighbours turns the ten fragment cases
+ * red (nine sort, one conflict) and leaves the whitespace cases green; ignoring the template's
+ * own neighbours at its ends turns only the Svelte nested-template case red.
+ */
+jsxTester.run('#198 sort-classes keeps fragments inside template literal expressions', sortClasses, {
+  valid: [
+    { name: 'JSX className', code: "<div className={`x${on ? 'fg:white m:0.5rem' : ''}`} />" },
+    { name: 'a fragment after the expression', code: "<div className={`${on ? 'fg:white m:0.5rem' : ''}-x`} />" },
+    { name: 'two expressions in a row', code: "<div className={`${a}${on ? 'fg:white m:0.5rem' : ''}`} />" },
+    { name: 'a template inside a class function array', code: "clsx([`x${on ? 'fg:white m:0.5rem' : ''}`])" },
+    {
+      name: 'Vue :class',
+      code: "<template><div :class=\"`x${on ? 'fg:white m:0.5rem' : ''}`\"></div></template>",
+      ...vue
+    },
+    { name: 'Svelte class expression', code: "<div class={`x${on ? 'fg:white m:0.5rem' : ''}`}></div>", ...svelte },
+    { name: 'Astro class:list', code: "<div class:list={`x${on ? 'fg:white m:0.5rem' : ''}`} />" },
+    {
+      name: 'a template touching Svelte text at its start',
+      code: "<div class=\"x{`${on ? 'fg:white m:0.5rem' : ''}`}\"></div>",
+      ...svelte
+    }
+  ],
+  invalid: [
+    {
+      name: 'an expression set off by whitespace',
+      code: "<div className={`x ${on ? 'fg:white m:0.5rem' : ''}`} />",
+      output: "<div className={`x ${on ? 'm:0.5rem fg:white' : ''}`} />",
+      errors: [{ messageId: 'invalidClassOrder' }]
+    },
+    {
+      name: 'whole classes after a fragment',
+      code: "<div className={`bg:${dark ? 'black fg:white m:0.5rem' : 'white'}`} />",
+      output: "<div className={`bg:${dark ? 'black m:0.5rem fg:white' : 'white'}`} />",
+      errors: [{ messageId: 'invalidClassOrder' }]
+    }
+  ]
+})
+
+jsxTester.run('#198 no-conflicting-classes keeps fragments inside template literal expressions', noConflictingClasses, {
+  valid: [
+    { name: 'a fragment touching the text after', code: "<div className={`${on ? 'block flex' : ''}x`} />" }
+  ],
+  invalid: [
+    {
+      name: 'an expression set off by whitespace',
+      code: "<div className={`${on ? 'block flex' : ''} x`} />",
+      output: "<div className={`${on ? 'flex' : ''} x`} />",
+      errors: [{ messageId: 'collisionClass' }]
+    }
+  ]
+})
