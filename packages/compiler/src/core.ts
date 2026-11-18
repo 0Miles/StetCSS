@@ -38,6 +38,7 @@ import {
   replaceSourceRanges,
   removeSourceRanges,
   skipCSSWhitespace,
+  skipCSSWhitespaceAndComments,
   type CSSDirectiveRuleRange
 } from '@stet-css/lexer'
 import {
@@ -2217,19 +2218,6 @@ function isManagedDefinitionDirectiveRange(range: CSSDirectiveRuleRange) {
   return range.depth === 0
     && (range.name === 'defaults' || range.name === 'components' || range.name === 'utilities')
     && range.blockContentRange
-}
-
-function skipCSSWhitespaceAndComments(source: string, index: number, end: number) {
-  while (index < end) {
-    index = skipCSSWhitespace(source, index)
-    if (source[index] === '/' && source[index + 1] === '*') {
-      const close = source.indexOf('*/', index + 2)
-      index = close === -1 ? end : close + 2
-      continue
-    }
-    break
-  }
-  return index
 }
 
 function createManagedPatternNameMask(length: number) {
