@@ -1,7 +1,7 @@
 import {
   findCSSBlockEnd,
   findCSSStatementEnd,
-  splitStetCSSTopLevel
+  splitCSSSelectorList
 } from '@stet-css/lexer'
 
 const KEYFRAMES_AT_RULE_RE = /^@(?:-[a-z]+-)?keyframes\b/i
@@ -39,8 +39,7 @@ function globalizeSelectors(css: string): string {
     } else {
       const leading = prelude.slice(0, prelude.length - prelude.trimStart().length)
       const trailing = prelude.slice(prelude.trimEnd().length)
-      const selectors = splitStetCSSTopLevel(trimmedPrelude, ',')
-        .map(({ start, end }) => `:global(${trimmedPrelude.slice(start, end).trim()})`)
+      const selectors = splitCSSSelectorList(trimmedPrelude).map((selector) => `:global(${selector})`)
       output += leading + selectors.join(',') + trailing + '{' + body + '}'
     }
     index = close + 1

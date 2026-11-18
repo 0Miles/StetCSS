@@ -536,6 +536,31 @@ describe('style CSS extraction helpers', () => {
     expect(unscoped.code).not.toContain('7a7a37b1')
   })
 
+  /**
+   * Prevents (#189): the scoped Vue transform split a generated rule's selector list on every
+   * top-level comma, so an escaped comma in a mode class (`@theme a\\,b` gives `.a\,b`) became
+   * `:global(.a\),:global(b)` and the mode's variables never applied.
+   * Reverse check: splitting with `splitStetCSSTopLevel` again turns only this test red.
+   */
+  it('keeps an escaped comma inside one selector of a scoped Vue style', async () => {
+    const root = createFixture()
+    writeFileSync(join(root, 'app/tokens.css'), [
+      '@settings { mode-trigger: class; }',
+      '@theme a\\\\,b { --color-brand: #abcdef; }'
+    ].join('\n'))
+    const source = '@reference "./tokens.css"; .button { color: var(--color-brand); }'
+
+    const scoped = await transformLocalStyleCSS(join(root, 'app/Button.vue') + '?vue&type=style&index=0&scoped=7a7a37b1&lang.css', source, {
+      projectDir: root
+    })
+    const unscoped = await transformLocalStyleCSS(join(root, 'app/Button.vue') + '?vue&type=style&index=0&lang.css', source, {
+      projectDir: root
+    })
+
+    expect(unscoped.code).toContain('.a\\,b{--color-brand:#abcdef}')
+    expect(scoped.code).toContain(':global(.a\\,b){--color-brand:#abcdef}')
+  })
+
   it('leaves ordinary local CSS unchanged', async () => {
     const source = '.button { color: red; }'
     const result = await transformLocalStyleCSS('/project/src/Button.module.css', source)
