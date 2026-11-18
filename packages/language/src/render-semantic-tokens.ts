@@ -20,11 +20,41 @@ function encodeHighlightTokens(document: TextDocument, highlightTokens: Highligh
   return encodeSemanticTokens(document, toSemanticTokenItems(highlightTokens))
 }
 
+/**
+ * Maps each offset in an unescaped class token to its offset in the raw source spelling, where
+ * escape backslashes were removed. A character spelled with a backslash maps to the backslash, so
+ * a token over `"` covers `\"`. Returns undefined when the raw text does not spell the token.
+ */
+function mapTokenOffsetsToRaw(raw: string, token: string) {
+  const offsets: number[] = []
+  let rawIndex = 0
+  for (let tokenIndex = 0; tokenIndex < token.length; tokenIndex++) {
+    const start = rawIndex
+    while (rawIndex < raw.length && raw[rawIndex] !== token[tokenIndex]) rawIndex++
+    if (rawIndex >= raw.length) return
+    offsets.push(start)
+    rawIndex++
+  }
+  offsets.push(raw.length)
+  return offsets
+}
+
+function tokenizeClassPosition(css: StetCSS, classPosition: ClassPosition): HighlightTokenItem[] {
+  const { raw, token, range } = classPosition
+  const offsets = raw === token ? undefined : mapTokenOffsetsToRaw(raw, token)
+  if (!offsets) return tokenizeClassToken(css, token, range.start)
+  return tokenizeClassToken(css, token, 0).map((item) => ({
+    ...item,
+    start: range.start + offsets[item.start],
+    end: range.start + offsets[item.end]
+  }))
+}
+
 export function collectEmbeddedHighlightTokenItems(css: StetCSS, classPositions: ClassPosition[]): HighlightTokenItem[] {
   const semanticTokens: HighlightTokenItem[] = []
   for (const classPosition of classPositions) {
     if (!classPosition.raw) continue
-    semanticTokens.push(...tokenizeClassToken(css, classPosition.token, classPosition.range.start))
+    semanticTokens.push(...tokenizeClassPosition(css, classPosition))
   }
   return semanticTokens
 }

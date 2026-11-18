@@ -3,11 +3,15 @@ import { createHighlighter, type HighlighterGeneric } from 'shiki'
 
 import {
   collectClassListSemanticTokenItems,
+  collectSemanticTokenItems,
   createLanguageCSS,
+  getClassPositions,
   getStetCSSSemanticTokenScopeKeys,
+  languageSettings,
   STET_CSS_SEMANTIC_TOKEN_SCOPE_MAP
 } from '../src'
 import type { SemanticTokenItem } from '../src'
+import createDoc from './helpers/create-doc'
 
 const css = createLanguageCSS()
 let highlighter: HighlighterGeneric<any, any>
@@ -111,4 +115,21 @@ test.concurrent('tokenizes the container name separator in a query', () => {
     type: 'operator',
     modifiers: ['query', 'queryPunctuation']
   })
+})
+
+/**
+ * Guards: a class with escaped quotes was tokenized after unescaping but placed at raw offsets,
+ * so every token after the first escape landed short of its text.
+ * Skipping `mapTokenOffsetsToRaw` in `render-semantic-tokens.ts` reds only this test.
+ */
+test.concurrent('places tokens at raw offsets when the class contains escaped quotes', () => {
+  const source = 'clsx("content:\\"x\\":hover")'
+  const doc = createDoc('ts', source)
+  const tokens = collectSemanticTokenItems(css, doc, getClassPositions(doc, languageSettings))
+  const hover = tokens.find((token) => token.type === 'modifier')
+
+  expect(hover).toMatchObject({ start: 20, end: 25 })
+  expect(tokens.map((token) => source.slice(token.start, token.end))).toEqual([
+    'content', ':', '\\"', 'x', '\\"', ':', 'hover'
+  ])
 })
