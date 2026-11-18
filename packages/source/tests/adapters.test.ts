@@ -162,6 +162,44 @@ describe('source adapters', () => {
     ])
   })
 
+  /**
+   * Guards: a `<script lang="ts">` with type annotations does not parse as JS,
+   * so extraction fell back to text and the identifier `hidden` emitted
+   * `.hidden{display:none}`. Reverse check: parsing Svelte scripts as `.js`
+   * again in `src/adapters/svelte.ts` turns this test red.
+   */
+  test('parses Svelte scripts and markup expressions in the language their lang attribute names', async () => {
+    await expect(extractSvelteClasses('Component.svelte', `
+      <script context="module" lang="ts">
+        export const size: string = 'p:1rem'
+      </script>
+      <script lang="ts">
+        let hidden: boolean = false
+        const classes: string = 'fg:red'
+      </script>
+      <div class="block {hidden as boolean ? 'm:0' : 'm:1'}">Save</div>
+    `)).resolves.toEqual([
+      'p:1rem',
+      'fg:red',
+      'block',
+      'm:0',
+      'm:1'
+    ])
+  })
+
+  test('keeps parsing Svelte scripts without a lang attribute as JavaScript', async () => {
+    await expect(extractSvelteClasses('Component.svelte', `
+      <script>
+        const hidden = isHidden()
+        const classes = 'fg:red'
+      </script>
+      <div class="block">Save</div>
+    `)).resolves.toEqual([
+      'fg:red',
+      'block'
+    ])
+  })
+
   test('extracts frontmatter, script, and markup classes from Astro files while ignoring styles', () => {
     expect(extractAstroClasses('Page.astro', `---
 const frontmatterClasses = 'fg:red'

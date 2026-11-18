@@ -25,6 +25,10 @@ interface SvelteAttribute {
   expression?: SvelteRange
 }
 
+interface SvelteScript extends SvelteRange {
+  content?: SvelteRange
+}
+
 interface SvelteMarkupNode {
   attributes?: SvelteAttribute[]
   children?: SvelteMarkupNode[]
@@ -53,6 +57,24 @@ function addOxc(classes: Set<string>, source: string, content: string) {
   }
 }
 
+// The legacy AST keeps no script attributes, so `lang` is read from the opening tag.
+const TYPESCRIPT_LANG_ATTRIBUTE = /\slang\s*=\s*(?:"(?:ts|typescript)"|'(?:ts|typescript)'|(?:ts|typescript)(?=[\s/>]))/
+
+function isTypeScriptScript(content: string, script: SvelteScript | null | undefined) {
+  if (script?.start == null || script.content?.start == null) return false
+  return TYPESCRIPT_LANG_ATTRIBUTE.test(content.slice(script.start, script.content.start))
+}
+
+function addScript(classes: Set<string>, source: string, content: string, script: SvelteScript | null | undefined) {
+  const range = script?.content
+  if (range?.start == null || range.end == null) return
+  addOxc(classes, `${source}.${isTypeScriptScript(content, script) ? 'ts' : 'js'}`, content.slice(range.start, range.end))
+}
+
+/**
+ * `source` carries the extension markup expressions parse as: a component
+ * whose script is TypeScript may use TypeScript in its markup too.
+ */
 function visitMarkup(node: SvelteMarkupNode | undefined, source: string, content: string, classes: Set<string>) {
   if (!node || typeof node !== 'object') return
 
@@ -61,7 +83,7 @@ function visitMarkup(node: SvelteMarkupNode | undefined, source: string, content
       if (attribute.type === 'Class') {
         addClassString(classes, attribute.name)
         if (attribute.expression?.start != null && attribute.expression?.end != null) {
-          addOxc(classes, `${source}.js`, content.slice(attribute.expression.start, attribute.expression.end))
+          addOxc(classes, source, content.slice(attribute.expression.start, attribute.expression.end))
         }
         continue
       }
@@ -70,7 +92,7 @@ function visitMarkup(node: SvelteMarkupNode | undefined, source: string, content
         if (value.type === 'Text') {
           addClassString(classes, value.data ?? value.raw)
         } else if (value.start != null && value.end != null) {
-          addOxc(classes, `${source}.js`, content.slice(value.start, value.end))
+          addOxc(classes, source, content.slice(value.start, value.end))
         }
       }
     }
@@ -98,13 +120,12 @@ export async function extractSvelteClasses(source: string, content: string): Pro
     const ast = compiler.parse(content)
     const classes = new Set<string>()
 
-    if (ast.module?.content) {
-      addOxc(classes, `${source}.js`, content.slice(ast.module.content.start, ast.module.content.end))
-    }
-    if (ast.instance?.content) {
-      addOxc(classes, `${source}.js`, content.slice(ast.instance.content.start, ast.instance.content.end))
-    }
-    visitMarkup(ast.html as SvelteMarkupNode, source, content, classes)
+    const module = ast.module as SvelteScript | null | undefined
+    const instance = ast.instance as SvelteScript | null | undefined
+    addScript(classes, source, content, module)
+    addScript(classes, source, content, instance)
+    const markupExt = isTypeScriptScript(content, module) || isTypeScriptScript(content, instance) ? 'ts' : 'js'
+    visitMarkup(ast.html as SvelteMarkupNode, `${source}.${markupExt}`, content, classes)
 
     return [...classes]
   } catch {
