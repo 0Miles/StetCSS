@@ -1,0 +1,63 @@
+import { expect, test } from 'vitest'
+import { decodeStetCSSHTMLAttributeValue, decodeStetCSSJSXAttributeString } from '../src'
+
+/**
+ * Source extraction reads class attributes by these decoders (#194), and editor tooling maps
+ * decoded classes back onto the source through their ranges. A wrong decode extracts a class the
+ * browser or the JSX compiler never sees; a wrong range points a diagnostic or edit elsewhere.
+ * Expected values follow the HTML tokenizer's character reference state and Babel's JSX reader.
+ */
+
+test.concurrent('decodes HTML attribute values the way the HTML tokenizer does', () => {
+  const cases: [string, string][] = [
+    ['block&#32;hidden', 'block hidden'],
+    ['inline&#x2d;flex&#X2D;x', 'inline-flex-x'],
+    // Numeric references may omit their `;`.
+    ['a&#45b&#x2d', 'a-b-'],
+    // NUL, surrogates and code points past U+10FFFF become U+FFFD; C1 controls read as windows-1252.
+    ['&#0;&#xD800;&#x110000;&#99999999999999999999;', '����'],
+    ['&#128;&#x9F;&#x81;', '€Ÿ\u0081'],
+    ['&#;&#x;&#xg;', '&#;&#x;&#xg;'],
+    ['a&amp;b a&lt;b &nbsp;', 'a&b a<b  '],
+    // Two code points, and one outside the BMP.
+    ['&NotEqualTilde;&Afr;', '≂̸\u{1D504}'],
+    // A legacy name may omit its `;`, but not before `=` or an alphanumeric.
+    ['&amp &copy!', '& ©!'],
+    ['x&copy=1 a&copyb &notin &notit;', 'x&copy=1 a&copyb &notin &notit;'],
+    ['&notin;', '∉'],
+    // Only legacy names may omit the `;`, and unknown names stay as written.
+    ['&NotEqualTilde &unknown; & &;', '&NotEqualTilde &unknown; & &;']
+  ]
+  for (const [source, value] of cases) {
+    expect(decodeStetCSSHTMLAttributeValue(source).value, source).toBe(value)
+  }
+})
+
+test.concurrent('decodes JSX attribute strings the way JSX compilers do', () => {
+  const cases: [string, string][] = [
+    ['block&#32;hidden inline&#x2d;flex', 'block hidden inline-flex'],
+    ['a&amp;b &nbsp; &apos;', 'a&b   \''],
+    // XHTML values, which differ from HTML for these two.
+    ['&lang;&rang;', '〈〉'],
+    ['&#x1F600;', '\u{1F600}'],
+    // Only references that end in `;`, a lowercase `x`, and the XHTML names decode.
+    ['&#32 &amp &#X2D; &NotEqualTilde; &#x110000; &#; &', '&#32 &amp &#X2D; &NotEqualTilde; &#x110000; &#; &']
+  ]
+  for (const [source, value] of cases) {
+    expect(decodeStetCSSJSXAttributeString(source).value, source).toBe(value)
+  }
+})
+
+test.concurrent('maps each decoded unit onto the source it is spelled with', () => {
+  // `&Afr;` decodes to a surrogate pair; both units span the reference.
+  expect(decodeStetCSSHTMLAttributeValue('a&amp;b&Afr;&copy')).toEqual({
+    value: 'a&b\u{1D504}©',
+    starts: [0, 1, 6, 7, 7, 12],
+    ends: [1, 6, 7, 12, 12, 17]
+  })
+  expect(decodeStetCSSJSXAttributeString('a&#32;b&amp')).toEqual({
+    value: 'a b&amp',
+    starts: [0, 1, 6, 7, 8, 9, 10],
+    ends: [1, 6, 7, 8, 9, 10, 11]
+  })
+})
