@@ -9,7 +9,8 @@
     "e2e": "vitest run tests/*-e2e.test.ts --no-file-parallelism --mode e2e",
     "lint": "eslint",
     "type-check": "tsc -b tsconfig.typecheck.json",
-    "test": "vitest"
+    "test": "vitest",
+    "bench": "vitest bench"
   },
   "license": "MIT",
   "description": "Next.js integration for StetCSS",

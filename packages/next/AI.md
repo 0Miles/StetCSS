@@ -19,3 +19,5 @@ Owns the Next.js integration behind `withStetCSS`: static CSS only, for Turbopac
 ## Validation
 
 When integration behaviour changes, also run `bun run --filter @stet-css/next e2e` (the `tests/*-e2e.test.ts` files, excluded from `test`; Vitest selects them only under `--mode e2e`, which the `e2e` script passes; they build Turbopack, `--webpack`, `output: 'export'` and custom-adapter (`e2e/adapters`) fixtures and run `next dev`) and `bun run --filter @stet-css/next dev:build` (builds `playground/`).
+
+`bun run --filter @stet-css/next bench` (`tests/style-css-loader.bench.ts`) measures what one CSS Module and one `@reference` stylesheet cost the style loader once the project is compiled (#202); its numbers are evidence, not a gate.
