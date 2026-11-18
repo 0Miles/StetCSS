@@ -1,4 +1,4 @@
-import { decodeStetCSSJSXAttributeString } from '@stet-css/lexer'
+import { decodeStetCSSJSXAttributeString } from '@stet-css/lexer/character-reference'
 import { visitorKeys, type ParserOptions } from 'oxc-parser'
 import { addClassString } from './class-string'
 import { parseOxcOnSourceStack, type OxcErrorFilter } from './oxc-stack'

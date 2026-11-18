@@ -1,4 +1,4 @@
-import { decodeStetCSSHTMLAttributeValue } from '@stet-css/lexer'
+import { decodeStetCSSHTMLAttributeValue } from '@stet-css/lexer/character-reference'
 import { Parser } from 'htmlparser2'
 import { addClassString } from './class-string'
 import { extractOxcClasses } from './oxc'
