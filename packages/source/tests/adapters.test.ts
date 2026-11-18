@@ -240,9 +240,9 @@ describe('source adapters', () => {
   })
 
   /**
-   * Guards: Astro processes every `<script>` as TypeScript, so a
-   * `<HTMLElement>` cast is valid there; parsed as JS it failed, extraction
-   * fell back to text, and the identifier `block` emitted
+   * Guards: Astro processes every `<script>` but `is:inline` ones as
+   * TypeScript, so a `<HTMLElement>` cast is valid there; parsed as JS it
+   * failed, extraction fell back to text, and the identifier `block` emitted
    * `.block{display:block}`. Reverse check: parsing Astro scripts as `.js`
    * again in `src/adapters/astro.ts` turns this test red.
    */
