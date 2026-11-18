@@ -139,6 +139,13 @@ export function isASCIIWhitespace(char: string | undefined) {
   return char !== undefined && ASCII_WHITESPACE.has(char)
 }
 
+const ASCII_WHITESPACE_RUN = /[\t\n\f\r ]+/
+
+/** The non-empty runs of `value` between ASCII whitespace: the classes of a class list, as the DOM splits it. */
+export function splitASCIIWhitespace(value: string): string[] {
+  return value.split(ASCII_WHITESPACE_RUN).filter(Boolean)
+}
+
 export function unescapeStetCSSClassListToken(raw: string, unescape: StetCSSClassListParseOptions['unescape']) {
   if (!unescape) return raw
   const characters = Array.isArray(unescape) ? unescape : [unescape]
