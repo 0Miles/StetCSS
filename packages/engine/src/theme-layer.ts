@@ -40,9 +40,9 @@ export default class ThemeLayer extends Layer {
       case 'host':
         return `:host(.${mode})${isDefaultMode ? ',:host' : ''}`
       case 'class':
-        return `.${mode}${isDefaultMode ? ',:root' : ''}`
+        return `.${mode}${isDefaultMode ? ',' + this.css.rootSelector : ''}`
       default:
-        return ':root'
+        return this.css.rootSelector
     }
   }
 

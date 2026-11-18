@@ -222,6 +222,15 @@ export default class StetCSS {
     }
   }
 
+  /**
+   * The tree root that carries theme variables. A subclass rendering into a shadow root, where
+   * `:root` never matches, returns `:host`; it is read after construction.
+   */
+  // eslint-disable-next-line @typescript-eslint/class-literal-property-style -- a subclass overrides it with an accessor, which a field would forbid
+  get rootSelector(): ':root' | ':host' {
+    return ':root'
+  }
+
   get text() {
     return this.rules
       .sort((a, b) => getLayerRank(a.name) - getLayerRank(b.name))
@@ -299,7 +308,17 @@ export default class StetCSS {
     this.applyEmittedGlobalsCounts(emittedGlobals)
   }
 
+  /**
+   * Whether the build's static CSS already provides this variable to this root. In a shadow root
+   * the document's `.<mode>` and `:host(.<mode>)` rules never match, so a mode variable under the
+   * class or host trigger is emitted again; inherited values cover everything else.
+   */
   isEmittedGlobalsVariable(name: string) {
+    if (
+      this.rootSelector === ':host'
+      && this.settings.modeTrigger !== 'media'
+      && this.variables.get(name)?.modes
+    ) return false
     return Boolean(this.emittedGlobals.variables[name])
   }
 

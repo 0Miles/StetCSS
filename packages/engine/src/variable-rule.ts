@@ -53,19 +53,9 @@ export class VariableRuleNode {
   ) { }
 
   get selectorText(): string {
-    const isDefaultMode = this.isDefaultMode
-    if (this.mode) {
-      switch (this.css.settings.modeTrigger) {
-        case 'host':
-          return `:host(.${this.mode})${isDefaultMode ? ',:host' : ''}`
-        case 'class':
-          return `.${this.mode}${isDefaultMode ? ',:root' : ''}`
-        default:
-          return ':root'
-      }
-    } else {
-      return ':root'
-    }
+    return this.mode
+      ? this.css.themeLayer.getModeSelectorText(this.mode, this.isDefaultMode)
+      : this.css.rootSelector
   }
 
   get declarationName() {
