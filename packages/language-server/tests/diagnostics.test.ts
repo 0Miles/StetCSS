@@ -38,6 +38,46 @@ withFixture('basic', async (context) => {
     sendDiagnostics.mockRestore()
   })
 
+  /**
+   * Prevents: an SFC style diagnostic landing in an opening-tag attribute that repeats the style content.
+   * Reverse check: locating the content with `indexOf` on the whole `<style>` match turns this test red.
+   */
+  test('publishes SFC style diagnostics in the content, not an opening-tag attribute repeating it', async ({ expect }) => {
+    const css = '.btn { @compose not-a-real-class; }'
+    const text = `<style data-source="${css}">${css}</style>`
+    const document = context.createDocument(text, { lang: 'vue' })
+    const sendDiagnostics = vi.spyOn(context.server.connection, 'sendDiagnostics').mockImplementation(() => undefined as any)
+
+    await context.server.onDidOpen({ document })
+
+    const diagnostics = sendDiagnostics.mock.calls.at(-1)?.[0].diagnostics || []
+    expect(diagnostics).toHaveLength(1)
+    expect(document.offsetAt(diagnostics[0].range.start)).toBe(text.lastIndexOf('not-a-real-class'))
+
+    await context.server.onDidClose({ document })
+    sendDiagnostics.mockRestore()
+  })
+
+  /**
+   * Prevents: a `>` inside a quoted opening-tag attribute ending the `<style>` tag early, which makes
+   * the rest of the attribute part of the style content.
+   * Reverse check: ending the tag at the first `>` (`<style\b([^>]*)>`) turns this test red.
+   */
+  test('publishes SFC style diagnostics after a quoted attribute containing >', async ({ expect }) => {
+    const text = '<style data-sel=".a > .b">.btn { @compose not-a-real-class; }</style>'
+    const document = context.createDocument(text, { lang: 'vue' })
+    const sendDiagnostics = vi.spyOn(context.server.connection, 'sendDiagnostics').mockImplementation(() => undefined as any)
+
+    await context.server.onDidOpen({ document })
+
+    const diagnostics = sendDiagnostics.mock.calls.at(-1)?.[0].diagnostics || []
+    expect(diagnostics).toHaveLength(1)
+    expect(document.offsetAt(diagnostics[0].range.start)).toBe(text.indexOf('not-a-real-class'))
+
+    await context.server.onDidClose({ document })
+    sendDiagnostics.mockRestore()
+  })
+
   test('publishes quoted @compose syntax diagnostics', async ({ expect }) => {
     const text = '.btn { @compose "block"; }'
     const document = context.createDocument(text, { lang: 'css' })
