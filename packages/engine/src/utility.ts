@@ -128,10 +128,11 @@ function continuesName(node: SelectorNode | undefined) {
  * `transition:all_.3s` a selector: a selector-list item cannot be empty (an empty one emitted the
  * bare class), every class, id and type selector name must be a CSS identifier (`.3s` is not),
  * and a universal or type selector cannot follow the class inside its compound (`hidden.a,div`
- * emitted the class `.hidden\.a\,divdiv`). `ends` is false when a `:` variant follows the nodes.
- * Inside `:of()` each item scopes the class on its own, written before it, so every item needs a
- * compound before any `>`, `+` or `~` (`:of(,.a)`, `:of(_)` left the bare class; `:of(>)` started
- * the rule with `>`), and `:of` needs a selector. Other pseudo-class functions are left to the
+ * emitted the class `.hidden\.a\,divdiv`). A literal `_` (BEM `__`) is a name character, not a
+ * combinator. `ends` is false when a `:` variant follows the nodes. Inside `:of()` each item scopes
+ * the class on its own, written before it, so every item needs a compound before any `>`, `+` or
+ * `~` (`:of(,.a)`, `:of(_)` left the bare class; `:of(>)` started the rule with `>`; `:of(__a)` is
+ * the type selector `__a`), and `:of` needs a selector. Other pseudo-class functions are left to the
  * browser. Combinators with nothing after them are checked on the composed template by
  * `hasDanglingCombinator`.
  */
@@ -151,7 +152,7 @@ function isSelectorSuffix(nodes: SelectorNode[], ends: boolean, ofList = false):
       if (following ? following.type === 'separator' : ends) return false
       continue
     }
-    if (node.type === 'combinator') {
+    if (node.type === 'combinator' && !continuesName(node)) {
       if (ofList && !itemHasCompound && node.value !== ' ') return false
       continue
     }
