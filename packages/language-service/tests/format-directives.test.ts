@@ -78,6 +78,10 @@ test.concurrent('respects range formatting', () => {
   expect(applyTextEdits(source, edits, doc)).toBe('.a { @compose bg:red !; }\n.b { @compose bg:blue!; }')
 })
 
+/**
+ * Prevents: SFC formatting editing an opening-tag attribute that repeats the style content.
+ * Reverse check: locating the content with `indexOf` on the whole `<style>` match turns this test red.
+ */
 test.concurrent('formats the SFC style content, not an opening-tag attribute repeating it', () => {
   const css = '.btn { @compose bg:transparent !; }'
   const source = `<style data-source="${css}">${css}</style>`
@@ -85,9 +89,13 @@ test.concurrent('formats the SFC style content, not an opening-tag attribute rep
     .toBe(`<style data-source="${css}">.btn { @compose bg:transparent!; }</style>`)
 })
 
+/**
+ * Prevents: a `>` inside a quoted opening-tag attribute ending the `<style>` tag early, which
+ * formats the rest of the attribute as style content.
+ * Reverse check: ending the tag at the first `>` (`<style\b([^>]*)>`) turns this test red.
+ */
 test.concurrent('ends the SFC style opening tag after a quoted attribute containing >', () => {
-  const css = '.a > .b { @compose bg:red !; }'
-  const source = `<style data-source="${css}">${css}</style>`
+  const source = '<style data-sel=".a > .b { @compose bg:red !; }">.btn { @compose bg:red !; }</style>'
   expect(format('vue', source))
-    .toBe(`<style data-source="${css}">.a > .b { @compose bg:red!; }</style>`)
+    .toBe('<style data-sel=".a > .b { @compose bg:red !; }">.btn { @compose bg:red!; }</style>')
 })
