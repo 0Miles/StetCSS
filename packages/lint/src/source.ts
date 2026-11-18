@@ -240,6 +240,8 @@ function collectClassListContexts(
   const contexts = new Map<string, ClassListContext>()
   const directives = collectCSSDirectiveRanges(content)
   for (const position of positions) {
+    // Part of a class that only exists at runtime: neither reported nor fixed.
+    if (position.fragment) continue
     const contextRange = position.contextRange
     const key = `${contextRange.start}:${contextRange.end}`
     if (contexts.has(key)) continue
