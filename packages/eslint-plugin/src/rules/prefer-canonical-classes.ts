@@ -50,6 +50,7 @@ export default createRule({
     if (shouldUseSourceVisitors(context)) {
       return defineSourceVisitors({
         context,
+        settings,
         css,
         ruleId: 'prefer-canonical-classes',
         ruleOptions: options

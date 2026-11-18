@@ -26,6 +26,7 @@ export default createRule({
     if (shouldUseSourceVisitors(context)) {
       return defineSourceVisitors({
         context,
+        settings,
         css,
         ruleId: 'no-invalid-classes',
         ruleOptions: {

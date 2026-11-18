@@ -22,7 +22,7 @@ export default createRule({
   create: function (context) {
     const { settings, css } = resolveContext(context)
     if (shouldUseSourceVisitors(context)) {
-      return defineSourceVisitors({ context, css, ruleId: 'sort-classes' })
+      return defineSourceVisitors({ context, settings, css, ruleId: 'sort-classes' })
     }
     return defineVisitors({ context, settings }, (node, resolved) => {
       if (resolved.nodes.length <= 1) return

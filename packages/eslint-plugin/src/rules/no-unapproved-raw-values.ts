@@ -48,6 +48,7 @@ export default createRule({
     if (shouldUseSourceVisitors(context)) {
       return defineSourceVisitors({
         context,
+        settings,
         css,
         ruleId: 'no-unapproved-raw-values',
         ruleOptions: options
