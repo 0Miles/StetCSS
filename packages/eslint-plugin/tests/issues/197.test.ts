@@ -16,8 +16,14 @@ const svelte = {
  * the whole classes beside them are still linted.
  *
  * Reverse check: at the base commit (05347e7cb) the three ticket repros were red with the ticket's
- * symptoms; skipping the fragment trim in resolve-class-node turns the seven Svelte cases red and
- * leaves the ignoredKeys cases green.
+ * symptoms. Skipping the fragment trim in resolve-class-node turns 8 of the 10 Svelte cases red and
+ * leaves the ignoredKeys cases green; the other two ("whole classes before a fragment" and "a
+ * conflict between whole classes") guard that the trim keeps whole classes linted. Trimming on
+ * `/\s/` instead of the lexer's ASCII whitespace turns only the NBSP case red.
+ *
+ * Cases stay inline rather than in tests/fixtures/issues/197/: each is one attribute or call whose
+ * exact spelling is the point, and RuleTester's code/output pairs show each fix next to its input,
+ * which a fixture per case would split across files.
  */
 jsxTester.run('#197 sort-classes leaves class fragments touching Svelte expressions alone', sortClasses, {
   valid: [
@@ -36,6 +42,14 @@ jsxTester.run('#197 sort-classes leaves class fragments touching Svelte expressi
       name: 'whole classes after a fragment are sorted around it',
       code: '<div class="bg:{color}-50 fg:white m:0.5rem"></div>',
       output: '<div class="bg:{color}-50 m:0.5rem fg:white"></div>',
+      errors: [{ messageId: 'invalidClassOrder' }],
+      ...svelte
+    },
+    {
+      // The lexer splits classes on ASCII whitespace only: `-50\u00a0m:0.5rem` is still one fragment.
+      name: 'an NBSP does not end a fragment',
+      code: '<div class="bg:{color}-50\u00a0m:0.5rem fg:white p:0.5rem"></div>',
+      output: '<div class="bg:{color}-50\u00a0m:0.5rem p:0.5rem fg:white"></div>',
       errors: [{ messageId: 'invalidClassOrder' }],
       ...svelte
     }
