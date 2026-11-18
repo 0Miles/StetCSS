@@ -10,12 +10,15 @@ import {
   type StetCSSLintSummary
 } from '@stet-css/lint'
 import { loadProjectManifest } from '@stet-css/project/manifest'
+import { PROJECT_SOURCE_EXTENSIONS } from '@stet-css/project/sources'
 import fg from 'fast-glob'
 import fs from 'node:fs'
 import path from 'node:path'
 
 const REPORT_VERSION = 1
-const DEFAULT_SOURCE_PATTERNS = ['**/*.{html,htm,js,jsx,cjs,ts,tsx,mts,cts,svelte,astro,vue,md,mdx,pug,php,css,scss,less}']
+/** The project's own sources, as the build reads them, plus the stylesheets lint checks. */
+const DEFAULT_SOURCE_EXTENSIONS = [...PROJECT_SOURCE_EXTENSIONS, '.css', '.scss', '.less']
+const DEFAULT_SOURCE_PATTERNS = [`**/*.{${DEFAULT_SOURCE_EXTENSIONS.map((extension) => extension.slice(1)).join(',')}}`]
 const DEFAULT_IGNORE_PATTERNS = ['**/node_modules/**', 'node_modules']
 
 export interface LintOptions {
