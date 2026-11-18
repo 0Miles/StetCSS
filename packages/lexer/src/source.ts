@@ -115,36 +115,14 @@ export function createSourceLocationResolver(source: string) {
 }
 
 export function findCSSStatementEnd(source: string, start: number): CSSStatementEnd {
-  let quote = ''
-  let comment = false
   let depth = 0
   for (let index = start; index < source.length; index++) {
+    const skipped = skipCSSEscapeStringOrComment(source, index)
+    if (skipped !== index) {
+      index = skipped - 1
+      continue
+    }
     const char = source[index]
-    const next = source[index + 1]
-    if (comment) {
-      if (char === '*' && next === '/') {
-        comment = false
-        index++
-      }
-      continue
-    }
-    if (quote) {
-      if (char === '\\') {
-        index++
-      } else if (char === quote) {
-        quote = ''
-      }
-      continue
-    }
-    if (char === '/' && next === '*') {
-      comment = true
-      index++
-      continue
-    }
-    if (char === '"' || char === '\'') {
-      quote = char
-      continue
-    }
     if (char === '(' || char === '[') {
       depth++
       continue
@@ -185,38 +163,34 @@ export function findCSSClosingQuote(source: string, start: number, quote: string
   return Math.max(start, limit - 1)
 }
 
+export function findCSSCommentEnd(source: string, start: number, limit = source.length) {
+  const end = source.indexOf('*/', start + 2)
+  return end === -1 || end + 2 > limit ? limit : end + 2
+}
+
+/**
+ * The index just past the escape, string or comment that starts at `index`, or `index` itself when
+ * none starts there. A `\` escapes the character after it outside a string as inside one, so the
+ * `\'` of `.a\'b` opens no string. A string or comment that does not close runs to `limit`.
+ */
+export function skipCSSEscapeStringOrComment(source: string, index: number, limit = source.length) {
+  const char = source[index]
+  if (char === '\\') return Math.min(index + 2, limit)
+  if (char === '"' || char === '\'') return findCSSClosingQuote(source, index, char, limit) + 1
+  if (char === '/' && source[index + 1] === '*') return findCSSCommentEnd(source, index, limit)
+  return index
+}
+
 export function findCSSBlockEnd(source: string, open: number) {
   if (source[open] !== '{') return -1
-  let quote = ''
-  let comment = false
   let depth = 0
   for (let index = open; index < source.length; index++) {
+    const skipped = skipCSSEscapeStringOrComment(source, index)
+    if (skipped !== index) {
+      index = skipped - 1
+      continue
+    }
     const char = source[index]
-    const next = source[index + 1]
-    if (comment) {
-      if (char === '*' && next === '/') {
-        comment = false
-        index++
-      }
-      continue
-    }
-    if (quote) {
-      if (char === '\\') {
-        index++
-      } else if (char === quote) {
-        quote = ''
-      }
-      continue
-    }
-    if (char === '/' && next === '*') {
-      comment = true
-      index++
-      continue
-    }
-    if (char === '"' || char === '\'') {
-      quote = char
-      continue
-    }
     if (char === '{') {
       depth++
       continue

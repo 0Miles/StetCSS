@@ -1,9 +1,11 @@
 import {
   findCSSBlockEnd,
   findCSSClosingQuote,
+  findCSSCommentEnd,
   findCSSStatementEnd,
   isCSSIdentStart,
   readCSSIdent,
+  skipCSSEscapeStringOrComment,
   skipCSSWhitespace,
   type SourceRange
 } from './source'
@@ -86,20 +88,14 @@ const CSS_DIRECTIVE_SOURCE_NAME_SET = new Set<string>(CSS_DIRECTIVE_RANGE_NAMES)
 
 export function collectCSSQuotedStringRanges(source: string, start = 0, end = source.length) {
   const ranges: CSSQuotedStringRange[] = []
-  let comment = false
   for (let index = start; index < end; index++) {
     const char = source[index]
-    const next = source[index + 1]
-    if (comment) {
-      if (char === '*' && next === '/') {
-        comment = false
-        index++
-      }
+    if (char === '\\') {
+      index++
       continue
     }
-    if (char === '/' && next === '*') {
-      comment = true
-      index++
+    if (char === '/' && source[index + 1] === '*') {
+      index = findCSSCommentEnd(source, index, end) - 1
       continue
     }
     if (char === '"' || char === '\'') {
@@ -121,8 +117,6 @@ export function collectCSSQuotedStringRanges(source: string, start = 0, end = so
 
 export function collectCSSDeclarationRanges(source: string, start: number, end: number) {
   const ranges: CSSDeclarationRange[] = []
-  let quote = ''
-  let comment = false
   let depth = 0
   let blockDepth = 0
   let propertyStart = -1
@@ -158,32 +152,12 @@ export function collectCSSDeclarationRanges(source: string, start: number, end: 
   }
 
   for (let index = start; index < end; index++) {
+    const skipped = skipCSSEscapeStringOrComment(source, index, end)
+    if (skipped !== index) {
+      index = skipped - 1
+      continue
+    }
     const char = source[index]
-    const next = source[index + 1]
-    if (comment) {
-      if (char === '*' && next === '/') {
-        comment = false
-        index++
-      }
-      continue
-    }
-    if (quote) {
-      if (char === '\\') {
-        index++
-      } else if (char === quote) {
-        quote = ''
-      }
-      continue
-    }
-    if (char === '/' && next === '*') {
-      comment = true
-      index++
-      continue
-    }
-    if (char === '"' || char === '\'') {
-      quote = char
-      continue
-    }
     if (char === '(' || char === '[') {
       depth++
       continue
@@ -229,8 +203,6 @@ function isCSSWhitespaceChar(char: string) {
 
 export function collectCSSDirectiveRanges(source: string) {
   const ranges: CSSDirectiveRuleRange[] = []
-  let quote = ''
-  let comment = false
   let depth = 0
   // Only whitespace and comments since the start of the source or the last `;`, `{` or `}`.
   // `@master` is located only there: every located `@master` is rejected, and text such as
@@ -238,30 +210,11 @@ export function collectCSSDirectiveRanges(source: string) {
   let atStatementStart = true
   for (let index = 0; index < source.length; index++) {
     const char = source[index]
-    const next = source[index + 1]
-    if (comment) {
-      if (char === '*' && next === '/') {
-        comment = false
-        index++
-      }
-      continue
-    }
-    if (quote) {
-      if (char === '\\') {
-        index++
-      } else if (char === quote) {
-        quote = ''
-      }
-      continue
-    }
-    if (char === '/' && next === '*') {
-      comment = true
-      index++
-      continue
-    }
-    if (char === '"' || char === '\'') {
-      quote = char
-      atStatementStart = false
+    const skipped = skipCSSEscapeStringOrComment(source, index)
+    if (skipped !== index) {
+      // A comment leaves a statement start as it found it; an escape or a string starts content.
+      if (char !== '/') atStatementStart = false
+      index = skipped - 1
       continue
     }
     if (char === '{') {

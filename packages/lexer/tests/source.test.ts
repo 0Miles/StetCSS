@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { cssEscape, escapeRegExp } from '../src/source'
+import {
+  cssEscape,
+  escapeRegExp,
+  findCSSBlockEnd,
+  findCSSStatementEnd,
+  skipCSSEscapeStringOrComment
+} from '../src/source'
 
 describe('source helpers', () => {
   it('escapes CSS identifiers', () => {
@@ -12,5 +18,30 @@ describe('source helpers', () => {
 
   it('escapes regular expression source text', () => {
     expect(escapeRegExp('a.b[c]')).toBe('a\\.b\\[c\\]')
+  })
+
+  it('skips one escape, string or comment at a time', () => {
+    const source = String.raw`a\'b 'c\'d' /* e */ f`
+    expect(skipCSSEscapeStringOrComment(source, 0)).toBe(0)
+    expect(source.slice(1, skipCSSEscapeStringOrComment(source, 1))).toBe(String.raw`\'`)
+    expect(source.slice(5, skipCSSEscapeStringOrComment(source, 5))).toBe(String.raw`'c\'d'`)
+    expect(source.slice(12, skipCSSEscapeStringOrComment(source, 12))).toBe('/* e */')
+    expect(skipCSSEscapeStringOrComment('"open', 0)).toBe(5)
+    expect(skipCSSEscapeStringOrComment('/* open', 0)).toBe(7)
+    expect(skipCSSEscapeStringOrComment('\\', 0)).toBe(1)
+    expect(skipCSSEscapeStringOrComment('"a" b', 0, 2)).toBe(2)
+  })
+
+  /**
+   * Prevents: a backslash-escaped quote outside a string, as in the selector `.a\'b`, opening a
+   * string that ran to the next quote and hid the delimiters between.
+   */
+  it('bounds statements and blocks past escaped quotes outside strings', () => {
+    const statement = String.raw`.a\'b, .c\"d { color: red }`
+    expect(findCSSStatementEnd(statement, 0).reason).toBe('block')
+    expect(statement[findCSSStatementEnd(statement, 0).end]).toBe('{')
+
+    const block = String.raw`{ .a\'b { color: red } } @safelist 'x';`
+    expect(findCSSBlockEnd(block, 0)).toBe(block.indexOf('} @safelist'))
   })
 })
