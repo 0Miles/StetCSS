@@ -125,6 +125,18 @@ function readPlaceholder(content: string, start: number, parts: string[], unclos
 }
 
 /**
+ * `text`, the static text of a template literal beside its placeholders, without the class
+ * fragments touching them: `before` and `after` say which of its ends a placeholder touches. Uses
+ * the fragment rule of `removeTemplatePlaceholders`, so a parsed template literal yields the
+ * candidates text extraction finds in the same one.
+ */
+export function removeTemplateFragments(text: string, before: boolean, after: boolean): string {
+  const start = before ? fragmentEnd(text, 0) : 0
+  const end = after ? fragmentStart(text, start, text.length) : text.length
+  return text.slice(start, end)
+}
+
+/**
  * Replaces each closed template-literal placeholder `${…}` with the strings its expression holds.
  * The expression is code the host fills in at runtime, and the text touching a placeholder is a
  * fragment of a class that only exists then (`grid-` in `grid-${size}`), so neither is a class

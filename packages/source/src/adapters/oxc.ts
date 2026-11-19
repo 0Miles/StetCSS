@@ -3,6 +3,7 @@ import { visitorKeys, type ParserOptions } from 'oxc-parser'
 import { addClassString } from './class-string'
 import { parseOxcOnSourceStack, type OxcErrorFilter } from './oxc-stack'
 import { extractClassCandidates } from '../extract-class-candidates'
+import { removeTemplateFragments } from '../template-placeholders'
 import type { SourceAdapter } from './types'
 
 export const OXC_SOURCE_EXT = /\.(?:(?:[cm]?[jt]s)|(?:[jt]sx))(?:\?|$)/
@@ -12,7 +13,6 @@ interface OxcNode {
   value?: unknown
   raw?: unknown
   directive?: unknown
-  expressions?: unknown[]
   quasis?: {
     value?: {
       cooked?: string | null
@@ -78,11 +78,18 @@ function getJSXAttributeStringValue(node: OxcNode) {
   return body.includes('&') ? decodeStetCSSJSXAttributeString(body).value : body
 }
 
-function getTemplateLiteralValue(node: OxcNode) {
-  if (node.expressions?.length) return
+/**
+ * Adds the classes of a template literal's static text. The text touching a placeholder is a
+ * fragment of a class that only exists at runtime (`grid-` in `grid-${size}`), so it is left out,
+ * as text extraction leaves it out.
+ */
+function addTemplateLiteralClasses(classes: Set<string>, node: OxcNode, cache: Map<string, string[]>) {
   const quasis = node.quasis || []
-  if (quasis.length !== 1) return
-  return quasis[0]?.value?.cooked ?? quasis[0]?.value?.raw
+  quasis.forEach((quasi, index) => {
+    const text = quasi?.value?.cooked ?? quasi?.value?.raw
+    if (!text) return
+    addClassString(classes, removeTemplateFragments(text, index > 0, index < quasis.length - 1), cache)
+  })
 }
 
 export interface OxcParse {
@@ -128,7 +135,7 @@ export function extractParsedOxcClasses(source: string, content: string, parse: 
     if (node.type === 'Literal' && typeof node.value === 'string') {
       addClassString(classes, node.value, classStringCache)
     } else if (node.type === 'TemplateLiteral') {
-      addClassString(classes, getTemplateLiteralValue(node), classStringCache)
+      addTemplateLiteralClasses(classes, node, classStringCache)
     }
 
     const keys = visitorKeys[node.type] || []

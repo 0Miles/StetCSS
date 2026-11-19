@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { extractAstroClasses, extractClassCandidates, extractVueClasses } from '../src'
+import { extractAstroClasses, extractClassCandidates, extractSourceClassCandidates, extractVueClasses } from '../src'
 
 /**
  * Guards: a template literal's `${…}` placeholder is code that the host fills in at runtime, and
@@ -90,5 +90,48 @@ describe('template literal placeholders', () => {
   /** The ticket's repro in a Vue class binding, which reaches text extraction the same way. */
   test('extracts only the classes beside a placeholder in a Vue class binding', async () => {
     await expect(extractVueClasses('App.vue', '<template><div :class="`grid ${size}`"></div></template>')).resolves.toEqual(['grid'])
+  })
+})
+
+/** A class expression written the same way in each source whose markup holds one. */
+const classExpressionSources: [name: string, source: string, wrap: (expression: string) => string][] = [
+  ['TSX', 'App.tsx', (expression) => `export const App = () => <div className={${expression}} />`],
+  ['JSX', 'App.jsx', (expression) => `export const App = () => <div className={${expression}} />`],
+  ['Svelte', 'Component.svelte', (expression) => `<div class={${expression}}></div>`],
+  ['Astro', 'Page.astro', (expression) => `<div class={${expression}}></div>`],
+  ['Vue', 'App.vue', (expression) => `<template><div :class="${expression}"></div></template>`],
+  ['MDX', 'page.mdx', (expression) => `<div className={${expression}} />`]
+]
+
+/**
+ * Guards: JSX, TSX and Svelte markup expressions parse with oxc, which read only the template
+ * literals without a placeholder, so `grid` in `` `grid ${size}` `` generated no CSS there while
+ * Astro, Vue and MDX, which reach text extraction, generated it (#243).
+ */
+describe('template literal placeholders in every source', () => {
+  /**
+   * The ticket's repro in each source. Reverse check: reading no static text from a template
+   * literal with a placeholder in `src/adapters/oxc.ts` turns the TSX, JSX and Svelte cases red,
+   * and the next test's.
+   */
+  test.each(classExpressionSources)('extracts the class beside a placeholder in %s', async (_, source, wrap) => {
+    await expect(extractSourceClassCandidates({ source, content: wrap('`grid ${size}`') })).resolves.toEqual(['grid'])
+  })
+
+  /**
+   * Guards: a parsed template literal yields what text extraction finds in the same one, so a
+   * class generates CSS in every source or in none. Fragments touching a placeholder (`grid-`,
+   * `x`, `-y`, `p:2`) and placeholder code (`size`, `block`) are no candidates; the strings an
+   * expression holds and the whole classes of a nested template literal are. Reverse check:
+   * keeping the fragments in `src/adapters/oxc.ts` turns only the TSX, JSX and Svelte cases red,
+   * with `grid-` among them.
+   */
+  test.each(classExpressionSources)('extracts the same classes from a template literal with placeholders in %s', async (_, source, wrap) => {
+    const expression = '`grid-${size} m:1 ${a}x${b}-y \'p:2${c}\' ${on ? \'fg:red\' : block} ${size > 1 ? `p:${size}x mt:2` : \'\'}`'
+    await expect(extractSourceClassCandidates({ source, content: wrap(expression) })).resolves.toEqual([
+      'm:1',
+      'fg:red',
+      'mt:2'
+    ])
   })
 })
