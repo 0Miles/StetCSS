@@ -1,1 +1,5 @@
 @import '@stet-css/core';
+
+@theme {
+  --color-vue: #42b883;
+}
