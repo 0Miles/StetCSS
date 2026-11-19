@@ -27,6 +27,8 @@ export interface StandaloneCSSDirectiveStatement {
 
 export const REMOVED_MASTER_AT_RULE_ERROR_CODE = 'removed-master-at-rule'
 
+const UNQUOTED_DIRECTIVE_ARGUMENT_ERROR_CODE = 'unquoted-directive-argument'
+
 /**
  * `locate` means offsets in `source` are offsets in `filename`, so the error carries a source
  * reference the editor can underline; leave it off when `source` holds an expanded import graph.
@@ -167,6 +169,101 @@ function parseUnquotedWords(source: string) {
   return words
 }
 
+/** The keywords each string-argument directive takes besides its quoted arguments. */
+const STRING_ARGUMENT_DIRECTIVE_KEYWORDS: Partial<Record<StandaloneCSSDirectiveName, readonly string[]>> = {
+  source: ['not'],
+  safelist: [],
+  blocklist: []
+}
+
+interface DirectivePreludeToken {
+  type: 'string' | 'word' | 'comma'
+  start: number
+  end: number
+}
+
+/**
+ * Splits the prelude between `start` and `end` into quoted strings, commas, and unquoted words.
+ * Whitespace and comments separate tokens; an escape belongs to the word it stands in.
+ */
+function tokenizeDirectivePrelude(source: string, start: number, end: number) {
+  const tokens: DirectivePreludeToken[] = []
+  let wordStart = -1
+  const endWord = (index: number) => {
+    if (wordStart === -1) return
+    tokens.push({ type: 'word', start: wordStart, end: index })
+    wordStart = -1
+  }
+  for (let index = start; index < end; index++) {
+    const char = source[index]
+    if (char === '\\') {
+      if (wordStart === -1) wordStart = index
+      index++
+      continue
+    }
+    const skipped = skipCSSEscapeStringOrComment(source, index, end)
+    if (skipped !== index) {
+      endWord(index)
+      if (char !== '/') tokens.push({ type: 'string', start: index, end: skipped })
+      index = skipped - 1
+      continue
+    }
+    if (char === ',' || /\s/.test(char)) {
+      endWord(index)
+      if (char === ',') tokens.push({ type: 'comma', start: index, end: index + 1 })
+      continue
+    }
+    if (wordStart === -1) wordStart = index
+  }
+  endWord(end)
+  return tokens
+}
+
+/**
+ * `@source`, `@safelist` and `@blocklist` read only quoted arguments; an unquoted one would leave
+ * the statement while its glob, class or pattern never applies, so it fails with the quoted form.
+ */
+function assertQuotedDirectiveArguments(
+  source: string,
+  statement: StandaloneCSSDirectiveStatement,
+  filename: string | undefined,
+  locate: boolean
+) {
+  const keywords = STRING_ARGUMENT_DIRECTIVE_KEYWORDS[statement.atRuleName]
+  if (!keywords) return
+  const preludeStart = statement.start + statement.atRuleName.length + 1
+  const preludeEnd = source[statement.end - 1] === ';' ? statement.end - 1 : statement.end
+  const tokens = tokenizeDirectivePrelude(source, preludeStart, preludeEnd)
+  const isUnquoted = (token: DirectivePreludeToken) =>
+    token.type === 'word' && !keywords.includes(source.slice(token.start, token.end))
+  const unquoted = tokens.filter(isUnquoted)
+  if (!unquoted.length) return
+  let quoted = `@${statement.atRuleName}`
+  for (const token of tokens) {
+    const text = source.slice(token.start, token.end)
+    quoted += token.type === 'comma' ? ',' : ` ${isUnquoted(token) ? `'${text}'` : text}`
+  }
+  const location = filename ? ` (in ${filename})` : ''
+  const range = { start: unquoted[0].start, end: unquoted[unquoted.length - 1].end }
+  throw new CSSDirectiveError(
+    UNQUOTED_DIRECTIVE_ARGUMENT_ERROR_CODE,
+    `@${statement.atRuleName} takes only quoted arguments, so write "${quoted};"${location}`,
+    locate ? createCSSDirectiveSourceReference(filename, range, source) : undefined
+  )
+}
+
+/**
+ * Throws on the first `@source`, `@safelist` or `@blocklist` with an unquoted argument in `source`.
+ * The import-graph reader runs it on every stylesheet it reads, so the error points into the file
+ * that holds the directive rather than into the expanded graph.
+ */
+export function assertQuotedCSSDirectiveArguments(source: string, filename?: string, locate = false) {
+  if (!source.includes('@source') && !source.includes('@safelist') && !source.includes('@blocklist')) return
+  for (const statement of findStandaloneCSSDirectiveStatements(source)) {
+    assertQuotedDirectiveArguments(source, statement, filename, locate)
+  }
+}
+
 function wildcardToRegExp(source: string) {
   return new RegExp(`^${source.split(/([*?])/g).map((part) => {
     if (part === '*') return '.*'
@@ -286,6 +383,7 @@ export function collectStandaloneCSSDirectiveExtractionPolicy(source: string, fi
   assertNoMasterAtRules(source, filename, locate)
   const policy = createCSSDirectiveExtractionPolicy()
   for (const statement of findStandaloneCSSDirectiveStatements(source, filename)) {
+    assertQuotedDirectiveArguments(source, statement, filename, locate)
     switch (statement.atRuleName) {
       case 'source': {
         const negated = statement.modifiers.includes('not')
