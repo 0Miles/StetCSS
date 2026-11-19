@@ -42,6 +42,8 @@ Run machine-readable StetCSS diagnostics for agents, MCP servers, editor tools, 
 npx @stet-css/cli lint index.html main.js
 ```
 
+With no source paths, `lint` checks files under the current directory with a source extension or a `.css`, `.scss` or `.less` extension, skipping the same dependency, build output and cache directories as the root command. Source path arguments are linted as given, even inside those directories.
+
 Use JSON output for tools:
 
 ```bash
