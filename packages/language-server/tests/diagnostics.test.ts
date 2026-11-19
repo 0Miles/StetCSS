@@ -118,6 +118,30 @@ withFixture('basic', async (context) => {
     sendDiagnostics.mockRestore()
   })
 
+  /**
+   * Prevents: an open stylesheet with `@safelist fg:blue;` showing no error while the class never
+   * reaches the safelist (#239). The compiler's error must reach the document as one diagnostic on
+   * the unquoted argument, naming the quoted form.
+   * Reverse check: building the compiler's unquoted-argument error without a source reference
+   * turns this test red.
+   */
+  test('publishes unquoted @safelist argument diagnostics on the argument', async ({ expect }) => {
+    const text = '.btn { color: red; }\n@safelist fg:blue;'
+    const document = context.createDocument(text, { lang: 'css' })
+    const sendDiagnostics = vi.spyOn(context.server.connection, 'sendDiagnostics').mockImplementation(() => undefined as any)
+
+    await context.server.onDidOpen({ document })
+
+    const diagnostics = sendDiagnostics.mock.calls.at(-1)?.[0].diagnostics || []
+    const diagnostic = diagnostics.find((item: { code?: unknown }) => item.code === 'unquoted-directive-argument')
+    expect(diagnostic?.message).toContain("@safelist 'fg:blue';")
+    expect(document.offsetAt(diagnostic!.range.start)).toBe(text.indexOf('fg:blue'))
+    expect(document.offsetAt(diagnostic!.range.end)).toBe(text.indexOf('fg:blue') + 'fg:blue'.length)
+
+    await context.server.onDidClose({ document })
+    sendDiagnostics.mockRestore()
+  })
+
   test('publishes grouped @compose syntax diagnostics', async ({ expect }) => {
     const text = '.btn { @compose {block}; }'
     const document = context.createDocument(text, { lang: 'css' })
