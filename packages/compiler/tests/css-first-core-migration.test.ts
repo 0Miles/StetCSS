@@ -1727,6 +1727,25 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     expect(css.componentsLayer.text).toBe('@layer components{@media (width>=600px){.card{color:#00f}}@media (width>=8in){.card{color:red}}}')
   })
 
+  /**
+   * Prevents (#233): a ratio in a query nested in a compiled block printing as
+   * `undefined/undefined`, so the block ships a query that never matches and all of a component's
+   * ratio blocks merge into one. Covers the range, colon and container forms.
+   * Reverse-checked: the old `formatFeatureValue`, which read the ratio as
+   * `{ numerator, denominator }`, reds every row.
+   */
+  test.each([
+    ['@media (aspect-ratio >= 16 / 9)', '@media (aspect-ratio>=16/9)'],
+    ['@media (aspect-ratio: 4/3)', '@media (aspect-ratio:4/3)'],
+    ['@container (aspect-ratio > 1/1)', '@container (aspect-ratio>1/1)']
+  ])('keeps the ratio of %s in a compiled component', (query, output) => {
+    const { manifest } = compileCSSManifest(`@components { card { ${query} { color: red; } } }`, { baseManifest: defaultManifest })
+    const css = createTestCSS(manifest)
+    css.ensureClassRules('card')
+
+    expect(css.componentsLayer.text).toBe(`@layer components{${output}{.card{color:red}}}`)
+  })
+
   test('lowers inline theme variables without emitting their own theme rules', () => {
     const { manifest } = compileCSSManifest(`
       @theme inline {
