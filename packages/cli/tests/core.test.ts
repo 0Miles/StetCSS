@@ -2,7 +2,7 @@ import { execFileSync } from 'child_process'
 import { createRequire } from 'module'
 import fs from 'node:fs'
 import os from 'node:os'
-import { resolve } from 'path'
+import { relative, resolve } from 'path'
 import { pathToFileURL } from 'url'
 import { describe, expect, it } from 'vitest'
 import pkg from '../package.json' with { type: 'json' }
@@ -28,6 +28,11 @@ function runCLI(args: string[], options: { cwd?: string, input?: string } = {}) 
       TSX_TSCONFIG_PATH: tsconfigPath
     }
   })
+}
+
+/** A linted file's path relative to the report's cwd, with `/` separators. */
+function toReportPath(cwd: string, filePath: string) {
+  return relative(cwd, filePath).replace(/\\/g, '/')
 }
 
 function runFailedCLI(args: string[], options: { cwd?: string, input?: string } = {}) {
@@ -286,6 +291,49 @@ describe('lint command', () => {
       expect(report.files).toHaveLength(1)
       expect(report.files[0].filePath).toMatch(/src[/\\]d\.mjs$/)
       expect(report.files[0].diagnostics.some((diagnostic: TestDiagnostic) => diagnostic.code === 'invalid-class-order')).toBe(true)
+    } finally {
+      fs.rmSync(cwd, { recursive: true, force: true })
+    }
+  })
+
+  /**
+   * Guards that `stet-css lint` with no pattern skips the directories the build skips: without
+   * that, a project's build output (`dist/**`, `build/**`) is linted, and the report fills with
+   * diagnostics for files the build never reads. Issue #238.
+   */
+  it('skips build output directories in the default source set', () => {
+    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'stet-css-cli-lint-ignored-'))
+    try {
+      for (const file of ['src/index.html', 'dist/index.html', 'packages/app/build/index.html', '.next/server/page.html']) {
+        fs.mkdirSync(resolve(cwd, file, '..'), { recursive: true })
+        fs.writeFileSync(resolve(cwd, file), '<div class="fg:white m:0.5rem"></div>')
+      }
+      const output = runCLI(['lint', '--exit-code', 'never'], { cwd })
+      const report = JSON.parse(output)
+      expect(report.files.map((file: { filePath: string }) => toReportPath(report.cwd, file.filePath))).toEqual(['src/index.html'])
+    } finally {
+      fs.rmSync(cwd, { recursive: true, force: true })
+    }
+  })
+
+  /**
+   * Guards that the default ignores apply only when no pattern is given: a pattern the user
+   * names is linted as written, even inside a directory the default set skips. Without that,
+   * `stet-css lint "dist/**"` reports nothing and passes. Issue #238.
+   */
+  it('lints files an explicit pattern names inside a build output directory', () => {
+    const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'stet-css-cli-lint-explicit-'))
+    try {
+      for (const file of ['src/index.html', 'dist/index.html', 'dist/assets/app.js']) {
+        fs.mkdirSync(resolve(cwd, file, '..'), { recursive: true })
+        fs.writeFileSync(resolve(cwd, file), '<div class="fg:white m:0.5rem"></div>')
+      }
+      const output = runCLI(['lint', 'dist/**/*.{html,js}', '--exit-code', 'never'], { cwd })
+      const report = JSON.parse(output)
+      expect(report.files.map((file: { filePath: string }) => toReportPath(report.cwd, file.filePath)).sort()).toEqual([
+        'dist/assets/app.js',
+        'dist/index.html'
+      ])
     } finally {
       fs.rmSync(cwd, { recursive: true, force: true })
     }
