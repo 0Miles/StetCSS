@@ -1746,6 +1746,34 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     expect(css.componentsLayer.text).toBe(`@layer components{${output}{.card{color:red}}}`)
   })
 
+  /**
+   * Prevents (#233): compiled component style blocks under close min queries sorting largest
+   * first, as engine classes did, so `@media (width >= 601px)` follows `@media (width >= 605px)`
+   * and wins on screens 605px and wider; and `aspect-ratio` blocks staying in written order, so a
+   * wider ratio written first loses to a narrower one. Rows match the engine's close min query
+   * rows and are written in both orders; each row lists its blocks in the expected order.
+   * Reverse-checked: with ratios serialized correctly, the old compiler sort (its own range
+   * subtraction, and a feature regex without `aspect-ratio`) reds every row.
+   */
+  test.each([
+    ['px', '@media (width >= 601px)', '@media (width>=601px)', '@media (width >= 605px)', '@media (width>=605px)'],
+    ['px under 1rem', '@media (width >= 10px)', '@media (width>=10px)', '@media (width >= 12px)', '@media (width>=12px)'],
+    ['rem decimal', '@media (width >= 1.25rem)', '@media (width>=1.25rem)', '@media (width >= 1.5rem)', '@media (width>=1.5rem)'],
+    ['height', '@media (height >= 601px)', '@media (height>=601px)', '@media (height >= 605px)', '@media (height>=605px)'],
+    ['container', '@container (width >= 601px)', '@container (width>=601px)', '@container (width >= 605px)', '@container (width>=605px)'],
+    ['aspect-ratio', '@media (aspect-ratio >= 16/9)', '@media (aspect-ratio>=16/9)', '@media (aspect-ratio >= 3/1)', '@media (aspect-ratio>=3/1)'],
+    ['close aspect-ratio', '@media (aspect-ratio >= 16 / 9)', '@media (aspect-ratio>=16/9)', '@media (aspect-ratio >= 2/1)', '@media (aspect-ratio>=2/1)']
+  ])('orders %s component query blocks from smallest to largest', (_, smaller, smallerOutput, larger, largerOutput) => {
+    const blocks = [`${smaller} { color: red; }`, `${larger} { color: blue; }`]
+    for (const written of [blocks, [...blocks].reverse()]) {
+      const { manifest } = compileCSSManifest(`@components { card { ${written.join(' ')} } }`, { baseManifest: defaultManifest })
+      const css = createTestCSS(manifest)
+      css.ensureClassRules('card')
+
+      expect(css.componentsLayer.text).toBe(`@layer components{${smallerOutput}{.card{color:red}}${largerOutput}{.card{color:#00f}}}`)
+    }
+  })
+
   test('lowers inline theme variables without emitting their own theme rules', () => {
     const { manifest } = compileCSSManifest(`
       @theme inline {
