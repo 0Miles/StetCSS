@@ -1,5 +1,5 @@
 import { readFileSync, statSync } from 'node:fs'
-import { assertNoMasterAtRules } from './lexer/standalone-directives'
+import { assertNoMasterAtRules, assertQuotedCSSDirectiveArguments } from './lexer/standalone-directives'
 
 const MiB = 1024 * 1024
 /** The largest stylesheet an import graph reads. */
@@ -33,12 +33,12 @@ export type CSSImportGraphReader = (file: string, source?: string) => string
  * expansion applies the same file checks and limits. Create one per compile entry: the entry's graph
  * and the graphs of every stylesheet its `@reference` tree compiles share it, so their imports count
  * toward the same limits. Each file is read from disk once per reader. Each stylesheet is checked for
- * removed `@master` at-rules on its own, so the error points into the file that holds the at-rule
- * rather than into the expanded graph.
+ * removed `@master` at-rules and unquoted directive arguments on its own, so the error points into
+ * the file that holds the at-rule rather than into the expanded graph.
  */
 export function createCSSImportGraphReader(): CSSImportGraphReader {
   const sources = new Map<string, string>()
-  /** The text each file was last checked with, so repeated inclusions skip the `@master` scan. */
+  /** The text each file was last checked with, so repeated inclusions skip the per-file checks. */
   const checkedSources = new Map<string, string>()
   let inclusions = 0
   let bytes = 0
@@ -54,6 +54,7 @@ export function createCSSImportGraphReader(): CSSImportGraphReader {
     }
     if (checkedSources.get(file) !== text) {
       assertNoMasterAtRules(text, file, true)
+      assertQuotedCSSDirectiveArguments(text, file, true)
       checkedSources.set(file, text)
     }
     bytes += Buffer.byteLength(text)
