@@ -212,3 +212,25 @@ it.each([
   expectClassInvalid(className)
   expect(validate(className).matched).toBe(false)
 })
+
+/**
+ * Guards (#234): lint and the build accepting a class whose value the engine now rejects. An open
+ * function with an empty argument, and a group with an invalid item, used to emit a declaration
+ * native CSS drops; `generateValidRules` even kept `{fg:red;bg:blue,}`'s `color` as a valid group
+ * declaration. Trade-off: the full rows live in the engine's `value-list-commas.test.ts` and
+ * `group-items.test.ts`; this test only keeps the validator on the engine's verdict. The
+ * `fg:rgb(1,` row already passed before #234, since css-tree drops `color:rgb(1,)`; it stays to
+ * record the ticket's criterion, not to catch the engine change.
+ *
+ * Reverse check: with the engine source before #234, the three group rows fail.
+ */
+it.each([
+  'fg:rgb(1,',
+  '{fg:red,}',
+  '{fg:red;bg:blue,}',
+  '{fg:rgb(}'
+])('reports %s, whose value is invalid, as unmatched', (className) => {
+  expect(generateValidRules(className)).toHaveLength(0)
+  expectClassInvalid(className)
+  expect(validate(className).matched).toBe(false)
+})
