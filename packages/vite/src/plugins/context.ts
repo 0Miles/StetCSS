@@ -7,6 +7,9 @@ export default function ContextPlugin(context: PluginContext): Plugin {
     enforce: 'pre',
     configResolved(config) {
       context.config = config
+    },
+    configureServer(server) {
+      context.server = server
     }
   }
 }
