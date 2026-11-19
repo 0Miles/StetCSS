@@ -40,6 +40,7 @@ The plugin builds static CSS with no options: before each compilation it reads t
 - Entries can be `.css`, `.scss` or `.sass` files (Sass entries compile with your project's `sass`), including entries your app imports from outside the project root.
 - Files in `node_modules` and in common build output directories are not read; name them with `@source` to include them. Webpack's own `output.path` is never read, not even through `@source`, so emitted bundles cannot feed classes back.
 - In watch mode, editing any file the CSS reads rebuilds once. A newly created file that nothing imports is picked up on the next rebuild.
+- Local stylesheets such as CSS Modules, and the `<style>` blocks of `.vue` files loaded by `vue-loader`, can use `@compose`, `@variant` and `@reference`; they are lowered in place. In a `<style scoped>` block, the theme variables `@reference` brings in stay on `:root`, and the keyframes they name take the component's scope id, as Vue names that block's own keyframes. `VueLoaderPlugin` can come before or after this plugin.
 
 ## Options
 
