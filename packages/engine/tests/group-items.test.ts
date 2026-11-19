@@ -32,6 +32,23 @@ describe.concurrent('group items', () => {
   })
 
   /**
+   * Guards (#234): a function left open inside a group takes the group's closing `}` as an
+   * argument, so the group never closes. `{fg:rgb(}` emitted `color:rgb(})`, and
+   * `{fg:rgb(1,2,3}` emitted `color:rgb(1,2,3})`.
+   *
+   * Reverse check: without the check that a group's `{` closes at its own level, these rows fail.
+   */
+  test.each([
+    '{fg:rgb(}',
+    '{fg:rgb(1,}',
+    '{fg:rgb(1,2,3}',
+    '{fg:calc(1+2}',
+    '{fg:red;{bg:blue}'
+  ])('%s generates no CSS', (className) => {
+    expect(generateText(className)).toBe('')
+  })
+
+  /**
    * Guards (#234): rejecting items for their value must not reject items that match nothing,
    * which a group writes as raw declarations (`{top:48}`, `{flex:col}`), nor complete lists and
    * function arguments.
