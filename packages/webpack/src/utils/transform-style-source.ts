@@ -1,4 +1,6 @@
 import {
+  STYLE_CSS_REQUEST_RE,
+  cleanStyleRequest,
   compileStyleCSS,
   createStyleCSSHostSource,
   hasLocalStyleDirectives,
@@ -56,6 +58,11 @@ export async function transformStyleSource(
   }
 
   const resolvedSource = resolveStetStyleSource(resourcePath, source, projectDir)
+  // The plugin registers an entry by reading its file, so only a stylesheet file can be one:
+  // a `.vue` `<style>` block that imports `@stet-css/core` passes through as written.
+  if (resolvedSource && !STYLE_CSS_REQUEST_RE.test(cleanStyleRequest(resourcePath))) {
+    return { code: source, dependencies }
+  }
   if (!resolvedSource) {
     if (hasLocalStyleDirectives(source)) {
       const context = await loadLocalStyleContext(projectDir)

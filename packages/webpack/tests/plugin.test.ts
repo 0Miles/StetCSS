@@ -122,11 +122,12 @@ function makePlugin(options: Record<string, unknown> = {}, cwd = process.cwd()) 
   return plugin
 }
 
-function runStyleCSSLoader(root: string, resourcePath: string, source: string) {
+function runStyleCSSLoader(root: string, resourcePath: string, source: string, resourceQuery = '') {
   const dependencies: string[] = []
   return new Promise<string>((resolve, reject) => {
     stetCSSStyleCSSLoader.call({
       resourcePath,
+      resourceQuery,
       rootContext: root,
       addDependency: (dependency) => dependencies.push(dependency),
       getOptions: () => ({}),
@@ -175,12 +176,14 @@ describe('StetCSSPlugin', () => {
       .toThrow('Unknown @stet-css/webpack option "sources"; the only option is "adapters".')
   })
 
+  // The rule goes in on `initialize`, once every plugin has applied (#236).
   test('installs a pre style loader for managed CSS entries', () => {
     const plugin = makePlugin()
     const { compiler } = makeFakeCompiler()
     ;(compiler as any).webpack = { sources: { RawSource: function NoopSource(this: object) { /* stub */ } } }
 
     plugin.apply(compiler as any)
+    compiler.hooks.initialize.call()
 
     expect((compiler as any).options.module.rules).toEqual(expect.arrayContaining([
       expect.objectContaining({
@@ -341,6 +344,80 @@ describe('StetCSSPlugin', () => {
       const result = await runStyleCSSLoader(root, modulePath, '.button { @compose block; }')
       expect(result.content).toContain('.button{display:block}')
       expect(result.dependencies).toContain(modulePath)
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  /**
+   * Guards #236: vue-loader requests a `.vue` `<style>` block as `App.vue?vue&type=style&…`, so
+   * the loader must judge the request by its query, not by the bare `resourcePath`, or
+   * `@compose` and `@reference` reach css-loader as written. A scoped block also gets #189's
+   * treatment: generated rules wrapped in `:global()` and generated keyframes named
+   * `<name>-<id>` after vue-loader's `id=<id>&scoped=true`.
+   * Reverse check: handing the loader's transform `resourcePath` alone turns only this test red.
+   */
+  test('style loader lowers @compose and @reference in vue-loader style block requests', async () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-webpack-vue-block-'))
+    const componentPath = path.join(root, 'App.vue')
+    const tokensPath = path.join(root, 'tokens.css')
+    try {
+      writeFileSync(path.join(root, 'app.css'), [
+        '@import "@stet-css/core";',
+        '@components {',
+        '  brand { background-color: #123456; }',
+        '}'
+      ].join('\n'))
+      writeFileSync(tokensPath, '@theme { --color-probe: #abcdef; }')
+
+      const plain = await runStyleCSSLoader(
+        root,
+        componentPath,
+        '.plain { @compose inline-flex brand; }',
+        '?vue&type=style&index=0&lang.css'
+      )
+      // The same output a CSS Module with this source gets: component declarations first.
+      expect(plain.content).toContain('.plain{background-color:#123456;display:inline-flex}')
+      expect(plain.content).not.toContain('@compose')
+      expect(plain.content).not.toContain(':global(')
+
+      const scoped = await runStyleCSSLoader(
+        root,
+        componentPath,
+        '@reference "./tokens.css";\n.probe { color: var(--color-probe); @compose animate:fade; }',
+        '?vue&type=style&index=1&id=7a7a37b1&scoped=true&lang.css'
+      )
+      expect(scoped.content).toContain('.probe{color:var(--color-probe);animation:var(--animate-fade)}')
+      expect(scoped.content).toMatch(/:global\(:root\)\{[^}]*--color-probe:#abcdef/)
+      expect(scoped.content).toMatch(/:global\(:root\)\{[^}]*--animate-fade:fade-7a7a37b1 /)
+      expect(scoped.content).toMatch(/@keyframes fade-7a7a37b1\{/)
+      expect(scoped.content).not.toContain('@reference')
+      expect(scoped.content).not.toContain('@compose')
+      expect(scoped.dependencies).toContain(tokensPath)
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  /**
+   * Guards that judging a `.vue` style block by its query (#236) leaves a block that imports
+   * `@stet-css/core` as it was: the plugin registers an entry by reading its file, which for a
+   * block is the whole component, so rewriting the block to the generated CSS import would
+   * drop its native CSS and its directives.
+   * Reverse check: dropping the stylesheet-file check on entries in
+   * `src/utils/transform-style-source.ts` turns only this test red.
+   */
+  test('style loader leaves a vue-loader style block that imports @stet-css/core as written', async () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-webpack-vue-entry-'))
+    try {
+      const source = '@import "@stet-css/core";\n.native { color: red; }'
+      const result = await runStyleCSSLoader(
+        root,
+        path.join(root, 'App.vue'),
+        source,
+        '?vue&type=style&index=0&lang.css'
+      )
+      expect(result.content).toBe(source)
     } finally {
       rmSync(root, { recursive: true, force: true })
     }
