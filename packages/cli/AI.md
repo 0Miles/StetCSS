@@ -15,7 +15,7 @@ The command-line entry. The root command scans sources and writes extracted CSS,
 - **Watch**: a `resetDependencies` change closes every watcher, resets the scanner, rewrites output, and restarts watching. Source files are watched as the list `resolveStylesheetSourceFiles` returned at start; a new file is picked up after the next restart.
 - **Stylesheet errors**: an entry its author must fix (a `CSSDirectiveError`, a missing import, an unreadable file) becomes `StylesheetEntryError` and is reported as its one-line message: exit 1 on a run, a logged error under `--watch`, printed only once the entry is watched again so saving the fix restarts. Any other error keeps its stack.
 - **Globs**: source path arguments are normalised to `/` so Windows paths match.
-- **Lint default set**: `lint` with no pattern skips `PROJECT_IGNORED_DIRECTORIES` from `@stet-css/project/sources`, the list the build walk skips; keep it imported, not copied. Explicit patterns skip nothing.
+- **Lint default set**: `lint` with no pattern skips `PROJECT_IGNORED_DIRECTORIES` from `@stet-css/project/sources`, the list the build walk skips; keep it imported, not copied. Explicit patterns get no ignore list, but every pattern runs through fast-glob with `dot: false`: `**/*.vue` misses `.vitepress/theme/Layout.vue`, which only a pattern naming the dot directory reaches.
 
 ## Validation
 
