@@ -202,6 +202,8 @@ export default class StetCSS {
   protected readonly nativeDeclarationUtilities = new Map<string, CompiledUtility>()
   protected nativeValueNamespaceUtilities = new Map<string, CompiledUtility>()
   protected keyAliases = new Map<string, string>()
+  /** Set when a candidate rule is rejected for an invalid value; scoped by `generateGroupItem`. */
+  private rejectedInvalidValue = false
 
   manifest!: StetCSSManifest
 
@@ -798,6 +800,23 @@ export default class StetCSS {
   }
 
   /**
+   * Generates one item of a group class (`fg:red` in `{fg:red;top:48}`). Returns `undefined` when
+   * the item generates nothing because its value is invalid (`fg:red,`), which invalidates the
+   * whole group, and `[]` when it matches nothing, which the group writes as a raw declaration
+   * (`top:48`).
+   */
+  generateGroupItem(className: string, mode?: string): Utility[] | undefined {
+    const outerRejectedInvalidValue = this.rejectedInvalidValue
+    this.rejectedInvalidValue = false
+    try {
+      const rules = this.generate(className, mode)
+      return rules.length || !this.rejectedInvalidValue ? rules : undefined
+    } finally {
+      this.rejectedInvalidValue = outerRejectedInvalidValue
+    }
+  }
+
+  /**
    * Create utility from given class name
    * @param className
    * @returns Utility
@@ -926,6 +945,7 @@ export default class StetCSS {
 
   protected createRuleWithDefinition(className: string, registeredUtility: CompiledUtility, fixedClass?: string, mode?: string, branchIndex = 0, stateBranches?: Utility['stateBranches']): Utility | undefined {
     const candidate = new Utility(className, this, registeredUtility, fixedClass, mode, branchIndex, stateBranches)
+    if (candidate.invalidValueSyntax) this.rejectedInvalidValue = true
     if (
       candidate.valid
       && this.shouldValidateNativeDeclarationUtility(registeredUtility)

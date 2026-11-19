@@ -866,7 +866,12 @@ export class Utility {
     addName()
 
     for (const eachName of names) {
-      const rules = this.css.generate(eachName, this.mode)
+      const rules = this.css.generateGroupItem(eachName, this.mode)
+      if (!rules) {
+        // One item with an invalid value invalidates the group, as it does a single class.
+        this.invalidValueSyntax = true
+        return {}
+      }
       if (rules.length) {
         for (const eachRule of rules) {
           handleRule(eachRule)
