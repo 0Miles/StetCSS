@@ -3,10 +3,11 @@ import { ConditionNode } from './parse-condition'
 import { SelectorNode } from './parse-selector'
 import naturalCompare from './natural-compare'
 import { toComparableQueryLength } from './query-length'
+import { compareQueryFeatures, sortQueryFeatures, toComparableQueryRatio, toQueryFeatures, type QueryFeature, type QueryFeatureBound } from './query-features'
 
 // ✅ RulePriority definition
 export type RulePriority = {
-  features?: [string, number, number][]
+  features?: QueryFeature[]
   selector: number
 }
 
@@ -41,43 +42,24 @@ const NOT_COMPARISON_OPERATORS = {
   '<': '>=',
 }
 
-// Orders a ratio query such as `aspect-ratio>=16/9` by the quotient of its ratio.
-function toComparableRatio(value: string) {
-  const [numerator, denominator] = value.split('/')
-  return Number(numerator) / Number(denominator)
-}
-
-function getConditionEntries(nestNodes?: ConditionNode[]) {
-  const featureMap = new Map<string, { min?: number; max?: number }>()
+function getConditionBounds(nestNodes?: ConditionNode[]) {
+  const bounds: QueryFeatureBound[] = []
   const walk = (list?: ConditionNode[], isOutsideNot = false) => {
     (list ?? []).forEach((node, i, arr) => {
       const prev = arr[i - 1]
       if ('operator' in node) {
-        const entry = featureMap.get(node.name) ?? {}
         let operator = node.operator
         if (isOutsideNot)
           operator = NOT_COMPARISON_OPERATORS[operator as keyof typeof NOT_COMPARISON_OPERATORS]
         if (prev?.type === 'logical' && prev.value === 'not')
           operator = NOT_COMPARISON_OPERATORS[operator as keyof typeof NOT_COMPARISON_OPERATORS]
-        const value = node.type === 'number'
-          ? toComparableQueryLength(node.value, node.unit)
-          : toComparableRatio(node.value)
-        if (Number.isNaN(value)) return
-        switch (operator) {
-          case '>':
-            entry.min = value + 0.02
-            break
-          case '>=':
-            entry.min = value
-            break
-          case '<':
-            entry.max = value - 0.02
-            break
-          case '<=':
-            entry.max = value
-            break
-        }
-        featureMap.set(node.name, entry)
+        bounds.push({
+          name: node.name,
+          operator,
+          value: node.type === 'number'
+            ? toComparableQueryLength(node.value, node.unit)
+            : toComparableQueryRatio(node.value)
+        })
       }
       if ('children' in node && Array.isArray(node.children)) {
         walk(node.children, prev?.type === 'logical' && prev.value === 'not')
@@ -85,51 +67,20 @@ function getConditionEntries(nestNodes?: ConditionNode[]) {
     })
   }
   walk(nestNodes)
-  return featureMap
+  return bounds
 }
 
 // ✅ Calculate RulePriority from AST
 export function calcRulePriority(rule: Utility): RulePriority {
-  const features: [string, number, number][] = []
-  const extractFeatures = (nodes: ConditionNode[]) => {
-    const featureMap = getConditionEntries(nodes)
-    for (const [name, entry] of featureMap.entries()) {
-      const max = entry.max ?? Number.MAX_SAFE_INTEGER
-      const min = entry.min ?? 0
-      features.push([name, min, max])
-    }
-  }
-  if (rule.conditions?.media) extractFeatures(rule.conditions.media)
-  if (rule.conditions?.container) extractFeatures(rule.conditions.container)
-  features.sort(([a], [b]) => naturalCompare(a, b))
+  const features = sortQueryFeatures([
+    ...toQueryFeatures(getConditionBounds(rule.conditions?.media)),
+    ...toQueryFeatures(getConditionBounds(rule.conditions?.container))
+  ])
   const selector = extractSelectorPriority(rule.selectorNodes ?? [])
   return {
     features,
     selector
   }
-}
-
-function compareFeatureTuples(
-  a: [string, number, number][],
-  b: [string, number, number][]
-): number {
-  const len = Math.max(a.length, b.length)
-  for (let i = 0; i < len; i++) {
-    const aa = a[i]
-    const bb = b[i]
-    if (!aa) return -1
-    if (!bb) return 1
-    const [nameA, minA, maxA] = aa
-    const [nameB, minB, maxB] = bb
-    const nameCmp = naturalCompare(nameA, nameB)
-    if (nameCmp !== 0) return nameCmp
-    const rangeA = maxA - minA
-    const rangeB = maxB - minB
-    if (rangeA !== rangeB) return rangeB - rangeA
-    if (minA !== minB) return minB - minA
-    if (maxA !== maxB) return maxB - maxA
-  }
-  return 0
 }
 
 function getRuleSortTier(rule: ComparableRule): number {
@@ -152,7 +103,7 @@ export default function compareRulePriority(a: ComparableRule, b: ComparableRule
   // 1. features
   const fa = a.priority.features || []
   const fb = b.priority.features || []
-  const featureCmp = compareFeatureTuples(fa, fb)
+  const featureCmp = compareQueryFeatures(fa, fb)
   if (featureCmp !== 0) return featureCmp
 
   // 2. selector
