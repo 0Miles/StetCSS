@@ -1606,6 +1606,8 @@ export class Utility {
     } else {
       // The class ended inside a function, which is closed for it: `fg:rgb(1,` is `rgb(1,)`.
       checkFunctionArguments()
+      // A group closes at its own level; in `{fg:rgb(}` the open `rgb(` takes the group's `}`.
+      if (endSymbol === '}' && this.registeredUtility.emit.type === 'group') this.invalidValueSyntax = true
     }
     return i
   }
