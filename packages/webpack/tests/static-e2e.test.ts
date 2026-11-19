@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process'
 import { createServer, type Server } from 'node:http'
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import { dirname, extname, join, normalize, relative } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { chromium, type Browser } from '@playwright/test'
@@ -299,6 +300,119 @@ describe('Webpack static CSS', () => {
       expect(css).toMatch(/\.p\\:0\\\.5rem\s*\{/)
     } finally {
       rmSync(workspace, { recursive: true, force: true })
+    }
+  }, 180000)
+
+  /**
+   * Guards #236 through vue-loader and Vue's real scoped style compiler, as users set it up
+   * with `style-loader`: a `.vue` `<style>` block reaches the loader as
+   * `App.vue?vue&type=style&…`, VueLoaderPlugin copies the rules present when it applies, and
+   * a `pre` loader would see the whole `.vue` file. A plain block's `@compose` must apply; a
+   * scoped block's referenced theme variable must sit on `:root` (as `[data-v-…]:root` it
+   * matches nothing) and its composed animation must name keyframes `fade-<scope id>` that
+   * exist, as with Vite (#189). Both orders of the two plugins.
+   * Reverse check: installing the rules at `apply` instead of on `initialize` turns only the
+   * StetCSSPlugin-first case red; leaving out the `.vue` block rule, or appending it after
+   * vue-loader's rule, turns both red; so does handing the loader's transform `resourcePath`
+   * alone.
+   */
+  it.each(['VueLoaderPlugin first', 'StetCSSPlugin first'])('lowers @compose and @reference in .vue style blocks (%s)', async (order) => {
+    const StetCSSPlugin = await importPlugin()
+    const { default: webpackModule } = await import('webpack')
+    const { VueLoaderPlugin } = createRequire(join(packageDir, 'package.json'))('vue-loader') as typeof import('vue-loader')
+    const root = createFixture('vue', {
+      // A project of its own: this package's `"sideEffects": false` would drop the style imports.
+      'package.json': '{ "private": true }',
+      'src/index.js': [
+        'import "./app.css"',
+        'import { createApp } from "vue"',
+        'import App from "./App.vue"',
+        'createApp(App).mount("#app")',
+        ''
+      ].join('\n'),
+      'src/app.css': [
+        '@import "@stet-css/core";',
+        '@theme { --color-probe: #123456; }',
+        '@components { brand { background-color: #abcdef; } }',
+        ''
+      ].join('\n'),
+      'src/App.vue': [
+        '<template>',
+        '  <p class="plain">plain</p>',
+        '  <p class="probe">probe</p>',
+        '</template>',
+        '',
+        '<style>',
+        '.plain { @compose inline-flex brand; }',
+        '</style>',
+        '',
+        '<style scoped>',
+        '@reference "./app.css";',
+        '.probe { color: var(--color-probe); @compose animate:fade; }',
+        '</style>',
+        ''
+      ].join('\n')
+    })
+    const dist = join(root, 'dist')
+    const plugins = [new VueLoaderPlugin(), new StetCSSPlugin({}, root)]
+    let browser: Browser | undefined
+    let server: Server | undefined
+
+    try {
+      await runWebpack(webpackModule, {
+        mode: 'production',
+        context: root,
+        entry: './src/index.js',
+        output: { path: dist, filename: '[name].js' },
+        module: {
+          rules: [
+            { test: /\.vue$/, loader: 'vue-loader' },
+            { test: /\.css$/, use: ['style-loader', 'css-loader'] }
+          ]
+        },
+        plugins: order === 'VueLoaderPlugin first' ? plugins : plugins.reverse()
+      })
+      writeFileSync(join(dist, 'index.html'), '<!doctype html><div id="app"></div><script src="./main.js"></script>\n')
+
+      const served = await serveDirectory(dist)
+      server = served.server
+      browser = await chromium.launch()
+      const page = await browser.newPage()
+      await page.goto(served.url)
+      await page.waitForSelector('.probe')
+      const result = await page.evaluate(() => {
+        const plain = getComputedStyle(document.querySelector('.plain')!)
+        const probeElement = document.querySelector('.probe')!
+        const probe = getComputedStyle(probeElement)
+        const rules = [...document.styleSheets].flatMap((sheet) => [...sheet.cssRules])
+        const flatten = (list: CSSRule[]): CSSRule[] => list.flatMap((rule) => [
+          rule,
+          ...'cssRules' in rule && !(rule instanceof CSSKeyframesRule) ? flatten([...(rule as CSSGroupingRule).cssRules]) : []
+        ])
+        const allRules = flatten(rules)
+        return {
+          plain: { display: plain.display, backgroundColor: plain.backgroundColor },
+          probe: { color: probe.color, animationName: probe.animationName },
+          scopeId: [...probeElement.attributes].find((attribute) => attribute.name.startsWith('data-v-'))?.name.slice('data-v-'.length),
+          keyframes: allRules.filter((rule) => rule instanceof CSSKeyframesRule).map((rule) => (rule as CSSKeyframesRule).name),
+          scopedRoot: allRules.some((rule) => rule instanceof CSSStyleRule && /\[data-v-[^\]]+\]:root/.test(rule.selectorText)),
+          directives: [...document.querySelectorAll('style')].some((style) => /@(?:compose|reference)\b/.test(style.textContent || ''))
+        }
+      })
+
+      expect(result.scopeId).toBeTruthy()
+      expect(result).toEqual({
+        plain: { display: 'inline-flex', backgroundColor: 'rgb(171, 205, 239)' },
+        probe: { color: 'rgb(18, 52, 86)', animationName: `fade-${result.scopeId}` },
+        scopeId: result.scopeId,
+        keyframes: expect.arrayContaining([`fade-${result.scopeId}`]),
+        scopedRoot: false,
+        directives: false
+      })
+    } finally {
+      await browser?.close()
+      await new Promise<void>((resolve) => server?.close(() => resolve()) ?? resolve())
+      rmSync(root, { recursive: true, force: true })
     }
   }, 180000)
 

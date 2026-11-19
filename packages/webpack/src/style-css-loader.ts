@@ -15,6 +15,7 @@ interface StyleCSSLoaderOptions {
 
 interface LoaderContext {
   resourcePath: string
+  resourceQuery?: string
   rootContext?: string
   async?: () => (error: Error | null, result?: string) => void
   addDependency?: (file: string) => void
@@ -46,13 +47,16 @@ export default function stetCSSStyleCSSLoader(this: LoaderContext, source: strin
     throw new Error('[@stet-css/webpack] Style CSS loader requires an async loader context.')
   }
   const options = this.getOptions?.() || {}
-  const dependencies = shouldAddStyleDependencies(this.resourcePath, source, this.rootContext)
-    ? new Set(collectStyleCSSDependencies(this.resourcePath, source, this.rootContext))
+  // The query tells a `.vue` `<style>` block (`App.vue?vue&type=style&…&lang.css`) apart
+  // from the component itself, and carries its scope id.
+  const request = this.resourcePath + (this.resourceQuery || '')
+  const dependencies = shouldAddStyleDependencies(request, source, this.rootContext)
+    ? new Set(collectStyleCSSDependencies(request, source, this.rootContext))
     : new Set<string>()
   for (const dependency of dependencies) {
     this.addDependency?.(dependency)
   }
-  transformStyleSource(this.resourcePath, source, {
+  transformStyleSource(request, source, {
     projectDir: this.rootContext,
     stetImport: toCSSImportPath(this.resourcePath, options.virtualCSSImportModuleId)
   })
