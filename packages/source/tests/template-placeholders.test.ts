@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { extractAstroClasses, extractClassCandidates, extractSourceClassCandidates, extractVueClasses } from '../src'
+import { extractAstroClasses, extractClassCandidates, extractOxcClasses, extractSourceClassCandidates, extractVueClasses } from '../src'
 
 /**
  * Guards: a template literal's `${…}` placeholder is code that the host fills in at runtime, and
@@ -119,8 +119,8 @@ describe('template literal placeholders in every source', () => {
   })
 
   /**
-   * Guards: a parsed template literal yields what text extraction finds in the same one, so a
-   * class generates CSS in every source or in none. Fragments touching a placeholder (`grid-`,
+   * Guards: a parsed template literal drops the fragments text extraction drops, so a class beside
+   * a placeholder generates CSS in every source or in none. Fragments touching a placeholder (`grid-`,
    * `x`, `-y`, `p:2`) and placeholder code (`size`, `block`) are no candidates; the strings an
    * expression holds and the whole classes of a nested template literal are. Reverse check:
    * keeping the fragments in `src/adapters/oxc.ts` turns only the TSX, JSX and Svelte cases red,
@@ -134,4 +134,15 @@ describe('template literal placeholders in every source', () => {
       'mt:2'
     ])
   })
+})
+
+/**
+ * Guards: the static text of a parsed template literal is read as the script runs it, with its
+ * escape sequences decoded, so `\t` separates two classes as the tab it stands for does; read as
+ * written, `grid\tm:1` is one invalid class and neither generates CSS. Parsed sources only: text
+ * extraction reads the literal as written. Reverse check: reading the raw text before the cooked
+ * text in `src/adapters/oxc.ts` turns only this test red, with `grid\tm:1`.
+ */
+test('reads a template literal with placeholders by its decoded escape sequences', () => {
+  expect(extractOxcClasses('App.tsx', 'export const App = () => <div className={`grid\\tm:1 ${x}`} />')).toEqual(['grid', 'm:1'])
 })
