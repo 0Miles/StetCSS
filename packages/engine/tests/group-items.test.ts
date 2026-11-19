@@ -64,4 +64,20 @@ describe.concurrent('group items', () => {
   ])('%s keeps its rule', (className, text) => {
     expect(generateText(className)).toBe(text)
   })
+
+  /**
+   * Guards (#234): a group item whose function may hold an empty argument. The group's own parse
+   * read `fg:var(--x,)` as a function named `fg:var`, missed the `var()` exemption from #175, and
+   * dropped the group although `fg:var(--x,)` alone keeps `color:var(--x,)`. Items are judged one
+   * by one, each against its own function names.
+   *
+   * Reverse check: running the empty-argument check on the group's own parse again fails these
+   * rows.
+   */
+  test.each([
+    ['{fg:var(--x,)}', '@layer utilities{.\\{fg\\:var\\(--x\\,\\)\\}{color:var(--x,)}}'],
+    ['{bg:url(a,)}', '@layer utilities{.\\{bg\\:url\\(a\\,\\)\\}{background-image:url(a,)}}']
+  ])('%s keeps its rule', (className, text) => {
+    expect(generateText(className)).toBe(text)
+  })
 })
