@@ -298,13 +298,20 @@ describe('lint command', () => {
 
   /**
    * Guards that `stet-css lint` with no pattern skips the directories the build skips: without
-   * that, a project's build output (`dist/**`, `build/**`) is linted, and the report fills with
-   * diagnostics for files the build never reads. Issue #238.
+   * that, a project's dependencies (`node_modules/**`) and build output (`dist/**`, `build/**`)
+   * are linted, and the report fills with diagnostics for files the build never reads. Issue #238.
    */
-  it('skips build output directories in the default source set', () => {
+  it('skips dependency and build output directories in the default source set', () => {
     const cwd = fs.mkdtempSync(resolve(os.tmpdir(), 'stet-css-cli-lint-ignored-'))
     try {
-      for (const file of ['src/index.html', 'dist/index.html', 'packages/app/build/index.html', '.next/server/page.html']) {
+      for (const file of [
+        'src/index.html',
+        'node_modules/pkg/index.html',
+        'packages/app/node_modules/dep/index.html',
+        'dist/index.html',
+        'packages/app/build/index.html',
+        '.next/server/page.html'
+      ]) {
         fs.mkdirSync(resolve(cwd, file, '..'), { recursive: true })
         fs.writeFileSync(resolve(cwd, file), '<div class="fg:white m:0.5rem"></div>')
       }
