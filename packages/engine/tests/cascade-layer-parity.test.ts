@@ -383,14 +383,52 @@ describe.concurrent('migrated cascade and layer parity', () => {
    * quotient. Rows are listed in the expected order; their class names sort differently.
    * Reverse-checked: making `toComparableRatio` in `compare-rule-priority.ts` return `NaN` reds this
    * test only; dropping `/` from the token regex in `parse-condition.ts` reds it and the 16/9 row
-   * in `parser-parity.test.ts`. Quotients sit at least 1 apart: closer min-only values tie in
-   * `compareFeatureTuples` (a separate precision defect).
+   * in `parser-parity.test.ts`. Ratios closer than 1 apart are covered by the close min query rows
+   * below (#233).
    */
   test('orders aspect-ratio queries by ratio', () => {
     const expected = ['block@aspect-ratio>=1/2', 'block@aspect-ratio>=16/9', 'block@aspect-ratio>=3/1']
     const css = createDefaultCSS()
     css.ensureClassRules(...[...expected].reverse())
     expect(css.utilitiesLayer.rules.map(({ name }) => name)).toEqual(expected)
+  })
+
+  /**
+   * Prevents (#233): two min-width queries a few pixels apart coming out largest first, so
+   * `fg:red@w>=601px` follows `fg:blue@w>=605px` and red wins on screens 605px and wider.
+   * Checked in both class orders, since insertion order alone must not decide the cascade.
+   * Reverse-checked: the old `compareFeatureTuples`, which subtracted each min from the unbounded
+   * max, reds this test and the close min query rows below, and nothing else in this package.
+   */
+  test('lets the larger of two close min-width queries win', () => {
+    const expected = '@layer utilities{@media (width>=601px){.fg\\:red\\@w\\>\\=601px{color:var(--color-red)}}@media (width>=605px){.fg\\:blue\\@w\\>\\=605px{color:var(--color-blue)}}}'
+    for (const classNames of [['fg:red@w>=601px', 'fg:blue@w>=605px'], ['fg:blue@w>=605px', 'fg:red@w>=601px']]) {
+      const css = createDefaultCSS()
+      css.ensureClassRules(...classNames)
+      expect(css.utilitiesLayer.text).toBe(expected)
+    }
+  })
+
+  /**
+   * Prevents (#233): min queries less than about 1rem apart sorting in reverse, so the narrower
+   * query lands first and loses the cascade to the wider one where both match. Covers width and
+   * height, px, rem decimals, container queries and ratios. Rows are listed in the expected order
+   * and inserted in both orders.
+   * Reverse-checked: the old `compareFeatureTuples` arithmetic reds every row and the 601/605 test.
+   */
+  test.each([
+    ['px', ['block@w>=10px', 'block@w>=12px']],
+    ['rem decimal', ['block@w>=1.25rem', 'block@w>=1.5rem']],
+    ['height', ['block@h>=601px', 'block@h>=605px']],
+    ['container', ['block@container(w>=601px)', 'block@container(w>=605px)']],
+    ['container rem decimal', ['block@container(w>=1.25rem)', 'block@container(w>=1.5rem)']],
+    ['aspect-ratio', ['block@aspect-ratio>=16/9', 'block@aspect-ratio>=2/1']]
+  ])('orders close %s min queries from smallest to largest', (_, expected) => {
+    for (const classNames of [expected, [...expected].reverse()]) {
+      const css = createDefaultCSS()
+      css.ensureClassRules(...classNames)
+      expect(css.utilitiesLayer.rules.map(({ name }) => name)).toEqual(expected)
+    }
   })
 
   test('orders breakpoint tokens with uppercase units by resolved width', () => {
