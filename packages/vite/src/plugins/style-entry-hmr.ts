@@ -2,6 +2,7 @@ import type { Plugin, ViteDevServer } from 'vite'
 import { isStylesheetSourceFile } from '@stet-css/stylesheet'
 import type { PluginContext } from '../core'
 import getExtractedCSS, { getStylesheetSourceContext } from '../utils/extracted-css'
+import { invalidateEmittedGlobalsModule } from '../utils/emitted-globals-module'
 
 /** HMR when the project's source files change */
 export default function StyleEntryHMRPlugin(context: PluginContext): Plugin {
@@ -40,6 +41,9 @@ export default function StyleEntryHMRPlugin(context: PluginContext): Plugin {
   const handleSourceFileChange = (server: ViteDevServer, file: string) => {
     if (!context.virtualCSSImporters?.size) return
     if (!isStylesheetSourceFile(file, getStylesheetSourceContext(context))) return
+    // Before the queued extraction: a page reload this change triggers (an HTML edit, a module
+    // without an HMR boundary) can request the module first, and it reads the file from disk.
+    invalidateEmittedGlobalsModule(server)
     // A burst of changes (a checkout, save-all) shares one pending update, which extracts
     // after the changes before it started have landed.
     if (serversWithPendingSourceUpdate.has(server)) return

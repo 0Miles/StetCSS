@@ -17,6 +17,7 @@ import { getProjectDir } from '../utils/project-dir'
 import { createSlotCSSRule } from '../utils/slot'
 import { collectLayerStatementsBeforeImports } from '../utils/layer-order'
 import { createBuildDigest } from '../utils/build-digest'
+import { invalidateEmittedGlobalsModule } from '../utils/emitted-globals-module'
 
 const RESOLVED_VIRTUAL_CSS_ID = '\0' + VIRTUAL_CSS_ID
 
@@ -90,6 +91,8 @@ export default function StyleEntryPlugin(context: PluginContext): Plugin {
       if (context.config?.command === 'serve') {
         context.virtualCSSImporters ??= new Set()
         context.virtualCSSImporters.add(id)
+        // The entry was registered again, and its theme decides the emitted variables.
+        invalidateEmittedGlobalsModule(context.server)
       } else {
         markPlaceholderEmitted(context, this)
       }
