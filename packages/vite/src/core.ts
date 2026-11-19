@@ -1,7 +1,7 @@
 import { validatePluginOptions, type CSSScanner } from '@stet-css/scanner'
 import type { StetCSSEmittedGlobals } from '@stet-css/core'
 import type { StyleCSSSources } from '@stet-css/stylesheet'
-import type { Plugin, ResolvedConfig } from 'vite'
+import type { Plugin, ResolvedConfig, ViteDevServer } from 'vite'
 import ManifestLoaderPlugin from './plugins/manifest-loader'
 import ManifestVirtualModulePlugin from './plugins/manifest-virtual-module'
 import EmittedGlobalsVirtualModulePlugin from './plugins/emitted-globals-virtual-module'
@@ -31,6 +31,8 @@ export interface PluginHost {
 
 export interface PluginContext {
   config?: ResolvedConfig
+  /** The dev server; unset in a build. */
+  server?: ViteDevServer
   host?: PluginHost
   scanner?: CSSScanner
   virtualCSSImporters?: Set<string>
