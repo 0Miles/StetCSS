@@ -1483,11 +1483,13 @@ export class Utility {
         currentValue = ''
       }
     }
-    // Unnamed parentheses pass down the nearest function name, so `calc((1,))` is checked.
+    // Unnamed parentheses pass down the nearest function name, so `calc((1,))` is checked. A
+    // group skips it: it reads `fg:var(` as `fg:var`, and generating each item checks it anyway.
     const checkFunctionArguments = () => {
       if (
         !root
         && endSymbol === ')'
+        && this.registeredUtility.emit.type !== 'group'
         && !hasOpaqueArguments(parentFunctionName)
         && hasEmptyListItem(currentValueComponents)
       ) this.invalidValueSyntax = true
