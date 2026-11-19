@@ -12,6 +12,7 @@ import {
 import type { PropertiesHyphen } from 'csstype'
 import { skipCSSEscapeStringOrComment, splitCSSSelectorList } from '@stet-css/lexer'
 import {
+  compareQueryFeatures,
   compareRulePriority,
   PRESET_MODES,
   UndeclaredModeError,
@@ -22,9 +23,13 @@ import {
   joinConditionNodes,
   parseCondition,
   parseSelector,
+  sortQueryFeatures,
   splitModeConjuncts,
   toComparableQueryLength,
+  toComparableQueryRatio,
+  toQueryFeatures,
   type GeneratedRule,
+  type QueryFeatureBound,
   type StetCSS
 } from '@stet-css/engine/compiler'
 import type { StetCSSManifest, StetCSSManifestUtilityLayerName } from '@stet-css/schema/manifest'
@@ -92,9 +97,8 @@ interface StyleMergeBucket {
   events: StyleMergeEvent[]
 }
 
-type StyleConditionFeature = [string, number, number]
-
-const STYLE_CONDITION_FEATURE_REGEX = /\(\s*(width|height|resolution)\s*(>=|<=|>|<)\s*(-?(?:\d+(?:\.\d+)?|\.\d+))([a-z%]*)\s*\)/g
+/** A range feature in a block's query: name, operator, value, then a ratio's denominator or a unit. */
+const STYLE_CONDITION_FEATURE_REGEX = /\(\s*(width|height|resolution|aspect-ratio)\s*(>=|<=|>|<)\s*(-?(?:\d+(?:\.\d+)?|\.\d+))(?:\s*\/\s*(\d+(?:\.\d+)?|\.\d+)|([a-z%]*))\s*\)/g
 const MEDIA_MODE_NAMES = new Set(PRESET_MODES)
 const DEFAULT_MODE_NONE = 'none'
 const CONDITION_VARIABLE_NAMESPACES = new Set(['breakpoint', 'container'])
@@ -755,56 +759,19 @@ function createMergedStyleDefinition(bucket: StyleMergeBucket): MergedStyleDefin
 }
 
 function getStyleConditionFeatures(conditions: string[] | undefined) {
-  const featureMap = new Map<string, { min?: number, max?: number }>()
+  const bounds: QueryFeatureBound[] = []
   for (const condition of conditions || []) {
-    for (const match of condition.matchAll(STYLE_CONDITION_FEATURE_REGEX)) {
-      const [, name, operator, rawValue, unit] = match
-      const value = toComparableQueryLength(Number(rawValue), unit)
-      const entry = featureMap.get(name) ?? {}
-      switch (operator) {
-        case '>':
-          entry.min = value + 0.02
-          break
-        case '>=':
-          entry.min = value
-          break
-        case '<':
-          entry.max = value - 0.02
-          break
-        case '<=':
-          entry.max = value
-          break
-      }
-      featureMap.set(name, entry)
+    for (const [, name, operator, rawValue, denominator, unit] of condition.matchAll(STYLE_CONDITION_FEATURE_REGEX)) {
+      bounds.push({
+        name,
+        operator,
+        value: denominator === undefined
+          ? toComparableQueryLength(Number(rawValue), unit)
+          : toComparableQueryRatio(`${rawValue}/${denominator}`)
+      })
     }
   }
-  return [...featureMap.entries()]
-    .map(([name, entry]) => [
-      name,
-      entry.min ?? 0,
-      entry.max ?? Number.MAX_SAFE_INTEGER
-    ] as StyleConditionFeature)
-    .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
-}
-
-function compareStyleConditionFeatures(a: StyleConditionFeature[], b: StyleConditionFeature[]) {
-  const len = Math.max(a.length, b.length)
-  for (let index = 0; index < len; index++) {
-    const left = a[index]
-    const right = b[index]
-    if (!left) return -1
-    if (!right) return 1
-    const [nameA, minA, maxA] = left
-    const [nameB, minB, maxB] = right
-    const nameCompare = nameA.localeCompare(nameB, undefined, { numeric: true })
-    if (nameCompare !== 0) return nameCompare
-    const rangeA = maxA - minA
-    const rangeB = maxB - minB
-    if (rangeA !== rangeB) return rangeB - rangeA
-    if (minA !== minB) return minB - minA
-    if (maxA !== maxB) return maxB - maxA
-  }
-  return 0
+  return sortQueryFeatures(toQueryFeatures(bounds))
 }
 
 function compareStyleMergeBuckets(a: StyleMergeBucket, b: StyleMergeBucket) {
@@ -818,7 +785,7 @@ function compareStyleMergeBuckets(a: StyleMergeBucket, b: StyleMergeBucket) {
       const featuresA = getStyleConditionFeatures(a.conditions)
       const featuresB = getStyleConditionFeatures(b.conditions)
       if (featuresA.length && featuresB.length) {
-        const featureCompare = compareStyleConditionFeatures(featuresA, featuresB)
+        const featureCompare = compareQueryFeatures(featuresA, featuresB)
         if (featureCompare !== 0) return featureCompare
       }
     }
