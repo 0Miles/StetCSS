@@ -16,8 +16,8 @@ describe.concurrent('empty items in a value list', () => {
    * does for selectors (#165).
    *
    * Reverse check: skipping the `hasEmptyListItem` call at the end of `parseValues`
-   * (`src/utility.ts`) reddens this test and the raw group declaration record below, whose
-   * item then generates `color:var(--color-red),`.
+   * (`src/utility.ts`) reddens this test and the comma rows of `group-items.test.ts`, whose
+   * items then generate rules such as `color:var(--color-red),`.
    */
   test.each([
     'fg:red,',
@@ -89,18 +89,6 @@ describe.concurrent('empty items in a value list', () => {
    */
   test('a group item with an empty function argument generates no CSS', () => {
     expect(generateText('{fg:rgb(1,2,)}')).toBe('')
-  })
-
-  /**
-   * Records known-wrong output, not a contract: a group item whose top-level value is rejected
-   * (`fg:red,`) generates no rule, and `emitGroupDeclarations` then writes it as a raw
-   * declaration. Telling a rejected value from a raw declaration needs the rejection reason from
-   * `StetCSS.createRules`, which this fix does not reach; see the #175 status record. Trade-off
-   * (rule 6): this pins the current output so a change to it is deliberate, in place of a guard
-   * that the group is rejected.
-   */
-  test('a group item with an empty top-level item keeps its raw declaration', () => {
-    expect(generateText('{fg:red,}')).toBe('@layer utilities{.\\{fg\\:red\\,\\}{fg:red,}}')
   })
 
   /**
