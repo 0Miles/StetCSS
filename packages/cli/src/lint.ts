@@ -10,7 +10,7 @@ import {
   type StetCSSLintSummary
 } from '@stet-css/lint'
 import { loadProjectManifest } from '@stet-css/project/manifest'
-import { PROJECT_SOURCE_EXTENSIONS } from '@stet-css/project/sources'
+import { PROJECT_IGNORED_DIRECTORIES, PROJECT_SOURCE_EXTENSIONS } from '@stet-css/project/sources'
 import fg from 'fast-glob'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -19,7 +19,8 @@ const REPORT_VERSION = 1
 /** The source extensions the build reads, plus the stylesheets lint checks. */
 const DEFAULT_SOURCE_EXTENSIONS = [...PROJECT_SOURCE_EXTENSIONS, '.css', '.scss', '.less']
 const DEFAULT_SOURCE_PATTERNS = [`**/*.{${DEFAULT_SOURCE_EXTENSIONS.map((extension) => extension.slice(1)).join(',')}}`]
-const DEFAULT_IGNORE_PATTERNS = ['**/node_modules/**', 'node_modules']
+/** The directories the build skips at any depth when it looks for sources. */
+const DEFAULT_IGNORE_PATTERNS = PROJECT_IGNORED_DIRECTORIES.map((directory) => `**/${directory}/**`)
 
 export interface LintOptions {
   fix?: boolean
