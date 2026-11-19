@@ -42,7 +42,7 @@ Run machine-readable StetCSS diagnostics for agents, MCP servers, editor tools, 
 npx @stet-css/cli lint index.html main.js
 ```
 
-With no source paths, `lint` checks files under the current directory with a source extension or a `.css`, `.scss` or `.less` extension, skipping the same dependency, build output and cache directories as the root command. Source path arguments are linted as given, even inside those directories.
+With no source paths, `lint` checks files under the current directory with a source extension or a `.css`, `.scss` or `.less` extension. It skips the same dependency, build output and cache directories as the root command, and also every directory whose name starts with `.`, including ones the root command reads such as `.storybook`. Source paths are glob patterns matched against files: they are not filtered by those directories, so `lint "dist/**/*.js"` checks build output, but a glob segment does not match a leading `.`, so reach `.storybook` with a pattern that names it (`".storybook/**/*.tsx"`). A bare directory such as `lint dist` matches no files, lints nothing and exits 0.
 
 Use JSON output for tools:
 
