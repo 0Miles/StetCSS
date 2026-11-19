@@ -1478,6 +1478,15 @@ export class Utility {
         currentValue = ''
       }
     }
+    // Unnamed parentheses pass down the nearest function name, so `calc((1,))` is checked.
+    const checkFunctionArguments = () => {
+      if (
+        !root
+        && endSymbol === ')'
+        && !hasOpaqueArguments(parentFunctionName)
+        && hasEmptyListItem(currentValueComponents)
+      ) this.invalidValueSyntax = true
+    }
 
     for (; i < value.length; i++) {
       const val = value[i]
@@ -1498,13 +1507,7 @@ export class Utility {
           }
         } else {
           parse()
-          // Unnamed parentheses pass down the nearest function name, so `calc((1,))` is checked.
-          if (
-            !root
-            && endSymbol === ')'
-            && !hasOpaqueArguments(parentFunctionName)
-            && hasEmptyListItem(currentValueComponents)
-          ) this.invalidValueSyntax = true
+          checkFunctionArguments()
         }
 
         return i
@@ -1561,7 +1564,12 @@ export class Utility {
       }
     }
     parse()
-    if (root && hasEmptyListItem(currentValueComponents)) this.invalidValueSyntax = true
+    if (root) {
+      if (hasEmptyListItem(currentValueComponents)) this.invalidValueSyntax = true
+    } else {
+      // The class ended inside a function, which is closed for it: `fg:rgb(1,` is `rgb(1,)`.
+      checkFunctionArguments()
+    }
     return i
   }
 

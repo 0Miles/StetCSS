@@ -54,6 +54,34 @@ describe.concurrent('empty items in a value list', () => {
   })
 
   /**
+   * Guards (#234): the same empty item in a function the class leaves open. The engine closes the
+   * function at the end of the class, so `fg:rgb(1,` emitted `color:rgb(1,)`, which native CSS
+   * drops; the check above ran only where a `)` closed the function.
+   *
+   * Reverse check: without the empty-item check where `parseValues` reaches the end of the class
+   * inside a function, these rows fail.
+   */
+  test.each([
+    'fg:rgb(1,',
+    'fg:rgb(,1',
+    'fg:rgb(1,,2',
+    'w:calc(1,',
+    'w:calc((1,'
+  ])('%s generates no CSS', (className) => {
+    expect(generateText(className)).toBe('')
+  })
+
+  /**
+   * Guards (#234): the check above rejecting open functions as such. Closing a function at the end
+   * of the class, as CSS closes one at the end of its input, keeps working when no argument is
+   * empty, and an open `var()` keeps its empty fallback.
+   */
+  test('a function left open without an empty item keeps its rule', () => {
+    expect(generateText('fg:rgb(1,2,3')).toBe('@layer utilities{.fg\\:rgb\\(1\\,2\\,3{color:rgb(1,2,3)}}')
+    expect(generateText('fg:var(--x,')).toBe('@layer utilities{.fg\\:var\\(--x\\,{color:var(--x,)}}')
+  })
+
+  /**
    * Guards: an empty item inside a function in a group item. The group parses its own value, so
    * `{fg:rgb(1,2,)}` is rejected by the function check above.
    *
