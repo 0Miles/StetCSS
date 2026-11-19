@@ -750,8 +750,11 @@ function formatFeatureValue(value: any): string {
       if (typeof resolvedValue === 'number') return formatNumber(resolvedValue)
       return `${formatNumber(resolvedValue.value)}${resolvedValue.unit || ''}`
     }
-    case 'ratio':
-      return `${value.value.numerator}/${value.value.denominator}`
+    case 'ratio': {
+      // lightningcss gives a ratio as a `[numerator, denominator]` tuple.
+      const [numerator, denominator] = value.value
+      return `${formatNumber(numerator)}/${formatNumber(denominator)}`
+    }
     default:
       return formatPrelude(value) || (typeof value.value === 'number' ? formatNumber(value.value) : String(value.value ?? ''))
   }
