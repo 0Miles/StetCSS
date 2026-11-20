@@ -183,11 +183,13 @@ test.concurrent('tokenizes every part of an attribute selector', () => {
  * Guards: the case flag after a quoted value (`"a"_i`, which the engine emits as `"a" i`) had no
  * token, so it kept the host string colour. Native CSS colours `i` as a modifier keyword
  * (`storage.modifier.ignore-case.css`) and reads `s` as an attribute name, so the flag takes the
- * matching token type. `_` after an unquoted value is part of it (`a_i`), and `_x` is no flag.
- * Dropping the case flag match in `tokenizeAttributeSelector` reds this test and the first one.
+ * matching token type. `_` after an unquoted value is part of it (`a_i`), and `_x` and `_is` are no
+ * flag, since the engine keeps them as written.
+ * Dropping the case flag match in `tokenizeAttributeSelector` reds this test and the first one;
+ * dropping the `]` lookahead from `ATTRIBUTE_CASE_FLAG_RE` reds only this test.
  */
 test.concurrent('tokenizes an attribute case flag after a quoted value only', () => {
-  const source = '[a="x"_s][a=\'x\'_I][a=x_i][a="x"_x]'
+  const source = '[a="x"_s][a=\'x\'_I][a=x_i][a="x"_x][a="x"_is]'
   expect(texts(source, tokenizeStetCSSState(source, 0, 0)).filter(({ role }) => role !== 'selector.attribute.bracket' && role !== 'selector.attribute.operator')).toEqual([
     { text: 'a', type: 'property', role: 'selector.attribute', modifiers: ['selector'] },
     { text: '"', type: 'string', role: 'value.string.quote', modifiers: ['quoted'] },
@@ -201,6 +203,10 @@ test.concurrent('tokenizes an attribute case flag after a quoted value only', ()
     { text: 'I', type: 'keyword', role: 'selector.attribute.flag', modifiers: ['selector'] },
     { text: 'a', type: 'property', role: 'selector.attribute', modifiers: ['selector'] },
     { text: 'x_i', type: 'string', role: 'selector.attribute.value', modifiers: ['selector'] },
+    { text: 'a', type: 'property', role: 'selector.attribute', modifiers: ['selector'] },
+    { text: '"', type: 'string', role: 'value.string.quote', modifiers: ['quoted'] },
+    { text: 'x', type: 'string', role: 'value.string', modifiers: ['quoted'] },
+    { text: '"', type: 'string', role: 'value.string.quote', modifiers: ['quoted'] },
     { text: 'a', type: 'property', role: 'selector.attribute', modifiers: ['selector'] },
     { text: '"', type: 'string', role: 'value.string.quote', modifiers: ['quoted'] },
     { text: 'x', type: 'string', role: 'value.string', modifiers: ['quoted'] },
