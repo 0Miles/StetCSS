@@ -60,6 +60,17 @@ async function startStaticTemplateServer(
   return { page, url }
 }
 
+/** Resolves when the dev server sends the browser an update or a full reload. */
+function waitForUpdate(devServer: ViteDevServer) {
+  return new Promise<void>((resolve) => {
+    const send = devServer.ws.send.bind(devServer.ws)
+    devServer.ws.send = ((payload: { type?: string }, ...args: unknown[]) => {
+      if (payload?.type === 'update' || payload?.type === 'full-reload') resolve()
+      return send(payload as never, ...args as never[])
+    }) as typeof devServer.ws.send
+  })
+}
+
 afterEach(async () => {
   await browser?.close()
   await server?.close()
@@ -236,19 +247,43 @@ describe('Vite dev HMR', () => {
     expect(await fetchCSS()).not.toContain('--color-brand')
     expect(await emittedGlobals()).not.toContain('"color-brand"')
 
-    const updateSent = new Promise<void>((resolve) => {
-      const send = devServer.ws.send.bind(devServer.ws)
-      devServer.ws.send = ((payload: { type?: string }, ...args: unknown[]) => {
-        if (payload?.type === 'update' || payload?.type === 'full-reload') resolve()
-        return send(payload as never, ...args as never[])
-      }) as typeof devServer.ws.send
-    })
+    const updateSent = waitForUpdate(devServer)
     writeFileSync(path.join(fixtureDir!, editedFile), editedSource)
     await updateSent
 
     // The page asks for the module first, then for the edited entry.
     expect(await emittedGlobals()).toContain('"color-brand"')
     expect(await fetchCSS()).toContain('--color-brand')
+  })
+
+  /**
+   * Guards an entry edit that only changes a wildcard `@blocklist` pattern. The pattern is the
+   * one part of a registration held as a RegExp, so the edit must still read as a change, or
+   * the module keeps listing the variables of the class the edit blocks, across reloads.
+   * Reverse check: comparing registrations with plain `JSON.stringify` in
+   * `utils/register-style-source.ts` turns only this test red.
+   */
+  it('regenerates emittedGlobals after a wildcard @blocklist pattern changes', async () => {
+    const { url } = await startStaticTemplateServer(
+      'emitted-globals-blocklist-',
+      '<h1 class="fg:fuchsia">Pink</h1><p class="fg:lime">Green</p>',
+      '@import "@stet-css/core";\n@blocklist \'fg:fuch*\';'
+    )
+    const devServer = server!
+    const fetchCSS = async () => (await fetch(new URL('src/style.css?direct', url))).text()
+    const emittedGlobals = async () => (await fetch(new URL(EMITTED_GLOBALS_URL, url))).text()
+
+    expect(await fetchCSS()).toContain('--color-lime')
+    expect(await emittedGlobals()).toContain('"color-lime"')
+
+    const updateSent = waitForUpdate(devServer)
+    writeFileSync(path.join(fixtureDir!, 'src/style.css'), '@import "@stet-css/core";\n@blocklist \'fg:lim*\';')
+    await updateSent
+
+    const module = await emittedGlobals()
+    expect(module).toContain('"color-fuchsia"')
+    expect(module).not.toContain('"color-lime"')
+    expect(await fetchCSS()).not.toContain('--color-lime')
   })
 
   /**

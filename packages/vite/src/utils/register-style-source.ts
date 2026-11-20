@@ -24,12 +24,21 @@ export async function registerStyleCSSSource(
   })
 }
 
+/**
+ * A registration as comparable text. A wildcard `@blocklist` pattern is held as a RegExp,
+ * which plain JSON writes as `{}`, so it is written as its source and flags.
+ */
+function serializeStyleCSSSource(context: PluginContext, key: string) {
+  return JSON.stringify(context.styleCSSSources?.get(key), (_, value: unknown) =>
+    value instanceof RegExp ? { regexp: value.source, flags: value.flags } : value)
+}
+
 /** Registers `source` for `id`, and tells whether that changed what the entry contributes. */
 export async function updateStyleCSSSource(context: PluginContext, id: string, source: string) {
   const key = cleanStyleRequest(id)
-  const previous = JSON.stringify(context.styleCSSSources?.get(key))
+  const previous = serializeStyleCSSSource(context, key)
   const result = await registerStyleCSSSource(context, id, source)
-  return { result, changed: JSON.stringify(context.styleCSSSources?.get(key)) !== previous }
+  return { result, changed: serializeStyleCSSSource(context, key) !== previous }
 }
 
 /**
