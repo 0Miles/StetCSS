@@ -1,9 +1,9 @@
 import { spawn } from 'node:child_process'
 import { readFileSync, statSync } from 'node:fs'
-import { mkdtemp, rm } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, symlink, unlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { expect, test } from 'vitest'
 import {
   NATIVE_PACKAGES_INSTALL_COMMAND,
@@ -368,4 +368,75 @@ test('staged language server starts and shuts down', async () => {
       await server.dispose()
     }
   })
+})
+
+async function until(check, message, timeout = 10_000) {
+  const startedAt = Date.now()
+  while (!await check()) {
+    if (Date.now() - startedAt > timeout) throw new Error(`Timed out waiting for ${message}`)
+    await new Promise((resolvePromise) => setTimeout(resolvePromise, 50))
+  }
+}
+
+function components(name, display) {
+  return `@components {\n  ${name} {\n    display: ${display};\n  }\n}\n`
+}
+
+/**
+ * Guards #248 in the extension: the language server it ships loaded a workspace's manifest only
+ * when the first document opened, so a `git checkout` that changed an imported CSS file left hover
+ * and completion on the old components until a `.css` save or a restart. The staged server, on a
+ * project with `@stet-css/core` installed, must pick the change up on its own.
+ */
+test('staged language server reloads an imported CSS file changed outside the editor', async () => {
+  const projectDir = await mkdtemp(join(tmpdir(), 'stet-css-vscode-watch-'))
+  try {
+    await mkdir(join(projectDir, 'node_modules', '@stet-css'), { recursive: true })
+    await symlink(resolve(packageDir, '..', 'core'), join(projectDir, 'node_modules', '@stet-css', 'core'), 'junction')
+    await writeFile(join(projectDir, 'index.css'), `@import '@stet-css/core';\n@import './components.css';\n`)
+    await writeFile(join(projectDir, 'components.css'), components('watch-card', 'block'))
+    const rootUri = pathToFileURL(projectDir).href
+    const uri = pathToFileURL(join(projectDir, 'index.html')).href
+    const text = '<div class="watch-card watch-chip"></div>'
+
+    await withStagedExtension(async ({ stagingDir }) => {
+      const server = createLanguageServer({
+        cwd: stagingDir,
+        serverPath: resolve(stagingDir, 'dist', 'server.min.js')
+      })
+      const hover = async (className) => {
+        const result = await server.request('textDocument/hover', {
+          textDocument: { uri },
+          position: { line: 0, character: text.indexOf(className) + 1 }
+        })
+        return result?.contents?.value?.replace(/\s+/g, '')
+      }
+
+      try {
+        await server.request('initialize', {
+          processId: null,
+          rootUri,
+          capabilities: { workspace: { configuration: false, workspaceFolders: true } },
+          workspaceFolders: [{ uri: rootUri, name: 'watch' }]
+        })
+        server.notify('initialized', {})
+        server.notify('textDocument/didOpen', { textDocument: { uri, languageId: 'html', version: 1, text } })
+        await until(async () => (await hover('watch-card'))?.includes('display:block'), 'the workspace to load')
+        expect(await hover('watch-chip')).toBeUndefined()
+
+        await unlink(join(projectDir, 'components.css'))
+        await writeFile(join(projectDir, 'components.css'), components('watch-chip', 'flex'))
+
+        await until(async () => (await hover('watch-chip'))?.includes('display:flex'), 'hover to show watch-chip')
+
+        await server.request('shutdown', null)
+        server.notify('exit')
+        await expect(server.closed()).resolves.toBe(0)
+      } finally {
+        await server.dispose()
+      }
+    })
+  } finally {
+    await rm(projectDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 })
+  }
 })

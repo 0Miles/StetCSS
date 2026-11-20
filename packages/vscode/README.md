@@ -50,7 +50,8 @@ For project-aware tokens, create a CSS entry that imports `@stet-css/core`, or d
 - **Manifest diagnostics**: Reports project manifest loading errors without taking over ESLint class policy warnings.
 - **Directive formatting**: Formats StetCSS directives and keeps class important markers attached, such as `bg:transparent !` to `bg:transparent!`.
 - **Workspace-aware manifests**: Loads project manifests from the closest detected StetCSS workspace so completions and tokens reflect custom variables, components, utilities, and modes.
-- **Restart command**: Provides `StetCSS: Restart Language Server` for reloading the language server after dependency, manifest, or workspace changes.
+- **Manifest reloads**: Reloads a workspace's manifest within about a second when its entry CSS, a file it imports, or the installed preset changes on disk, including changes made outside VS Code such as `git checkout` or a package update.
+- **Restart command**: Provides `StetCSS: Restart Language Server` for reloading the language server after dependency or workspace changes.
 
 The default language list covers HTML, PHP, JavaScript, TypeScript, JSX, TSX, CSS, SCSS, LESS, Vue, Svelte, Rust, Astro, Markdown, and MDX.
 
@@ -210,7 +211,7 @@ Open the Command Palette and run:
 StetCSS: Restart Language Server
 ```
 
-Use this after changing dependencies, workspace layout, or project manifest files if VS Code has not reloaded the language server automatically. The extension also restarts the StetCSS language server when `stetCSS.*` settings change.
+Use this after adding a new entry CSS file, changing the workspace layout, or updating `@stet-css/core` or `@stet-css/engine`; changes to existing entry CSS files, the files they import, and the installed preset reload on their own. The extension also restarts the StetCSS language server when `stetCSS.*` settings change.
 
 ## Requirements and Limitations
 
