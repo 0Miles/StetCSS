@@ -10,6 +10,7 @@ import {
   applyCSSImportConditions,
   collectCSSLayerOrder,
   createCSSImportGraphReader,
+  findCSSLayerStatements,
   hoistCSSImportStatements,
   isStetCSSPackageStyleFile as isStetCSSCompilerPackageStyleFile,
   resolveStetCSSPackageImportGraph,
@@ -36,7 +37,8 @@ import {
   hasStetCSSManifestEntrypoint,
   isStetCSSModuleId as isStetCSSManifestModuleId,
   normalizeStetCSSModuleIds,
-  parseCSSImportSource
+  parseCSSImportSource,
+  removeSourceRanges
 } from '@stet-css/lexer'
 import type { SourceAdapter } from '@stet-css/source'
 import { findCSSManifestEntryFiles } from '@stet-css/project/entries'
@@ -182,6 +184,11 @@ export interface ScannerState {
 export interface StyleCSSSource {
   source: string
   stetCSS: boolean
+  /**
+   * The layers the entry's `@layer` statements declare before its `@import '@stet-css/core'`, in
+   * written order. They are not in `source`: static CSS declares them ahead of the package's CSS.
+   */
+  leadingLayers?: string[]
   directives: StylesheetDirectives
   dependencies: string[]
   sourceDependencies: string[]
@@ -397,6 +404,24 @@ function removeCSSImportStatements(source: string) {
     index = importStatement.end
   }
   return code + source.slice(index)
+}
+
+/**
+ * Takes the `@layer` statements that precede `@import '@stet-css/core'` out of an entry's hoisted
+ * import graph, and returns the layers they declare in order. Static CSS puts the package's CSS
+ * first, so those layers are declared ahead of it there, as the import would order them (#250).
+ */
+function takeLayersBeforeStetCSSImport(source: string) {
+  const stetImport = findImportStatements(source).find((importStatement) => {
+    const importSource = parseCSSImportSource(importStatement.statement)
+    return importSource !== undefined && isStetCSSManifestModuleId(importSource)
+  })
+  if (!stetImport) return { source, layers: [] }
+  const statements = findCSSLayerStatements(source, stetImport.start)
+  return {
+    source: removeSourceRanges(source, statements),
+    layers: [...new Set(statements.flatMap((statement) => statement.names))]
+  }
 }
 
 export function hasStyleCSSImport(source: string) {
@@ -929,7 +954,10 @@ export async function registerStyleCSSSource(
       dependencies: []
     }
   const stetCSS = hasStetCSSImport(resolvedSource.source)
-  const sourceWithoutImports = removeCSSImportStatements(resolvedSource.source)
+  const { source: entrySource, layers: leadingLayers } = stetCSS
+    ? takeLayersBeforeStetCSSImport(resolvedSource.source)
+    : { source: resolvedSource.source, layers: [] }
+  const sourceWithoutImports = removeCSSImportStatements(entrySource)
   const cleanSource = removeStetStyleDirectives(sourceWithoutImports).code
   const defaultArtifact = stetCSS
     ? readDefaultStetCSSPackageArtifact(options.projectDir ?? scanner.cwd, options)
@@ -954,6 +982,7 @@ export async function registerStyleCSSSource(
   styleCSSSources.set(filename, {
     source: cleanSource,
     stetCSS,
+    leadingLayers,
     directives: collectedDirectives.directives,
     dependencies: result.dependencies || [],
     sourceDependencies
@@ -1085,7 +1114,11 @@ export async function createExtractedCSSResult(options: CreateExtractedCSSOption
       }))
   )
   for (const result of entryStyleResults) finalize(result)
+  // The layers entries declare before `@import '@stet-css/core'` lead, each declared once, so
+  // they sort ahead of the package's layers as the import ordered them (#250).
+  const leadingLayers = [...new Set(Array.from(styleCSSSources?.values() || [], (styleSource) => styleSource.leadingLayers ?? []).flat())]
   const nativeCSS = [
+    ...(includeNativeCSS && leadingLayers.length ? [`@layer ${leadingLayers.join(', ')};`] : []),
     ...(includeStetBaseCSS
       ? [
         ...(defaultArtifact ? [defaultArtifact.nativeCSS] : []),
