@@ -38,7 +38,6 @@ import {
   findCSSStatementEnd,
   replaceSourceRanges,
   removeSourceRanges,
-  skipCSSWhitespace,
   skipCSSWhitespaceAndComments,
   type CSSDirectiveRuleRange
 } from '@stet-css/lexer'
