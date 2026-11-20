@@ -68,3 +68,21 @@ test('explains a class using an undeclared mode on hover', () => {
 
   expect(hover?.contents).toEqual({ kind: 'markdown', value: expect.stringContaining('mode "dark", which is not declared') })
 })
+
+/**
+ * Prevents (#240): hovering a class in an attribute spelled with a character reference, as in
+ * `block&#32;hidden`, reading the whole attribute as one class the build never generates and
+ * showing no CSS, while the build generates `.block` and `.hidden`. The hover covers the class
+ * where it is spelled.
+ * Reverse-checked: dropping the HTML decoder from `getAttributeCharacterReferences` in
+ * `@stet-css/language` reds this test.
+ */
+test('hovers a class that an attribute separates with a character reference', () => {
+  const content = '<div class="block&#32;hidden"></div>'
+  const doc = createDoc('html', content)
+  const start = content.indexOf('hidden')
+  const hover = new CSSLanguageService().inspectSyntax(doc, doc.positionAt(start + 1))
+
+  expect(hover?.contents).toEqual({ kind: 'markdown', value: expect.stringContaining('.hidden {\n    display: none') })
+  expect(hover?.range).toEqual({ start: doc.positionAt(start), end: doc.positionAt(start + 'hidden'.length) })
+})
