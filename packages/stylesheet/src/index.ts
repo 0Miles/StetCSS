@@ -105,8 +105,8 @@ export interface TransformLocalStyleCSSOptions extends CompileStyleCSSOptions {
   emittedGlobals?: StetCSSEmittedGlobals
   /**
    * The bundler compiles the stylesheet as a CSS Module, possibly in pure mode (Next.js): keep
-   * the generated rules global and exempt from the pure check. A scoped Vue style request
-   * takes precedence.
+   * the generated rules global and give their selectors a local class that pure mode accepts
+   * and that matches nothing more. A scoped Vue style request takes precedence.
    */
   cssModule?: boolean
 }

@@ -133,12 +133,14 @@ describe('Next style CSS loader', () => {
   /**
    * Prevents (#244): `next dev --webpack` answered 500 with `Selector ":root" is not pure`
    * for a CSS Module whose `@compose` referenced a theme variable no global stylesheet used,
-   * because Next compiles CSS Modules in pure mode. CSS Modules keep the generated rule
-   * global behind a `cssmodules-pure-ignore` comment; other local stylesheets are unchanged.
+   * because Next compiles CSS Modules in pure mode. CSS and Sass Modules keep the generated
+   * rule global and pure through a local class that matches nothing more; other local
+   * stylesheets are unchanged.
    * Reverse check: passing `cssModule: false` from the style loader turns only this test red.
    */
   it.each([
-    ['app/page.module.css', '/* cssmodules-pure-ignore */:global(:root){--color-qaentry:#123456}'],
+    ['app/page.module.css', '@layer theme{:global(:root):where(:not(.stet-css-global)){--color-qaentry:#123456}}'],
+    ['app/page.module.scss', '@layer theme{:global(:root):where(:not(.stet-css-global)){--color-qaentry:#123456}}'],
     ['app/page.css', '@layer theme{:root{--color-qaentry:#123456}}']
   ])('emits the referenced theme variables %s accepts', async (file, themeRule) => {
     const root = createFixture()
