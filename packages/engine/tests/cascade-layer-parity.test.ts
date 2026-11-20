@@ -435,11 +435,14 @@ describe.concurrent('migrated cascade and layer parity', () => {
    * Prevents (#233): an exclusive bound (`>`, `<`) ordering by a fixed offset instead of by its
    * value, so `fg:red@w>600px` lands after `fg:blue@w>=600.1px` and wins on screens 600.1px and
    * wider. Bounds order by value; on the same value the exclusive one matches less and comes later.
-   * Covers min and max bounds, ratios, and a range whose ends are both exclusive. Rows are listed in
-   * the expected order and inserted in both orders.
+   * Covers min and max bounds, ratios, and a range whose ends are both exclusive. A length written
+   * in cm or mm is the same value as in px, though their px ratios are inexact in binary: otherwise
+   * `fg:red@w<=12.7cm` follows `fg:blue@w<480px` and blue never applies. Rows are listed in the
+   * expected order and inserted in both orders.
    * Reverse-checked: the fixed 0.02 offset this replaces reds the three close rows, and nothing
-   * else in this file; review r1 of #233 found dropping the exclusive adjustment puts `w>600px`
-   * first in the same-value min row.
+   * else in this file; comparing unrounded values reds the two cm/mm rows (12.7cm resolves just
+   * under 30rem, 127mm just over); review r1 of #233 found dropping the exclusive adjustment puts
+   * `w>600px` first in the same-value min row.
    */
   test.each([
     ['inclusive and exclusive min on one value', ['fg:red@w>=600px', 'fg:blue@w>600px']],
@@ -447,7 +450,9 @@ describe.concurrent('migrated cascade and layer parity', () => {
     ['exclusive ratio min below a close inclusive one', ['fg:red@aspect-ratio>1/1', 'fg:blue@aspect-ratio>=101/100']],
     ['inclusive and exclusive max on one value', ['fg:red@w<=600px', 'fg:blue@w<600px']],
     ['exclusive max above a close inclusive max', ['fg:red@w<600px', 'fg:blue@w<=599.9px']],
-    ['exclusive range inside an inclusive one', ['fg:red@w>=600px&w<=800px', 'fg:blue@w>600px&w<800px']]
+    ['exclusive range inside an inclusive one', ['fg:red@w>=600px&w<=800px', 'fg:blue@w>600px&w<800px']],
+    ['inclusive max in cm and exclusive max in px on one length', ['fg:red@w<=12.7cm', 'fg:blue@w<480px']],
+    ['inclusive min in mm and exclusive min in px on one length', ['fg:red@w>=127mm', 'fg:blue@w>480px']]
   ])('orders %s by value, then exclusivity', (_, expected) => {
     for (const classNames of [expected, [...expected].reverse()]) {
       const css = createDefaultCSS()
