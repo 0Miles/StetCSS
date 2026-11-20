@@ -25,6 +25,13 @@ export declare type SelectorNode = SelectorLiteralNode | SelectorCombinatorNode 
 
 const SELECTOR_REGEX = new RegExp(`(?:[a-zA-Z0-9-]+)|([${SELECTOR_COMBINATORS.join('')}#.:,*])|(a-zA-Z0-9-)`, 'g')
 const LEGACY_PSEUDO_ELEMENTS = new Set(['before', 'after', 'first-letter', 'first-line'])
+/**
+ * An attribute selector body that ends in a quoted value, `_` and a case flag. A class holds no
+ * space, so `_` stands for the one before the flag (`[data-x="a"_i]` is `[data-x="a" i]`). Every
+ * other `_` stays as written: inside the string, and after an unquoted value, where native CSS
+ * reads `a_i` as one identifier.
+ */
+const ATTRIBUTE_CASE_FLAG_REGEX = /^([^"']*(?:"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'))_([is])$/i
 
 export default function parseSelector(token: string, css: StetCSS, isRaw = true) {
   const resolve = (eachToken: string): SelectorNode[] => {
@@ -129,7 +136,7 @@ export default function parseSelector(token: string, css: StetCSS, isRaw = true)
       const { pre, body, post } = attrPaired
       if (pre) nodes.push(...pair(pre))
       nodes.push({
-        value: body,
+        value: body.replace(ATTRIBUTE_CASE_FLAG_REGEX, '$1 $2'),
         type: 'attribute',
         ...(isRaw && { raw: `[${body}]` }),
       })
