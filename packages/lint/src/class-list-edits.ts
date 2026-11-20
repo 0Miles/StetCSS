@@ -21,17 +21,19 @@ function cloneClassListItems(items: StetCSSClassListItem[]) {
 }
 
 /**
- * The class list `items` spell, or undefined when no spelling reads as its items do. In a decoded
- * list, joining spellings that were not next to each other can change how they read: a space
- * spelled `&#x20`, without its `;`, reads on into a class that now starts with a hex digit
- * (`&#x20bg:black` is one reference). Such a space gets a `;` when that keeps its meaning, or is
- * written as the whitespace it decodes to. An item that does not decode on its own (a replacement
- * holding the string's quote) has no safe spelling. Each edit leaves a list it cannot spell as it
- * is, so it gets no fix.
+ * The class list `items`, edited from `classList`, spell, or undefined when no spelling reads as
+ * its items do. In a list the parser decoded, joining spellings that were not next to each other
+ * can change how they read: a space spelled `&#x20`, without its `;`, reads on into a class that
+ * now starts with a hex digit (`&#x20bg:black` is one reference). Such a space gets a `;` when
+ * that keeps its meaning, or is written as the whitespace it decodes to. An item that does not
+ * decode on its own (a replacement holding the string's quote) has no safe spelling. Each edit
+ * leaves a list it cannot spell as it is, so it gets no fix. A list the parser read as written
+ * (a string body that does not decode, such as one holding a line break) is rebuilt as written.
  */
-function buildClassList(items: StetCSSClassListItem[], options: StetCSSClassListEditOptions) {
+function buildClassList(items: StetCSSClassListItem[], classList: string, options: StetCSSClassListEditOptions) {
   const spellings = items.map((item) => item.raw)
   if (!options.scriptString && !options.characterReferences) return spellings.join('')
+  if (!decodeStetCSSClassListSource(classList, options)) return spellings.join('')
   const decode = (spelling: string) => decodeStetCSSClassListSource(spelling, options)?.value
   const values = spellings.map(decode)
   if (values.some((value) => value === undefined)) return
@@ -122,7 +124,7 @@ export function sortClassList(classList: string, css: StetCSS, options: StetCSSC
     item.token = token
   }
 
-  return buildClassList(fixedItems, options) ?? classList
+  return buildClassList(fixedItems, classList, options) ?? classList
 }
 
 export function removeClassNamesFromClassList(
@@ -134,7 +136,7 @@ export function removeClassNamesFromClassList(
   for (const className of classNames) {
     removeClassListToken(items, className)
   }
-  return buildClassList(items, options) ?? classList
+  return buildClassList(items, classList, options) ?? classList
 }
 
 export function replaceClassNameInClassList(
@@ -145,7 +147,7 @@ export function replaceClassNameInClassList(
 ) {
   const items = parseClassList(classList, options)
   replaceClassListToken(items, className, replacement)
-  return buildClassList(items, options) ?? classList
+  return buildClassList(items, classList, options) ?? classList
 }
 
 export function replaceClassGroupInClassList(
@@ -160,5 +162,5 @@ export function replaceClassGroupInClassList(
   for (const className of classNamesToRemove) {
     removeClassListToken(items, className)
   }
-  return buildClassList(items, options) ?? classList
+  return buildClassList(items, classList, options) ?? classList
 }
