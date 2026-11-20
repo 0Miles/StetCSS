@@ -1,10 +1,15 @@
 import { describe, expect, test } from 'vitest'
-import { createDefaultCSS } from './helpers/css-tester'
+import { StetCSS } from '../src'
+import { cloneManifest, createDefaultCSS } from './helpers/css-tester'
 
-function generateText(className: string) {
-  const css = createDefaultCSS()
+function generateText(className: string, css = createDefaultCSS()) {
   css.ensureClassRules(className)
   return css.text
+}
+
+/** An instance without a native declaration matcher, which builds no rule for a raw item. */
+function createMatcherlessCSS() {
+  return StetCSS.create({ manifest: cloneManifest() })
 }
 
 describe.concurrent('group items', () => {
@@ -66,18 +71,43 @@ describe.concurrent('group items', () => {
   })
 
   /**
+   * Guards (#234): empty function arguments the group's own parse must keep rejecting. Item
+   * generation never sees parentheses in an item's selector or at-rule state, nor after the
+   * group's `}`, and builds no rule for an item it writes raw, so `{fg:red:not(,.a)}` would emit an
+   * unconditional `color` and `{fg:red;foo$:rgb(1,2,)}` a dead `foo$:rgb(1,2,)`.
+   *
+   * Reverse check: skipping the empty-argument check on a group's own parse fails these rows and
+   * the matcherless `translate()` row below.
+   */
+  test.each([
+    '{fg:red:not(,.a)}',
+    '{fg:red@media(a,)}',
+    '{fg:red;bg:blue:is(.a,)}',
+    '{fg:red}(1,)',
+    '{fg:red;foo$:rgb(1,2,)}'
+  ])('%s generates no CSS', (className) => {
+    expect(generateText(className)).toBe('')
+  })
+
+  /**
    * Guards (#234): a group item whose function may hold an empty argument. The group's own parse
    * read `fg:var(--x,)` as a function named `fg:var`, missed the `var()` exemption from #175, and
-   * dropped the group although `fg:var(--x,)` alone keeps `color:var(--x,)`. Items are judged one
-   * by one, each against its own function names.
+   * dropped the group although `fg:var(--x,)` alone keeps `color:var(--x,)`; the exemption now
+   * reads the function name past the item key. Without a native declaration matcher a raw item
+   * still gets the check (`translate(1px,)`).
    *
-   * Reverse check: running the empty-argument check on the group's own parse again fails these
-   * rows.
+   * Reverse check: matching the exemption against the whole name before `(` again fails the `var()`
+   * and `url()` rows.
    */
   test.each([
     ['{fg:var(--x,)}', '@layer utilities{.\\{fg\\:var\\(--x\\,\\)\\}{color:var(--x,)}}'],
     ['{bg:url(a,)}', '@layer utilities{.\\{bg\\:url\\(a\\,\\)\\}{background-image:url(a,)}}']
   ])('%s keeps its rule', (className, text) => {
     expect(generateText(className)).toBe(text)
+    expect(generateText(className, createMatcherlessCSS())).toBe(text)
+  })
+
+  test('{transform:translate(1px,)} generates no CSS without a native declaration matcher', () => {
+    expect(generateText('{transform:translate(1px,)}', createMatcherlessCSS())).toBe('')
   })
 })

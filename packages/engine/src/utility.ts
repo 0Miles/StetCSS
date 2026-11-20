@@ -168,8 +168,13 @@ function isSelectorSuffix(nodes: SelectorNode[], ends: boolean, ofList = false):
 /** Functions whose arguments may hold empty items: `var(--x,)`, `env(a,)`, unquoted `url(a,)`. */
 const OPAQUE_ARGUMENT_FUNCTIONS = new Set(['var', 'env', 'attr', 'url', 'inherit'])
 
+/**
+ * A group parses its items as one value, so the text before `(` carries the item key and any
+ * earlier items (`fg:red;bg:var` in `{fg:red;bg:var(--x,)}`); the function is its last name.
+ */
 function hasOpaqueArguments(functionName: string) {
-  return OPAQUE_ARGUMENT_FUNCTIONS.has(functionName) || functionName.startsWith('--')
+  const name = functionName.slice(functionName.search(/[-\w]*$/))
+  return OPAQUE_ARGUMENT_FUNCTIONS.has(name) || name.startsWith('--')
 }
 
 /**
@@ -1515,13 +1520,11 @@ export class Utility {
         currentValue = ''
       }
     }
-    // Unnamed parentheses pass down the nearest function name, so `calc((1,))` is checked. A
-    // group skips it: it reads `fg:var(` as `fg:var`, and generating each item checks it anyway.
+    // Unnamed parentheses pass down the nearest function name, so `calc((1,))` is checked.
     const checkFunctionArguments = () => {
       if (
         !root
         && endSymbol === ')'
-        && this.registeredUtility.emit.type !== 'group'
         && !hasOpaqueArguments(parentFunctionName)
         && hasEmptyListItem(currentValueComponents)
       ) this.invalidValueSyntax = true
