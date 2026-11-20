@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { compileCSS } from '../src'
+import { compileCSS, compileCSSManifest } from '../src'
 
 const lines = (...rows: string[]) => rows.join('\n')
 
@@ -196,4 +196,71 @@ test.concurrent('falls back to lightningcss printing when the written declaratio
     '  height: 1px;',
     '}'
   ))
+})
+
+/**
+ * Prevents: a `@keyframes` keyframe block losing its fallbacks, top-level or nested in `@layer` or
+ * `@media`, so an animation frame sets no height in browsers without `dvh` (#242). The same
+ * declarations in a style rule keep them.
+ * Reverse check: with `preserveNativeFallbacks` leaving `keyframes` rules alone (before #242), this
+ * test and the next were the only red ones in this file.
+ */
+test.concurrent('keeps fallbacks in keyframe blocks, top-level and nested in @layer or @media', () => {
+  const { nativeCSS } = compileCSS([
+    '@keyframes k { from { height: 100vh; height: 100dvh } to { height: 0 } }',
+    '@layer a { @keyframes l { from { height: 100vh; height: 100dvh } } }',
+    '@media print { @keyframes m { 50%, to { color: #f00; color: oklch(60% .2 30) } } }'
+  ].join('\n'))
+
+  expect(nativeCSS).toBe(lines(
+    '@keyframes k {',
+    '  from {',
+    '    height: 100vh;',
+    '    height: 100dvh;',
+    '  }',
+    '',
+    '  to {',
+    '    height: 0;',
+    '  }',
+    '}',
+    '',
+    '@layer a {',
+    '  @keyframes l {',
+    '    from {',
+    '      height: 100vh;',
+    '      height: 100dvh;',
+    '    }',
+    '  }',
+    '}',
+    '',
+    '@media print {',
+    '  @keyframes m {',
+    '    50%, to {',
+    '      color: red;',
+    '      color: oklch(60% .2 30);',
+    '    }',
+    '  }',
+    '}'
+  ))
+})
+
+/**
+ * Prevents: a `@keyframes` kept beside a `@compose` rule in a native `@layer` block (#187) losing
+ * its fallbacks, while the `@compose` rule still lowers (#242).
+ * Reverse check: as above.
+ */
+test.concurrent('keeps keyframe fallbacks beside a @compose rule in a native @layer block', () => {
+  const result = compileCSSManifest('@layer components { .x { @compose p:1rem; } @keyframes k { from { height: 100vh; height: 100dvh } } }')
+
+  expect(result.nativeCSS).toBe(lines(
+    '@layer components {',
+    '  @keyframes k {',
+    '    from {',
+    '      height: 100vh;',
+    '      height: 100dvh;',
+    '    }',
+    '  }',
+    '}'
+  ))
+  expect(result.generatedCSS).toBe('@layer components{.x{padding:1rem}}')
 })

@@ -2331,20 +2331,27 @@ function hasOverriddenDeclaration(declarations: Declaration[] | undefined) {
   return false
 }
 
+function hasOverriddenDeclarations(block: DeclarationBlock<Declaration>) {
+  return hasOverriddenDeclaration(block.declarations) || hasOverriddenDeclaration(block.importantDeclarations)
+}
+
 function isCommentOnly(statement: string) {
   return !statement.replace(/\/\*[\s\S]*?\*\//g, '').trim()
 }
 
-/**
- * A style rule's declarations as written, grouped as lightningcss groups them: the ones the block
- * opens with, then each run that follows a nested rule (a `nested-declarations` child).
- */
-function readRawDeclarationGroups(rule: any, fallbacks: NativeFallbacks) {
+/** The text inside the braces of the rule at `loc`. */
+function readRawRuleBlock(loc: any, fallbacks: NativeFallbacks) {
   const { source } = fallbacks
   fallbacks.resolveLocation ??= createSourceLocationResolver(source)
-  const blockRange = findRawRuleBlockRange(source, fallbacks.resolveLocation(rule.value.loc))
-  if (!blockRange) return
-  const block = source.slice(blockRange.start, blockRange.end)
+  const blockRange = findRawRuleBlockRange(source, fallbacks.resolveLocation(loc))
+  return blockRange && source.slice(blockRange.start, blockRange.end)
+}
+
+/**
+ * A block's declarations as written, grouped as lightningcss groups a style rule's: the ones the
+ * block opens with, then each run that follows a nested rule (a `nested-declarations` child).
+ */
+function splitRawDeclarationGroups(block: string) {
   const groups: string[][] = [[]]
   for (let index = skipCSSWhitespace(block, 0); index < block.length; index = skipCSSWhitespace(block, index)) {
     const statementEnd = findCSSStatementEnd(block, index)
@@ -2363,47 +2370,82 @@ function readRawDeclarationGroups(rule: any, fallbacks: NativeFallbacks) {
   return groups
 }
 
-function countDeclarations(target: any) {
-  const block: DeclarationBlock<Declaration> = target.value.declarations
+/** Each keyframe block's declarations as written, in source order. */
+function readRawKeyframeDeclarations(rule: any, fallbacks: NativeFallbacks) {
+  const block = readRawRuleBlock(rule.value.loc, fallbacks)
+  if (block === undefined) return
+  const keyframes: string[][] = []
+  for (let index = skipCSSWhitespaceAndComments(block, 0); index < block.length; index = skipCSSWhitespaceAndComments(block, index)) {
+    const range = findRawRuleBlockRange(block, index)
+    if (!range) return
+    const groups = splitRawDeclarationGroups(block.slice(range.start, range.end))
+    if (groups?.length !== 1) return
+    keyframes.push(groups[0])
+    index = range.end + 1
+  }
+  return keyframes
+}
+
+function countDeclarations(block: DeclarationBlock<Declaration>) {
   return (block.declarations?.length || 0) + (block.importantDeclarations?.length || 0)
+}
+
+/** Keeps `declarations` as written and returns the placeholder block printed in their place. */
+function createNativeFallbacksBlock(declarations: string[], fallbacks: NativeFallbacks): DeclarationBlock<Declaration> {
+  fallbacks.declarations.push(declarations)
+  return {
+    declarations: [{
+      property: 'custom',
+      value: {
+        name: `${nativeFallbacksPlaceholder(fallbacks)}${fallbacks.declarations.length - 1}`,
+        value: [{ type: 'token', value: { type: 'ident', value: 'x' } }]
+      }
+    }],
+    importantDeclarations: []
+  }
 }
 
 /**
  * lightningcss's `transform` always minifies, which keeps only the last of overriding
  * declarations. For a native style rule holding such fallbacks, swap its declarations (and those
  * of its `nested-declarations` children) for a placeholder and keep the declarations as written;
- * `restoreNativeFallbacks` prints them in source order once the transform is done. Other rules,
- * and any group whose written declarations do not line up one to one with what lightningcss
- * parsed, keep lightningcss's printing.
+ * `restoreNativeFallbacks` prints them in source order once the transform is done. A `@keyframes`
+ * rule does the same for each keyframe block. Other rules, and any group whose written
+ * declarations do not line up one to one with what lightningcss parsed, keep lightningcss's
+ * printing.
  */
 function preserveNativeFallbacks(rule: any, fallbacks: NativeFallbacks) {
+  if (rule.type === 'keyframes') return preserveKeyframeFallbacks(rule, fallbacks)
   if (rule.type !== 'style') return
   const targets = [rule, ...(rule.value.rules || []).filter((child: any) => child.type === 'nested-declarations')]
-  const overridden = targets.map((target) => {
-    const block: DeclarationBlock<Declaration> = target.value.declarations
-    return hasOverriddenDeclaration(block.declarations) || hasOverriddenDeclaration(block.importantDeclarations)
-  })
+  const overridden = targets.map((target) => hasOverriddenDeclarations(target.value.declarations))
   if (!overridden.includes(true)) return
-  const groups = readRawDeclarationGroups(rule, fallbacks)
+  const block = readRawRuleBlock(rule.value.loc, fallbacks)
+  const groups = block === undefined ? undefined : splitRawDeclarationGroups(block)
   if (!groups) return
   // The leading group always belongs to the rule; later ones map onto its children only when the counts agree.
   const mapped = groups.length === targets.length ? targets.length : 1
   let replaced = false
   for (let index = 0; index < mapped; index++) {
-    if (!overridden[index] || groups[index].length !== countDeclarations(targets[index])) continue
-    fallbacks.declarations.push(groups[index])
-    targets[index].value.declarations = {
-      declarations: [{
-        property: 'custom',
-        value: {
-          name: `${nativeFallbacksPlaceholder(fallbacks)}${fallbacks.declarations.length - 1}`,
-          value: [{ type: 'token', value: { type: 'ident', value: 'x' } }]
-        }
-      }],
-      importantDeclarations: []
-    }
+    if (!overridden[index] || groups[index].length !== countDeclarations(targets[index].value.declarations)) continue
+    targets[index].value.declarations = createNativeFallbacksBlock(groups[index], fallbacks)
     replaced = true
   }
+  return replaced ? rule : undefined
+}
+
+function preserveKeyframeFallbacks(rule: any, fallbacks: NativeFallbacks) {
+  const keyframes: { declarations: DeclarationBlock<Declaration> }[] = rule.value.keyframes
+  const overridden = keyframes.map((keyframe) => hasOverriddenDeclarations(keyframe.declarations))
+  if (!overridden.includes(true)) return
+  const written = readRawKeyframeDeclarations(rule, fallbacks)
+  if (written?.length !== keyframes.length) return
+  let replaced = false
+  keyframes.forEach((keyframe, index) => {
+    if (!overridden[index] || written[index].length !== countDeclarations(keyframe.declarations)) return
+    keyframe.declarations = createNativeFallbacksBlock(written[index], fallbacks)
+    replaced = true
+  })
   return replaced ? rule : undefined
 }
 
