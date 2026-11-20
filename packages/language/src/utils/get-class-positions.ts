@@ -12,6 +12,7 @@ import {
   type StetCSSExpressionNeighbours,
   type StetCSSScriptStringQuote
 } from '@stet-css/lexer'
+import { getStetCSSAstroFrontmatter } from '@stet-css/lexer/astro-frontmatter'
 import { decodeStetCSSHTMLAttributeValue, decodeStetCSSJSXAttributeString } from '@stet-css/lexer/character-reference'
 import { parseOxcOnSourceStack } from './oxc-stack'
 
@@ -138,8 +139,16 @@ const ASTRO_SOURCE_EXT = /\.astro$/
 /** The bindings the build reads decoded: Vue compiles `:class` from the decoded attribute. */
 const DECODED_CLASS_BINDINGS = new Set([':class', 'v-bind:class'])
 
-/** `<script>` and `<style>` elements, whose text the build reads as JavaScript or not at all. */
-const SCRIPT_OR_STYLE_ELEMENT = /<(script|style)\b[^>]*>[\s\S]*?(?:<\/\1\s*>|$)/gi
+/** The attributes of an HTML start tag: names with optional quoted or unquoted values. */
+const TAG_ATTRIBUTES = String.raw`(?:\s+[^\s"'>\/=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'>]+))?)*\s*\/?`
+
+/**
+ * What the HTML tokenizer reads before it reaches markup text: comments, `<script>` and `<style>`
+ * elements (whose content the build reads as JavaScript or not at all), and other start tags with
+ * their attribute values. Scanned left to right, so a `<style>` inside a comment or an attribute
+ * value opens nothing.
+ */
+const MARKUP_TOKEN = new RegExp(String.raw`<!--[\s\S]*?(?:-->|$)|<(script|style)\b(${TAG_ATTRIBUTES})>[\s\S]*?(?:<\/\1\s*>|$)|<[A-Za-z][^\s\/>]*${TAG_ATTRIBUTES}>`, 'gi')
 
 const OXC_CACHE_LIMIT = 20
 
@@ -223,36 +232,17 @@ function getDocumentPath(textDocument: TextDocument) {
   return textDocument.uri.split(/[?#]/)[0]
 }
 
-/**
- * The range of an Astro component's frontmatter, which the build reads as TypeScript. Like the
- * Astro compiler, the opening fence may follow a BOM, whitespace and HTML comments; the closing
- * fence is taken as the next `---`, which a `---` inside a frontmatter string ends early.
- */
-function getAstroFrontmatterRange(source: string): SourceRange | undefined {
-  let cursor = source.startsWith('\uFEFF') ? 1 : 0
-  for (;;) {
-    while (/[ \t\r\n\f]/.test(source[cursor] ?? '')) cursor++
-    if (source.startsWith('---', cursor)) {
-      const end = source.indexOf('---', cursor + 3)
-      return { start: cursor, end: end < 0 ? source.length : end + 3 }
-    }
-    if (!source.startsWith('<!--', cursor)) return
-    const commentEnd = source.indexOf('-->', cursor + 4)
-    if (commentEnd < 0) return
-    cursor = commentEnd + 3
-  }
-}
-
-/**
- * Ranges of a markup document the build does not read as markup: `<script>` and `<style>`
- * elements, and an Astro component's frontmatter. Attributes spelled there are text in a script.
- */
 function collectNonMarkupRanges(source: string, astro: boolean) {
   const ranges: SourceRange[] = []
-  const frontmatter = astro ? getAstroFrontmatterRange(source) : undefined
-  if (frontmatter) ranges.push(frontmatter)
-  for (const match of source.matchAll(SCRIPT_OR_STYLE_ELEMENT)) {
-    ranges.push({ start: match.index ?? 0, end: (match.index ?? 0) + match[0].length })
+  // Astro's frontmatter, located with the build's own scan, and what precedes it.
+  const markupStart = astro ? getStetCSSAstroFrontmatter(source)?.markupStart ?? 0 : 0
+  if (markupStart) ranges.push({ start: 0, end: markupStart })
+  for (const match of source.slice(markupStart).matchAll(MARKUP_TOKEN)) {
+    const [element, name, attributes] = match
+    if (!name) continue
+    // The element's content, after its start tag.
+    const start = markupStart + (match.index ?? 0) + 1 + name.length + attributes.length + 1
+    ranges.push({ start, end: markupStart + (match.index ?? 0) + element.length })
   }
   return ranges
 }
