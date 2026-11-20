@@ -544,7 +544,8 @@ describe('source content linting', () => {
    * as JavaScript, and attributes other than `class` and Vue's `:class` are read as written, so lint
    * neither passes `blockk&#32;hiddenn` as two classes nor rewrites it.
    * Reverse checks: decoding every `html` document regardless of its extension reds the PHP, Pug
-   * and `.txt` rows; decoding inside `<script>` or frontmatter, or every attribute name, reds those rows.
+   * and `.txt` rows; decoding inside `<script>` or frontmatter, or every attribute name, reds those
+   * rows; closing Astro frontmatter at any `---` reds the `// --- helpers ---` row.
    */
   test('reads as written the class attributes the build reads as written', () => {
     const asWritten = ['blockk&#32;hiddenn']
@@ -553,6 +554,8 @@ describe('source content linting', () => {
     }
     expect(unknownClassNames('<script>el.innerHTML = \'<p class="blockk&#32;hiddenn"></p>\'</script>', '/project/index.html')).toEqual(asWritten)
     expect(unknownClassNames('---\nconst html = \'<p class="blockk&#32;hiddenn"></p>\'\n---\n<div></div>', '/project/Page.astro')).toEqual(asWritten)
+    // The frontmatter closes at the first `---` outside a comment or string.
+    expect(unknownClassNames('---\n// --- helpers ---\nconst html = \'<b class="blockk&#32;hiddenn"></b>\'\n---\n<div></div>', '/project/Page.astro')).toEqual(asWritten)
     expect(unknownClassNames('<template><Comp className="blockk&#32;hiddenn" /></template>', '/project/App.vue')).toEqual(asWritten)
     expect(unknownClassNames('<div :class="\'blockk&#32;hiddenn\'"></div>', '/project/index.html')).toEqual(asWritten)
   })
@@ -565,7 +568,9 @@ describe('source content linting', () => {
    * would join the two classes into one. Expected outputs are the fixes of the same lists written
    * without references (`fg:white bg:black` sorts to `bg:black fg:white`, `bg:black m:0.5rem` to
    * `m:0.5rem bg:black`); text the build reads as written is left alone.
-   * Reverse check: joining edited items without checking how they decode reds the `&#x20` rows.
+   * Reverse checks: joining edited items without checking how they decode reds the `&#x20` rows;
+   * checking a list the parser read as written reds the PHP rows; closing Astro frontmatter at any
+   * `---` reds the Astro row.
    */
   test('fixes class attributes with character references at their source spelling', () => {
     const fix = (content: string, filePath: string) => fixStetCSSContent({
@@ -594,6 +599,13 @@ describe('source content linting', () => {
       .toBe('<div class="fg:white&#32;bg:black"></div>')
     expect(fix('<script>el.innerHTML = \'<p class="fg:white&#32;bg:black"></p>\'</script><div class="fg:white&#32;bg:black"></div>', '/project/index.html'))
       .toBe('<script>el.innerHTML = \'<p class="fg:white&#32;bg:black"></p>\'</script><div class="bg:black&#32;fg:white"></div>')
+    const astro = (line: string) => `---\n${line}\nconst html = '<b class="fg:white&#32;bg:black"></b>'\n---\n<div></div>`
+    expect(fix(astro('const rule = \'---\''), '/project/Page.astro')).toBe(astro('const rule = \'---\''))
+    // A string the parser cannot decode (a line break inside quotes) is read and rebuilt as written.
+    expect(fix('<?php echo clsx(\'fg:white\n  bg:black\'); ?>', '/project/index.php'))
+      .toBe('<?php echo clsx(\'bg:black\n  fg:white\'); ?>')
+    expect(fix('<?php echo clsx("fg:white\r\n  bg:black"); ?>', '/project/index.php'))
+      .toBe('<?php echo clsx("bg:black\r\n  fg:white"); ?>')
   })
 
   /**
