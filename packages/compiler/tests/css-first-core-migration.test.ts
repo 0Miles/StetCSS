@@ -1783,9 +1783,11 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
    *   Folding both widths into one range let the container's 300px decide, putting it first.
    * - An AND query: feature lists compare in name order (`height` before `width`), so the
    *   `(width >= 600px) and (height >= 500px)` block comes first, as its engine class does. This
-   *   name-first order is the engine's existing rule; the row keeps the compiler on it.
+   *   name-first order is the engine's existing rule; the row keeps the compiler on it. The
+   *   container row holds container features to the same order.
    * Reverse-checked: folding media and container bounds into one range reds the nested row; review
-   * r1 of #233 found dropping `sortQueryFeatures` emits the blue AND-row block first.
+   * r1 of #233 found dropping `sortQueryFeatures` emits the blue AND-row block first, and review r2
+   * found name-sorting only the media features does the same in the container row.
    */
   test.each([
     [
@@ -1801,6 +1803,13 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
       '@media (width >= 500px) { color: blue; }',
       '@layer components{@media (width>=600px) and (height>=500px){.card{color:red}}@media (width>=500px){.card{color:#00f}}}',
       ['fg:red@w>=600px&h>=500px', 'fg:blue@w>=500px']
+    ],
+    [
+      'with a container AND query',
+      '@container (width >= 600px) and (height >= 500px) { color: red; }',
+      '@container (width >= 500px) { color: blue; }',
+      '@layer components{@container (width>=600px) and (height>=500px){.card{color:red}}@container (width>=500px){.card{color:#00f}}}',
+      ['fg:red@container(w>=600px&h>=500px)', 'fg:blue@container(w>=500px)']
     ]
   ])('orders component query blocks %s like the engine', (_, redBlock, blueBlock, expectedCSS, expectedClasses) => {
     for (const written of [[redBlock, blueBlock], [blueBlock, redBlock]]) {
