@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import stetCSS from '../../src/core'
-import { buildProject } from '../plugin-test-helper'
+import { buildProject, cssLayerOrder } from '../plugin-test-helper'
 
 function expectStetBaseCSS(css: string) {
   expect(css).toContain('@layer base')
@@ -67,6 +67,25 @@ describe('StyleEntryPlugin Vite build integration', () => {
     expect(css.slice(0, css.indexOf('@layer base'))).toMatch(
       /^@layer theme,base,defaults,components,utilities;@import ("https:\/\/example\.com\/b\.css"|url\("?https:\/\/example\.com\/b\.css"?\)) layer\(b\);/
     )
+  })
+
+  /**
+   * Guards #250 in a production build: the CSS spliced into the asset put the package's CSS first
+   * and lost `@layer reset;` written before `@import "@stet-css/core"`, so `reset` was declared
+   * after `utilities` and beat `fg:blue`. The build orders the layers as static extraction does.
+   * Reverse check: before the fix this test was red with `reset` after `utilities`.
+   */
+  test('declares the layers written before @stet-css/core ahead of the preset layers', async () => {
+    const { css } = await buildProject({
+      appClass: 'r fg:blue',
+      plugins: [
+        stetCSS()
+      ],
+      prefix: 'stet-css-vite-leading-layer-',
+      styleCSS: '@layer reset;\n@import "@stet-css/core";\n@layer reset { .r { color: rgb(0 128 0); } }'
+    })
+
+    expect(cssLayerOrder(css)).toEqual(['reset', 'theme', 'base', 'defaults', 'components', 'utilities'])
   })
 
   test('emits preset base CSS for the root StetCSS import', async () => {
