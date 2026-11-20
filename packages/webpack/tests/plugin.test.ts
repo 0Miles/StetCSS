@@ -501,10 +501,15 @@ describe('StetCSSPlugin', () => {
    * files to vue-loader, by package name or resolved path, past a rule that runs other files
    * through vue-loader (VuePress's `.md`); and a `null`, `undefined` or `false` rule, which
    * webpack accepts, must not throw.
+   * VueLoaderPlugin takes the first rule that matches, so with two `.vue` rules split by
+   * `include` the block rule goes before the first; a `test` can be a function or an array.
    * Reverse check: matching only the bare `vue-loader` name turns the resolved-path case red;
    * splicing before the first rule naming vue-loader turns the `.md` case red, and the
    * `static-e2e.test.ts` cases with the `.md` rule before the css rule; dropping the
-   * guard on rules that are not objects turns the falsy case red (TypeError).
+   * guard on rules that are not objects turns the falsy case red (TypeError); `findLastIndex`
+   * turns the `include` case red; a function condition that never matches turns the function
+   * case red; an array condition that needs every item turns the array case red. Each of these
+   * three also turns its `static-e2e.test.ts` case red.
    */
   test.each([
     ['a resolved vue-loader path', [
@@ -514,7 +519,17 @@ describe('StetCSSPlugin', () => {
       { test: /\.md$/, use: ['vue-loader', '/project/md-loader.js'] },
       { test: /\.vue$/, use: [{ loader: 'vue-loader', options: {} }] }
     ], 1],
-    ['null, undefined and false rules', [null, undefined, false], -1]
+    ['null, undefined and false rules', [null, undefined, false], -1],
+    ['two .vue rules split by include', [
+      { test: /\.vue$/, include: '/project/src/a', loader: 'vue-loader' },
+      { test: /\.vue$/, include: '/project/src/b', loader: 'vue-loader' }
+    ], 0],
+    ['a function test', [
+      { test: (file: string) => file.endsWith('.vue'), loader: 'vue-loader' }
+    ], 0],
+    ['an array test', [
+      { test: [/\.vue\.html$/, /\.vue$/], loader: 'vue-loader' }
+    ], 0]
   ])('installs the .vue block rule with %s', (_, rules, vueRuleIndex) => {
     const plugin = makePlugin()
     const { compiler } = makeFakeCompiler()
@@ -535,6 +550,57 @@ describe('StetCSSPlugin', () => {
     expect(blockRules).toHaveLength(1)
     expect(installed.indexOf(blockRules[0])).toBe(vueRuleIndex)
     expect(installed[vueRuleIndex + 1]).toBe(rules[vueRuleIndex])
+  })
+
+  /**
+   * Guards that the rules go in once (#236): `initialize`, `beforeRun` and every `watchRun` try
+   * to install them, so a plugin applied after `webpack()` still gets them; a second install
+   * would run the loader again on every stylesheet and `.vue` block, more on each rebuild.
+   * Reverse check: dropping the installed check turns this test red (5 of each rule) and the
+   * watched late-apply case in `static-e2e.test.ts`.
+   */
+  test('installs its rules once across initialize, beforeRun and watch rebuilds', async () => {
+    const plugin = makePlugin()
+    const { compiler } = makeFakeCompiler()
+    ;(compiler as any).webpack = { sources: { RawSource: function NoopSource(this: object) { /* stub */ } } }
+    ;(compiler.options.module as any).rules = [{ test: /\.vue$/, loader: 'vue-loader' }]
+    // The generation these hooks also start is not under test here.
+    vi.spyOn(plugin as any, 'writeGeneratedCSSModule').mockResolvedValue(undefined)
+    vi.spyOn(plugin, 'init').mockResolvedValue(plugin)
+
+    plugin.apply(compiler as any)
+    compiler.hooks.initialize.call()
+    await compiler.hooks.beforeRun.promise(compiler)
+    for (let rebuild = 0; rebuild < 3; rebuild++) {
+      await compiler.hooks.watchRun.promise(compiler)
+    }
+
+    const installed = (compiler.options.module as any).rules as any[]
+    const styleLoaderRules = installed.filter((rule) => rule?.use?.[0]?.loader?.includes('style-css-loader'))
+    expect(styleLoaderRules.filter((rule) => rule.enforce === 'pre')).toHaveLength(1)
+    expect(styleLoaderRules.filter((rule) => rule.use[0].options.vueStyleBlock)).toHaveLength(1)
+  })
+
+  /**
+   * Guards the map of a block the loader rewrites (#236): the incoming map describes the source
+   * as written, not the lowered CSS, so it must not travel with the new code; the next loader
+   * maps the lowered text instead.
+   * Reverse check: always handing on the incoming map turns only this test red.
+   */
+  test('style loader hands no incoming source map on with a block it lowers', async () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-webpack-lowered-map-'))
+    try {
+      const map = { version: 3, sources: ['App.vue'], mappings: 'SAAS' }
+      const result = await runStyleCSSLoader(root, path.join(root, 'App.vue'), '.x { @compose block; }\n', {
+        resourceQuery: '?vue&type=style&index=0&lang.css',
+        options: { vueStyleBlock: true },
+        map
+      })
+      expect(result.content).toContain('.x{display:block}')
+      expect(result.map).toBeUndefined()
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
   })
 
   test('locally lowers explicit @reference CSS Modules and reports reference dependencies', async () => {
