@@ -5,6 +5,7 @@ import {
   type CSSDirectiveAnimationDefinitions,
   type CSSDirectiveConditionPathEntry,
   type CSSDirectiveManifestInput,
+  type CSSDirectiveDeclarationFallbacks,
   type CSSDirectiveDeclarations,
   type CSSDirectiveLayerName,
   type CSSDirectiveReference,
@@ -872,6 +873,64 @@ function collectDeclarations(block: DeclarationBlock<Declaration>) {
   return declarations
 }
 
+/** `getDeclarationName` with the vendor prefix it was written with. */
+function getWrittenDeclarationName(declaration: Declaration) {
+  // An unparsed declaration's property id carries its prefix as `vendor_prefix` at run time.
+  const prefixes: string[] | undefined = declaration.property === 'unparsed'
+    ? (declaration.value.propertyId as any).vendor_prefix
+    : (declaration as any).vendorPrefix
+  const prefix = prefixes?.find((each) => each !== 'none')
+  return `${prefix ? `-${prefix}-` : ''}${getDeclarationName(declaration)}`
+}
+
+interface CollectedDeclarations {
+  declarations: CSSDirectiveDeclarations
+  fallbacks?: CSSDirectiveDeclarationFallbacks
+}
+
+/**
+ * A block whose declarations override each other (`hasOverriddenDeclarations`), kept as written
+ * for a lowered native rule, the way `preserveNativeFallbacks` keeps them in a rule left native:
+ * each property's last declaration in `declarations`, in the order they come, and every earlier
+ * one in `fallbacks` under the declaration written next after it. Undefined for any other block.
+ */
+function collectWrittenDeclarations(block: DeclarationBlock<Declaration>): CollectedDeclarations | undefined {
+  if (!hasOverriddenDeclarations(block)) return
+  const written: [property: string, value: string][] = [
+    ...(block.declarations || []).map((declaration): [string, string] => [
+      getWrittenDeclarationName(declaration),
+      normalizeDeclarationValue(formatDeclarationValue(declaration))
+    ]),
+    ...(block.importantDeclarations || []).map((declaration): [string, string] => [
+      getWrittenDeclarationName(declaration),
+      `${normalizeDeclarationValue(formatDeclarationValue(declaration))} !important`
+    ])
+  ]
+  const lastIndexes = new Map(written.map(([property], index) => [property, index]))
+  const declarations: CSSDirectiveDeclarations = {}
+  const fallbacks: CSSDirectiveDeclarationFallbacks = {}
+  let pending: CSSDirectiveDeclarationFallbacks[string] = []
+  written.forEach((entry, index) => {
+    const [property, value] = entry
+    if (lastIndexes.get(property) !== index) {
+      pending.push(entry)
+      return
+    }
+    declarations[property] = value
+    if (pending.length) fallbacks[property] = pending
+    pending = []
+  })
+  return { declarations, fallbacks }
+}
+
+/** A lowered native rule's block: `collectWrittenDeclarations`, else one value per property. */
+function collectNativeDeclarations(
+  block: DeclarationBlock<Declaration>,
+  transformDeclarations: (declarations: Record<string, string>) => Record<string, string> = declarations => declarations
+): CollectedDeclarations {
+  return collectWrittenDeclarations(block) || { declarations: transformDeclarations(collectDeclarations(block)) }
+}
+
 const WEBKIT_PAIRED_DECLARATIONS: Record<string, string> = {
   '-webkit-backdrop-filter': 'backdrop-filter',
   '-webkit-box-decoration-break': 'box-decoration-break',
@@ -1313,10 +1372,7 @@ function isNestedStyleRule(rule: Rule) {
 }
 
 type StyleRuleBodyItem =
-  | {
-    type: 'declarations'
-    declarations: Record<string, string>
-  }
+  | ({ type: 'declarations' } & CollectedDeclarations)
   | {
     type: 'compose'
     classNames: ParsedComposeClassName[]
@@ -1327,12 +1383,14 @@ type StyleRuleBodyItem =
     rule: Rule
   }
 
-function collectDirectiveStyleRule(rule: any, parsed: ParsedDirectives) {
+/** `native` keeps the fallbacks of a native rule's blocks (`collectNativeDeclarations`). */
+function collectDirectiveStyleRule(rule: any, parsed: ParsedDirectives, native = false) {
   return collectDirectiveStyleRuleBody(
     rule.value.declarations,
     rule.value.rules,
     parsed,
-    (declarations) => restoreRawWebkitPairedDeclarations(rule, parsed, declarations)
+    (declarations) => restoreRawWebkitPairedDeclarations(rule, parsed, declarations),
+    native
   )
 }
 
@@ -1340,25 +1398,30 @@ function collectDirectiveStyleRuleBody(
   block: DeclarationBlock<Declaration>,
   rules: Rule[],
   parsed: ParsedDirectives,
-  transformDeclarations: (declarations: Record<string, string>) => Record<string, string> = declarations => declarations
+  transformDeclarations: (declarations: Record<string, string>) => Record<string, string> = declarations => declarations,
+  native = false
 ) {
   const items: StyleRuleBodyItem[] = []
-  const declarations = transformDeclarations(collectDeclarations(block))
-  if (Object.keys(declarations).length) {
+  const leading = native
+    ? collectNativeDeclarations(block, transformDeclarations)
+    : { declarations: transformDeclarations(collectDeclarations(block)) }
+  if (Object.keys(leading.declarations).length) {
     items.push({
       type: 'declarations',
-      declarations
+      ...leading
     })
   }
   for (const child of rules) {
     assertNotSlotRule(child)
 
     if (child.type === 'nested-declarations') {
-      const nestedDeclarations = collectDeclarations(child.value.declarations)
-      if (Object.keys(nestedDeclarations).length) {
+      const nested = native
+        ? collectNativeDeclarations(child.value.declarations)
+        : { declarations: collectDeclarations(child.value.declarations) }
+      if (Object.keys(nested.declarations).length) {
         items.push({
           type: 'declarations',
-          declarations: nestedDeclarations
+          ...nested
         })
       }
       continue
@@ -1437,6 +1500,7 @@ function parseStyleDefinitionBody(
         ...(selectorDefinition.source ? { selectorSource: selectorDefinition.source } : {}),
         ...(name ? { name } : {}),
         declarations: item.declarations,
+        ...(item.fallbacks && Object.keys(item.fallbacks).length ? { fallbacks: item.fallbacks } : {}),
         ...createConditionPathProperties(conditionPath),
         ...(layer ? { layer } : {})
       })
@@ -1546,11 +1610,11 @@ function parseNativeRuleBody(
     }
 
     if (child.type === 'nested-declarations' && parentSelectorDefinition) {
-      const declarations = collectDeclarations(child.value.declarations)
-      if (Object.keys(declarations).length) {
+      const collected = collectNativeDeclarations(child.value.declarations)
+      if (Object.keys(collected.declarations).length) {
         parseStyleDefinitionBody(parsed, parentSelectorDefinition, [{
           type: 'declarations',
-          declarations
+          ...collected
         }], conditionPath, undefined, undefined)
       }
       continue
@@ -1624,7 +1688,7 @@ function parseNestedNativeStyleChildRule(child: Rule, parsed: ParsedDirectives, 
 function parseNativeStyleRule(rule: any, parsed: ParsedDirectives, conditionPath: CSSDirectiveConditionPath = [], parentSelectorDefinition?: StyleSelectorDefinition) {
   const selectorDefinition = parseNativeSelectorDefinition(rule.value.selectors, parentSelectorDefinition)
   selectorDefinition.source = createSelectorSourceReference(parsed, rule) || parentSelectorDefinition?.source
-  parseStyleDefinitionBody(parsed, selectorDefinition, collectDirectiveStyleRule(rule, parsed), conditionPath, undefined, undefined)
+  parseStyleDefinitionBody(parsed, selectorDefinition, collectDirectiveStyleRule(rule, parsed, true), conditionPath, undefined, undefined)
 }
 
 function formatKeyframeSelector(selector: KeyframeSelector) {

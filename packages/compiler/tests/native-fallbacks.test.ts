@@ -264,3 +264,60 @@ test.concurrent('keeps keyframe fallbacks beside a @compose rule in a native @la
   ))
   expect(result.generatedCSS).toBe('@layer components{.x{padding:1rem}}')
 })
+
+/**
+ * Prevents: a native rule that `@compose` lowers losing the fallbacks the same rule keeps without
+ * `@compose`, so browsers without `dvh` get no height (#242). The rule's own declarations, those
+ * after a nested rule, and those of the nested rule keep them, inside an at-rule block too.
+ * Reverse check: collecting a lowered rule's blocks one value per property (before #242) turned
+ * this test and the next red, and no other test in this file.
+ */
+test.concurrent('keeps fallbacks in rules lowered by @compose', () => {
+  expect(compileCSSManifest('.x { @compose p:1rem; height: 100vh; height: 100dvh }').generatedCSS)
+    .toBe('.x{padding:1rem;height:100vh;height:100dvh}')
+  expect(compileCSSManifest(
+    '@media print { .y { @compose p:1rem; color: #f00; color: oklch(60% .2 30); .z & { height: 100vh; height: 100dvh } width: 100vw; width: 100dvw } }'
+  ).generatedCSS).toBe(
+    '@media print{.y{padding:1rem;color:red;color:oklch(60% .2 30);width:100vw;width:100dvw}}@media print{.z .y{height:100vh;height:100dvh}}'
+  )
+})
+
+/**
+ * Prevents: a lowered rule's fallbacks printing out of the written order or under the wrong name.
+ * A longhand written before and after its shorthand keeps its place around it, a vendor-prefixed
+ * declaration keeps its prefix, `!important` pairs stay important, and the fallbacks of a
+ * declaration a composed `!important` one keeps out go with it, even when written before another
+ * property's declaration.
+ * Reverse check: as above; passing those fallbacks on to the next declaration that applies, instead
+ * of dropping them, turned only the `.f` row red.
+ */
+test.concurrent('keeps lowered fallbacks in written order with their prefix and importance', () => {
+  expect(compileCSSManifest([
+    '.a { @compose p:1rem; background-color: #f00; background: red; background-color: oklch(60% .2 30) }',
+    '.b { @compose p:1rem; -webkit-transition: color 1s; transition: color 1s }',
+    '.c { @compose p:1rem; color: #f00 !important; color: oklch(60% .2 30) !important }',
+    '.d { @compose h:10px; height: 100vh; height: 100dvh }',
+    '.e { @compose h:10px!; height: 100vh; height: 100dvh }',
+    '.f { @compose h:10px!; height: 100vh; width: 1px; height: 100dvh }'
+  ].join('\n')).generatedCSS).toBe([
+    '.a{padding:1rem;background-color:red;background:red;background-color:oklch(60% .2 30)}',
+    '.b{padding:1rem;-webkit-transition:color 1s;transition:color 1s}',
+    '.c{padding:1rem;color:red !important;color:oklch(60% .2 30) !important}',
+    '.d{height:100vh;height:100dvh}',
+    '.e{height:10px!important}',
+    '.f{height:10px!important;width:1px}'
+  ].join(''))
+})
+
+/**
+ * Prevents: lowered declarations without a fallback changing output (#242): a rule with no
+ * overridden declaration, and a later rule for the same selector whose declaration replaces one
+ * that had fallbacks, which prints alone as it did.
+ */
+test.concurrent('leaves lowered declarations without fallbacks unchanged', () => {
+  expect(compileCSSManifest([
+    '.x { @compose p:1rem; height: 100dvh; border: 1px solid red; border-radius: 2px }',
+    '.y { @compose p:1rem; height: 100vh; height: 100dvh }',
+    '.y { @compose p:2rem; height: 1px }'
+  ].join('\n')).generatedCSS).toBe('.x{padding:1rem;height:100dvh;border:1px solid red;border-radius:2px}.y{padding:2rem;height:1px}')
+})
