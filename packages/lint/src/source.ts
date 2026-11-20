@@ -3,6 +3,7 @@ import {
   collectCSSDirectiveRanges,
   type CSSDirectiveRuleRange,
   type SourceRange,
+  type StetCSSCharacterReferenceDecoder,
   type StetCSSScriptStringQuote
 } from '@stet-css/lexer'
 import { getClassPositions, languageSettings } from '@stet-css/language'
@@ -138,6 +139,7 @@ interface ClassListContext {
   sourceKind: Exclude<StetCSSLintDiagnosticSourceKind, 'manifest'>
   unescape?: string | false
   scriptString?: StetCSSScriptStringQuote
+  characterReferences?: StetCSSCharacterReferenceDecoder
   directive?: CSSDirectiveRuleRange
 }
 
@@ -252,6 +254,7 @@ function collectClassListContexts(
       sourceKind: directive ? 'compose-directive' : inferClassSourceKind(content, contextRange),
       unescape: detectClassListUnescape(content, contextRange),
       scriptString: position.scriptString,
+      characterReferences: position.characterReferences,
       ...(directive ? { directive } : {})
     })
   }
@@ -326,7 +329,8 @@ function createClassListLintOptions(
   return {
     ...getRuleOptions(options),
     unescape: context.unescape,
-    scriptString: context.scriptString
+    scriptString: context.scriptString,
+    characterReferences: context.characterReferences
   }
 }
 
@@ -340,7 +344,8 @@ function withSourceRuleOptions(
     ...getSpecificRuleOptions(options, ruleId),
     severity: options.severities?.[ruleId],
     unescape: context.unescape,
-    scriptString: context.scriptString
+    scriptString: context.scriptString,
+    characterReferences: context.characterReferences
   }
 }
 
