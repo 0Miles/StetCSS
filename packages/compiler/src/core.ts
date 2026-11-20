@@ -46,6 +46,7 @@ import {
 import {
   assertNoMasterAtRules,
   REMOVED_MASTER_AT_RULE_ERROR_CODE,
+  UNQUOTED_DIRECTIVE_ARGUMENT_ERROR_CODE,
   collectStandaloneCSSDirectiveExtractionPolicy,
   createCSSDirectiveExtractionPolicy,
   findStandaloneCSSDirectiveStatements,
@@ -86,6 +87,7 @@ function createConditionPathProperties(conditionPath: CSSDirectiveConditionPath 
 export {
   assertNoMasterAtRules,
   REMOVED_MASTER_AT_RULE_ERROR_CODE,
+  UNQUOTED_DIRECTIVE_ARGUMENT_ERROR_CODE,
   collectStandaloneCSSDirectiveExtractionPolicy,
   createCSSDirectiveExtractionPolicy,
   findStandaloneCSSDirectiveStatements,

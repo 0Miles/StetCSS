@@ -675,6 +675,31 @@ describe('style CSS extraction helpers', () => {
     )).toThrow(join(root, 'app/settings.css'))
   })
 
+  /**
+   * Prevents (#239): a stylesheet that reaches `@stet-css/core` only through a relative import
+   * silently losing its entry status when it, or a stylesheet it imports, holds an unquoted
+   * `@safelist`/`@source`/`@blocklist` argument. The import graph's catch hands non-entries back
+   * to the bundler, so the build went green with no generated utilities and no error.
+   * Reverse check: dropping the unquoted-argument code from that catch's rethrow turns only this
+   * test red in this package.
+   */
+  it('rejects unquoted directive arguments in a stylesheet that imports the entry', () => {
+    const root = createFixture()
+    writeFileSync(join(root, 'app/stet.css'), '@import "@stet-css/core";')
+    writeFileSync(join(root, 'app/classes.css'), '@blocklist debug-*;')
+
+    expect(() => resolveStetStyleSource(
+      join(root, 'app/style.css'),
+      '@import "./stet.css";\n@safelist fg:blue;',
+      root
+    )).toThrow("@safelist 'fg:blue';")
+    expect(() => resolveStetStyleSource(
+      join(root, 'app/style.css'),
+      '@import "./stet.css";\n@import "./classes.css";',
+      root
+    )).toThrow(`@blocklist 'debug-*'; (in ${join(root, 'app/classes.css')})`)
+  })
+
   it('derives package host CSS from the package entry graph', async () => {
     const hostSource = await createStetCSSPackageHostSource(process.cwd(), {
       projectDir: process.cwd()
