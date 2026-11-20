@@ -2,7 +2,7 @@ import type { Plugin } from 'vite'
 import { toEmittedGlobalsModule } from '@stet-css/integration/emitted-globals-module'
 import type { PluginContext } from '../core'
 import { RESOLVED_VIRTUAL_EMITTED_GLOBALS_ID, VIRTUAL_EMITTED_GLOBALS_ID } from '../common'
-import { getExtractedCSSResult } from '../utils/extracted-css'
+import { extractCSSResult } from '../utils/extracted-css'
 
 export default function EmittedGlobalsVirtualModulePlugin(
   context: PluginContext
@@ -15,7 +15,7 @@ export default function EmittedGlobalsVirtualModulePlugin(
     },
     async load(id) {
       if (id !== RESOLVED_VIRTUAL_EMITTED_GLOBALS_ID) return
-      const result = await getExtractedCSSResult(context)
+      const result = await extractCSSResult(context)
       return toEmittedGlobalsModule(result.emittedGlobals)
     }
   }

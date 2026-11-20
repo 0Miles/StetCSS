@@ -29,13 +29,19 @@ function writeStyle(root: string, displayClass: string) {
  * A dev server whose CSS entry is imported from `src/main.ts` and whose only
  * template, `src/pages/index.astro`, no module imports.
  */
-async function startStaticTemplateServer(prefix: string, template = '<h1 class="font:heavy">Home</h1>') {
+async function startStaticTemplateServer(
+  prefix: string,
+  template = '<h1 class="font:heavy">Home</h1>',
+  style = '@import "@stet-css/core";',
+  files: Record<string, string> = {}
+) {
   mkdirSync(fixtureRoot, { recursive: true })
   fixtureDir = mkdtempSync(path.join(fixtureRoot, prefix))
   mkdirSync(path.join(fixtureDir, 'src/pages'), { recursive: true })
   writeFileSync(path.join(fixtureDir, 'index.html'), '<script type="module" src="/src/main.ts"></script>')
   writeFileSync(path.join(fixtureDir, 'src/main.ts'), 'import "./style.css"')
-  writeFileSync(path.join(fixtureDir, 'src/style.css'), '@import "@stet-css/core";')
+  writeFileSync(path.join(fixtureDir, 'src/style.css'), style)
+  for (const [file, source] of Object.entries(files)) writeFileSync(path.join(fixtureDir, file), source)
   const page = path.join(fixtureDir, 'src/pages/index.astro')
   writeFileSync(page, template)
 
@@ -175,44 +181,94 @@ describe('Vite dev HMR', () => {
    * `CSSRuntime.create`: it must list the variables the managed CSS defines now. The module
    * was loaded once per server, so a class added to a template never reached it, and after
    * the class was removed it still listed a variable the CSS no longer defined; the runtime
-   * then skipped that variable and its `fg:fuchsia` rendered in the inherited color.
+   * then skipped that variable and its `fg:fuchsia` rendered in the inherited color. The
+   * server environment's copy, which server-rendered code imports, must follow as well.
    * Reverse check: removing the `invalidateEmittedGlobalsModule` call in `style-entry-hmr.ts`
-   * turns only this test red.
+   * turns only this test red; so does invalidating only the `client` environment in
+   * `utils/emitted-globals-module.ts`.
    */
   it('regenerates emittedGlobals after a template gains or loses a class', async () => {
     const { page, url } = await startStaticTemplateServer('emitted-globals-class-')
+    const devServer = server!
     const emittedGlobals = async () => (await fetch(new URL(EMITTED_GLOBALS_URL, url))).text()
+    const serverEmittedGlobals = async () =>
+      (await devServer.environments.ssr.transformRequest('virtual:stet-css-emitted-globals'))?.code ?? ''
 
-    // The browser loads the CSS entry and the module, as a runtime page does.
+    // The browser loads the CSS entry and the module, as a runtime page does; the server
+    // environment holds its own copy.
     expect(await (await fetch(new URL('src/style.css?direct', url))).text()).toContain('.font\\:heavy')
     expect(await emittedGlobals()).not.toContain('"color-fuchsia"')
+    expect(await serverEmittedGlobals()).not.toContain('"color-fuchsia"')
 
     writeFileSync(page, '<h1 class="font:heavy">Home</h1><i class="fg:fuchsia">Pink</i>')
     await expect.poll(emittedGlobals, { timeout: 5000 }).toContain('"color-fuchsia"')
+    await expect.poll(serverEmittedGlobals, { timeout: 5000 }).toContain('"color-fuchsia"')
 
     writeFileSync(page, '<h1 class="font:heavy">Home</h1>')
     await expect.poll(emittedGlobals, { timeout: 5000 }).not.toContain('"color-fuchsia"')
+    await expect.poll(serverEmittedGlobals, { timeout: 5000 }).not.toContain('"color-fuchsia"')
   })
 
   /**
-   * Guards the same module when the stylesheet entry changes instead of a template: a theme
-   * variable added to the entry reaches the managed CSS once the HMR client fetches the
-   * edited entry, and must reach the module too.
-   * Reverse check: removing the `invalidateEmittedGlobalsModule` call in `style-entry.ts`
-   * turns only this test red.
+   * Guards the same module when the stylesheet entry, or a stylesheet it imports, changes
+   * instead of a template. Vite answers the edit with an HMR message, a full reload when the
+   * page imports `virtual:stet-css-manifest`, and the reloaded page can request the module
+   * before the entry is transformed again. The module must already describe the edit then,
+   * or that page's runtime starts with the old variables.
+   * Reverse check: dropping the `handleHotUpdate` registration in `style-entry-hmr.ts` turns
+   * both cases red and nothing else; matching only the entry file itself in
+   * `registerEditedStyleEntries` turns only the imported-stylesheet case red.
    */
-  it('regenerates emittedGlobals after the stylesheet entry changes its theme', async () => {
-    const { url } = await startStaticTemplateServer('emitted-globals-theme-', '<h1 class="fg:brand">Home</h1>')
-    const style = path.join(fixtureDir!, 'src/style.css')
+  it.each([
+    ['the entry', 'src/style.css', '@import "@stet-css/core";\n@import "./theme.css";\n@theme { --color-brand: #123456; }'],
+    ['a stylesheet the entry imports', 'src/theme.css', '@theme { --color-brand: #123456; }']
+  ])('regenerates emittedGlobals before the update an edit to %s sends', async (_, editedFile, editedSource) => {
+    const { url } = await startStaticTemplateServer(
+      'emitted-globals-theme-',
+      '<h1 class="fg:brand">Home</h1>',
+      '@import "@stet-css/core";\n@import "./theme.css";',
+      { 'src/theme.css': '' }
+    )
+    const devServer = server!
     const fetchCSS = async () => (await fetch(new URL('src/style.css?direct', url))).text()
     const emittedGlobals = async () => (await fetch(new URL(EMITTED_GLOBALS_URL, url))).text()
 
     expect(await fetchCSS()).not.toContain('--color-brand')
     expect(await emittedGlobals()).not.toContain('"color-brand"')
 
-    writeFileSync(style, '@import "@stet-css/core";\n@theme { --color-brand: #123456; }')
-    // The HMR client fetches the edited entry before the page is reloaded.
-    await expect.poll(fetchCSS, { timeout: 5000 }).toContain('--color-brand')
+    const updateSent = new Promise<void>((resolve) => {
+      const send = devServer.ws.send.bind(devServer.ws)
+      devServer.ws.send = ((payload: { type?: string }, ...args: unknown[]) => {
+        if (payload?.type === 'update' || payload?.type === 'full-reload') resolve()
+        return send(payload as never, ...args as never[])
+      }) as typeof devServer.ws.send
+    })
+    writeFileSync(path.join(fixtureDir!, editedFile), editedSource)
+    await updateSent
+
+    // The page asks for the module first, then for the edited entry.
+    expect(await emittedGlobals()).toContain('"color-brand"')
+    expect(await fetchCSS()).toContain('--color-brand')
+  })
+
+  /**
+   * Guards the first page load after the server starts, which can request the module before
+   * the stylesheet entry is registered, so that list lacks the entry's theme. Registering the
+   * entry must mark the module stale, or every later page load keeps the incomplete list.
+   * Reverse check: never invalidating the module from the transform in `style-entry.ts` turns
+   * only this test red.
+   */
+  it('regenerates emittedGlobals once the stylesheet entry registers', async () => {
+    const { url } = await startStaticTemplateServer(
+      'emitted-globals-register-',
+      '<h1 class="fg:brand">Home</h1>',
+      '@import "@stet-css/core";\n@theme { --color-brand: #123456; }'
+    )
+    const emittedGlobals = async () => (await fetch(new URL(EMITTED_GLOBALS_URL, url))).text()
+
+    await emittedGlobals()
+    expect(await (await fetch(new URL('src/style.css?direct', url))).text()).toContain('--color-brand')
+
     expect(await emittedGlobals()).toContain('"color-brand"')
   })
 })
