@@ -82,8 +82,9 @@ describe.concurrent('empty items in a value list', () => {
   })
 
   /**
-   * Guards: an empty item inside a function in a group item. The group generates each item, so
-   * `{fg:rgb(1,2,)}` is rejected by the function check above on `fg:rgb(1,2,)` (#234).
+   * Guards: an empty item inside a function in a group item. The group parses its own value, so
+   * `{fg:rgb(1,2,)}` is rejected by the function check above, which reads the function name past
+   * the item key (#234).
    *
    * Reverse check: the same as the function cases; skipping that call reddens this test too.
    */
