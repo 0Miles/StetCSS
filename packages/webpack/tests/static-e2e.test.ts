@@ -51,6 +51,50 @@ function createFixture(prefix: string, files: Record<string, string>) {
   return root
 }
 
+/**
+ * A Vue app whose `App.vue` has a plain block that composes a component and a scoped block that
+ * `@reference`s the entry for a theme variable and composes `animate:fade`. It is a project of
+ * its own: this package's `"sideEffects": false` would drop the style imports.
+ */
+const VUE_FIXTURE_FILES = {
+  'package.json': '{ "private": true }',
+  'src/index.js': [
+    'import "./app.css"',
+    'import { createApp } from "vue"',
+    'import App from "./App.vue"',
+    'createApp(App).mount("#app")',
+    ''
+  ].join('\n'),
+  'src/app.css': [
+    '@import "@stet-css/core";',
+    '@theme { --color-probe: #123456; }',
+    '@components { brand { background-color: #abcdef; } }',
+    ''
+  ].join('\n'),
+  'src/App.vue': [
+    '<template>',
+    '  <p class="plain">plain</p>',
+    '  <p class="probe">probe</p>',
+    '</template>',
+    '',
+    '<style>',
+    '.plain { @compose inline-flex brand; }',
+    '</style>',
+    '',
+    '<style scoped>',
+    '@reference "./app.css";',
+    '.probe { color: var(--color-probe); @compose animate:fade; }',
+    '</style>',
+    ''
+  ].join('\n'),
+  // The shape of VuePress's markdown loader: it emits an SFC for vue-loader, left of it.
+  'md-loader.cjs': 'module.exports = (source) => `<template><article>${source}</article></template>`\n'
+}
+
+function loadVueLoader() {
+  return createRequire(join(packageDir, 'package.json'))('vue-loader') as typeof import('vue-loader')
+}
+
 /** Native CSS stands in for an extraction plugin: it emits the CSS as its own asset. */
 const extractedCSSConfig = {
   experiments: { css: true },
@@ -319,40 +363,8 @@ describe('Webpack static CSS', () => {
   it.each(['VueLoaderPlugin first', 'StetCSSPlugin first'])('lowers @compose and @reference in .vue style blocks (%s)', async (order) => {
     const StetCSSPlugin = await importPlugin()
     const { default: webpackModule } = await import('webpack')
-    const { VueLoaderPlugin } = createRequire(join(packageDir, 'package.json'))('vue-loader') as typeof import('vue-loader')
-    const root = createFixture('vue', {
-      // A project of its own: this package's `"sideEffects": false` would drop the style imports.
-      'package.json': '{ "private": true }',
-      'src/index.js': [
-        'import "./app.css"',
-        'import { createApp } from "vue"',
-        'import App from "./App.vue"',
-        'createApp(App).mount("#app")',
-        ''
-      ].join('\n'),
-      'src/app.css': [
-        '@import "@stet-css/core";',
-        '@theme { --color-probe: #123456; }',
-        '@components { brand { background-color: #abcdef; } }',
-        ''
-      ].join('\n'),
-      'src/App.vue': [
-        '<template>',
-        '  <p class="plain">plain</p>',
-        '  <p class="probe">probe</p>',
-        '</template>',
-        '',
-        '<style>',
-        '.plain { @compose inline-flex brand; }',
-        '</style>',
-        '',
-        '<style scoped>',
-        '@reference "./app.css";',
-        '.probe { color: var(--color-probe); @compose animate:fade; }',
-        '</style>',
-        ''
-      ].join('\n')
-    })
+    const { VueLoaderPlugin } = loadVueLoader()
+    const root = createFixture('vue', VUE_FIXTURE_FILES)
     const dist = join(root, 'dist')
     const plugins = [new VueLoaderPlugin(), new StetCSSPlugin({}, root)]
     let browser: Browser | undefined
@@ -412,6 +424,112 @@ describe('Webpack static CSS', () => {
     } finally {
       await browser?.close()
       await new Promise<void>((resolve) => server?.close(() => resolve()) ?? resolve())
+      rmSync(root, { recursive: true, force: true })
+    }
+  }, 180000)
+
+  /**
+   * Guards the other vue-loader setups #236 must survive, by the CSS the bundle ships (the
+   * browser test above shows that CSS works):
+   * - `experimentalInlineMatchResource` (which vue-loader requires with `experiments.css`)
+   *   names a block `App.vue.css?vue&type=style&…`, so the `pre` rule matches it before
+   *   vue-loader extracts it and the `.vue` block rule must match that form too;
+   * - a second rule through vue-loader, such as VuePress's `.md` one, before or after the
+   *   css rule: the block rule must go before the rule that hands `.vue` files to vue-loader,
+   *   after every copy VueLoaderPlugin makes, not before the first rule naming vue-loader.
+   * Reverse check: letting the `pre` rule lower a `.vue` file turns the three inline cases red
+   * ("Invalid empty selector"); dropping the match-resource form from the block rule's test
+   * leaves `@compose` in them; splicing before the first rule naming vue-loader turns the two
+   * cases with the `.md` rule before the css rule red.
+   */
+  it.each([
+    { name: 'inline match resource, VueLoaderPlugin first', order: 'vue', inline: true, layout: ['vue', 'css'] },
+    { name: 'inline match resource, StetCSSPlugin first', order: 'stet', inline: true, layout: ['vue', 'css'] },
+    { name: 'inline match resource with experiments.css', order: 'vue', inline: true, experimentsCSS: true, layout: ['vue', 'css'] },
+    { name: 'a vue-loader .md rule after the css rule', order: 'vue', layout: ['vue', 'css', 'md'] },
+    { name: 'a vue-loader .md rule before the css rule', order: 'vue', layout: ['vue', 'md', 'css'] },
+    { name: 'a vue-loader .md rule first', order: 'stet', layout: ['md', 'vue', 'css'] }
+  ] as const)('lowers .vue style blocks with $name', async ({ order, layout, ...setup }) => {
+    const inline = 'inline' in setup && setup.inline
+    const experimentsCSS = 'experimentsCSS' in setup && setup.experimentsCSS
+    const StetCSSPlugin = await importPlugin()
+    const { default: webpackModule } = await import('webpack')
+    const { VueLoaderPlugin } = loadVueLoader()
+    const root = createFixture('vue-setup', VUE_FIXTURE_FILES)
+    const dist = join(root, 'dist')
+    const rules = {
+      vue: { test: /\.vue$/, loader: 'vue-loader', options: inline ? { experimentalInlineMatchResource: true } : {} },
+      css: experimentsCSS
+        ? { test: /\.css$/, type: 'css' }
+        : { test: /\.css$/, use: ['style-loader', 'css-loader'] },
+      md: { test: /\.md$/, use: ['vue-loader', join(root, 'md-loader.cjs')] }
+    }
+    const plugins = [new VueLoaderPlugin(), new StetCSSPlugin({}, root)]
+
+    try {
+      await runWebpack(webpackModule, {
+        mode: 'development',
+        devtool: false,
+        context: root,
+        entry: './src/index.js',
+        experiments: experimentsCSS ? { css: true } : undefined,
+        output: { path: dist, filename: '[name].js', cssFilename: '[name].css' },
+        module: { rules: layout.map((name) => rules[name]) },
+        plugins: order === 'vue' ? plugins : plugins.reverse()
+      })
+
+      const output = readOutput(dist, '.js') + readOutput(dist, '.css')
+      const scopeId = output.match(/\.probe\[data-v-([0-9a-f]+)\]/)?.[1]
+      expect(scopeId).toBeTruthy()
+      expect(output).toContain('.plain{background-color:#abcdef;display:inline-flex}')
+      expect(output).toContain(`.probe[data-v-${scopeId}]{color:var(--color-probe);animation:var(--animate-fade)}`)
+      expect(output).toContain(`:root{--color-probe:#123456;--animate-fade:fade-${scopeId} 1s infinite}`)
+      expect(output).toContain(`@keyframes fade-${scopeId}{`)
+      expect(output).not.toMatch(/@(?:compose|reference)\b/)
+      expect(output).not.toMatch(/\[data-v-[^\]]+\]:root/)
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  }, 180000)
+
+  /**
+   * Guards a plugin applied after `webpack()` created the compiler, as webpack's Node API
+   * allows: it misses `initialize`, so its rules go in before the first build instead, or the
+   * entry ships StetCSS's package CSS and no utilities, silently.
+   * Reverse check: installing the rules on `initialize` alone turns only this test red.
+   */
+  it('installs its rules when applied after webpack() created the compiler', async () => {
+    const StetCSSPlugin = await importPlugin()
+    const { default: webpackModule } = await import('webpack')
+    const root = createFixture('late', {
+      'src/index.js': 'import "./app.css"\n',
+      'src/app.css': '@import "@stet-css/core";\n',
+      'src/template.html': '<main class="block fg:red"></main>\n'
+    })
+    const compiler = webpackModule({
+      mode: 'production',
+      context: root,
+      entry: './src/index.js',
+      ...extractedCSSConfig,
+      output: { path: join(root, 'dist'), filename: '[name].js', cssFilename: '[name].css' }
+    })
+    new StetCSSPlugin({}, root).apply(compiler)
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        compiler.run((error, stats) => {
+          compiler.close(() => {
+            if (error) reject(error)
+            else if (stats?.hasErrors()) reject(new Error(stats.toString({ all: false, errors: true })))
+            else resolve()
+          })
+        })
+      })
+
+      const css = readOutput(join(root, 'dist'), '.css')
+      expect(css).toMatch(/\.block\s*\{\s*display:\s*block/)
+      expect(css).toMatch(/\.fg\\:red\s*\{\s*color:/)
+    } finally {
       rmSync(root, { recursive: true, force: true })
     }
   }, 180000)
