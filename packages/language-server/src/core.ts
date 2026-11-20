@@ -4,9 +4,10 @@ import path from 'node:path'
 import { readFile } from 'node:fs/promises'
 import { pathToFileURL } from 'node:url'
 import CSSLanguageService, { collectSFCStyleBlocks, CSS_STYLE_LANGUAGE_IDS, SFC_LANGUAGE_IDS } from '@stet-css/language-service'
-import { compileCSSManifest } from '@stet-css/compiler'
+import { compileCSSManifest, resolveCSSImportGraph } from '@stet-css/compiler'
 import { cssTreeNativeDeclarationMatcher, generateValidRules } from '@stet-css/validator'
 import { Settings } from './settings'
+import { FileWatcher } from './file-watcher'
 import {
   findCSSManifestEntryFiles,
   findStetCSSWorkspaceDirectories
@@ -173,10 +174,19 @@ export default class CSSLanguageServer {
   }
   documents: TextDocuments<TextDocument>
   initializing?: Promise<void>
+  /** Settles once every workspace reload that a watched file change queued has finished. */
+  reloading?: Promise<void>
   clientCapabilities: ClientCapabilities = {}
   settings?: Settings
   console: RemoteConsole
   private disposables: Disposable[] = []
+  private stopped = false
+  /**
+   * Watches each loaded workspace's manifest files (entries, every file they import, including
+   * package CSS in node_modules, and the workspace preset's default manifest), so a change made
+   * outside the editor reloads the workspace without a save or restart.
+   */
+  private fileWatcher = new FileWatcher((uri, files) => this.reloadWorkspace(uri, files))
 
   constructor(
     public connection: Connection = process.argv.includes('--stdio')
@@ -442,6 +452,9 @@ export default class CSSLanguageServer {
   async initWorkspaceLanguageService(workspace: Workspace) {
     workspace.languageRuntime = await this.loadWorkspaceLanguageRuntime(workspace)
     const languageRuntime = workspace.languageRuntime
+    const manifestFiles = new Set<string>()
+    const presetManifestFile = workspace.languageRuntimeResolution?.presetManifest?.entry
+    if (workspace !== this.globalWorkspace && presetManifestFile) manifestFiles.add(presetManifestFile)
     const createLanguageService = (manifest?: StetCSSManifest) => new CSSLanguageService(
       { ...workspace.languageServiceSettings, manifest },
       { runtime: languageRuntime }
@@ -452,14 +465,19 @@ export default class CSSLanguageServer {
       this.console.error(error instanceof Error ? error.stack : error.toString())
     }
     let workspacePlan: StetCSSManifest | undefined
+    let manifestLoadFailed = false
     workspace.manifestErrors = []
     if (workspace !== this.globalWorkspace) {
       try {
-        workspacePlan = await this.loadWorkspacePlan(workspace)
+        workspacePlan = await this.loadWorkspacePlan(workspace, manifestFiles)
       } catch (e: any) {
+        manifestLoadFailed = true
         reportManifestError(e)
       }
     }
+    // A load whose import graph broke cannot list the imported files, so it also keeps watching
+    // what the last load read: the change that fixes the error lands in one of those files.
+    this.fileWatcher.watch(workspace.uri, manifestFiles, { keepWatched: manifestLoadFailed })
     if (workspacePlan) {
       try {
         workspace.languageService = createLanguageService(workspacePlan)
@@ -487,12 +505,63 @@ export default class CSSLanguageServer {
     workspace.languageService = createLanguageService()
   }
 
-  private async loadWorkspacePlan(workspace: Workspace) {
+  /**
+   * Loads the workspace's manifest, adding to `manifestFiles` the entries and every file they
+   * import, also when the load fails, so the change that fixes it reloads the workspace.
+   */
+  private async loadWorkspacePlan(workspace: Workspace, manifestFiles: Set<string>) {
     const cwd = workspace.uri ? URI.parse(workspace.uri).fsPath : process.cwd()
-    const result = await loadProjectManifest(cwd, {
-      baseManifest: (workspace.languageRuntime ?? defaultCSSLanguageRuntime).defaultManifest
-    })
+    const entries = await findCSSManifestEntryFiles(cwd)
+    workspace.planEntries = entries
+    entries.forEach((entry) => manifestFiles.add(entry))
+    let result: Awaited<ReturnType<typeof loadProjectManifest>>
+    try {
+      result = await loadProjectManifest(cwd, {
+        entries,
+        baseManifest: (workspace.languageRuntime ?? defaultCSSLanguageRuntime).defaultManifest
+      })
+    } catch (error) {
+      // A failed compile reports no dependencies; the import graph alone still lists them, unless
+      // the graph itself is what broke (a missing import).
+      for (const entry of entries) {
+        try {
+          resolveCSSImportGraph(entry, { projectDir: cwd }).dependencies.forEach((dependency) => manifestFiles.add(dependency))
+        } catch {
+          // The caller keeps watching what the last load read.
+        }
+      }
+      throw error
+    }
+    result.dependencies.forEach((dependency) => manifestFiles.add(dependency))
     return result.entries.length ? result.manifest : workspace.languageServiceSettings.manifest
+  }
+
+  /**
+   * Rebuilds a workspace's language service after its watched files changed outside the editor,
+   * then republishes its documents' diagnostics. Reloads run one at a time, in the order queued.
+   */
+  private reloadWorkspace(uri: string, files: string[]) {
+    this.reloading = (this.reloading ?? Promise.resolve()).then(async () => {
+      if (this.stopped) return
+      const workspace = this.workspaces.get(uri)
+      if (!workspace?.languageService || !workspace.openedTextDocuments.length) {
+        this.fileWatcher.unwatch(uri)
+        return
+      }
+      this.console.info(`Reloading workspace ${uri} after changes to ${files.join(', ')}`)
+      await this.initWorkspaceLanguageService(workspace)
+      if (this.stopped) return
+      if (!workspace.openedTextDocuments.length) {
+        this.destroyLanguageService(workspace)
+        return
+      }
+      for (const document of workspace.openedTextDocuments) {
+        this.publishDiagnostics(document, workspace)
+      }
+      this.refreshSemanticTokens()
+    }).catch((error) => {
+      this.console.error(error instanceof Error ? error.stack || error.message : String(error))
+    })
   }
 
   private async loadWorkspaceLanguageRuntime(workspace: Workspace): Promise<CSSLanguageRuntime> {
@@ -565,6 +634,7 @@ export default class CSSLanguageServer {
   destroyLanguageService(workspace: Workspace) {
     this.console.info(`Destroyed workspace ${workspace.uri}`)
     delete workspace.languageService
+    this.fileWatcher.unwatch(workspace.uri)
   }
 
   findClosestWorkspace(textDocumentURI: string) {
@@ -716,6 +786,8 @@ export default class CSSLanguageServer {
 
   stop(): void {
     this.connection.sendNotification('stetCSS/dispose')
+    this.stopped = true
+    this.fileWatcher.dispose()
     this.disposables.forEach((disposable) => disposable.dispose())
     this.disposables.length = 0
     this.connection.dispose()
