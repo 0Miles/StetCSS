@@ -17,6 +17,16 @@ export interface QueryFeatureBound {
 
 const UNBOUNDED_MIN = 0
 const UNBOUNDED_MAX = Number.MAX_SAFE_INTEGER
+/**
+ * Comparable values are rounded to 1e-9 (rem for lengths), far below any written difference, so a
+ * length written in a unit whose px ratio is inexact in binary (`cm`, `mm`, `Q`, `pt`) compares
+ * equal to the same length in px or rem, and exclusivity decides between them.
+ */
+const COMPARABLE_VALUE_SCALE = 1e9
+
+function roundComparableValue(value: number) {
+  return Math.round(value * COMPARABLE_VALUE_SCALE) / COMPARABLE_VALUE_SCALE
+}
 
 /** Orders a ratio query such as `aspect-ratio>=16/9` by the quotient of its ratio. */
 export function toComparableQueryRatio(value: string) {
@@ -26,7 +36,8 @@ export function toComparableQueryRatio(value: string) {
 
 /**
  * Folds bounds into one range per feature, in the order features first appear. A later bound on
- * the same side replaces an earlier one; a bound whose value is not a number is skipped.
+ * the same side replaces an earlier one; a bound whose value is not a number is skipped. Values
+ * are rounded to `COMPARABLE_VALUE_SCALE`.
  */
 export function toQueryFeatures(bounds: Iterable<QueryFeatureBound>): QueryFeature[] {
   const features = new Map<string, QueryFeature>()
@@ -36,12 +47,12 @@ export function toQueryFeatures(bounds: Iterable<QueryFeatureBound>): QueryFeatu
     switch (operator) {
       case '>':
       case '>=':
-        feature[1] = value
+        feature[1] = roundComparableValue(value)
         feature[3] = operator === '>' ? 1 : 0
         break
       case '<':
       case '<=':
-        feature[2] = value
+        feature[2] = roundComparableValue(value)
         feature[4] = operator === '<' ? -1 : 0
         break
     }
