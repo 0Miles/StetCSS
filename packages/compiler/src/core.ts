@@ -2369,14 +2369,20 @@ interface NativeFallbacks {
   resolveLocation?: ReturnType<typeof createSourceLocationResolver>
   /** Each placeholder's declarations as written, in source order. */
   declarations: string[][]
+  /** Each `@keyframes` placeholder's rule as written, its fallback blocks holding a declarations placeholder. */
+  keyframes: string[]
 }
 
 function createNativeFallbacks(source: string): NativeFallbacks {
-  return { source, nonce: Math.random().toString(36).slice(2, 10), declarations: [] }
+  return { source, nonce: Math.random().toString(36).slice(2, 10), declarations: [], keyframes: [] }
 }
 
 function nativeFallbacksPlaceholder(fallbacks: NativeFallbacks) {
   return `--stet-native-fallbacks-${fallbacks.nonce}-`
+}
+
+function nativeKeyframesPlaceholder(fallbacks: NativeFallbacks) {
+  return `--stet-native-keyframes-${fallbacks.nonce}-`
 }
 
 /**
@@ -2411,13 +2417,19 @@ function readRawRuleBlock(loc: any, fallbacks: NativeFallbacks) {
   return blockRange && source.slice(blockRange.start, blockRange.end)
 }
 
+/** Skips CSS whitespace only: U+00A0 and other Unicode spaces are part of an identifier in CSS. */
+function skipRawCSSWhitespace(source: string, index: number) {
+  while (index < source.length && ' \t\n\r\f'.includes(source[index])) index++
+  return index
+}
+
 /**
  * A block's declarations as written, grouped as lightningcss groups a style rule's: the ones the
  * block opens with, then each run that follows a nested rule (a `nested-declarations` child).
  */
 function splitRawDeclarationGroups(block: string) {
   const groups: string[][] = [[]]
-  for (let index = skipCSSWhitespace(block, 0); index < block.length; index = skipCSSWhitespace(block, index)) {
+  for (let index = skipRawCSSWhitespace(block, 0); index < block.length; index = skipRawCSSWhitespace(block, index)) {
     const statementEnd = findCSSStatementEnd(block, index)
     if (statementEnd.reason === 'block') {
       const nestedEnd = findCSSBlockEnd(block, statementEnd.end)
@@ -2434,34 +2446,51 @@ function splitRawDeclarationGroups(block: string) {
   return groups
 }
 
-/** Each keyframe block's declarations as written, in source order. */
-function readRawKeyframeDeclarations(rule: any, fallbacks: NativeFallbacks) {
-  const block = readRawRuleBlock(rule.value.loc, fallbacks)
-  if (block === undefined) return
-  const keyframes: string[][] = []
-  for (let index = skipCSSWhitespaceAndComments(block, 0); index < block.length; index = skipCSSWhitespaceAndComments(block, index)) {
-    const range = findRawRuleBlockRange(block, index)
-    if (!range) return
-    const groups = splitRawDeclarationGroups(block.slice(range.start, range.end))
+/**
+ * A `@keyframes` rule as written, with the range inside each keyframe block's braces and its
+ * declarations as written, in source order.
+ */
+function readRawKeyframes(rule: any, fallbacks: NativeFallbacks) {
+  const { source } = fallbacks
+  fallbacks.resolveLocation ??= createSourceLocationResolver(source)
+  const start = fallbacks.resolveLocation(rule.value.loc)
+  const blockRange = findRawRuleBlockRange(source, start)
+  if (!blockRange) return
+  const text = source.slice(start, blockRange.end + 1)
+  const blockEnd = blockRange.end - start
+  const frames: { range: { start: number, end: number }, declarations: string[] }[] = []
+  for (
+    let index = skipCSSWhitespaceAndComments(text, blockRange.start - start, blockEnd);
+    index < blockEnd;
+    index = skipCSSWhitespaceAndComments(text, index, blockEnd)
+  ) {
+    const range = findRawRuleBlockRange(text, index)
+    if (!range || range.end >= blockEnd) return
+    const groups = splitRawDeclarationGroups(text.slice(range.start, range.end))
     if (groups?.length !== 1) return
-    keyframes.push(groups[0])
+    frames.push({ range, declarations: groups[0] })
     index = range.end + 1
   }
-  return keyframes
+  return { text, frames }
 }
 
 function countDeclarations(block: DeclarationBlock<Declaration>) {
   return (block.declarations?.length || 0) + (block.importantDeclarations?.length || 0)
 }
 
-/** Keeps `declarations` as written and returns the placeholder block printed in their place. */
-function createNativeFallbacksBlock(declarations: string[], fallbacks: NativeFallbacks): DeclarationBlock<Declaration> {
+/** Keeps `declarations` as written and returns the name of the placeholder printed in their place. */
+function keepNativeFallbacks(declarations: string[], fallbacks: NativeFallbacks) {
   fallbacks.declarations.push(declarations)
+  return `${nativeFallbacksPlaceholder(fallbacks)}${fallbacks.declarations.length - 1}`
+}
+
+/** A block holding only the placeholder `name: x`. */
+function createPlaceholderBlock(name: string): DeclarationBlock<Declaration> {
   return {
     declarations: [{
       property: 'custom',
       value: {
-        name: `${nativeFallbacksPlaceholder(fallbacks)}${fallbacks.declarations.length - 1}`,
+        name,
         value: [{ type: 'token', value: { type: 'ident', value: 'x' } }]
       }
     }],
@@ -2474,9 +2503,9 @@ function createNativeFallbacksBlock(declarations: string[], fallbacks: NativeFal
  * declarations. For a native style rule holding such fallbacks, swap its declarations (and those
  * of its `nested-declarations` children) for a placeholder and keep the declarations as written;
  * `restoreNativeFallbacks` prints them in source order once the transform is done. A `@keyframes`
- * rule does the same for each keyframe block. Other rules, and any group whose written
- * declarations do not line up one to one with what lightningcss parsed, keep lightningcss's
- * printing.
+ * rule does the same for each keyframe block (`preserveKeyframeFallbacks`). Other rules, and any
+ * group whose written declarations do not line up one to one with what lightningcss parsed, keep
+ * lightningcss's printing.
  */
 function preserveNativeFallbacks(rule: any, fallbacks: NativeFallbacks) {
   if (rule.type === 'keyframes') return preserveKeyframeFallbacks(rule, fallbacks)
@@ -2492,25 +2521,44 @@ function preserveNativeFallbacks(rule: any, fallbacks: NativeFallbacks) {
   let replaced = false
   for (let index = 0; index < mapped; index++) {
     if (!overridden[index] || groups[index].length !== countDeclarations(targets[index].value.declarations)) continue
-    targets[index].value.declarations = createNativeFallbacksBlock(groups[index], fallbacks)
+    targets[index].value.declarations = createPlaceholderBlock(keepNativeFallbacks(groups[index], fallbacks))
     replaced = true
   }
   return replaced ? rule : undefined
 }
 
+/**
+ * A `@keyframes` rule is swapped whole for a placeholder rule of the same name, never rebuilt from
+ * its parsed form: lightningcss cannot read back every value it parsed (`var()` in a transform,
+ * `image-set()`) and reprints others (`25%` as `25.0%`). The name keeps lightningcss dropping the
+ * earlier of two same-name rules as before. The rule as written, each keyframe block with
+ * fallbacks holding a declarations placeholder, is kept for `restoreNativeFallbacks`.
+ */
 function preserveKeyframeFallbacks(rule: any, fallbacks: NativeFallbacks) {
   const keyframes: { declarations: DeclarationBlock<Declaration> }[] = rule.value.keyframes
   const overridden = keyframes.map((keyframe) => hasOverriddenDeclarations(keyframe.declarations))
   if (!overridden.includes(true)) return
-  const written = readRawKeyframeDeclarations(rule, fallbacks)
-  if (written?.length !== keyframes.length) return
-  let replaced = false
-  keyframes.forEach((keyframe, index) => {
-    if (!overridden[index] || written[index].length !== countDeclarations(keyframe.declarations)) return
-    keyframe.declarations = createNativeFallbacksBlock(written[index], fallbacks)
-    replaced = true
-  })
-  return replaced ? rule : undefined
+  const written = readRawKeyframes(rule, fallbacks)
+  if (written?.frames.length !== keyframes.length) return
+  const replacements = written.frames.flatMap(({ range, declarations }, index) =>
+    overridden[index] && declarations.length === countDeclarations(keyframes[index].declarations)
+      ? [{ ...range, replacement: `${keepNativeFallbacks(declarations, fallbacks)}: x` }]
+      : [])
+  if (!replacements.length) return
+  fallbacks.keyframes.push(replaceSourceRanges(written.text, replacements))
+  return {
+    type: 'keyframes',
+    value: {
+      name: rule.value.name,
+      // lightningcss reads an empty list back as nothing; `none` is how it writes no prefix.
+      vendorPrefix: rule.value.vendorPrefix?.length ? rule.value.vendorPrefix : ['none'],
+      keyframes: [{
+        selectors: [{ type: 'from' }],
+        declarations: createPlaceholderBlock(`${nativeKeyframesPlaceholder(fallbacks)}${fallbacks.keyframes.length - 1}`)
+      }],
+      loc: rule.value.loc
+    }
+  }
 }
 
 /**
@@ -2541,8 +2589,24 @@ function printNativeDeclarations(declarations: string[], nonce: string) {
   return printed
 }
 
+/** Prints each kept `@keyframes` rule on its own, as lightningcss prints it from source, in place of its placeholder. */
+function restoreNativeKeyframes(css: string, fallbacks: NativeFallbacks) {
+  if (!fallbacks.keyframes.length) return css
+  const placeholder = new RegExp(
+    `^([ \\t]*)@[^\\n]*\\{\\n[ \\t]*from \\{\\n[ \\t]*${nativeKeyframesPlaceholder(fallbacks)}(\\d+): x;\\n[ \\t]*\\}\\n[ \\t]*\\}$`,
+    'gm'
+  )
+  return css.replace(placeholder, (line, indent: string, index: string) => {
+    const keyframes = fallbacks.keyframes[Number(index)]
+    if (keyframes === undefined) return line
+    const printed = decodeCSS(getCSSTransform()({ filename: 'stet-css-keyframes.css', code: encodeCSS(keyframes) }).code).trim()
+    return printed.split('\n').map((printedLine) => printedLine && indent + printedLine).join('\n')
+  })
+}
+
 function restoreNativeFallbacks(css: string, fallbacks: NativeFallbacks) {
   if (!fallbacks.declarations.length) return css
+  css = restoreNativeKeyframes(css, fallbacks)
   const printed = printNativeDeclarations(fallbacks.declarations.flat(), fallbacks.nonce)
   let offset = 0
   const lines = fallbacks.declarations.map((group) => printed.slice(offset, offset += group.length).flat())

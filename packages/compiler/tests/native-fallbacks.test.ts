@@ -203,7 +203,7 @@ test.concurrent('falls back to lightningcss printing when the written declaratio
  * `@media`, so an animation frame sets no height in browsers without `dvh` (#242). The same
  * declarations in a style rule keep them.
  * Reverse check: with `preserveNativeFallbacks` leaving `keyframes` rules alone (before #242), this
- * test and the next were the only red ones in this file.
+ * test and the next were red.
  */
 test.concurrent('keeps fallbacks in keyframe blocks, top-level and nested in @layer or @media', () => {
   const { nativeCSS } = compileCSS([
@@ -266,11 +266,133 @@ test.concurrent('keeps keyframe fallbacks beside a @compose rule in a native @la
 })
 
 /**
+ * Prevents: one keyframe's fallbacks breaking or reprinting the other keyframes of its rule. A
+ * sibling holding `var()`, `env()` or `image-set()` failed the build (lightningcss could not read
+ * the rebuilt rule back), and percentages printed as `25.0%`, where the rule compiles and prints
+ * them as written without the fallback (#242).
+ * Reverse check: rebuilding the whole rule from its parsed form (the first #242 attempt) turned
+ * this test red on the deserialize error.
+ */
+test.concurrent('prints sibling keyframes of a keyframe with fallbacks as lightningcss does', () => {
+  const { nativeCSS } = compileCSS([
+    '@keyframes a { from { transform: translateY(var(--distance)); opacity: 0 } to { height: 100vh; height: 100dvh } }',
+    '@media (min-width: 1px) { @keyframes b { from { background-image: image-set("a.png" 1x); left: env(safe-area-inset-left) } to { transform: translateY(var(--distance)); height: 100vh; height: 100dvh } } }',
+    '@keyframes c { from { animation-timing-function: linear(0, .5 25%, 1); shape-outside: circle(50%); transform-origin: 10% 20% 1px } to { height: 100vh; height: 100dvh } }'
+  ].join('\n'))
+
+  expect(nativeCSS).toBe(lines(
+    '@keyframes a {',
+    '  from {',
+    '    transform: translateY(var(--distance));',
+    '    opacity: 0;',
+    '  }',
+    '',
+    '  to {',
+    '    height: 100vh;',
+    '    height: 100dvh;',
+    '  }',
+    '}',
+    '',
+    '@media (width >= 1px) {',
+    '  @keyframes b {',
+    '    from {',
+    '      left: env(safe-area-inset-left);',
+    '      background-image: image-set("a.png" 1x);',
+    '    }',
+    '',
+    '    to {',
+    '      transform: translateY(var(--distance));',
+    '      height: 100vh;',
+    '      height: 100dvh;',
+    '    }',
+    '  }',
+    '}',
+    '',
+    '@keyframes c {',
+    '  from {',
+    '    animation-timing-function: linear(0, .5 25%, 1);',
+    '    shape-outside: circle(50%);',
+    '    transform-origin: 10% 20% 1px;',
+    '  }',
+    '',
+    '  to {',
+    '    height: 100vh;',
+    '    height: 100dvh;',
+    '  }',
+    '}'
+  ))
+})
+
+/**
+ * Prevents: a `@keyframes` rule without fallbacks printing where it did not before: of two rules
+ * with the same name, lightningcss keeps only the later, also when the later has fallbacks.
+ * Reverse check: with a placeholder rule that did not carry the name (a draft of this fix), the
+ * earlier rule printed too.
+ */
+test.concurrent('drops the earlier of two same-name @keyframes as before when the later has fallbacks', () => {
+  expect(compileCSS('@keyframes k { from { height: 1px } } @keyframes k { from { height: 100vh; height: 100dvh } }').nativeCSS).toBe(lines(
+    '@keyframes k {',
+    '  from {',
+    '    height: 100vh;',
+    '    height: 100dvh;',
+    '  }',
+    '}'
+  ))
+})
+
+/**
+ * Prevents: a keyframe losing a declaration when its written block does not split the way
+ * lightningcss parsed it (a `{}` value reads as a nested rule to the source scanner). Such a
+ * keyframe keeps lightningcss's printing: it loses the fallback, as before #242, but `--x` stays.
+ * The expected output is the fixed point's. This pins the written/parsed count check in
+ * `preserveKeyframeFallbacks`, which the review's mutant dropped.
+ */
+test.concurrent('falls back to lightningcss printing when a keyframe\'s written declarations do not line up', () => {
+  expect(compileCSS('@keyframes k { from { height: 100vh; height: 100dvh; --x: {a;b} } }').nativeCSS).toBe(lines(
+    '@keyframes k {',
+    '  from {',
+    '    --x: {a;b};',
+    '    height: 100dvh;',
+    '  }',
+    '}'
+  ))
+})
+
+/**
+ * Prevents: a declaration whose name starts with U+00A0, which CSS reads as part of the name,
+ * being split as if U+00A0 were whitespace: the reprinted rule failed the build or printed
+ * `\u00a0color` as `color`, a property the author did not write.
+ * Reverse check: skipping `\s` instead of CSS whitespace in `splitRawDeclarationGroups` turned this
+ * test red on `Unexpected token Semicolon`.
+ */
+test.concurrent('keeps a U+00A0 at the start of a declaration name when reprinting fallbacks', () => {
+  expect(compileCSS([
+    '@keyframes k { from { height: 100vh; height: 100dvh; \u00a0: red } }',
+    '.a { height: 100vh; height: 100dvh; \u00a0color: red }'
+  ].join('\n')).nativeCSS).toBe(lines(
+    '@keyframes k {',
+    '  from {',
+    '    height: 100vh;',
+    '    height: 100dvh;',
+    '    \u00a0: red;',
+    '  }',
+    '}',
+    '',
+    '.a {',
+    '  height: 100vh;',
+    '  height: 100dvh;',
+    '  \u00a0color: red;',
+    '}'
+  ))
+})
+
+/**
  * Prevents: a native rule that `@compose` lowers losing the fallbacks the same rule keeps without
  * `@compose`, so browsers without `dvh` get no height (#242). The rule's own declarations, those
- * after a nested rule, and those of the nested rule keep them, inside an at-rule block too.
+ * after a nested rule, and those of the nested rule keep them, inside an at-rule block too, and
+ * so do the bodies of a nested `@media` and of `@variant`, which the compiler lowers the same way.
  * Reverse check: collecting a lowered rule's blocks one value per property (before #242) turned
- * this test and the next red, and no other test in this file.
+ * this test and the next red.
  */
 test.concurrent('keeps fallbacks in rules lowered by @compose', () => {
   expect(compileCSSManifest('.x { @compose p:1rem; height: 100vh; height: 100dvh }').generatedCSS)
@@ -280,6 +402,12 @@ test.concurrent('keeps fallbacks in rules lowered by @compose', () => {
   ).generatedCSS).toBe(
     '@media print{.y{padding:1rem;color:red;color:oklch(60% .2 30);width:100vw;width:100dvw}}@media print{.z .y{height:100vh;height:100dvh}}'
   )
+  expect(compileCSSManifest('.x { @compose p:1rem; @media print { height: 100vh; height: 100dvh } }').generatedCSS)
+    .toBe('.x{padding:1rem}@media print{.x{height:100vh;height:100dvh}}')
+  expect(compileCSSManifest('.x { @variant dark { height: 100vh; height: 100dvh } }').generatedCSS)
+    .toBe('@media (prefers-color-scheme:dark){.x{height:100vh;height:100dvh}}')
+  expect(compileCSSManifest('@variant dark { .x { height: 100vh; height: 100dvh } }').generatedCSS)
+    .toBe('@media (prefers-color-scheme:dark){.x{height:100vh;height:100dvh}}')
 })
 
 /**
@@ -287,9 +415,11 @@ test.concurrent('keeps fallbacks in rules lowered by @compose', () => {
  * A longhand written before and after its shorthand keeps its place around it, a vendor-prefixed
  * declaration keeps its prefix, `!important` pairs stay important, and the fallbacks of a
  * declaration a composed `!important` one keeps out go with it, even when written before another
- * property's declaration.
+ * property's declaration. A fallback written before another property's declaration stays when a
+ * composed declaration replaces that one.
  * Reverse check: as above; passing those fallbacks on to the next declaration that applies, instead
- * of dropping them, turned only the `.f` row red.
+ * of dropping them, turned only the `.f` row red; dropping the fallbacks listed under a replaced
+ * declaration turned the `.g` row red.
  */
 test.concurrent('keeps lowered fallbacks in written order with their prefix and importance', () => {
   expect(compileCSSManifest([
@@ -298,26 +428,32 @@ test.concurrent('keeps lowered fallbacks in written order with their prefix and 
     '.c { @compose p:1rem; color: #f00 !important; color: oklch(60% .2 30) !important }',
     '.d { @compose h:10px; height: 100vh; height: 100dvh }',
     '.e { @compose h:10px!; height: 100vh; height: 100dvh }',
-    '.f { @compose h:10px!; height: 100vh; width: 1px; height: 100dvh }'
+    '.f { @compose h:10px!; height: 100vh; width: 1px; height: 100dvh }',
+    '.g { min-height: 100vh; padding: 0; min-height: 100dvh; @compose p:1rem; }'
   ].join('\n')).generatedCSS).toBe([
     '.a{padding:1rem;background-color:red;background:red;background-color:oklch(60% .2 30)}',
     '.b{padding:1rem;-webkit-transition:color 1s;transition:color 1s}',
     '.c{padding:1rem;color:red !important;color:oklch(60% .2 30) !important}',
     '.d{height:100vh;height:100dvh}',
     '.e{height:10px!important}',
-    '.f{height:10px!important;width:1px}'
+    '.f{height:10px!important;width:1px}',
+    '.g{min-height:100vh;min-height:100dvh;padding:1rem}'
   ].join(''))
 })
 
 /**
  * Prevents: lowered declarations without a fallback changing output (#242): a rule with no
  * overridden declaration, and a later rule for the same selector whose declaration replaces one
- * that had fallbacks, which prints alone as it did.
+ * that had fallbacks, which prints alone as it did, wherever those fallbacks were written.
+ * Reverse check: clearing only the fallbacks listed under the replaced declaration printed a
+ * stray `height:100vh` in the `.z` row.
  */
 test.concurrent('leaves lowered declarations without fallbacks unchanged', () => {
   expect(compileCSSManifest([
     '.x { @compose p:1rem; height: 100dvh; border: 1px solid red; border-radius: 2px }',
     '.y { @compose p:1rem; height: 100vh; height: 100dvh }',
-    '.y { @compose p:2rem; height: 1px }'
-  ].join('\n')).generatedCSS).toBe('.x{padding:1rem;height:100dvh;border:1px solid red;border-radius:2px}.y{padding:2rem;height:1px}')
+    '.y { @compose p:2rem; height: 1px }',
+    '.z { @compose p:1rem; height: 100vh; width: 1px; height: 100dvh }',
+    '.z { @compose p:2rem; height: 1px }'
+  ].join('\n')).generatedCSS).toBe('.x{padding:1rem;height:100dvh;border:1px solid red;border-radius:2px}.y{padding:2rem;height:1px}.z{width:1px;padding:2rem;height:1px}')
 })

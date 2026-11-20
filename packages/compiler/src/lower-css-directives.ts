@@ -770,10 +770,29 @@ function isStyleDeclarationKept(declarations: PropertiesHyphen, propertyName: st
 }
 
 /**
- * Applies a block's declarations in order. A declaration that replaces another drops the
- * fallbacks printed before it and takes its own. The fallbacks of a property whose declaration
- * does not apply go with it; others listed under it pass to the next declaration that applies,
- * so they keep their written place.
+ * Drops the fallbacks of the `replaced` properties wherever they are listed. The other fallbacks
+ * listed under a replaced declaration, which moves to the end, pass to the next declaration that
+ * stays, so they still print before their own property's declaration.
+ */
+function dropReplacedFallbacks(declarations: PropertiesHyphen, fallbacks: CSSDirectiveDeclarationFallbacks, replaced: Set<string>) {
+  let carried: CSSDirectiveDeclarationFallbacks[string] = []
+  for (const propertyName of Object.keys(declarations)) {
+    const listed = [...carried, ...(fallbacks[propertyName] || [])].filter(([property]) => !replaced.has(property))
+    delete fallbacks[propertyName]
+    carried = []
+    if (replaced.has(propertyName)) {
+      carried = listed
+    } else if (listed.length) {
+      fallbacks[propertyName] = listed
+    }
+  }
+}
+
+/**
+ * Applies a block's declarations in order. A declaration that replaces another takes its own
+ * fallbacks, and the replaced property's fallbacks go (`dropReplacedFallbacks`). The fallbacks of a
+ * property whose declaration does not apply go with it; others listed under it pass to the next
+ * declaration that applies, so they keep their written place.
  */
 function applyStyleDeclarations(
   declarations: PropertiesHyphen,
@@ -782,9 +801,16 @@ function applyStyleDeclarations(
   incomingFallbacks?: CSSDirectiveDeclarationFallbacks
 ) {
   const kept = new Set<string>()
+  const replaced = new Set<string>()
   for (const propertyName in incomingDeclarations) {
-    if (isStyleDeclarationKept(declarations, propertyName, incomingDeclarations[propertyName as keyof PropertiesHyphen])) kept.add(propertyName)
+    const value = incomingDeclarations[propertyName as keyof PropertiesHyphen]
+    if (isStyleDeclarationKept(declarations, propertyName, value)) {
+      kept.add(propertyName)
+    } else if (propertyName in declarations) {
+      replaced.add(propertyName)
+    }
   }
+  if (replaced.size) dropReplacedFallbacks(declarations, fallbacks, replaced)
   let pending: CSSDirectiveDeclarationFallbacks[string] = []
   for (const propertyName in incomingDeclarations) {
     pending.push(...(incomingFallbacks?.[propertyName] || []).filter(([property]) => !kept.has(property)))
@@ -792,7 +818,6 @@ function applyStyleDeclarations(
     const key = propertyName as keyof PropertiesHyphen
     delete declarations[key]
     declarations[key] = incomingDeclarations[key] as any
-    delete fallbacks[propertyName]
     if (pending.length) fallbacks[propertyName] = pending
     pending = []
   }
