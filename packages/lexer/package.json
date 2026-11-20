@@ -41,6 +41,11 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
+    "./astro-frontmatter": {
+      "types": "./dist/astro-frontmatter.d.ts",
+      "import": "./dist/astro-frontmatter.js",
+      "default": "./dist/astro-frontmatter.js"
+    },
     "./character-reference": {
       "types": "./dist/character-reference.d.ts",
       "import": "./dist/character-reference.js",
@@ -51,6 +56,9 @@
     "*": {
       ".": [
         "./dist/index.d.ts"
+      ],
+      "./astro-frontmatter": [
+        "./dist/astro-frontmatter.d.ts"
       ],
       "./character-reference": [
         "./dist/character-reference.d.ts"
