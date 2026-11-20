@@ -1774,6 +1774,50 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     }
   })
 
+  /**
+   * Prevents (#233): compiled component blocks and engine classes with the same queries coming
+   * out in different orders. Each row compiles two blocks, written in both orders, and checks the
+   * engine classes with the same queries come out in the same order.
+   * - `@media` inside `@container`: the engine ranges media and container features separately, so
+   *   the block under `(width >= 610px)` sorts by that width, after the `(width >= 605px)` block.
+   *   Folding both widths into one range let the container's 300px decide, putting it first.
+   * - An AND query: feature lists compare in name order (`height` before `width`), so the
+   *   `(width >= 600px) and (height >= 500px)` block comes first, as its engine class does. This
+   *   name-first order is the engine's existing rule; the row keeps the compiler on it.
+   * Reverse-checked: folding media and container bounds into one range reds the nested row; review
+   * r1 of #233 found dropping `sortQueryFeatures` emits the blue AND-row block first.
+   */
+  test.each([
+    [
+      'nested in @media and @container',
+      '@media (width >= 610px) { @container (width >= 300px) { color: red; } }',
+      '@media (width >= 605px) { color: blue; }',
+      '@layer components{@media (width>=605px){.card{color:#00f}}@media (width>=610px){@container (width>=300px){.card{color:red}}}}',
+      ['fg:blue@w>=605px', 'fg:red@w>=610px@container(w>=300px)']
+    ],
+    [
+      'with an AND query',
+      '@media (width >= 600px) and (height >= 500px) { color: red; }',
+      '@media (width >= 500px) { color: blue; }',
+      '@layer components{@media (width>=600px) and (height>=500px){.card{color:red}}@media (width>=500px){.card{color:#00f}}}',
+      ['fg:red@w>=600px&h>=500px', 'fg:blue@w>=500px']
+    ]
+  ])('orders component query blocks %s like the engine', (_, redBlock, blueBlock, expectedCSS, expectedClasses) => {
+    for (const written of [[redBlock, blueBlock], [blueBlock, redBlock]]) {
+      const { manifest } = compileCSSManifest(`@components { card { ${written.join(' ')} } }`, { baseManifest: defaultManifest })
+      const css = createTestCSS(manifest)
+      css.ensureClassRules('card')
+
+      expect(css.componentsLayer.text).toBe(expectedCSS)
+    }
+    for (const classNames of [expectedClasses, [...expectedClasses].reverse()]) {
+      const css = createTestCSS(defaultManifest)
+      css.ensureClassRules(...classNames)
+
+      expect(css.utilitiesLayer.rules.map(({ name }) => name)).toEqual(expectedClasses)
+    }
+  })
+
   test('lowers inline theme variables without emitting their own theme rules', () => {
     const { manifest } = compileCSSManifest(`
       @theme inline {
