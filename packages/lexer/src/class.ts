@@ -45,6 +45,7 @@ export type StetCSSLexicalTokenRole =
   | 'query.unit'
   | 'selector.attribute'
   | 'selector.attribute.bracket'
+  | 'selector.attribute.flag'
   | 'selector.attribute.operator'
   | 'selector.attribute.value'
   | 'selector.class'
@@ -712,6 +713,7 @@ const TYPE_SELECTOR_RE = /^\*?[A-Za-z][\w-]*/
 const ATTRIBUTE_NAME_RE = /^[A-Za-z_-][\w-]*/
 const ATTRIBUTE_OPERATOR_RE = /^[~|^$*]?=/
 const ATTRIBUTE_UNQUOTED_VALUE_RE = /^[^\]"']+/
+const ATTRIBUTE_CASE_FLAG_RE = /^_([is])(?=\])/i
 
 function pushTypeSelector(tokens: StetCSSLexicalTokenItem[], token: string, start: number, offset: number) {
   const match = token.slice(start).match(TYPE_SELECTOR_RE)
@@ -744,8 +746,10 @@ function findAttributeSelectorClose(token: string, start: number) {
 
 /**
  * Tokenizes an attribute selector from just after its `[` and returns the offset of its `]`, which
- * the caller tokenizes. Text after the value, such as `_i`, gets no tokens: the engine keeps `_`
- * inside brackets as written, so it is neither a combinator nor a case flag.
+ * the caller tokenizes. A quoted value followed by `_i` or `_s` ends in a case flag, which the
+ * engine emits after a space (`"a" i`); the flag takes the token type native CSS colours it with,
+ * `storage.modifier.ignore-case.css` for `i` and the attribute name scope for `s`. The `_` and any
+ * other text after the value get no tokens: the engine keeps them as written.
  */
 function tokenizeAttributeSelector(tokens: StetCSSLexicalTokenItem[], token: string, start: number, offset: number) {
   const name = token.slice(start).match(ATTRIBUTE_NAME_RE)
@@ -763,6 +767,10 @@ function tokenizeAttributeSelector(tokens: StetCSSLexicalTokenItem[], token: str
     if (token[end] !== quote || end === i) return token.length
     pushStetCSSLexicalToken(tokens, offset + i + 1, end - i - 1, 'string', 'value.string', ['quoted'])
     pushStetCSSLexicalToken(tokens, offset + end, 1, 'string', 'value.string.quote', ['quoted'])
+    const flag = token.slice(end + 1).match(ATTRIBUTE_CASE_FLAG_RE)
+    if (flag) {
+      pushStetCSSLexicalToken(tokens, offset + end + 2, 1, flag[1].toLowerCase() === 'i' ? 'keyword' : 'property', 'selector.attribute.flag', ['selector'])
+    }
     return findAttributeSelectorClose(token, end + 1)
   }
   const value = token.slice(i).match(ATTRIBUTE_UNQUOTED_VALUE_RE)
