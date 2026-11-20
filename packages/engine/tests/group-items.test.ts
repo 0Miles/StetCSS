@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { StetCSS } from '../src'
-import { cloneManifest, createDefaultCSS } from './helpers/css-tester'
+import { cloneManifest, createDefaultCSS, createManifestWithVariables } from './helpers/css-tester'
 
 function generateText(className: string, css = createDefaultCSS()) {
   css.ensureClassRules(className)
@@ -109,5 +109,55 @@ describe.concurrent('group items', () => {
 
   test('{transform:translate(1px,)} generates no CSS without a native declaration matcher', () => {
     expect(generateText('{transform:translate(1px,)}', createMatcherlessCSS())).toBe('')
+  })
+})
+
+describe.concurrent('generateGroupItem', () => {
+  /**
+   * Guards (#234): an invalid class generated earlier on the same long-lived instance (the
+   * runtime, a build) leaving its rejection behind, so a later group drops an item it should write
+   * raw. `fg:red,` must not stop `{display:flex;foo-bar:1}` from keeping `foo-bar:1`.
+   *
+   * Reverse check: not clearing the rejection when `generateGroupItem` starts fails this test.
+   */
+  test('starts each item without an earlier class\'s rejection', () => {
+    const css = createDefaultCSS()
+    css.ensureClassRules('fg:red,')
+    css.ensureClassRules('{display:flex;foo-bar:1}')
+    expect(css.text).toBe('@layer utilities{.\\{display\\:flex\\;foo-bar\\:1\\}{display:flex;foo-bar:1}}')
+  })
+
+  /**
+   * Guards (#234): an item one candidate rejects for its value while another generates it. With a
+   * radius token `0`, `r:0/50%` reads as `0` with an alpha the radius cannot take, but the native
+   * `border-radius:0/50%` declaration is valid, so the group keeps it.
+   *
+   * Reverse check: returning `undefined` whenever a candidate was rejected, even with rules,
+   * fails this test and the nested-item test below.
+   */
+  test('keeps an item that generates rules though a candidate was rejected', () => {
+    const css = StetCSS.create({
+      manifest: createManifestWithVariables([
+        { name: 'radius-0', key: '0', namespace: 'radius', type: 'number', value: '0', numeric: { value: 0, unit: '' } }
+      ]),
+      nativeDeclarationMatcher: ({ property }) => property === 'border-radius'
+    })
+    css.ensureClassRules('{r:0/50%}')
+    expect(css.utilitiesLayer.text).toBe('@layer utilities{.\\{r\\:0\\/50\\%\\}{border-radius:0/50%}}')
+  })
+
+  /**
+   * Guards (#234): a nested group's items leaking their rejections into the item that holds it.
+   * `{stroke:red/50}@base@component` matches nothing because it names two layers; its own item
+   * `stroke:red/50` generates a rule after a color candidate rejects the alpha `50`. That
+   * rejection belongs to the inner item, so the outer item is `[]`, not `undefined`.
+   * Trade-off: the review also proposed pinning `{fg:blue;{stroke:red/50}@base@component}`, which
+   * writes the nested group as a raw declaration; that output is dead CSS, so the test asserts the
+   * method's result instead.
+   *
+   * Reverse check: not restoring the outer rejection after an item fails this test.
+   */
+  test('keeps a nested item\'s rejection out of the outer item', () => {
+    expect(createDefaultCSS().generateGroupItem('{stroke:red/50}@base@component')).toEqual([])
   })
 })
