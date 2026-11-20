@@ -27,7 +27,7 @@ export interface StandaloneCSSDirectiveStatement {
 
 export const REMOVED_MASTER_AT_RULE_ERROR_CODE = 'removed-master-at-rule'
 
-export const UNQUOTED_DIRECTIVE_ARGUMENT_ERROR_CODE = 'unquoted-directive-argument'
+const UNQUOTED_DIRECTIVE_ARGUMENT_ERROR_CODE = 'unquoted-directive-argument'
 
 /**
  * `locate` means offsets in `source` are offsets in `filename`, so the error carries a source
@@ -176,7 +176,7 @@ const STRING_ARGUMENT_DIRECTIVE_KEYWORDS: Partial<Record<StandaloneCSSDirectiveN
   blocklist: []
 }
 
-/** The quoted form an unquoted-argument error shows when it cannot quote the argument as written. */
+/** The argument of the fixed quoted example an unquoted-argument error shows. */
 const STRING_ARGUMENT_DIRECTIVE_EXAMPLES: Partial<Record<StandaloneCSSDirectiveName, string>> = {
   source: './src',
   safelist: 'fg:blue',
@@ -184,106 +184,53 @@ const STRING_ARGUMENT_DIRECTIVE_EXAMPLES: Partial<Record<StandaloneCSSDirectiveN
 }
 
 /**
- * One whitespace-separated item of a directive prelude, without the top-level commas around it.
- * Strings, comments, escapes, parentheses and brackets stay inside the item they touch, so
- * `content:'x'`, `./src/**\/*.vue` and `bg:rgb(0,0,0)` are one item each.
+ * One whitespace-separated item of a directive prelude. Strings, comments and escapes stay whole
+ * inside the item they stand in.
  */
 interface DirectivePreludeItem {
   start: number
   end: number
-  /** Holds text outside strings and comments other than a top-level comma. */
-  bare: boolean
-  /** Holds a quoted string. */
-  quoted: boolean
-  /** Holds a top-level comma between its first and last character. */
-  comma: boolean
-  /** A top-level comma separates it from the item before it. */
-  commaBefore: boolean
+  /** The item's text outside strings and comments, without commas: empty for a quoted argument. */
+  bareText: string
 }
 
 function splitDirectivePrelude(source: string, start: number, end: number) {
   const items: DirectivePreludeItem[] = []
-  let itemStart = -1
-  let bare = false
-  let quoted = false
-  let depth = 0
-  /** Offsets of the item's top-level commas: outside strings, comments, escapes and brackets. */
-  let commas: number[] = []
-  let commaBefore = false
-  const close = (itemEnd: number) => {
-    if (itemStart === -1) return
-    // Top-level commas at either edge separate items; only those between other text belong to it.
-    let first = itemStart
-    let last = itemEnd
-    while (first < last && commas.includes(first)) {
-      first++
-      commaBefore = true
-    }
-    let commaAfter = false
-    while (last > first && commas.includes(last - 1)) {
-      last--
-      commaAfter = true
-    }
-    if (first < last) {
-      items.push({
-        start: first,
-        end: last,
-        bare,
-        quoted,
-        comma: commas.some((comma) => comma >= first && comma < last),
-        commaBefore: commaBefore && items.length > 0
-      })
-      commaBefore = false
-    }
-    commaBefore ||= commaAfter
-    itemStart = -1
-    bare = false
-    quoted = false
-    depth = 0
-    commas = []
-  }
+  let item: DirectivePreludeItem | undefined
   for (let index = start; index < end; index++) {
     const char = source[index]
-    if (depth === 0 && /\s/.test(char)) {
-      close(index)
+    if (/\s/.test(char)) {
+      item = undefined
       continue
     }
-    if (itemStart === -1) itemStart = index
-    if (char === '\\') {
-      bare = true
-      index++
-    } else if (char === '"' || char === '\'' || (char === '/' && source[index + 1] === '*')) {
-      if (char !== '/') quoted = true
-      index = skipCSSEscapeStringOrComment(source, index, end) - 1
-    } else if (char === ',' && depth === 0) {
-      commas.push(index)
-    } else {
-      bare = true
-      if (char === '(' || char === '[') depth++
-      else if ((char === ')' || char === ']') && depth > 0) depth--
+    if (!item) {
+      item = { start: index, end: index, bareText: '' }
+      items.push(item)
     }
+    const skipped = skipCSSEscapeStringOrComment(source, index, end)
+    if (skipped === index) {
+      if (char !== ',') item.bareText += char
+    } else {
+      if (char === '\\') item.bareText += source.slice(index, skipped)
+      index = skipped - 1
+    }
+    item.end = index + 1
   }
-  close(end)
   return items
 }
 
 /**
- * The argument quoted so that it reads back as written, or nothing when no quoting can: the
- * directives split their strings on whitespace, and a string beside a comma or an escape is
- * ambiguous.
+ * An unquoted argument the error can show inside quotes as written, because the quoted string reads
+ * back as the same class, pattern or glob: no quotes, escapes or commas, no closing bracket (a space
+ * inside brackets splits an argument before it), and no comment other than the `/**\/` of a glob.
  */
-function quoteDirectiveArgument(text: string, item: DirectivePreludeItem) {
-  if (/\s/.test(text)) return
-  if (item.quoted && (item.comma || text.includes('\\'))) return
-  if (!text.includes('\'')) return `'${text}'`
-  if (!text.includes('"')) return `"${text}"`
-}
+const ECHOED_DIRECTIVE_ARGUMENT_RE = /^(?:[^'"\\,)\]/]|\/(?!\*)|\/\*\*\/)+$/
 
 /**
  * `@source`, `@safelist` and `@blocklist` read only quoted arguments; an unquoted one would leave
- * the statement while its glob, class or pattern never applies, so it fails with the quoted form.
- * The form quotes each argument as written; when one cannot be quoted without changing what it
- * reads as, the error shows a fixed example instead.
+ * the statement while its glob, class or pattern never applies, so it fails with the quoted form:
+ * the statement with each argument quoted as written, or a fixed example when an argument holds
+ * anything quoting could change.
  */
 function assertQuotedDirectiveArguments(
   source: string,
@@ -293,27 +240,15 @@ function assertQuotedDirectiveArguments(
 ) {
   const keywords = STRING_ARGUMENT_DIRECTIVE_KEYWORDS[statement.atRuleName]
   if (!keywords) return
-  const preludeStart = statement.start + statement.atRuleName.length + 1
-  const preludeEnd = source[statement.end - 1] === ';' ? statement.end - 1 : statement.end
-  const items = splitDirectivePrelude(source, preludeStart, preludeEnd)
-  const texts = items.map((item) => source.slice(item.start, item.end))
-  const isKeyword = (index: number) => !items[index].quoted && keywords.includes(texts[index])
-  const unquoted = items.filter((item, index) => item.bare && !isKeyword(index))
+  const items = splitDirectivePrelude(source, statement.start + statement.atRuleName.length + 1, statement.end - 1)
+  const isUnquoted = (item: DirectivePreludeItem) => item.bareText && !keywords.includes(item.bareText)
+  const unquoted = items.filter(isUnquoted)
   if (!unquoted.length) return
-  let quoted: string | undefined = `@${statement.atRuleName}`
-  for (const [index, item] of items.entries()) {
-    if (!item.bare && !item.quoted) continue
-    const text = item.bare && !isKeyword(index) ? quoteDirectiveArgument(texts[index], item) : texts[index]
-    if (text === undefined) {
-      quoted = undefined
-      break
-    }
-    quoted += `${item.commaBefore ? ',' : ''} ${text}`
-  }
   const name = `@${statement.atRuleName}`
-  const advice = quoted
-    ? `so write ${quoted};`
-    : `quote each argument, as in ${name}${items.some((item, index) => isKeyword(index)) ? ' not' : ''} '${STRING_ARGUMENT_DIRECTIVE_EXAMPLES[statement.atRuleName]}';`
+  const text = (item: DirectivePreludeItem) => source.slice(item.start, item.end)
+  const advice = unquoted.every((item) => ECHOED_DIRECTIVE_ARGUMENT_RE.test(text(item)))
+    ? `so write ${name} ${items.map((item) => isUnquoted(item) ? `'${text(item)}'` : text(item)).join(' ')};`
+    : `quote each argument, as in ${name}${items.some((item) => keywords.includes(item.bareText)) ? ' not' : ''} '${STRING_ARGUMENT_DIRECTIVE_EXAMPLES[statement.atRuleName]}';`
   const location = filename ? ` (in ${filename})` : ''
   const range = { start: unquoted[0].start, end: unquoted[unquoted.length - 1].end }
   throw new CSSDirectiveError(

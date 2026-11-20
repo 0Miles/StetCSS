@@ -28,6 +28,16 @@ const MAX_CSS_IMPORT_GRAPH_BYTES = 64 * MiB
  */
 export type CSSImportGraphReader = (file: string, source?: string) => string
 
+export interface CSSImportGraphReaderOptions {
+  /**
+   * Rejects unquoted `@source`, `@safelist` and `@blocklist` arguments in every stylesheet read
+   * (default `true`). Turn it off only to find out whether a stylesheet is a StetCSS entry, so a
+   * stylesheet StetCSS does not own, such as a Tailwind entry with `@source inline(...)`, never
+   * fails for directives StetCSS would not read.
+   */
+  checkDirectiveArguments?: boolean
+}
+
 /**
  * Creates the reader one CSS import graph inlines every stylesheet through, so every `@import`
  * expansion applies the same file checks and limits. Create one per compile entry: the entry's graph
@@ -36,7 +46,8 @@ export type CSSImportGraphReader = (file: string, source?: string) => string
  * removed `@master` at-rules and unquoted directive arguments on its own, so the error points into
  * the file that holds the at-rule rather than into the expanded graph.
  */
-export function createCSSImportGraphReader(): CSSImportGraphReader {
+export function createCSSImportGraphReader(options: CSSImportGraphReaderOptions = {}): CSSImportGraphReader {
+  const checkDirectiveArguments = options.checkDirectiveArguments !== false
   const sources = new Map<string, string>()
   /** The text each file was last checked with, so repeated inclusions skip the per-file checks. */
   const checkedSources = new Map<string, string>()
@@ -54,7 +65,7 @@ export function createCSSImportGraphReader(): CSSImportGraphReader {
     }
     if (checkedSources.get(file) !== text) {
       assertNoMasterAtRules(text, file, true)
-      assertQuotedCSSDirectiveArguments(text, file, true)
+      if (checkDirectiveArguments) assertQuotedCSSDirectiveArguments(text, file, true)
       checkedSources.set(file, text)
     }
     bytes += Buffer.byteLength(text)
