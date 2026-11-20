@@ -758,9 +758,15 @@ function createMergedStyleDefinition(bucket: StyleMergeBucket): MergedStyleDefin
   }
 }
 
+/**
+ * Ranges a block's media and container features separately, media first, as the engine's rule
+ * priority does, so a block under both sorts like the class with the same queries.
+ */
 function getStyleConditionFeatures(conditions: string[] | undefined) {
-  const bounds: QueryFeatureBound[] = []
+  const mediaBounds: QueryFeatureBound[] = []
+  const containerBounds: QueryFeatureBound[] = []
   for (const condition of conditions || []) {
+    const bounds = condition.startsWith('@container') ? containerBounds : mediaBounds
     for (const [, name, operator, rawValue, denominator, unit] of condition.matchAll(STYLE_CONDITION_FEATURE_REGEX)) {
       bounds.push({
         name,
@@ -771,7 +777,7 @@ function getStyleConditionFeatures(conditions: string[] | undefined) {
       })
     }
   }
-  return sortQueryFeatures(toQueryFeatures(bounds))
+  return sortQueryFeatures([...toQueryFeatures(mediaBounds), ...toQueryFeatures(containerBounds)])
 }
 
 function compareStyleMergeBuckets(a: StyleMergeBucket, b: StyleMergeBucket) {
