@@ -1493,8 +1493,8 @@ export class Utility {
       if (
         !root
         && endSymbol === ')'
-        && !hasOpaqueArguments(parentFunctionName)
         && hasEmptyListItem(currentValueComponents)
+        && !hasOpaqueArguments(parentFunctionName)
       ) this.invalidValueSyntax = true
     }
 
