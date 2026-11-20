@@ -19,17 +19,22 @@ const angular = {
  * could not map a decoded class list back onto an attribute spelled with references, so #196
  * left such attributes reported over their whole value and never fixed (#240). Classes are read
  * the way the host decodes the attribute (HTML's rules in Vue, Svelte and Angular templates,
- * JSX's in JSX, the attribute before the expression in a Vue binding), and each fix rewrites the
- * classes at their source spelling, keeping every reference where it is written. Expected
- * outputs are the fixes of the same lists written without references.
+ * JSX's in JSX, the attribute before the expression in a Vue `:class` binding), and each fix
+ * rewrites the classes at their source spelling, keeping every reference where it is written. A
+ * space spelled `&#x20` without its `;` gets one before a class starting with a hex digit, which
+ * it would otherwise read on into. Expected outputs are the fixes of the same lists written
+ * without references.
  *
- * A string the decoder cannot map back, such as one quoted with `&quot;`, is still reported
- * over its whole value without a fix.
+ * A string the decoder cannot map back, such as one quoted with `&quot;`, or one in a Vue
+ * expression the build reads as written (an interpolation), is still reported over its whole
+ * value without a fix.
  *
  * Reverse checks in resolve-class-node: reading JSX attribute strings as written reds the JSX
  * sort case and the `hiddenn` report; reading VLiteral and SvelteLiteral as written reds the Vue
- * and Svelte attribute cases; missing the Vue template expression reds the binding case; treating
- * every list as fixable reds only the `&quot;` case.
+ * and Svelte attribute cases; missing the Vue `:class` binding reds the binding cases; decoding
+ * every Vue template expression reds the interpolation case; treating every list as fixable reds
+ * the `&quot;` case. In @stet-css/lint, joining edited items without checking how they decode
+ * reds the `&#x20` cases.
  *
  * Cases stay inline rather than in tests/fixtures/issues/240/: each is one attribute whose exact
  * spelling is the point, and RuleTester's code/output pairs show each fix next to its input.
@@ -72,6 +77,34 @@ jsxTester.run('#240 sort-classes fixes class attributes spelled with character r
       output: '<div class="bg:black&#32;fg:white"></div>',
       errors: [{ messageId: 'invalidClassOrder' }],
       ...angular
+    },
+    {
+      name: 'a space spelled without its `;` before a class that now starts with a hex digit',
+      code: '<template><div class="bg:black&#x20m:0.5rem"></div></template>',
+      output: '<template><div class="m:0.5rem&#x20;bg:black"></div></template>',
+      errors: [{ messageId: 'invalidClassOrder' }],
+      ...vue
+    },
+    {
+      name: 'the same space in a Vue class binding',
+      code: '<template><div :class="[\'bg:black&#x20m:0.5rem\']"></div></template>',
+      output: '<template><div :class="[\'m:0.5rem&#x20;bg:black\']"></div></template>',
+      errors: [{ messageId: 'invalidClassOrder' }],
+      ...vue
+    },
+    {
+      name: 'the same space in a Svelte class attribute',
+      code: '<div class="bg:black&#x20m:0.5rem"></div>',
+      output: '<div class="m:0.5rem&#x20;bg:black"></div>',
+      errors: [{ messageId: 'invalidClassOrder' }],
+      ...svelte
+    },
+    {
+      name: 'a string in a Vue interpolation, which the build reads as written, is reported without a fix',
+      code: '<template><div>{{ clsx(\'fg:white&#32;bg:black\') }}</div></template>',
+      output: null,
+      errors: [{ messageId: 'invalidClassOrder' }],
+      ...vue
     },
     {
       name: 'a Vue binding string quoted with entities is reported over its whole value without a fix',

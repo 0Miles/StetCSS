@@ -58,13 +58,16 @@ function getWholeClassRange(text: string, neighbours?: StetCSSExpressionNeighbou
 }
 
 /**
- * Whether a script node sits in a Vue template expression. The template compiler decodes the
- * attribute or interpolation that holds it before it parses the expression, so its strings are
- * spelled with character references.
+ * Whether a script node sits in a Vue `:class` binding. The template compiler decodes the
+ * attribute before it parses the expression, so its strings are spelled with character
+ * references, and the build reads them decoded; it reads other template expressions, such as
+ * interpolations, as written.
  */
-function isInVueTemplateExpression(node: any) {
+function isInVueClassBinding(node: any) {
   for (let parent = node.parent; parent; parent = parent.parent) {
-    if (parent.type === 'VExpressionContainer') return true
+    if (parent.type === 'VAttribute') {
+      return parent.directive && parent.key?.name?.name === 'bind' && parent.key?.argument?.name === 'class'
+    }
   }
   return false
 }
@@ -95,7 +98,7 @@ export default function resolveClassNode(
         characterReferences = decodeStetCSSJSXAttributeString
       } else {
         script = true
-        if (isInVueTemplateExpression(node)) characterReferences = decodeStetCSSHTMLAttributeValue
+        if (isInVueClassBinding(node)) characterReferences = decodeStetCSSHTMLAttributeValue
       }
       break
     case 'VLiteral':
@@ -119,7 +122,7 @@ export default function resolveClassNode(
       start = node.range[0]
       end = node.range[1]
       script = true
-      if (isInVueTemplateExpression(node)) characterReferences = decodeStetCSSHTMLAttributeValue
+      if (isInVueClassBinding(node)) characterReferences = decodeStetCSSHTMLAttributeValue
       break
     default:
       return
