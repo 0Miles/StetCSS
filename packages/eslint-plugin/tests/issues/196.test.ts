@@ -9,21 +9,17 @@ const vueParser = await import('vue-eslint-parser')
  * source differs from its value (CRLF in an espree template, a line continuation, an escape, an
  * HTML entity) the fix corrupted code, and escaped classes were checked as written. Each fix must
  * keep the source's own spelling, or the class list is reported over its whole range without a fix.
+ * Attributes spelled with HTML entities, which #196 left unfixed, are fixed since #240 and covered
+ * in 240.test.ts, along with a string that still does not map back.
  *
  * Reverse check: at the base commit (6764d846a) the six original cases (the first four sort
- * fixes and both no-invalid-classes cases) were red with the ticket's symptoms; forcing `fixable`
- * to true in resolve-class-node turns the three entity cases red and leaves the others green.
+ * fixes and both no-invalid-classes cases) were red with the ticket's symptoms.
  *
  * Cases stay inline rather than in tests/fixtures/issues/196/: CRLF and line continuations must
  * survive byte for byte, which a fixture file risks through editor and git line-ending handling.
  */
 jsxTester.run('#196 sort-classes maps decoded class lists back to source', sortClasses, {
-  valid: [
-    {
-      name: 'an entity-separated list already in order by its decoded value',
-      code: '<div className="bg:black&#32;fg:white" />'
-    }
-  ],
+  valid: [],
   invalid: [
     {
       // espree, which parses Vue <script> blocks, reports template raw text with CRLF normalized to LF
@@ -45,28 +41,6 @@ jsxTester.run('#196 sort-classes maps decoded class lists back to source', sortC
       code: 'clsx("fg:white \\x62g:black")',
       output: 'clsx("\\x62g:black fg:white")',
       errors: [{ messageId: 'invalidClassOrder' }]
-    },
-    {
-      name: 'an HTML entity in a Vue expression is reported without a fix',
-      code: `<template><div :class="['fg:white&#32;bg:black']"></div></template>`,
-      output: null,
-      errors: [{ messageId: 'invalidClassOrder' }],
-      filename: 'test.vue',
-      languageOptions: { parser: vueParser }
-    },
-    {
-      name: 'an HTML entity in a static Vue class attribute is reported over the whole value without a fix',
-      code: '<template><div class="b&amp;c fg:white bg:black"></div></template>',
-      output: null,
-      errors: [{ messageId: 'invalidClassOrder', line: 1, column: 23, endLine: 1, endColumn: 48 }],
-      filename: 'test.vue',
-      languageOptions: { parser: vueParser }
-    },
-    {
-      name: 'an HTML entity in a JSX attribute string is reported over the whole value without a fix',
-      code: '<div className="fg:white&#32;bg:black" />',
-      output: null,
-      errors: [{ messageId: 'invalidClassOrder', line: 1, column: 17, endLine: 1, endColumn: 38 }]
     }
   ]
 })
