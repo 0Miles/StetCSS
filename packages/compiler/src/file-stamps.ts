@@ -33,6 +33,9 @@ const FILE_STAMP_SETTLE_MS = 2000
  * Whether a value read from a file whose stamp is now `stamp`, by a read that began at `startedAt`,
  * can be reused while the stamp stays: the file changed neither during the read (its change time
  * would be later) nor so shortly before it that a coarse timestamp could hide the next edit.
+ * Change times come from the file system's clock, which can trail `Date.now()` by a tick (Linux
+ * stamps files from its coarse clock), so a change within that tick after `startedAt` is caught
+ * only by its modification time, which every ordinary write moves into the settle window.
  */
 function isSettledFileStamp(stamp: FileStamp, startedAt: number) {
   return stamp.ctimeMs < startedAt && stamp.mtimeMs < startedAt - FILE_STAMP_SETTLE_MS
