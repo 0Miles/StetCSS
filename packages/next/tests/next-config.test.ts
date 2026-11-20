@@ -10,6 +10,13 @@ type WebpackConfig = Parameters<NonNullable<NextConfig['webpack']>>[0]
 type WebpackContext = Parameters<NonNullable<NextConfig['webpack']>>[1]
 type LoaderRule = { loader?: string, options?: Record<string, unknown> }
 type ConfigRule = { loaders?: LoaderRule[], use?: LoaderRule[], type?: string }
+type TurbopackCondition = {
+  all?: TurbopackCondition[]
+  not?: TurbopackCondition
+  path?: RegExp
+  content?: RegExp
+  query?: RegExp
+}
 
 const cwd = process.cwd()
 let projectDir: string
@@ -82,6 +89,34 @@ describe('withStetCSS', () => {
     expect(content.test('@master entry;\n.main { color: red; }')).toBe(true)
     expect(content.test('@master { mode-trigger: media; }')).toBe(true)
     expect(content.test('.main { color: red; }')).toBe(false)
+  })
+
+  /**
+   * Prevents (#244): under Turbopack a CSS Module with `@compose` shipped as global CSS and its
+   * import exported no class names (`styles.qa` was undefined), because the style loader rule
+   * renamed every stylesheet it matched `*.css`. CSS Modules get a `*.module.css` rule.
+   * Reverse check: renaming the CSS Module rule's output `*.css` turns this test and the
+   * Turbopack case of `css-module-compose-e2e.test.ts` red.
+   */
+  it.each([
+    ['app/page.module.css', 'css-module', '*.module.css'],
+    ['app/page.module.scss', 'css-module', '*.module.css'],
+    ['app/page.css', 'css', '*.css'],
+    ['app/globals.scss', 'css', '*.css']
+  ])('compiles %s through the Turbopack style loader as %s', (file, type, as) => {
+    const nextConfig = withStetCSS({} as NextConfig)
+    const matches = (condition: TurbopackCondition): boolean => {
+      if (condition.all) return condition.all.every(matches)
+      if (condition.not) return !matches(condition.not)
+      if (condition.path) return condition.path.test(join(projectDir, file))
+      if (condition.content) return condition.content.test('.qa { @compose fg:red; }')
+      if (condition.query) return condition.query.test('')
+      return true
+    }
+    const styleRules = (nextConfig.turbopack!.rules!['*'] as (ConfigRule & { condition: TurbopackCondition, as?: string })[])
+      .filter((rule) => findLoaders([rule], 'style-css-loader.js').length && matches(rule.condition))
+
+    expect(styleRules.map((rule) => ({ type: rule.type, as: rule.as }))).toEqual([{ type, as }])
   })
 
   /**
