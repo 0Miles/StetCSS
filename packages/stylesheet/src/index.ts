@@ -20,6 +20,7 @@ import type { createCSSWithNativeDeclarations } from '@stet-css/validator/native
 import type { StetCSSManifest } from '@stet-css/schema/manifest'
 import { renderCompiledManifestCSS, type RenderCompiledManifestCSSResult } from './render'
 import { scopeVueGeneratedCSS } from './vue-scoped-style'
+import { globalizeCSSModuleGeneratedCSS } from './css-module-style'
 import {
   STYLE_CSS_REQUEST_RE,
   cleanStyleRequest,
@@ -102,6 +103,12 @@ export interface TransformLocalStyleCSSResult {
 
 export interface TransformLocalStyleCSSOptions extends CompileStyleCSSOptions {
   emittedGlobals?: StetCSSEmittedGlobals
+  /**
+   * The bundler compiles the stylesheet as a CSS Module, possibly in pure mode (Next.js): keep
+   * the generated rules global and exempt from the pure check. A scoped Vue style request
+   * takes precedence.
+   */
+  cssModule?: boolean
 }
 
 export type RegisterStyleCSSSourceOptions = CompileStyleCSSOptions
@@ -787,6 +794,7 @@ export async function transformLocalStyleCSS(
   }
   const {
     emittedGlobals,
+    cssModule,
     ...compileOptions
   } = options
   const { result, finalizedResult } = await compileStyleCSSResult(id, source, {
@@ -800,11 +808,14 @@ export async function transformLocalStyleCSS(
     emittedGlobals
   })
   // Vue's scoped style compiler runs next: keep the generated rules global and their
-  // keyframes reachable from global variables (#189).
+  // keyframes reachable from global variables (#189). A CSS Modules pass runs next: keep
+  // the generated rules global and accepted by pure mode (#244).
   const vueScopeId = renderedCSS.generatedCSS ? getVueScopedStyleId(id) : undefined
   const scopedCSS = vueScopeId
     ? scopeVueGeneratedCSS(renderedCSS.nativeCSS, renderedCSS.generatedCSS, vueScopeId)
-    : undefined
+    : cssModule && renderedCSS.generatedCSS
+      ? { nativeCSS: renderedCSS.nativeCSS, generatedCSS: globalizeCSSModuleGeneratedCSS(renderedCSS.generatedCSS) }
+      : undefined
   const transformedResult = {
     ...result,
     dependencies: finalizedResult.dependencies,
