@@ -3,6 +3,7 @@ import {
   createFileStampCache,
   createManifestFromCSSResult,
   REMOVED_MASTER_AT_RULE_ERROR_CODE,
+  UNQUOTED_DIRECTIVE_ARGUMENT_ERROR_CODE,
   type CompileCSSOptions,
   type CompileCSSResult
 } from '@stet-css/compiler'
@@ -419,18 +420,20 @@ export function resolveStetStyleSource(
       expandStetCSSPackage: false
     })
   } catch (error) {
-    // The graph reader rejects removed `@master` at-rules in the file or anything it imports.
-    // That error must not be handed back to the bundler with the file: `@master entry;` no
-    // longer makes an entry, so nothing else would compile the file and report it.
-    if (!sourceHasStetEntry && !isRemovedMasterAtRuleError(error)) return
+    // The graph reader rejects removed `@master` at-rules and unquoted `@source`, `@safelist` and
+    // `@blocklist` arguments in the file or anything it imports. Those errors must not be handed
+    // back to the bundler with the file: `@master entry;` no longer makes an entry, and a file that
+    // reaches `@stet-css/core` only through an import would silently stop being one.
+    if (!sourceHasStetEntry && !isStetStyleDirectiveError(error)) return
     throw error
   }
   if (!isStetStyleSource(unresolvedPackageSource.source)) return
   return resolveStyleCSSImportGraph(file, source, projectDir)
 }
 
-function isRemovedMasterAtRuleError(error: unknown) {
-  return (error as { code?: unknown } | undefined)?.code === REMOVED_MASTER_AT_RULE_ERROR_CODE
+function isStetStyleDirectiveError(error: unknown) {
+  const code = (error as { code?: unknown } | undefined)?.code
+  return code === REMOVED_MASTER_AT_RULE_ERROR_CODE || code === UNQUOTED_DIRECTIVE_ARGUMENT_ERROR_CODE
 }
 
 export function isStetCSSModuleId(id: string) {
