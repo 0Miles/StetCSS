@@ -12,10 +12,11 @@ const ANIMATION_VALUE_RE = /((?<![-\w])(?:-[a-z]+-)?animation(?:-name)?\s*:)([^;
 
 /**
  * Wraps every selector of the CSS's style rules in `:global()`, so Vue's scoped style
- * compiler keeps them as written instead of appending the component attribute. It descends
+ * compiler or a CSS Modules pass keeps them as written instead of scoping them. It descends
  * into conditional at-rule blocks; keyframe selectors and declarations are left alone.
+ * `rulePrefix` is written right before each wrapped rule's selectors.
  */
-function globalizeSelectors(css: string): string {
+export function globalizeSelectors(css: string, rulePrefix = ''): string {
   let output = ''
   let index = 0
   while (index < css.length) {
@@ -35,12 +36,12 @@ function globalizeSelectors(css: string): string {
     const body = css.slice(open + 1, close)
     const trimmedPrelude = prelude.trim()
     if (trimmedPrelude.startsWith('@')) {
-      output += prelude + '{' + (KEYFRAMES_AT_RULE_RE.test(trimmedPrelude) ? body : globalizeSelectors(body)) + '}'
+      output += prelude + '{' + (KEYFRAMES_AT_RULE_RE.test(trimmedPrelude) ? body : globalizeSelectors(body, rulePrefix)) + '}'
     } else {
       const leading = prelude.slice(0, prelude.length - prelude.trimStart().length)
       const trailing = prelude.slice(prelude.trimEnd().length)
       const selectors = splitCSSSelectorList(trimmedPrelude).map((selector) => `:global(${selector})`)
-      output += leading + selectors.join(',') + trailing + '{' + body + '}'
+      output += leading + rulePrefix + selectors.join(',') + trailing + '{' + body + '}'
     }
     index = close + 1
   }
