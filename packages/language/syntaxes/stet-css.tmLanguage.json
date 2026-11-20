@@ -792,6 +792,22 @@
     "stet-class-fragment": {
       "patterns": [
         {
+          "match": "(?<=[\"'])_([iI])(?=\\])",
+          "captures": {
+            "1": {
+              "name": "meta.selector.css meta.attribute-selector.css storage.modifier.ignore-case.css"
+            }
+          }
+        },
+        {
+          "match": "(?<=[\"'])_([sS])(?=\\])",
+          "captures": {
+            "1": {
+              "name": "meta.selector.css meta.attribute-selector.css entity.other.attribute-name.css"
+            }
+          }
+        },
+        {
           "match": "(?<![:@._a-zA-Z0-9-])([_a-zA-Z-][_a-zA-Z0-9-]*)(?=:{1,2}[_a-zA-Z-][_a-zA-Z0-9-]*\\s*\\{)",
           "name": "entity.other.attribute-name.class.stet-css"
         },

@@ -86,6 +86,18 @@ test.concurrent('tokenizes every part of an attribute selector like the native C
 })
 
 /**
+ * Guards: the case flag of an attribute selector (`"a"_i`, emitted as `"a" i`) kept the host string
+ * colour. VS Code and Shiki colour it through the scope map, so each flag maps to the scope native
+ * CSS gives it: `i` a modifier keyword, `s` an attribute name.
+ * Dropping the `keyword.selector` scope entry in `scopes.ts` reds this and the Shiki case flag test.
+ */
+test.concurrent('maps an attribute case flag to the native CSS scope', () => {
+  for (const flag of ['i', 's', 'I']) {
+    expectNativeScope(`block[data-x="a"_${flag}]`, flag, nativeScope(`a[data-x="a" ${flag}] {}`, flag)!)
+  }
+})
+
+/**
  * Guards: `nth-child(2n+1)` left `2n` and `1` without tokens and coloured `+` as a combinator;
  * native CSS colours the whole `an+b` expression as one number.
  * Turning off the `NTH_PSEUDO_CLASSES` check in lexer `class.ts` reds this, the lexer an+b test and the Shiki selector colour test.
@@ -148,6 +160,7 @@ test.concurrent('places tokens at raw offsets when the class contains escaped qu
 test.concurrent('orders scope keys so VS Code resolves the key Shiki resolves', () => {
   const classList = [
     'block[data-state=open]:nth-child(2n+1):is(.a,#b)::before',
+    'block[data-x="a"_i][data-y="b"_s]',
     'content:"x":hover@sm',
     'hidden@container(card|w>=600)',
     '{fg:red;bg:blue}>li',

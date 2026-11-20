@@ -274,6 +274,22 @@ test('documents native CSS punctuation scopes used by semantic token mappings', 
   expectScope(tokens, '--token', 'variable.css')
 })
 
+/**
+ * Guards: a quote in a directive's class list leaves it to the grammar, which scoped the case flag
+ * of an attribute selector (`"a"_i]`) as a class name. Native CSS scopes `i` as a modifier keyword
+ * and `s` as an attribute name, so the flag takes the scope native CSS gives it.
+ * Removing the case flag patterns from `stet-class-fragment` reds this test and the Shiki TextMate case flag test.
+ */
+test('scopes an attribute case flag in a directive class like native CSS', () => {
+  const tokens = tokenizeWith(injectedCSSGrammar, '@components { btn { @compose block[data-x="a"_i] hidden[data-y="b"_s]; } }')
+  const nativeTokens = tokenizeWith(nativeCSSGrammar, 'a[data-x="a" i], b[data-y="b" s] {}')
+  for (const flag of ['i', 's']) {
+    const nativeScopes = nativeTokens.find((token) => token.text === flag)?.scopes
+    expect(nativeScopes).toBeDefined()
+    expectScope(tokens, flag, nativeScopes[nativeScopes.length - 1])
+  }
+})
+
 test('highlights every StetCSS directive keyword', () => {
   const tokens = tokenize(`
     @settings {}

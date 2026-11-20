@@ -404,6 +404,9 @@
           "keyword.query": [
             "keyword.control.at-rule"
           ],
+          "keyword.selector": [
+            "storage.modifier.ignore-case.css"
+          ],
           "modifier": [
             "entity.other.attribute-name.pseudo-class.css"
           ],
