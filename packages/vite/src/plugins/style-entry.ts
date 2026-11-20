@@ -10,7 +10,7 @@ import {
   removeStetStyleDirectives,
   resolveStetStyleSource
 } from '@stet-css/stylesheet'
-import { registerStyleCSSSource } from '../utils/register-style-source'
+import { updateStyleCSSSource } from '../utils/register-style-source'
 import { getScanner } from '../utils/scanner-context'
 import { getEnvironmentName } from '../utils/environment'
 import { getProjectDir } from '../utils/project-dir'
@@ -80,7 +80,7 @@ export default function StyleEntryPlugin(context: PluginContext): Plugin {
         }
       }
 
-      const result = await registerStyleCSSSource(context, id, code)
+      const { result, changed: registrationChanged } = await updateStyleCSSSource(context, id, code)
       for (const dependency of result.dependencies) {
         if (dependencies.has(dependency)) continue
         this.addWatchFile?.(dependency)
@@ -91,8 +91,9 @@ export default function StyleEntryPlugin(context: PluginContext): Plugin {
       if (context.config?.command === 'serve') {
         context.virtualCSSImporters ??= new Set()
         context.virtualCSSImporters.add(id)
-        // The entry was registered again, and its theme decides the emitted variables.
-        invalidateEmittedGlobalsModule(context.server)
+        // A first registration, or an edit the hot-update hook did not register already: the
+        // entry's theme and directives decide the emitted variables.
+        if (registrationChanged) invalidateEmittedGlobalsModule(context.server)
       } else {
         markPlaceholderEmitted(context, this)
       }

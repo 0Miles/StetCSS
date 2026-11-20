@@ -3,6 +3,7 @@ import { isStylesheetSourceFile } from '@stet-css/stylesheet'
 import type { PluginContext } from '../core'
 import getExtractedCSS, { getStylesheetSourceContext } from '../utils/extracted-css'
 import { invalidateEmittedGlobalsModule } from '../utils/emitted-globals-module'
+import { registerEditedStyleEntries } from '../utils/register-style-source'
 
 /** HMR when the project's source files change */
 export default function StyleEntryHMRPlugin(context: PluginContext): Plugin {
@@ -49,8 +50,9 @@ export default function StyleEntryHMRPlugin(context: PluginContext): Plugin {
     if (serversWithPendingSourceUpdate.has(server)) return
     serversWithPendingSourceUpdate.add(server)
     // The baseline is taken when the file changes, not when the queued update runs: another
-    // extraction in between (the emittedGlobals module, an SSR transform) would already see
-    // the new classes and make the update look like a no-op.
+    // extraction in between (an SSR transform of the entry) would already see the new
+    // classes and make the update look like a no-op. The emittedGlobals module's load does
+    // not record its extraction, since a load can read a save before its watcher event.
     const previousCSS = context.extractedCSS
     queueUpdate(async () => {
       serversWithPendingSourceUpdate.delete(server)
@@ -68,6 +70,16 @@ export default function StyleEntryHMRPlugin(context: PluginContext): Plugin {
           handleSourceFileChange(server, file)
         })
       }
+    },
+    /**
+     * A stylesheet entry, or a stylesheet it imports, was edited. Vite awaits this hook before
+     * it sends the update (a full reload when the page imports the manifest), and the
+     * reloaded page can request the emittedGlobals module before the entry's transform runs
+     * again; so the entry is registered from disk here first. Returns nothing, which keeps
+     * Vite's own update list.
+     */
+    async handleHotUpdate({ file, server }) {
+      if (await registerEditedStyleEntries(context, file)) invalidateEmittedGlobalsModule(server)
     }
   }
 }

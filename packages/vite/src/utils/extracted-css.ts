@@ -23,10 +23,19 @@ export function getStylesheetSourceContext(context: PluginContext): StylesheetSo
   }
 }
 
-export async function getExtractedCSSResult(context: PluginContext) {
+/**
+ * Extracts without recording anything: for a reader that serves no CSS, such as the
+ * emittedGlobals module, whose load must not move the baseline dev updates compare against.
+ */
+export async function extractCSSResult(context: PluginContext) {
   // Every class comes from the stylesheet's class set, so templates that only an SSR or
   // prerender build compiles still get their rules.
-  const result = await createExtractedCSSResult(getStylesheetSourceContext(context))
+  return await createExtractedCSSResult(getStylesheetSourceContext(context))
+}
+
+/** Extracts the CSS the managed CSS modules serve, and records it for dev updates. */
+export async function getExtractedCSSResult(context: PluginContext) {
+  const result = await extractCSSResult(context)
   context.emittedGlobals = result.emittedGlobals
   context.extractedCSS = result.css
   return result
