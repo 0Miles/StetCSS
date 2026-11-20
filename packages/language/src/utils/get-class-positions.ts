@@ -8,9 +8,11 @@ import {
   getStetCSSTemplateExpressionNeighbours,
   getStetCSSWholeClassRange,
   parseStetCSSClassList,
+  type StetCSSCharacterReferenceDecoder,
   type StetCSSExpressionNeighbours,
   type StetCSSScriptStringQuote
 } from '@stet-css/lexer'
+import { decodeStetCSSHTMLAttributeValue, decodeStetCSSJSXAttributeString } from '@stet-css/lexer/character-reference'
 import { parseOxcOnSourceStack } from './oxc-stack'
 
 export interface ClassPosition {
@@ -24,6 +26,14 @@ export interface ClassPosition {
    * attribute strings and CSS directives leave it unset.
    */
   scriptString?: StetCSSScriptStringQuote
+  /**
+   * Set when the context sits in a markup attribute value whose character references the build
+   * decodes: the decoder for the host's rules, as `parseStetCSSClassList` takes it. Class
+   * attributes in HTML, Vue, Svelte and Astro, JSX attribute strings, and the strings of a quoted
+   * binding such as Vue's `:class` (with `scriptString`) set it; Markdown, MDX and other text the
+   * build reads as written leave it unset.
+   */
+  characterReferences?: StetCSSCharacterReferenceDecoder
   /**
    * Set when the class touches a runtime expression with no whitespace between, as `-50` does in
    * Svelte's `bg:{color}-50` or `x` in `` `x${on ? 'a' : ''}` ``: it is part of a class that only
@@ -115,6 +125,19 @@ const JS_LANGUAGE_IDS = new Set([
   'typescriptreact'
 ])
 
+/**
+ * Documents whose attribute values the build reads with character references decoded by HTML's
+ * rules (`@stet-css/source`'s HTML, Vue, Svelte and Astro adapters). Markdown, MDX and unknown
+ * documents are extracted as plain text, as written.
+ */
+const HTML_ATTRIBUTE_LANGUAGE_IDS = new Set([
+  'html',
+  'angular-html',
+  'vue',
+  'svelte',
+  'astro'
+])
+
 const OXC_CACHE_LIMIT = 20
 
 const OXC_SOURCE_BY_LANGUAGE_ID: Record<string, string> = {
@@ -191,6 +214,23 @@ function getOxcCacheKey(textDocument: TextDocument) {
 
 function isJavaScriptDocument(textDocument: TextDocument) {
   return JS_LANGUAGE_IDS.has(textDocument.languageId)
+}
+
+/** How the build decodes a markup attribute value in the document: JSX's rules, HTML's, or not at all. */
+function getAttributeCharacterReferences(languageId: string) {
+  if (JS_LANGUAGE_IDS.has(languageId)) return decodeStetCSSJSXAttributeString
+  if (HTML_ATTRIBUTE_LANGUAGE_IDS.has(languageId)) return decodeStetCSSHTMLAttributeValue
+}
+
+/** How a context's source spelling decodes into its classes; `ClassPosition` carries the same fields. */
+type ClassListDecoding = Pick<ClassPosition, 'scriptString' | 'characterReferences'>
+
+/** `decoding` without its unset fields, so positions only carry the ones that apply. */
+function compactDecoding({ scriptString, characterReferences }: ClassListDecoding): ClassListDecoding {
+  return {
+    ...(scriptString ? { scriptString } : {}),
+    ...(characterReferences ? { characterReferences } : {})
+  }
 }
 
 function isOxcNode(value: unknown): value is OxcNode {
@@ -321,12 +361,14 @@ function collectClassPositions(
     start: classNameStart,
     end: classNameStart + className.length
   },
-  scriptString?: StetCSSScriptStringQuote
+  decoding: ClassListDecoding = {}
 ) {
   const classPositions: ClassPosition[] = []
+  // Script strings keep their quote unescaping here; lint decodes them by `scriptString`.
   for (const item of parseStetCSSClassList(className, {
     includeEmpty,
-    unescape: escapeCharacter || false
+    unescape: escapeCharacter || false,
+    characterReferences: decoding.characterReferences
   })) {
     if (item.type !== 'class') continue
     if (!item.raw && !includeEmpty) continue
@@ -339,7 +381,7 @@ function collectClassPositions(
       contextRange,
       raw: item.raw,
       token: item.token,
-      ...(scriptString ? { scriptString } : {})
+      ...compactDecoding(decoding)
     })
   }
   return classPositions
@@ -357,7 +399,7 @@ function collectSegmentClassPositions(
   includeEmpty: boolean,
   accept: ClassPositionAccept | undefined,
   neighbours: StetCSSExpressionNeighbours = {},
-  scriptString?: StetCSSScriptStringQuote
+  decoding: ClassListDecoding = {}
 ) {
   const [wholeStart, wholeEnd] = getStetCSSWholeClassRange(text, neighbours)
   const collect = (from: number, to: number, fragment: boolean) => {
@@ -370,7 +412,7 @@ function collectSegmentClassPositions(
       includeEmpty,
       accept,
       { start: start + from, end: start + to },
-      scriptString
+      decoding
     )
     return fragment ? positions.map((position) => ({ ...position, fragment: true as const })) : positions
   }
@@ -405,10 +447,10 @@ function collectSpannedClassPositions(
   escapeCharacter: string,
   includeEmpty: boolean,
   accept: ClassPositionAccept | undefined,
-  scriptString?: StetCSSScriptStringQuote
+  decoding: ClassListDecoding = {}
 ) {
   if (!spans.length) {
-    return collectClassPositions(text, start, escapeCharacter, includeEmpty, accept, undefined, scriptString)
+    return collectClassPositions(text, start, escapeCharacter, includeEmpty, accept, undefined, decoding)
   }
   const classPositions: ClassPosition[] = []
   let segmentStart = 0
@@ -421,7 +463,7 @@ function collectSpannedClassPositions(
         includeEmpty,
         accept,
         { before: segmentStart > 0, after: spanStart < text.length },
-        scriptString
+        decoding
       ))
     }
     segmentStart = spanEnd
@@ -598,7 +640,7 @@ function collectOxcStringLiteral(
   node: OxcNode,
   includeEmpty: boolean,
   accept?: ClassPositionAccept,
-  script = true,
+  jsxAttribute = false,
   neighbours?: StetCSSExpressionNeighbours
 ) {
   if (typeof node.value !== 'string') return []
@@ -616,7 +658,8 @@ function collectOxcStringLiteral(
     includeEmpty,
     accept,
     neighbours,
-    script ? quote : undefined
+    // JSX attribute strings hold character references, not JavaScript escapes.
+    jsxAttribute ? { characterReferences: decodeStetCSSJSXAttributeString } : { scriptString: quote }
   )
 }
 
@@ -644,7 +687,7 @@ function collectOxcTemplateLiteral(
         before: index > 0 || neighbours.before,
         after: index < quasis.length - 1 || neighbours.after
       },
-      '`'
+      { scriptString: '`' }
     ))
   })
   return classPositions
@@ -667,7 +710,7 @@ function collectOxcClassStrings(
     if (!isOxcNode(eachNode)) return
     if (eachNode.type === 'Property' && matchesAny(getStaticPropertyKey(eachNode), ignoredKeyMatchers)) return
     if (eachNode.type === 'Literal') {
-      classPositions.push(...collectOxcStringLiteral(source, eachNode, includeEmpty, accept, true, neighbours))
+      classPositions.push(...collectOxcStringLiteral(source, eachNode, includeEmpty, accept, false, neighbours))
       return
     }
     if (eachNode.type === 'TemplateLiteral') {
@@ -745,8 +788,7 @@ function createOxcClassPositions(
       const attributeName = getJSXAttributeName(node.name)
       const attributeValue = node.value
       if (attributeName && classAttributes.has(attributeName) && isOxcNode(attributeValue) && attributeValue.type === 'Literal') {
-        // JSX attribute strings hold no JavaScript escapes.
-        classPositions.push(...collectOxcStringLiteral(source, attributeValue, true, undefined, false))
+        classPositions.push(...collectOxcStringLiteral(source, attributeValue, true, undefined, true))
       }
       if (attributeName && classAttributeBindings.has(attributeName) && isOxcNode(attributeValue) && attributeValue.type === 'JSXExpressionContainer') {
         collect(attributeValue.expression)
@@ -948,22 +990,37 @@ export default function getClassPositions(
         pair,
         includeEmpty,
         acceptsClassRange,
-        markup ? undefined : pair as StetCSSScriptStringQuote
+        markup
+          ? { characterReferences: getAttributeCharacterReferences(textDocument.languageId) }
+          : { scriptString: pair as StetCSSScriptStringQuote }
       ))
     })
   }
 
+  // A binding quoted like an attribute value (Vue's `:class="…"`) is one: the template compiler
+  // decodes its character references before it parses the expression.
+  const quotedBindingExpressions = new Set<ClassMatcher>()
+  const bindingCharacterReferences = HTML_ATTRIBUTE_LANGUAGE_IDS.has(textDocument.languageId)
+    ? decodeStetCSSHTMLAttributeValue
+    : undefined
   if (classAttributeBindings) {
+    const bindingExpressions: ClassMatcher[] = []
     for (const eachClassAttribute in classAttributeBindings) {
       const eachClassAttributeBinding = classAttributeBindings[eachClassAttribute]
       if (eachClassAttributeBinding === false) continue
-      assignmentExpressions.push([eachClassAttribute + '=', eachClassAttributeBinding[0], eachClassAttributeBinding[1]])
+      const binding: ClassMatcher = [eachClassAttribute + '=', eachClassAttributeBinding[0], eachClassAttributeBinding[1]]
+      if (binding[1] === '"' || binding[1] === '\'') quotedBindingExpressions.add(binding)
+      bindingExpressions.push(binding)
     }
+    // First, so a class function call inside a quoted binding keeps the binding's decoding when
+    // both scans find its strings.
+    assignmentExpressions.unshift(...bindingExpressions)
   }
 
   if (assignmentExpressions.length) {
     const ignoredKeyValuePattern = createIgnoredKeyValuePattern(settings.ignoredKeys)
-    resolve(assignmentExpressions, (eachAttrStart, eachClassPositionEnd) => {
+    resolve(assignmentExpressions, (eachAttrStart, eachClassPositionEnd, eachClassMatcher) => {
+      const characterReferences = quotedBindingExpressions.has(eachClassMatcher) ? bindingCharacterReferences : undefined
       const eachClassPositionExpression = sourceText.substring(eachAttrStart, eachClassPositionEnd)
       const ignoredRanges = collectIgnoredKeyValueRanges(eachClassPositionExpression, ignoredKeyValuePattern)
       const isIgnored = (index: number) => ignoredRanges.some((range) => range.start <= index && index < range.end)
@@ -998,7 +1055,7 @@ export default function getClassPositions(
           includeEmpty,
           acceptsClassRange,
           { start: classNameStart, end: classNameStart + eachClassName.length },
-          '"'
+          { scriptString: '"', characterReferences }
         ))
       }
 
@@ -1013,7 +1070,7 @@ export default function getClassPositions(
           includeEmpty,
           acceptsClassRange,
           { start: classNameStart, end: classNameStart + eachClassName.length },
-          '\''
+          { scriptString: '\'', characterReferences }
         ))
       }
 
@@ -1028,7 +1085,7 @@ export default function getClassPositions(
           '`',
           includeEmpty,
           acceptsClassRange,
-          '`'
+          { scriptString: '`', characterReferences }
         ))
       }
     })
