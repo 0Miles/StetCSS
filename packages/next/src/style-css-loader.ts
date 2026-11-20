@@ -11,6 +11,9 @@ import {
 import type { ScannerOptions } from '@stet-css/scanner'
 import { createStaticCSS, toCSSImportPath, writeStaticOutputFile } from './static'
 
+/** The stylesheets Next compiles as CSS Modules, under Turbopack and webpack alike. */
+export const CSS_MODULE_FILE_PATTERN = /\.module\.(css|scss|sass)$/
+
 export interface StyleCSSLoaderOptions {
   /** The generated CSS module every stylesheet entry imports instead of `@stet-css/core`. */
   outputPath: string
@@ -38,7 +41,9 @@ async function transformLocalStyleSource(resourcePath: string, source: string, p
   const result = await transformLocalStyleCSS(resourcePath, source, {
     baseManifest: context.manifest,
     projectDir,
-    emittedGlobals: context.emittedGlobals
+    emittedGlobals: context.emittedGlobals,
+    // Next compiles CSS Modules in pure mode under webpack, which rejects a `:root` rule (#244).
+    cssModule: CSS_MODULE_FILE_PATTERN.test(resourcePath)
   })
   return {
     code: result.code,
