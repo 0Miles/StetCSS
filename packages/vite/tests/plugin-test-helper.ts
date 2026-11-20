@@ -60,6 +60,15 @@ export function createProjectContext({
   } as any
 }
 
+/**
+ * Cascade layer order of `css`: each layer name where an `@layer` statement or block, or a
+ * layered `@import`, first names it.
+ */
+export function cssLayerOrder(css: string) {
+  return [...new Set([...css.matchAll(/@layer\s+([^{;]+)[{;]|@import[^;]*\slayer\(([^)]+)\)/g)]
+    .flatMap((match) => (match[1] ?? match[2]).split(',').map((name) => name.trim())))]
+}
+
 export interface BuildProjectOptions {
   appClass?: string
   build?: BuildOptions
