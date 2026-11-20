@@ -1,6 +1,7 @@
 import {
   CSSDirectiveError,
   type CSSDirectiveConditionPathEntry,
+  type CSSDirectiveDeclarationFallbacks,
   type CSSDirectiveManifestInput,
   type CSSDirectiveLayerName,
   type CSSDirectiveResult,
@@ -68,6 +69,8 @@ type GeneratedCondition = Parameters<typeof generateCondition>[0]
 interface MergedStyleDefinition {
   selector: string
   declarations: PropertiesHyphen
+  /** Printed before the declaration of the same key (`CSSDirectiveDeclarationFallbacks`). */
+  fallbacks?: CSSDirectiveDeclarationFallbacks
   conditions?: string[]
   layer?: StetCSSManifestUtilityLayerName
 }
@@ -87,6 +90,7 @@ type StyleMergeEvent =
     type: 'native'
     order: number
     declarations: PropertiesHyphen
+    fallbacks?: CSSDirectiveDeclarationFallbacks
   }
 
 interface StyleMergeBucket {
@@ -759,29 +763,49 @@ function isImportantStyleDeclarationValue(value: unknown) {
   return String(value).trim().endsWith('!important')
 }
 
-function applyStyleDeclaration(declarations: PropertiesHyphen, propertyName: string, value: unknown) {
-  const key = propertyName as keyof PropertiesHyphen
-  const currentValue = declarations[key]
-  if (currentValue !== undefined && isImportantStyleDeclarationValue(currentValue) && !isImportantStyleDeclarationValue(value)) {
-    return
-  }
-  delete declarations[key]
-  declarations[key] = value as any
+/** An `!important` declaration already there keeps its place against a plain one. */
+function isStyleDeclarationKept(declarations: PropertiesHyphen, propertyName: string, value: unknown) {
+  const currentValue = declarations[propertyName as keyof PropertiesHyphen]
+  return currentValue !== undefined && isImportantStyleDeclarationValue(currentValue) && !isImportantStyleDeclarationValue(value)
 }
 
-function applyStyleDeclarations(declarations: PropertiesHyphen, incomingDeclarations: PropertiesHyphen) {
+/**
+ * Applies a block's declarations in order. A declaration that replaces another drops the
+ * fallbacks printed before it and takes its own. The fallbacks of a property whose declaration
+ * does not apply go with it; others listed under it pass to the next declaration that applies,
+ * so they keep their written place.
+ */
+function applyStyleDeclarations(
+  declarations: PropertiesHyphen,
+  fallbacks: CSSDirectiveDeclarationFallbacks,
+  incomingDeclarations: PropertiesHyphen,
+  incomingFallbacks?: CSSDirectiveDeclarationFallbacks
+) {
+  const kept = new Set<string>()
   for (const propertyName in incomingDeclarations) {
-    applyStyleDeclaration(declarations, propertyName, incomingDeclarations[propertyName as keyof PropertiesHyphen])
+    if (isStyleDeclarationKept(declarations, propertyName, incomingDeclarations[propertyName as keyof PropertiesHyphen])) kept.add(propertyName)
+  }
+  let pending: CSSDirectiveDeclarationFallbacks[string] = []
+  for (const propertyName in incomingDeclarations) {
+    pending.push(...(incomingFallbacks?.[propertyName] || []).filter(([property]) => !kept.has(property)))
+    if (kept.has(propertyName)) continue
+    const key = propertyName as keyof PropertiesHyphen
+    delete declarations[key]
+    declarations[key] = incomingDeclarations[key] as any
+    delete fallbacks[propertyName]
+    if (pending.length) fallbacks[propertyName] = pending
+    pending = []
   }
 }
 
 function createMergedStyleDefinition(bucket: StyleMergeBucket): MergedStyleDefinition | undefined {
   const declarations: PropertiesHyphen = {}
+  const fallbacks: CSSDirectiveDeclarationFallbacks = {}
   const composeBatch: Extract<StyleMergeEvent, { type: 'compose' }>[] = []
   const flushComposeBatch = () => {
     composeBatch.sort((a, b) => compareRulePriority(a.utility, b.utility) || a.order - b.order)
     for (const event of composeBatch) {
-      applyStyleDeclarations(declarations, event.declarations)
+      applyStyleDeclarations(declarations, fallbacks, event.declarations)
     }
     composeBatch.length = 0
   }
@@ -792,7 +816,7 @@ function createMergedStyleDefinition(bucket: StyleMergeBucket): MergedStyleDefin
       continue
     }
     flushComposeBatch()
-    applyStyleDeclarations(declarations, event.declarations)
+    applyStyleDeclarations(declarations, fallbacks, event.declarations, event.fallbacks)
   }
   flushComposeBatch()
 
@@ -800,6 +824,7 @@ function createMergedStyleDefinition(bucket: StyleMergeBucket): MergedStyleDefin
   return {
     selector: bucket.selector,
     declarations,
+    ...(Object.keys(fallbacks).length ? { fallbacks } : {}),
     ...(bucket.conditions?.length ? { conditions: bucket.conditions } : {}),
     ...(bucket.layer ? { layer: bucket.layer } : {})
   }
@@ -875,7 +900,8 @@ function createMergedStyleDefinitions(definitions: CSSDirectiveStyleDefinition[]
         pushStyleMergeEvent(buckets, resolved.selector, resolved.conditions, resolved.layer, {
           type: 'native',
           order: definition.order,
-          declarations: definition.declarations
+          declarations: definition.declarations,
+          ...(definition.fallbacks ? { fallbacks: definition.fallbacks } : {})
         })
       }
     }
@@ -1002,6 +1028,7 @@ function createManagedStyleDefinitionPlan(
 function renderStyleDefinitions(definitions: MergedStyleDefinition[]) {
   return definitions.map((definition) => {
     const body = Object.entries(definition.declarations)
+      .flatMap(([propertyName, value]) => [...(definition.fallbacks?.[propertyName] || []), [propertyName, value]])
       .map(([propertyName, value]) => `${propertyName}:${value}`)
       .join(';')
     return wrapConditions(`${definition.selector}{${body}}`, definition.conditions)
