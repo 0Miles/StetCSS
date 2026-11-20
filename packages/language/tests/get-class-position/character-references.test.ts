@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import { TextDocument } from 'vscode-languageserver-textdocument'
-import { getClassPositions, languageSettings } from '../../src'
+import { getClassPositions, languageSettings, type LanguageSettings } from '../../src'
 import createDoc from '../helpers/create-doc'
 import { getClassPosition } from './test'
 
@@ -8,31 +8,42 @@ import { getClassPosition } from './test'
  * The build reads class attributes by the classes the host renders, character references decoded
  * (#194), so hover, completion and lint read them the same way (#240). Read as written,
  * `block&#32;hidden` is one class the build never generates: hover shows no CSS, completion
- * queries `block&#32;hid`, and lint reports it. Each class is read at its source spelling, so
- * edits land where it is written. Expected classes are the ones the build extracts from the same
- * attributes (`@stet-css/source` tests/character-references.test.ts).
+ * queries `block&#32;hid`, and lint reports it. Decoded where the build reads as written, lint
+ * passes and rewrites text the build never splits. Each class is read at its source spelling,
+ * so edits land where it is written. Expected classes are the ones the build extracts from the
+ * same text (`@stet-css/source` tests/character-references.test.ts and its adapters).
  * Reverse checks (each also reds the lint, hover or completion tests built on it):
- * - no HTML decoder for class attributes → the HTML-hosted and cursor tests;
+ * - no decoder for `class` attributes → the HTML-hosted and cursor tests; the JSX decoder in
+ *   place of the HTML one → the HTML-hosted test;
  * - oxc reading JSX attribute strings as written → the JSX test;
- * - quoted bindings read as written → the Vue binding test;
- * - Markdown and MDX decoded like HTML → the as-written test.
+ * - Vue `:class` bindings read as written, single-quoted ones skipped, or class functions scanned
+ *   before bindings → the Vue binding test;
+ * - decoding by language id instead of the file extension, inside scripts or frontmatter, or for
+ *   every attribute name → the as-written test.
  */
-function readClasses(document: TextDocument, provider?: 'regex' | 'oxc') {
+function readClasses(document: TextDocument, provider?: 'regex' | 'oxc', settings: LanguageSettings = languageSettings) {
   const content = document.getText()
-  return getClassPositions(document, languageSettings, provider && { provider }).map(({ range, raw, token }) => {
+  return getClassPositions(document, settings, provider && { provider }).map(({ range, raw, token }) => {
     expect(content.slice(range.start, range.end)).toBe(raw)
     return [raw, token]
   })
 }
 
+function createFileDoc(path: string, languageId: string, content: string) {
+  return TextDocument.create(`file:///project/${path}`, languageId, 0, content)
+}
+
 test.concurrent('reads HTML-hosted class attributes by their decoded classes', () => {
-  const attribute = 'class="block&#32;hidden inline&#x2d;flex c&nbsp;d a&copyb"'
+  // HTML reads a numeric reference without its `;` too, unlike JSX.
+  const attribute = 'class="block&#32;hidden inline&#x2d;flex c&nbsp;d a&copyb x&#32y"'
   const classes = [
     ['block', 'block'],
     ['hidden', 'hidden'],
     ['inline&#x2d;flex', 'inline-flex'],
     ['c&nbsp;d', 'c d'],
-    ['a&copyb', 'a&copyb']
+    ['a&copyb', 'a&copyb'],
+    ['x', 'x'],
+    ['y', 'y']
   ]
   for (const ext of ['html', 'vue', 'svelte', 'astro'] as const) {
     expect(readClasses(createDoc(ext, `<div ${attribute}></div>`)), ext).toEqual(classes)
@@ -42,10 +53,7 @@ test.concurrent('reads HTML-hosted class attributes by their decoded classes', (
 test.concurrent('reads JSX attribute strings by their decoded classes and script strings as written', () => {
   // JSX decodes only references that end in `;`; a JavaScript string holds no references.
   const document = createDoc('tsx', 'export default () => <div className="block&#32;hidden e&nbsp" data-x={ clsx(\'g&#32;h\') } />')
-  const classes = [['block', 'block'], ['hidden', 'hidden'], ['e&nbsp', 'e&nbsp'], ['g&#32;h', 'g&#32;h']]
-  expect(readClasses(document, 'oxc')).toEqual(classes)
-  // The language service tries the regex scan first at a cursor.
-  expect(readClasses(document, 'regex')).toEqual(classes)
+  expect(readClasses(document, 'oxc')).toEqual([['block', 'block'], ['hidden', 'hidden'], ['e&nbsp', 'e&nbsp'], ['g&#32;h', 'g&#32;h']])
 })
 
 test.concurrent('reads strings in a Vue class binding after the template decodes the attribute', () => {
@@ -58,14 +66,39 @@ test.concurrent('reads strings in a Vue class binding after the template decodes
     ['x', 'x'],
     ['y', 'y']
   ])
+  // A class function's string inside the binding is read as the binding reads it.
+  expect(readClasses(createDoc('vue', '<template><div :class="[ clsx(\'inline&#x2d;flex\') ]"></div></template>')))
+    .toEqual([['inline&#x2d;flex', 'inline-flex']])
+  // A binding configured with single quotes is an attribute value as well.
+  const singleQuoted = { ...languageSettings, classAttributeBindings: { ...languageSettings.classAttributeBindings, ':class': ['\'', '\''] as [string, string] } }
+  expect(readClasses(createDoc('vue', '<template><div :class=\'["block&#32;hidden"]\'></div></template>'), undefined, singleQuoted))
+    .toEqual([['block', 'block'], ['hidden', 'hidden']])
 })
 
 test.concurrent('reads class attributes as written where the build does', () => {
-  // The build extracts Markdown and MDX as plain text, without decoding.
-  for (const languageId of ['markdown', 'mdx']) {
-    const document = TextDocument.create(`file:///abc.${languageId}`, languageId, 0, '<div class="block&#32;hidden"></div>')
-    expect(readClasses(document), languageId).toEqual([['block&#32;hidden', 'block&#32;hidden']])
+  const asWritten = [['block&#32;hidden', 'block&#32;hidden']]
+  const attribute = '<div class="block&#32;hidden"></div>'
+  // Files the build extracts as plain text, whatever language they are read as.
+  for (const [path, languageId] of [
+    ['index.php', 'html'],
+    ['index.pug', 'html'],
+    ['notes.txt', 'html'],
+    ['README.md', 'markdown'],
+    ['content.mdx', 'mdx']
+  ]) {
+    expect(readClasses(createFileDoc(path, languageId, attribute)), path).toEqual(asWritten)
   }
+  // Script text and Astro frontmatter, which the build reads as JavaScript.
+  expect(readClasses(createDoc('html', '<script>el.innerHTML = \'<p class="block&#32;hidden"></p>\'</script>'))).toEqual(asWritten)
+  expect(readClasses(createDoc('vue', '<script setup>const html = \'<p class="block&#32;hidden"></p>\'</script>'))).toEqual(asWritten)
+  expect(readClasses(createDoc('astro', '---\nconst html = \'<p class="block&#32;hidden"></p>\'\n---\n<div class="x&#32;y"></div>')))
+    .toEqual([...asWritten, ['x', 'x'], ['y', 'y']])
+  // Attributes the build does not read as class attributes.
+  expect(readClasses(createDoc('vue', '<template><Comp className="block&#32;hidden" /></template>'))).toEqual(asWritten)
+  // An Alpine `:class` in an HTML file: the build reads only `class` there.
+  expect(readClasses(createDoc('html', '<div :class="\'block&#32;hidden\'"></div>'))).toEqual(asWritten)
+  // In a JS/TS document only oxc tells a JSX attribute from a string such as a lit template.
+  expect(readClasses(createDoc('ts', 'const t = html`<p class="block&#32;hidden"></p>`'), 'regex')).toEqual(asWritten)
 })
 
 test.concurrent('finds the decoded class at the cursor', () => {

@@ -23,6 +23,15 @@ import { createCompletionIndex, type CompletionIndex } from './utils/completion-
 
 export type { ClassPosition }
 
+/**
+ * Whether the quick regex scan's class reads as oxc would read it. A `${` may be a template
+ * placeholder, and a `&` may be a character reference that only a JSX attribute decodes, which
+ * only oxc tells from a string; documents oxc does not parse fall back to the regex class.
+ */
+function isRegexClassPositionSettled({ raw }: ClassPosition) {
+  return !raw.includes('${') && !raw.includes('&')
+}
+
 export interface CSSLanguageServiceOptions {
   runtime?: CSSLanguageRuntime
 }
@@ -109,7 +118,7 @@ export default class CSSLanguageService extends EventEmitter {
       includeEmpty: true,
       provider: 'regex'
     })[0]
-    if (regexClassPosition && !regexClassPosition.raw.includes('${')) {
+    if (regexClassPosition && isRegexClassPositionSettled(regexClassPosition)) {
       return regexClassPosition
     }
 
@@ -136,7 +145,7 @@ export default class CSSLanguageService extends EventEmitter {
       provider: 'regex',
       positionMatch: 'context'
     })
-    if (regexClassPositions.length && regexClassPositions.every(({ raw }) => !raw.includes('${'))) {
+    if (regexClassPositions.length && regexClassPositions.every(isRegexClassPositionSettled)) {
       return regexClassPositions
     }
 
