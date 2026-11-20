@@ -436,11 +436,16 @@ describe('Webpack static CSS', () => {
    *   vue-loader extracts it and the `.vue` block rule must match that form too;
    * - a second rule through vue-loader, such as VuePress's `.md` one, before or after the
    *   css rule: the block rule must go before the rule that hands `.vue` files to vue-loader,
-   *   after every copy VueLoaderPlugin makes, not before the first rule naming vue-loader.
+   *   after every copy VueLoaderPlugin makes, not before the first rule naming vue-loader;
+   * - two `.vue` rules split by `include`: VueLoaderPlugin takes the first, so the block rule
+   *   goes before it, not the last;
+   * - a `.vue` rule whose `test` is a function or an array.
    * Reverse check: letting the `pre` rule lower a `.vue` file turns the three inline cases red
    * ("Invalid empty selector"); dropping the match-resource form from the block rule's test
    * leaves `@compose` in them; splicing before the first rule naming vue-loader turns the two
-   * cases with the `.md` rule before the css rule red.
+   * cases with the `.md` rule before the css rule red; `findLastIndex` turns the `include` case
+   * red; a function condition that never matches, or an array condition that needs every
+   * item, turns the function or array case red.
    */
   it.each([
     { name: 'inline match resource, VueLoaderPlugin first', order: 'vue', inline: true, layout: ['vue', 'css'] },
@@ -448,7 +453,10 @@ describe('Webpack static CSS', () => {
     { name: 'inline match resource with experiments.css', order: 'vue', inline: true, experimentsCSS: true, layout: ['vue', 'css'] },
     { name: 'a vue-loader .md rule after the css rule', order: 'vue', layout: ['vue', 'css', 'md'] },
     { name: 'a vue-loader .md rule before the css rule', order: 'vue', layout: ['vue', 'md', 'css'] },
-    { name: 'a vue-loader .md rule first', order: 'stet', layout: ['md', 'vue', 'css'] }
+    { name: 'a vue-loader .md rule first', order: 'stet', layout: ['md', 'vue', 'css'] },
+    { name: 'two .vue rules split by include', order: 'vue', layout: ['vue in src', 'css', 'vue elsewhere'] },
+    { name: 'a .vue rule with a function test', order: 'vue', layout: ['vue by function', 'css'] },
+    { name: 'a .vue rule with an array test', order: 'stet', layout: ['vue by array', 'css'] }
   ] as const)('lowers .vue style blocks with $name', async ({ order, layout, ...setup }) => {
     const inline = 'inline' in setup && setup.inline
     const experimentsCSS = 'experimentsCSS' in setup && setup.experimentsCSS
@@ -462,7 +470,11 @@ describe('Webpack static CSS', () => {
       css: experimentsCSS
         ? { test: /\.css$/, type: 'css' }
         : { test: /\.css$/, use: ['style-loader', 'css-loader'] },
-      md: { test: /\.md$/, use: ['vue-loader', join(root, 'md-loader.cjs')] }
+      md: { test: /\.md$/, use: ['vue-loader', join(root, 'md-loader.cjs')] },
+      'vue in src': { test: /\.vue$/, include: join(root, 'src'), loader: 'vue-loader' },
+      'vue elsewhere': { test: /\.vue$/, include: join(root, 'elsewhere'), loader: 'vue-loader' },
+      'vue by function': { test: (file: string) => file.endsWith('.vue'), loader: 'vue-loader' },
+      'vue by array': { test: [/\.vue\.html$/, /\.vue$/], loader: 'vue-loader' }
     }
     const plugins = [new VueLoaderPlugin(), new StetCSSPlugin({}, root)]
 
@@ -530,6 +542,65 @@ describe('Webpack static CSS', () => {
       expect(css).toMatch(/\.block\s*\{\s*display:\s*block/)
       expect(css).toMatch(/\.fg\\:red\s*\{\s*color:/)
     } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  }, 180000)
+
+  /**
+   * Guards a plugin applied after `webpack()` and then watched: a watch build fires no
+   * `beforeRun`, so the rules go in on `watchRun`, and only once though every rebuild fires it;
+   * a second install would run the loader again on every stylesheet, more on each rebuild.
+   * Reverse check: dropping the `watchRun` tap leaves `@compose` in the CSS; dropping the
+   * installed check grows the rule count with each rebuild. The first turns only this test
+   * red, the second also the install-once case in `plugin.test.ts`.
+   */
+  it('installs its rules once when applied after webpack() and watched', async () => {
+    const StetCSSPlugin = await importPlugin()
+    const { default: webpackModule } = await import('webpack')
+    const root = createFixture('late-watch', {
+      'src/index.js': 'import "./app.css"\nimport "./button.css"\n',
+      'src/app.css': '@import "@stet-css/core";\n',
+      'src/button.css': '.button { @compose block; }\n'
+    })
+    const output = join(root, 'www')
+    const compiler = webpackModule({
+      mode: 'development',
+      devtool: false,
+      context: root,
+      entry: './src/index.js',
+      ...extractedCSSConfig,
+      output: { path: output, filename: '[name].js', cssFilename: '[name].css' }
+    })
+    new StetCSSPlugin({}, root).apply(compiler)
+    const isStyleLoaderRule = (rule: unknown) => Boolean(
+      (rule as { use?: { loader?: string }[] } | undefined)?.use?.[0]?.loader?.includes('style-css-loader')
+    )
+    const styleLoaderRuleCounts: number[] = []
+    let failure: Error | undefined
+    const watching = compiler.watch({ aggregateTimeout: 300 }, (error, stats) => {
+      if (error || stats?.hasErrors()) {
+        failure = error || new Error(stats!.toString({ all: false, errors: true }))
+      }
+      styleLoaderRuleCounts.push(compiler.options.module.rules.filter(isStyleLoaderRule).length)
+    })
+
+    try {
+      await waitFor(() => styleLoaderRuleCounts.length >= 1, 60000)
+      expect(failure).toBeUndefined()
+      expect(readOutput(output, '.css')).toMatch(/\.button\s*\{\s*display:\s*block/)
+
+      for (const [edit, utility] of ['flex', 'grid'].entries()) {
+        writeFileSync(join(root, 'src/button.css'), `.button { @compose ${utility}; }\n`)
+        await waitFor(() => styleLoaderRuleCounts.length >= edit + 2, 60000)
+      }
+
+      expect(failure).toBeUndefined()
+      const css = readOutput(output, '.css')
+      expect(css).toMatch(/\.button\s*\{\s*display:\s*grid/)
+      expect(css).not.toContain('@compose')
+      expect(styleLoaderRuleCounts).toEqual(styleLoaderRuleCounts.map(() => 1))
+    } finally {
+      await new Promise<void>((resolve) => watching ? watching.close(() => resolve()) : resolve())
       rmSync(root, { recursive: true, force: true })
     }
   }, 180000)
