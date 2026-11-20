@@ -28,10 +28,10 @@ export interface ClassPosition {
   scriptString?: StetCSSScriptStringQuote
   /**
    * Set when the context sits in a markup attribute value whose character references the build
-   * decodes: the decoder for the host's rules, as `parseStetCSSClassList` takes it. Class
-   * attributes in HTML, Vue, Svelte and Astro, JSX attribute strings, and the strings of a quoted
-   * binding such as Vue's `:class` (with `scriptString`) set it; Markdown, MDX and other text the
-   * build reads as written leave it unset.
+   * decodes: the decoder for the host's rules, as `parseStetCSSClassList` takes it. `class`
+   * attributes in the markup of HTML, Vue, Svelte and Astro files, JSX attribute strings that oxc
+   * reads, and the strings of a Vue `:class` binding (with `scriptString`) set it; everything the
+   * build reads as written (other files and attributes, scripts, frontmatter) leaves it unset.
    */
   characterReferences?: StetCSSCharacterReferenceDecoder
   /**
@@ -126,17 +126,20 @@ const JS_LANGUAGE_IDS = new Set([
 ])
 
 /**
- * Documents whose attribute values the build reads with character references decoded by HTML's
- * rules (`@stet-css/source`'s HTML, Vue, Svelte and Astro adapters). Markdown, MDX and unknown
- * documents are extracted as plain text, as written.
+ * Files whose `class` attributes the build reads with character references decoded by HTML's
+ * rules: the extensions `@stet-css/source`'s HTML, Vue, Svelte and Astro adapters match, which
+ * this package does not import. The build extracts other files (PHP, Pug, Markdown, MDX, unknown
+ * extensions) as plain text, as written, whatever language the editor or lint reads them as.
  */
-const HTML_ATTRIBUTE_LANGUAGE_IDS = new Set([
-  'html',
-  'angular-html',
-  'vue',
-  'svelte',
-  'astro'
-])
+const HTML_ATTRIBUTE_SOURCE_EXT = /\.(?:html?|vue|svelte|astro)$/
+const VUE_SOURCE_EXT = /\.vue$/
+const ASTRO_SOURCE_EXT = /\.astro$/
+
+/** The bindings the build reads decoded: Vue compiles `:class` from the decoded attribute. */
+const DECODED_CLASS_BINDINGS = new Set([':class', 'v-bind:class'])
+
+/** `<script>` and `<style>` elements, whose text the build reads as JavaScript or not at all. */
+const SCRIPT_OR_STYLE_ELEMENT = /<(script|style)\b[^>]*>[\s\S]*?(?:<\/\1\s*>|$)/gi
 
 const OXC_CACHE_LIMIT = 20
 
@@ -216,10 +219,42 @@ function isJavaScriptDocument(textDocument: TextDocument) {
   return JS_LANGUAGE_IDS.has(textDocument.languageId)
 }
 
-/** How the build decodes a markup attribute value in the document: JSX's rules, HTML's, or not at all. */
-function getAttributeCharacterReferences(languageId: string) {
-  if (JS_LANGUAGE_IDS.has(languageId)) return decodeStetCSSJSXAttributeString
-  if (HTML_ATTRIBUTE_LANGUAGE_IDS.has(languageId)) return decodeStetCSSHTMLAttributeValue
+function getDocumentPath(textDocument: TextDocument) {
+  return textDocument.uri.split(/[?#]/)[0]
+}
+
+/**
+ * The range of an Astro component's frontmatter, which the build reads as TypeScript. Like the
+ * Astro compiler, the opening fence may follow a BOM, whitespace and HTML comments; the closing
+ * fence is taken as the next `---`, which a `---` inside a frontmatter string ends early.
+ */
+function getAstroFrontmatterRange(source: string): SourceRange | undefined {
+  let cursor = source.startsWith('\uFEFF') ? 1 : 0
+  for (;;) {
+    while (/[ \t\r\n\f]/.test(source[cursor] ?? '')) cursor++
+    if (source.startsWith('---', cursor)) {
+      const end = source.indexOf('---', cursor + 3)
+      return { start: cursor, end: end < 0 ? source.length : end + 3 }
+    }
+    if (!source.startsWith('<!--', cursor)) return
+    const commentEnd = source.indexOf('-->', cursor + 4)
+    if (commentEnd < 0) return
+    cursor = commentEnd + 3
+  }
+}
+
+/**
+ * Ranges of a markup document the build does not read as markup: `<script>` and `<style>`
+ * elements, and an Astro component's frontmatter. Attributes spelled there are text in a script.
+ */
+function collectNonMarkupRanges(source: string, astro: boolean) {
+  const ranges: SourceRange[] = []
+  const frontmatter = astro ? getAstroFrontmatterRange(source) : undefined
+  if (frontmatter) ranges.push(frontmatter)
+  for (const match of source.matchAll(SCRIPT_OR_STYLE_ELEMENT)) {
+    ranges.push({ start: match.index ?? 0, end: (match.index ?? 0) + match[0].length })
+  }
+  return ranges
 }
 
 /** How a context's source spelling decodes into its classes; `ClassPosition` carries the same fields. */
@@ -944,11 +979,25 @@ export default function getClassPositions(
   const stringExpressions: ClassMatcher[] = []
   const assignmentExpressions: ClassMatcher[] = []
 
+  // The build decodes character references only in markup it reads as markup: a `class`
+  // attribute, or a Vue `:class` binding, in an HTML, Vue, Svelte or Astro file, outside its
+  // scripts. In JS/TS documents only oxc tells a JSX attribute from a string, so this scan reads
+  // every match there as written.
+  const documentPath = getDocumentPath(textDocument)
+  const decodesMarkup = HTML_ATTRIBUTE_SOURCE_EXT.test(documentPath)
+  let nonMarkupRanges: SourceRange[] | undefined
+  const isMarkup = (index: number) => {
+    nonMarkupRanges ??= collectNonMarkupRanges(sourceText, ASTRO_SOURCE_EXT.test(documentPath))
+    return !nonMarkupRanges.some((range) => range.start <= index && index < range.end)
+  }
+
   const markupStringExpressions = new Set<ClassMatcher>()
+  const decodedMarkupExpressions = new Set<ClassMatcher>()
   classAttributes?.forEach((eachClassAttribute) => {
     const doubleQuoted: ClassMatcher = [eachClassAttribute + '=', '"', '"']
     const singleQuoted: ClassMatcher = [eachClassAttribute + '=', '\'', '\'']
     markupStringExpressions.add(doubleQuoted).add(singleQuoted)
+    if (decodesMarkup && eachClassAttribute === 'class') decodedMarkupExpressions.add(doubleQuoted).add(singleQuoted)
     stringExpressions.push(doubleQuoted, singleQuoted)
   })
 
@@ -991,25 +1040,28 @@ export default function getClassPositions(
         includeEmpty,
         acceptsClassRange,
         markup
-          ? { characterReferences: getAttributeCharacterReferences(textDocument.languageId) }
+          ? {
+            characterReferences: decodedMarkupExpressions.has(eachClassMatcher) && isMarkup(eachAttrStart)
+              ? decodeStetCSSHTMLAttributeValue
+              : undefined
+          }
           : { scriptString: pair as StetCSSScriptStringQuote }
       ))
     })
   }
 
-  // A binding quoted like an attribute value (Vue's `:class="…"`) is one: the template compiler
-  // decodes its character references before it parses the expression.
-  const quotedBindingExpressions = new Set<ClassMatcher>()
-  const bindingCharacterReferences = HTML_ATTRIBUTE_LANGUAGE_IDS.has(textDocument.languageId)
-    ? decodeStetCSSHTMLAttributeValue
-    : undefined
+  // A Vue `:class` binding quoted like an attribute value is one: the template compiler decodes
+  // its character references before it parses the expression.
+  const decodedBindingExpressions = new Set<ClassMatcher>()
+  const decodesBindings = VUE_SOURCE_EXT.test(documentPath)
   if (classAttributeBindings) {
     const bindingExpressions: ClassMatcher[] = []
     for (const eachClassAttribute in classAttributeBindings) {
       const eachClassAttributeBinding = classAttributeBindings[eachClassAttribute]
       if (eachClassAttributeBinding === false) continue
       const binding: ClassMatcher = [eachClassAttribute + '=', eachClassAttributeBinding[0], eachClassAttributeBinding[1]]
-      if (binding[1] === '"' || binding[1] === '\'') quotedBindingExpressions.add(binding)
+      const quoted = binding[1] === '"' || binding[1] === '\''
+      if (decodesBindings && quoted && DECODED_CLASS_BINDINGS.has(eachClassAttribute)) decodedBindingExpressions.add(binding)
       bindingExpressions.push(binding)
     }
     // First, so a class function call inside a quoted binding keeps the binding's decoding when
@@ -1020,7 +1072,9 @@ export default function getClassPositions(
   if (assignmentExpressions.length) {
     const ignoredKeyValuePattern = createIgnoredKeyValuePattern(settings.ignoredKeys)
     resolve(assignmentExpressions, (eachAttrStart, eachClassPositionEnd, eachClassMatcher) => {
-      const characterReferences = quotedBindingExpressions.has(eachClassMatcher) ? bindingCharacterReferences : undefined
+      const characterReferences = decodedBindingExpressions.has(eachClassMatcher) && isMarkup(eachAttrStart)
+        ? decodeStetCSSHTMLAttributeValue
+        : undefined
       const eachClassPositionExpression = sourceText.substring(eachAttrStart, eachClassPositionEnd)
       const ignoredRanges = collectIgnoredKeyValueRanges(eachClassPositionExpression, ignoredKeyValuePattern)
       const isIgnored = (index: number) => ignoredRanges.some((range) => range.start <= index && index < range.end)
