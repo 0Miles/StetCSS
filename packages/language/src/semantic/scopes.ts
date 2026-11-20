@@ -37,6 +37,7 @@ export const STET_CSS_SEMANTIC_TOKEN_SCOPE_MAP = {
   keyword: ['keyword.control.at-rule'],
   'keyword.directive': ['keyword.control.at-rule.stet-css.css'],
   'keyword.query': ['keyword.control.at-rule'],
+  'keyword.selector': ['storage.modifier.ignore-case.css'],
   modifier: ['entity.other.attribute-name.pseudo-class.css'],
   'modifier.directive': ['storage.modifier.stet-css.css'],
   'modifier.pseudoClass': ['entity.other.attribute-name.pseudo-class.css'],
