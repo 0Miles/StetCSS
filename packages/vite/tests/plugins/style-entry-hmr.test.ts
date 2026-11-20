@@ -10,6 +10,8 @@ import { join } from 'node:path'
 import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
 import StyleEntryHMRPlugin from '../../src/plugins/style-entry-hmr'
 import StyleEntryPlugin from '../../src/plugins/style-entry'
+import EmittedGlobalsVirtualModulePlugin from '../../src/plugins/emitted-globals-virtual-module'
+import { RESOLVED_VIRTUAL_EMITTED_GLOBALS_ID } from '../../src/common'
 import getExtractedCSS from '../../src/utils/extracted-css'
 import { createProjectContext, removeProjects } from '../plugin-test-helper'
 
@@ -88,6 +90,25 @@ describe('StyleEntryHMRPlugin source file changes', () => {
     releaseFirstReload()
 
     await vi.waitFor(() => expect(server.reloadModule).toHaveBeenCalledTimes(2))
+  })
+
+  /**
+   * Guards a page load that lands between a save and its watcher event: it requests
+   * `virtual:stet-css-emitted-globals`, whose load reads the saved file. That load must not
+   * become the baseline the save's update compares against, or the update finds nothing new
+   * and the served CSS lacks the new rule until the next edit that changes the CSS.
+   * Reverse check: having the module's load record its extraction (`getExtractedCSSResult`
+   * instead of `extractCSSResult` in `emitted-globals-virtual-module.ts`) turns only this
+   * test red.
+   */
+  test('reloads after an edit that an emittedGlobals load read before the watcher reported it', async () => {
+    const { context, page, server } = await serveProject('<div class="block"></div>')
+
+    writeFileSync(page, '<div class="block italic"></div>')
+    await (EmittedGlobalsVirtualModulePlugin(context) as any).load.call({}, RESOLVED_VIRTUAL_EMITTED_GLOBALS_ID)
+    server.watcher.emit('change', page)
+
+    await vi.waitFor(() => expect(server.reloadModule).toHaveBeenCalledTimes(1))
   })
 
   /**
