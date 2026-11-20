@@ -74,8 +74,9 @@ test.concurrent('maps each decoded unit onto the source it is spelled with', () 
  * the attribute, so a sort or removal writes back where the class is spelled. A class split on
  * its source spelling reports `block&#32;hidden`, which the build never generates; a wrong range
  * corrupts the attribute on autofix. Reverse checks: skipping the quote unescape of decoded
- * markup tokens reds the first test; ending a composed unit at its reference's start reds the
- * second (and the lint and ESLint Vue binding fixes built on it).
+ * markup tokens, or decoding only lists holding `&#`, reds the first test; ending a composed unit
+ * at its reference's start (or one past it) reds the second (and the lint and ESLint Vue binding
+ * fixes built on it).
  */
 test.concurrent('splits a class attribute on its decoded value and keeps each item in source', () => {
   const source = 'block&#32;hidden inline&#x2d;flex'
@@ -88,6 +89,9 @@ test.concurrent('splits a class attribute on its decoded value and keeps each it
     { type: 'class', start: 17, end: 33, raw: 'inline&#x2d;flex', token: 'inline-flex' }
   ])
   expect(items.map((item) => item.raw).join('')).toBe(source)
+  // A list whose only reference is a named one.
+  expect(parseStetCSSClassList('block&Tab;hidden', { characterReferences: decodeStetCSSHTMLAttributeValue }).map((item) => item.token))
+    .toEqual(['block', 'hidden'])
   // JSX reads only references that end in `;`.
   expect(parseStetCSSClassList('a&#32;b c&#32d', { characterReferences: decodeStetCSSJSXAttributeString }).map((item) => item.token))
     .toEqual(['a', 'b', 'c&#32d'])
@@ -107,4 +111,7 @@ test.concurrent('decodes the character references of a script string before its 
     { type: 'space', start: 8, end: 13, raw: '&#32;', token: ' ' },
     { type: 'class', start: 13, end: 28, raw: '&#92;x62g:black', token: 'bg:black' }
   ])
+  // A class that ends in a reference ends where the reference does.
+  expect(parseStetCSSClassList('fg:whit&#x65; bg:black', { preserveSpaces: true, ...options })[0])
+    .toEqual({ type: 'class', start: 0, end: 13, raw: 'fg:whit&#x65;', token: 'fg:white' })
 })
