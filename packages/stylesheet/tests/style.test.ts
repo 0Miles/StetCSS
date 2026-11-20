@@ -644,8 +644,8 @@ describe('style CSS extraction helpers', () => {
    * silently losing its entry status when it, or a stylesheet it imports, holds an unquoted
    * `@safelist`/`@source`/`@blocklist` argument. The import graph's catch hands non-entries back
    * to the bundler, so the build went green with no generated utilities and no error.
-   * Reverse check: dropping the unquoted-argument code from that catch's rethrow turns only this
-   * test red in this package.
+   * Reverse check: turning the directive-argument check off in the resolve that follows the entry
+   * probe in `resolveStetStyleSource`, or on in the probe, turns only this test red in this package.
    */
   it('rejects unquoted directive arguments in a stylesheet that imports the entry', () => {
     const root = createFixture()
@@ -662,6 +662,36 @@ describe('style CSS extraction helpers', () => {
       '@import "./stet.css";\n@import "./classes.css";',
       root
     )).toThrow(`@blocklist 'debug-*'; (in ${join(root, 'app/classes.css')})`)
+  })
+
+  /**
+   * Prevents (#239 review F8): a build failing on a stylesheet StetCSS does not own. Bundler
+   * plugins send every `.css`, `.scss` and `.sass` request here, so Tailwind's
+   * `@source inline(...)` (in the file or a file it imports) and a Sass `//` comment that mentions
+   * `@safelist` must leave a stylesheet whose graph never reaches `@stet-css/core` untouched.
+   * Reverse check: restoring round 1 of the fix (the entry probe checks directive arguments and its
+   * catch rethrows `unquoted-directive-argument`) turns only this test red in this package; the
+   * probe check alone is caught by the test above.
+   */
+  it('leaves directive arguments alone in stylesheets that do not reach the entry', () => {
+    const root = createFixture()
+    writeFileSync(join(root, 'app/sources.css'), '@source inline("underline");')
+
+    expect(resolveStetStyleSource(
+      join(root, 'app/tw.css'),
+      '@import "tailwindcss";\n@source inline("underline");\n@source not inline("container");',
+      root
+    )).toBeUndefined()
+    expect(resolveStetStyleSource(
+      join(root, 'app/plain.css'),
+      '@import "./sources.css";\n.a { color: red; }',
+      root
+    )).toBeUndefined()
+    expect(resolveStetStyleSource(
+      join(root, 'app/a.scss'),
+      '// old: @safelist fg:blue;\n.a { color: red; }',
+      root
+    )).toBeUndefined()
   })
 
   it('derives package host CSS from the package entry graph', async () => {

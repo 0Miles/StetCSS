@@ -3,7 +3,6 @@ import {
   createFileStampCache,
   createManifestFromCSSResult,
   REMOVED_MASTER_AT_RULE_ERROR_CODE,
-  UNQUOTED_DIRECTIVE_ARGUMENT_ERROR_CODE,
   type CompileCSSOptions,
   type CompileCSSResult
 } from '@stet-css/compiler'
@@ -190,6 +189,8 @@ export interface ResolvedStyleCSSSource {
 
 export interface ResolveStyleCSSImportGraphOptions {
   expandStetCSSPackage?: boolean
+  /** Passed to `createCSSImportGraphReader`: off only to find out whether a stylesheet is an entry. */
+  checkDirectiveArguments?: boolean
 }
 
 export interface CreateStyleCSSHostSourceOptions {
@@ -333,7 +334,7 @@ export function resolveStyleCSSImportGraph(
     }
   }
   const filename = cleanStyleRequest(file)
-  const readCSSImport = createCSSImportGraphReader()
+  const readCSSImport = createCSSImportGraphReader({ checkDirectiveArguments: options.checkDirectiveArguments })
   return {
     source: hoistCSSImportStatements(resolveStyleCSSImportGraphFile(filename, readCSSImport(filename, source), readCSSImport, dependencies, new Set(), [], projectDir, options)),
     dependencies
@@ -409,24 +410,27 @@ export function resolveStetStyleSource(
   const sourceHasStetEntry = hasStetStyleEntrypoint(source)
   let unresolvedPackageSource: ResolvedStyleCSSSource
   try {
+    // Unquoted `@source`, `@safelist` and `@blocklist` arguments are checked only once the graph
+    // reaches `@stet-css/core`: a stylesheet StetCSS does not own (Tailwind's `@source inline()`,
+    // a Sass `//` comment) is handed back to the bundler untouched, while an entry, even one that
+    // reaches the core through an import, fails in the resolve below.
     unresolvedPackageSource = resolveStyleCSSImportGraph(file, source, projectDir, {
-      expandStetCSSPackage: false
+      expandStetCSSPackage: false,
+      checkDirectiveArguments: false
     })
   } catch (error) {
-    // The graph reader rejects removed `@master` at-rules and unquoted `@source`, `@safelist` and
-    // `@blocklist` arguments in the file or anything it imports. Those errors must not be handed
-    // back to the bundler with the file: `@master entry;` no longer makes an entry, and a file that
-    // reaches `@stet-css/core` only through an import would silently stop being one.
-    if (!sourceHasStetEntry && !isStetStyleDirectiveError(error)) return
+    // The graph reader rejects removed `@master` at-rules in the file or anything it imports.
+    // That error must not be handed back to the bundler with the file: `@master entry;` no
+    // longer makes an entry, so nothing else would compile the file and report it.
+    if (!sourceHasStetEntry && !isRemovedMasterAtRuleError(error)) return
     throw error
   }
   if (!isStetStyleSource(unresolvedPackageSource.source)) return
   return resolveStyleCSSImportGraph(file, source, projectDir)
 }
 
-function isStetStyleDirectiveError(error: unknown) {
-  const code = (error as { code?: unknown } | undefined)?.code
-  return code === REMOVED_MASTER_AT_RULE_ERROR_CODE || code === UNQUOTED_DIRECTIVE_ARGUMENT_ERROR_CODE
+function isRemovedMasterAtRuleError(error: unknown) {
+  return (error as { code?: unknown } | undefined)?.code === REMOVED_MASTER_AT_RULE_ERROR_CODE
 }
 
 export function isStetCSSModuleId(id: string) {

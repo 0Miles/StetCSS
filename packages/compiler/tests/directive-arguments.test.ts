@@ -28,13 +28,12 @@ function policy(values: { include?: string[], exclude?: string[], safelist?: str
  * Guards #239: an unquoted argument (`@safelist fg:blue;`) was read as a keyword, so the
  * statement left the output while the class, pattern or glob never reached the extraction policy,
  * with no error. Each form must fail the compile, underline the unquoted arguments for the editor,
- * and name a quoted form that, written as shown, applies the class, pattern or glob the developer
- * meant: a glob keeps its `/**\/`, a class keeps its commas, string and escapes.
+ * and name the statement with each argument quoted as written, which applies the class, pattern or
+ * glob the developer meant; the `/**\/` of a glob stays in it.
  * Reverse check: skipping the unquoted-argument check in `collectStandaloneCSSDirectiveExtractionPolicy`
- * (`src/lexer/standalone-directives.ts`) turns every row red. Ending an argument at a comment turns
- * the two `/**\/` rows red, at a string the `content:'x'` row, at every comma the `rgb(0,0,0)` row;
- * dropping the escape branch turns the `\,` row red; ending the range at the first argument turns
- * the two two-argument rows red.
+ * (`src/lexer/standalone-directives.ts`) turns every row red; dropping the `/**\/` alternative from
+ * `ECHOED_DIRECTIVE_ARGUMENT_RE` turns the two glob rows red; ending the range at the first argument
+ * turns the `fg:blue bg:red` row and the multi-item rows of the fixed-example test red.
  */
 test.concurrent.each([
   ['@safelist fg:blue;', "@safelist 'fg:blue';", 'fg:blue', policy({ safelist: ['fg:blue'] })],
@@ -42,19 +41,16 @@ test.concurrent.each([
   ['@source ./pages;', "@source './pages';", './pages', policy({ include: ['./pages'] })],
   ['@source not ./legacy;', "@source not './legacy';", './legacy', policy({ exclude: ['./legacy'] })],
   ["@safelist 'p:2' fg:blue;", "@safelist 'p:2' 'fg:blue';", 'fg:blue', policy({ safelist: ['p:2', 'fg:blue'] })],
+  ["@safelist 'p:2', fg:blue;", "@safelist 'p:2', 'fg:blue';", 'fg:blue', policy({ safelist: ['p:2', 'fg:blue'] })],
   ['@safelist fg:blue bg:red;', "@safelist 'fg:blue' 'bg:red';", 'fg:blue bg:red', policy({ safelist: ['fg:blue', 'bg:red'] })],
-  ['@safelist fg:blue, bg:red;', "@safelist 'fg:blue', 'bg:red';", 'fg:blue, bg:red', policy({ safelist: ['fg:blue', 'bg:red'] })],
+  ['@safelist fg:blue /* note */;', "@safelist 'fg:blue' /* note */;", 'fg:blue', policy({ safelist: ['fg:blue'] })],
   ['@source ./src/**/*.vue;', "@source './src/**/*.vue';", './src/**/*.vue', policy({ include: ['./src/**/*.vue'] })],
   [
     '@source not ../ui/**/*.stories.tsx;',
     "@source not '../ui/**/*.stories.tsx';",
     '../ui/**/*.stories.tsx',
     policy({ exclude: ['../ui/**/*.stories.tsx'] })
-  ],
-  ['@safelist bg:rgb(0,0,0);', "@safelist 'bg:rgb(0,0,0)';", 'bg:rgb(0,0,0)', policy({ safelist: ['bg:rgb(0,0,0)'] })],
-  ["@safelist content:'x';", "@safelist \"content:'x'\";", "content:'x'", policy({ safelist: ["content:'x'"] })],
-  [String.raw`@safelist fg\:blue;`, String.raw`@safelist 'fg\:blue';`, String.raw`fg\:blue`, policy({ safelist: ['fg:blue'] })],
-  [String.raw`@safelist 'p:2' \,;`, String.raw`@safelist 'p:2' '\,';`, String.raw`\,`, policy({ safelist: ['p:2', ','] })]
+  ]
 ])('rejects the unquoted argument of %s and names the quoted form', (statement, quoted, argument, intended) => {
   const source = `.card { color: red; }\n${statement}`
   const error = catchError(() => compileCSS(source, { from: '/app/entry.css' }))
@@ -67,22 +63,39 @@ test.concurrent.each([
       range: { start: source.indexOf(argument), end: source.indexOf(argument) + argument.length }
     }
   })
-  expect(error.message).toContain(quoted)
+  expect(error.message).toContain(`so write ${quoted}`)
   expect(compileCSS(quoted).extractionPolicy).toEqual(intended)
 })
 
 /**
- * Guards against a quoted form that reads back as something else: spaces inside parentheses or
- * brackets, and a string joined to a class by a comma, have no quoted spelling that keeps their
- * meaning, so the error shows a fixed example rather than splitting the argument.
- * Reverse check: no longer tracking parentheses and brackets turns the three rows with spaces
- * inside them red.
+ * Guards against a quoted form that reads back as something else (#239 review F2-F4, F13, F14):
+ * an argument holding a quote, an escape, a comma, a bracket or a comment other than a glob's
+ * `/**\/` could change meaning inside quotes (`'bg:rgb(0' '0' '0)'`, `"content:'a\'b'"`), so the
+ * error shows a fixed example instead, still failing and underlining the argument.
+ * Reverse check: removing any one of `'`, `"`, `\`, `,`, `)`, `]` from `ECHOED_DIRECTIVE_ARGUMENT_RE`'s
+ * class turns red only the rows whose argument relies on that character; letting `/` match before
+ * `*` turns the `/*x*\/` row red; dropping ` not` from the example turns the `@source not` row red;
+ * leaving an escape out of an item's text turns the `\,` row red.
  */
 test.concurrent.each([
-  ['@safelist bg:rgb(0, 0, 0);', 'bg:rgb(0, 0, 0)', "@safelist 'fg:blue';"],
-  ['@safelist a[b, c];', 'a[b, c]', "@safelist 'fg:blue';"],
+  ["@safelist content:'x';", "content:'x'", "@safelist 'fg:blue';"],
+  ['@safelist content:"x";', 'content:"x"', "@safelist 'fg:blue';"],
+  [String.raw`@safelist fg\:blue;`, String.raw`fg\:blue`, "@safelist 'fg:blue';"],
+  [String.raw`@safelist 'p:2' \,;`, String.raw`\,`, "@safelist 'fg:blue';"],
+  ['@safelist fg:blue,bg:red;', 'fg:blue,bg:red', "@safelist 'fg:blue';"],
+  ['@safelist fg:blue, bg:red;', 'fg:blue, bg:red', "@safelist 'fg:blue';"],
+  ['@safelist ,fg:blue;', ',fg:blue', "@safelist 'fg:blue';"],
+  ['@safelist a) b;', 'a) b', "@safelist 'fg:blue';"],
+  ['@safelist a] b;', 'a] b', "@safelist 'fg:blue';"],
+  ['@safelist bg:rgb(0,0,0);', 'bg:rgb(0,0,0)', "@safelist 'fg:blue';"],
+  ['@safelist bg:rgb(0 0 0);', 'bg:rgb(0 0 0)', "@safelist 'fg:blue';"],
+  ['@safelist fg:blue/*x*/;', 'fg:blue/*x*/', "@safelist 'fg:blue';"],
   ["@safelist 'p:2',fg:blue;", "'p:2',fg:blue", "@safelist 'fg:blue';"],
-  ['@source not ./src/(a b).ts;', './src/(a b).ts', "@source not './src';"]
+  ["@safelist content:'a\"b';", "content:'a\"b'", "@safelist 'fg:blue';"],
+  [String.raw`@safelist content:'a\'b';`, String.raw`content:'a\'b'`, "@safelist 'fg:blue';"],
+  ['@blocklist debug-*,x;', 'debug-*,x', "@blocklist 'debug-*';"],
+  ['@source ./a,b;', './a,b', "@source './src';"],
+  ['@source not ./a,b;', './a,b', "@source not './src';"]
 ])('shows a fixed quoted example for %s', (statement, argument, example) => {
   const error = catchError(() => compileCSS(statement, { from: '/app/entry.css' }))
 
@@ -90,14 +103,14 @@ test.concurrent.each([
     code: 'unquoted-directive-argument',
     source: { range: { start: statement.indexOf(argument), end: statement.indexOf(argument) + argument.length } }
   })
-  expect(error.message).toContain(`as in ${example}`)
+  expect(error.message).toContain(`quote each argument, as in ${example}`)
 })
 
 /**
  * Guards the quoted spellings the directives already accept: commas between strings, comments,
  * and the `not` keyword of `@source` must not count as unquoted arguments, or valid entries fail.
- * Reverse check: treating a top-level comma as argument text turns this test and the
- * `fg:blue, bg:red` row red.
+ * Reverse check: counting a comma as argument text turns this test, the `'p:2', fg:blue` row and
+ * the `not,'./legacy'` row red.
  */
 test.concurrent('keeps the extraction policy of quoted arguments', () => {
   const result = compileCSS([
@@ -114,6 +127,20 @@ test.concurrent('keeps the extraction policy of quoted arguments', () => {
     blocklist: [/^debug-.*$/, 'legacy']
   })
   expect(result.nativeCSS).toBe('')
+})
+
+/**
+ * Guards #239 review F9: `not` written right against a string, comment or comma is still the
+ * keyword, so these quoted forms keep excluding `./legacy` as they did before the check existed.
+ * Reverse check: recognising `not` by the item's whole text instead of its text outside strings
+ * and comments turns every row red.
+ */
+test.concurrent.each([
+  "@source not'./legacy';",
+  "@source not/* legacy */ './legacy';",
+  "@source not,'./legacy';"
+])('keeps %s an exclusion', (statement) => {
+  expect(compileCSS(statement).extractionPolicy).toEqual(policy({ exclude: ['./legacy'] }))
 })
 
 /**
