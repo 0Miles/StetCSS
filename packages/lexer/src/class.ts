@@ -118,7 +118,20 @@ export interface StetCSSClassListParseOptions {
    * A body that does not decode falls back to `unescape: scriptString`.
    */
   scriptString?: StetCSSScriptStringQuote
+  /**
+   * Decodes the character references of the markup attribute value that holds the class list:
+   * `decodeStetCSSHTMLAttributeValue` or `decodeStetCSSJSXAttributeString` from
+   * `@stet-css/lexer/character-reference`. Classes split on the decoded text and carry decoded
+   * tokens, still unescaped by `unescape`, while `start`, `end` and `raw` stay in source. With
+   * `scriptString`, the class list is a string inside an attribute, as in a Vue `:class` binding:
+   * references decode first, as the template compiler decodes the attribute before it parses
+   * the expression, and `unescape` is not applied.
+   */
+  characterReferences?: StetCSSCharacterReferenceDecoder
 }
+
+/** Decodes the character references of a markup attribute value, keeping each unit's source range. */
+export type StetCSSCharacterReferenceDecoder = (source: string) => StetCSSDecodedSource
 
 export interface StetCSSValueTokenizeOptions {
   isKnownVariable?: (name: string) => boolean
@@ -289,18 +302,44 @@ export function collectStetCSSClassListTokenRanges(classList: string): StetCSSCl
     .map(({ start, end, token }) => ({ start, end, token }))
 }
 
+/**
+ * The text `parseStetCSSClassList` splits a class list into under `scriptString` and
+ * `characterReferences`, with the source range of each unit: character references decode
+ * first, then the script string's escapes. Undefined when a script string body does not decode.
+ */
+export function decodeStetCSSClassListSource(
+  source: string,
+  options: Pick<StetCSSClassListParseOptions, 'scriptString' | 'characterReferences'>
+): StetCSSDecodedSource | undefined {
+  const references = options.characterReferences?.(source)
+  if (!options.scriptString) {
+    if (references) return references
+    const offsets = Array.from({ length: source.length }, (_, index) => index)
+    return { value: source, starts: offsets, ends: offsets.map((offset) => offset + 1) }
+  }
+  const cooked = decodeStetCSSScriptString(references ? references.value : source, options.scriptString)
+  if (!cooked || !references) return cooked
+  return {
+    value: cooked.value,
+    starts: cooked.starts.map((start) => references.starts[start]),
+    ends: cooked.ends.map((end) => references.ends[end - 1])
+  }
+}
+
 export function parseStetCSSClassList(
   classList: string,
   options: StetCSSClassListParseOptions = {}
 ): StetCSSClassListItem[] {
-  if (options.scriptString) {
-    // Without a `\` or a carriage return the body cooks to itself unit for unit, so skip the decode.
-    if (!classList.includes('\\') && !classList.includes('\r')) {
-      return parseStetCSSClassList(classList, { ...options, scriptString: undefined })
-    }
-    const decoded = decodeStetCSSScriptString(classList, options.scriptString)
+  if (options.scriptString || options.characterReferences) {
+    const asWritten = { ...options, scriptString: undefined, characterReferences: undefined }
+    // Without a `&` no reference decodes, and without a `\` or a carriage return a script string
+    // body cooks to itself unit for unit, so skip the decode.
+    const decodes = options.characterReferences && classList.includes('&') ||
+      options.scriptString && (classList.includes('\\') || classList.includes('\r'))
+    if (!decodes) return parseStetCSSClassList(classList, asWritten)
+    const decoded = decodeStetCSSClassListSource(classList, options)
     if (decoded) return parseDecodedStetCSSClassList(classList, decoded, options)
-    return parseStetCSSClassList(classList, { ...options, scriptString: undefined, unescape: options.scriptString })
+    return parseStetCSSClassList(classList, { ...asWritten, unescape: options.scriptString })
   }
   const items: StetCSSClassListItem[] = []
   const pushClass = (start: number, end: number) => {
@@ -361,13 +400,16 @@ function parseDecodedStetCSSClassList(
   const { value, starts, ends } = decoded
   const items: StetCSSClassListItem[] = []
   const sourceOffsetAt = (index: number) => index < value.length ? starts[index] : source.length
+  // A script string's escapes are already cooked; a markup value's escaped quotes are not.
+  const unescape = options.scriptString ? false : options.unescape
   const push = (type: StetCSSClassListItem['type'], start: number, end: number, sourceStart: number, sourceEnd: number) => {
+    const text = value.slice(start, end)
     items.push({
       type,
       start: sourceStart,
       end: sourceEnd,
       raw: source.slice(sourceStart, sourceEnd),
-      token: value.slice(start, end)
+      token: type === 'class' ? unescapeStetCSSClassListToken(text, unescape) : text
     })
   }
 
