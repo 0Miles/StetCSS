@@ -70,6 +70,19 @@ const customManifest = createPresetManifest({
 })
 const customCSS = createCSSWithNativeDeclarations(customManifest)
 
+/** The unknown classes no-invalid-classes reports in `content`, linted as `filePath`. */
+function unknownClassNames(content: string, filePath: string) {
+  return lintStetCSSContent({
+    content,
+    filePath,
+    css,
+    rules: { 'no-invalid-classes': true },
+    ruleOptions: { 'no-invalid-classes': { disallowUnknownClass: true } }
+  }).diagnostics
+    .filter((diagnostic) => diagnostic.code === 'unknown-class')
+    .map((diagnostic) => diagnostic.data?.className)
+}
+
 type PresetManifestInput = Parameters<typeof createPresetManifest>[0]
 const registryFieldCSS = createCSSWithNativeDeclarations(createPresetManifest({
   variables: [
@@ -509,42 +522,58 @@ describe('source content linting', () => {
   /**
    * #240: the build decodes character references in class attributes (#194), so
    * `class="block&#32;hidden"` generates `.block` and `.hidden`. Lint read the attribute as
-   * written and reported `block&#32;hidden` as an unknown class the build never sees, while
-   * Markdown and MDX, which the build extracts as plain text, stay as written.
-   * Reverse check: dropping `characterReferences` from the source contexts reds this test and the
-   * next one.
+   * written and reported `block&#32;hidden` as an unknown class the build never sees.
+   * Reverse checks: dropping `characterReferences` from the source contexts reds this test and the
+   * fix test below; dropping it from the compose-directive options reds the `@compose` row only.
    */
   test('checks class attributes by the classes the build reads', () => {
-    const unknownClassNames = (content: string, filePath: string) => lintStetCSSContent({
-      content,
-      filePath,
-      css,
-      rules: { 'no-invalid-classes': true },
-      ruleOptions: { 'no-invalid-classes': { disallowUnknownClass: true } }
-    }).diagnostics
-      .filter((diagnostic) => diagnostic.code === 'unknown-class')
-      .map((diagnostic) => diagnostic.data?.className)
-
     for (const filePath of ['/project/index.html', '/project/App.vue', '/project/App.svelte', '/project/Page.astro']) {
-      expect(unknownClassNames('<div class="block&#32;hidden inline&#x2d;flex"></div>', filePath), filePath).toEqual([])
+      // HTML reads a numeric reference without its `;` too.
+      expect(unknownClassNames('<div class="block&#32;hidden inline&#x2d;flex flex&#32grid"></div>', filePath), filePath).toEqual([])
     }
     expect(unknownClassNames('<div className="block&#32;hidden" />', '/project/component.tsx')).toEqual([])
     expect(unknownClassNames('<div :class="[\'block&#32;hidden\']"></div>', '/project/App.vue')).toEqual([])
-    expect(unknownClassNames('<div class="block&#32;hidden"></div>', '/project/content.mdx')).toEqual(['block&#32;hidden'])
+    // A class attribute inside a `@compose` prelude is linted as part of the directive (whose
+    // own words are reported too).
+    expect(unknownClassNames('@compose /* <span class="block&#32;hidden"></span> */;', '/project/index.html')).not.toContain('block&#32;hidden')
+  })
+
+  /**
+   * #240: lint decodes only where the build does. Files the build extracts as plain text (PHP,
+   * Pug, Markdown, MDX, unknown extensions), `<script>` text and Astro frontmatter, which it reads
+   * as JavaScript, and attributes other than `class` and Vue's `:class` are read as written, so lint
+   * neither passes `blockk&#32;hiddenn` as two classes nor rewrites it.
+   * Reverse checks: decoding every `html` document regardless of its extension reds the PHP, Pug
+   * and `.txt` rows; decoding inside `<script>` or frontmatter, or every attribute name, reds those rows.
+   */
+  test('reads as written the class attributes the build reads as written', () => {
+    const asWritten = ['blockk&#32;hiddenn']
+    for (const filePath of ['/project/index.php', '/project/index.pug', '/project/notes.txt', '/project/content.md', '/project/content.mdx']) {
+      expect(unknownClassNames('<div class="blockk&#32;hiddenn"></div>', filePath), filePath).toEqual(asWritten)
+    }
+    expect(unknownClassNames('<script>el.innerHTML = \'<p class="blockk&#32;hiddenn"></p>\'</script>', '/project/index.html')).toEqual(asWritten)
+    expect(unknownClassNames('---\nconst html = \'<p class="blockk&#32;hiddenn"></p>\'\n---\n<div></div>', '/project/Page.astro')).toEqual(asWritten)
+    expect(unknownClassNames('<template><Comp className="blockk&#32;hiddenn" /></template>', '/project/App.vue')).toEqual(asWritten)
+    expect(unknownClassNames('<div :class="\'blockk&#32;hiddenn\'"></div>', '/project/index.html')).toEqual(asWritten)
   })
 
   /**
    * #240: with decoded classes mapped back onto their source spelling, an attribute holding a
    * character reference is fixed in place: each class keeps its spelling and the reference
-   * between them stays where it was. Expected outputs are the fixes of the same lists written
-   * without references (`fg:white bg:black` sorts to `bg:black fg:white`).
+   * between them stays where it was. A space spelled `&#x20` without its `;` reads on into a hex
+   * digit, so before a class that now starts with one (`bg:black`) it gets its `;`, or the fix
+   * would join the two classes into one. Expected outputs are the fixes of the same lists written
+   * without references (`fg:white bg:black` sorts to `bg:black fg:white`, `bg:black m:0.5rem` to
+   * `m:0.5rem bg:black`); text the build reads as written is left alone.
+   * Reverse check: joining edited items without checking how they decode reds the `&#x20` rows.
    */
   test('fixes class attributes with character references at their source spelling', () => {
     const fix = (content: string, filePath: string) => fixStetCSSContent({
       content,
       filePath,
       css,
-      rules: { 'sort-classes': true }
+      // Sorting only: canonical suggestions would rewrite `m:0.5rem` to `m:xs`.
+      rules: { 'sort-classes': true, 'prefer-canonical-classes': false }
     })
 
     expect(fix('<div class="fg:white&#32;bg:black"></div>', '/project/index.html'))
@@ -555,6 +584,16 @@ describe('source content linting', () => {
       .toBe('<div className="bg:black&#32;fg:white" />')
     expect(fix('<div :class="[\'fg:white&#32;bg:black\']"></div>', '/project/App.vue'))
       .toBe('<div :class="[\'bg:black&#32;fg:white\']"></div>')
+    for (const filePath of ['/project/index.html', '/project/App.vue', '/project/App.svelte']) {
+      expect(fix('<div class="bg:black&#x20m:0.5rem"></div>', filePath), filePath)
+        .toBe('<div class="m:0.5rem&#x20;bg:black"></div>')
+    }
+    expect(fix('<div :class="[\'bg:black&#x20m:0.5rem\']"></div>', '/project/App.vue'))
+      .toBe('<div :class="[\'m:0.5rem&#x20;bg:black\']"></div>')
+    expect(fix('<div class="fg:white&#32;bg:black"></div>', '/project/index.php'))
+      .toBe('<div class="fg:white&#32;bg:black"></div>')
+    expect(fix('<script>el.innerHTML = \'<p class="fg:white&#32;bg:black"></p>\'</script><div class="fg:white&#32;bg:black"></div>', '/project/index.html'))
+      .toBe('<script>el.innerHTML = \'<p class="fg:white&#32;bg:black"></p>\'</script><div class="bg:black&#32;fg:white"></div>')
   })
 
   /**
