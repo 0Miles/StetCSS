@@ -15,12 +15,14 @@ describe.concurrent('attribute selector case flags', () => {
    * Native CSS reads the flag (`i` or `s`, in any case) after a quoted value as `[data-x="a" i]`.
    *
    * Reverse check: skipping the flag rewrite in `src/utils/parse-selector.ts` reddens only this
-   * test and the variant test below.
+   * test and the variant test below; dropping the escaped-character alternative from
+   * `ATTRIBUTE_CASE_FLAG_REGEX` reddens only the escaped-quote row.
    */
   test.each([
     ['block[data-x="a"_i]', '@layer utilities{.block\\[data-x\\=\\"a\\"_i\\][data-x="a" i]{display:block}}'],
     ['block[data-x="a"_s]', '@layer utilities{.block\\[data-x\\=\\"a\\"_s\\][data-x="a" s]{display:block}}'],
     ['block[data-x=\'a\'_i]', '@layer utilities{.block\\[data-x\\=\\\'a\\\'_i\\][data-x=\'a\' i]{display:block}}'],
+    ['block[data-x="a\\"b"_i]', '@layer utilities{.block\\[data-x\\=\\"a\\\\\\"b\\"_i\\][data-x="a\\"b" i]{display:block}}'],
     ['block[data-x="a"_I]', '@layer utilities{.block\\[data-x\\=\\"a\\"_I\\][data-x="a" I]{display:block}}'],
     ['block[data-x^="a"_i]:hover', '@layer utilities{.block\\[data-x\\^\\=\\"a\\"_i\\]\\:hover[data-x^="a" i]:hover{display:block}}'],
     ['block:has([data-x="a"_s])', '@layer utilities{.block\\:has\\(\\[data-x\\=\\"a\\"_s\\]\\):has([data-x="a" s]){display:block}}']
