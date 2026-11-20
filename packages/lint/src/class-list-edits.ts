@@ -6,7 +6,7 @@ import {
 import type { StetCSS } from '@stet-css/engine'
 import sortClassNames from './sort-class-names'
 
-export type StetCSSClassListEditOptions = Pick<StetCSSClassListParseOptions, 'unescape' | 'scriptString'>
+export type StetCSSClassListEditOptions = Pick<StetCSSClassListParseOptions, 'unescape' | 'scriptString' | 'characterReferences'>
 
 function parseClassList(classList: string, options: StetCSSClassListEditOptions = {}) {
   return parseStetCSSClassList(classList, {

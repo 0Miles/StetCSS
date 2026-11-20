@@ -507,6 +507,57 @@ describe('source content linting', () => {
   })
 
   /**
+   * #240: the build decodes character references in class attributes (#194), so
+   * `class="block&#32;hidden"` generates `.block` and `.hidden`. Lint read the attribute as
+   * written and reported `block&#32;hidden` as an unknown class the build never sees, while
+   * Markdown and MDX, which the build extracts as plain text, stay as written.
+   * Reverse check: dropping `characterReferences` from the source contexts reds this test and the
+   * next one.
+   */
+  test('checks class attributes by the classes the build reads', () => {
+    const unknownClassNames = (content: string, filePath: string) => lintStetCSSContent({
+      content,
+      filePath,
+      css,
+      rules: { 'no-invalid-classes': true },
+      ruleOptions: { 'no-invalid-classes': { disallowUnknownClass: true } }
+    }).diagnostics
+      .filter((diagnostic) => diagnostic.code === 'unknown-class')
+      .map((diagnostic) => diagnostic.data?.className)
+
+    for (const filePath of ['/project/index.html', '/project/App.vue', '/project/App.svelte', '/project/Page.astro']) {
+      expect(unknownClassNames('<div class="block&#32;hidden inline&#x2d;flex"></div>', filePath), filePath).toEqual([])
+    }
+    expect(unknownClassNames('<div className="block&#32;hidden" />', '/project/component.tsx')).toEqual([])
+    expect(unknownClassNames('<div :class="[\'block&#32;hidden\']"></div>', '/project/App.vue')).toEqual([])
+    expect(unknownClassNames('<div class="block&#32;hidden"></div>', '/project/content.mdx')).toEqual(['block&#32;hidden'])
+  })
+
+  /**
+   * #240: with decoded classes mapped back onto their source spelling, an attribute holding a
+   * character reference is fixed in place: each class keeps its spelling and the reference
+   * between them stays where it was. Expected outputs are the fixes of the same lists written
+   * without references (`fg:white bg:black` sorts to `bg:black fg:white`).
+   */
+  test('fixes class attributes with character references at their source spelling', () => {
+    const fix = (content: string, filePath: string) => fixStetCSSContent({
+      content,
+      filePath,
+      css,
+      rules: { 'sort-classes': true }
+    })
+
+    expect(fix('<div class="fg:white&#32;bg:black"></div>', '/project/index.html'))
+      .toBe('<div class="bg:black&#32;fg:white"></div>')
+    expect(fix('<div class="fg:&#x77;hite bg:black"></div>', '/project/index.html'))
+      .toBe('<div class="bg:black fg:&#x77;hite"></div>')
+    expect(fix('<div className="fg:white&#32;bg:black" />', '/project/component.tsx'))
+      .toBe('<div className="bg:black&#32;fg:white" />')
+    expect(fix('<div :class="[\'fg:white&#32;bg:black\']"></div>', '/project/App.vue'))
+      .toBe('<div :class="[\'bg:black&#32;fg:white\']"></div>')
+  })
+
+  /**
    * Guards that a module file is linted as script, not HTML: read as HTML, the class lists in
    * its strings are never found. Issue #192: `.mjs` fell back to HTML.
    * Reverse check: removing `.mjs` from `languageByExtension` turns only this test red.
