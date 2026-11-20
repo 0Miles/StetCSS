@@ -16,6 +16,69 @@ async function withFiles(files: Record<string, string>, run: (root: string) => P
   }
 }
 
+/** The static CSS for the classes of `root`'s files, with `entryName` as the only entry. */
+async function extractEntry(root: string, entryName: string) {
+  const scanner = new CSSScanner({}, root)
+  await scanner.init()
+  const styleCSSSources = new Map()
+  const entry = join(root, entryName)
+  await registerStyleCSSSource(scanner, styleCSSSources, entry, readFileSync(entry, 'utf-8'), { projectDir: root })
+  return createExtractedCSS({ scanner, styleCSSSources, projectDir: root })
+}
+
+/** Cascade layer order: each layer name where an `@layer` statement or block first names it. */
+function layerOrder(css: string) {
+  return [...new Set([...css.matchAll(/@layer\s+([^{;]+)[{;]/g)]
+    .flatMap((match) => match[1].split(',').map((name) => name.trim())))]
+}
+
+/** Every layer name an `@layer` statement declares, once per statement that names it. */
+function layerStatementNames(css: string) {
+  return [...css.matchAll(/@layer\s+([^{;]+);/g)]
+    .flatMap((match) => match[1].split(',').map((name) => name.trim()))
+}
+
+/**
+ * Guards #250 on static extraction (the CLI, static builds): the package's CSS always came first
+ * and `@layer reset;` written before `@import "@stet-css/core"` was lost, so `reset` was declared
+ * after `utilities` and its `.r` beat `fg:blue`. The layers written before the import now lead the
+ * CSS, each declared once.
+ * Reverse check: before the fix this test and the next one were red, with `reset` after `utilities`.
+ */
+test('static extraction declares the layers written before @stet-css/core ahead of the preset layers', () => withFiles({
+  'main.css': '@layer reset;\n@import "@stet-css/core";\n@layer reset { .r { color: rgb(0 128 0); } }',
+  'index.html': '<div class="r fg:blue"></div>'
+}, async (root) => {
+  const css = await extractEntry(root, 'main.css')
+  expect(layerOrder(css)).toEqual(['reset', 'theme', 'base', 'defaults', 'components', 'utilities'])
+  const declared = layerStatementNames(css)
+  expect(declared).toContain('reset')
+  expect(declared).toEqual([...new Set(declared)])
+}))
+
+/**
+ * Guards #250 for the other ways an entry orders layers around `@import "@stet-css/core"`: a layer
+ * an inlined relative import names before it is declared ahead of the preset too, and a statement
+ * written after it stays after the preset layers, as native CSS orders them.
+ * Reverse check: moving every `@layer` statement of the entry ahead of the preset reds only this
+ * test; before the fix it was red with `reset` and `vendor` after `utilities`.
+ */
+test('static extraction keeps the layers written after @stet-css/core after the preset layers', () => withFiles({
+  'main.css': [
+    '@layer reset;',
+    '@import "./vendor.css" layer(vendor);',
+    '@import "@stet-css/core";',
+    '@layer late;',
+    '@layer reset { .r { color: green } }',
+    '@layer late { .l { color: red } }'
+  ].join('\n'),
+  'vendor.css': '.v { color: blue }',
+  'index.html': '<div class="fg:blue"></div>'
+}, async (root) => {
+  expect(layerOrder(await extractEntry(root, 'main.css')))
+    .toEqual(['reset', 'vendor', 'theme', 'base', 'defaults', 'components', 'utilities', 'late'])
+}))
+
 /**
  * Guards #183 on the static build: the entry's relative `@import` kept its rules but dropped its
  * `layer()` and media conditions, so `.x` beat every layer and `.y` applied on screen.
