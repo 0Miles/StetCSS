@@ -117,9 +117,14 @@ describe('CSS @reference compile cache', () => {
     hooks.beforeCompile = (from) => {
       if (from !== entryPath) return
       hooks.beforeCompile = undefined
-      // The editor saves while the entry compiles; only the change time tells.
-      writeFileSync(tokensPath, '@components { brand { color: #222222; } }')
-      settle(tokensPath)
+      // The editor saves while the entry compiles; only the change time tells. The file system
+      // dates changes by its own clock, which can trail `Date.now()` by a tick (Linux's coarse
+      // clock), so save until the change time lies after the compile began.
+      const compiling = Date.now()
+      do {
+        writeFileSync(tokensPath, '@components { brand { color: #222222; } }')
+        settle(tokensPath)
+      } while (statSync(tokensPath).ctimeMs <= compiling)
     }
 
     compileCSSManifestFile(entryPath)
