@@ -19,7 +19,7 @@ import {
 import { ensureStaticOutputFile } from './static'
 import type { Options } from './options'
 import type { GeneratedCSSLoaderOptions } from './generated-css-loader'
-import type { StyleCSSLoaderOptions } from './style-css-loader'
+import { CSS_MODULE_FILE_PATTERN, type StyleCSSLoaderOptions } from './style-css-loader'
 
 type WebpackConfig = Parameters<NonNullable<NextConfig['webpack']>>[0]
 type WebpackContext = Parameters<NonNullable<NextConfig['webpack']>>[1]
@@ -166,15 +166,22 @@ function applyStetCSSTurbopackConfig(turbopack: TurbopackConfig = {}, setup: Ste
     type: 'css' as const,
     as: '*.css'
   }
+  const styleCSSConditions = [
+    { path: STYLE_FILE_PATTERN },
+    { not: { path: generatedCSSPathPattern } },
+    { content: STET_CSS_STYLE_CONTENT_PATTERN },
+    { not: { query: STET_CSS_MANIFEST_RESOURCE_QUERY } }
+  ]
+  // Turbopack compiles the loader output by the `as` name, so CSS Modules need their own
+  // rule: renamed `*.css`, they would ship global and export no class names (#244).
+  const styleCSSModuleRule = {
+    condition: { all: [...styleCSSConditions, { path: CSS_MODULE_FILE_PATTERN }] },
+    loaders: [toTurbopackLoader(setup.styleCSSLoader)],
+    type: 'css-module' as const,
+    as: '*.module.css'
+  }
   const styleCSSRule = {
-    condition: {
-      all: [
-        { path: STYLE_FILE_PATTERN },
-        { not: { path: generatedCSSPathPattern } },
-        { content: STET_CSS_STYLE_CONTENT_PATTERN },
-        { not: { query: STET_CSS_MANIFEST_RESOURCE_QUERY } }
-      ]
-    },
+    condition: { all: [...styleCSSConditions, { not: { path: CSS_MODULE_FILE_PATTERN } }] },
     loaders: [toTurbopackLoader(setup.styleCSSLoader)],
     type: 'css' as const,
     as: '*.css'
@@ -217,6 +224,7 @@ function applyStetCSSTurbopackConfig(turbopack: TurbopackConfig = {}, setup: Ste
       ])),
       '*': [
         generatedCSSRule,
+        styleCSSModuleRule,
         styleCSSRule,
         virtualManifestRule,
         manifestQueryRule,

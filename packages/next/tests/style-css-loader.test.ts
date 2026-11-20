@@ -130,6 +130,28 @@ describe('Next style CSS loader', () => {
     expect(result.dependencies).toContain(globalsPath)
   })
 
+  /**
+   * Prevents (#244): `next dev --webpack` answered 500 with `Selector ":root" is not pure`
+   * for a CSS Module whose `@compose` referenced a theme variable no global stylesheet used,
+   * because Next compiles CSS Modules in pure mode. CSS Modules keep the generated rule
+   * global behind a `cssmodules-pure-ignore` comment; other local stylesheets are unchanged.
+   * Reverse check: passing `cssModule: false` from the style loader turns only this test red.
+   */
+  it.each([
+    ['app/page.module.css', '/* cssmodules-pure-ignore */:global(:root){--color-qaentry:#123456}'],
+    ['app/page.css', '@layer theme{:root{--color-qaentry:#123456}}']
+  ])('emits the referenced theme variables %s accepts', async (file, themeRule) => {
+    const root = createFixture()
+    const globalsPath = join(root, 'app/globals.css')
+    writeFileSync(globalsPath, '@import "@stet-css/core";\n@theme { --color-qaentry: #123456; }\n')
+
+    const result = await runStyleCSSLoader(root, join(root, file), '.qa { @compose fg:qaentry; }')
+
+    expect(result.content).toContain('.qa{color:var(--color-qaentry)}')
+    expect(result.content).toContain(themeRule)
+    expect(result.dependencies).toContain(globalsPath)
+  })
+
   it('keeps local style dependencies registered after invalid @compose and recovers on the next run', async () => {
     const root = createFixture()
     const modulePath = join(root, 'app/Button.module.css')
