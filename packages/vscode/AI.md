@@ -19,3 +19,4 @@ Owns the VS Code extension: activation, language server startup (`./server`), th
 
 - Packaging changes: `bun run --filter stet-css-vscode vscode:package -- --target darwin-arm64`. `tests/server-bundle.test.js` covers native externals and staged VSIX contents; its win32-x64 case skips unless every platform's native packages are installed (`RELEASE.md`).
 - Release flow: `RELEASE.md` (the `release` script).
+- Manifest reloads (#248): `tests/server-bundle.test.js` checks that the staged server picks up an imported CSS file replaced on disk. By hand in VS Code: open a project whose entry CSS imports another CSS file, open a `.jsx` that uses a class the import does not define yet, then add that component to the imported file from a terminal (`git checkout` or another editor). Within about a second, completion and hover show it with no save or restart, and the StetCSS output channel logs `Reloading workspace`.
