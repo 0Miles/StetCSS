@@ -122,26 +122,35 @@ function makePlugin(options: Record<string, unknown> = {}, cwd = process.cwd()) 
   return plugin
 }
 
-function runStyleCSSLoader(root: string, resourcePath: string, source: string, resourceQuery = '') {
+interface StyleCSSLoaderRun {
+  /** The block of a `.vue` file, such as `?vue&type=style&index=0&lang.css`. */
+  resourceQuery?: string
+  /** The options the plugin's rule passes; the `.vue` block rule sets `vueStyleBlock`. */
+  options?: Record<string, unknown>
+  /** The source map the previous loader handed on. */
+  map?: unknown
+}
+
+function runStyleCSSLoader(root: string, resourcePath: string, source: string, run: StyleCSSLoaderRun = {}) {
   const dependencies: string[] = []
-  return new Promise<string>((resolve, reject) => {
+  return new Promise<{ content: string, map: unknown }>((resolve, reject) => {
     stetCSSStyleCSSLoader.call({
       resourcePath,
-      resourceQuery,
+      resourceQuery: run.resourceQuery ?? '',
       rootContext: root,
       addDependency: (dependency) => dependencies.push(dependency),
-      getOptions: () => ({}),
-      async: () => (error, content) => {
+      getOptions: () => run.options ?? {},
+      async: () => (error, content, map) => {
         if (error) {
           const loaderError = error as Error & { dependencies?: string[] }
           loaderError.dependencies = dependencies
           reject(loaderError)
         } else {
-          resolve(content || '')
+          resolve({ content: content || '', map })
         }
       }
-    }, source)
-  }).then((content) => ({ content, dependencies }))
+    }, source, run.map)
+  }).then((result) => ({ ...result, dependencies }))
 }
 
 function makeRegisteredStyleSource(dependencies: string[]) {
@@ -355,7 +364,8 @@ describe('StetCSSPlugin', () => {
    * `@compose` and `@reference` reach css-loader as written. A scoped block also gets #189's
    * treatment: generated rules wrapped in `:global()` and generated keyframes named
    * `<name>-<id>` after vue-loader's `id=<id>&scoped=true`.
-   * Reverse check: handing the loader's transform `resourcePath` alone turns only this test red.
+   * Reverse check: handing the loader's transform `resourcePath` alone turns this test and
+   * every `.vue` case in `static-e2e.test.ts` red.
    */
   test('style loader lowers @compose and @reference in vue-loader style block requests', async () => {
     const root = mkdtempSync(path.join(tmpdir(), 'stet-css-webpack-vue-block-'))
@@ -374,7 +384,7 @@ describe('StetCSSPlugin', () => {
         root,
         componentPath,
         '.plain { @compose inline-flex brand; }',
-        '?vue&type=style&index=0&lang.css'
+        { resourceQuery: '?vue&type=style&index=0&lang.css', options: { vueStyleBlock: true } }
       )
       // The same output a CSS Module with this source gets: component declarations first.
       expect(plain.content).toContain('.plain{background-color:#123456;display:inline-flex}')
@@ -385,7 +395,7 @@ describe('StetCSSPlugin', () => {
         root,
         componentPath,
         '@reference "./tokens.css";\n.probe { color: var(--color-probe); @compose animate:fade; }',
-        '?vue&type=style&index=1&id=7a7a37b1&scoped=true&lang.css'
+        { resourceQuery: '?vue&type=style&index=1&id=7a7a37b1&scoped=true&lang.css', options: { vueStyleBlock: true } }
       )
       expect(scoped.content).toContain('.probe{color:var(--color-probe);animation:var(--animate-fade)}')
       expect(scoped.content).toMatch(/:global\(:root\)\{[^}]*--color-probe:#abcdef/)
@@ -415,12 +425,116 @@ describe('StetCSSPlugin', () => {
         root,
         path.join(root, 'App.vue'),
         source,
-        '?vue&type=style&index=0&lang.css'
+        { resourceQuery: '?vue&type=style&index=0&lang.css', options: { vueStyleBlock: true } }
       )
       expect(result.content).toBe(source)
     } finally {
       rmSync(root, { recursive: true, force: true })
     }
+  })
+
+  /**
+   * Guards vue-loader's `experimentalInlineMatchResource` form, `App.vue.css?vue&type=style&…`
+   * (#236): webpack's rules see a stylesheet, so the `pre` rule runs, but before vue-loader
+   * extracts the block: the source is the whole component and must pass through, map included.
+   * The `.vue` block rule lowers the block once extracted.
+   * Reverse check: dropping the `pre` rule's check on the file in `src/style-css-loader.ts`
+   * turns this test red ("Invalid empty selector") and the inline cases in `static-e2e.test.ts`.
+   */
+  test('style loader leaves a .vue file the pre rule reaches through a match resource as written', async () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-webpack-vue-pre-'))
+    try {
+      const source = '<template><p class="plain"></p></template>\n<style>\n.plain { @compose block; }\n</style>\n'
+      const map = { version: 3, sources: ['App.vue'], mappings: 'AAAA' }
+      const result = await runStyleCSSLoader(root, path.join(root, 'App.vue'), source, {
+        resourceQuery: '?vue&type=style&index=0&lang.css',
+        map
+      })
+      expect(result.content).toBe(source)
+      expect(result.map).toBe(map)
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  /**
+   * Guards source maps through the loader (#236): vue-loader maps a `<style>` block to its lines
+   * in the `.vue` file, and the `.vue` block rule now runs on every block. A style the loader
+   * leaves as written must keep the incoming map, or CSS maps point at the block's own lines.
+   * Reverse check: calling back without the map turns both cases red.
+   */
+  test.each([
+    ['a .vue style block', 'App.vue', '?vue&type=style&index=0&lang.css', { vueStyleBlock: true }],
+    ['a stylesheet', 'app.css', '', {}]
+  ])('style loader keeps the source map of %s it leaves as written', async (_, file, resourceQuery, options) => {
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-webpack-map-'))
+    try {
+      const source = '.x { color: red; }\n'
+      const map = { version: 3, sources: [file], mappings: 'SAAS' }
+      const result = await runStyleCSSLoader(root, path.join(root, file), source, { resourceQuery, options, map })
+      expect(result.content).toBe(source)
+      expect(result.map).toBe(map)
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  /**
+   * Guards entries in a project whose path holds `#` (#236's review): whether a request names a
+   * stylesheet file is read from `resourcePath`, which has no query to cut, so the entry is
+   * still rewritten to the generated CSS import.
+   * Reverse check: judging the file by the request with its query cut at `#` turns only this
+   * test red.
+   */
+  test('style loader rewrites an entry whose path holds #', async () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'stet-css-webpack-#hash-'))
+    try {
+      const result = await runStyleCSSLoader(root, path.join(root, 'app.css'), '@import "@stet-css/core";\n')
+      expect(result.content).toBe(`@import "${VIRTUAL_CSS_ID}";`)
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  /**
+   * Guards where the `.vue` block rule goes (#236): right before the rule that hands `.vue`
+   * files to vue-loader, by package name or resolved path, past a rule that runs other files
+   * through vue-loader (VuePress's `.md`); and a `null`, `undefined` or `false` rule, which
+   * webpack accepts, must not throw.
+   * Reverse check: matching only the bare `vue-loader` name turns the resolved-path case red;
+   * splicing before the first rule naming vue-loader turns the `.md` case red, and the
+   * `static-e2e.test.ts` cases with the `.md` rule before the css rule; dropping the
+   * guard on rules that are not objects turns the falsy case red (TypeError).
+   */
+  test.each([
+    ['a resolved vue-loader path', [
+      { test: /\.vue$/, loader: '/project/node_modules/vue-loader/dist/index.js' }
+    ], 0],
+    ['a vue-loader rule for .md first', [
+      { test: /\.md$/, use: ['vue-loader', '/project/md-loader.js'] },
+      { test: /\.vue$/, use: [{ loader: 'vue-loader', options: {} }] }
+    ], 1],
+    ['null, undefined and false rules', [null, undefined, false], -1]
+  ])('installs the .vue block rule with %s', (_, rules, vueRuleIndex) => {
+    const plugin = makePlugin()
+    const { compiler } = makeFakeCompiler()
+    ;(compiler as any).webpack = { sources: { RawSource: function NoopSource(this: object) { /* stub */ } } }
+    ;(compiler.options.module as any).rules = [...rules]
+
+    plugin.apply(compiler as any)
+    compiler.hooks.initialize.call()
+
+    const installed = (compiler.options.module as any).rules as any[]
+    const isStyleLoader = (rule: any) => rule?.use?.[0]?.loader?.includes('style-css-loader')
+    const blockRules = installed.filter((rule) => isStyleLoader(rule) && rule.use[0].options.vueStyleBlock)
+    expect(installed.filter((rule) => isStyleLoader(rule) && rule.enforce === 'pre')).toHaveLength(1)
+    if (vueRuleIndex === -1) {
+      expect(blockRules).toEqual([])
+      return
+    }
+    expect(blockRules).toHaveLength(1)
+    expect(installed.indexOf(blockRules[0])).toBe(vueRuleIndex)
+    expect(installed[vueRuleIndex + 1]).toBe(rules[vueRuleIndex])
   })
 
   test('locally lowers explicit @reference CSS Modules and reports reference dependencies', async () => {
