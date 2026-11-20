@@ -409,12 +409,34 @@ function combineSelectorWrapper(selector: string, wrapper: string) {
   return replaceSelectorNesting(wrapper, selector)
 }
 
+/** Stands for the selector an alias attaches to while its text is generated; CSS text never holds U+0000. */
+const SELECTOR_ALIAS_HOST = '\u0000'
+
+/**
+ * The items of a `:` selector alias with `:of()`, each split where `generateSelector` puts the
+ * class: the ancestor before it and the alias's own text after it (`:hover:of(.a,.b)` is `.a ` +
+ * `:hover` and `.b ` + `:hover`). Undefined for an alias without `:of()`.
+ */
+function getSelectorAliasAncestorItems(nodes: Parameters<typeof generateSelector>[0]) {
+  const items = splitCSSSelectorList(generateSelector(nodes, SELECTOR_ALIAS_HOST)).map((item) => {
+    const hostIndex = item.indexOf(SELECTOR_ALIAS_HOST)
+    return { ancestor: item.slice(0, hostIndex), text: item.slice(hostIndex + SELECTOR_ALIAS_HOST.length) }
+  })
+  return items.some((item) => item.ancestor) ? items : undefined
+}
+
 /**
  * `selector` with its `:` selector aliases replaced by their selectors. An alias that is a list
  * (`>li,+li`) at the top level expands the selector item it sits in once per alias item:
  * `.card:pair` is `.card>li,.card+li`, not `.card>li,+li`, which left `+li` unscoped.
+ *
+ * An alias with `:of()` reads as it does on a class: each `:of()` item goes before the selector
+ * item the alias sits in (`.card:of-a` is `.a .card`, not `.card.a `); inside a functional
+ * pseudo-class it stands for any element under the ancestor (`:is(.a *)`). With
+ * `ancestorAliasesOnly`, aliases without `:of()` stay as written, so a caller can place the
+ * ancestors before wrapping the selector and resolve the rest after.
  */
-function resolveSelectorAliases(selector: string, css: StetCSS) {
+function resolveSelectorAliases(selector: string, css: StetCSS, ancestorAliasesOnly = false) {
   const selectorTokens = [...css.selectors.keys()]
     .filter((token) => token.startsWith(':'))
     .sort((a, b) => b.length - a.length)
@@ -463,6 +485,19 @@ function resolveSelectorAliases(selector: string, css: StetCSS) {
       })
       if (matchedToken) {
         const nodes = css.selectors.get(matchedToken)
+        const ancestorItems = nodes?.length ? getSelectorAliasAncestorItems(nodes) : undefined
+        if (nodes && ancestorItems) {
+          alternatives = parenDepth
+            ? alternatives.map((alternative) => alternative + generateSelector(nodes, '*'))
+            : alternatives.flatMap((alternative) => ancestorItems.map(({ ancestor, text }) => ancestor + alternative + text))
+          index += matchedToken.length
+          continue
+        }
+        if (ancestorAliasesOnly) {
+          append(matchedToken)
+          index += matchedToken.length
+          continue
+        }
         if (nodes?.length) {
           const text = generateSelector(nodes, '')
           const aliasItems = parenDepth ? [] : splitCSSSelectorList(text)
@@ -590,6 +625,8 @@ function resolveConfiguredBranches(conditionPath: CSSDirectiveConditionPath | un
       selector: resolveSelectorAliases(branch.selector, css)
     }))
   }
+  // `:of()` ancestors belong to the rule's own selector, inside the wrappers the path adds.
+  branches = branches.map((branch) => ({ ...branch, selector: resolveSelectorAliases(branch.selector, css, true) }))
 
   for (const entry of conditionPath) {
     if (entry.type === 'condition') {
@@ -804,9 +841,11 @@ function createMergedStyleDefinitions(definitions: CSSDirectiveStyleDefinition[]
   for (const definition of definitions) {
     if (definition.type === 'compose') {
       const composedDefinitions = createStyleDefinitionsFromCompose(definition, css)
+      // The host's `:of()` ancestors go inside the composed utility's mode or selector wrapper.
+      const hostSelector = resolveSelectorAliases(definition.selector, css, true)
       for (const composedDefinition of composedDefinitions) {
         const { conditions: composedConditions, ...composedDefinitionWithoutConditions } = composedDefinition
-        const selector = combineStyleSelectors(definition.selector, composedDefinition.selector)
+        const selector = combineStyleSelectors(hostSelector, composedDefinition.selector)
         const resolvedBranches = resolveConfiguredBranches([
           ...(getConditionPath(definition) || []),
           ...(conditionPathFromConditions(composedConditions) || [])

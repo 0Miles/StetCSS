@@ -60,6 +60,109 @@ describe.concurrent('selector lists in lowered rules', () => {
     expect(css.trim()).toBe('.card{display:block}.card>li,.card+li,.card .z{color:red}')
   })
 
+  describe('a selector alias with :of() in a nested selector', () => {
+    const ofNode = (...classes: string[]) => ({
+      value: 'of',
+      type: 'pseudo-class',
+      children: classes.flatMap((name, index) => [
+        ...(index ? [{ type: 'separator', value: ',' }] : []),
+        { type: 'class', value: name }
+      ])
+    })
+    const baseManifest = {
+      ...defaultManifest,
+      selectors: {
+        ...defaultManifest.selectors,
+        ':pair': [
+          { type: 'combinator', value: '>' }, { value: 'li' },
+          { type: 'separator', value: ',' },
+          { type: 'combinator', value: '+' }, { value: 'li' }
+        ],
+        ':inof': [ofNode('a')],
+        ':inofs': [ofNode('a', 'b')],
+        ':hoverof': [{ type: 'pseudo-class', value: 'hover' }, ofNode('a')],
+        ':after-a': [{ value: 'of', type: 'pseudo-class', children: [{ type: 'class', value: 'a' }, { type: 'combinator', value: '+' }] }]
+      },
+      variants: [
+        ...(defaultManifest.variants || []),
+        { token: '@hocus', branches: [{ selector: '&:hover,&:focus' }] }
+      ]
+    } as StetCSSManifest
+
+    /**
+     * Guards #235: the alias's selector was pasted at the alias as text, so its `:of()` ancestor
+     * landed inside the host's compound: `.card { &:inof { … } }` with `:inof` = `:of(.a)` lowered
+     * to `.card.a ` (an element that is both) instead of `.a .card`. The alias reads as it does on
+     * a class (`hidden:of(.a)` is `.a .hidden`): each `:of()` item goes before the selector item
+     * the alias sits in, keeps its trailing combinator, and the rest of the alias stays at the
+     * alias. Inside a functional pseudo-class the alias has no item of its own to prefix, so it
+     * stands for any element under the ancestor (`.a *`); the row uses `:not()` because
+     * lightningcss already unwraps a one-compound `:is()` before aliases resolve.
+     *
+     * Reverse check in `src/lower-css-directives.ts`: pasting `generateSelector(nodes, '')` for
+     * an `:of()` alias, as before, reddens every row; writing the ancestor at the alias instead
+     * of the item start reddens all but the `:not()` row; dropping the `*` body inside parentheses
+     * reddens only the `:not()` row.
+     */
+    test.each([
+      ['beside @compose on the parent', '.card { @compose block; &:inof { color: red; } }', '.card{display:block}.a .card{color:red}'],
+      ['holding @compose', '.card { &:inof { @compose hidden; } }', '.a .card{display:none}'],
+      ['with an :of() list', '.card { @compose block; &:inofs { color: red; } }', '.card{display:block}.a .card,.b .card{color:red}'],
+      ['with an :of() list and text after it, in a list', '.card { @compose block; &:inofs:focus, .z { color: red; } }', '.card{display:block}.a .card:focus,.b .card:focus,.card .z{color:red}'],
+      ['with a pseudo-class beside :of()', '.card { @compose block; &:hoverof { color: red; } }', '.card{display:block}.a .card:hover{color:red}'],
+      ['with an :of() item ending in a combinator', '.card { @compose block; &:after-a { color: red; } }', '.card{display:block}.a+.card{color:red}'],
+      ['after a combinator', '.card { @compose block; &>li:inof { color: red; } }', '.card{display:block}.a .card>li{color:red}'],
+      ['inside :not()', '.card { @compose block; &:not(:inofs) { color: red; } }', '.card{display:block}.card:not(.a *,.b *){color:red}']
+    ])('keeps the ancestor of the selector item: %s', (_, source, expected) => {
+      const { css } = compileCSSManifest(source, { baseManifest })
+      expect(css.trim()).toBe(expected)
+    })
+
+    /**
+     * Guards #235 for managed definitions: a component's nested `&:inofs` kept the ancestor
+     * inside the component's compound once the engine put the class at `&`.
+     * Reverse check: the same paste as above reddens this test.
+     */
+    test('in a component', () => {
+      const { manifest } = compileCSSManifest('@components { card { &:inofs { color: red; } } }', { baseManifest })
+      const css = StetCSS.create({ manifest })
+      css.ensureClassRules('card')
+      expect(css.text).toBe('@layer components{.a .card,.b .card{color:red}}')
+    })
+
+    /**
+     * Guards: a mode or `@variant` wrapper goes outside the alias's ancestors, as it already does
+     * for `@compose hidden:of(.a,.b)@dark` (`.dark .a .card`). Lifting the ancestors only after the
+     * wrapper was applied gave `.a .dark .card`, which never matches with the mode class on
+     * `<html>`, and puts `:host(.dark)` after another compound under `mode-trigger: host`.
+     *
+     * Reverse check in `src/lower-css-directives.ts`: dropping the ancestor-only pass at the start
+     * of `resolveConfiguredBranches` reddens only the `@variant` row; dropping it on the
+     * `@compose` host in `createMergedStyleDefinitions` reddens only the `@compose` row.
+     */
+    test.each([
+      ['@variant inside the alias rule', '.card { @compose block; &:inofs { @variant dark { color: red; } } }', '.card{display:block}.dark .a .card,.dark .b .card{color:red}'],
+      ['@compose of a mode utility', '.card { &:inofs { @compose hidden@dark; } }', '.dark .a .card,.dark .b .card{display:none}']
+    ])('wraps the ancestors in the mode: %s', (_, source, expected) => {
+      const { css } = compileCSSManifest(classModes + source, { baseManifest })
+      expect(css.trim()).toBe(expected)
+    })
+
+    /**
+     * Guards #235's "an alias without `:of()` keeps its output": the pass that places `:of()`
+     * ancestors before the wrappers leaves every other alias to the pass after them, so a
+     * wrapper that is a list still expands around the alias as written. Resolving `:pair` before
+     * the `@hocus` wrapper reorders the items (`.card>li:hover,.card>li:focus,…`).
+     *
+     * Reverse check: letting the ancestor-only pass in `resolveSelectorAliases` resolve aliases
+     * without `:of()` too reddens only this test.
+     */
+    test('leaves an alias without :of() to resolve after the wrappers', () => {
+      const { css } = compileCSSManifest('.card { @compose block; &:pair { @variant hocus { color: red; } } }', { baseManifest })
+      expect(css.trim()).toBe('.card{display:block}.card>li:hover,.card+li:hover,.card>li:focus,.card+li:focus{color:red}')
+    })
+  })
+
   /**
    * Guards: a comma inside a comment in a manifest alias's selector text is not a list separator.
    * Alias text comes from the manifest, not from lightningcss, so it can carry a comment:
