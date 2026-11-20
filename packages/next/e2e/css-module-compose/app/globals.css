@@ -4,7 +4,7 @@
   mode-trigger: class;
 }
 
-/* Only the CSS Module references these, so its own CSS has to emit them. */
+/* Only the CSS Modules reference these, so their own CSS has to emit them. */
 @theme {
   --color-qaentry: #123456;
 }
@@ -15,4 +15,5 @@
 
 @theme dark {
   --color-qamode: #abcdef;
+  --color-qadark: #13579b;
 }
