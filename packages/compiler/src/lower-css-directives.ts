@@ -413,6 +413,13 @@ function combineSelectorWrapper(selector: string, wrapper: string) {
 const SELECTOR_ALIAS_HOST = '\u0000'
 
 /**
+ * Ends with a functional pseudo-class whose argument is a complex selector list, where `.a *` is
+ * valid. `:host()`, `::slotted()` and the rest take one compound, and a combinator there drops
+ * the whole rule.
+ */
+const COMPLEX_SELECTOR_FUNCTION_PATTERN = /(?<![:\\]):(?:is|where|not|has)$/i
+
+/**
  * The items of a `:` selector alias with `:of()`, each split where `generateSelector` puts the
  * class: the ancestor before it and the alias's own text after it (`:hover:of(.a,.b)` is `.a ` +
  * `:hover` and `.b ` + `:hover`). Undefined for an alias without `:of()`.
@@ -431,10 +438,12 @@ function getSelectorAliasAncestorItems(nodes: Parameters<typeof generateSelector
  * `.card:pair` is `.card>li,.card+li`, not `.card>li,+li`, which left `+li` unscoped.
  *
  * An alias with `:of()` reads as it does on a class: each `:of()` item goes before the selector
- * item the alias sits in (`.card:of-a` is `.a .card`, not `.card.a `); inside a functional
- * pseudo-class it stands for any element under the ancestor (`:is(.a *)`). With
- * `ancestorAliasesOnly`, aliases without `:of()` stay as written, so a caller can place the
- * ancestors before wrapping the selector and resolve the rest after.
+ * item the alias sits in (`.card:of-a` is `.a .card`, not `.card.a `); inside `:is()`,
+ * `:where()`, `:not()` or `:has()` it stands for any element under the ancestor (`:not(.a *)`).
+ * Inside any other function, at any depth (`:host()`, `::slotted()`), no compound can express an
+ * ancestor, so it keeps its plain text. With `ancestorAliasesOnly`, aliases without `:of()` stay
+ * as written, so a caller can place the ancestors before wrapping the selector and resolve the
+ * rest after.
  */
 function resolveSelectorAliases(selector: string, css: StetCSS, ancestorAliasesOnly = false) {
   const selectorTokens = [...css.selectors.keys()]
@@ -448,7 +457,8 @@ function resolveSelectorAliases(selector: string, css: StetCSS, ancestorAliasesO
     alternatives = alternatives.map((alternative) => alternative + text)
   }
   let attributeDepth = 0
-  let parenDepth = 0
+  /** One entry per open parenthesis: whether its argument takes complex selectors. */
+  const parens: boolean[] = []
   for (let index = 0; index < selector.length;) {
     const skipped = skipCSSEscapeStringOrComment(selector, index)
     if (skipped !== index) {
@@ -470,9 +480,9 @@ function resolveSelectorAliases(selector: string, css: StetCSS, ancestorAliasesO
       continue
     }
     if (!attributeDepth) {
-      if (char === '(') parenDepth++
-      else if (char === ')' && parenDepth > 0) parenDepth--
-      else if (char === ',' && !parenDepth) {
+      if (char === '(') parens.push(COMPLEX_SELECTOR_FUNCTION_PATTERN.test(selector.slice(0, index)))
+      else if (char === ')' && parens.length) parens.pop()
+      else if (char === ',' && !parens.length) {
         items.push(...alternatives)
         alternatives = ['']
         index++
@@ -486,8 +496,8 @@ function resolveSelectorAliases(selector: string, css: StetCSS, ancestorAliasesO
       if (matchedToken) {
         const nodes = css.selectors.get(matchedToken)
         const ancestorItems = nodes?.length ? getSelectorAliasAncestorItems(nodes) : undefined
-        if (nodes && ancestorItems) {
-          alternatives = parenDepth
+        if (nodes && ancestorItems && parens.every(Boolean)) {
+          alternatives = parens.length
             ? alternatives.map((alternative) => alternative + generateSelector(nodes, '*'))
             : alternatives.flatMap((alternative) => ancestorItems.map(({ ancestor, text }) => ancestor + alternative + text))
           index += matchedToken.length
@@ -500,7 +510,7 @@ function resolveSelectorAliases(selector: string, css: StetCSS, ancestorAliasesO
         }
         if (nodes?.length) {
           const text = generateSelector(nodes, '')
-          const aliasItems = parenDepth ? [] : splitCSSSelectorList(text)
+          const aliasItems = parens.length ? [] : splitCSSSelectorList(text)
           alternatives = aliasItems.length > 1
             ? alternatives.flatMap((alternative) => aliasItems.map((aliasItem) => alternative + aliasItem))
             : alternatives.map((alternative) => alternative + text)
