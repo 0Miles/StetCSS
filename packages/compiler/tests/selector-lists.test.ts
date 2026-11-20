@@ -80,6 +80,14 @@ describe.concurrent('selector lists in lowered rules', () => {
         ],
         ':inof': [ofNode('a')],
         ':inofs': [ofNode('a', 'b')],
+        ':inofgap': [{
+          value: 'of',
+          type: 'pseudo-class',
+          children: [
+            { type: 'class', value: 'a' }, { type: 'separator', value: ',' },
+            { type: 'separator', value: ',' }, { type: 'class', value: 'b' }
+          ]
+        }],
         ':hoverof': [{ type: 'pseudo-class', value: 'hover' }, ofNode('a')],
         ':after-a': [{ value: 'of', type: 'pseudo-class', children: [{ type: 'class', value: 'a' }, { type: 'combinator', value: '+' }] }]
       },
@@ -114,6 +122,41 @@ describe.concurrent('selector lists in lowered rules', () => {
       ['after a combinator', '.card { @compose block; &>li:inof { color: red; } }', '.card{display:block}.a .card>li{color:red}'],
       ['inside :not()', '.card { @compose block; &:not(:inofs) { color: red; } }', '.card{display:block}.card:not(.a *,.b *){color:red}']
     ])('keeps the ancestor of the selector item: %s', (_, source, expected) => {
+      const { css } = compileCSSManifest(source, { baseManifest })
+      expect(css.trim()).toBe(expected)
+    })
+
+    /**
+     * Guards: an alias is an `:of()` alias when any of its items has an ancestor, not only when
+     * all do. An empty item (`:of(.a,,.b)`) has none and stands for the bare selector item, so
+     * the alias still expands per item instead of being pasted into the host's compound
+     * (`.card.a,.card,.card.b`).
+     *
+     * Reverse check: `items.some(…)` → `items.every(…)` in `getSelectorAliasAncestorItems`
+     * reddens only this test.
+     */
+    test('an :of() list with an empty item', () => {
+      const { css } = compileCSSManifest('.card { @compose block; &:inofgap { color: red; } }', { baseManifest })
+      expect(css.trim()).toBe('.card{display:block}.a .card,.card,.b .card{color:red}')
+    })
+
+    /**
+     * Guards (#235 review F1): `:host()` and `::slotted()` take one compound selector, so `.a *`
+     * there is invalid and lightningcss drops the whole rule, other list items included:
+     * `:host(.a *),.x{…}` left `.x` unstyled. That holds for `:is()` or `:not()` nested inside
+     * them too (`:host(:not(.a *))` is dropped). No compound can say "inside `.a`", so inside any
+     * function other than `:is()`, `:where()`, `:not()` or `:has()`, at any depth, the alias keeps
+     * the text it had before #235.
+     *
+     * Reverse check in `resolveSelectorAliases`: treating every parenthesis as taking a complex
+     * selector reddens all three rows; checking only the innermost parenthesis reddens only the
+     * nested `:not()` row.
+     */
+    test.each([
+      [':host() in a list', ':host(:inof), .x { @compose block; }', ':host(.a ),.x{display:block}'],
+      ['::slotted() in a list', '.card { @compose block; &::slotted(:inof), .x { color: red; } }', '.card{display:block}.card::slotted(.a ),.card .x{color:red}'],
+      [':not() inside :host()', ':host(:not(:inof)), .x { @compose block; }', ':host(:not(.a )),.x{display:block}']
+    ])('keeps the alias text where a combinator is invalid: %s', (_, source, expected) => {
       const { css } = compileCSSManifest(source, { baseManifest })
       expect(css.trim()).toBe(expected)
     })
