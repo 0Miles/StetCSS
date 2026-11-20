@@ -911,6 +911,65 @@ test('colours attribute selectors, an+b and selector punctuation in a class like
 })
 
 /**
+ * Guards: an attribute selector's case flag (`"a"_i`, emitted as `"a" i`) kept the host string
+ * colour while native CSS colours `i` as a modifier keyword and `s` as an attribute name. Checked
+ * character by character against the same selector in native CSS, in every bundled theme. The `_`
+ * stands for the native space, which has no colour of its own, so it is skipped.
+ * Dropping the case flag from the scope probe in `shiki.ts` reds this test.
+ */
+test('colours an attribute case flag in a class like native CSS', async () => {
+  const highlighter = await createHighlighter({ themes: allBundledThemes, langs: ['css', 'html', stetCSSShikiLanguage] })
+  try {
+    const mismatches: string[] = []
+    for (const flag of ['i', 's']) {
+      const selector = `[data-x="a"_${flag}]`
+      const native = `a${selector.replace('_', ' ')} {}`
+      const code = `<div class='block${selector}'></div>`
+      const offset = code.indexOf(selector)
+      for (const theme of allBundledThemes) {
+        const nativeTokens = textMateColors(highlighter, native, theme)
+        const tokens = transformedColors(highlighter, code, 'html', theme)
+        for (let index = 0; index < selector.length; index++) {
+          if (selector[index] === '_') continue
+          const actual = colorAt(tokens, offset + index)
+          const expected = colorAt(nativeTokens, 1 + index)
+          if (actual?.toLowerCase() !== expected?.toLowerCase()) mismatches.push(`${theme} ${selector[index]}@${index}: ${actual} != ${expected}`)
+        }
+      }
+    }
+    expect(mismatches).toEqual([])
+  } finally {
+    highlighter.dispose()
+  }
+})
+
+/**
+ * Guards: a quote in a directive's class list leaves it to the grammar, which drew the case flag of
+ * an attribute selector (`"a"_i]`) as a class name while native CSS colours `i` as a modifier
+ * keyword and `s` as an attribute name.
+ * Removing the case flag patterns from `stet-class-fragment` reds this test and the VS Code grammar case flag test.
+ */
+test('colours an attribute case flag in a directive class like native CSS with TextMate only', async () => {
+  const highlighter = await createHighlighter({ themes: [...allBundledThemes], langs: ['css', stetCSSShikiLanguage] })
+  try {
+    const mismatches: string[] = []
+    for (const flag of ['i', 'S']) {
+      const native = `a[data-x="a" ${flag}] {}`
+      const code = `@components { btn { @compose block[data-x="a"_${flag}]; } }`
+      const at = code.indexOf(`_${flag}]`) + 1
+      for (const theme of allBundledThemes) {
+        const actual = colorAt(textMateColors(highlighter, code, theme), at)
+        const expected = colorAt(textMateColors(highlighter, native, theme), native.indexOf(` ${flag}]`) + 1)
+        if (actual?.toLowerCase() !== expected?.toLowerCase()) mismatches.push(`${theme} ${flag}: ${actual} != ${expected}`)
+      }
+    }
+    expect(mismatches).toEqual([])
+  } finally {
+    highlighter.dispose()
+  }
+})
+
+/**
  * Guards: without semantic tokens, the grammar drew a quoted value inside a directive's class as a class name.
  * Removing the `stet-class-value-string` includes reds only this test.
  */

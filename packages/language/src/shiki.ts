@@ -425,7 +425,7 @@ const SEMANTIC_SCOPE_STYLE_PROBE = [
   '@components {',
   '  btn { @compose block fg:red:hover@md; }',
   '}',
-  '.x, #y, div > li:hover::before, a[data-x=y]:nth-child(2n+1):nth-child(odd) {',
+  '.x, #y, div > li:hover::before, a[data-x=y i]:nth-child(2n+1):nth-child(odd) {',
   '  color: red !important;',
   '  width: 1.5rem;',
   '  background: rgb(0 0 0 / .5);',

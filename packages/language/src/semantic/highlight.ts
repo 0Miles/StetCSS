@@ -18,6 +18,7 @@ export type HighlightTokenRole =
   | 'query.unit'
   | 'selector.attribute'
   | 'selector.attribute.bracket'
+  | 'selector.attribute.flag'
   | 'selector.attribute.operator'
   | 'selector.attribute.value'
   | 'selector.class'
