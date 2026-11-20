@@ -101,7 +101,9 @@ describe.concurrent('group items', () => {
    */
   test.each([
     ['{fg:var(--x,)}', '@layer utilities{.\\{fg\\:var\\(--x\\,\\)\\}{color:var(--x,)}}'],
-    ['{bg:url(a,)}', '@layer utilities{.\\{bg\\:url\\(a\\,\\)\\}{background-image:url(a,)}}']
+    ['{bg:url(a,)}', '@layer utilities{.\\{bg\\:url\\(a\\,\\)\\}{background-image:url(a,)}}'],
+    ['{display:flex;bg:var(--x,)}', '@layer utilities{.\\{display\\:flex\\;bg\\:var\\(--x\\,\\)\\}{display:flex;background-color:var(--x,)}}'],
+    ['{font-family:a,var(--x,)}', '@layer utilities{.\\{font-family\\:a\\,var\\(--x\\,\\)\\}{font-family:a,var(--x,)}}']
   ])('%s keeps its rule', (className, text) => {
     expect(generateText(className)).toBe(text)
     expect(generateText(className, createMatcherlessCSS())).toBe(text)
@@ -109,6 +111,46 @@ describe.concurrent('group items', () => {
 
   test('{transform:translate(1px,)} generates no CSS without a native declaration matcher', () => {
     expect(generateText('{transform:translate(1px,)}', createMatcherlessCSS())).toBe('')
+  })
+
+  /**
+   * Guards (#234): the `var()`/`url()` exemption reaching past an item's value. In a selector or
+   * at-rule an opaque name is no function that may take empty arguments, so `{fg:red@env(a,)}`
+   * emitted an unconditional `color` and `{fg:red:url(,.a)}` a dead raw declaration; a later item
+   * in the same value list (`{fg:a,b:url(,)}`) or a state after another function
+   * (`{fg:red:is(.a):url(,)}`) is a selector too.
+   *
+   * Reverse check: exempting an opaque name wherever it stands in a group item fails these rows.
+   */
+  test.each([
+    '{fg:red@env(a,)}',
+    '{fg:red@--x(a,)}',
+    '{fg:red:url(,.a)}',
+    '{fg:red:var(,.a)}',
+    '{fg:a,b:url(,)}',
+    '{fg:red:is(.a):url(,)}'
+  ])('%s generates no CSS', (className) => {
+    expect(generateText(className)).toBe('')
+  })
+})
+
+// Not concurrent: a slow run here must not push the tests above past their timeout.
+describe('long classes', () => {
+  /**
+   * Guards (#234): reading the function name past an item key in linear time. Classes come from
+   * untrusted markup and the runtime parses them in the browser; a backtracking search for the
+   * last name took 1.2 s on a 30,000-character class where the base took about 6 ms.
+   * Trade-off: a wall-clock bound, about twenty times the linear time on a loaded machine, which
+   * the quadratic form overshoots several times over at this length.
+   *
+   * Reverse check: reading the name with `search(/[-\w]*$/)` again fails only this test.
+   */
+  test('reads the function name of a 50,000-character class in linear time', () => {
+    const name = 'a'.repeat(50_000)
+    const start = performance.now()
+    expect(generateText(`fg:calc(${name}+b(1,))`)).toBe('')
+    expect(generateText(`{${name}:b(1,)}`)).toBe('')
+    expect(performance.now() - start).toBeLessThan(1_000)
   })
 })
 

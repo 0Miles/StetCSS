@@ -169,11 +169,14 @@ function isSelectorSuffix(nodes: SelectorNode[], ends: boolean, ofList = false):
 const OPAQUE_ARGUMENT_FUNCTIONS = new Set(['var', 'env', 'attr', 'url', 'inherit'])
 
 /**
- * A group parses its items as one value, so the text before `(` carries the item key and any
- * earlier items (`fg:red;bg:var` in `{fg:red;bg:var(--x,)}`); the function is its last name.
+ * The text before `(` can hold more than the function name: an operator in `calc()`
+ * (`100%+var`), or in a group the item key and earlier items (`fg:red;bg:var`). The function is
+ * its last name, read backwards so a long class stays linear.
  */
 function hasOpaqueArguments(functionName: string) {
-  const name = functionName.slice(functionName.search(/[-\w]*$/))
+  let start = functionName.length
+  while (start && /[-\w]/.test(functionName[start - 1])) start--
+  const name = functionName.slice(start)
   return OPAQUE_ARGUMENT_FUNCTIONS.has(name) || name.startsWith('--')
 }
 
@@ -1488,6 +1491,11 @@ export class Utility {
         currentValue = ''
       }
     }
+    // In a group's braces, where in its item the text read so far stands. Only an item's value
+    // may hold `var()` and the like with empty arguments; in a selector (`{fg:red:url(,.a)}`) or
+    // at-rule (`{fg:red@env(a,)}`) an opaque name is checked like any other.
+    const groupBlock = endSymbol === '}' && this.registeredUtility.emit.type === 'group'
+    let itemPosition: 'key' | 'value' | 'state' = 'key'
     // Unnamed parentheses pass down the nearest function name, so `calc((1,))` is checked.
     const checkFunctionArguments = () => {
       if (
@@ -1536,7 +1544,7 @@ export class Utility {
           value,
           unit,
           VALUE_DELIMITERS[val as keyof typeof VALUE_DELIMITERS],
-          functionName || parentFunctionName || '',
+          groupBlock && itemPosition !== 'value' ? '' : functionName || parentFunctionName || '',
           bypassParsing || functionName === 'calc'
         )
       } else if ((val === '|' || val === ' ') && endSymbol !== '}' && (!isString || parentFunctionName === 'path')) {
@@ -1570,6 +1578,15 @@ export class Utility {
             break
           }
         }
+        if (groupBlock) {
+          if (val === ';') {
+            itemPosition = 'key'
+          } else if (val === ':') {
+            itemPosition = itemPosition === 'key' ? 'value' : 'state'
+          } else if (val === '@') {
+            itemPosition = 'state'
+          }
+        }
         currentValue += val
       }
     }
@@ -1580,7 +1597,7 @@ export class Utility {
       // The class ended inside a function, which is closed for it: `fg:rgb(1,` is `rgb(1,)`.
       checkFunctionArguments()
       // A group closes at its own level; in `{fg:rgb(}` the open `rgb(` takes the group's `}`.
-      if (endSymbol === '}' && this.registeredUtility.emit.type === 'group') this.invalidValueSyntax = true
+      if (groupBlock) this.invalidValueSyntax = true
     }
     return i
   }
