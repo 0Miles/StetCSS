@@ -19,7 +19,9 @@ import { getClassPosition } from './test'
  * - Vue `:class` bindings read as written, single-quoted ones skipped, or class functions scanned
  *   before bindings → the Vue binding test;
  * - decoding by language id instead of the file extension, inside scripts or frontmatter, or for
- *   every attribute name → the as-written test.
+ *   every attribute name → the as-written test;
+ * - finding `<script>`/`<style>` in comments or attribute values → the HTML-hosted test;
+ * - closing Astro frontmatter at any `---` → the as-written test.
  */
 function readClasses(document: TextDocument, provider?: 'regex' | 'oxc', settings: LanguageSettings = languageSettings) {
   const content = document.getText()
@@ -47,6 +49,17 @@ test.concurrent('reads HTML-hosted class attributes by their decoded classes', (
   ]
   for (const ext of ['html', 'vue', 'svelte', 'astro'] as const) {
     expect(readClasses(createDoc(ext, `<div ${attribute}></div>`)), ext).toEqual(classes)
+  }
+  // A `<script>` or `<style>` the HTML tokenizer reads as no tag (in a comment or an attribute
+  // value) opens nothing, so the markup after it is still markup.
+  const decoded = [['block', 'block'], ['hidden', 'hidden']]
+  for (const [ext, content] of [
+    ['html', '<!-- <style> moved to app.css -->\n<div class="block&#32;hidden"></div>'],
+    ['vue', '<template><!-- <script> --><div class="block&#32;hidden"></div></template>'],
+    ['astro', '---\nconst a = 1\n---\n<!-- <style> -->\n<div class="block&#32;hidden"></div>'],
+    ['html', '<div title="<style>"></div><p class="block&#32;hidden"></p>']
+  ] as const) {
+    expect(readClasses(createDoc(ext, content)), content).toEqual(decoded)
   }
 })
 
@@ -93,6 +106,11 @@ test.concurrent('reads class attributes as written where the build does', () => 
   expect(readClasses(createDoc('vue', '<script setup>const html = \'<p class="block&#32;hidden"></p>\'</script>'))).toEqual(asWritten)
   expect(readClasses(createDoc('astro', '---\nconst html = \'<p class="block&#32;hidden"></p>\'\n---\n<div class="x&#32;y"></div>')))
     .toEqual([...asWritten, ['x', 'x'], ['y', 'y']])
+  // The frontmatter closes at the first `---` outside a comment or string, as the build reads it.
+  for (const line of ['// --- helpers ---', 'const rule = \'---\'']) {
+    expect(readClasses(createDoc('astro', `---\n${line}\nconst html = '<p class="block&#32;hidden"></p>'\n---\n<div></div>`)), line)
+      .toEqual(asWritten)
+  }
   // Attributes the build does not read as class attributes.
   expect(readClasses(createDoc('vue', '<template><Comp className="block&#32;hidden" /></template>'))).toEqual(asWritten)
   // An Alpine `:class` in an HTML file: the build reads only `class` there.
