@@ -241,6 +241,19 @@ export function hoistCSSImportStatements(source: string) {
 }
 
 /**
+ * The top-level `@layer` statements of `source` that start before `limit`, with the names each
+ * declares; `@layer` blocks are not statements.
+ */
+export function findCSSLayerStatements(source: string, limit = source.length) {
+  const statements: (SourceRange & { names: string[] })[] = []
+  for (const statement of walkTopLevelStatements(source, limit)) {
+    if (statement.name !== 'layer' || statement.isBlock) continue
+    statements.push({ start: statement.start, end: statement.end, names: readLayerNames(statement.prelude) })
+  }
+  return statements
+}
+
+/**
  * The layers `source` declares at its top level, outside conditional rules, in order: the names of
  * its `@layer` statements and blocks. Layers of `@import` statements are not counted.
  */
