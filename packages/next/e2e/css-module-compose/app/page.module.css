@@ -1,0 +1,7 @@
+.qa {
+  @compose fg:qaentry;
+}
+
+.mode {
+  @compose fg:qamode;
+}
