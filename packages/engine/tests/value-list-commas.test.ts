@@ -115,4 +115,16 @@ describe.concurrent('empty items in a value list', () => {
     expect(generateText('bg:url(a,)')).toBe('@layer utilities{.bg\\:url\\(a\\,\\){background-image:url(a,)}}')
     expect(generateText('fg:--f(a,)')).toBe('@layer utilities{.fg\\:--f\\(a\\,\\){color:--f(a,)}}')
   })
+
+  /**
+   * Guards (#234): an opaque function after an operator inside `calc()`. The text before `(`
+   * there is `100%+var`; the exemption reads the last name, `var`, so a valid `var()` fallback
+   * keeps its rule where the base generated nothing.
+   *
+   * Reverse check: matching the exemption against the whole text before `(` fails this test.
+   */
+  test('an opaque function after an operator keeps its rule', () => {
+    expect(generateText('w:calc(100%+var(--x,))')).toBe('@layer utilities{.w\\:calc\\(100\\%\\+var\\(--x\\,\\)\\){width:calc(100% + var(--x,))}}')
+    expect(generateText('w:calc(1px*var(--x,))')).toBe('@layer utilities{.w\\:calc\\(1px\\*var\\(--x\\,\\)\\){width:calc(1px * var(--x,))}}')
+  })
 })
