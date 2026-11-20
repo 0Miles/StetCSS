@@ -10,6 +10,13 @@ export type CSSDirectiveVariableValue = number | string | false | (number | stri
 
 export type CSSDirectiveDeclarations = Record<string, string>
 
+/**
+ * Declarations a block wrote before a later one overrides them, kept as fallbacks for browsers
+ * that reject the later value: `[property, value]` pairs in written order, listed under the
+ * `CSSDirectiveDeclarations` property written next after them and printed just before it.
+ */
+export type CSSDirectiveDeclarationFallbacks = Record<string, [property: string, value: string][]>
+
 export type CSSDirectiveLayerName = StetCSSManifestUtilityLayerName
 
 export type CSSDirectiveModeTrigger = StetCSSManifestModeTrigger
@@ -197,6 +204,7 @@ export interface CSSDirectiveStyleNativeDefinition {
   order: number
   selector: string
   declarations: CSSDirectiveDeclarations
+  fallbacks?: CSSDirectiveDeclarationFallbacks
   source?: CSSDirectiveSourceReference
   selectorSource?: CSSDirectiveSourceReference
   conditions?: string[]
