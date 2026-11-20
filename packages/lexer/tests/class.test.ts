@@ -155,7 +155,7 @@ test.concurrent('tokenizes native-like query and selector punctuation roles', ()
 /**
  * Guards: an attribute selector got tokens only for its brackets, and text after its value (`_i`)
  * was read as a `_` combinator and a type selector although the engine keeps it inside the brackets.
- * Skipping `tokenizeAttributeSelector` in `class.ts` reds this test.
+ * Skipping `tokenizeAttributeSelector` in `class.ts` reds this test and the case flag test.
  */
 test.concurrent('tokenizes every part of an attribute selector', () => {
   const source = '[data-state=open][data-x^="a]"_i][hidden]'
@@ -171,10 +171,40 @@ test.concurrent('tokenizes every part of an attribute selector', () => {
     { text: '"', type: 'string', role: 'value.string.quote', modifiers: ['quoted'] },
     { text: 'a]', type: 'string', role: 'value.string', modifiers: ['quoted'] },
     { text: '"', type: 'string', role: 'value.string.quote', modifiers: ['quoted'] },
+    { text: 'i', type: 'keyword', role: 'selector.attribute.flag', modifiers: ['selector'] },
     { text: ']', type: 'operator', role: 'selector.attribute.bracket', modifiers: ['selector'] },
     { text: '[', type: 'operator', role: 'selector.attribute.bracket', modifiers: ['selector'] },
     { text: 'hidden', type: 'property', role: 'selector.attribute', modifiers: ['selector'] },
     { text: ']', type: 'operator', role: 'selector.attribute.bracket', modifiers: ['selector'] }
+  ])
+})
+
+/**
+ * Guards: the case flag after a quoted value (`"a"_i`, which the engine emits as `"a" i`) had no
+ * token, so it kept the host string colour. Native CSS colours `i` as a modifier keyword
+ * (`storage.modifier.ignore-case.css`) and reads `s` as an attribute name, so the flag takes the
+ * matching token type. `_` after an unquoted value is part of it (`a_i`), and `_x` is no flag.
+ * Dropping the case flag match in `tokenizeAttributeSelector` reds this test and the first one.
+ */
+test.concurrent('tokenizes an attribute case flag after a quoted value only', () => {
+  const source = '[a="x"_s][a=\'x\'_I][a=x_i][a="x"_x]'
+  expect(texts(source, tokenizeStetCSSState(source, 0, 0)).filter(({ role }) => role !== 'selector.attribute.bracket' && role !== 'selector.attribute.operator')).toEqual([
+    { text: 'a', type: 'property', role: 'selector.attribute', modifiers: ['selector'] },
+    { text: '"', type: 'string', role: 'value.string.quote', modifiers: ['quoted'] },
+    { text: 'x', type: 'string', role: 'value.string', modifiers: ['quoted'] },
+    { text: '"', type: 'string', role: 'value.string.quote', modifiers: ['quoted'] },
+    { text: 's', type: 'property', role: 'selector.attribute.flag', modifiers: ['selector'] },
+    { text: 'a', type: 'property', role: 'selector.attribute', modifiers: ['selector'] },
+    { text: '\'', type: 'string', role: 'value.string.quote', modifiers: ['quoted'] },
+    { text: 'x', type: 'string', role: 'value.string', modifiers: ['quoted'] },
+    { text: '\'', type: 'string', role: 'value.string.quote', modifiers: ['quoted'] },
+    { text: 'I', type: 'keyword', role: 'selector.attribute.flag', modifiers: ['selector'] },
+    { text: 'a', type: 'property', role: 'selector.attribute', modifiers: ['selector'] },
+    { text: 'x_i', type: 'string', role: 'selector.attribute.value', modifiers: ['selector'] },
+    { text: 'a', type: 'property', role: 'selector.attribute', modifiers: ['selector'] },
+    { text: '"', type: 'string', role: 'value.string.quote', modifiers: ['quoted'] },
+    { text: 'x', type: 'string', role: 'value.string', modifiers: ['quoted'] },
+    { text: '"', type: 'string', role: 'value.string.quote', modifiers: ['quoted'] }
   ])
 })
 
