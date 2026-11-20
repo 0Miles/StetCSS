@@ -564,14 +564,16 @@ describe('style CSS extraction helpers', () => {
   /**
    * Prevents (#244): Next compiles CSS Modules in pure mode, which rejects the generated
    * `:root` rule (`Selector ":root" is not pure`), and every CSS Module pass renames the class
-   * trigger's `.dark`, so the mode's variables never applied. With `cssModule`, generated rules
-   * are wrapped in `:global()` behind a `cssmodules-pure-ignore` comment; the module's own rules
+   * trigger's `.dark`, so the mode's variables never applied. With `cssModule`, each generated
+   * selector is wrapped in `:global()` and given `:where(:not(.stet-css-global))`: a local class
+   * that makes it pure without matching anything else or adding specificity, and that, unlike a
+   * `cssmodules-pure-ignore` comment, survives Sass's `compressed` output. The module's own rules
    * and the generated keyframes stay as written, and without the option nothing changes.
    * Reverse check: ignoring `cssModule` in `transformLocalStyleCSS` turns only this test red.
    */
   it.each([
-    ['media', '@layer theme{/* cssmodules-pure-ignore */:global(:root){--animate-ping:ping 1s infinite}@media (prefers-color-scheme:light){/* cssmodules-pure-ignore */:global(:root){--color-brand:#123456}}@media (prefers-color-scheme:dark){/* cssmodules-pure-ignore */:global(:root){--color-brand:#abcdef}}}'],
-    ['class', '@layer theme{/* cssmodules-pure-ignore */:global(:root){--animate-ping:ping 1s infinite}/* cssmodules-pure-ignore */:global(.light),:global(:root){color-scheme:light;--color-brand:#123456}/* cssmodules-pure-ignore */:global(.dark){color-scheme:dark;--color-brand:#abcdef}}']
+    ['media', '@layer theme{:global(:root):where(:not(.stet-css-global)){--animate-ping:ping 1s infinite}@media (prefers-color-scheme:light){:global(:root):where(:not(.stet-css-global)){--color-brand:#123456}}@media (prefers-color-scheme:dark){:global(:root):where(:not(.stet-css-global)){--color-brand:#abcdef}}}'],
+    ['class', '@layer theme{:global(:root):where(:not(.stet-css-global)){--animate-ping:ping 1s infinite}:global(.light):where(:not(.stet-css-global)),:global(:root):where(:not(.stet-css-global)){color-scheme:light;--color-brand:#123456}:global(.dark):where(:not(.stet-css-global)){color-scheme:dark;--color-brand:#abcdef}}']
   ])('keeps generated rules global and pure-mode safe in a CSS Module (mode-trigger: %s)', async (modeTrigger, generatedCSS) => {
     const root = createFixture()
     writeFileSync(join(root, 'app/tokens.css'), [
@@ -591,8 +593,8 @@ describe('style CSS extraction helpers', () => {
 
     const plain = await transformLocalStyleCSS(modulePath, source, { projectDir: root })
     expect(plain.code).not.toContain(':global(')
-    expect(plain.code).not.toContain('cssmodules-pure-ignore')
-    expect(cssModule.code.replaceAll('/* cssmodules-pure-ignore */', '').replace(/:global\(([^()]*)\)/g, '$1')).toBe(plain.code)
+    expect(plain.code).not.toContain('stet-css-global')
+    expect(cssModule.code.replaceAll(':where(:not(.stet-css-global))', '').replace(/:global\(([^()]*)\)/g, '$1')).toBe(plain.code)
   })
 
   it('leaves ordinary local CSS unchanged', async () => {

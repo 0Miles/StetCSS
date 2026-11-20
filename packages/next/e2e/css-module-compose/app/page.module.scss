@@ -1,0 +1,6 @@
+// In production Next compiles Sass modules with `style: compressed`, which drops comments.
+$block: qa;
+
+.#{$block}-sass {
+  @compose fg:qadark;
+}
