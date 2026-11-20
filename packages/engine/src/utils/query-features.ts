@@ -2,9 +2,11 @@ import naturalCompare from './natural-compare'
 
 /**
  * A query feature and the range it matches, in comparable units: lengths through
- * `toComparableQueryLength`, ratios through `toComparableQueryRatio`.
+ * `toComparableQueryLength`, ratios through `toComparableQueryRatio`. An exclusive bound keeps its
+ * value and sits one step inside it: `minStep` is 1 for `>` and `maxStep` is -1 for `<`; inclusive
+ * and missing bounds have step 0. Steps only decide between bounds of equal value.
  */
-export type QueryFeature = [name: string, min: number, max: number]
+export type QueryFeature = [name: string, min: number, max: number, minStep: number, maxStep: number]
 
 /** One comparison in a query, such as `width>=600px`, with its value already comparable. */
 export interface QueryFeatureBound {
@@ -15,8 +17,6 @@ export interface QueryFeatureBound {
 
 const UNBOUNDED_MIN = 0
 const UNBOUNDED_MAX = Number.MAX_SAFE_INTEGER
-/** Moves an exclusive bound inside its value, so `>600px` ranks narrower than `>=600px`. */
-const EXCLUSIVE_BOUND_OFFSET = 0.02
 
 /** Orders a ratio query such as `aspect-ratio>=16/9` by the quotient of its ratio. */
 export function toComparableQueryRatio(value: string) {
@@ -29,27 +29,25 @@ export function toComparableQueryRatio(value: string) {
  * the same side replaces an earlier one; a bound whose value is not a number is skipped.
  */
 export function toQueryFeatures(bounds: Iterable<QueryFeatureBound>): QueryFeature[] {
-  const ranges = new Map<string, { min?: number, max?: number }>()
+  const features = new Map<string, QueryFeature>()
   for (const { name, operator, value } of bounds) {
     if (Number.isNaN(value)) continue
-    const range = ranges.get(name) ?? {}
+    const feature = features.get(name) ?? [name, UNBOUNDED_MIN, UNBOUNDED_MAX, 0, 0]
     switch (operator) {
       case '>':
-        range.min = value + EXCLUSIVE_BOUND_OFFSET
-        break
       case '>=':
-        range.min = value
+        feature[1] = value
+        feature[3] = operator === '>' ? 1 : 0
         break
       case '<':
-        range.max = value - EXCLUSIVE_BOUND_OFFSET
-        break
       case '<=':
-        range.max = value
+        feature[2] = value
+        feature[4] = operator === '<' ? -1 : 0
         break
     }
-    ranges.set(name, range)
+    features.set(name, feature)
   }
-  return [...ranges].map(([name, { min, max }]) => [name, min ?? UNBOUNDED_MIN, max ?? UNBOUNDED_MAX])
+  return [...features.values()]
 }
 
 /** Sorts features by name, keeping the written order of features that share one. */
@@ -57,15 +55,9 @@ export function sortQueryFeatures(features: QueryFeature[]) {
   return features.sort(([a], [b]) => naturalCompare(a, b))
 }
 
-/**
- * Puts the wider range first. When the ranges share a bound, the other bound alone decides:
- * subtracting a min from the unbounded max rounds to a whole number at that magnitude, so min-only
- * queries less than 1 apart would tie and fall through to the larger-min-first tiebreak.
- */
-function compareRangeWidth(minA: number, maxA: number, minB: number, maxB: number) {
-  if (maxA === maxB) return minA - minB
-  if (minA === minB) return maxB - maxA
-  return (maxB - minB) - (maxA - minA)
+/** Orders two bounds on one axis by value, then by step. */
+function compareBound(valueA: number, stepA: number, valueB: number, stepB: number) {
+  return valueA - valueB || stepA - stepB
 }
 
 /**
@@ -79,14 +71,23 @@ export function compareQueryFeatures(a: QueryFeature[], b: QueryFeature[]): numb
     const featureB = b[i]
     if (!featureA) return -1
     if (!featureB) return 1
-    const [nameA, minA, maxA] = featureA
-    const [nameB, minB, maxB] = featureB
+    const [nameA, minA, maxA, minStepA, maxStepA] = featureA
+    const [nameB, minB, maxB, minStepB, maxStepB] = featureB
     const nameCmp = naturalCompare(nameA, nameB)
     if (nameCmp !== 0) return nameCmp
-    const widthCmp = compareRangeWidth(minA, maxA, minB, maxB)
+    const minCmp = compareBound(minA, minStepA, minB, minStepB)
+    const maxCmp = compareBound(maxA, maxStepA, maxB, maxStepB)
+    // The wider range first. When the ranges share a bound, the other bound alone decides, which
+    // avoids subtracting a min from the unbounded max: at that magnitude the result rounds to a
+    // whole number, and min-only queries less than 1 apart would tie.
+    const widthCmp = maxCmp === 0
+      ? minCmp
+      : minCmp === 0
+        ? -maxCmp
+        : (maxB - minB) - (maxA - minA) || (maxStepB - minStepB) - (maxStepA - minStepA)
     if (widthCmp !== 0) return widthCmp
-    if (minA !== minB) return minB - minA
-    if (maxA !== maxB) return maxB - maxA
+    // Equal widths: the range that starts higher first.
+    if (minCmp !== 0) return -minCmp
   }
   return 0
 }
