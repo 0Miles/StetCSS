@@ -4,7 +4,7 @@ import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
 import { createBuildDigest } from '../../src/utils/build-digest'
 import getExtractedCSS from '../../src/utils/extracted-css'
 import { createSlotCSSRule } from '../../src/utils/slot'
-import { createProjectContext, removeProjects, SLOT_CSS_RULE as SLOT } from '../plugin-test-helper'
+import { createProjectContext, cssLayerOrder, removeProjects, SLOT_CSS_RULE as SLOT } from '../plugin-test-helper'
 
 const RESOLVED_VIRTUAL_CSS_ID = '\0' + VIRTUAL_CSS_ID
 
@@ -135,6 +135,30 @@ describe('StyleEntryPlugin', () => {
     expect(result.code.match(/@fontsource\/fira-mono/g)).toHaveLength(1)
     expect(context.virtualCSSImporters).toEqual(new Set(['/project/src/style.css']))
     expect(context.virtualCSSPlaceholderEnvironments).toBeUndefined()
+  })
+
+  /**
+   * Guards #250 in dev: with a kept import the dev host source declared `reset`, written before
+   * `@import "@stet-css/core"`, after the preset layers, while the build declared it first. Dev
+   * now orders it ahead of them as the build and static extraction do, and `b` after them.
+   * Reverse check: before the fix this test was red with `reset` after `utilities`.
+   */
+  test('serve transform declares the layers written before @stet-css/core ahead of the preset layers', async () => {
+    const context = makeContext('serve')
+    const plugin = StyleEntryPlugin(context)
+
+    const result = await (plugin as any).transform.call(
+      {},
+      [
+        '@layer reset;',
+        '@import "@stet-css/core";',
+        '@import url("https://example.com/b.css") layer(b);',
+        '@layer reset { .r { color: green } }'
+      ].join('\n'),
+      '/project/src/style.css'
+    )
+
+    expect(cssLayerOrder(result.code)).toEqual(['reset', 'theme', 'base', 'defaults', 'components', 'utilities', 'b'])
   })
 
   /**
