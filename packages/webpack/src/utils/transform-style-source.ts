@@ -1,6 +1,4 @@
 import {
-  STYLE_CSS_REQUEST_RE,
-  cleanStyleRequest,
   compileStyleCSS,
   createStyleCSSHostSource,
   hasLocalStyleDirectives,
@@ -21,8 +19,17 @@ interface TransformStyleSourceResult {
 }
 
 interface TransformStyleSourceOptions {
+  /** The request's query, such as a `.vue` `<style>` block's `?vue&type=style&index=0&lang.css`. */
+  resourceQuery?: string
   projectDir?: string
   stetImport?: string
+}
+
+const STYLE_FILE_RE = /\.(css|scss|sass)$/
+
+/** Whether the file itself is a stylesheet, read from its path alone: it may hold `#` or `?`. */
+export function isStyleFile(resourcePath: string) {
+  return STYLE_FILE_RE.test(resourcePath)
 }
 
 function hasStetStyleManifestDirective(source: string) {
@@ -34,12 +41,13 @@ export async function transformStyleSource(
   source: string,
   options: TransformStyleSourceOptions = {}
 ): Promise<TransformStyleSourceResult> {
-  const { projectDir, stetImport = VIRTUAL_CSS_ID } = options
+  const { resourceQuery = '', projectDir, stetImport = VIRTUAL_CSS_ID } = options
+  const request = resourcePath + resourceQuery
   const dependencies: string[] = []
-  if (!isStyleCSSRequest(resourcePath)) {
+  if (!isStyleCSSRequest(request)) {
     return { code: source, dependencies }
   }
-  if (isStetCSSPackageStyleFile(resourcePath, projectDir)) {
+  if (isStetCSSPackageStyleFile(request, projectDir)) {
     const cleanSource = removeStetStyleDirectives(source).code
     if (!hasStetStyleManifestDirective(cleanSource)) {
       return {
@@ -47,7 +55,7 @@ export async function transformStyleSource(
         dependencies
       }
     }
-    const result = await compileStyleCSS(resourcePath, cleanSource, {
+    const result = await compileStyleCSS(request, cleanSource, {
       projectDir,
       preserveNativeCSS: true
     })
@@ -57,16 +65,16 @@ export async function transformStyleSource(
     }
   }
 
-  const resolvedSource = resolveStetStyleSource(resourcePath, source, projectDir)
+  const resolvedSource = resolveStetStyleSource(request, source, projectDir)
   // The plugin registers an entry by reading its file, so only a stylesheet file can be one:
   // a `.vue` `<style>` block that imports `@stet-css/core` passes through as written.
-  if (resolvedSource && !STYLE_CSS_REQUEST_RE.test(cleanStyleRequest(resourcePath))) {
+  if (resolvedSource && !isStyleFile(resourcePath)) {
     return { code: source, dependencies }
   }
   if (!resolvedSource) {
     if (hasLocalStyleDirectives(source)) {
       const context = await loadLocalStyleContext(projectDir)
-      const result = await transformLocalStyleCSS(resourcePath, source, {
+      const result = await transformLocalStyleCSS(request, source, {
         baseManifest: context.manifest,
         projectDir,
         emittedGlobals: context.emittedGlobals
