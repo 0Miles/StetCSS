@@ -381,10 +381,10 @@ describe.concurrent('migrated cascade and layer parity', () => {
    * Prevents (#184): ratio queries sorting by their class names, so `@aspect-ratio>=3/1` lands
    * before `@aspect-ratio>=16/9` and loses to it on the widest screens. Ratios order by their
    * quotient. Rows are listed in the expected order; their class names sort differently.
-   * Reverse-checked: making `toComparableRatio` in `compare-rule-priority.ts` return `NaN` reds this
-   * test only; dropping `/` from the token regex in `parse-condition.ts` reds it and the 16/9 row
-   * in `parser-parity.test.ts`. Ratios closer than 1 apart are covered by the close min query rows
-   * below (#233).
+   * Reverse-checked (#184): making the ratio helper return `NaN` reds this test; dropping `/` from
+   * the token regex in `parse-condition.ts` reds it and the 16/9 row in `parser-parity.test.ts`.
+   * The helper is now `toComparableQueryRatio` in `utils/query-features.ts`, which the ratio rows
+   * of the close min query and exclusive bound tests below (#233) also depend on.
    */
   test('orders aspect-ratio queries by ratio', () => {
     const expected = ['block@aspect-ratio>=1/2', 'block@aspect-ratio>=16/9', 'block@aspect-ratio>=3/1']
@@ -424,6 +424,60 @@ describe.concurrent('migrated cascade and layer parity', () => {
     ['container rem decimal', ['block@container(w>=1.25rem)', 'block@container(w>=1.5rem)']],
     ['aspect-ratio', ['block@aspect-ratio>=16/9', 'block@aspect-ratio>=2/1']]
   ])('orders close %s min queries from smallest to largest', (_, expected) => {
+    for (const classNames of [expected, [...expected].reverse()]) {
+      const css = createDefaultCSS()
+      css.ensureClassRules(...classNames)
+      expect(css.utilitiesLayer.rules.map(({ name }) => name)).toEqual(expected)
+    }
+  })
+
+  /**
+   * Prevents (#233): an exclusive bound (`>`, `<`) ordering by a fixed offset instead of by its
+   * value, so `fg:red@w>600px` lands after `fg:blue@w>=600.1px` and wins on screens 600.1px and
+   * wider. Bounds order by value; on the same value the exclusive one matches less and comes later.
+   * Covers min and max bounds, ratios, and a range whose ends are both exclusive. Rows are listed in
+   * the expected order and inserted in both orders.
+   * Reverse-checked: the fixed 0.02 offset this replaces reds the three close rows, and nothing
+   * else in this file; review r1 of #233 found dropping the exclusive adjustment puts `w>600px`
+   * first in the same-value min row.
+   */
+  test.each([
+    ['inclusive and exclusive min on one value', ['fg:red@w>=600px', 'fg:blue@w>600px']],
+    ['exclusive min below a close inclusive min', ['fg:red@w>600px', 'fg:blue@w>=600.1px']],
+    ['exclusive ratio min below a close inclusive one', ['fg:red@aspect-ratio>1/1', 'fg:blue@aspect-ratio>=101/100']],
+    ['inclusive and exclusive max on one value', ['fg:red@w<=600px', 'fg:blue@w<600px']],
+    ['exclusive max above a close inclusive max', ['fg:red@w<600px', 'fg:blue@w<=599.9px']],
+    ['exclusive range inside an inclusive one', ['fg:red@w>=600px&w<=800px', 'fg:blue@w>600px&w<800px']]
+  ])('orders %s by value, then exclusivity', (_, expected) => {
+    for (const classNames of [expected, [...expected].reverse()]) {
+      const css = createDefaultCSS()
+      css.ensureClassRules(...classNames)
+      expect(css.utilitiesLayer.rules.map(({ name }) => name)).toEqual(expected)
+    }
+  })
+
+  /**
+   * Prevents: two overlapping ranges of the same width swapping order, which flips the winner
+   * where they overlap (650px to 700px). Equal widths keep the order they had before #233: the
+   * range that starts higher comes first.
+   */
+  test('orders equal-width ranges with the higher start first', () => {
+    const expected = ['fg:red@w>=650px&w<=750px', 'fg:blue@w>=600px&w<=700px']
+    for (const classNames of [expected, [...expected].reverse()]) {
+      const css = createDefaultCSS()
+      css.ensureClassRules(...classNames)
+      expect(css.utilitiesLayer.rules.map(({ name }) => name)).toEqual(expected)
+    }
+  })
+
+  /**
+   * Prevents: rules querying different features swapping order, which flips the winner where both
+   * match (both rules set `color`). Feature lists compare by feature name first, so the `height`
+   * rule comes before the `width` rule; compiled component blocks share this comparison.
+   * Reverse-checked (review r1 of #233): comparing feature names in reverse puts the width rule first.
+   */
+  test('orders queries on different features by feature name', () => {
+    const expected = ['fg:red@h>=600px', 'fg:blue@w>=600px']
     for (const classNames of [expected, [...expected].reverse()]) {
       const css = createDefaultCSS()
       css.ensureClassRules(...classNames)
