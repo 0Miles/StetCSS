@@ -33,8 +33,14 @@ function serializeStyleCSSSource(context: PluginContext, key: string) {
     value instanceof RegExp ? { regexp: value.source, flags: value.flags } : value)
 }
 
-/** Registers `source` for `id`, and tells whether that changed what the entry contributes. */
-export async function updateStyleCSSSource(context: PluginContext, id: string, source: string) {
+/**
+ * Registers `source` for `id`, and tells whether that changed what the entry contributes.
+ * Typed through the stylesheet function, like `registerStyleCSSSource`.
+ */
+export async function updateStyleCSSSource(context: PluginContext, id: string, source: string): Promise<{
+  result: Awaited<ReturnType<typeof registerStylesheetCSSSource>>
+  changed: boolean
+}> {
   const key = cleanStyleRequest(id)
   const previous = serializeStyleCSSSource(context, key)
   const result = await registerStyleCSSSource(context, id, source)
