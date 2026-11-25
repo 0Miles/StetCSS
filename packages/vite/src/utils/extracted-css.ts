@@ -2,6 +2,7 @@ import { createExtractedCSSResult, type StyleCSSSources, type StylesheetSourceCo
 import type { PluginContext } from '../core'
 import { getScanner } from './scanner-context'
 import { getProjectDir } from './project-dir'
+import { collectProjectLeadingLayers } from './project-entries'
 
 /**
  * The registered entries in path order. Vite transforms modules concurrently, so they register
@@ -29,8 +30,13 @@ export function getStylesheetSourceContext(context: PluginContext): StylesheetSo
  */
 export async function extractCSSResult(context: PluginContext) {
   // Every class comes from the stylesheet's class set, so templates that only an SSR or
-  // prerender build compiles still get their rules.
-  return await createExtractedCSSResult(getStylesheetSourceContext(context))
+  // prerender build compiles still get their rules. Entries register as Vite transforms them, so
+  // the CSS leads with the layers of every entry, registered or not yet: a stylesheet dev serves
+  // before another entry registers orders that entry's leading layers as the build does (#250).
+  return await createExtractedCSSResult({
+    ...getStylesheetSourceContext(context),
+    leadingLayers: await collectProjectLeadingLayers(context)
+  })
 }
 
 /** Extracts the CSS the managed CSS modules serve, and records it for dev updates. */

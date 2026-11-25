@@ -164,6 +164,12 @@ export interface CreateExtractedCSSOptions extends CompileStyleCSSOptions, Style
   includeGeneratedCSS?: boolean
   includeNativeCSS?: boolean
   includeStetBaseCSS?: boolean
+  /**
+   * The layers declared ahead of the package's CSS, in place of the registered entries'
+   * `leadingLayers`: an integration that registers entries as the bundler transforms them passes
+   * every entry's, so CSS extracted before the last entry registers leads with them too.
+   */
+  leadingLayers?: string[]
 }
 
 export interface CreateExtractedCSSResult {
@@ -1069,6 +1075,7 @@ export async function createExtractedCSSResult(options: CreateExtractedCSSOption
     includeGeneratedCSS = true,
     includeNativeCSS = true,
     includeStetBaseCSS = true,
+    leadingLayers: givenLeadingLayers,
     sources,
     extraProjectDirs,
     ignorePaths,
@@ -1116,7 +1123,8 @@ export async function createExtractedCSSResult(options: CreateExtractedCSSOption
   for (const result of entryStyleResults) finalize(result)
   // The layers entries declare before `@import '@stet-css/core'` lead, each declared once, so
   // they sort ahead of the package's layers as the import ordered them (#250).
-  const leadingLayers = [...new Set(Array.from(styleCSSSources?.values() || [], (styleSource) => styleSource.leadingLayers ?? []).flat())]
+  const leadingLayers = [...new Set(givenLeadingLayers
+    ?? Array.from(styleCSSSources?.values() || [], (styleSource) => styleSource.leadingLayers ?? []).flat())]
   const nativeCSS = [
     ...(includeNativeCSS && leadingLayers.length ? [`@layer ${leadingLayers.join(', ')};`] : []),
     ...(includeStetBaseCSS
