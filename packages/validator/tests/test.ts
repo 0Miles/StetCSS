@@ -234,3 +234,18 @@ it.each([
   expect(generateValidRules(className).map((rule) => rule.text)).toEqual([text])
   expectClassValid(className)
 })
+
+/**
+ * Guards: an escaped `@` in the conditions. Only the selector keeps `\@` in a name; with the escape
+ * rule reaching the conditions, `block@sm\@md` became one condition and the engine emitted the
+ * invalid `@media (…) (…)`, which the validator rejected. The conditions split at every `@`, so the
+ * class keeps its `and`-joined media query and stays valid.
+ *
+ * Reverse check: skipping `\` in the conditions in the engine's `splitStateToken` (then
+ * `bun run build`) reddens only this row among the validator tests.
+ */
+it('validates block@sm\\@md with its conditions joined', () => {
+  expect(generateValidRules('block@sm\\@md').map((rule) => rule.text))
+    .toEqual(['@media (width>=52.125rem) and (width>=64rem){.block\\@sm\\\\\\@md{display:block}}'])
+  expectClassValid('block@sm\\@md')
+})

@@ -195,6 +195,21 @@ test.concurrent('tokenizes an escaped `@` as part of a class name, not a conditi
 })
 
 /**
+ * Guards: an escaped `@` in the conditions. Only the selector keeps `\@` in a name; the engine
+ * splits the conditions at every `@`, so `block@sm\@md` is `@sm` and `@md` joined with `and`, and
+ * the editor colours two queries, not one `@sm\@md`.
+ * Making the `@` branch of `tokenizeStetCSSState` read to the end of the token (no `nextAt`) reds
+ * this test.
+ */
+test.concurrent('tokenizes each `@` after the first condition as its own query, escaped or not', () => {
+  const source = '@sm\\@md'
+  expect(texts(source, tokenizeStetCSSState(source, 0, 0))).toEqual([
+    { text: '@sm', type: 'keyword', role: 'query.keyword', modifiers: ['query'] },
+    { text: '@md', type: 'keyword', role: 'query.keyword', modifiers: ['query'] }
+  ])
+})
+
+/**
  * Guards: an attribute selector got tokens only for its brackets, and text after its value (`_i`)
  * was read as a `_` combinator and a type selector although the engine keeps it inside the brackets.
  * Skipping `tokenizeAttributeSelector` in `class.ts` reds this test and the case flag test.
