@@ -39,6 +39,7 @@
     "tests/**/*.test.ts",
     "tests/**/test.ts",
     "tests/setup.ts",
-    "tests/connection.ts"
+    "tests/connection.ts",
+    "tests/watch-project.ts"
   ]
 }
