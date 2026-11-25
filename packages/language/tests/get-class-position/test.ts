@@ -115,6 +115,21 @@ test.concurrent('ignores quoted CSS @compose classes', () => {
   expect(getClassPosition(doc, doc.positionAt(doc.getText().indexOf('bg:primary')))).toBeUndefined()
 })
 
+/**
+ * Prevents (#241): a CSS `@compose` written without its last `;` reading the block's `}` and
+ * everything after it as its class list, so the editor offered completion and hover on `}` and the
+ * next rule's text. The class list stops at the `}` that closes the rule, as in native CSS.
+ * Reverse check: dropping the nested `}` stop in the lexer's `collectCSSDirectiveRanges` reds this test.
+ */
+test.concurrent('ends a CSS @compose class list at the closing brace when it has no semicolon', () => {
+  const doc = createDoc('css', '@layer a { .w { @compose block\n  fg:red } }\n.x { color: red }')
+  const positions = getClassPositions(doc, resolveSettings())
+
+  expect(positions.map((classPosition) => classPosition.token)).toEqual(['block', 'fg:red'])
+  expect(positions.map((classPosition) => doc.getText().slice(classPosition.contextRange.start, classPosition.contextRange.end)))
+    .toEqual(['block\n  fg:red', 'block\n  fg:red'])
+})
+
 test.concurrent('quote in class', () => {
   const target = `content:''`
   const contents = ['<div class="class-a ', target, '"></div>']
