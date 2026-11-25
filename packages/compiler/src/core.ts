@@ -1743,8 +1743,28 @@ function getSettingsSection(rule: any): SettingsSection {
   throw new Error(`Unsupported @settings section: ${prelude}`)
 }
 
+/**
+ * The `@theme` prelude split into words at its whitespace tokens. lightningcss decodes escapes in
+ * an ident, so joining the prelude into text first would split the escaped space of `a\ b`.
+ */
 function getThemePrelude(rule: any) {
-  return parseThemePrelude(formatPrelude(getCustomRulePrelude(rule)))
+  const prelude = getCustomRulePrelude(rule)
+  const tokens: TokenOrValue[] | undefined = Array.isArray(prelude)
+    ? prelude
+    : Array.isArray(prelude?.value) ? prelude.value : undefined
+  if (!tokens) return parseThemePrelude(formatPrelude(prelude))
+  const words: string[] = []
+  let word = ''
+  for (const token of tokens) {
+    if (token.type === 'token' && token.value.type === 'white-space') {
+      if (word) words.push(word)
+      word = ''
+      continue
+    }
+    word += formatTokenOrValue(token)
+  }
+  if (word) words.push(word)
+  return parseThemePrelude(words)
 }
 
 function parseSettingsStyleRule(rule: any) {
