@@ -23,7 +23,12 @@ export declare type SelectorCombinatorNode = {
 
 export declare type SelectorNode = SelectorLiteralNode | SelectorCombinatorNode | SelectorSeparatorNode
 
-const SELECTOR_REGEX = new RegExp(`(?:[a-zA-Z0-9-]+)|([${SELECTOR_COMBINATORS.join('')}#.:,*])|(a-zA-Z0-9-)`, 'g')
+/**
+ * A name, a combinator or a delimiter. An escaped character (`\:`, `\.`, `\_`) belongs to the name
+ * and stays escaped, as in plain CSS: `.literal\:first` is one class, not `.literal` with the
+ * `:first` alias.
+ */
+const SELECTOR_REGEX = new RegExp(`(?:[a-zA-Z0-9-]|\\\\[\\s\\S])+|([${SELECTOR_COMBINATORS.join('')}#.:,*])|(a-zA-Z0-9-)`, 'g')
 const LEGACY_PSEUDO_ELEMENTS = new Set(['before', 'after', 'first-letter', 'first-line'])
 /**
  * An attribute selector body that ends in a quoted value, `_` and a case flag. A class holds no
