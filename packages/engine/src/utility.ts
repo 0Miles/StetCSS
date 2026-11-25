@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
 import StetCSS from './core'
-import { cssEscape, replaceCSSVariableReferences } from '@stet-css/lexer'
+import { cssEscape, replaceCSSNestingSelector, replaceCSSVariableReferences } from '@stet-css/lexer'
 import UtilityType, { type UtilityType as UtilityTypeValue } from '@stet-css/schema/utility-type'
 import { type PropertiesHyphen } from 'csstype'
 import { VALUE_DELIMITERS, CONDITION_IDENTIFIERS } from './common'
@@ -283,15 +283,20 @@ function splitStateToken(stateToken: string) {
 }
 
 /**
- * `template` with each `&` replaced by `selector`, once per item when `selector` is a list:
+ * `template` with each nesting `&` replaced by `selector`, once per item when `selector` is a list:
  * `&:hover` over `.a &,.b &` is `.a &:hover,.b &:hover`, not `.a &,.b &:hover`, which left
- * `.a &` without the state.
+ * `.a &` without the state. An escaped `\&` or an `&` in a string stays (`replaceCSSNestingSelector`).
  */
 function replaceSelectorNesting(template: string, selector: string) {
   const items = splitSelectorList(selector)
   return items.length > 1
-    ? items.map((item) => template.replace(/&/g, item)).join(',')
-    : template.replace(/&/g, selector)
+    ? items.map((item) => replaceCSSNestingSelector(template, item) ?? template).join(',')
+    : replaceCSSNestingSelector(template, selector) ?? template
+}
+
+/** `selectorTemplate` without its nesting `&`s, for parsing the selector nodes it adds. */
+function removeSelectorNesting(selectorTemplate: string) {
+  return replaceCSSNestingSelector(selectorTemplate, '') ?? selectorTemplate
 }
 
 /** Top-level items of a selector list; escaped commas (`.a\,b`) and commas in strings, `()` and `[]` stay. */
@@ -984,7 +989,7 @@ export class Utility {
           key: branch.key + segment,
           selectorTemplate: composeSelectorTemplate(branch.selectorTemplate, rawSelector),
           selectorNodes: parseSelector((branch.selectorTemplate
-            ? composeSelectorTemplate(branch.selectorTemplate, rawSelector)?.replace(/&/g, '') || ''
+            ? removeSelectorNesting(composeSelectorTemplate(branch.selectorTemplate, rawSelector) || '')
             : segment), this.css)
         }))
         continue
@@ -1001,7 +1006,7 @@ export class Utility {
           return {
             ...merged,
             ...(selectorTemplate
-              ? { selectorNodes: parseSelector(selectorTemplate.replace(/&/g, ''), this.css) }
+              ? { selectorNodes: parseSelector(removeSelectorNesting(selectorTemplate), this.css) }
               : {})
           }
         })
@@ -1127,7 +1132,7 @@ export class Utility {
         ? generateSelector(this.selectorNodes, body)
         : body
     if (this.selectorTemplate) {
-      base = this.selectorTemplate.replace(/&/g, base)
+      base = replaceCSSNestingSelector(this.selectorTemplate, base) ?? this.selectorTemplate
     }
     return selector
       ? replaceSelectorNesting(selector, base)

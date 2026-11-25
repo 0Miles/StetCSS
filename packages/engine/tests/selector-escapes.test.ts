@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { StetCSS } from '../src'
-import { cloneManifest, createDefaultCSS } from './helpers/css-tester'
+import { cloneManifest, createCSSWithSemanticUtilities, createDefaultCSS } from './helpers/css-tester'
 
 function generateText(className: string) {
   const css = createDefaultCSS()
@@ -94,5 +94,25 @@ describe.concurrent('escapes in a class selector', () => {
     ['block:is(.a_b)', '@layer utilities{.block\\:is\\(\\.a_b\\):is(.a b){display:block}}'],
   ])('%s without escapes keeps its output', (className, expected) => {
     expect(generateText(className)).toBe(expected)
+  })
+})
+
+describe.concurrent('ampersands that are not nesting selectors', () => {
+  /**
+   * Guards: a component rule selector replaced every `&` with the class, so the escaped `\&` of the
+   * class `a&b` and an `&` inside an attribute string took the class too: `&.a\&b` emitted
+   * `.card.a\.cardb` and `& [data-a="&"]` emitted `.card [data-a=".card"]`, matching elements the
+   * author never wrote. Only the nesting selector takes the class, as in plain CSS nesting.
+   *
+   * Reverse check: `replaceSelectorNesting` in `src/utility.ts` replacing a single selector with
+   * `/&/g` again reddens only these two rows.
+   */
+  test.each([
+    ['&.a\\&b', '@layer components{.card.a\\&b{color:red}}'],
+    ['& [data-a="&"]', '@layer components{.card [data-a="&"]{color:red}}']
+  ])('a component rule `%s` keeps it as written', (selector, expected) => {
+    const css = createCSSWithSemanticUtilities([{ name: 'card', rules: [{ selector, declarations: { color: 'red' } }] }])
+    css.ensureClassRules('card')
+    expect(css.text).toBe(expected)
   })
 })
