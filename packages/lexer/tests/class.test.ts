@@ -153,6 +153,32 @@ test.concurrent('tokenizes native-like query and selector punctuation roles', ()
 })
 
 /**
+ * Guards: a type, class or id name stopped at `\`, so `.literal\:first` coloured `literal` as the
+ * class and `:first` as a pseudo-class, and `.a\.b` as two classes, while the engine keeps an
+ * escaped character in the name (`:is(.literal\:first)`). The editor then showed a selector the
+ * class does not generate.
+ * Dropping the escape alternative from `SELECTOR_NAME_RE` or `TYPE_SELECTOR_RE` in `class.ts`
+ * reds this test only.
+ */
+test.concurrent('tokenizes an escaped character as part of a type, class or id name', () => {
+  const source = ':is(.literal\\:first).a\\.b#x\\:y>a\\:b'
+  expect(texts(source, tokenizeStetCSSState(source, 0, 0))).toEqual([
+    { text: ':', type: 'operator', role: 'selector.pseudoClass.delimiter', modifiers: ['selector', 'pseudoClass'] },
+    { text: 'is', type: 'modifier', role: 'selector.pseudoClass.name', modifiers: ['pseudoClass'] },
+    { text: '(', type: 'operator', role: 'selector.function.punctuation', modifiers: ['selector'] },
+    { text: '.', type: 'operator', role: 'selector.class.delimiter', modifiers: ['selector'] },
+    { text: 'literal\\:first', type: 'class', role: 'selector.class', modifiers: ['selector'] },
+    { text: ')', type: 'operator', role: 'selector.function.punctuation', modifiers: ['selector'] },
+    { text: '.', type: 'operator', role: 'selector.class.delimiter', modifiers: ['selector'] },
+    { text: 'a\\.b', type: 'class', role: 'selector.class', modifiers: ['selector'] },
+    { text: '#', type: 'operator', role: 'selector.id.delimiter', modifiers: ['selector'] },
+    { text: 'x\\:y', type: 'variable', role: 'selector.id', modifiers: ['selector'] },
+    { text: '>', type: 'operator', role: 'selector.combinator', modifiers: ['selector'] },
+    { text: 'a\\:b', type: 'type', role: 'selector.type', modifiers: ['selector'] }
+  ])
+})
+
+/**
  * Guards: an attribute selector got tokens only for its brackets, and text after its value (`_i`)
  * was read as a `_` combinator and a type selector although the engine keeps it inside the brackets.
  * Skipping `tokenizeAttributeSelector` in `class.ts` reds this test and the case flag test.

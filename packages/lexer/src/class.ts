@@ -709,7 +709,9 @@ const NTH_PSEUDO_CLASSES = new Set(['nth-child', 'nth-last-child', 'nth-of-type'
 const NTH_AN_PLUS_B_RE = /^(?:[+-]?\d*n(?:[+-]\d+)?|[+-]?\d+)(?=_of_|[^\w-]|$)/i
 const NTH_PARITY_RE = /^(?:odd|even)(?=_of_|[^\w-]|$)/i
 const NTH_OF_RE = /^_of_/i
-const TYPE_SELECTOR_RE = /^\*?[A-Za-z][\w-]*/
+// An escaped character (`\:`, `\.`) is part of a type, class or id name, as the engine emits it.
+const TYPE_SELECTOR_RE = /^\*?[A-Za-z](?:[\w-]|\\[\s\S])*/
+const SELECTOR_NAME_RE = /^(?:[\w-]|\\[\s\S])+/
 const ATTRIBUTE_NAME_RE = /^[A-Za-z_-][\w-]*/
 const ATTRIBUTE_OPERATOR_RE = /^[~|^$*]?=/
 const ATTRIBUTE_UNQUOTED_VALUE_RE = /^[^\]"']+/
@@ -795,7 +797,7 @@ export function tokenizeStetCSSState(token: string, stateStart: number, offset: 
       const role = char === '.' ? 'selector.class' : 'selector.id'
       pushStetCSSLexicalToken(tokens, offset + i, 1, 'operator', char === '.' ? 'selector.class.delimiter' : 'selector.id.delimiter', ['selector'])
       const nameStart = i + 1
-      const match = token.slice(nameStart).match(/^[\w-]+/)
+      const match = token.slice(nameStart).match(SELECTOR_NAME_RE)
       if (match) {
         pushStetCSSLexicalToken(tokens, offset + nameStart, match[0].length, char === '.' ? 'class' : 'variable', role, ['selector'])
         i = nameStart + match[0].length
@@ -835,7 +837,8 @@ export function tokenizeStetCSSState(token: string, stateStart: number, offset: 
         i = nameStart
       }
     } else {
-      i++
+      // An escaped character is never a combinator or delimiter: `\:x` starts no pseudo-class.
+      i += char === '\\' ? 2 : 1
     }
   }
   return tokens
