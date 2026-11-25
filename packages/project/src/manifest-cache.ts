@@ -22,6 +22,9 @@ export function loadCachedProjectManifest(
   const cached = projectManifestCache.get(key, options.baseManifest)
   if (cached) {
     for (const warning of cached.warnings) options.onWarning?.(warning)
+    if (options.onDependency) {
+      for (const file of new Set([...entries, ...cached.dependencies])) options.onDependency(file)
+    }
     return cached
   }
   const startedAt = Date.now()
