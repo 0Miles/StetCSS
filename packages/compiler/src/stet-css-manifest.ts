@@ -43,6 +43,7 @@ import {
 import { builtinNamespaces } from '@stet-css/engine'
 import { isNativeCSSShorthandProperty } from '@stet-css/schema/native-css-shorthand'
 import { normalizeStylesheetValue } from './stylesheet-value'
+import resolveSelectorAliases from './utils/resolve-selector-aliases'
 
 export type CSSDirectiveManifestInput = SharedCSSDirectiveManifestInput
 
@@ -348,8 +349,12 @@ function compileVariantBranch(branch: StetCSSManifestVariantBranch, css: ReturnT
     : branch.conditions?.length
       ? branch.conditions.map((condition) => cloneCondition(parseCondition(condition, css, false) as StetCSSManifestCondition))
       : undefined
+  // The engine places a class at the branch selector's `&` as written, so its `:` aliases are
+  // expanded here, as `@compose` lowering expands them: `&:first` is `&:first-child`.
+  const resolvedSelector = selector ? resolveSelectorAliases(selector, css) : undefined
   return {
     ...branch,
+    ...(resolvedSelector !== selector ? { selector: resolvedSelector } : {}),
     ...(selectorNodes?.length ? { selectorNodes } : {}),
     ...(branch.conditions?.length ? { conditions: [...branch.conditions] } : {}),
     ...(conditionNodes?.length ? { conditionNodes } : {})
