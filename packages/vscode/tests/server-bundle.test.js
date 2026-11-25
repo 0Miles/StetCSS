@@ -44,6 +44,7 @@ function createLanguageServer(options = {}) {
   let stdout = Buffer.alloc(0)
   const stderr = []
   const pending = new Map()
+  const notifications = []
   const closedPromise = new Promise((resolvePromise) => {
     child.on('close', (code) => {
       closed = true
@@ -74,6 +75,7 @@ function createLanguageServer(options = {}) {
       }
       return
     }
+    if (!Object.hasOwn(message, 'id') && message.method) notifications.push(message)
   }
 
   child.stdout.on('data', (chunk) => {
@@ -135,6 +137,10 @@ function createLanguageServer(options = {}) {
     },
     stderr() {
       return stderr.join('')
+    },
+    /** The params of every `method` notification the server has sent so far, in order. */
+    notifications(method) {
+      return notifications.filter((message) => message.method === method).map((message) => message.params)
     },
     closed: () => closedPromise,
     async dispose() {
@@ -411,6 +417,8 @@ test('staged language server reloads an imported CSS file changed outside the ed
         })
         return result?.contents?.value?.replace(/\s+/g, '')
       }
+      const diagnostics = () => server.notifications('textDocument/publishDiagnostics')
+        .filter((params) => params.uri === uri)
 
       try {
         await server.request('initialize', {
@@ -421,13 +429,25 @@ test('staged language server reloads an imported CSS file changed outside the ed
         })
         server.notify('initialized', {})
         server.notify('textDocument/didOpen', { textDocument: { uri, languageId: 'html', version: 1, text } })
-        await until(async () => (await hover('watch-card'))?.includes('display:block'), 'the workspace to load')
+        // The server compiles a workspace's manifest on its one thread, so a request sent during a
+        // (re)load waits for the whole compile, which CI load can stretch past the request timeout.
+        // Hover only once a load has finished, which the server signals by publishing the
+        // document's diagnostics: at once when it opens, then again once its workspace has loaded.
+        await until(() => diagnostics().length >= 2, 'the workspace to load')
+        expect(await hover('watch-card')).toContain('display:block')
         expect(await hover('watch-chip')).toBeUndefined()
 
+        let published = diagnostics().length
         await unlink(join(projectDir, 'components.css'))
         await writeFile(join(projectDir, 'components.css'), components('watch-chip', 'flex'))
 
-        await until(async () => (await hover('watch-chip'))?.includes('display:flex'), 'hover to show watch-chip')
+        // Each reload republishes the diagnostics. The first may still find components.css
+        // missing, and the change that restores it reloads again.
+        await until(async () => {
+          if (diagnostics().length === published) return false
+          published = diagnostics().length
+          return (await hover('watch-chip'))?.includes('display:flex')
+        }, 'hover to show watch-chip')
 
         await server.request('shutdown', null)
         server.notify('exit')
