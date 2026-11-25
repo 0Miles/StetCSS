@@ -1485,6 +1485,35 @@ describe.concurrent('CSS-first lowering for migrated core tests', () => {
     expect(result.css).toContain('.list>li{text-align:center}')
   })
 
+  /**
+   * Prevents (#241): `@compose` written as the last statement of a block without its `;`, as
+   * native CSS allows for the last declaration, failing the build with `Invalid @compose class: }`.
+   * It lowers as the same rule with the `;` does, top-level and nested in `@layer` and `@media`, and
+   * a rule after it keeps its own `@compose`.
+   * Reverse check: dropping the nested `}` stop in the lexer's `collectCSSDirectiveRanges` reds
+   * every row and the managed definition test below.
+   */
+  test.each([
+    ['.w { @compose p:2rem }', '.w{padding:2rem}'],
+    ['.w {\n  color: red;\n  @compose p:2rem\n}', '.w{color:red;padding:2rem}'],
+    ['.w { &:hover { @compose p:2rem } }', '.w:hover{padding:2rem}'],
+    ['.a { @compose p:2rem } .b { @compose m:1rem; }', '.a{padding:2rem}.b{margin:1rem}'],
+    ['@layer components { .w { @compose p:2rem } }', '@layer components{.w{padding:2rem}}'],
+    ['@media print { .w { @compose p:2rem } }', '@media print{.w{padding:2rem}}'],
+    ['@layer components { @media print { .w { @compose p:2rem } } }', '@layer components{@media print{.w{padding:2rem}}}']
+  ])('lowers @compose without a trailing semicolon in %j', (source, generatedCSS) => {
+    expect(compileCSSManifest(source, { baseManifest: defaultManifest }).generatedCSS).toBe(generatedCSS)
+  })
+
+  test('lowers a managed definition whose @compose has no trailing semicolon', () => {
+    const result = compileCSSManifest('@components { card { @compose block p:2rem } }', { baseManifest: defaultManifest })
+    const css = createTestCSS(result.manifest)
+
+    css.ensureClassRules('card')
+
+    expect(css.text).toContain('.card{display:block;padding:2rem}')
+  })
+
   test('batches independent managed style refreshes before native compose', () => {
     const { result, diagnostics } = compileCSSManifestWithDiagnostics(`
       @components {

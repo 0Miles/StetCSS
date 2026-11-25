@@ -526,6 +526,20 @@ describe('source content linting', () => {
     expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toContain('invalid-class-order')
   })
 
+  /**
+   * Prevents (#241): a `@compose` written without its last `;` taking the block's `}` into its
+   * class list, so lint reported `invalid-class-order` over `block\n} }` and `--fix` rewrote the
+   * braces. The class list stops at the `}`, as native CSS ends the last declaration there.
+   * Reverse check: dropping the nested `}` stop in the lexer's `collectCSSDirectiveRanges` reds this test.
+   */
+  test('lints a compose directive without a trailing semicolon as its class list alone', () => {
+    const content = '@layer a { .w { @compose\n  block\n} }'
+    const options = { content, filePath: '/project/index.css', css }
+
+    expect(lintStetCSSContent(options).diagnostics).toEqual([])
+    expect(fixStetCSSContent({ ...options, includeDirectiveFixes: true })).toBe(content)
+  })
+
   test('reports and applies structural compose directive fixes when allowed', () => {
     const content = '.btn { @compose contain:content; }'
     const result = lintStetCSSContent({

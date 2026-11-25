@@ -9,8 +9,12 @@ export interface SourceLocation {
 }
 
 export interface CSSStatementEnd {
+  /**
+   * After the `;`; at the `{` or, for `block-end`, at the `}`, neither of which the statement
+   * consumes; or the end of the source.
+   */
   end: number
-  reason: 'semicolon' | 'block' | 'eof'
+  reason: 'semicolon' | 'block' | 'block-end' | 'eof'
   delimiterRange?: SourceRange
 }
 
@@ -114,7 +118,12 @@ export function createSourceLocationResolver(source: string) {
   }
 }
 
-export function findCSSStatementEnd(source: string, start: number): CSSStatementEnd {
+/**
+ * Finds where the statement starting at `start` ends: at a `;` or `{` outside parentheses and
+ * brackets. With `nested`, for a statement inside a block, a `}` there ends it too (`block-end`),
+ * as CSS ends the last declaration of a block that has no `;`.
+ */
+export function findCSSStatementEnd(source: string, start: number, nested = false): CSSStatementEnd {
   let depth = 0
   for (let index = start; index < source.length; index++) {
     const skipped = skipCSSEscapeStringOrComment(source, index)
@@ -142,6 +151,13 @@ export function findCSSStatementEnd(source: string, start: number): CSSStatement
       return {
         end: index,
         reason: 'block',
+        delimiterRange: { start: index, end: index + 1 }
+      }
+    }
+    if (nested && depth === 0 && char === '}') {
+      return {
+        end: index,
+        reason: 'block-end',
         delimiterRange: { start: index, end: index + 1 }
       }
     }
