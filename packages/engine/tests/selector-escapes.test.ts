@@ -32,13 +32,29 @@ describe.concurrent('escapes in a class selector', () => {
    * condition.
    *
    * Reverse check: dropping the `\\` branch from `splitStateToken` in `src/utility.ts` reddens
-   * these rows only.
+   * these rows and the `block.a\@sm@sm\@md` row below only.
    */
   test.each([
     ['block.a\\@sm', '@layer utilities{.block\\.a\\\\\\@sm.a\\@sm{display:block}}'],
     ['block:is(.a\\@sm)', '@layer utilities{.block\\:is\\(\\.a\\\\\\@sm\\):is(.a\\@sm){display:block}}'],
     ['block.a\\@sm@sm', '@layer utilities{@media (width>=52.125rem){.block\\.a\\\\\\@sm\\@sm.a\\@sm{display:block}}}'],
   ])('%s keeps its escaped `@` in the selector', (className, expected) => {
+    expect(generateText(className)).toBe(expected)
+  })
+
+  /**
+   * Guards: the escape rule reaching the conditions. Skipping `\@` after the first condition made
+   * `block@sm\@md` one condition, and the engine emitted the invalid `@media (…) (…)`. Conditions
+   * split at every `@`, as before escapes were kept and as the editor colours them, so the class
+   * keeps its `and`-joined media query.
+   *
+   * Reverse check: skipping `\` in the conditions too (splitting the whole token in the
+   * `splitStateToken` loop) reddens these rows only.
+   */
+  test.each([
+    ['block@sm\\@md', '@layer utilities{@media (width>=52.125rem) and (width>=64rem){.block\\@sm\\\\\\@md{display:block}}}'],
+    ['block.a\\@sm@sm\\@md', '@layer utilities{@media (width>=52.125rem) and (width>=64rem){.block\\.a\\\\\\@sm\\@sm\\\\\\@md.a\\@sm{display:block}}}'],
+  ])('%s splits its conditions at every `@`', (className, expected) => {
     expect(generateText(className)).toBe(expected)
   })
 

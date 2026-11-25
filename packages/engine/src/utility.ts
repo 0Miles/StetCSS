@@ -266,23 +266,20 @@ function getVariableAliasRefNamespace(ref: string) {
 }
 
 /**
- * A state token split at each `@` into its selector and its stacked conditions. An escaped `\@`
- * is a selector name character, as in plain CSS (`.a\@sm` is one class), and starts no condition.
+ * A state token split into its selector and its stacked conditions. In the selector an escaped
+ * `\@` is a name character, as in plain CSS (`.a\@sm` is one class), and starts no condition; the
+ * conditions after the first unescaped `@` split at every `@` (`@sm\@md` is `@sm` and `@md`).
  */
 function splitStateToken(stateToken: string) {
-  const parts: string[] = []
-  let start = 0
   for (let index = 0; index < stateToken.length; index++) {
     const char = stateToken[index]
     if (char === '\\') {
       index++
     } else if (char === '@') {
-      parts.push(stateToken.slice(start, index))
-      start = index + 1
+      return [stateToken.slice(0, index), ...stateToken.slice(index + 1).split('@')]
     }
   }
-  parts.push(stateToken.slice(start))
-  return parts
+  return [stateToken]
 }
 
 /**
