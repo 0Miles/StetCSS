@@ -1,3 +1,5 @@
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import StyleEntryPlugin from '../../src/plugins/style-entry'
 import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
@@ -159,6 +161,27 @@ describe('StyleEntryPlugin', () => {
     )
 
     expect(cssLayerOrder(result.code)).toEqual(['reset', 'theme', 'base', 'defaults', 'components', 'utilities', 'b'])
+  })
+
+  /**
+   * Guards #250 with two entries in dev: Vite transforms `a.css` before `b.css` registers, and the
+   * CSS served for `a.css` was extracted from the entries registered so far, so the page declared
+   * `y`, written before `@import "@stet-css/core"` in `b.css`, after `utilities` and `b`, and `.y`
+   * beat `fg:blue` in dev only. Dev leads with every entry's layers, as the build and the CLI do.
+   * Reverse check: extracting the dev CSS from the registered entries' layers alone reds only this test.
+   */
+  test('serve transform declares the layers of entries not yet registered ahead of the preset layers', async () => {
+    const context = createProjectContext({ command: 'serve', html: '<div class="y fg:blue"></div>' })
+    const root = context.config.root
+    mkdirSync(join(root, 'src'))
+    const a = join(root, 'src/a.css')
+    writeFileSync(a, '@layer x;\n@import "@stet-css/core";\n@import url("https://example.com/b.css") layer(b);')
+    writeFileSync(join(root, 'src/b.css'), '@layer y;\n@import "@stet-css/core";\n@layer y { .y { color: rgb(0 128 0); } }')
+    const plugin = StyleEntryPlugin(context)
+
+    const result = await (plugin as any).transform.call({}, readFileSync(a, 'utf8'), a)
+
+    expect(cssLayerOrder(result.code)).toEqual(['x', 'y', 'theme', 'base', 'defaults', 'components', 'utilities', 'b'])
   })
 
   /**
