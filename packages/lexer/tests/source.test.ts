@@ -4,6 +4,7 @@ import {
   escapeRegExp,
   findCSSBlockEnd,
   findCSSStatementEnd,
+  replaceCSSNestingSelector,
   skipCSSEscapeStringOrComment
 } from '../src/source'
 
@@ -43,5 +44,19 @@ describe('source helpers', () => {
 
     const block = String.raw`{ .a\'b { color: red } } @safelist 'x';`
     expect(findCSSBlockEnd(block, 0)).toBe(block.indexOf('} @safelist'))
+  })
+
+  /**
+   * Prevents: an escaped `\&` in a class name (`.a\&b`, the class `a&b`), or an `&` inside an
+   * attribute string (`[data-a="&"]`), being taken for the nesting selector, so the parent was
+   * pasted into the class name or the attribute value.
+   */
+  it('replaces only nesting selectors, not escaped ampersands or ones in strings or comments', () => {
+    expect(replaceCSSNestingSelector('&.a\\&b', '.x')).toBe('.x.a\\&b')
+    expect(replaceCSSNestingSelector('& [data-a="&"]', '.x')).toBe('.x [data-a="&"]')
+    expect(replaceCSSNestingSelector("& [data-a='&'] /* & */ + &", '.x')).toBe(".x [data-a='&'] /* & */ + .x")
+    expect(replaceCSSNestingSelector('.a\\&b', '.x')).toBeUndefined()
+    expect(replaceCSSNestingSelector('[data-a="&"]', '.x')).toBeUndefined()
+    expect(replaceCSSNestingSelector('&:hover', '')).toBe(':hover')
   })
 })
