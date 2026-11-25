@@ -266,6 +266,26 @@ function getVariableAliasRefNamespace(ref: string) {
 }
 
 /**
+ * A state token split at each `@` into its selector and its stacked conditions. An escaped `\@`
+ * is a selector name character, as in plain CSS (`.a\@sm` is one class), and starts no condition.
+ */
+function splitStateToken(stateToken: string) {
+  const parts: string[] = []
+  let start = 0
+  for (let index = 0; index < stateToken.length; index++) {
+    const char = stateToken[index]
+    if (char === '\\') {
+      index++
+    } else if (char === '@') {
+      parts.push(stateToken.slice(start, index))
+      start = index + 1
+    }
+  }
+  parts.push(stateToken.slice(start))
+  return parts
+}
+
+/**
  * `template` with each `&` replaced by `selector`, once per item when `selector` is a list:
  * `&:hover` over `.a &,.b &` is `.a &:hover,.b &:hover`, not `.a &,.b &:hover`, which left
  * `.a &` without the state.
@@ -547,7 +567,7 @@ export class Utility {
 
     this.stateToken = stateToken
     if (stateToken.includes('@')) {
-      for (const stackToken of stateToken.split('@').slice(1)) {
+      for (const stackToken of splitStateToken(stateToken).slice(1)) {
         for (const conditionToken of splitModeConjuncts(stackToken, css, `Class "${this.name}"`).tokens) {
           if (!css.modes.includes(conditionToken)) this.conditionToken = (this.conditionToken || '') + '@' + conditionToken
         }
@@ -882,7 +902,7 @@ export class Utility {
 
   /** The branches a state token selects; `undefined`, leaving the class invalid, past `MAX_STATE_BRANCHES`. */
   resolveStateBranches(stateToken: string): UtilityStateBranch[] | undefined {
-    const [selectorToken = '', ...stackTokens] = stateToken.split('@')
+    const [selectorToken = '', ...stackTokens] = splitStateToken(stateToken)
     const conditionTokens: string[] = []
     let expressible = true
     for (const stackToken of stackTokens) {
