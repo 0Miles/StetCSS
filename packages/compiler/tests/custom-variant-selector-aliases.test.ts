@@ -41,12 +41,14 @@ describe.concurrent('selector aliases in a @custom-variant selector', () => {
    * drops, while `@compose block@foo` expanded the same alias to `:first-child`. Both paths now
    * read one selector, with every alias expanded the way it is on a class: several aliases in one
    * compound, an `:of()` alias placing its ancestors before the class, and an alias that is a
-   * list expanding the item once per alias item. Each row holds the class and the `@compose`
-   * output side by side, so the two paths cannot drift apart again.
+   * list expanding the item once per alias item, except inside a function, where no selector
+   * item of its own exists to expand and its text stays in the argument. Each row holds the class
+   * and the `@compose` output side by side, so the two paths cannot drift apart again.
    *
    * Reverse check in `src/stet-css-manifest.ts`: keeping the written `selector` in
    * `compileVariantBranch` reddens the class side of every row; the `@compose` side stays green,
-   * since lowering resolves aliases on its own.
+   * since lowering resolves aliases on its own. In `src/utils/resolve-selector-aliases.ts`,
+   * splitting a list alias inside parentheses too reddens only the row inside a function.
    */
   test.each([
     ['one alias', '&:first', '@layer utilities{.block\\@foo:first-child{display:block}}', '.card:first-child{display:block}'],
@@ -54,6 +56,7 @@ describe.concurrent('selector aliases in a @custom-variant selector', () => {
     ['a pseudo-class and a pseudo-element alias', '&:rtl::scrollbar', '@layer utilities{.block\\@foo:dir(rtl)::-webkit-scrollbar{display:block}}', '.card:dir(rtl)::-webkit-scrollbar{display:block}'],
     ['an :of() alias', '&:inofs', '@layer utilities{.a .block\\@foo,.b .block\\@foo{display:block}}', '.a .card,.b .card{display:block}'],
     ['an alias that is a list', '&:pair', '@layer utilities{.block\\@foo>li,.block\\@foo+li{display:block}}', '.card>li,.card+li{display:block}'],
+    ['an alias that is a list inside a function', '&:not(:pair)', '@layer utilities{.block\\@foo:not(>li,+li){display:block}}', '.card:not(>li,+li){display:block}'],
     ['a selector list of aliases', '&:first, &:last', '@layer utilities{.block\\@foo:first-child{display:block}.block\\@foo:last-child{display:block}}', '.card:first-child{display:block}.card:last-child{display:block}']
   ])('%s', (_, variant, expectedClass, expectedCompose) => {
     expect(classCSS(variant)).toBe(expectedClass)
