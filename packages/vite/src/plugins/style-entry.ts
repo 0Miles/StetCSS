@@ -16,7 +16,7 @@ import { getEnvironmentName } from '../utils/environment'
 import { getProjectDir } from '../utils/project-dir'
 import { createSlotCSSRule } from '../utils/slot'
 import { collectLayerStatementsBeforeImports } from '../utils/layer-order'
-import { createBuildDigest } from '../utils/build-digest'
+import { createBuildExtraction } from '../utils/build-digest'
 import { invalidateEmittedGlobalsModule } from '../utils/emitted-globals-module'
 
 const RESOLVED_VIRTUAL_CSS_ID = '\0' + VIRTUAL_CSS_ID
@@ -26,10 +26,15 @@ function markPlaceholderEmitted(context: PluginContext, pluginContext: unknown) 
   context.virtualCSSPlaceholderEnvironments.add(getEnvironmentName(pluginContext))
 }
 
-/** The generated CSS in dev; in a build, the placeholder `generateBundle` swaps it into. */
-async function createStetSource(context: PluginContext) {
-  if (context.config?.command === 'serve') return await getExtractedCSS(context)
-  return createSlotCSSRule(getScanner(context).slotCSSRule, await createBuildDigest(context))
+/**
+ * The generated CSS in dev. In a build, the placeholder `generateBundle` swaps it into, with the
+ * CSS it stands for as `layerSource`: every entry's leading layers lead that CSS (#250), so a host
+ * statement listing only its own entry's layers would sort the others after a kept import.
+ */
+async function createStetSource(context: PluginContext): Promise<{ source: string, layerSource?: string }> {
+  if (context.config?.command === 'serve') return { source: await getExtractedCSS(context) }
+  const { css, digest } = await createBuildExtraction(context)
+  return { source: createSlotCSSRule(getScanner(context).slotCSSRule, digest), layerSource: css }
 }
 
 export default function StyleEntryPlugin(context: PluginContext): Plugin {
@@ -47,9 +52,9 @@ export default function StyleEntryPlugin(context: PluginContext): Plugin {
       context.virtualCSSImporters ??= new Set()
       context.virtualCSSImporters.add(RESOLVED_VIRTUAL_CSS_ID)
 
-      const stetSource = await createStetSource(context)
+      const { source } = await createStetSource(context)
       if (context.config?.command !== 'serve') markPlaceholderEmitted(context, this)
-      return stetSource
+      return source
     },
     async transform(code, id) {
       if (id.startsWith('\0')) return
@@ -100,9 +105,9 @@ export default function StyleEntryPlugin(context: PluginContext): Plugin {
 
       const isServe = context.config?.command === 'serve'
       const hostSource = createStyleCSSHostSource(code, {
-        stetSource,
-        // A build splices the CSS into the placeholder later; its layers come from the entry.
-        ...(isServe ? {} : { stetLayerSource: resolvedStyleSource.source })
+        stetSource: stetSource.source,
+        // A build splices the CSS into the placeholder later; its layers come from that CSS.
+        ...(stetSource.layerSource === undefined ? {} : { stetLayerSource: stetSource.layerSource })
       })
       if (!isServe) {
         // Vite hoists the kept imports past these statements; generateBundle moves them back.

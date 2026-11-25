@@ -88,6 +88,31 @@ describe('StyleEntryPlugin Vite build integration', () => {
     expect(cssLayerOrder(css)).toEqual(['reset', 'theme', 'base', 'defaults', 'components', 'utilities'])
   })
 
+  /**
+   * Guards #250 with two entries in a production build: the layer statement the build puts ahead
+   * of a kept import listed only its own entry's layers, while the CSS spliced in after it leads
+   * with every entry's. `y`, written before `@import "@stet-css/core"` in the other entry, then sorted
+   * after `utilities` and `b`, so `.r` beat `fg:blue` only in production. The build orders the
+   * layers as static extraction and dev do, with `b` after the CSS that precedes its import.
+   * Reverse check: building the statement from the entry's own import graph again reds only this test.
+   */
+  test('declares the layers every entry writes before @stet-css/core ahead of a kept import', async () => {
+    const { css } = await buildProject({
+      appClass: 'r fg:blue',
+      plugins: [
+        stetCSS()
+      ],
+      prefix: 'stet-css-vite-leading-layers-',
+      mainTS: 'import "./a.css"\nimport "./b.css"\n',
+      setup(root) {
+        writeFileSync(join(root, 'src/a.css'), '@layer x;\n@import "@stet-css/core";\n@import url("https://example.com/b.css") layer(b);')
+        writeFileSync(join(root, 'src/b.css'), '@layer y;\n@import "@stet-css/core";\n@layer y { .r { color: rgb(0 128 0); } }')
+      }
+    })
+
+    expect(cssLayerOrder(css)).toEqual(['x', 'y', 'theme', 'base', 'defaults', 'components', 'utilities', 'b'])
+  })
+
   test('emits preset base CSS for the root StetCSS import', async () => {
     const { css } = await buildProject({
       appClass: 'block',
