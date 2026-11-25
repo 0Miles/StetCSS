@@ -179,6 +179,22 @@ test.concurrent('tokenizes an escaped character as part of a type, class or id n
 })
 
 /**
+ * Guards: an escaped `@` in a class name. The engine reads `.a\@sm` as one class and only an
+ * unescaped `@` as a condition, so `block.a\@sm@sm` is the class `.a\@sm` inside `@sm`; the
+ * editor colours the same split.
+ * Dropping the escape alternative from `SELECTOR_NAME_RE` in `class.ts` reds this test and the
+ * escaped name test above.
+ */
+test.concurrent('tokenizes an escaped `@` as part of a class name, not a condition', () => {
+  const source = '.a\\@sm@sm'
+  expect(texts(source, tokenizeStetCSSState(source, 0, 0))).toEqual([
+    { text: '.', type: 'operator', role: 'selector.class.delimiter', modifiers: ['selector'] },
+    { text: 'a\\@sm', type: 'class', role: 'selector.class', modifiers: ['selector'] },
+    { text: '@sm', type: 'keyword', role: 'query.keyword', modifiers: ['query'] }
+  ])
+})
+
+/**
  * Guards: an attribute selector got tokens only for its brackets, and text after its value (`_i`)
  * was read as a `_` combinator and a type selector although the engine keeps it inside the brackets.
  * Skipping `tokenizeAttributeSelector` in `class.ts` reds this test and the case flag test.

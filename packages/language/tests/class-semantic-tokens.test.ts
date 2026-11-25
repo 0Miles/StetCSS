@@ -122,24 +122,28 @@ test.concurrent('tokenizes an an+b argument as one number, not a combinator', ()
 /**
  * Guards: an escaped character in a selector name ended the name, so `block:is(.literal\:first)`
  * coloured `:first` as a pseudo-class and `block:is(.a\.b)` coloured two classes, while the engine
- * and the validator read one class (`:is(.literal\:first)`, `:is(.a\.b)`). The whole escaped name
- * takes the class colour native CSS gives it.
+ * and the validator read one class (`:is(.literal\:first)`, `:is(.a\.b)`). An escaped `@`
+ * (`block.a\@sm`) is part of the name too, not a condition. The whole escaped name takes the class
+ * colour native CSS gives it.
  * Dropping the escape alternative from `SELECTOR_NAME_RE` in lexer `class.ts` reds this and the
  * lexer escaped name test.
  */
 test.concurrent('tokenizes an escaped selector name as the one class the engine emits', () => {
-  const classList = 'block:is(.literal\\:first) block:is(.a\\.b)'
+  const classList = 'block:is(.literal\\:first) block:is(.a\\.b) block.a\\@sm'
   const tokens = classTokens(classList)
 
   expect(tokens).toEqual(expect.arrayContaining([
     { text: 'literal\\:first', start: 10, type: 'class', modifiers: ['selector'] },
-    { text: 'a\\.b', start: 36, type: 'class', modifiers: ['selector'] }
+    { text: 'a\\.b', start: 36, type: 'class', modifiers: ['selector'] },
+    { text: 'a\\@sm', start: 48, type: 'class', modifiers: ['selector'] }
   ]))
   expect(tokens).not.toContainEqual(expect.objectContaining({ text: 'first' }))
+  expect(tokens).not.toContainEqual(expect.objectContaining({ text: '@sm' }))
 
   const nativeClass = nativeScope(':is(.literal\\:first) {}', 'literal')!
   expectNativeScope(classList, 'literal\\:first', nativeClass)
   expectNativeScope(classList, 'a\\.b', nativeClass)
+  expectNativeScope(classList, 'a\\@sm', nativeClass)
 })
 
 /**
