@@ -275,6 +275,38 @@ test('documents native CSS punctuation scopes used by semantic token mappings', 
 })
 
 /**
+ * Prevents (#241): `@compose` written without its last `;`, as native CSS allows for the last
+ * declaration of a block, taking the rule's `}` and the rest of the line into its class list, so
+ * `.w { @compose p:2rem } .x { color: red }` scoped the `}` as a directive brace and `.x` and
+ * `color` as classes. The rule's `}` closes the rule as native CSS scopes it, and the next rule
+ * highlights as native CSS. A group (`@compose {a b}`, with or without `;`) keeps its own `}`.
+ * Reverse check: removing the `(?=\})` end from the `@compose` rule reds the rows without `;`;
+ * removing the brace pair from `stet-compose-prelude` reds both group rows.
+ */
+test.each([
+  ['.w { @compose p:2rem } .x { color: red }', 'p:2rem }'],
+  ['@layer a { .w { @compose p:2rem } } .x { color: red }', 'p:2rem }'],
+  ['.w { @compose {block hidden} } .x { color: red }', 'hidden} }'],
+  ['.w { @compose {block hidden}; } .x { color: red }', 'hidden}; }']
+])('ends @compose at the closing brace of its rule in %j', (source, beforeRuleClose) => {
+  const tokens = []
+  let offset = 0
+  for (const token of tokenizeWith(injectedCSSGrammar, source)) {
+    tokens.push({ ...token, start: offset })
+    offset += token.text.length
+  }
+  const lastScopeAt = (index) => tokens.find((token) => token.start <= index && index < token.start + token.text.length).scopes.at(-1)
+
+  expect(lastScopeAt(source.indexOf(beforeRuleClose) + beforeRuleClose.length - 1))
+    .toBe('punctuation.section.property-list.end.bracket.curly.css')
+  expect(lastScopeAt(source.indexOf('x {'))).toBe('entity.other.attribute-name.class.css')
+  expect(lastScopeAt(source.indexOf('color'))).toBe('support.type.property-name.css')
+  if (source.includes('hidden}')) {
+    expect(lastScopeAt(source.indexOf('hidden}') + 'hidden'.length)).toBe('punctuation.section.stet-css')
+  }
+})
+
+/**
  * Guards: a quote in a directive's class list leaves it to the grammar, which scoped the case flag
  * of an attribute selector (`"a"_i]`) as a class name. Native CSS scopes `i` as a modifier keyword
  * and `s` as an attribute name, so the flag takes the scope native CSS gives it.
