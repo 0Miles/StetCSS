@@ -5,6 +5,12 @@ export interface LoadManifestOptions {
   baseManifest?: StetCSSManifest
   classes?: string[]
   onWarning?: (warning: string) => void
+  /**
+   * Called with each stylesheet the load reaches through `@import` and `@reference`, before it is
+   * read, also when it is missing or the load fails, so a caller can watch the files whose change
+   * could fix or change the manifest. A cached result reports its entries and dependencies again.
+   */
+  onDependency?: (file: string) => void
 }
 
 export type LoadManifestResult = CompileCSSManifestResult

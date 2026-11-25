@@ -13,7 +13,7 @@ Resolves a project's manifest: discovers **entry** CSS files, finds workspace ro
 
 - **Ignored directories** (`PROJECT_IGNORED_DIRECTORIES`) decide both which CSS files can be entries and which files feed static CSS; adding or removing one changes CSS output.
 - **Entry markers**: discovery checks only a top-level `@import "@stet-css/core"`; imported files and package CSS files are never independent entries.
-- **Dependencies** come from compiler results, never from hardcoded package CSS filenames.
+- **Dependencies** come from compiler results, never from hardcoded package CSS filenames. `onDependency` names each stylesheet the compile reaches before it reads it, also when the load fails, and again on a cache hit; the language server watches through it.
 - **CSS only**: manifests load from `.css` files; JavaScript/TypeScript manifest loading is intentionally unsupported.
 - **Entry extensions**: discovery reads `.css` by default (`CSS_MANIFEST_ENTRY_EXTENSIONS`), which manifest loading needs. Static CSS builds pass `extensions: STYLE_ENTRY_EXTENSIONS` to also find `.scss` and `.sass` entries; markers there still need their semicolon.
 - **Caches** (#202): entry discovery still lists every directory on each call but rereads a CSS file only when its stamp (mtime, ctime, size) changed; `loadProjectManifest({ cache: true })` reuses a compiled manifest while every entry and imported file keeps its stamp (`src/manifest-cache.ts`). Both use `createFileStampCache` from `@stet-css/compiler`. A cached result is shared between callers, so nothing may mutate it.

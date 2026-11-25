@@ -101,6 +101,12 @@ export interface CompileCSSOptions {
 
 export interface CompileCSSFileOptions extends CompileCSSOptions {
   root?: string
+  /**
+   * Called with each stylesheet the compile reaches through `@import` and `@reference`, before
+   * reading it, also when it is missing or the compile later fails, so a caller can watch every
+   * file whose change could change the result.
+   */
+  onDependency?: (file: string) => void
 }
 
 export type CompileCSSResult = CSSDirectiveResult
