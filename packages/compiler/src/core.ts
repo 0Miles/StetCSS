@@ -36,6 +36,7 @@ import {
   findCSSBlockEnd,
   findCSSClosingQuote,
   findCSSStatementEnd,
+  replaceCSSNestingSelector,
   replaceSourceRanges,
   removeSourceRanges,
   skipCSSWhitespaceAndComments,
@@ -1088,7 +1089,7 @@ function createVariantTemplateBranch(path: {
   conditions: string[]
   layer?: CSSDirectiveLayerName
 }) {
-  const selector = path.selectors.reduce((current, selectorTemplate) => selectorTemplate.replace(/&/g, current), '&')
+  const selector = path.selectors.reduce((current, selectorTemplate) => replaceCSSNestingSelector(selectorTemplate, current) ?? selectorTemplate, '&')
   return {
     ...(selector !== '&' ? { selector } : {}),
     ...(path.conditions.length ? { conditions: [...path.conditions] } : {}),
@@ -1119,7 +1120,7 @@ function collectVariantTemplateBranches(
     if (child.type === 'style') {
       const selectors = (child as any).value.selectors.map((selector: Selector) => formatSelectors([selector]))
       for (const selector of selectors) {
-        if (!selector.includes('&')) {
+        if (replaceCSSNestingSelector(selector, '') === undefined) {
           throw new Error(`@custom-variant ${token} selector value must include "&"`)
         }
       }

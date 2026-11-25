@@ -28,7 +28,7 @@ import type {
   StetCSSManifestVariants
 } from '@stet-css/schema/manifest'
 import { flattenStetCSSManifestVariables, groupStetCSSManifestVariables } from '@stet-css/schema/manifest'
-import { skipCSSEscapeStringOrComment, STET_CSS_LENGTH_UNITS } from '@stet-css/lexer'
+import { replaceCSSNestingSelector, skipCSSEscapeStringOrComment, STET_CSS_LENGTH_UNITS } from '@stet-css/lexer'
 import {
   createCompilerCSS,
   parseCondition,
@@ -336,9 +336,7 @@ function cloneSelectorNode(node: StetCSSManifestSelectorNode): StetCSSManifestSe
 function compileVariantBranch(branch: StetCSSManifestVariantBranch, css: ReturnType<typeof createCompilerCSS>): StetCSSManifestVariantBranch {
   const selector = branch.selector?.trim()
   const bodylessSelector = selector
-    ? selector.includes('&')
-      ? selector.replace(/&/g, '')
-      : selector
+    ? replaceCSSNestingSelector(selector, '') ?? selector
     : undefined
   const selectorNodes = branch.selectorNodes?.length
     ? branch.selectorNodes.map(cloneSelectorNode)
