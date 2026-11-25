@@ -31,6 +31,7 @@ import {
   type EngineSettings
 } from './compile-manifest'
 import { MATCH_NAME_BOUNDARY } from './common'
+import { cssEscape } from '@stet-css/lexer'
 
 export type { CompiledUtility } from './compile-manifest'
 
@@ -1034,12 +1035,13 @@ export default class StetCSS {
     }
   }
 
+  /** The selector of a mode under a class or host trigger; the mode name is one escaped class (`a,b` → `.a\,b`). */
   getModeSelector(modeName: string) {
     switch (this.settings.modeTrigger) {
       case 'class':
-        return '.' + modeName
+        return '.' + cssEscape(modeName)
       case 'host':
-        return ':host(.' + modeName + ')'
+        return ':host(.' + cssEscape(modeName) + ')'
     }
   }
 }
