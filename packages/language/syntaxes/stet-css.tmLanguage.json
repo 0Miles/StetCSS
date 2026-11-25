@@ -205,7 +205,7 @@
               "name": "punctuation.definition.keyword.css"
             }
           },
-          "end": "(;)|$",
+          "end": "(;)|(?=\\})|$",
           "endCaptures": {
             "1": {
               "name": "punctuation.section.stet-css"
@@ -272,6 +272,25 @@
     },
     "stet-compose-prelude": {
       "patterns": [
+        {
+          "begin": "\\{",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.section.stet-css"
+            }
+          },
+          "end": "\\}",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.stet-css"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#stet-compose-prelude"
+            }
+          ]
+        },
         {
           "include": "#stet-class-value-string"
         },
