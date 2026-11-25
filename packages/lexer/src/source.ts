@@ -245,6 +245,26 @@ export function splitCSSSelectorList(selectorText: string): string[] {
   return selectors
 }
 
+/**
+ * `template` with each nesting selector `&` replaced by `selector`, or `undefined` when it has
+ * none. An escaped `\&` (`.a\&b` is the class `a&b`) and an `&` in a string or comment are not
+ * nesting selectors and stay as written.
+ */
+export function replaceCSSNestingSelector(template: string, selector: string): string | undefined {
+  let result: string | undefined
+  let start = 0
+  for (let index = 0; index < template.length; index++) {
+    const skipped = skipCSSEscapeStringOrComment(template, index)
+    if (skipped !== index) {
+      index = skipped - 1
+    } else if (template[index] === '&') {
+      result = (result ?? '') + template.slice(start, index) + selector
+      start = index + 1
+    }
+  }
+  return result === undefined ? undefined : result + template.slice(start)
+}
+
 export function findCSSBlockEnd(source: string, open: number) {
   if (source[open] !== '{') return -1
   let depth = 0
