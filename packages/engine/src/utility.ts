@@ -374,12 +374,13 @@ function findClosingParen(value: string, start: number) {
   let quote = ''
   for (let index = start; index < value.length; index++) {
     const char = value[index]
+    // An escaped character is never a quote or a parenthesis: `:is(.a\))` closes at the last `)`.
+    if (char === '\\') {
+      index++
+      continue
+    }
     if (quote) {
-      if (char === '\\') {
-        index++
-      } else if (char === quote) {
-        quote = ''
-      }
+      if (char === quote) quote = ''
       continue
     }
     if (char === '"' || char === '\'') {
@@ -1009,6 +1010,12 @@ export class Utility {
     }
 
     while (index < selectorToken.length) {
+      // An escaped character belongs to the selector name: `.a\:dk` never starts the `:dk` variant.
+      if (selectorToken[index] === '\\') {
+        raw += selectorToken.slice(index, index + 2)
+        index += 2
+        continue
+      }
       if (selectorToken[index] === '(') {
         const end = findClosingParen(selectorToken, index)
         if (end !== -1) {
