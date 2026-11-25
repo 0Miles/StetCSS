@@ -14,6 +14,7 @@ export {
   isCSSIdentStart,
   readCSSIdent,
   removeSourceRanges,
+  replaceCSSNestingSelector,
   replaceSourceRanges,
   skipCSSEscapeStringOrComment,
   skipCSSWhitespace,
