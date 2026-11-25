@@ -164,23 +164,30 @@ test.concurrent('locates directives after escaped quotes outside strings', () =>
  * Prevents (#241): a nested directive written without its last `;`, as native CSS allows for the
  * last declaration of a block, running past the block's `}`. `.w { @compose p:2rem }` failed the
  * build with `Invalid @compose class: }`, and the directives after it read the wrong depth. The
- * prelude stops before the `}`, which still closes the block. A top-level statement has no block
- * to close and still runs to the end of the source.
+ * prelude stops before the whitespace that precedes the `}`, which still closes the block, so
+ * directive formatting keeps that space. A `}` inside brackets or parentheses does not end it. A
+ * top-level statement has no block to close and still runs to the end of the source.
  * Reverse check: dropping the nested `}` stop in `collectCSSDirectiveRanges` reds this test and the
- * compiler, language and lint `#241` tests.
+ * compiler, language and lint `#241` tests; keeping the whitespace before `}` in the range reds
+ * this test and the language formatting rows; stopping at a `}` one bracket deep in
+ * `findCSSStatementEnd` reds this test.
  */
 test.concurrent('ends a nested directive statement at the closing brace of its block', () => {
   const source = '@layer a { .w { @compose p:2rem } .x { @compose\n  m:1 } } @variant sm { @slot }'
   const ranges = collectCSSDirectiveRanges(source)
 
   expect(ranges.map((range) => [range.name, range.depth, source.slice(range.start, range.end)])).toEqual([
-    ['compose', 2, '@compose p:2rem '],
-    ['compose', 2, '@compose\n  m:1 '],
+    ['compose', 2, '@compose p:2rem'],
+    ['compose', 2, '@compose\n  m:1'],
     ['variant', 0, '@variant sm { @slot }'],
-    ['slot', 1, '@slot ']
+    ['slot', 1, '@slot']
   ])
-  expect(source.slice(ranges[0].preludeRange.start, ranges[0].preludeRange.end)).toBe(' p:2rem ')
+  expect(source.slice(ranges[0].preludeRange.start, ranges[0].preludeRange.end)).toBe(' p:2rem')
   expect(ranges[0].semicolonRange).toBeUndefined()
   expect(ranges[0].quotedStringRanges).toEqual([])
   expect(collectCSSDirectiveRanges('@compose p:2rem }').map((range) => range.end)).toEqual(['@compose p:2rem }'.length])
+  for (const nested of ['.w { @compose content:[}] }', '.w { @compose content:var(}) }']) {
+    const [range] = collectCSSDirectiveRanges(nested)
+    expect(nested.slice(range.preludeRange.start, range.preludeRange.end)).toBe(nested.slice('.w { @compose'.length, -2))
+  }
 })

@@ -28,6 +28,21 @@ test.concurrent('leaves quoted and grouped @compose syntax unchanged', () => {
   expect(format('.btn { @compose { bg:transparent ! }; }')).toBe('.btn { @compose { bg:transparent ! }; }')
 })
 
+/**
+ * Prevents (#241 review): formatting a directive written without its last `;` removing the
+ * whitespace before the `}` that closes its block, so `.w { @compose p:2rem }` became
+ * `.w { @compose p:2rem}`. The class list is still formatted; the space before `}` stays.
+ * Reverse check: keeping the whitespace before `}` in the lexer's directive range reds this test.
+ */
+test.concurrent.each([
+  ['.w { @compose p:2rem }', '.w { @compose p:2rem }'],
+  ['@variant sm { @slot }', '@variant sm { @slot }'],
+  ['.w {\n  @compose p:2rem\n}', '.w {\n  @compose p:2rem\n}'],
+  ['.w { @compose  bg:transparent !   fg:red\n}', '.w { @compose bg:transparent! fg:red\n}']
+])('keeps the space before the closing brace of a directive without a semicolon in %j', (source, formatted) => {
+  expect(format(source)).toBe(formatted)
+})
+
 test.concurrent('formats @safelist quoted class lists while preserving quote style', () => {
   expect(format('@safelist  \'bg:transparent !   fg:red !@sm\' ;\n@safelist "block  bg:blue !";'))
     .toBe('@safelist \'bg:transparent! fg:red!@sm\';\n@safelist "block bg:blue!";')
