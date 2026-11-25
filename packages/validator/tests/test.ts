@@ -212,3 +212,22 @@ it.each([
   expectClassInvalid(className)
   expect(validate(className).matched).toBe(false)
 })
+
+/**
+ * Guards: lint and the editor disagreeing on a selector with escapes. The engine dropped every `\`
+ * in a class selector, so the validator approved `:is(.literal:first-child)` for
+ * `block:is(.literal\:first)`, a rule for an element nobody named. The validator passes the escaped
+ * selector the engine now emits, the same one class the editor colours.
+ * Trade-off: the engine's `selector-escapes.test.ts` holds the parsing rows; this keeps the
+ * validator on the engine's output.
+ *
+ * Reverse check: dropping the escape alternative from the engine's `SELECTOR_REGEX` (then
+ * `bun run build`) reddens only these rows among the validator tests.
+ */
+it.each([
+  ['block:is(.literal\\:first)', '.block\\:is\\(\\.literal\\\\\\:first\\):is(.literal\\:first){display:block}'],
+  ['block:is(.a\\.b)', '.block\\:is\\(\\.a\\\\\\.b\\):is(.a\\.b){display:block}']
+])('validates %s with its escapes kept', (className, text) => {
+  expect(generateValidRules(className).map((rule) => rule.text)).toEqual([text])
+  expectClassValid(className)
+})
