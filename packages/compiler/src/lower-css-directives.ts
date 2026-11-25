@@ -11,7 +11,7 @@ import {
   type CSSDirectiveVariableDefinition
 } from '@stet-css/schema/css-directives'
 import type { PropertiesHyphen } from 'csstype'
-import { skipCSSEscapeStringOrComment, splitCSSSelectorList } from '@stet-css/lexer'
+import { replaceCSSNestingSelector, skipCSSEscapeStringOrComment, splitCSSSelectorList } from '@stet-css/lexer'
 import {
   compareQueryFeatures,
   compareRulePriority,
@@ -362,7 +362,7 @@ function getComposedUtilitySelector(utility: GeneratedRule, css: StetCSS) {
       ? generateSelector(utility.selectorNodes, '&')
       : '&'
   if (utility.selectorTemplate) {
-    selector = utility.selectorTemplate.replace(/&/g, selector)
+    selector = replaceCSSNestingSelector(utility.selectorTemplate, selector) ?? utility.selectorTemplate
   }
   if (utility.mode && css.settings.modeTrigger !== 'media') {
     const modeSelector = css.getModeSelector(utility.mode)
