@@ -26,6 +26,23 @@ describe.concurrent('escapes in a class selector', () => {
   })
 
   /**
+   * Guards: a state token split at every `@`, so `block.a\@sm` emitted `.a` inside the `@sm` media
+   * query instead of the class `.a\@sm` (one class in plain CSS), and the editor and the validator
+   * disagreed on it. An escaped `@` is a name character; an unescaped `@` after it still stacks a
+   * condition.
+   *
+   * Reverse check: dropping the `\\` branch from `splitStateToken` in `src/utility.ts` reddens
+   * these rows only.
+   */
+  test.each([
+    ['block.a\\@sm', '@layer utilities{.block\\.a\\\\\\@sm.a\\@sm{display:block}}'],
+    ['block:is(.a\\@sm)', '@layer utilities{.block\\:is\\(\\.a\\\\\\@sm\\):is(.a\\@sm){display:block}}'],
+    ['block.a\\@sm@sm', '@layer utilities{@media (width>=52.125rem){.block\\.a\\\\\\@sm\\@sm.a\\@sm{display:block}}}'],
+  ])('%s keeps its escaped `@` in the selector', (className, expected) => {
+    expect(generateText(className)).toBe(expected)
+  })
+
+  /**
    * Guards: a `:` variant token right after a `\` was split off the selector as a variant, so
    * `block.a\:dk` with a `:dk` variant emitted `.dark .block\.a\\\:dk.a`: the class lost the
    * escaped `:dk` of its name and gained a `.dark` ancestor nobody wrote. The same happened past an
