@@ -67,6 +67,8 @@ export interface ResolveCSSImportGraphOptions {
   projectDir?: string
   expandPackageImports?: boolean
   onReference?: (reference: CSSReferenceStatement, fromFile: string) => void
+  /** Called with each stylesheet the graph reaches, before reading it, also when it is missing. */
+  onDependency?: (file: string) => void
 }
 
 interface ResolveCSSImportGraphFileOptions extends ResolveCSSImportGraphOptions {
@@ -89,6 +91,8 @@ export type CompileCSSManifestOptions = CompileCSSFileOptions & {
 export type CompileCSSManifestSourceOptions = CompileCSSOptions & {
   baseManifest?: StetCSSManifest
   root?: string
+  /** Called with each stylesheet the `@reference` tree reaches, as in `CompileCSSFileOptions`. */
+  onDependency?: (file: string) => void
 }
 
 type CompileCSSManifestInternalOptions = CompileCSSManifestSourceOptions & {
@@ -245,6 +249,7 @@ function resolveCSSImportGraphFile(
   if (stack.includes(absoluteFile)) {
     throw new Error(`Circular CSS import: ${[...stack, absoluteFile].join(' -> ')}`)
   }
+  options.onDependency?.(absoluteFile)
   if (!existsSync(absoluteFile)) {
     throw new Error(`CSS manifest entry file not found: ${absoluteFile}`)
   }
@@ -352,7 +357,7 @@ function compileCSSFileWithReader(
   options: CompileCSSFileOptions = {}
 ): CompileCSSResult {
   const absoluteFile = isAbsolute(file) ? file : resolve(options.root || '', file)
-  const graph = resolveCSSImportGraphWithReader(absoluteFile, readCSSImport, { projectDir: options.root })
+  const graph = resolveCSSImportGraphWithReader(absoluteFile, readCSSImport, { projectDir: options.root, onDependency: options.onDependency })
   return compileCSSImportGraph(absoluteFile, graph, options)
 }
 
@@ -362,7 +367,7 @@ function compileCSSImportGraph(
   graph: ResolvedCSSImportGraph,
   options: CompileCSSFileOptions = {}
 ): CompileCSSResult {
-  const { root: _root, ...compileOptions } = options
+  const { root: _root, onDependency: _onDependency, ...compileOptions } = options
   const source = compileOptions.preserveNativeCSS === false
     ? removeCSSImportStatements(graph.source, file)
     : graph.source
@@ -447,7 +452,7 @@ function resolveCSSReferenceTree(
       if (expansions > MAX_CSS_REFERENCE_EXPANSIONS) {
         throw new Error(`CSS references compile more than ${MAX_CSS_REFERENCE_EXPANSIONS} stylesheets, counting repeated references of the same file: ${chain.join(' -> ')}`)
       }
-      const graph = resolveCSSImportGraphWithReader(file, readCSSImport, { projectDir: options.root })
+      const graph = resolveCSSImportGraphWithReader(file, readCSSImport, { projectDir: options.root, onDependency: options.onDependency })
       return {
         file,
         startedAt,

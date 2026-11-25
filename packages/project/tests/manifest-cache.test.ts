@@ -88,6 +88,27 @@ describe('cached project manifest', () => {
   })
 })
 
+describe('reported dependencies', () => {
+  /**
+   * Guards #248: a caller that watches the files `onDependency` names learns nothing from a load
+   * the cache answered, so it would stop watching an imported file after the second load.
+   */
+  test('reports the imported files again when the cache answers the load', async () => {
+    const entryPath = join(root, 'app/globals.css')
+    const importedPath = join(root, 'app/components.css')
+    writeFileSync(entryPath, '@import "@stet-css/core";\n@import "./components.css";')
+    writeFileSync(importedPath, '@components { brand { color: #123456; } }')
+    settle(entryPath, importedPath)
+    await loadProjectManifest(root, { cache: true })
+
+    const reported: string[] = []
+    await loadProjectManifest(root, { cache: true, onDependency: (file) => reported.push(file) })
+
+    expect(vi.mocked(compiler.compileProjectManifest)).toHaveBeenCalledTimes(1)
+    expect(reported).toEqual(expect.arrayContaining([entryPath, importedPath]))
+  })
+})
+
 describe('entry discovery', () => {
   /**
    * Guards: discovery reusing what it read about a file after the file gained or lost its
