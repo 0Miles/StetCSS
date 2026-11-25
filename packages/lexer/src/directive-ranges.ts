@@ -244,17 +244,23 @@ export function collectCSSDirectiveRanges(source: string) {
 
     // Inside a block, a `}` ends a statement written without its last `;`, as in native CSS.
     const statementEnd = findCSSStatementEnd(source, name.end, depth > 0)
+    // The whitespace before that `}` belongs to the block, not to the statement, so editors that
+    // rewrite the range (directive formatting) leave it in place.
+    let unterminatedEnd = statementEnd.end
+    if (statementEnd.reason === 'block-end') {
+      while (unterminatedEnd > name.end && isCSSWhitespaceChar(source[unterminatedEnd - 1])) unterminatedEnd--
+    }
     const blockStart = statementEnd.reason === 'block' ? statementEnd.end : -1
     const blockEnd = blockStart === -1 ? -1 : findCSSBlockEnd(source, blockStart)
     const end = blockStart === -1
-      ? statementEnd.end
+      ? unterminatedEnd
       : blockEnd === -1
         ? source.length
         : blockEnd + 1
     const preludeEnd = blockStart === -1
       ? statementEnd.reason === 'semicolon'
         ? statementEnd.end - 1
-        : statementEnd.end
+        : unterminatedEnd
       : blockStart
     const semicolonRange = statementEnd.reason === 'semicolon'
       ? statementEnd.delimiterRange
