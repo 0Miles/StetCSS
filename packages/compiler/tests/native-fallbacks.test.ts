@@ -341,6 +341,30 @@ test.concurrent('drops the earlier of two same-name @keyframes as before when th
 })
 
 /**
+ * Prevents: a vendor-prefixed `@keyframes` with fallbacks vanishing beside an unprefixed rule of
+ * the same name. lightningcss keeps both; a placeholder without the prefix read as a duplicate of
+ * the later rule and was dropped.
+ * Reverse check: `vendorPrefix: ['none']` for every placeholder in `preserveKeyframeFallbacks`
+ * turns only this test red.
+ */
+test.concurrent('keeps a prefixed @keyframes with fallbacks beside an unprefixed one of the same name', () => {
+  expect(compileCSS('@-webkit-keyframes k { from { height: 100vh; height: 100dvh } } @keyframes k { from { height: 1px } }').nativeCSS).toBe(lines(
+    '@-webkit-keyframes k {',
+    '  from {',
+    '    height: 100vh;',
+    '    height: 100dvh;',
+    '  }',
+    '}',
+    '',
+    '@keyframes k {',
+    '  from {',
+    '    height: 1px;',
+    '  }',
+    '}'
+  ))
+})
+
+/**
  * Prevents: a keyframe losing a declaration when its written block does not split the way
  * lightningcss parsed it (a `{}` value reads as a nested rule to the source scanner). Such a
  * keyframe keeps lightningcss's printing: it loses the fallback, as before #242, but `--x` stays.
@@ -359,16 +383,17 @@ test.concurrent('falls back to lightningcss printing when a keyframe\'s written 
 })
 
 /**
- * Prevents: a declaration whose name starts with U+00A0, which CSS reads as part of the name,
- * being split as if U+00A0 were whitespace: the reprinted rule failed the build or printed
+ * Prevents: a declaration whose name starts with U+00A0 (or U+2003, U+FEFF), which CSS reads as
+ * part of the name, being split as if it were whitespace: the reprinted rule failed the build or printed
  * `\u00a0color` as `color`, a property the author did not write.
  * Reverse check: skipping `\s` instead of CSS whitespace in `splitRawDeclarationGroups` turned this
  * test red on `Unexpected token Semicolon`.
  */
-test.concurrent('keeps a U+00A0 at the start of a declaration name when reprinting fallbacks', () => {
+test.concurrent('keeps a U+00A0, U+2003 or U+FEFF at the start of a declaration name when reprinting fallbacks', () => {
   expect(compileCSS([
     '@keyframes k { from { height: 100vh; height: 100dvh; \u00a0: red } }',
-    '.a { height: 100vh; height: 100dvh; \u00a0color: red }'
+    '.a { height: 100vh; height: 100dvh; \u00a0color: red }',
+    '.b { height: 100vh; height: 100dvh; \u2003color: red; \ufeffcolor: red }'
   ].join('\n')).nativeCSS).toBe(lines(
     '@keyframes k {',
     '  from {',
@@ -382,6 +407,13 @@ test.concurrent('keeps a U+00A0 at the start of a declaration name when reprinti
     '  height: 100vh;',
     '  height: 100dvh;',
     '  \u00a0color: red;',
+    '}',
+    '',
+    '.b {',
+    '  height: 100vh;',
+    '  height: 100dvh;',
+    '  \u2003color: red;',
+    '  \ufeffcolor: red;',
     '}'
   ))
 })
