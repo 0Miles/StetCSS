@@ -10,14 +10,15 @@ const FILE_WATCH_INTERVAL = 500
  * What tells a file changed without reading it. The inode catches a file replaced at the same
  * path (`git checkout`, a package reinstall), even when its times and size happen to match.
  */
-interface FileStamp {
+export interface FileStamp {
   ino: number
   mtimeMs: number
   ctimeMs: number
   size: number
 }
 
-function readFileStamp(file: string): FileStamp | undefined {
+/** The stamp of `file`, or `undefined` when it is missing or cannot be read. */
+export function readFileStamp(file: string): FileStamp | undefined {
   try {
     const { ino, mtimeMs, ctimeMs, size } = statSync(file)
     return { ino, mtimeMs, ctimeMs, size }
@@ -34,7 +35,7 @@ function isSameFileStamp(a: FileStamp | undefined, b: FileStamp | undefined) {
 /**
  * Watches files by polling their stamps, so it sees every way a file can change outside the
  * editor, with no watch handle to lose when a directory is deleted: written in place, replaced,
- * removed, or created again. Each key (a workspace) watches its own files; a file shared by several
+ * removed, or created again (a missing file is watched like any other). Each key (a workspace) watches its own files; a file shared by several
  * keys is checked once.
  *
  * Changes are batched: while any check still finds a new change, nothing is reported, so a branch
@@ -50,15 +51,17 @@ export class FileWatcher {
   constructor(private readonly onChange: (key: string, files: string[]) => void) { }
 
   /**
-   * Watches `files` for `key`, replacing what it watched before unless `keepWatched` is set; no
-   * files at all stops watching `key`. A file already watched keeps the stamp last seen, so a
-   * change made while the caller was reading it is still reported; a new file is stamped now.
+   * Watches `files` for `key`, each with the stamp the caller read before reading the file, so a
+   * change made after that read is reported. It replaces what `key` watched before, except files
+   * that are missing now: they stay watched until they come back, since a branch switch or an
+   * install that removed them may restore them. A file already watched keeps the stamp last seen,
+   * so a change another key has not been told about yet is not lost. No files stops watching `key`.
    */
-  watch(key: string, files: Iterable<string>, { keepWatched = false } = {}) {
+  watch(key: string, files: ReadonlyMap<string, FileStamp | undefined>) {
     if (this.disposed) return
-    const keyFiles = new Set(files)
-    if (keepWatched) {
-      for (const file of this.watched.get(key) ?? []) keyFiles.add(file)
+    const keyFiles = new Set(files.keys())
+    for (const file of this.watched.get(key) ?? []) {
+      if (!readFileStamp(file)) keyFiles.add(file)
     }
     if (!keyFiles.size) {
       this.unwatch(key)
@@ -66,7 +69,7 @@ export class FileWatcher {
     }
     this.watched.set(key, keyFiles)
     for (const file of keyFiles) {
-      if (!this.stamps.has(file)) this.stamps.set(file, readFileStamp(file))
+      if (!this.stamps.has(file)) this.stamps.set(file, files.get(file))
     }
     this.forgetUnwatchedFiles()
     if (!this.timer) {
