@@ -1,141 +1,11 @@
-import {
-  CompletionRequest,
-  CompletionTriggerKind,
-  DidCloseTextDocumentNotification,
-  DidOpenTextDocumentNotification,
-  HoverRequest,
-  InitializeRequest,
-  InitializedNotification,
-  PublishDiagnosticsNotification,
-  type CompletionItem,
-  type CompletionList,
-  type InitializeParams,
-  type MarkupContent,
-  type PublishDiagnosticsParams
-} from 'vscode-languageserver/node'
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
-import { tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { URI } from 'vscode-uri'
 import { afterEach, expect, test, vi } from 'vitest'
 import type { StetCSSManifest } from '@stet-css/schema/manifest'
-import { connect } from './connection'
+import { components, controlFileChecks, disposeProjects, ENTRY_CSS, openProject, until } from './watch-project'
 
-const ENTRY_CSS = `@import '@stet-css/core';\n@import './components.css';\n`
-
-function components(name: string, display: string) {
-  return `@components {\n  ${name} {\n    display: ${display};\n  }\n}\n`
-}
-
-async function until(check: () => boolean | Promise<boolean>, message: string, timeout = 10_000) {
-  const startedAt = Date.now()
-  while (!await check()) {
-    if (Date.now() - startedAt > timeout) throw new Error(`Timed out waiting for ${message}`)
-    await new Promise((resolve) => setTimeout(resolve, 20))
-  }
-}
-
-const projects: { dispose(): void }[] = []
-
-afterEach(() => {
-  vi.useRealTimers()
-  projects.splice(0).forEach((project) => project.dispose())
-})
-
-/** Fakes only the watcher's clock, so a test decides when the server checks the files. */
-function controlFileChecks() {
-  vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
-  return () => vi.advanceTimersToNextTimer()
-}
-
-/**
- * Starts a server on a temporary project, the way an editor does over LSP, and returns helpers
- * that change the project's files from outside the editor.
- */
-async function openProject(files: Record<string, string>) {
-  const cwd = mkdtempSync(join(tmpdir(), 'stet-css-language-server-watch-'))
-  const write = (file: string, text: string) => {
-    const path = join(cwd, file)
-    mkdirSync(dirname(path), { recursive: true })
-    writeFileSync(path, text)
-  }
-  for (const [file, text] of Object.entries(files)) write(file, text)
-  const { server, clientConnection } = connect()
-  const project = {
-    server,
-    write,
-    /** Replaces a file the way `git checkout` does: a new file at the same path. */
-    replace(file: string, text: string) {
-      unlinkSync(join(cwd, file))
-      write(file, text)
-    },
-    remove(path: string) {
-      rmSync(join(cwd, path), { recursive: true, force: true })
-    },
-    dispose() {
-      server.stop()
-      clientConnection.dispose()
-      rmSync(cwd, { recursive: true, force: true })
-    }
-  }
-  projects.push(project)
-  const published: PublishDiagnosticsParams[] = []
-  clientConnection.onNotification(PublishDiagnosticsNotification.method, (params: PublishDiagnosticsParams) => { published.push(params) })
-  const rootUri = URI.file(cwd).toString()
-  await clientConnection.sendRequest(InitializeRequest.type, {
-    rootUri,
-    capabilities: { workspace: { configuration: false, workspaceFolders: true } },
-    workspaceFolders: [{ uri: rootUri, name: 'watch' }]
-  } as InitializeParams)
-  await clientConnection.sendNotification(InitializedNotification.method, {})
-  await server.init()
-
-  return {
-    ...project,
-    /** Opens an HTML document in the project and waits until the server has loaded its workspace. */
-    async open(text: string) {
-      const uri = URI.file(join(cwd, `document-${published.length}.html`)).toString()
-      const diagnostics = () => published.filter((params) => params.uri === uri)
-      await clientConnection.sendNotification(DidOpenTextDocumentNotification.type, {
-        textDocument: { uri, languageId: 'html', version: 1, text }
-      })
-      const workspace = () => server.findClosestWorkspace(uri)
-      await until(() => workspace().openedTextDocuments.some((document) => document.uri === uri), 'the document to open')
-      const position = (offset: number) => {
-        const lines = text.slice(0, offset).split('\n')
-        return { line: lines.length - 1, character: lines.at(-1)!.length }
-      }
-      // A request answered after the open delivers every diagnostic the open published.
-      await clientConnection.sendRequest(HoverRequest.type, { textDocument: { uri }, position: position(0) })
-      return {
-        workspace,
-        diagnostics,
-        async close() {
-          await clientConnection.sendNotification(DidCloseTextDocumentNotification.type, { textDocument: { uri } })
-          await until(() => diagnostics().at(-1)?.diagnostics.length === 0 && !server.findClosestWorkspace(uri).languageService, 'the document to close')
-        },
-        async hover(className: string) {
-          const hover = await clientConnection.sendRequest(HoverRequest.type, {
-            textDocument: { uri },
-            position: position(text.indexOf(className) + 1)
-          })
-          return hover ? (hover.contents as MarkupContent).value.replace(/\s+/g, '') : undefined
-        },
-        async completionLabels(offset: number) {
-          const result = await clientConnection.sendRequest(CompletionRequest.type, {
-            textDocument: { uri },
-            position: position(offset),
-            context: { triggerKind: CompletionTriggerKind.Invoked }
-          }) as CompletionItem[] | CompletionList | null
-          const items = Array.isArray(result) ? result : result?.items ?? []
-          return items.map((item) => item.label)
-        }
-      }
-    }
-  }
-}
+afterEach(disposeProjects)
 
 /**
  * Guards #248: the server loaded a workspace's manifest once, when its first document opened, so a
@@ -278,9 +148,9 @@ test('reloads once after a branch switch that rewrites the watched files over se
 /**
  * Guards #248 for diagnostics: a branch whose imported CSS imports a file that is not there must
  * show the manifest error on open documents, and switching back must clear it, although the failed
- * load stopped before it could list the files it imports.
- * Catches: watching only what the failed load read (`keepWatched` false in
- * `initWorkspaceLanguageService`), which leaves the error up after the switch back.
+ * load returned no dependencies.
+ * Catches: a failed load that watches only the entries, not the files it reached through
+ * `onDependency`, which leaves the error up after the switch back.
  */
 test('shows and then clears a manifest error that a branch switch brings and takes away', async () => {
   const project = await openProject({
@@ -319,6 +189,94 @@ test('clears a manifest error once the imported file it points at is fixed', asy
 
   await until(() => lastDiagnostics().length === 0, 'the manifest error to clear')
   expect(await document.hover('watch-card')).toContain('display:flex')
+})
+
+/**
+ * Guards #248 (review F1): a branch without the stylesheet removes the entry and its import, and the
+ * reload that follows finds nothing to load. Switching back must still reload, although no load
+ * lists those files any more.
+ * Catches: a reload that replaces the watched files with what it found, dropping the missing ones.
+ */
+test('picks up an entry that a branch switch removed and a later one restored', async () => {
+  const project = await openProject({
+    'index.css': ENTRY_CSS,
+    'components.css': components('watch-card', 'block')
+  })
+  const document = await project.open('<div class="watch-card"></div>')
+  expect(await document.hover('watch-card')).toContain('display:block')
+
+  project.remove('index.css')
+  project.remove('components.css')
+  await until(async () => (await document.hover('watch-card')) === undefined, 'the stylesheet to go away')
+
+  project.write('index.css', ENTRY_CSS)
+  project.write('components.css', components('watch-card', 'flex'))
+
+  await until(async () => (await document.hover('watch-card'))?.includes('display:flex') ?? false, 'hover to show watch-card again')
+})
+
+/**
+ * Guards #248 (review F2): a document opened while an import is missing gets a failed first load
+ * with no earlier load to fall back on; fixing the importing file outside the editor must clear the
+ * error.
+ * Catches: a failed load that watches only the entries, or loses the files it reached before the
+ * missing import.
+ */
+test('clears a first-load error once the file that imports a missing stylesheet is fixed', async () => {
+  const project = await openProject({
+    'index.css': ENTRY_CSS,
+    'components.css': `@import './missing.css';\n`
+  })
+  const document = await project.open('<div class="watch-card"></div>')
+  const lastDiagnostics = () => document.diagnostics().at(-1)?.diagnostics ?? []
+  expect(lastDiagnostics().map(({ code }) => code)).toContain('manifest-loading-error')
+
+  project.replace('components.css', components('watch-card', 'flex'))
+
+  await until(() => lastDiagnostics().length === 0, 'the manifest error to clear')
+  expect(await document.hover('watch-card')).toContain('display:flex')
+})
+
+/**
+ * Guards #248 (review F3): a branch switch can write the importing file before the file it imports,
+ * or a build can generate the import later. Creating the missing file must reload the workspace.
+ * Catches: not watching the missing import's own path.
+ */
+test('picks up a missing import once the file is created', async () => {
+  const project = await openProject({
+    'index.css': ENTRY_CSS,
+    'components.css': components('watch-card', 'block')
+  })
+  const document = await project.open('<div class="watch-new"></div>')
+  const lastDiagnostics = () => document.diagnostics().at(-1)?.diagnostics ?? []
+
+  project.replace('components.css', `@import './widgets/new.css';\n`)
+  await until(() => lastDiagnostics().some(({ code }) => code === 'manifest-loading-error'), 'the manifest error')
+
+  project.write('widgets/new.css', components('watch-new', 'grid'))
+
+  await until(() => lastDiagnostics().length === 0, 'the manifest error to clear')
+  expect(await document.hover('watch-new')).toContain('display:grid')
+})
+
+/**
+ * Guards #248 (review F8): a stylesheet the entry pulls in with `@reference` feeds the manifest like
+ * an import; when it fails to compile on the first load, fixing it outside the editor must clear
+ * the error.
+ * Catches: a failed load that lists `@import` files but not `@reference` targets.
+ */
+test('clears a first-load error once the referenced stylesheet is fixed', async () => {
+  const project = await openProject({
+    'index.css': `@import '@stet-css/core';\n@reference './tokens.css';\n`,
+    'tokens.css': '.watch-card {\n  @compose "block";\n}\n'
+  })
+  const document = await project.open('<div class="block"></div>')
+  const lastDiagnostics = () => document.diagnostics().at(-1)?.diagnostics ?? []
+  expect(lastDiagnostics().map(({ code }) => code)).toContain('manifest-loading-error')
+
+  project.replace('tokens.css', '.watch-card {\n  @compose block;\n}\n')
+
+  await until(() => lastDiagnostics().length === 0, 'the manifest error to clear')
 })
 
 /**

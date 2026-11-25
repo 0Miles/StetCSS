@@ -4,10 +4,10 @@ import path from 'node:path'
 import { readFile } from 'node:fs/promises'
 import { pathToFileURL } from 'node:url'
 import CSSLanguageService, { collectSFCStyleBlocks, CSS_STYLE_LANGUAGE_IDS, SFC_LANGUAGE_IDS } from '@stet-css/language-service'
-import { compileCSSManifest, resolveCSSImportGraph } from '@stet-css/compiler'
+import { compileCSSManifest } from '@stet-css/compiler'
 import { cssTreeNativeDeclarationMatcher, generateValidRules } from '@stet-css/validator'
 import { Settings } from './settings'
-import { FileWatcher } from './file-watcher'
+import { FileWatcher, readFileStamp, type FileStamp } from './file-watcher'
 import {
   findCSSManifestEntryFiles,
   findStetCSSWorkspaceDirectories
@@ -450,11 +450,13 @@ export default class CSSLanguageServer {
   }
 
   async initWorkspaceLanguageService(workspace: Workspace) {
-    workspace.languageRuntime = await this.loadWorkspaceLanguageRuntime(workspace)
+    // Every file the workspace's manifest is read from, stamped before it is read.
+    const manifestFiles = new Map<string, FileStamp | undefined>()
+    const addManifestFile = (file: string) => {
+      if (!manifestFiles.has(file)) manifestFiles.set(file, readFileStamp(file))
+    }
+    workspace.languageRuntime = await this.loadWorkspaceLanguageRuntime(workspace, addManifestFile)
     const languageRuntime = workspace.languageRuntime
-    const manifestFiles = new Set<string>()
-    const presetManifestFile = workspace.languageRuntimeResolution?.presetManifest?.entry
-    if (workspace !== this.globalWorkspace && presetManifestFile) manifestFiles.add(presetManifestFile)
     const createLanguageService = (manifest?: StetCSSManifest) => new CSSLanguageService(
       { ...workspace.languageServiceSettings, manifest },
       { runtime: languageRuntime }
@@ -465,19 +467,15 @@ export default class CSSLanguageServer {
       this.console.error(error instanceof Error ? error.stack : error.toString())
     }
     let workspacePlan: StetCSSManifest | undefined
-    let manifestLoadFailed = false
     workspace.manifestErrors = []
     if (workspace !== this.globalWorkspace) {
       try {
-        workspacePlan = await this.loadWorkspacePlan(workspace, manifestFiles)
+        workspacePlan = await this.loadWorkspacePlan(workspace, addManifestFile)
       } catch (e: any) {
-        manifestLoadFailed = true
         reportManifestError(e)
       }
     }
-    // A load whose import graph broke cannot list the imported files, so it also keeps watching
-    // what the last load read: the change that fixes the error lands in one of those files.
-    this.fileWatcher.watch(workspace.uri, manifestFiles, { keepWatched: manifestLoadFailed })
+    this.fileWatcher.watch(workspace.uri, manifestFiles)
     if (workspacePlan) {
       try {
         workspace.languageService = createLanguageService(workspacePlan)
@@ -506,33 +504,20 @@ export default class CSSLanguageServer {
   }
 
   /**
-   * Loads the workspace's manifest, adding to `manifestFiles` the entries and every file they
-   * import, also when the load fails, so the change that fixes it reloads the workspace.
+   * Loads the workspace's manifest, passing `addManifestFile` each entry and every stylesheet the
+   * load reaches, before reading it. A load that fails still names the files it reached, the
+   * missing import included, so the change that fixes it reloads the workspace.
    */
-  private async loadWorkspacePlan(workspace: Workspace, manifestFiles: Set<string>) {
+  private async loadWorkspacePlan(workspace: Workspace, addManifestFile: (file: string) => void) {
     const cwd = workspace.uri ? URI.parse(workspace.uri).fsPath : process.cwd()
     const entries = await findCSSManifestEntryFiles(cwd)
     workspace.planEntries = entries
-    entries.forEach((entry) => manifestFiles.add(entry))
-    let result: Awaited<ReturnType<typeof loadProjectManifest>>
-    try {
-      result = await loadProjectManifest(cwd, {
-        entries,
-        baseManifest: (workspace.languageRuntime ?? defaultCSSLanguageRuntime).defaultManifest
-      })
-    } catch (error) {
-      // A failed compile reports no dependencies; the import graph alone still lists them, unless
-      // the graph itself is what broke (a missing import).
-      for (const entry of entries) {
-        try {
-          resolveCSSImportGraph(entry, { projectDir: cwd }).dependencies.forEach((dependency) => manifestFiles.add(dependency))
-        } catch {
-          // The caller keeps watching what the last load read.
-        }
-      }
-      throw error
-    }
-    result.dependencies.forEach((dependency) => manifestFiles.add(dependency))
+    entries.forEach(addManifestFile)
+    const result = await loadProjectManifest(cwd, {
+      entries,
+      baseManifest: (workspace.languageRuntime ?? defaultCSSLanguageRuntime).defaultManifest,
+      onDependency: addManifestFile
+    })
     return result.entries.length ? result.manifest : workspace.languageServiceSettings.manifest
   }
 
@@ -564,7 +549,7 @@ export default class CSSLanguageServer {
     })
   }
 
-  private async loadWorkspaceLanguageRuntime(workspace: Workspace): Promise<CSSLanguageRuntime> {
+  private async loadWorkspaceLanguageRuntime(workspace: Workspace, addManifestFile: (file: string) => void): Promise<CSSLanguageRuntime> {
     if (workspace === this.globalWorkspace || !workspace.uri) {
       workspace.languageRuntimeSource = 'bundled'
       return bundledLanguageRuntime
@@ -575,6 +560,7 @@ export default class CSSLanguageServer {
     try {
       resolution = resolveStetCSSWorkspacePackages(cwd)
       workspace.languageRuntimeResolution = resolution
+      if (resolution.presetManifest) addManifestFile(resolution.presetManifest.entry)
       const missingPackages = [
         !resolution.css && '@stet-css/core',
         !resolution.engine && '@stet-css/engine',
