@@ -242,7 +242,8 @@ export function collectCSSDirectiveRanges(source: string) {
     if (!CSS_DIRECTIVE_SOURCE_NAME_SET.has(name.value)) continue
     if (name.value === 'master' && !startsStatement) continue
 
-    const statementEnd = findCSSStatementEnd(source, name.end)
+    // Inside a block, a `}` ends a statement written without its last `;`, as in native CSS.
+    const statementEnd = findCSSStatementEnd(source, name.end, depth > 0)
     const blockStart = statementEnd.reason === 'block' ? statementEnd.end : -1
     const blockEnd = blockStart === -1 ? -1 : findCSSBlockEnd(source, blockStart)
     const end = blockStart === -1
