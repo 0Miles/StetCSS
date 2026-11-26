@@ -165,6 +165,9 @@ function isSelectorSuffix(nodes: SelectorNode[], ends: boolean, ofList = false):
   return itemHasCompound || !ofList && !ends
 }
 
+/** Signs that end a group item's value and start its selector or at-rule, as they end a class value. */
+const ITEM_STATE_SIGNS = new Set(['!', '*', '>', '+', '~', ':', '[', '@', '_'])
+
 /** Functions whose arguments may hold empty items: `var(--x,)`, `env(a,)`, unquoted `url(a,)`. */
 const OPAQUE_ARGUMENT_FUNCTIONS = new Set(['var', 'env', 'attr', 'url', 'inherit'])
 
@@ -1440,7 +1443,8 @@ export class Utility {
     endSymbol: string,
     parentFunctionName?: string,
     bypassParsing = false,
-    bypassVariableNames: string[] = []
+    bypassVariableNames: string[] = [],
+    opaqueArguments?: boolean
   ) => {
     const root = parentFunctionName === undefined
     const isVarFunction = !root
@@ -1524,17 +1528,24 @@ export class Utility {
       }
     }
     // In a group's braces, where in its item the text read so far stands. Only an item's value
-    // may hold `var()` and the like with empty arguments; in a selector (`{fg:red:url(,.a)}`) or
-    // at-rule (`{fg:red@env(a,)}`) an opaque name is checked like any other.
+    // may hold `var()` and the like with empty arguments; in a selector (`{fg:red:url(,.a)}`,
+    // `{fg:red>url(,.a)}`) or at-rule (`{fg:red@env(a,)}`) an opaque name is checked like any
+    // other. The value ends where a class value does: at `:`, `@`, `!*>+~[_`, a `.` before no digit
+    // or a `#` after a value (`valueHasText`).
     const groupBlock = endSymbol === '}' && this.registeredUtility.emit.type === 'group'
     let itemPosition: 'key' | 'value' | 'state' = 'key'
-    // Unnamed parentheses pass down the nearest function name, so `calc((1,))` is checked.
+    let valueHasText = false
+    // Whether these arguments may hold empty items, decided once from the function name, when
+    // first needed, and passed down to unnamed parentheses (`calc((1,))` is checked) so they do
+    // not read a long name again.
+    let argumentsAreOpaque = opaqueArguments
+    const isOpaque = () => argumentsAreOpaque ??= hasOpaqueArguments(parentFunctionName ?? '')
     const checkFunctionArguments = () => {
       if (
         !root
         && endSymbol === ')'
         && hasEmptyListItem(currentValueComponents)
-        && !hasOpaqueArguments(parentFunctionName)
+        && !isOpaque()
       ) this.invalidValueSyntax = true
     }
 
@@ -1570,15 +1581,19 @@ export class Utility {
         const newValueComponent: ValueComponent[][0] = { type: 'function', name: functionName, symbol: val, children: [], token: '' }
         currentValueComponents.push(newValueComponent)
         currentValue = ''
+        const outsideItemValue = groupBlock && itemPosition !== 'value'
         i = this.parseValues(
           newValueComponent.children,
           ++i,
           value,
           unit,
           VALUE_DELIMITERS[val as keyof typeof VALUE_DELIMITERS],
-          groupBlock && itemPosition !== 'value' ? '' : functionName || parentFunctionName || '',
-          bypassParsing || functionName === 'calc'
+          outsideItemValue ? '' : functionName || parentFunctionName || '',
+          bypassParsing || functionName === 'calc',
+          undefined,
+          outsideItemValue ? false : functionName ? undefined : isOpaque()
         )
+        valueHasText = true
       } else if ((val === '|' || val === ' ') && endSymbol !== '}' && (!isString || parentFunctionName === 'path')) {
         parse()
         currentValueComponents.push({ type: 'separator', value: ' ', token: val })
@@ -1599,6 +1614,7 @@ export class Utility {
               text: (val === ',' ? '' : ' ') + val + (val === ',' ? '' : ' '),
               token: val
             })
+            valueHasText = false
             continue
           } else if (
             root
@@ -1613,10 +1629,23 @@ export class Utility {
         if (groupBlock) {
           if (val === ';') {
             itemPosition = 'key'
-          } else if (val === ':') {
-            itemPosition = itemPosition === 'key' ? 'value' : 'state'
-          } else if (val === '@') {
-            itemPosition = 'state'
+          } else if (itemPosition === 'key') {
+            if (val === ':') {
+              itemPosition = 'value'
+              valueHasText = false
+            } else if (val === '@') {
+              itemPosition = 'state'
+            }
+          } else if (itemPosition === 'value') {
+            if (
+              ITEM_STATE_SIGNS.has(val)
+              || val === '.' && isNaN(+value[i + 1])
+              || val === '#' && valueHasText
+            ) {
+              itemPosition = 'state'
+            } else {
+              valueHasText = val !== '|' && val !== ' '
+            }
           }
         }
         currentValue += val
