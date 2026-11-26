@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { build, type BuildOptions, type Plugin, type PluginOption, type Rollup } from 'vite'
 import defaultManifestJSON from '@stet-css/preset/default-manifest.json' with { type: 'json' }
+import { normalizeFilePath } from '../src/utils/path'
 
 export const SLOT_CSS_RULE = '#stet-css-slot{--slot:0}'
 
@@ -58,6 +59,29 @@ export function createProjectContext({
       validClasses: new Set()
     }
   } as any
+}
+
+/**
+ * A dev server whose module graphs hold a module for each of `files`, as Vite's do once a module
+ * importing them was served, before their own transform.
+ */
+export function createDevServerStub(files: string[]) {
+  const known = new Set(files.map((file) => normalizeFilePath(file)))
+  const moduleGraph = {
+    getModulesByFile: (file: string) => (known.has(normalizeFilePath(file)) ? new Set([{ file }]) : undefined),
+    getModuleById: () => undefined,
+    invalidateModule: () => {}
+  }
+  return { moduleGraph, environments: { client: { name: 'client', moduleGraph } } } as any
+}
+
+/**
+ * Cascade layer order of `css`: each layer name where an `@layer` statement or block, or a
+ * layered `@import`, first names it.
+ */
+export function cssLayerOrder(css: string) {
+  return [...new Set([...css.matchAll(/@layer\s+([^{;]+)[{;]|@import[^;]*\slayer\(([^)]+)\)/g)]
+    .flatMap((match) => (match[1] ?? match[2]).split(',').map((name) => name.trim())))]
 }
 
 export interface BuildProjectOptions {

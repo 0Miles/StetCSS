@@ -101,7 +101,8 @@ export default function StyleEntryPlugin(context: PluginContext): Plugin {
       const isServe = context.config?.command === 'serve'
       const hostSource = createStyleCSSHostSource(code, {
         stetSource,
-        // A build splices the CSS into the placeholder later; its layers come from the entry.
+        // A build splices the CSS into the placeholder later; its layers come from the entry, and
+        // generateBundle adds the other entries' leading layers once all of them registered.
         ...(isServe ? {} : { stetLayerSource: resolvedStyleSource.source })
       })
       if (!isServe) {

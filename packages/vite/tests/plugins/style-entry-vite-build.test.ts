@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import stetCSS from '../../src/core'
-import { buildProject } from '../plugin-test-helper'
+import { buildProject, cssLayerOrder } from '../plugin-test-helper'
 
 function expectStetBaseCSS(css: string) {
   expect(css).toContain('@layer base')
@@ -67,6 +67,99 @@ describe('StyleEntryPlugin Vite build integration', () => {
     expect(css.slice(0, css.indexOf('@layer base'))).toMatch(
       /^@layer theme,base,defaults,components,utilities;@import ("https:\/\/example\.com\/b\.css"|url\("?https:\/\/example\.com\/b\.css"?\)) layer\(b\);/
     )
+  })
+
+  /**
+   * Guards #250 in a production build: the CSS spliced into the asset put the package's CSS first
+   * and lost `@layer reset;` written before `@import "@stet-css/core"`, so `reset` was declared
+   * after `utilities` and beat `fg:blue`. The build orders the layers as static extraction does.
+   * Reverse check: before the fix this test was red with `reset` after `utilities`.
+   */
+  test('declares the layers written before @stet-css/core ahead of the preset layers', async () => {
+    const { css } = await buildProject({
+      appClass: 'r fg:blue',
+      plugins: [
+        stetCSS()
+      ],
+      prefix: 'stet-css-vite-leading-layer-',
+      styleCSS: '@layer reset;\n@import "@stet-css/core";\n@layer reset { .r { color: rgb(0 128 0); } }'
+    })
+
+    expect(cssLayerOrder(css)).toEqual(['reset', 'theme', 'base', 'defaults', 'components', 'utilities'])
+  })
+
+  /**
+   * Guards #250 with two entries in a production build: the layer statement the build puts ahead
+   * of a kept import listed only its own entry's layers, while the CSS spliced in after it leads
+   * with every entry's. `y`, written before `@import "@stet-css/core"` in the other entry, then sorted
+   * after `utilities` and `b`, so `.r` beat `fg:blue` only in production. The build orders the
+   * layers as static extraction and dev do, with `b` after the CSS that precedes its import.
+   * Reverse check: building the statement from the entry's own import graph again reds only this test.
+   */
+  test('declares the layers every entry writes before @stet-css/core ahead of a kept import', async () => {
+    const { css } = await buildProject({
+      appClass: 'r fg:blue',
+      plugins: [
+        stetCSS()
+      ],
+      prefix: 'stet-css-vite-leading-layers-',
+      mainTS: 'import "./a.css"\nimport "./b.css"\n',
+      setup(root) {
+        writeFileSync(join(root, 'src/a.css'), '@layer x;\n@import "@stet-css/core";\n@import url("https://example.com/b.css") layer(b);')
+        writeFileSync(join(root, 'src/b.css'), '@layer y;\n@import "@stet-css/core";\n@layer y { .r { color: rgb(0 128 0); } }')
+      }
+    })
+
+    expect(cssLayerOrder(css)).toEqual(['x', 'y', 'theme', 'base', 'defaults', 'components', 'utilities', 'b'])
+  })
+
+  /**
+   * Guards #250's criterion 3 in a production build: an entry that writes no `@layer` statement
+   * kept its order only while no other stylesheet on disk did. The CSS spliced into the asset led
+   * with the leading layers of every entry discovered on disk, so `legacy/old.css`, which the build
+   * never imports, put `reset` ahead of the preset and `.r` lost to `fg:blue`.
+   * Reverse check: splicing with every discovered entry's leading layers again reds only this test.
+   */
+  test('ignores the leading layers of an entry the build never imports', async () => {
+    const { css } = await buildProject({
+      appClass: 'r fg:blue',
+      plugins: [
+        stetCSS()
+      ],
+      prefix: 'stet-css-vite-unimported-leading-layer-',
+      styleCSS: '@import "@stet-css/core";\n@layer reset { .r { color: rgb(0 128 0); } }',
+      setup(root) {
+        mkdirSync(join(root, 'legacy'))
+        writeFileSync(join(root, 'legacy/old.css'), '@layer reset;\n@import "@stet-css/core";')
+      }
+    })
+
+    expect(cssLayerOrder(css)).toEqual(['theme', 'base', 'defaults', 'components', 'utilities', 'reset'])
+  })
+
+  /**
+   * Guards #250's criterion 3 for a kept import in a production build: no entry writes an `@layer`
+   * statement, yet the statement the build puts ahead of `a.css`'s kept import listed every layer
+   * of the generated CSS, `late` from `b.css` included, so `late` sorted before `b` and the external
+   * `layer(b)` rules beat `.l`. The statement lists the entry's own layers plus every entry's
+   * leading layers only, so `late` stays after `b`, as at the fixed point and in native CSS.
+   * Reverse check: building the statement from the whole extracted CSS again reds only this test.
+   */
+  test('keeps another entry\'s layer block after a kept import when no entry writes a layer statement', async () => {
+    const { css } = await buildProject({
+      appClass: 'l fg:blue',
+      plugins: [
+        stetCSS()
+      ],
+      prefix: 'stet-css-vite-kept-import-late-layer-',
+      mainTS: 'import "./a.css"\nimport "./b.css"\n',
+      setup(root) {
+        writeFileSync(join(root, 'src/a.css'), '@import "@stet-css/core";\n@import url("https://example.com/b.css") layer(b);')
+        writeFileSync(join(root, 'src/b.css'), '@import "@stet-css/core";\n@layer late { .l { color: rgb(0 128 0); } }')
+      }
+    })
+
+    expect(cssLayerOrder(css)).toEqual(['theme', 'base', 'defaults', 'components', 'utilities', 'b', 'late'])
   })
 
   test('emits preset base CSS for the root StetCSS import', async () => {

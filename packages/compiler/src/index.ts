@@ -36,7 +36,7 @@ import {
 export * from './core'
 export { createCSSImportGraphReader, type CSSImportGraphReader, type CSSImportGraphReaderOptions } from './css-import-graph-reader'
 export { createFileStampCache, type FileStampCache } from './file-stamps'
-export { applyCSSImportConditions, collectCSSLayerOrder, hoistCSSImportStatements } from './css-import-conditions'
+export { applyCSSImportConditions, collectCSSLayerOrder, findCSSLayerStatements, hoistCSSImportStatements } from './css-import-conditions'
 export type {
   CompileCSSFileOptions,
   CompileCSSOptions,

@@ -17,6 +17,159 @@ async function withFiles(files: Record<string, string>, run: (root: string) => P
 }
 
 /**
+ * The static CSS for the classes of `root`'s files, with `entries` (file name to source; a file's
+ * own source when `undefined`) registered in order.
+ */
+async function extractEntries(
+  root: string,
+  entries: Record<string, string | undefined>,
+  options: Partial<Parameters<typeof createExtractedCSS>[0]> = {}
+) {
+  const scanner = new CSSScanner({}, root)
+  await scanner.init()
+  const styleCSSSources = new Map()
+  for (const [name, source] of Object.entries(entries)) {
+    const entry = join(root, name)
+    await registerStyleCSSSource(scanner, styleCSSSources, entry, source ?? readFileSync(entry, 'utf-8'), { projectDir: root })
+  }
+  return createExtractedCSS({ scanner, styleCSSSources, projectDir: root, ...options })
+}
+
+/** The static CSS for the classes of `root`'s files, with `entryName` as the only entry. */
+function extractEntry(root: string, entryName: string) {
+  return extractEntries(root, { [entryName]: undefined })
+}
+
+/** Cascade layer order: each layer name where an `@layer` statement or block first names it. */
+function layerOrder(css: string) {
+  return [...new Set([...css.matchAll(/@layer\s+([^{;]+)[{;]/g)]
+    .flatMap((match) => match[1].split(',').map((name) => name.trim())))]
+}
+
+/** Every layer name an `@layer` statement declares, once per statement that names it. */
+function layerStatementNames(css: string) {
+  return [...css.matchAll(/@layer\s+([^{;]+);/g)]
+    .flatMap((match) => match[1].split(',').map((name) => name.trim()))
+}
+
+/**
+ * Guards #250 on static extraction (the CLI, static builds): the package's CSS always came first
+ * and `@layer reset;` written before `@import "@stet-css/core"` was lost, so `reset` was declared
+ * after `utilities` and its `.r` beat `fg:blue`. The layers written before the import now lead the
+ * CSS, each declared once.
+ * Reverse check: before the fix this test and the next one were red, with `reset` after `utilities`.
+ */
+test('static extraction declares the layers written before @stet-css/core ahead of the preset layers', () => withFiles({
+  'main.css': '@layer reset;\n@import "@stet-css/core";\n@layer reset { .r { color: rgb(0 128 0); } }',
+  'index.html': '<div class="r fg:blue"></div>'
+}, async (root) => {
+  const css = await extractEntry(root, 'main.css')
+  expect(layerOrder(css)).toEqual(['reset', 'theme', 'base', 'defaults', 'components', 'utilities'])
+  const declared = layerStatementNames(css)
+  expect(declared).toContain('reset')
+  expect(declared).toEqual([...new Set(declared)])
+}))
+
+/**
+ * Guards #250 for the other ways an entry orders layers around `@import "@stet-css/core"`: a layer
+ * an inlined relative import names before it is declared ahead of the preset too, and a statement
+ * written after it stays after the preset layers, as native CSS orders them.
+ * Reverse check: moving every `@layer` statement of the entry ahead of the preset reds only this
+ * test; before the fix it was red with `reset` and `vendor` after `utilities`.
+ */
+test('static extraction keeps the layers written after @stet-css/core after the preset layers', () => withFiles({
+  'main.css': [
+    '@layer reset;',
+    '@import "./vendor.css" layer(vendor);',
+    '@import "@stet-css/core";',
+    '@layer late;',
+    '@layer reset { .r { color: green } }',
+    '@layer late { .l { color: red } }'
+  ].join('\n'),
+  'vendor.css': '.v { color: blue }',
+  'index.html': '<div class="fg:blue"></div>'
+}, async (root) => {
+  expect(layerOrder(await extractEntry(root, 'main.css')))
+    .toEqual(['reset', 'vendor', 'theme', 'base', 'defaults', 'components', 'utilities', 'late'])
+}))
+
+/**
+ * Guards #250 when another import precedes `@import "@stet-css/core"`: the layers written before
+ * the core import are found by the core import's position, not the first import's, so `a`, which
+ * the layered relative import declares after a kept external import, still leads the preset.
+ * Reverse check: taking the first import as the core import reds only this test, with `a` after
+ * `utilities`.
+ */
+test('static extraction declares a layer written after another import but before @stet-css/core ahead of the preset layers', () => withFiles({
+  'main.css': [
+    '@import url("https://example.com/b.css");',
+    '@import "./a.css" layer(a);',
+    '@import "@stet-css/core";'
+  ].join('\n'),
+  'a.css': '.a { color: green }',
+  'index.html': '<div class="a fg:blue"></div>'
+}, async (root) => {
+  expect(layerOrder(await extractEntry(root, 'main.css')).slice(0, 2)).toEqual(['a', 'theme'])
+}))
+
+/**
+ * Guards #250's "each layer declared once": `@layer reset;` before `@import "@stet-css/core"` with
+ * no `reset` block left the entry's compile to keep the statement, so the CSS declared `reset`
+ * ahead of the preset and again after it. The statement leaves the entry's own CSS.
+ * Reverse check: keeping the statements in the entry's source reds only this test.
+ */
+test('static extraction declares a layer written before @stet-css/core once when no block follows', () => withFiles({
+  'main.css': '@layer reset;\n@import "@stet-css/core";\n.a { color: red }',
+  'index.html': '<div class="fg:blue"></div>'
+}, async (root) => {
+  expect(layerStatementNames(await extractEntry(root, 'main.css')).filter((name) => name === 'reset')).toEqual(['reset'])
+}))
+
+/**
+ * Guards #250 across entries: all entries share one extracted CSS, so two entries that each write
+ * `@layer reset;` before `@import "@stet-css/core"` must not lead it with `@layer reset, reset;`.
+ * Reverse check: concatenating the entries' layers without de-duplicating reds only this test.
+ */
+test('static extraction declares a layer two entries write before @stet-css/core once', () => withFiles({
+  'a.css': '@layer reset;\n@import "@stet-css/core";\n@layer reset { .a { color: red } }',
+  'b.css': '@layer reset;\n@import "@stet-css/core";\n@layer reset { .b { color: blue } }',
+  'index.html': '<div class="fg:blue"></div>'
+}, async (root) => {
+  const css = await extractEntries(root, { 'a.css': undefined, 'b.css': undefined })
+  expect(css.startsWith('@layer reset;')).toBe(true)
+  expect(layerStatementNames(css).filter((name) => name === 'reset')).toEqual(['reset'])
+}))
+
+/**
+ * Guards #250 against `includeNativeCSS: false`: the layers written before
+ * `@import "@stet-css/core"` belong to the entry's native CSS, so CSS without it must not declare them.
+ * Reverse check: emitting the leading statement regardless of `includeNativeCSS` reds only this test.
+ */
+test('static extraction without native CSS declares no layer written before @stet-css/core', () => withFiles({
+  'main.css': '@layer reset;\n@import "@stet-css/core";\n@layer reset { .r { color: green } }',
+  'index.html': '<div class="r fg:blue"></div>'
+}, async (root) => {
+  const css = await extractEntries(root, { 'main.css': undefined }, { includeNativeCSS: false })
+  expect(css).toContain('.fg\\:blue')
+  expect(css).not.toContain('@layer reset')
+}))
+
+/**
+ * Guards #250 for entries whose graph is not hoisted, such as a Vue style block: an `@layer` block
+ * written before `@import "@stet-css/core"` holds rules, not just a layer name, so only statements
+ * may leave the entry's source. Taking the block too made `.r` vanish from the CSS.
+ * Reverse check: treating `@layer` blocks as statements in `findCSSLayerStatements` reds only this test.
+ */
+test('static extraction keeps an @layer block written before @stet-css/core in a Vue style block', () => withFiles({
+  'index.html': '<div class="r fg:blue"></div>'
+}, async (root) => {
+  const css = await extractEntries(root, {
+    'App.vue?vue&type=style&index=0&lang.css': '@layer reset { .r { color: green } }\n@import "@stet-css/core";'
+  })
+  expect(css).toMatch(/\.r\s*\{\s*color:\s*green/)
+}))
+
+/**
  * Guards #183 on the static build: the entry's relative `@import` kept its rules but dropped its
  * `layer()` and media conditions, so `.x` beat every layer and `.y` applied on screen.
  * Reverse check: `applyCSSImportConditions` returning its source unchanged reds this test and the
