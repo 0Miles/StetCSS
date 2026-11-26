@@ -94,6 +94,25 @@ test('static extraction keeps the layers written after @stet-css/core after the 
 }))
 
 /**
+ * Guards #250 when another import precedes `@import "@stet-css/core"`: the layers written before
+ * the core import are found by the core import's position, not the first import's, so `a`, which
+ * the layered relative import declares after a kept external import, still leads the preset.
+ * Reverse check: taking the first import as the core import reds only this test, with `a` after
+ * `utilities`.
+ */
+test('static extraction declares a layer written after another import but before @stet-css/core ahead of the preset layers', () => withFiles({
+  'main.css': [
+    '@import url("https://example.com/b.css");',
+    '@import "./a.css" layer(a);',
+    '@import "@stet-css/core";'
+  ].join('\n'),
+  'a.css': '.a { color: green }',
+  'index.html': '<div class="a fg:blue"></div>'
+}, async (root) => {
+  expect(layerOrder(await extractEntry(root, 'main.css')).slice(0, 2)).toEqual(['a', 'theme'])
+}))
+
+/**
  * Guards #250's "each layer declared once": `@layer reset;` before `@import "@stet-css/core"` with
  * no `reset` block left the entry's compile to keep the statement, so the CSS declared `reset`
  * ahead of the preset and again after it. The statement leaves the entry's own CSS.

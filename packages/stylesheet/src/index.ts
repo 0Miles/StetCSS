@@ -1067,6 +1067,14 @@ export async function createStyleCSSManifest(options: CreateStyleCSSManifestOpti
   }
 }
 
+/**
+ * The layers the entries declare before `@import '@stet-css/core'`, in entry order, each once:
+ * what `createExtractedCSSResult` leads with by default (#250).
+ */
+export function collectStyleCSSLeadingLayers(styleCSSSources: StyleCSSSources | undefined) {
+  return [...new Set(Array.from(styleCSSSources?.values() || [], (styleSource) => styleSource.leadingLayers ?? []).flat())]
+}
+
 export async function createExtractedCSSResult(options: CreateExtractedCSSOptions): Promise<CreateExtractedCSSResult> {
   const {
     scanner,
@@ -1123,8 +1131,9 @@ export async function createExtractedCSSResult(options: CreateExtractedCSSOption
   for (const result of entryStyleResults) finalize(result)
   // The layers entries declare before `@import '@stet-css/core'` lead, each declared once, so
   // they sort ahead of the package's layers as the import ordered them (#250).
-  const leadingLayers = [...new Set(givenLeadingLayers
-    ?? Array.from(styleCSSSources?.values() || [], (styleSource) => styleSource.leadingLayers ?? []).flat())]
+  const leadingLayers = givenLeadingLayers
+    ? [...new Set(givenLeadingLayers)]
+    : collectStyleCSSLeadingLayers(styleCSSSources)
   const nativeCSS = [
     ...(includeNativeCSS && leadingLayers.length ? [`@layer ${leadingLayers.join(', ')};`] : []),
     ...(includeStetBaseCSS
