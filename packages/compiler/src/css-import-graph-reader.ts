@@ -1,5 +1,5 @@
 import { readFileSync, statSync } from 'node:fs'
-import { assertNoMasterAtRules } from './lexer/standalone-directives'
+import { assertNoMasterAtRules, assertQuotedCSSDirectiveArguments } from './lexer/standalone-directives'
 
 const MiB = 1024 * 1024
 /** The largest stylesheet an import graph reads. */
@@ -28,17 +28,28 @@ const MAX_CSS_IMPORT_GRAPH_BYTES = 64 * MiB
  */
 export type CSSImportGraphReader = (file: string, source?: string) => string
 
+export interface CSSImportGraphReaderOptions {
+  /**
+   * Rejects unquoted `@source`, `@safelist` and `@blocklist` arguments in every stylesheet read
+   * (default `true`). Turn it off only to find out whether a stylesheet is a StetCSS entry, so a
+   * stylesheet StetCSS does not own, such as a Tailwind entry with `@source inline(...)`, never
+   * fails for directives StetCSS would not read.
+   */
+  checkDirectiveArguments?: boolean
+}
+
 /**
  * Creates the reader one CSS import graph inlines every stylesheet through, so every `@import`
  * expansion applies the same file checks and limits. Create one per compile entry: the entry's graph
  * and the graphs of every stylesheet its `@reference` tree compiles share it, so their imports count
  * toward the same limits. Each file is read from disk once per reader. Each stylesheet is checked for
- * removed `@master` at-rules on its own, so the error points into the file that holds the at-rule
- * rather than into the expanded graph.
+ * removed `@master` at-rules and unquoted directive arguments on its own, so the error points into
+ * the file that holds the at-rule rather than into the expanded graph.
  */
-export function createCSSImportGraphReader(): CSSImportGraphReader {
+export function createCSSImportGraphReader(options: CSSImportGraphReaderOptions = {}): CSSImportGraphReader {
+  const checkDirectiveArguments = options.checkDirectiveArguments !== false
   const sources = new Map<string, string>()
-  /** The text each file was last checked with, so repeated inclusions skip the `@master` scan. */
+  /** The text each file was last checked with, so repeated inclusions skip the per-file checks. */
   const checkedSources = new Map<string, string>()
   let inclusions = 0
   let bytes = 0
@@ -54,6 +65,7 @@ export function createCSSImportGraphReader(): CSSImportGraphReader {
     }
     if (checkedSources.get(file) !== text) {
       assertNoMasterAtRules(text, file, true)
+      if (checkDirectiveArguments) assertQuotedCSSDirectiveArguments(text, file, true)
       checkedSources.set(file, text)
     }
     bytes += Buffer.byteLength(text)

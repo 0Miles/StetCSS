@@ -196,6 +196,8 @@ export interface ResolvedStyleCSSSource {
 
 export interface ResolveStyleCSSImportGraphOptions {
   expandStetCSSPackage?: boolean
+  /** Passed to `createCSSImportGraphReader`: off only to find out whether a stylesheet is an entry. */
+  checkDirectiveArguments?: boolean
 }
 
 export interface CreateStyleCSSHostSourceOptions {
@@ -339,7 +341,7 @@ export function resolveStyleCSSImportGraph(
     }
   }
   const filename = cleanStyleRequest(file)
-  const readCSSImport = createCSSImportGraphReader()
+  const readCSSImport = createCSSImportGraphReader({ checkDirectiveArguments: options.checkDirectiveArguments })
   return {
     source: hoistCSSImportStatements(resolveStyleCSSImportGraphFile(filename, readCSSImport(filename, source), readCSSImport, dependencies, new Set(), [], projectDir, options)),
     dependencies
@@ -365,8 +367,11 @@ export function collectStyleCSSDependencies(
   }
 
   try {
+    // The files to watch do not depend on directive arguments: with the check on, an unquoted
+    // one in an imported file would drop every dependency, and fixing it would never rerun the entry.
     const graph = resolveStyleCSSImportGraph(filename, resolvedSource, projectDir, {
-      expandStetCSSPackage: false
+      expandStetCSSPackage: false,
+      checkDirectiveArguments: false
     })
     for (const dependency of graph.dependencies) {
       dependencies.add(cleanStyleRequest(dependency))
@@ -415,8 +420,13 @@ export function resolveStetStyleSource(
   const sourceHasStetEntry = hasStetStyleEntrypoint(source)
   let unresolvedPackageSource: ResolvedStyleCSSSource
   try {
+    // Unquoted `@source`, `@safelist` and `@blocklist` arguments are checked only once the graph
+    // reaches `@stet-css/core`: a stylesheet StetCSS does not own (Tailwind's `@source inline()`,
+    // a Sass `//` comment) is handed back to the bundler untouched, while an entry, even one that
+    // reaches the core through an import, fails in the resolve below.
     unresolvedPackageSource = resolveStyleCSSImportGraph(file, source, projectDir, {
-      expandStetCSSPackage: false
+      expandStetCSSPackage: false,
+      checkDirectiveArguments: false
     })
   } catch (error) {
     // The graph reader rejects removed `@master` at-rules in the file or anything it imports.
