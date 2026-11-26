@@ -186,6 +186,43 @@ describe.concurrent('group items', () => {
   ])('%s keeps its rule', (className, text) => {
     expect(generateText(className)).toBe(text)
   })
+
+  /**
+   * Guards (#234): the exemption reaching a selector after an item's first `:`. After a key that
+   * is a class on its own (`block`, `hidden`), a key that names no property (`block>div`) or a
+   * nested group (`{bg:blue}`), that `:` starts a state, not a value. Such an item generates
+   * nothing and the group wrote it raw, so `{fg:red;block:url(,.a)}` emitted an unconditional
+   * `color` beside a dead `block:url(,.a)`, and passed validation, where the base generated
+   * nothing.
+   *
+   * Reverse check: writing such an item raw again fails these rows.
+   */
+  test.each([
+    '{fg:red;block:url(,.a)}',
+    '{block:url(,.a)}',
+    '{hidden:env(a,)}',
+    '{fg:red;block>div:url(,.a)}',
+    '{fg:red;{bg:blue}:url(,)}'
+  ])('%s generates no CSS', (className) => {
+    expect(generateText(className)).toBe('')
+    expect(generateText(className, createMatcherlessCSS())).toBe('')
+  })
+
+  /**
+   * Guards (#234): rejecting a raw item for its `var()` with an empty fallback when its key names a
+   * property. The native declaration matcher rejects `repeat()` holding `var()`, and an instance
+   * without one builds no rule for a custom property, so these items are written raw; they are
+   * valid CSS and the base emitted them.
+   *
+   * Reverse check: rejecting every raw item that holds an empty function argument fails these rows.
+   */
+  test.each([
+    ['{grid-template-columns:repeat(2,var(--x,))}', '@layer utilities{.\\{grid-template-columns\\:repeat\\(2\\,var\\(--x\\,\\)\\)\\}{grid-template-columns:repeat(2,var(--x,))}}'],
+    ['{--x:var(--y,)}', '@layer utilities{.\\{--x\\:var\\(--y\\,\\)\\}{--x:var(--y,)}}']
+  ])('%s keeps its rule', (className, text) => {
+    expect(generateText(className)).toBe(text)
+    expect(generateText(className, createMatcherlessCSS())).toBe(text)
+  })
 })
 
 // Not concurrent: a slow run here must not push the tests above past their timeout.
