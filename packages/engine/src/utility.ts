@@ -964,14 +964,30 @@ export class Utility {
    * matcher says so (`block:url(,.a)`, `hidden:env(a,)`). The group's own parse cannot tell these
    * keys from properties and exempts `url()` and the like after any item's first `:`; an item
    * whose key names a property is a raw declaration and keeps the exemption
-   * (`flex-wrap:var(--x,)`), though `flex-wrap` is a class too. Without a matcher the engine
-   * cannot tell `block` from `flex-wrap`, and writes either raw.
+   * (`flex-wrap:var(--x,)`), though `flex-wrap` is a class too.
    */
   private holdsEmptyArgumentInState(item: string) {
     const indexOfColon = item.indexOf(':')
     if (indexOfColon === -1 || !hasEmptyFunctionArgument(item)) return false
     const key = item.slice(0, indexOfColon)
-    return !PROPERTY_NAME.test(key) || this.css.namesNativeProperty(key) === false
+    if (!PROPERTY_NAME.test(key)) return true
+    return !(this.css.namesNativeProperty(key) ?? this.classNamesItsProperty(key))
+  }
+
+  /**
+   * Without a native declaration matcher, whether `key` names a property, judged by the class
+   * `key` alone, since the engine holds no property list: a key that is no class keeps the
+   * benefit of the doubt (`grid-template-columns`), and a class names a property when it sets
+   * that property or a `key-*` longhand of it (`flex-wrap`, `container` setting
+   * `container-type`), not when it sets another (`block`, `hidden` setting `display`). A property
+   * whose class sets another (`flex`, `grid`) is read as a state, as at the base.
+   */
+  private classNamesItsProperty(key: string) {
+    const rules = this.css.generateGroupItem(key, this.mode)
+    if (!rules?.length) return true
+    const longhandPrefix = key + '-'
+    return rules.some((rule) => Object.keys(rule.declarations ?? {})
+      .some((property) => property === key || property.startsWith(longhandPrefix)))
   }
 
   /** The branches a state token selects; `undefined`, leaving the class invalid, past `MAX_STATE_BRANCHES`. */
