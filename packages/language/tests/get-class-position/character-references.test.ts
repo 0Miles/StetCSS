@@ -21,6 +21,10 @@ import { getClassPosition } from './test'
  * - decoding by language id instead of the file extension, inside scripts or frontmatter, or for
  *   every attribute name → the as-written test;
  * - finding `<script>`/`<style>` in comments or attribute values → the HTML-hosted test;
+ * - reading a Vue root `<template lang="pug">` as markup → the as-written test; reading a nested
+ *   one, an `html` one or an upper-case `LANG` as raw text → the HTML-hosted test;
+ * - class function or string scans keeping their as-written reading inside a decoded `:class`
+ *   binding → the Vue binding test;
  * - closing Astro frontmatter at any `---` → the as-written test.
  */
 function readClasses(document: TextDocument, provider?: 'regex' | 'oxc', settings: LanguageSettings = languageSettings) {
@@ -57,7 +61,11 @@ test.concurrent('reads HTML-hosted class attributes by their decoded classes', (
     ['html', '<!-- <style> moved to app.css -->\n<div class="block&#32;hidden"></div>'],
     ['vue', '<template><!-- <script> --><div class="block&#32;hidden"></div></template>'],
     ['astro', '---\nconst a = 1\n---\n<!-- <style> -->\n<div class="block&#32;hidden"></div>'],
-    ['html', '<div title="<style>"></div><p class="block&#32;hidden"></p>']
+    ['html', '<div title="<style>"></div><p class="block&#32;hidden"></p>'],
+    // Vue reads a template as raw text only at the root, and only for a `lang` other than `html`.
+    ['vue', '<template lang="html"><div class="block&#32;hidden"></div></template>'],
+    ['vue', '<template LANG="pug"><div class="block&#32;hidden"></div></template>'],
+    ['vue', '<template><template lang="pug"><div class="block&#32;hidden"></div></template></template>']
   ] as const) {
     expect(readClasses(createDoc(ext, content)), content).toEqual(decoded)
   }
@@ -82,6 +90,9 @@ test.concurrent('reads strings in a Vue class binding after the template decodes
   // A class function's string inside the binding is read as the binding reads it.
   expect(readClasses(createDoc('vue', '<template><div :class="[ clsx(\'inline&#x2d;flex\') ]"></div></template>')))
     .toEqual([['inline&#x2d;flex', 'inline-flex']])
+  // Only as the binding reads it, also where a reference splits the string into classes.
+  expect(readClasses(createDoc('vue', '<template><div :class="[ clsx(\'block&#32;hidden\') ]"></div></template>')))
+    .toEqual([['block', 'block'], ['hidden', 'hidden']])
   // A binding configured with single quotes is an attribute value as well.
   const singleQuoted = { ...languageSettings, classAttributeBindings: { ...languageSettings.classAttributeBindings, ':class': ['\'', '\''] as [string, string] } }
   expect(readClasses(createDoc('vue', '<template><div :class=\'["block&#32;hidden"]\'></div></template>'), undefined, singleQuoted))
@@ -118,6 +129,8 @@ test.concurrent('reads class attributes as written where the build does', () => 
     expect(readClasses(createDoc('astro', `---\n${line}\nconst html = '<p class="block&#32;hidden"></p>'\n---\n<div></div>`)), line)
       .toEqual(asWritten)
   }
+  // A Vue template in another language (`lang="pug"`), which Vue reads as raw text.
+  expect(readClasses(createDoc('vue', '<template lang="pug">\ndiv(id="x" class="block&#32;hidden")\n</template>'))).toEqual(asWritten)
   // Attributes the build does not read as class attributes.
   expect(readClasses(createDoc('vue', '<template><Comp className="block&#32;hidden" /></template>'))).toEqual(asWritten)
   // An Alpine `:class` in an HTML file: the build reads only `class` there.
