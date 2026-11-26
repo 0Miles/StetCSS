@@ -183,6 +183,42 @@ function hasOpaqueArguments(functionName: string) {
   return OPAQUE_ARGUMENT_FUNCTIONS.has(name) || name.startsWith('--')
 }
 
+/** A key a raw group item can write as a declaration: `top`, `-webkit-x`, `--x`. */
+const PROPERTY_NAME = /^-{0,2}[a-zA-Z_][-\w]*$/
+
+/**
+ * Whether a function in the text, a raw group item, has an empty list item: `url(,.a)`,
+ * `env(a,)`. Unlike the group's own parse, it exempts no function. Quoted text is skipped, and
+ * `|` is a space, not an item.
+ */
+function hasEmptyFunctionArgument(text: string) {
+  const lists: { hasComma: boolean, itemHasValue: boolean }[] = []
+  let quote = ''
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i]
+    if (quote) {
+      if (char === '\\') i++
+      else if (char === quote) quote = ''
+      continue
+    }
+    const list = lists[lists.length - 1]
+    if (char === ')') {
+      if (list?.hasComma && !list.itemHasValue) return true
+      lists.pop()
+    } else if (char === ',') {
+      if (!list) continue
+      if (!list.itemHasValue) return true
+      list.hasComma = true
+      list.itemHasValue = false
+    } else {
+      if (list && char !== '|') list.itemHasValue = true
+      if (char === '(') lists.push({ hasComma: false, itemHasValue: false })
+      else if (char === '\'' || char === '"') quote = char
+    }
+  }
+  return false
+}
+
 /**
  * Whether a comma list, a value's top level or a function's arguments, has an empty item:
  * `red,`, `,red`, `a,,b` or `rgb(1,2,)`. Native CSS drops such a declaration, so `fg:red,`
@@ -910,12 +946,31 @@ export class Utility {
         for (const eachRule of rules) {
           handleRule(eachRule)
         }
+      } else if (this.holdsEmptyArgumentInState(eachName)) {
+        this.invalidValueSyntax = true
+        return {}
       } else {
         addProp(eachName)
       }
     }
 
     return declarations as PropertiesHyphen
+  }
+
+  /**
+   * Whether a group item that generates nothing holds an empty function argument after a first
+   * `:` that starts a state, not a value: after a key that is a class on its own
+   * (`block:url(,.a)`, `hidden:env(a,)`), names no property (`block>div:url(,.a)`) or opens a
+   * nested group (`{bg:blue}:url(,)`). The group's own parse cannot tell these keys from
+   * properties and exempts `url()` and the like after any item's first `:`; an item whose key
+   * names a property is a raw declaration and keeps the exemption
+   * (`grid-template-columns:repeat(2,var(--x,))`).
+   */
+  private holdsEmptyArgumentInState(item: string) {
+    const indexOfColon = item.indexOf(':')
+    if (indexOfColon === -1 || !hasEmptyFunctionArgument(item)) return false
+    const key = item.slice(0, indexOfColon)
+    return !PROPERTY_NAME.test(key) || Boolean(this.css.generateGroupItem(key, this.mode)?.length)
   }
 
   /** The branches a state token selects; `undefined`, leaving the class invalid, past `MAX_STATE_BRANCHES`. */
