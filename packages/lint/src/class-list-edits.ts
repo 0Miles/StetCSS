@@ -28,13 +28,17 @@ function cloneClassListItems(items: StetCSSClassListItem[]) {
  * that keeps its meaning, or is written as the whitespace it decodes to. An item that does not
  * decode on its own (a replacement holding the string's quote) has no safe spelling. Each edit
  * leaves a list it cannot spell as it is, so it gets no fix. A list the parser read as written
- * (a string body that does not decode, such as one holding a line break) is rebuilt as written.
+ * (a string body that does not decode, such as one holding a line break) is rebuilt as written,
+ * still with no fix when a class spelling does not decode on its own: one holding the string's
+ * quote, or one ending in a lone `\` that would escape what follows it, breaks the string.
  */
 function buildClassList(items: StetCSSClassListItem[], classList: string, options: StetCSSClassListEditOptions) {
   const spellings = items.map((item) => item.raw)
   if (!options.scriptString && !options.characterReferences) return spellings.join('')
-  if (!decodeStetCSSClassListSource(classList, options)) return spellings.join('')
   const decode = (spelling: string) => decodeStetCSSClassListSource(spelling, options)?.value
+  if (!decodeStetCSSClassListSource(classList, options)) {
+    return items.every((item) => item.type === 'space' || decode(item.raw) !== undefined) ? spellings.join('') : undefined
+  }
   const values = spellings.map(decode)
   if (values.some((value) => value === undefined)) return
   const value = values.join('')
