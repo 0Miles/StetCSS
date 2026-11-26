@@ -171,6 +171,21 @@ describe.concurrent('group items', () => {
   ])('%s keeps its rule', (className, text) => {
     expect(generateText(className)).toBe(text)
   })
+
+  /**
+   * Guards (#234): an item's position tracked inside a function's arguments as well as at the
+   * group's own level. `min(` would then start a new item key, so the `var()` inside it lost its
+   * exemption and these valid groups generated nothing.
+   *
+   * Reverse check: tracking the item position at every nesting level fails these rows.
+   */
+  test.each([
+    ['{w:min(var(--x,),10px)}', '@layer utilities{.\\{w\\:min\\(var\\(--x\\,\\)\\,10px\\)\\}{width:min(var(--x,),10px)}}'],
+    ['{fg:rgb(var(--x,),2,3)}', '@layer utilities{.\\{fg\\:rgb\\(var\\(--x\\,\\)\\,2\\,3\\)\\}{color:rgb(var(--x,),2,3)}}'],
+    ['{fg:var(--x,var(--y,))}', '@layer utilities{.\\{fg\\:var\\(--x\\,var\\(--y\\,\\)\\)\\}{color:var(--x,var(--y,))}}']
+  ])('%s keeps its rule', (className, text) => {
+    expect(generateText(className)).toBe(text)
+  })
 })
 
 // Not concurrent: a slow run here must not push the tests above past their timeout.
