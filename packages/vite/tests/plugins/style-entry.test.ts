@@ -6,7 +6,7 @@ import { VIRTUAL_CSS_ID } from '@stet-css/integration/style-module'
 import { createBuildDigest } from '../../src/utils/build-digest'
 import getExtractedCSS from '../../src/utils/extracted-css'
 import { createSlotCSSRule } from '../../src/utils/slot'
-import { createProjectContext, cssLayerOrder, removeProjects, SLOT_CSS_RULE as SLOT } from '../plugin-test-helper'
+import { createDevServerStub, createProjectContext, cssLayerOrder, removeProjects, SLOT_CSS_RULE as SLOT } from '../plugin-test-helper'
 
 const RESOLVED_VIRTUAL_CSS_ID = '\0' + VIRTUAL_CSS_ID
 
@@ -167,7 +167,8 @@ describe('StyleEntryPlugin', () => {
    * Guards #250 with two entries in dev: Vite transforms `a.css` before `b.css` registers, and the
    * CSS served for `a.css` was extracted from the entries registered so far, so the page declared
    * `y`, written before `@import "@stet-css/core"` in `b.css`, after `utilities` and `b`, and `.y`
-   * beat `fg:blue` in dev only. Dev leads with every entry's layers, as the build and the CLI do.
+   * beat `fg:blue` in dev only. Dev leads with the layers of every entry the app imports, which the
+   * dev server knows of once it served the module importing it, as the build and the CLI do.
    * Reverse check: extracting the dev CSS from the registered entries' layers alone reds only this test.
    */
   test('serve transform declares the layers of entries not yet registered ahead of the preset layers', async () => {
@@ -175,13 +176,60 @@ describe('StyleEntryPlugin', () => {
     const root = context.config.root
     mkdirSync(join(root, 'src'))
     const a = join(root, 'src/a.css')
+    const b = join(root, 'src/b.css')
     writeFileSync(a, '@layer x;\n@import "@stet-css/core";\n@import url("https://example.com/b.css") layer(b);')
-    writeFileSync(join(root, 'src/b.css'), '@layer y;\n@import "@stet-css/core";\n@layer y { .y { color: rgb(0 128 0); } }')
+    writeFileSync(b, '@layer y;\n@import "@stet-css/core";\n@layer y { .y { color: rgb(0 128 0); } }')
+    context.server = createDevServerStub([a, b])
     const plugin = StyleEntryPlugin(context)
 
     const result = await (plugin as any).transform.call({}, readFileSync(a, 'utf8'), a)
 
     expect(cssLayerOrder(result.code)).toEqual(['x', 'y', 'theme', 'base', 'defaults', 'components', 'utilities', 'b'])
+  })
+
+  /**
+   * Guards #250's criterion 3 in dev: an entry that writes no `@layer` statement kept its order only
+   * while no other stylesheet on disk did. Dev led with the leading layers of every entry discovered
+   * on disk, so `legacy/old.css`, which nothing imports, put `reset` ahead of the preset and `.r`
+   * lost to `fg:blue`. Only entries the app imports lead, as in a build.
+   * Reverse check: leading with every discovered entry's layers again reds only this test.
+   */
+  test('serve transform ignores the leading layers of an entry nothing imports', async () => {
+    const context = createProjectContext({ command: 'serve', html: '<div class="r fg:blue"></div>' })
+    const root = context.config.root
+    mkdirSync(join(root, 'src'))
+    mkdirSync(join(root, 'legacy'))
+    const site = join(root, 'src/site.css')
+    writeFileSync(site, '@import "@stet-css/core";\n@layer reset { .r { color: rgb(0 128 0); } }')
+    writeFileSync(join(root, 'legacy/old.css'), '@layer reset;\n@import "@stet-css/core";')
+    context.server = createDevServerStub([site])
+    const plugin = StyleEntryPlugin(context)
+
+    const result = await (plugin as any).transform.call({}, readFileSync(site, 'utf8'), site)
+
+    expect(cssLayerOrder(result.code)).toEqual(['theme', 'base', 'defaults', 'components', 'utilities', 'reset'])
+  })
+
+  /**
+   * Guards #250's entry order: entries register in the order Vite transforms them, so the leading
+   * layers follow the entries' paths instead, as in the CLI. A Vue style block, which discovery on
+   * disk misses, sorts with the stylesheets it finds.
+   * Reverse check: dropping the sort in `collectProjectEntries` reds only this test, with `y, x`.
+   */
+  test('serve transform orders the leading layers of entries by path', async () => {
+    const context = createProjectContext({ command: 'serve', html: '<div class="fg:blue"></div>' })
+    const root = context.config.root
+    mkdirSync(join(root, 'src'))
+    const main = join(root, 'src/main.css')
+    const app = join(root, 'src/App.vue')
+    writeFileSync(main, '@layer y;\n@import "@stet-css/core";')
+    writeFileSync(app, '<style>\n@layer x;\n@import "@stet-css/core";\n</style>')
+    const plugin = StyleEntryPlugin(context)
+
+    await (plugin as any).transform.call({}, readFileSync(main, 'utf8'), main)
+    const result = await (plugin as any).transform.call({}, '@layer x;\n@import "@stet-css/core";', `${app}?vue&type=style&index=0&lang.css`)
+
+    expect(cssLayerOrder(result.code)).toEqual(['x', 'y', 'theme', 'base', 'defaults', 'components', 'utilities'])
   })
 
   /**
