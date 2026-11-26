@@ -45,6 +45,7 @@ import {
 } from '@stet-css/lexer'
 import {
   assertNoMasterAtRules,
+  assertQuotedCSSDirectiveArguments,
   REMOVED_MASTER_AT_RULE_ERROR_CODE,
   collectStandaloneCSSDirectiveExtractionPolicy,
   createCSSDirectiveExtractionPolicy,
@@ -85,6 +86,7 @@ function createConditionPathProperties(conditionPath: CSSDirectiveConditionPath 
 
 export {
   assertNoMasterAtRules,
+  assertQuotedCSSDirectiveArguments,
   REMOVED_MASTER_AT_RULE_ERROR_CODE,
   collectStandaloneCSSDirectiveExtractionPolicy,
   createCSSDirectiveExtractionPolicy,
@@ -99,6 +101,12 @@ export interface CompileCSSOptions {
   from?: string
   preserveNativeCSS?: boolean
   onWarning?: (warning: string) => void
+  /**
+   * Rejects unquoted `@source`, `@safelist` and `@blocklist` arguments (default `true`). The
+   * language server turns it off and runs `assertQuotedCSSDirectiveArguments` itself only on a
+   * document the build would check, as the build leaves stylesheets outside StetCSS graphs alone.
+   */
+  checkDirectiveArguments?: boolean
 }
 
 export interface CompileCSSFileOptions extends CompileCSSOptions {
@@ -2657,7 +2665,7 @@ export function compileCSS(source: string, options: CompileCSSOptions = {}): Com
   }
   // Collected from the source as given (`@reference` is no extraction directive), so the
   // removed-directive errors' source references line up with what the caller passed.
-  parsed.extractionPolicy = collectStandaloneCSSDirectiveExtractionPolicy(source, options.from, true)
+  parsed.extractionPolicy = collectStandaloneCSSDirectiveExtractionPolicy(source, options.from, true, options.checkDirectiveArguments !== false)
   validateComposeRanges(parsed)
   const preprocessedSource = maskManagedPatternEntryNames(removeStandaloneCSSDirectives(sourceWithoutReferences, filename))
   let ruleDepth = 0

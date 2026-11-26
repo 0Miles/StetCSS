@@ -367,8 +367,11 @@ export function collectStyleCSSDependencies(
   }
 
   try {
+    // The files to watch do not depend on directive arguments: with the check on, an unquoted
+    // one in an imported file would drop every dependency, and fixing it would never rerun the entry.
     const graph = resolveStyleCSSImportGraph(filename, resolvedSource, projectDir, {
-      expandStetCSSPackage: false
+      expandStetCSSPackage: false,
+      checkDirectiveArguments: false
     })
     for (const dependency of graph.dependencies) {
       dependencies.add(cleanStyleRequest(dependency))

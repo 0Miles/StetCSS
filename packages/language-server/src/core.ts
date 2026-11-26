@@ -4,13 +4,14 @@ import path from 'node:path'
 import { readFile } from 'node:fs/promises'
 import { pathToFileURL } from 'node:url'
 import CSSLanguageService, { collectSFCStyleBlocks, CSS_STYLE_LANGUAGE_IDS, SFC_LANGUAGE_IDS } from '@stet-css/language-service'
-import { compileCSSManifest } from '@stet-css/compiler'
+import { assertQuotedCSSDirectiveArguments, compileCSSManifest } from '@stet-css/compiler'
 import { cssTreeNativeDeclarationMatcher, generateValidRules } from '@stet-css/validator'
 import { Settings } from './settings'
 import { FileWatcher, readFileStamp, type FileStamp } from './file-watcher'
 import {
   findCSSManifestEntryFiles,
-  findStetCSSWorkspaceDirectories
+  findStetCSSWorkspaceDirectories,
+  hasStetCSSManifestEntrypoint
 } from '@stet-css/project/entries'
 import { loadProjectManifest } from '@stet-css/project/manifest'
 import { resolveStetCSSWorkspacePackages, type StetCSSWorkspacePackageResolution } from '@stet-css/project/workspace'
@@ -45,6 +46,8 @@ export declare interface Workspace {
   languageRuntimeSource?: 'workspace' | 'bundled'
   manifestErrors?: unknown[]
   planEntries?: string[]
+  /** Every stylesheet the last manifest load reached from the entries, as absolute paths. */
+  stetCSSGraphFiles?: Set<string>
 }
 
 export const ACTIVE_SEMANTIC_TOKENS_REQUEST = 'stetCSS/renderActiveSemanticTokens'
@@ -114,6 +117,54 @@ function getCSSDiagnosticSources(textDocument: TextDocument): CSSDiagnosticSourc
   }
   if (!SFC_LANGUAGE_IDS.has(textDocument.languageId)) return []
   return collectSFCStyleBlocks(text).map(({ content, start }) => ({ source: content, offset: start }))
+}
+
+/** Languages whose `//` starts a line comment, which CSS directive scanning does not know. */
+const LINE_COMMENT_LANGUAGE_IDS = new Set(['scss', 'less'])
+
+const UNQUOTED_URL_START_RE = /url\(\s*[^\s'")]/iy
+
+function matchesAt(pattern: RegExp, source: string, index: number) {
+  pattern.lastIndex = index
+  return pattern.test(source)
+}
+
+/**
+ * `source` with each `//` line comment blanked, offsets kept, so a directive mentioned in a Sass or
+ * Less comment (`// old: @safelist fg:blue;`) is not read. Strings, block comments, escapes and
+ * unquoted `url(...)` stay as written.
+ */
+function blankLineComments(source: string) {
+  let output = ''
+  let index = 0
+  while (index < source.length) {
+    const char = source[index]
+    let end = index + 1
+    if (char === '\\') {
+      end = index + 2
+    } else if (char === '"' || char === '\'') {
+      end = index + 1
+      while (end < source.length && source[end] !== char && source[end] !== '\n') {
+        end += source[end] === '\\' ? 2 : 1
+      }
+      end++
+    } else if (source.startsWith('/*', index)) {
+      const close = source.indexOf('*/', index + 2)
+      end = close === -1 ? source.length : close + 2
+    } else if (matchesAt(UNQUOTED_URL_START_RE, source, index)) {
+      const close = source.indexOf(')', index)
+      end = close === -1 ? source.length : close + 1
+    } else if (source.startsWith('//', index)) {
+      const lineEnd = source.indexOf('\n', index)
+      end = lineEnd === -1 ? source.length : lineEnd
+      output += ' '.repeat(end - index)
+      index = end
+      continue
+    }
+    output += source.slice(index, end)
+    index = end
+  }
+  return output
 }
 
 function isCSSDirectiveError(error: unknown): error is CSSDirectiveError {
@@ -468,9 +519,14 @@ export default class CSSLanguageServer {
     }
     let workspacePlan: StetCSSManifest | undefined
     workspace.manifestErrors = []
+    const stetCSSGraphFiles = new Set<string>()
+    workspace.stetCSSGraphFiles = stetCSSGraphFiles
     if (workspace !== this.globalWorkspace) {
       try {
-        workspacePlan = await this.loadWorkspacePlan(workspace, addManifestFile)
+        workspacePlan = await this.loadWorkspacePlan(workspace, (file) => {
+          stetCSSGraphFiles.add(path.resolve(file))
+          addManifestFile(file)
+        })
       } catch (e: any) {
         reportManifestError(e)
       }
@@ -656,20 +712,40 @@ export default class CSSLanguageServer {
     })
   }
 
+  /**
+   * Unquoted `@source`, `@safelist` and `@blocklist` arguments are reported only where the build
+   * rejects them: in a stylesheet that imports `@stet-css/core` or that the workspace's entries
+   * import. Any other stylesheet, such as a Tailwind entry with `@source inline(...)`, is handed
+   * back to its own tooling, and Sass or Less `//` comments are not read.
+   */
   private createCSSDirectiveDiagnostics(textDocument: TextDocument, workspace: Workspace) {
     if (!isCSSDiagnosticDocument(textDocument)) return []
     const diagnostics: Diagnostic[] = []
     const documentFile = path.resolve(URI.parse(textDocument.uri).fsPath)
+    const report = (error: unknown, offset: number) => {
+      if (!isCSSDirectiveError(error)) return
+      const diagnostic = this.createCSSDirectiveDiagnostic(error, textDocument, documentFile, offset)
+      if (diagnostic) diagnostics.push(diagnostic)
+    }
     for (const { source, offset } of getCSSDiagnosticSources(textDocument)) {
       try {
         compileCSSManifest(source, {
           from: documentFile,
-          baseManifest: (workspace.languageRuntime ?? defaultCSSLanguageRuntime).defaultManifest
+          baseManifest: (workspace.languageRuntime ?? defaultCSSLanguageRuntime).defaultManifest,
+          checkDirectiveArguments: false
         })
       } catch (error) {
-        if (!isCSSDirectiveError(error)) continue
-        const diagnostic = this.createCSSDirectiveDiagnostic(error, textDocument, documentFile, offset)
-        if (diagnostic) diagnostics.push(diagnostic)
+        report(error, offset)
+      }
+      if (!workspace.stetCSSGraphFiles?.has(documentFile) && !hasStetCSSManifestEntrypoint(source)) continue
+      try {
+        assertQuotedCSSDirectiveArguments(
+          LINE_COMMENT_LANGUAGE_IDS.has(textDocument.languageId) ? blankLineComments(source) : source,
+          documentFile,
+          true
+        )
+      } catch (error) {
+        report(error, offset)
       }
     }
     return diagnostics

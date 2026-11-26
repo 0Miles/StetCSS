@@ -1,4 +1,8 @@
-import { test, vi } from 'vitest'
+import { join } from 'node:path'
+import { expect, test, vi } from 'vitest'
+import type { Diagnostic } from 'vscode-languageserver/node'
+import { TextDocument } from 'vscode-languageserver-textdocument'
+import { URI } from 'vscode-uri'
 import { withFixture } from './setup'
 
 withFixture('basic', async (context) => {
@@ -119,14 +123,14 @@ withFixture('basic', async (context) => {
   })
 
   /**
-   * Prevents: an open stylesheet with `@safelist fg:blue;` showing no error while the class never
-   * reaches the safelist (#239). The compiler's error must reach the document as one diagnostic on
-   * the unquoted argument, naming the quoted form.
+   * Prevents: an open stylesheet entry with `@safelist fg:blue;` showing no error while the class
+   * never reaches the safelist (#239). The compiler's error must reach the document as one
+   * diagnostic on the unquoted argument, naming the quoted form.
    * Reverse check: building the compiler's unquoted-argument error without a source reference
    * turns this test red.
    */
   test('publishes unquoted @safelist argument diagnostics on the argument', async ({ expect }) => {
-    const text = '.btn { color: red; }\n@safelist fg:blue;'
+    const text = "@import '@stet-css/core';\n.btn { color: red; }\n@safelist fg:blue;"
     const document = context.createDocument(text, { lang: 'css' })
     const sendDiagnostics = vi.spyOn(context.server.connection, 'sendDiagnostics').mockImplementation(() => undefined as any)
 
@@ -137,6 +141,35 @@ withFixture('basic', async (context) => {
     expect(diagnostic?.message).toContain("@safelist 'fg:blue';")
     expect(document.offsetAt(diagnostic!.range.start)).toBe(text.indexOf('fg:blue'))
     expect(document.offsetAt(diagnostic!.range.end)).toBe(text.indexOf('fg:blue') + 'fg:blue'.length)
+
+    await context.server.onDidClose({ document })
+    sendDiagnostics.mockRestore()
+  })
+
+  /**
+   * Prevents (#239 review 4 F2): a red unquoted-argument diagnostic on a stylesheet the build
+   * leaves alone. Only a stylesheet whose graph reaches `@stet-css/core` is checked, so Tailwind's
+   * `@source inline(...)` and a directive mentioned in a Sass `//` comment publish none, while an
+   * unquoted argument outside the comment in that Sass entry still does.
+   * Reverse check: checking every document turns the Tailwind row red; leaving `//` comments in
+   * the checked text turns the three Sass and Less rows red.
+   */
+  test.each([
+    ['css', '@import "tailwindcss";\n@source inline("underline");\n@source not inline("container");\n@safelist fg:blue;', undefined],
+    ['scss', "@import '@stet-css/core';\n// old: @safelist fg:blue;\n.a { background: url(//cdn.test/a.png); }", undefined],
+    ['less', "@import '@stet-css/core';\n.a { color: red; } // @source ./src;", undefined],
+    ['scss', "@import '@stet-css/core';\n// '@safelist fg:red;\n@safelist fg:blue;", 'fg:blue']
+  ])('publishes unquoted-argument diagnostics on a %s document only where the build rejects them', async (lang, text, argument) => {
+    const document = context.createDocument(text, { lang })
+    const sendDiagnostics = vi.spyOn(context.server.connection, 'sendDiagnostics').mockImplementation(() => undefined as any)
+
+    await context.server.onDidOpen({ document })
+
+    const diagnostics = sendDiagnostics.mock.calls.at(-1)?.[0].diagnostics || []
+    const ranges = diagnostics
+      .filter((item: Diagnostic) => item.code === 'unquoted-directive-argument')
+      .map((item: Diagnostic) => document.offsetAt(item.range.start))
+    expect(ranges).toEqual(argument ? [text.lastIndexOf(argument)] : [])
 
     await context.server.onDidClose({ document })
     sendDiagnostics.mockRestore()
@@ -155,6 +188,29 @@ withFixture('basic', async (context) => {
     expect(diagnostic.code).toBe('compose-group-syntax')
     expect(document.offsetAt(diagnostic.range.start)).toBe(text.indexOf('{block}'))
     expect(document.offsetAt(diagnostic.range.end)).toBe(text.indexOf('{block}') + '{block}'.length)
+
+    await context.server.onDidClose({ document })
+    sendDiagnostics.mockRestore()
+  })
+})
+
+withFixture('manifest', async (context) => {
+  /**
+   * Prevents (#239 review 4 F2): a stylesheet the workspace's entry imports losing its live
+   * unquoted-argument diagnostic. The build checks every stylesheet a StetCSS entry reaches, so the
+   * editor does too, though the file does not import `@stet-css/core` itself.
+   * Reverse check: checking only documents that import `@stet-css/core` turns this test red.
+   */
+  test('publishes unquoted-argument diagnostics on a stylesheet the entry imports', async ({ expect }) => {
+    const text = '@safelist fg:blue;\n@components { fixture-card { display: block; } }'
+    const document = TextDocument.create(URI.file(join(context.fixtureDir, 'preset.css')).toString(), 'css', 0, text)
+    const sendDiagnostics = vi.spyOn(context.server.connection, 'sendDiagnostics').mockImplementation(() => undefined as any)
+
+    await context.server.onDidOpen({ document })
+
+    const diagnostics = sendDiagnostics.mock.calls.at(-1)?.[0].diagnostics || []
+    const diagnostic = diagnostics.find((item: { code?: unknown }) => item.code === 'unquoted-directive-argument')
+    expect(diagnostic && document.offsetAt(diagnostic.range.start)).toBe(text.indexOf('fg:blue'))
 
     await context.server.onDidClose({ document })
     sendDiagnostics.mockRestore()
