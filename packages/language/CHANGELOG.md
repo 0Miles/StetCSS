@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.0](https://github.com/0Miles/StetCSS/compare/language-v0.2.0...language-v0.3.0) (2026-11-26)
+
+
+### Bug Fixes
+
+* **language:** decode class attributes only where the build does ([#240](https://github.com/0Miles/StetCSS/issues/240)) ([4507dd2](https://github.com/0Miles/StetCSS/commit/4507dd298fe7b21f45e9e8f5eeaeefc98e480880))
+* **language:** find script elements as the build does in Astro and HTML start tags ([#240](https://github.com/0Miles/StetCSS/issues/240)) ([be186f5](https://github.com/0Miles/StetCSS/commit/be186f5fcdd8aca4d69f8953580283ac0b8e4604))
+* **language:** find scripts and Astro frontmatter as the build does ([#240](https://github.com/0Miles/StetCSS/issues/240)) ([950327e](https://github.com/0Miles/StetCSS/commit/950327e9c23b768216f1321e7266bba7a2325a45))
+* **language:** read class attributes by the classes the build extracts ([#240](https://github.com/0Miles/StetCSS/issues/240)) ([fc57533](https://github.com/0Miles/StetCSS/commit/fc575336fb952e3062b440dc271e09225ee70651))
+* **language:** read decoded Vue bindings once and pug templates as written ([#240](https://github.com/0Miles/StetCSS/issues/240)) ([4c7bcd8](https://github.com/0Miles/StetCSS/commit/4c7bcd8821d6580bbf290dbcaf721dd297063312))
+
 ## [0.2.0](https://github.com/0Miles/StetCSS/compare/language-v0.1.0...language-v0.2.0) (2026-11-26)
 
 

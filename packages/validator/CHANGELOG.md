@@ -1,5 +1,100 @@
 # Changelog
 
+## [0.3.0](https://github.com/0Miles/StetCSS/compare/validator-v0.2.0...validator-v0.3.0) (2026-11-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* **engine:** renamed names (old -> new):
+    - MasterCSS -> StetCSS
+    - MasterCSSCreateOptions -> StetCSSCreateOptions
+    - MasterCSSBuiltinKeyAliases -> StetCSSBuiltinKeyAliases
+    - MasterCSSBuiltinNamespace -> StetCSSBuiltinNamespace
+    - MasterCSSBuiltinNamespaceRef -> StetCSSBuiltinNamespaceRef
+    - MasterCSSBuiltinNativeValueNamespace -> StetCSSBuiltinNativeValueNamespace
+    - MasterCSSBuiltinNativeValueNamespaces -> StetCSSBuiltinNativeValueNamespaces
+    - MasterCSSBuiltinSelectorAliases -> StetCSSBuiltinSelectorAliases
+    - MasterCSSClassInspection -> StetCSSClassInspection
+    - MasterCSSEmittedGlobals -> StetCSSEmittedGlobals
+    - MasterCSSInspectedClassVariable -> StetCSSInspectedClassVariable
+    - MasterCSSNormalizedNumericValue -> StetCSSNormalizedNumericValue
+    - MasterCSSOptions -> StetCSSOptions
+    - assertMasterCSSManifest -> assertStetCSSManifest
+    - inspectMasterCSSClass -> inspectStetCSSClass
+    - normalizeMasterCSSNumericValue -> normalizeStetCSSNumericValue
+* **schema:** renamed names (old -> new):
+    - MASTER_CSS_RUNTIME_STYLE_ID -> STET_CSS_RUNTIME_STYLE_ID
+    - MasterCSSManifest -> StetCSSManifest
+    - MasterCSSManifestAnimationOptions -> StetCSSManifestAnimationOptions
+    - MasterCSSManifestAnimations -> StetCSSManifestAnimations
+    - MasterCSSManifestCSSDeclarationPrimitive -> StetCSSManifestCSSDeclarationPrimitive
+    - MasterCSSManifestCSSDeclarations -> StetCSSManifestCSSDeclarations
+    - MasterCSSManifestCondition -> StetCSSManifestCondition
+    - MasterCSSManifestConditionBooleanNode -> StetCSSManifestConditionBooleanNode
+    - MasterCSSManifestConditionComparisonOperatorNode -> StetCSSManifestConditionComparisonOperatorNode
+    - MasterCSSManifestConditionGroupNode -> StetCSSManifestConditionGroupNode
+    - MasterCSSManifestConditionIdentifier -> StetCSSManifestConditionIdentifier
+    - MasterCSSManifestConditionLogicalOperatorNode -> StetCSSManifestConditionLogicalOperatorNode
+    - MasterCSSManifestConditionNode -> StetCSSManifestConditionNode
+    - MasterCSSManifestConditionNumberNode -> StetCSSManifestConditionNumberNode
+    - MasterCSSManifestConditionOperatorNode -> StetCSSManifestConditionOperatorNode
+    - MasterCSSManifestConditionStringNode -> StetCSSManifestConditionStringNode
+    - MasterCSSManifestConditionValueNode -> StetCSSManifestConditionValueNode
+    - MasterCSSManifestConditions -> StetCSSManifestConditions
+    - MasterCSSManifestDefaultMode -> StetCSSManifestDefaultMode
+    - MasterCSSManifestKeyframes -> StetCSSManifestKeyframes
+    - MasterCSSManifestModeTrigger -> StetCSSManifestModeTrigger
+    - MasterCSSManifestSelectorCombinatorNode -> StetCSSManifestSelectorCombinatorNode
+    - MasterCSSManifestSelectorLiteralNode -> StetCSSManifestSelectorLiteralNode
+    - MasterCSSManifestSelectorNode -> StetCSSManifestSelectorNode
+    - MasterCSSManifestSelectorSeparatorNode -> StetCSSManifestSelectorSeparatorNode
+    - MasterCSSManifestSelectors -> StetCSSManifestSelectors
+    - MasterCSSManifestSettings -> StetCSSManifestSettings
+    - MasterCSSManifestUtilities -> StetCSSManifestUtilities
+    - MasterCSSManifestUtility -> StetCSSManifestUtility
+    - MasterCSSManifestUtilityEmit -> StetCSSManifestUtilityEmit
+    - MasterCSSManifestUtilityKind -> StetCSSManifestUtilityKind
+    - MasterCSSManifestUtilityLayerName -> StetCSSManifestUtilityLayerName
+    - MasterCSSManifestUtilityMatcher -> StetCSSManifestUtilityMatcher
+    - MasterCSSManifestUtilityMatcherValueSegments -> StetCSSManifestUtilityMatcherValueSegments
+    - MasterCSSManifestUtilityRule -> StetCSSManifestUtilityRule
+    - MasterCSSManifestVariable -> StetCSSManifestVariable
+    - MasterCSSManifestVariableAlias -> StetCSSManifestVariableAlias
+    - MasterCSSManifestVariableAliasSet -> StetCSSManifestVariableAliasSet
+    - MasterCSSManifestVariableEntry -> StetCSSManifestVariableEntry
+    - MasterCSSManifestVariableNumericValue -> StetCSSManifestVariableNumericValue
+    - MasterCSSManifestVariableType -> StetCSSManifestVariableType
+    - MasterCSSManifestVariableValue -> StetCSSManifestVariableValue
+    - MasterCSSManifestVariables -> StetCSSManifestVariables
+    - MasterCSSManifestVariant -> StetCSSManifestVariant
+    - MasterCSSManifestVariantBranch -> StetCSSManifestVariantBranch
+    - MasterCSSManifestVariantToken -> StetCSSManifestVariantToken
+    - MasterCSSManifestVariants -> StetCSSManifestVariants
+    - flattenMasterCSSManifestVariables -> flattenStetCSSManifestVariables
+    - getMasterCSSManifestVariableName -> getStetCSSManifestVariableName
+    - groupMasterCSSManifestVariables -> groupStetCSSManifestVariables
+    - normalizeMasterCSSManifestForJSON -> normalizeStetCSSManifestForJSON
+    - stringifyMasterCSSManifestJSON -> stringifyStetCSSManifestJSON
+* @stet-css/server and its render(), renderCSS() and related exports no longer exist.
+
+### Bug Fixes
+
+* **engine:** end a group item's value at every selector sign, and decide the var() exemption once ([#234](https://github.com/0Miles/StetCSS/issues/234)) ([08fd684](https://github.com/0Miles/StetCSS/commit/08fd68491e6b3eee262729cfcc1bbdfb1e989967))
+* **engine:** generate no group whose raw item holds an empty argument in a state ([#234](https://github.com/0Miles/StetCSS/issues/234)) ([2f4fbca](https://github.com/0Miles/StetCSS/commit/2f4fbca9c8ad6090da620f9a61dc30c5cf06c6d6))
+* **engine:** keep a group's own empty-argument check, reading the function past the item key ([#234](https://github.com/0Miles/StetCSS/issues/234)) ([8161190](https://github.com/0Miles/StetCSS/commit/8161190520287cfdaee1edde686d522a8512e9cc))
+* **engine:** keep an escaped `@` in a class selector ([#246](https://github.com/0Miles/StetCSS/issues/246)) ([312d427](https://github.com/0Miles/StetCSS/commit/312d427c708be3f8d906cb44cd3ae9cb340f22ce))
+* **engine:** keep splitting conditions at every `@` ([#246](https://github.com/0Miles/StetCSS/issues/246)) ([4e7bcd6](https://github.com/0Miles/StetCSS/commit/4e7bcd6ad3901b30ac6ade6ba8120f252bfe6592))
+* **engine:** read an opaque function's name linearly, and only in a group item's value ([#234](https://github.com/0Miles/StetCSS/issues/234)) ([3f93835](https://github.com/0Miles/StetCSS/commit/3f9383563174be206aef47543097457f562a1e96))
+* **lexer:** colour an escaped selector name as one name ([#246](https://github.com/0Miles/StetCSS/issues/246)) ([c31ecbf](https://github.com/0Miles/StetCSS/commit/c31ecbf41ffa5157a599016c0d4b06203a750aec))
+* name StetCSS in messages, logs and comments ([f132d89](https://github.com/0Miles/StetCSS/commit/f132d89762bc95ebe2af75e5e31e67d9409b4945)), closes [#95](https://github.com/0Miles/StetCSS/issues/95)
+
+
+### Code Refactoring
+
+* delete @stet-css/server ([77c7fa8](https://github.com/0Miles/StetCSS/commit/77c7fa8958c89a526d95224c6bc2922c71be6bbc)), closes [#61](https://github.com/0Miles/StetCSS/issues/61)
+* **engine:** rename the MasterCSS engine class, options and inspection types to StetCSS ([2a1c5d5](https://github.com/0Miles/StetCSS/commit/2a1c5d5aaa1e61163645afafab2fe98064313e95))
+* **schema:** rename MasterCSS manifest types, constants and helpers to StetCSS ([e1c755a](https://github.com/0Miles/StetCSS/commit/e1c755a7f6537952b8117def00b5946cd06b8db8))
+
 ## [0.2.0](https://github.com/0Miles/StetCSS/compare/validator-v0.1.0...validator-v0.2.0) (2026-11-26)
 
 

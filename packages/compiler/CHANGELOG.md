@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/0Miles/StetCSS/compare/compiler-v0.2.0...compiler-v0.3.0) (2026-11-26)
+
+
+### Bug Fixes
+
+* **compiler,stylesheet,language-server:** close review 4 findings on unquoted directive arguments ([#239](https://github.com/0Miles/StetCSS/issues/239)) ([8431226](https://github.com/0Miles/StetCSS/commit/8431226384e58ca9e811317d7f301467451e935f))
+* **compiler,stylesheet:** check directive arguments only in StetCSS graphs and echo only plain ones ([#239](https://github.com/0Miles/StetCSS/issues/239)) ([4a8acd9](https://github.com/0Miles/StetCSS/commit/4a8acd95273c3ecaa92ef1128b087d1d8820247d))
+* **compiler,stylesheet:** keep unquoted-argument errors faithful and surfaced ([#239](https://github.com/0Miles/StetCSS/issues/239)) ([daab770](https://github.com/0Miles/StetCSS/commit/daab77086f7d83721851f6b4fc714861457d70d1))
+* **compiler:** fail on unquoted [@source](https://github.com/source), [@safelist](https://github.com/safelist) and [@blocklist](https://github.com/blocklist) arguments ([#239](https://github.com/0Miles/StetCSS/issues/239)) ([85ea14f](https://github.com/0Miles/StetCSS/commit/85ea14f07f892c321a609e33682d45caea84c2e8))
+* **compiler:** take [@source](https://github.com/source) not only when the compile reads it as one word ([#239](https://github.com/0Miles/StetCSS/issues/239)) ([10a2240](https://github.com/0Miles/StetCSS/commit/10a22400e3374fd56149a9498ab46c82e8c06bba))
+* **stylesheet:** declare the layers written before @stet-css/core ahead of the preset layers ([#250](https://github.com/0Miles/StetCSS/issues/250)) ([4208c4b](https://github.com/0Miles/StetCSS/commit/4208c4b8522f6fa5b8b1057f127868758f85dd6f))
+
 ## [0.2.0](https://github.com/0Miles/StetCSS/compare/compiler-v0.1.0...compiler-v0.2.0) (2026-11-26)
 
 
