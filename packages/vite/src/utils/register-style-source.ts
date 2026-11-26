@@ -13,7 +13,7 @@ import { includesFile } from './path'
 
 // Typed through the stylesheet function: the inferred type would name @stet-css/schema, which
 // this package does not depend on.
-export async function registerStyleCSSSource(
+async function registerStyleCSSSource(
   context: PluginContext,
   id: string,
   source: string
