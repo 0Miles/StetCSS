@@ -12,7 +12,7 @@ import {
   type StetCSSExpressionNeighbours,
   type StetCSSScriptStringQuote
 } from '@stet-css/lexer'
-import { getStetCSSAstroFrontmatter } from '@stet-css/lexer/astro-frontmatter'
+import { getStetCSSAstroFrontmatter, getStetCSSAstroMarkupElements } from '@stet-css/lexer/astro'
 import { decodeStetCSSHTMLAttributeValue, decodeStetCSSJSXAttributeString } from '@stet-css/lexer/character-reference'
 import { parseOxcOnSourceStack } from './oxc-stack'
 
@@ -139,16 +139,23 @@ const ASTRO_SOURCE_EXT = /\.astro$/
 /** The bindings the build reads decoded: Vue compiles `:class` from the decoded attribute. */
 const DECODED_CLASS_BINDINGS = new Set([':class', 'v-bind:class'])
 
-/** The attributes of an HTML start tag: names with optional quoted or unquoted values. */
-const TAG_ATTRIBUTES = String.raw`(?:\s+[^\s"'>\/=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'>]+))?)*\s*\/?`
+/**
+ * The rest of a tag after its name, through its `>`, as the HTML tokenizer reads it: attributes
+ * need no whitespace between them, a name runs to whitespace, `/`, `>` or `=` (quotes included),
+ * a quoted value to its closing quote and an unquoted one to whitespace or `>`. Whitespace is
+ * HTML's: tab, line feed, form feed, carriage return and space. A tag left open runs to the end
+ * of the file, as in the tokenizer, so no `<` is scanned twice.
+ */
+const TAG_REST = String.raw`(?:[\t\n\f\r /]+|[^\t\n\f\r />][^\t\n\f\r />=]*(?:[\t\n\f\r ]*=[\t\n\f\r ]*(?:"[^"]*"?|'[^']*'?|[^\t\n\f\r >]*))?)*(?:>|$)`
 
 /**
- * What the HTML tokenizer reads before it reaches markup text: comments, `<script>` and `<style>`
- * elements (whose content the build reads as JavaScript or not at all), and other start tags with
- * their attribute values. Scanned left to right, so a `<style>` inside a comment or an attribute
- * value opens nothing.
+ * What the HTML tokenizer reads before it reaches markup text in HTML, Vue and Svelte files:
+ * comments, `<script>` and `<style>` elements (whose content the build reads as JavaScript or not
+ * at all), and other tags with their attribute values. Scanned left to right, so a `<style>`
+ * inside a comment or an attribute value opens nothing. Astro's build finds its elements by
+ * pattern instead (`getStetCSSAstroMarkupElements`).
  */
-const MARKUP_TOKEN = new RegExp(String.raw`<!--[\s\S]*?(?:-->|$)|<(script|style)\b(${TAG_ATTRIBUTES})>[\s\S]*?(?:<\/\1\s*>|$)|<[A-Za-z][^\s\/>]*${TAG_ATTRIBUTES}>`, 'gi')
+const MARKUP_TOKEN = new RegExp(String.raw`<!--[\s\S]*?(?:-->|$)|<(script|style)(?=[\t\n\f\r />]|$)(${TAG_REST})[\s\S]*?(?:<\/\1(?=[\t\n\f\r />]|$)${TAG_REST}|$)|<\/?[A-Za-z][^\t\n\f\r />]*${TAG_REST}`, 'gi')
 
 const OXC_CACHE_LIMIT = 20
 
@@ -234,15 +241,21 @@ function getDocumentPath(textDocument: TextDocument) {
 
 function collectNonMarkupRanges(source: string, astro: boolean) {
   const ranges: SourceRange[] = []
-  // Astro's frontmatter, located with the build's own scan, and what precedes it.
-  const markupStart = astro ? getStetCSSAstroFrontmatter(source)?.markupStart ?? 0 : 0
-  if (markupStart) ranges.push({ start: 0, end: markupStart })
-  for (const match of source.slice(markupStart).matchAll(MARKUP_TOKEN)) {
-    const [element, name, attributes] = match
+  if (astro) {
+    // Astro's frontmatter and what precedes it, and its script and style elements, located with
+    // the build's own scans.
+    const markupStart = getStetCSSAstroFrontmatter(source)?.markupStart ?? 0
+    if (markupStart) ranges.push({ start: 0, end: markupStart })
+    for (const { start, end } of getStetCSSAstroMarkupElements(source.slice(markupStart)).elements) {
+      ranges.push({ start: markupStart + start, end: markupStart + end })
+    }
+    return ranges
+  }
+  for (const match of source.matchAll(MARKUP_TOKEN)) {
+    const [element, name, startTagRest] = match
     if (!name) continue
     // The element's content, after its start tag.
-    const start = markupStart + (match.index ?? 0) + 1 + name.length + attributes.length + 1
-    ranges.push({ start, end: markupStart + (match.index ?? 0) + element.length })
+    ranges.push({ start: match.index + 1 + name.length + startTagRest.length, end: match.index + element.length })
   }
   return ranges
 }
