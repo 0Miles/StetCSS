@@ -179,18 +179,14 @@ function parseUnquotedWords(source: string) {
   return words
 }
 
-/** The keywords each string-argument directive takes besides its quoted arguments. */
-const STRING_ARGUMENT_DIRECTIVE_KEYWORDS: Partial<Record<StandaloneCSSDirectiveName, readonly string[]>> = {
-  source: ['not'],
-  safelist: [],
-  blocklist: []
-}
-
-/** The argument of the fixed quoted example an unquoted-argument error shows. */
-const STRING_ARGUMENT_DIRECTIVE_EXAMPLES: Partial<Record<StandaloneCSSDirectiveName, string>> = {
-  source: './src',
-  safelist: 'fg:blue',
-  blocklist: 'debug-*'
+/**
+ * Each string-argument directive: the keywords it takes besides its quoted arguments, and the
+ * argument of the fixed quoted example an unquoted-argument error shows.
+ */
+const STRING_ARGUMENT_DIRECTIVES: Partial<Record<StandaloneCSSDirectiveName, { keywords: readonly string[], example: string }>> = {
+  source: { keywords: ['not'], example: './src' },
+  safelist: { keywords: [], example: 'fg:blue' },
+  blocklist: { keywords: [], example: 'debug-*' }
 }
 
 /**
@@ -248,8 +244,9 @@ function assertQuotedDirectiveArguments(
   filename: string | undefined,
   locate: boolean
 ) {
-  const keywords = STRING_ARGUMENT_DIRECTIVE_KEYWORDS[statement.atRuleName]
-  if (!keywords) return
+  const directive = STRING_ARGUMENT_DIRECTIVES[statement.atRuleName]
+  if (!directive) return
+  const { keywords, example } = directive
   const preludeEnd = statement.unterminated ? statement.end : statement.end - 1
   const items = splitDirectivePrelude(source, statement.start + statement.atRuleName.length + 1, preludeEnd)
   const text = (item: DirectivePreludeItem) => source.slice(item.start, item.end)
@@ -262,7 +259,7 @@ function assertQuotedDirectiveArguments(
   const name = `@${statement.atRuleName}`
   const advice = unquoted.every((item) => ECHOED_DIRECTIVE_ARGUMENT_RE.test(text(item)))
     ? `so write ${name} ${items.map((item) => isUnquoted(item) ? `'${text(item)}'` : text(item)).join(' ')};`
-    : `quote each argument, as in ${name}${items.some(isKeyword) ? ' not' : ''} '${STRING_ARGUMENT_DIRECTIVE_EXAMPLES[statement.atRuleName]}';`
+    : `quote each argument, as in ${name}${items.some(isKeyword) ? ' not' : ''} '${example}';`
   const location = filename ? ` (in ${filename})` : ''
   const range = { start: unquoted[0].start, end: unquoted[unquoted.length - 1].end }
   throw new CSSDirectiveError(
@@ -343,16 +340,15 @@ function parseStandaloneCSSDirectiveStatement(
   if (statementEnd.reason !== 'semicolon' && !(withUnterminated && unterminated)) return
   const end = statementEnd.end
   const statement = source.slice(start, end)
-  const prelude = statement.replace(new RegExp(`^@${atRuleName}\\b`), '')
-  const terminatedPrelude = unterminated ? prelude : prelude.replace(/;$/, '')
+  const prelude = statement.replace(new RegExp(`^@${atRuleName}\\b`), '').replace(/;$/, '')
   return {
     start,
     end,
     atRuleName,
     name: atRuleName,
     statement,
-    args: parseQuotedStrings(terminatedPrelude),
-    modifiers: parseUnquotedWords(terminatedPrelude),
+    args: parseQuotedStrings(prelude),
+    modifiers: parseUnquotedWords(prelude),
     ...(unterminated ? { unterminated } : {})
   }
 }

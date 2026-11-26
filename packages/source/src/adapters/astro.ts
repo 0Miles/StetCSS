@@ -1,3 +1,4 @@
+import { removeSourceRanges } from '@stet-css/lexer'
 import { getStetCSSAstroFrontmatter, getStetCSSAstroMarkupElements } from '@stet-css/lexer/astro'
 import { decodeStetCSSHTMLAttributeValue } from '@stet-css/lexer/character-reference'
 import { extractClassCandidates } from '../extract-class-candidates'
@@ -71,13 +72,7 @@ export function extractAstroClasses(source: string, content: string): string[] {
     add(classes, extractOxcClasses(`${source}.ts`, markup.slice(script.start, script.end)))
   }
   // The markup text: the markup without its script and style elements.
-  let template = ''
-  let cursor = 0
-  for (const element of elements) {
-    template += markup.slice(cursor, element.start)
-    cursor = element.end
-  }
-  template = extractDecodedClassAttributes(classes, template + markup.slice(cursor))
+  const template = extractDecodedClassAttributes(classes, removeSourceRanges(markup, elements))
   add(classes, extractClassCandidates(template))
 
   return [...classes]

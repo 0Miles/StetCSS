@@ -5,6 +5,8 @@
  * tell markup from script, so the build and the editor agree on where markup text is.
  */
 
+import type { SourceRange } from './source'
+
 // The whitespace the Astro compiler skips before the opening fence.
 const LEADING_SPACE = /[ \t\r\n\f]*/y
 // A `/` after one of these words starts a regular expression, not a division.
@@ -110,19 +112,14 @@ export function getStetCSSAstroFrontmatter(content: string): StetCSSAstroFrontma
 const SCRIPT_ELEMENT = /<script\b[^>]*>([\s\S]*?)<\/script>/gi
 const STYLE_ELEMENT = /<style\b[^>]*>[\s\S]*?<\/style>/gi
 
-export interface StetCSSSourceRange {
-  start: number
-  end: number
-}
-
 export interface StetCSSAstroMarkupElements {
   /** The content of each `<script>` element, in order: script, not markup. */
-  scripts: StetCSSSourceRange[]
+  scripts: SourceRange[]
   /**
    * Every `<script>` and `<style>` element, from its `<` to the end of its closing tag, sorted and
    * not overlapping: the markup text is what lies between them.
    */
-  elements: StetCSSSourceRange[]
+  elements: SourceRange[]
 }
 
 /**
@@ -133,8 +130,8 @@ export interface StetCSSAstroMarkupElements {
  * text without them.
  */
 export function getStetCSSAstroMarkupElements(markup: string): StetCSSAstroMarkupElements {
-  const scripts: StetCSSSourceRange[] = []
-  const scriptElements: StetCSSSourceRange[] = []
+  const scripts: SourceRange[] = []
+  const scriptElements: SourceRange[] = []
   // The markup without its scripts, and where each of its pieces starts in `markup`.
   const pieces: { start: number, origin: number }[] = []
   let withoutScripts = ''
@@ -162,7 +159,7 @@ export function getStetCSSAstroMarkupElements(markup: string): StetCSSAstroMarku
     end: toMarkup(match.index + match[0].length - 1) + 1
   }))
   // A script inside a style element is part of it.
-  const elements: StetCSSSourceRange[] = []
+  const elements: SourceRange[] = []
   for (const element of [...scriptElements, ...styleElements].sort((a, b) => a.start - b.start)) {
     if (element.end > (elements.at(-1)?.end ?? -1)) elements.push(element)
   }

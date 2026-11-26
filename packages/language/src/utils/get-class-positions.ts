@@ -140,13 +140,21 @@ const ASTRO_SOURCE_EXT = /\.astro$/
 const DECODED_CLASS_BINDINGS = new Set([':class', 'v-bind:class'])
 
 /**
+ * One attribute of a tag's rest, as the HTML tokenizer reads it; `group` is `''` to capture its
+ * name and its value as written (quotes included), or `'?:'` to capture nothing.
+ */
+function tagAttributePattern(group: '' | '?:') {
+  return String.raw`(${group}[^\t\n\f\r />][^\t\n\f\r />=]*)(?:[\t\n\f\r ]*=[\t\n\f\r ]*(${group}"[^"]*"?|'[^']*'?|[^\t\n\f\r >]*))?`
+}
+
+/**
  * The rest of a tag after its name, through its `>`, as the HTML tokenizer reads it: attributes
  * need no whitespace between them, a name runs to whitespace, `/`, `>` or `=` (quotes included),
  * a quoted value to its closing quote and an unquoted one to whitespace or `>`. Whitespace is
  * HTML's: tab, line feed, form feed, carriage return and space. A tag left open runs to the end
  * of the file, as in the tokenizer, so no `<` is scanned twice.
  */
-const TAG_REST = String.raw`(?:[\t\n\f\r /]+|[^\t\n\f\r />][^\t\n\f\r />=]*(?:[\t\n\f\r ]*=[\t\n\f\r ]*(?:"[^"]*"?|'[^']*'?|[^\t\n\f\r >]*))?)*(?:>|$)`
+const TAG_REST = String.raw`(?:[\t\n\f\r /]+|${tagAttributePattern('?:')})*(?:>|$)`
 
 /**
  * What the HTML tokenizer reads before it reaches markup text in HTML, Vue and Svelte files:
@@ -159,7 +167,7 @@ const TAG_REST = String.raw`(?:[\t\n\f\r /]+|[^\t\n\f\r />][^\t\n\f\r />=]*(?:[\
 const MARKUP_TOKEN = new RegExp(String.raw`<!--[\s\S]*?(?:-->|$)|<(script|style)(?=[\t\n\f\r />]|$)(${TAG_REST})[\s\S]*?(?:<\/\1(?=[\t\n\f\r />]|$)${TAG_REST}|$)|<(\/?)([A-Za-z][^\t\n\f\r />]*)(${TAG_REST})`, 'gi')
 
 /** One attribute of a tag's rest (`TAG_REST`): its name and its value as written, quotes included. */
-const TAG_ATTRIBUTE = /([^\t\n\f\r />][^\t\n\f\r />=]*)(?:[\t\n\f\r ]*=[\t\n\f\r ]*("[^"]*"?|'[^']*'?|[^\t\n\f\r >]*))?/g
+const TAG_ATTRIBUTE = new RegExp(tagAttributePattern(''), 'g')
 
 /** Where Vue's SFC tokenizer ends a root `<template>` it reads as raw text. */
 const VUE_TEMPLATE_END = /<\/template(?=[\t\n\f\r />]|$)/gi
@@ -572,7 +580,7 @@ function filterClassPositions(
 function getOxcSource(textDocument: TextDocument) {
   const sourceByLanguageId = OXC_SOURCE_BY_LANGUAGE_ID[textDocument.languageId]
   if (sourceByLanguageId) return sourceByLanguageId
-  return textDocument.uri.split(/[?#]/)[0] || 'document.js'
+  return getDocumentPath(textDocument) || 'document.js'
 }
 
 // JavaScript files commonly hold JSX, which OXC parses only in `jsx` mode, and
