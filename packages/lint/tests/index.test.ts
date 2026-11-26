@@ -599,6 +599,13 @@ describe('source content linting', () => {
       .toBe('<div class="fg:white&#32;bg:black"></div>')
     expect(fix('<script>el.innerHTML = \'<p class="fg:white&#32;bg:black"></p>\'</script><div class="fg:white&#32;bg:black"></div>', '/project/index.html'))
       .toBe('<script>el.innerHTML = \'<p class="fg:white&#32;bg:black"></p>\'</script><div class="bg:black&#32;fg:white"></div>')
+    for (const [content, filePath] of [
+      ['<script id="t"type="module">el.innerHTML = \'<p class="fg:white&#32;bg:black"></p>\'</script>', '/project/index.html'],
+      ['<script define:vars={{ msg: \'hi\' }}>el.innerHTML = \'<p class="fg:white&#32;bg:black"></p>\'</script>', '/project/Page.astro'],
+      ['---\n---\n<!-- the analytics <script> sits at the end -->\n<div class="fg:white&#32;bg:black"></div>\n<script>console.log(1)</script>', '/project/Page.astro']
+    ]) {
+      expect(fix(content, filePath), content).toBe(content)
+    }
     const astro = (line: string) => `---\n${line}\nconst html = '<b class="fg:white&#32;bg:black"></b>'\n---\n<div></div>`
     expect(fix(astro('const rule = \'---\''), '/project/Page.astro')).toBe(astro('const rule = \'---\''))
     // A string the parser cannot decode (a line break inside quotes) is read and rebuilt as written.
@@ -606,6 +613,21 @@ describe('source content linting', () => {
       .toBe('<?php echo clsx(\'bg:black\n  fg:white\'); ?>')
     expect(fix('<?php echo clsx("fg:white\r\n  bg:black"); ?>', '/project/index.php'))
       .toBe('<?php echo clsx("bg:black\r\n  fg:white"); ?>')
+    // Rebuilt as written, a class spelling that would end the string (a replacement holding its
+    // quote, a spelling ending in a lone backslash moved before the quote) still gets no fix.
+    const canonical = (content: string) => fixStetCSSContent({
+      content,
+      filePath: '/project/index.php',
+      css,
+      rules: { 'sort-classes': true, 'prefer-canonical-classes': true }
+    })
+    for (const content of [
+      '<?php echo clsx(\'block\n  background:url(\\\'a.png\\\')|red\'); ?>',
+      '<?php echo clsx("block\n  background:url(\\"a.png\\")|red"); ?>',
+      '<?php echo clsx(\'bg:black\n  zz\\ fg:white\'); ?>'
+    ]) {
+      expect(canonical(content), content).toBe(content)
+    }
   })
 
   /**
