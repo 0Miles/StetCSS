@@ -106,6 +106,13 @@ test.concurrent('reads class attributes as written where the build does', () => 
   expect(readClasses(createDoc('vue', '<script setup>const html = \'<p class="block&#32;hidden"></p>\'</script>'))).toEqual(asWritten)
   expect(readClasses(createDoc('astro', '---\nconst html = \'<p class="block&#32;hidden"></p>\'\n---\n<div class="x&#32;y"></div>')))
     .toEqual([...asWritten, ['x', 'x'], ['y', 'y']])
+  // A script whose start tag the build reads as the HTML tokenizer does: no whitespace between
+  // attributes, or an Astro expression value.
+  expect(readClasses(createDoc('html', '<script id="t"type="module">el.innerHTML = \'<p class="block&#32;hidden"></p>\'</script>'))).toEqual(asWritten)
+  expect(readClasses(createDoc('astro', '<script define:vars={{ msg: \'hi\' }}>el.innerHTML = \'<p class="block&#32;hidden"></p>\'</script>'))).toEqual(asWritten)
+  // Astro finds a closed `<script>` as its build does, even one opened inside an HTML comment.
+  expect(readClasses(createDoc('astro', '---\n---\n<!-- the analytics <script> sits at the end -->\n<div class="block&#32;hidden"></div>\n<script>console.log(1)</script>')))
+    .toEqual(asWritten)
   // The frontmatter closes at the first `---` outside a comment or string, as the build reads it.
   for (const line of ['// --- helpers ---', 'const rule = \'---\'']) {
     expect(readClasses(createDoc('astro', `---\n${line}\nconst html = '<p class="block&#32;hidden"></p>'\n---\n<div></div>`)), line)
