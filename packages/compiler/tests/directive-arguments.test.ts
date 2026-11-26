@@ -76,6 +76,9 @@ test.concurrent.each([
  * class turns red only the rows whose argument relies on that character; letting `/` match before
  * `*` turns the `/*x*\/` row red; dropping ` not` from the example turns the `@source not` row red;
  * leaving an escape out of an item's text turns the `\,` row red.
+ * The `n,ot` / `n'x'ot` rows guard #239 review F15: a comma or string splits `not` into words the
+ * compile drops; taking `not` from the item's text without commas and strings alone compiled them
+ * silently to an include and turns those rows red, as does deciding the example's ` not` that way.
  */
 test.concurrent.each([
   ["@safelist content:'x';", "content:'x'", "@safelist 'fg:blue';"],
@@ -95,7 +98,10 @@ test.concurrent.each([
   [String.raw`@safelist content:'a\'b';`, String.raw`content:'a\'b'`, "@safelist 'fg:blue';"],
   ['@blocklist debug-*,x;', 'debug-*,x', "@blocklist 'debug-*';"],
   ['@source ./a,b;', './a,b', "@source './src';"],
-  ['@source not ./a,b;', './a,b', "@source not './src';"]
+  ['@source not ./a,b;', './a,b', "@source not './src';"],
+  ["@source n,ot './a';", 'n,ot', "@source './src';"],
+  ["@source n'x'ot;", "n'x'ot", "@source './src';"],
+  ["@source n'./a'ot './b';", "n'./a'ot", "@source './src';"]
 ])('shows a fixed quoted example for %s', (statement, argument, example) => {
   const error = catchError(() => compileCSS(statement, { from: '/app/entry.css' }))
 
@@ -138,7 +144,9 @@ test.concurrent('keeps the extraction policy of quoted arguments', () => {
 test.concurrent.each([
   "@source not'./legacy';",
   "@source not/* legacy */ './legacy';",
-  "@source not,'./legacy';"
+  "@source not,'./legacy';",
+  "@source ,not './legacy';",
+  "@source no/**/t './legacy';"
 ])('keeps %s an exclusion', (statement) => {
   expect(compileCSS(statement).extractionPolicy).toEqual(policy({ exclude: ['./legacy'] }))
 })
