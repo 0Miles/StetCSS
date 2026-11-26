@@ -19,6 +19,17 @@ function themeCSS(trigger: 'class' | 'host', mode: string) {
   return css.themeLayer.text
 }
 
+function compileProjectEntry(source: string) {
+  const root = mkdtempSync(join(tmpdir(), 'stet-css-mode-name-escapes-'))
+  try {
+    const entryPath = join(root, 'app.css')
+    writeFileSync(entryPath, `@import "@stet-css/core";\n${source}`)
+    return compileProjectManifest([entryPath]).manifest
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+}
+
 describe.concurrent('mode names in mode selectors', () => {
   /**
    * Guards #249: a mode name went into the class selector unescaped, so `@theme a\,b` (mode `a,b`)
@@ -65,23 +76,35 @@ describe.concurrent('mode names in mode selectors', () => {
   /**
    * Guards #249 on the project loader (CLI, ESLint, `inspect`), which reads `@theme` mode names
    * from the source text before compiling: there `a\ b` split into two words and threw
-   * `@theme mode must be a single token`, and `a\,b` stayed `a\,b` instead of the mode `a,b`.
+   * `@theme mode must be a single token`.
    *
-   * Reverse check: splitting the prelude source text on every space in `src/theme-prelude.ts`
-   * reddens only this test.
+   * Reverse check: splitting the prelude source text on every space, without decoding, in
+   * `src/theme-prelude.ts` reddens this test and both rows of the next one.
    */
-  test('the project loader reads escaped mode names as the compiler does', () => {
-    const root = mkdtempSync(join(tmpdir(), 'stet-css-mode-name-escapes-'))
-    try {
-      const entryPath = join(root, 'app.css')
-      writeFileSync(entryPath, '@import "@stet-css/core";\n@settings { mode-trigger: class; default-mode: none; }\n@theme a\\ b { --color-x: #000; }\n@theme a\\,b {}')
-      const { manifest } = compileProjectManifest([entryPath])
-      expect(manifest.settings?.modes).toEqual(['a b', 'a,b'])
-      const css = StetCSS.create({ manifest })
-      css.ensureClassRules('fg:x')
-      expect(css.themeLayer.text).toBe('@layer theme{.a\\ b{--color-x:#000}}')
-    } finally {
-      rmSync(root, { recursive: true, force: true })
-    }
+  test('the project loader keeps an escaped space inside a mode name', () => {
+    const manifest = compileProjectEntry('@settings { mode-trigger: class; default-mode: none; }\n@theme a\\ b { --color-x: #000; }\n@theme a\\,b {}')
+    expect(manifest.settings?.modes).toEqual(['a b', 'a,b'])
+    const css = StetCSS.create({ manifest })
+    css.ensureClassRules('fg:x')
+    expect(css.themeLayer.text).toBe('@layer theme{.a\\ b{--color-x:#000}}')
+  })
+
+  /**
+   * Guards #249: the project loader decodes escapes in a `@theme` mode name as the compiler does.
+   * Its reading decides which preset modes stay (#69), so a loader that kept `dar\k` as written
+   * missed that the project declares `dark` and also kept the preset's `light`, which linters and
+   * the CLI then accepted while the build rejected it.
+   *
+   * Reverse check: keeping the backslash of a non-hex escape in `splitThemePreludeSource`
+   * (`src/theme-prelude.ts`) reddens only the `dar\k` row; dropping the whitespace that ends a hex
+   * escape there reddens only the `\64 ark` row.
+   */
+  test.each([
+    ['a non-hex escape', 'dar\\k'],
+    ['a hex escape ended by a space', '\\64 ark']
+  ])('a mode name with %s is the declared mode on both paths', (_, mode) => {
+    const source = `@theme ${mode} { --color-x: #000; }`
+    expect(compileProjectEntry(source).settings?.modes).toEqual(['dark'])
+    expect(compileCSSManifest(source, { baseManifest: defaultManifest }).manifest.settings?.modes).toEqual(['dark'])
   })
 })
