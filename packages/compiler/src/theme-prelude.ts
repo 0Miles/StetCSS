@@ -1,5 +1,6 @@
+import { isASCIIWhitespace } from '@stet-css/lexer'
+
 const HEX_DIGIT = /[0-9a-fA-F]/
-const CSS_WHITESPACE = /[ \t\n\r\f]/
 
 /**
  * The words of `@theme` prelude source text with CSS escapes decoded, as lightningcss reads them:
@@ -23,11 +24,11 @@ function splitThemePreludeSource(source: string) {
       word += codePoint === 0 || codePoint > 0x10FFFF || (codePoint >= 0xD800 && codePoint <= 0xDFFF)
         ? '\uFFFD'
         : String.fromCodePoint(codePoint)
-      if (end < source.length && CSS_WHITESPACE.test(source[end])) end++
+      if (isASCIIWhitespace(source[end])) end++
       index = end - 1
       continue
     }
-    if (CSS_WHITESPACE.test(char)) {
+    if (isASCIIWhitespace(char)) {
       if (word) words.push(word)
       word = ''
       continue

@@ -1,4 +1,3 @@
-import { cssEscape } from '@stet-css/lexer'
 import StetCSS from './core'
 import Layer from './layer'
 import VariableRule, { VariableRuleNode } from './variable-rule'
@@ -39,9 +38,9 @@ export default class ThemeLayer extends Layer {
   getModeSelectorText(mode: string, isDefaultMode = false) {
     switch (this.css.settings.modeTrigger) {
       case 'host':
-        return `:host(.${cssEscape(mode)})${isDefaultMode ? ',:host' : ''}`
+        return this.css.getModeSelector(mode) + (isDefaultMode ? ',:host' : '')
       case 'class':
-        return `.${cssEscape(mode)}${isDefaultMode ? ',' + this.css.rootSelector : ''}`
+        return this.css.getModeSelector(mode) + (isDefaultMode ? ',' + this.css.rootSelector : '')
       default:
         return this.css.rootSelector
     }

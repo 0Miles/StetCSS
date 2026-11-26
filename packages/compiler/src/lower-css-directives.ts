@@ -30,6 +30,7 @@ import {
   toComparableQueryRatio,
   toQueryFeatures,
   type GeneratedRule,
+  type QueryFeature,
   type QueryFeatureBound,
   type StetCSS
 } from '@stet-css/engine/compiler'
@@ -100,6 +101,8 @@ interface StyleMergeBucket {
   layer?: StetCSSManifestUtilityLayerName
   order: number
   events: StyleMergeEvent[]
+  /** `getStyleConditionFeatures` of `conditions`, worked out once when sorting needs it. */
+  features?: QueryFeature[]
 }
 
 /** A range feature in a block's query: name, operator, value, then a ratio's denominator or a unit. */
@@ -769,8 +772,8 @@ function compareStyleMergeBuckets(a: StyleMergeBucket, b: StyleMergeBucket) {
     const conditionStateB = b.conditions?.length ? 1 : 0
     if (conditionStateA !== conditionStateB) return conditionStateA - conditionStateB
     if (conditionStateA && conditionStateB) {
-      const featuresA = getStyleConditionFeatures(a.conditions)
-      const featuresB = getStyleConditionFeatures(b.conditions)
+      const featuresA = a.features ??= getStyleConditionFeatures(a.conditions)
+      const featuresB = b.features ??= getStyleConditionFeatures(b.conditions)
       if (featuresA.length && featuresB.length) {
         const featureCompare = compareQueryFeatures(featuresA, featuresB)
         if (featureCompare !== 0) return featureCompare

@@ -25,7 +25,7 @@ interface TransformStyleSourceOptions {
   stetImport?: string
 }
 
-const STYLE_FILE_RE = /\.(css|scss|sass)$/
+export const STYLE_FILE_RE = /\.(css|scss|sass)$/
 
 /** Whether the file itself is a stylesheet, read from its path alone: it may hold `#` or `?`. */
 export function isStyleFile(resourcePath: string) {
