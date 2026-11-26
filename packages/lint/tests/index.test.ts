@@ -533,6 +533,8 @@ describe('source content linting', () => {
     }
     expect(unknownClassNames('<div className="block&#32;hidden" />', '/project/component.tsx')).toEqual([])
     expect(unknownClassNames('<div :class="[\'block&#32;hidden\']"></div>', '/project/App.vue')).toEqual([])
+    // A class function's string inside the binding, split by a reference, is read only decoded.
+    expect(unknownClassNames('<template><div :class="[ clsx(\'&#32;hidden fg:white bg:black\') ]"></div></template>', '/project/App.vue')).toEqual([])
     // A class attribute inside a `@compose` prelude is linted as part of the directive (whose
     // own words are reported too).
     expect(unknownClassNames('@compose /* <span class="block&#32;hidden"></span> */;', '/project/index.html')).not.toContain('block&#32;hidden')
@@ -558,6 +560,8 @@ describe('source content linting', () => {
     expect(unknownClassNames('---\n// --- helpers ---\nconst html = \'<b class="blockk&#32;hiddenn"></b>\'\n---\n<div></div>', '/project/Page.astro')).toEqual(asWritten)
     expect(unknownClassNames('<template><Comp className="blockk&#32;hiddenn" /></template>', '/project/App.vue')).toEqual(asWritten)
     expect(unknownClassNames('<div :class="\'blockk&#32;hiddenn\'"></div>', '/project/index.html')).toEqual(asWritten)
+    // A Vue template in another language, which Vue reads as raw text.
+    expect(unknownClassNames('<template lang="pug">\ndiv(id="x" class="blockk&#32;hiddenn")\n</template>', '/project/App.vue')).toEqual(asWritten)
   })
 
   /**
