@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
 import StetCSS from './core'
-import { cssEscape, replaceCSSNestingSelector, replaceCSSVariableReferences } from '@stet-css/lexer'
+import { cssEscape, findStetCSSClosingQuote, isCSSIdentChar, replaceCSSNestingSelector, replaceCSSVariableReferences } from '@stet-css/lexer'
 import UtilityType, { type UtilityType as UtilityTypeValue } from '@stet-css/schema/utility-type'
 import { type PropertiesHyphen } from 'csstype'
 import { VALUE_DELIMITERS, CONDITION_IDENTIFIERS } from './common'
@@ -165,15 +165,15 @@ function isSelectorSuffix(nodes: SelectorNode[], ends: boolean, ofList = false):
   return itemHasCompound || !ofList && !ends
 }
 
-/** Signs that end a group item's value and start its selector or at-rule, as they end a class value. */
-const ITEM_STATE_SIGNS = new Set(['!', '*', '>', '+', '~', ':', '[', '@', '_'])
+/** Signs that end a class value, or a group item's value, and start its selector or at-rule. */
+const CLASS_VALUE_END_SIGNS = new Set(['!', '*', '>', '+', '~', ':', '[', '@', '_'])
 
 /** Functions whose arguments may hold empty items: `var(--x,)`, `env(a,)`, unquoted `url(a,)`. */
 const OPAQUE_ARGUMENT_FUNCTIONS = new Set(['var', 'env', 'attr', 'url', 'inherit'])
 
 /** A name character: ASCII word characters, `-`, and any non-ASCII character (`--fé`, `--色`). */
 function isNameCharacter(char: string) {
-  return char >= '\u0080' || /[-\w]/.test(char)
+  return char >= '\u0080' || isCSSIdentChar(char)
 }
 
 /**
@@ -203,14 +203,8 @@ const CUSTOM_PROPERTY_NAME = /^--(?:[-\w\u0080-\uffff]|\\[\s\S])*$/
  */
 function hasEmptyFunctionArgument(text: string) {
   const lists: { hasComma: boolean, itemHasValue: boolean }[] = []
-  let quote = ''
   for (let i = 0; i < text.length; i++) {
     const char = text[i]
-    if (quote) {
-      if (char === '\\') i++
-      else if (char === quote) quote = ''
-      continue
-    }
     const list = lists[lists.length - 1]
     if (char === ')') {
       if (list?.hasComma && !list.itemHasValue) return true
@@ -223,7 +217,7 @@ function hasEmptyFunctionArgument(text: string) {
     } else {
       if (list && char !== '|') list.itemHasValue = true
       if (char === '(') lists.push({ hasComma: false, itemHasValue: false })
-      else if (char === '\'' || char === '"') quote = char
+      else if (char === '\'' || char === '"') i = findStetCSSClosingQuote(text, i, char)
     }
   }
   return false
@@ -947,7 +941,7 @@ export class Utility {
 
     for (const eachName of names) {
       const rules = this.css.generateGroupItem(eachName, this.mode)
-      if (!rules) {
+      if (!rules || !rules.length && this.holdsEmptyArgumentInState(eachName)) {
         // One item with an invalid value invalidates the group, as it does a single class.
         this.invalidValueSyntax = true
         return {}
@@ -956,9 +950,6 @@ export class Utility {
         for (const eachRule of rules) {
           handleRule(eachRule)
         }
-      } else if (this.holdsEmptyArgumentInState(eachName)) {
-        this.invalidValueSyntax = true
-        return {}
       } else {
         addProp(eachName)
       }
@@ -1703,7 +1694,7 @@ export class Utility {
             root
             && (
               val === '#' && (currentValue || currentValueComponents.length && currentValueComponents[currentValueComponents.length - 1]['type'] !== 'separator')
-              || ['!', '*', '>', '+', '~', ':', '[', '@', '_'].includes(val)
+              || CLASS_VALUE_END_SIGNS.has(val)
             )
           ) {
             break
@@ -1721,7 +1712,7 @@ export class Utility {
             }
           } else if (itemPosition === 'value') {
             if (
-              ITEM_STATE_SIGNS.has(val)
+              CLASS_VALUE_END_SIGNS.has(val)
               || val === '.' && isNaN(+value[i + 1])
               || val === '#' && valueHasText
             ) {
