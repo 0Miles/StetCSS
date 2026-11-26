@@ -160,12 +160,15 @@ describe.concurrent('group items', () => {
   /**
    * Guards (#234): a hex color or a decimal read as a selector start. A `#` that starts a value
    * and a `.` before a digit stay in the value, so the `var()` after them keeps its empty
-   * fallback and the group keeps its rule.
+   * fallback and the group keeps its rule. A later item starts its value afresh, so the `rgb()`
+   * before `;` does not make its `#` a selector start.
    *
-   * Reverse check: leaving an item's value on every `#` and `.` fails these rows.
+   * Reverse check: leaving an item's value on every `#` and `.` fails these rows; keeping "after a
+   * value" from the item before fails the `rgb()` row.
    */
   test.each([
     ['{bg:#fff|var(--x,)}', '@layer utilities{.\\{bg\\:\\#fff\\|var\\(--x\\,\\)\\}{background:#fff var(--x,)}}'],
+    ['{fg:rgb(1,2,3);bg:#fff|var(--x,)}', '@layer utilities{.\\{fg\\:rgb\\(1\\,2\\,3\\)\\;bg\\:\\#fff\\|var\\(--x\\,\\)\\}{color:rgb(1,2,3);background:#fff var(--x,)}}'],
     ['{box-shadow:0|0|1px|#000,var(--x,)}', '@layer utilities{.\\{box-shadow\\:0\\|0\\|1px\\|\\#000\\,var\\(--x\\,\\)\\}{box-shadow:0 0 1px #000,var(--x,)}}'],
     ['{transition:opacity|.3s|var(--x,)}', '@layer utilities{.\\{transition\\:opacity\\|\\.3s\\|var\\(--x\\,\\)\\}{transition:opacity 0.3s var(--x,)}}']
   ])('%s keeps its rule', (className, text) => {
