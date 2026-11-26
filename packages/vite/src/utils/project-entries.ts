@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { findCSSManifestEntryFiles, STYLE_ENTRY_EXTENSIONS } from '@stet-css/project/entries'
 import {
   cleanStyleRequest,
+  collectStyleCSSLeadingLayers,
   registerStyleCSSSource,
   resolveStyleCSSImportGraph,
   type StyleCSSSource,
@@ -89,12 +90,27 @@ export async function collectProjectEntries(context: PluginContext) {
   return { entries: sorted, styleCSSSources }
 }
 
+/** Whether the dev server holds a module for `file`: something it served imports the file. */
+function isKnownToDevServer(context: PluginContext, file: string) {
+  const server = context.server
+  if (!server) return false
+  const graphs = [...Object.values(server.environments ?? {}).map((environment) => environment.moduleGraph), server.moduleGraph]
+  return graphs.some((graph) => !!graph?.getModulesByFile(file)?.size)
+}
+
 /**
- * The layers every project entry writes before `@import '@stet-css/core'`, in entry order, over the
- * same entries as `collectProjectEntries`: what extracted CSS leads with once every entry has
- * registered (#250).
+ * The layers dev leads extracted CSS with: those each entry the app imports writes before
+ * `@import '@stet-css/core'`, in entry order (#250). An entry counts once it registered, or once
+ * the dev server holds a module for it, which it does as soon as a module importing it is served,
+ * before its own transform: CSS served for one entry then already orders another entry's layers.
+ * An entry discovered on disk that nothing imports does not count, as it does not in a build.
  */
 export async function collectProjectLeadingLayers(context: PluginContext) {
   const { styleCSSSources } = await collectProjectEntries(context)
-  return [...new Set(Array.from(styleCSSSources.values(), (styleSource) => styleSource.leadingLayers ?? []).flat())]
+  const registered = new Set(Array.from(context.styleCSSSources?.keys() ?? [], toEntryKey))
+  const imported: StyleCSSSources = new Map()
+  for (const [key, styleSource] of styleCSSSources) {
+    if (registered.has(key) || isKnownToDevServer(context, cleanStyleRequest(key))) imported.set(key, styleSource)
+  }
+  return collectStyleCSSLeadingLayers(imported)
 }

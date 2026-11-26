@@ -72,8 +72,16 @@ export function collectLayerStatementsBeforeImports(hostSource: string) {
  * Moves the `@layer` statements that directly follow the hoisted `@import` statements at the start
  * of a built CSS asset back ahead of them, when they are statements a host source led with
  * (`hostStatements`, from `collectLayerStatementsBeforeImports`). Other CSS is left as it is.
+ *
+ * `leadingLayers`, the layers every entry wrote before `@import '@stet-css/core'`, are declared
+ * first in the first statement moved: a host source lists only its own entry's layers, while the
+ * CSS spliced in after the imports leads with every entry's (#250).
  */
-export function restoreLayerStatementsBeforeImports(css: string, hostStatements: ReadonlySet<string>) {
+export function restoreLayerStatementsBeforeImports(
+  css: string,
+  hostStatements: ReadonlySet<string>,
+  leadingLayers: readonly string[] = []
+) {
   if (!hostStatements.size) return css
   let index = skipTrivia(css, 0)
   const charset = readStatement(css, index, '@charset')
@@ -89,8 +97,11 @@ export function restoreLayerStatementsBeforeImports(css: string, hostStatements:
   const restored = hostCount === -1 ? moved : moved.slice(0, hostCount)
   if (!restored.length) return css
   const restoredEnd = restored[restored.length - 1].end
+  const [first, ...rest] = restored
+  const firstNames = [...new Set([...leadingLayers, ...first.names.split(',')])].join(',')
   return css.slice(0, importsStart)
-    + restored.map((statement) => css.slice(statement.start, statement.end)).join('')
+    + (firstNames === first.names ? css.slice(first.start, first.end) : `@layer ${firstNames};`)
+    + rest.map((statement) => css.slice(statement.start, statement.end)).join('')
     + css.slice(importsStart, importsEnd)
     + css.slice(restoredEnd)
 }

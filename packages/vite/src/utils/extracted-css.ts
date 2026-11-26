@@ -30,12 +30,12 @@ export function getStylesheetSourceContext(context: PluginContext): StylesheetSo
  */
 export async function extractCSSResult(context: PluginContext) {
   // Every class comes from the stylesheet's class set, so templates that only an SSR or
-  // prerender build compiles still get their rules. Entries register as Vite transforms them, so
-  // the CSS leads with the layers of every entry, registered or not yet: a stylesheet dev serves
-  // before another entry registers orders that entry's leading layers as the build does (#250).
+  // prerender build compiles still get their rules. Dev serves a stylesheet as soon as Vite
+  // transforms it, possibly before another imported entry registers, so it leads with the layers
+  // of every entry the app imports (#250). A build splices its CSS in once every entry registered.
   return await createExtractedCSSResult({
     ...getStylesheetSourceContext(context),
-    leadingLayers: await collectProjectLeadingLayers(context)
+    ...(context.config?.command === 'serve' ? { leadingLayers: await collectProjectLeadingLayers(context) } : {})
   })
 }
 
