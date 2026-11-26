@@ -255,6 +255,55 @@ describe.concurrent('group items', () => {
     expect(generateText('{fg:red;flex-wrap:var(--x,)}', createMatcherlessCSS()))
       .toContain('@layer utilities{.\\{fg\\:red\\;flex-wrap\\:var\\(--x\\,\\)\\}{color:var(--color-red);flex-wrap:var(--x,)}}')
   })
+
+  /**
+   * Guards (#234): reading a custom property or custom function by ASCII name characters only.
+   * A raw item keyed `--色` or `--x\.y` was read as a state start, and the `--` exemption of a
+   * function named `--fé` was lost, so these classes, which the base emitted, generated nothing.
+   *
+   * Reverse check: testing a `--` key against the ASCII property name first fails the key rows;
+   * reading the function name over `[-\w]` only fails the `--fé` rows.
+   */
+  test.each([
+    ['{--色:var(--y,)}', '@layer utilities{.\\{--色\\:var\\(--y\\,\\)\\}{--色:var(--y,)}}'],
+    ['{--x\\.y:var(--y,)}', '@layer utilities{.\\{--x\\\\\\.y\\:var\\(--y\\,\\)\\}{--x\\.y:var(--y,)}}'],
+    ['{--1x:var(--y,)}', '@layer utilities{.\\{--1x\\:var\\(--y\\,\\)\\}{--1x:var(--y,)}}'],
+    ['fg:--fé(a,)', '@layer utilities{.fg\\:--fé\\(a\\,\\){color:--fé(a,)}}'],
+    ['{--x:--fé(a,)}', '@layer utilities{.\\{--x\\:--fé\\(a\\,\\)\\}{--x:--fé(a,)}}']
+  ])('%s keeps its rule with a non-ASCII or escaped custom name', (className, text) => {
+    expect(generateText(className)).toBe(text)
+    expect(generateText(className, createMatcherlessCSS())).toBe(text)
+  })
+
+  /**
+   * Guards (#234): how a raw item's own empty-argument check reads its text. Empty parentheses
+   * hold no list, so `url()` has no empty item; `|` is a space, not a value, so `url(a,|)` ends
+   * on an empty item; an escaped quote does not end a string, so the `,)` inside
+   * `"\",)"` is text, not an argument list.
+   *
+   * Reverse check: treating `()` as an empty item fails the `url()` row; counting `|` as a value
+   * fails the `url(a,|)` row; not skipping the escaped character in a string fails the quoted
+   * rows.
+   */
+  test.each([
+    ['{fg:red;block:url()}', '{color:var(--color-red);block:url()}}'],
+    ['{fg:red;block:url("\\",)")}', '{color:var(--color-red);block:url("\\",)")}}'],
+    ["{fg:red;block:url('\\',)')}", "{color:var(--color-red);block:url('\\',)')}}"]
+  ])('%s keeps its raw item', (className, declarations) => {
+    expect(generateText(className)).toContain(declarations)
+    expect(generateText(className, createMatcherlessCSS())).toContain(declarations)
+  })
+
+  test('{block:url("\\",)")} keeps its raw item', () => {
+    const text = '@layer utilities{.\\{block\\:url\\(\\"\\\\\\"\\,\\)\\"\\)\\}{block:url("\\",)")}}'
+    expect(generateText('{block:url("\\",)")}')).toBe(text)
+    expect(generateText('{block:url("\\",)")}', createMatcherlessCSS())).toBe(text)
+  })
+
+  test('{fg:red;block:url(a,|)} generates no CSS', () => {
+    expect(generateText('{fg:red;block:url(a,|)}')).toBe('')
+    expect(generateText('{fg:red;block:url(a,|)}', createMatcherlessCSS())).toBe('')
+  })
 })
 
 // Not concurrent: a slow run here must not push the tests above past their timeout.
