@@ -32,7 +32,7 @@ const angular = {
  * Reverse checks in resolve-class-node: reading JSX attribute strings as written reds the JSX
  * sort case and the `hiddenn` report; reading VLiteral and SvelteLiteral as written reds the Vue
  * and Svelte attribute cases; missing the Vue `:class` binding reds the binding cases; decoding
- * every Vue template expression reds the interpolation case; treating every list as fixable reds
+ * every Vue template expression reds the interpolation case, and every `v-bind` the `:title` case; treating every list as fixable reds
  * the `&quot;` case. In @stet-css/lint, joining edited items without checking how they decode
  * reds the `&#x20` cases.
  *
@@ -102,6 +102,13 @@ jsxTester.run('#240 sort-classes fixes class attributes spelled with character r
     {
       name: 'a string in a Vue interpolation, which the build reads as written, is reported without a fix',
       code: '<template><div>{{ clsx(\'fg:white&#32;bg:black\') }}</div></template>',
+      output: null,
+      errors: [{ messageId: 'invalidClassOrder' }],
+      ...vue
+    },
+    {
+      name: 'a string in a Vue binding other than `:class`, which the build reads as written, is reported without a fix',
+      code: '<template><div :title="clsx(`fg:white&#32;bg:black`)"></div></template>',
       output: null,
       errors: [{ messageId: 'invalidClassOrder' }],
       ...vue
