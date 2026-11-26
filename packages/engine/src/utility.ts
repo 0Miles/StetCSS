@@ -165,11 +165,68 @@ function isSelectorSuffix(nodes: SelectorNode[], ends: boolean, ofList = false):
   return itemHasCompound || !ofList && !ends
 }
 
+/** Signs that end a group item's value and start its selector or at-rule, as they end a class value. */
+const ITEM_STATE_SIGNS = new Set(['!', '*', '>', '+', '~', ':', '[', '@', '_'])
+
 /** Functions whose arguments may hold empty items: `var(--x,)`, `env(a,)`, unquoted `url(a,)`. */
 const OPAQUE_ARGUMENT_FUNCTIONS = new Set(['var', 'env', 'attr', 'url', 'inherit'])
 
+/** A name character: ASCII word characters, `-`, and any non-ASCII character (`--fé`, `--色`). */
+function isNameCharacter(char: string) {
+  return char >= '\u0080' || /[-\w]/.test(char)
+}
+
+/**
+ * The text before `(` can hold more than the function name: an operator in `calc()`
+ * (`100%+var`), or in a group the item key and earlier items (`fg:red;bg:var`). The function is
+ * its last name, read backwards so a long class stays linear; non-ASCII characters belong to
+ * the name (`--fé`). An escaped character never reaches here: the value's parse ends the text
+ * before `(` at it.
+ */
 function hasOpaqueArguments(functionName: string) {
-  return OPAQUE_ARGUMENT_FUNCTIONS.has(functionName) || functionName.startsWith('--')
+  let start = functionName.length
+  while (start && isNameCharacter(functionName[start - 1])) start--
+  const name = functionName.slice(start)
+  return OPAQUE_ARGUMENT_FUNCTIONS.has(name) || name.startsWith('--')
+}
+
+/** A key a raw group item can write as a declaration: `top`, `-webkit-x`. */
+const PROPERTY_NAME = /^-{0,2}[a-zA-Z_][-\w]*$/
+
+/** A custom property key, whose name may hold non-ASCII and escaped characters: `--色`, `--x\.y`, `--1x`. */
+const CUSTOM_PROPERTY_NAME = /^--(?:[-\w\u0080-\uffff]|\\[\s\S])*$/
+
+/**
+ * Whether a function in the text, a raw group item, has an empty list item: `url(,.a)`,
+ * `env(a,)`. Unlike the group's own parse, it exempts no function. Quoted text is skipped, and
+ * `|` is a space, not an item.
+ */
+function hasEmptyFunctionArgument(text: string) {
+  const lists: { hasComma: boolean, itemHasValue: boolean }[] = []
+  let quote = ''
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i]
+    if (quote) {
+      if (char === '\\') i++
+      else if (char === quote) quote = ''
+      continue
+    }
+    const list = lists[lists.length - 1]
+    if (char === ')') {
+      if (list?.hasComma && !list.itemHasValue) return true
+      lists.pop()
+    } else if (char === ',') {
+      if (!list) continue
+      if (!list.itemHasValue) return true
+      list.hasComma = true
+      list.itemHasValue = false
+    } else {
+      if (list && char !== '|') list.itemHasValue = true
+      if (char === '(') lists.push({ hasComma: false, itemHasValue: false })
+      else if (char === '\'' || char === '"') quote = char
+    }
+  }
+  return false
 }
 
 /**
@@ -889,17 +946,59 @@ export class Utility {
     addName()
 
     for (const eachName of names) {
-      const rules = this.css.generate(eachName, this.mode)
+      const rules = this.css.generateGroupItem(eachName, this.mode)
+      if (!rules) {
+        // One item with an invalid value invalidates the group, as it does a single class.
+        this.invalidValueSyntax = true
+        return {}
+      }
       if (rules.length) {
         for (const eachRule of rules) {
           handleRule(eachRule)
         }
+      } else if (this.holdsEmptyArgumentInState(eachName)) {
+        this.invalidValueSyntax = true
+        return {}
       } else {
         addProp(eachName)
       }
     }
 
     return declarations as PropertiesHyphen
+  }
+
+  /**
+   * Whether a group item that generates nothing holds an empty function argument after a first
+   * `:` that starts a state, not a value: after a key that names no property, whether it cannot
+   * (`block>div:url(,.a)`, a nested group's `{bg:blue}:url(,)`) or the native declaration
+   * matcher says so (`block:url(,.a)`, `hidden:env(a,)`). The group's own parse cannot tell these
+   * keys from properties and exempts `url()` and the like after any item's first `:`; an item
+   * whose key names a property is a raw declaration and keeps the exemption
+   * (`flex-wrap:var(--x,)`), though `flex-wrap` is a class too.
+   */
+  private holdsEmptyArgumentInState(item: string) {
+    const indexOfColon = item.indexOf(':')
+    if (indexOfColon === -1 || !hasEmptyFunctionArgument(item)) return false
+    const key = item.slice(0, indexOfColon)
+    if (CUSTOM_PROPERTY_NAME.test(key)) return false
+    if (!PROPERTY_NAME.test(key)) return true
+    return !(this.css.namesNativeProperty(key) ?? this.classNamesItsProperty(key))
+  }
+
+  /**
+   * Without a native declaration matcher, whether `key` names a property, judged by the class
+   * `key` alone, since the engine holds no property list: a key that is no class keeps the
+   * benefit of the doubt (`grid-template-columns`), and a class names a property when it sets
+   * that property or a `key-*` longhand of it (`flex-wrap`, `container` setting
+   * `container-type`), not when it sets another (`block`, `hidden` setting `display`). A property
+   * whose class sets another (`flex`, `grid`) is read as a state, as at the base.
+   */
+  private classNamesItsProperty(key: string) {
+    const rules = this.css.generateGroupItem(key, this.mode)
+    if (!rules?.length) return true
+    const longhandPrefix = key + '-'
+    return rules.some((rule) => Object.keys(rule.declarations ?? {})
+      .some((property) => property === key || property.startsWith(longhandPrefix)))
   }
 
   /** The branches a state token selects; `undefined`, leaving the class invalid, past `MAX_STATE_BRANCHES`. */
@@ -1427,7 +1526,8 @@ export class Utility {
     endSymbol: string,
     parentFunctionName?: string,
     bypassParsing = false,
-    bypassVariableNames: string[] = []
+    bypassVariableNames: string[] = [],
+    opaqueArguments?: boolean
   ) => {
     const root = parentFunctionName === undefined
     const isVarFunction = !root
@@ -1510,6 +1610,27 @@ export class Utility {
         currentValue = ''
       }
     }
+    // In a group's braces, where in its item the text read so far stands. Only an item's value
+    // may hold `var()` and the like with empty arguments; in a selector (`{fg:red:url(,.a)}`,
+    // `{fg:red>url(,.a)}`) or at-rule (`{fg:red@env(a,)}`) an opaque name is checked like any
+    // other. The value ends where a class value does: at `:`, `@`, `!*>+~[_`, a `.` before no digit
+    // or a `#` after a value (`valueHasText`).
+    const groupBlock = endSymbol === '}' && this.registeredUtility.emit.type === 'group'
+    let itemPosition: 'key' | 'value' | 'state' = 'key'
+    let valueHasText = false
+    // Whether these arguments may hold empty items, decided once from the function name, when
+    // first needed, and passed down to unnamed parentheses (`calc((1,))` is checked) so they do
+    // not read a long name again.
+    let argumentsAreOpaque = opaqueArguments
+    const isOpaque = () => argumentsAreOpaque ??= hasOpaqueArguments(parentFunctionName ?? '')
+    const checkFunctionArguments = () => {
+      if (
+        !root
+        && endSymbol === ')'
+        && hasEmptyListItem(currentValueComponents)
+        && !isOpaque()
+      ) this.invalidValueSyntax = true
+    }
 
     for (; i < value.length; i++) {
       const val = value[i]
@@ -1530,13 +1651,7 @@ export class Utility {
           }
         } else {
           parse()
-          // Unnamed parentheses pass down the nearest function name, so `calc((1,))` is checked.
-          if (
-            !root
-            && endSymbol === ')'
-            && !hasOpaqueArguments(parentFunctionName)
-            && hasEmptyListItem(currentValueComponents)
-          ) this.invalidValueSyntax = true
+          checkFunctionArguments()
         }
 
         return i
@@ -1549,15 +1664,19 @@ export class Utility {
         const newValueComponent: ValueComponent[][0] = { type: 'function', name: functionName, symbol: val, children: [], token: '' }
         currentValueComponents.push(newValueComponent)
         currentValue = ''
+        const outsideItemValue = groupBlock && itemPosition !== 'value'
         i = this.parseValues(
           newValueComponent.children,
           ++i,
           value,
           unit,
           VALUE_DELIMITERS[val as keyof typeof VALUE_DELIMITERS],
-          functionName || parentFunctionName || '',
-          bypassParsing || functionName === 'calc'
+          outsideItemValue ? '' : functionName || parentFunctionName || '',
+          bypassParsing || functionName === 'calc',
+          undefined,
+          outsideItemValue ? false : functionName ? undefined : isOpaque()
         )
+        valueHasText = true
       } else if ((val === '|' || val === ' ') && endSymbol !== '}' && (!isString || parentFunctionName === 'path')) {
         parse()
         currentValueComponents.push({ type: 'separator', value: ' ', token: val })
@@ -1578,6 +1697,7 @@ export class Utility {
               text: (val === ',' ? '' : ' ') + val + (val === ',' ? '' : ' '),
               token: val
             })
+            valueHasText = false
             continue
           } else if (
             root
@@ -1589,11 +1709,40 @@ export class Utility {
             break
           }
         }
+        if (groupBlock) {
+          if (val === ';') {
+            itemPosition = 'key'
+          } else if (itemPosition === 'key') {
+            if (val === ':') {
+              itemPosition = 'value'
+              valueHasText = false
+            } else if (val === '@') {
+              itemPosition = 'state'
+            }
+          } else if (itemPosition === 'value') {
+            if (
+              ITEM_STATE_SIGNS.has(val)
+              || val === '.' && isNaN(+value[i + 1])
+              || val === '#' && valueHasText
+            ) {
+              itemPosition = 'state'
+            } else {
+              valueHasText = val !== '|' && val !== ' '
+            }
+          }
+        }
         currentValue += val
       }
     }
     parse()
-    if (root && hasEmptyListItem(currentValueComponents)) this.invalidValueSyntax = true
+    if (root) {
+      if (hasEmptyListItem(currentValueComponents)) this.invalidValueSyntax = true
+    } else {
+      // The class ended inside a function, which is closed for it: `fg:rgb(1,` is `rgb(1,)`.
+      checkFunctionArguments()
+      // A group closes at its own level; in `{fg:rgb(}` the open `rgb(` takes the group's `}`.
+      if (groupBlock) this.invalidValueSyntax = true
+    }
     return i
   }
 

@@ -16,8 +16,8 @@ describe.concurrent('empty items in a value list', () => {
    * does for selectors (#165).
    *
    * Reverse check: skipping the `hasEmptyListItem` call at the end of `parseValues`
-   * (`src/utility.ts`) reddens this test and the raw group declaration record below, whose
-   * item then generates `color:var(--color-red),`.
+   * (`src/utility.ts`) reddens this test and the comma rows of `group-items.test.ts`, whose
+   * items then generate rules such as `color:var(--color-red),`.
    */
   test.each([
     'fg:red,',
@@ -54,25 +54,42 @@ describe.concurrent('empty items in a value list', () => {
   })
 
   /**
+   * Guards (#234): the same empty item in a function the class leaves open. The engine closes the
+   * function at the end of the class, so `fg:rgb(1,` emitted `color:rgb(1,)`, which native CSS
+   * drops; the check above ran only where a `)` closed the function.
+   *
+   * Reverse check: without the empty-item check where `parseValues` reaches the end of the class
+   * inside a function, these rows fail.
+   */
+  test.each([
+    'fg:rgb(1,',
+    'fg:rgb(,1',
+    'fg:rgb(1,,2',
+    'w:calc(1,',
+    'w:calc((1,'
+  ])('%s generates no CSS', (className) => {
+    expect(generateText(className)).toBe('')
+  })
+
+  /**
+   * Guards (#234): the check above rejecting open functions as such. Closing a function at the end
+   * of the class, as CSS closes one at the end of its input, keeps working when no argument is
+   * empty, and an open `var()` keeps its empty fallback.
+   */
+  test('a function left open without an empty item keeps its rule', () => {
+    expect(generateText('fg:rgb(1,2,3')).toBe('@layer utilities{.fg\\:rgb\\(1\\,2\\,3{color:rgb(1,2,3)}}')
+    expect(generateText('fg:var(--x,')).toBe('@layer utilities{.fg\\:var\\(--x\\,{color:var(--x,)}}')
+  })
+
+  /**
    * Guards: an empty item inside a function in a group item. The group parses its own value, so
-   * `{fg:rgb(1,2,)}` is rejected by the function check above.
+   * `{fg:rgb(1,2,)}` is rejected by the function check above, which reads the function name past
+   * the item key (#234).
    *
    * Reverse check: the same as the function cases; skipping that call reddens this test too.
    */
   test('a group item with an empty function argument generates no CSS', () => {
     expect(generateText('{fg:rgb(1,2,)}')).toBe('')
-  })
-
-  /**
-   * Records known-wrong output, not a contract: a group item whose top-level value is rejected
-   * (`fg:red,`) generates no rule, and `emitGroupDeclarations` then writes it as a raw
-   * declaration. Telling a rejected value from a raw declaration needs the rejection reason from
-   * `StetCSS.createRules`, which this fix does not reach; see the #175 status record. Trade-off
-   * (rule 6): this pins the current output so a change to it is deliberate, in place of a guard
-   * that the group is rejected.
-   */
-  test('a group item with an empty top-level item keeps its raw declaration', () => {
-    expect(generateText('{fg:red,}')).toBe('@layer utilities{.\\{fg\\:red\\,\\}{fg:red,}}')
   })
 
   /**
@@ -97,5 +114,17 @@ describe.concurrent('empty items in a value list', () => {
     expect(generateText('content:attr(a,)')).toBe('@layer utilities{.content\\:attr\\(a\\,\\){content:attr(a,)}}')
     expect(generateText('bg:url(a,)')).toBe('@layer utilities{.bg\\:url\\(a\\,\\){background-image:url(a,)}}')
     expect(generateText('fg:--f(a,)')).toBe('@layer utilities{.fg\\:--f\\(a\\,\\){color:--f(a,)}}')
+  })
+
+  /**
+   * Guards (#234): an opaque function after an operator inside `calc()`. The text before `(`
+   * there is `100%+var`; the exemption reads the last name, `var`, so a valid `var()` fallback
+   * keeps its rule where the base generated nothing.
+   *
+   * Reverse check: matching the exemption against the whole text before `(` fails this test.
+   */
+  test('an opaque function after an operator keeps its rule', () => {
+    expect(generateText('w:calc(100%+var(--x,))')).toBe('@layer utilities{.w\\:calc\\(100\\%\\+var\\(--x\\,\\)\\){width:calc(100% + var(--x,))}}')
+    expect(generateText('w:calc(1px*var(--x,))')).toBe('@layer utilities{.w\\:calc\\(1px\\*var\\(--x\\,\\)\\){width:calc(1px * var(--x,))}}')
   })
 })

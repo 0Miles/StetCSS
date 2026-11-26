@@ -203,6 +203,8 @@ export default class StetCSS {
   protected readonly nativeDeclarationUtilities = new Map<string, CompiledUtility>()
   protected nativeValueNamespaceUtilities = new Map<string, CompiledUtility>()
   protected keyAliases = new Map<string, string>()
+  /** Set when a candidate rule is rejected for an invalid value; scoped by `generateGroupItem`. */
+  private rejectedInvalidValue = false
 
   manifest!: StetCSSManifest
 
@@ -799,6 +801,33 @@ export default class StetCSS {
   }
 
   /**
+   * Generates one item of a group class (`fg:red` in `{fg:red;top:48}`). Returns `undefined` when
+   * the item generates nothing because its value is invalid (`fg:red,`), which invalidates the
+   * whole group, and `[]` when it matches nothing, which the group writes as a raw declaration
+   * (`top:48`).
+   */
+  generateGroupItem(className: string, mode?: string): Utility[] | undefined {
+    const outerRejectedInvalidValue = this.rejectedInvalidValue
+    this.rejectedInvalidValue = false
+    try {
+      const rules = this.generate(className, mode)
+      return rules.length || !this.rejectedInvalidValue ? rules : undefined
+    } finally {
+      this.rejectedInvalidValue = outerRejectedInvalidValue
+    }
+  }
+
+  /**
+   * Whether `property` names a CSS property: `flex-wrap` does, `block` does not. Custom
+   * properties always do; others are asked of the native declaration matcher with the CSS-wide
+   * `inherit`. `undefined` without a matcher, which leaves the engine no way to tell.
+   */
+  namesNativeProperty(property: string): boolean | undefined {
+    if (!property.startsWith('--') && !this.options.nativeDeclarationMatcher) return
+    return this.matchNativeDeclaration({ property, value: 'inherit' })
+  }
+
+  /**
    * Create utility from given class name
    * @param className
    * @returns Utility
@@ -927,6 +956,7 @@ export default class StetCSS {
 
   protected createRuleWithDefinition(className: string, registeredUtility: CompiledUtility, fixedClass?: string, mode?: string, branchIndex = 0, stateBranches?: Utility['stateBranches']): Utility | undefined {
     const candidate = new Utility(className, this, registeredUtility, fixedClass, mode, branchIndex, stateBranches)
+    if (candidate.invalidValueSyntax) this.rejectedInvalidValue = true
     if (
       candidate.valid
       && this.shouldValidateNativeDeclarationUtility(registeredUtility)
