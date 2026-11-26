@@ -153,9 +153,28 @@ const TAG_REST = String.raw`(?:[\t\n\f\r /]+|[^\t\n\f\r />][^\t\n\f\r />=]*(?:[\
  * comments, `<script>` and `<style>` elements (whose content the build reads as JavaScript or not
  * at all), and other tags with their attribute values. Scanned left to right, so a `<style>`
  * inside a comment or an attribute value opens nothing. Astro's build finds its elements by
- * pattern instead (`getStetCSSAstroMarkupElements`).
+ * pattern instead (`getStetCSSAstroMarkupElements`). Other tags capture their `/`, name and rest
+ * so Vue's root `<template>` can be told apart.
  */
-const MARKUP_TOKEN = new RegExp(String.raw`<!--[\s\S]*?(?:-->|$)|<(script|style)(?=[\t\n\f\r />]|$)(${TAG_REST})[\s\S]*?(?:<\/\1(?=[\t\n\f\r />]|$)${TAG_REST}|$)|<\/?[A-Za-z][^\t\n\f\r />]*${TAG_REST}`, 'gi')
+const MARKUP_TOKEN = new RegExp(String.raw`<!--[\s\S]*?(?:-->|$)|<(script|style)(?=[\t\n\f\r />]|$)(${TAG_REST})[\s\S]*?(?:<\/\1(?=[\t\n\f\r />]|$)${TAG_REST}|$)|<(\/?)([A-Za-z][^\t\n\f\r />]*)(${TAG_REST})`, 'gi')
+
+/** One attribute of a tag's rest (`TAG_REST`): its name and its value as written, quotes included. */
+const TAG_ATTRIBUTE = /([^\t\n\f\r />][^\t\n\f\r />=]*)(?:[\t\n\f\r ]*=[\t\n\f\r ]*("[^"]*"?|'[^']*'?|[^\t\n\f\r >]*))?/g
+
+/** Where Vue's SFC tokenizer ends a root `<template>` it reads as raw text. */
+const VUE_TEMPLATE_END = /<\/template(?=[\t\n\f\r />]|$)/gi
+
+/**
+ * Whether Vue reads a root `<template>` with this start tag rest as raw text, as its SFC
+ * tokenizer does when a `lang` attribute (case-sensitive) holds a language other than `html`
+ * (`lang="pug"`). The build then reads the template as written.
+ */
+function isRawVueTemplate(tagRest: string) {
+  return [...tagRest.matchAll(TAG_ATTRIBUTE)].some(([, name, value]) => {
+    const lang = value?.replace(/^(["'])([\s\S]*?)\1?$/, '$2')
+    return name === 'lang' && !!lang && lang !== 'html'
+  })
+}
 
 const OXC_CACHE_LIMIT = 20
 
@@ -239,7 +258,7 @@ function getDocumentPath(textDocument: TextDocument) {
   return textDocument.uri.split(/[?#]/)[0]
 }
 
-function collectNonMarkupRanges(source: string, astro: boolean) {
+function collectNonMarkupRanges(source: string, astro: boolean, vue: boolean) {
   const ranges: SourceRange[] = []
   if (astro) {
     // Astro's frontmatter and what precedes it, and its script and style elements, located with
@@ -251,11 +270,29 @@ function collectNonMarkupRanges(source: string, astro: boolean) {
     }
     return ranges
   }
-  for (const match of source.matchAll(MARKUP_TOKEN)) {
-    const [element, name, startTagRest] = match
-    if (!name) continue
-    // The element's content, after its start tag.
-    ranges.push({ start: match.index + 1 + name.length + startTagRest.length, end: match.index + element.length })
+  const token = new RegExp(MARKUP_TOKEN.source, MARKUP_TOKEN.flags)
+  // How many Vue `<template>` elements are open: at 0, a `<template>` is the SFC's root one.
+  let templateDepth = 0
+  for (let match = token.exec(source); match; match = token.exec(source)) {
+    const [element, name, startTagRest, closing, tagName, tagRest] = match
+    if (name) {
+      // The element's content, after its start tag.
+      ranges.push({ start: match.index + 1 + name.length + startTagRest.length, end: match.index + element.length })
+      continue
+    }
+    if (!vue || tagName !== 'template') continue
+    if (closing) {
+      templateDepth = Math.max(0, templateDepth - 1)
+    } else if (templateDepth === 0 && isRawVueTemplate(tagRest)) {
+      // Raw text up to the first `</template`, which the scan then reads as the closing tag.
+      VUE_TEMPLATE_END.lastIndex = token.lastIndex
+      const end = VUE_TEMPLATE_END.exec(source)?.index ?? source.length
+      ranges.push({ start: token.lastIndex, end })
+      token.lastIndex = end
+      templateDepth++
+    } else if (!tagRest.endsWith('/>')) {
+      templateDepth++
+    }
   }
   return ranges
 }
@@ -990,7 +1027,7 @@ export default function getClassPositions(
   const decodesMarkup = HTML_ATTRIBUTE_SOURCE_EXT.test(documentPath)
   let nonMarkupRanges: SourceRange[] | undefined
   const isMarkup = (index: number) => {
-    nonMarkupRanges ??= collectNonMarkupRanges(sourceText, ASTRO_SOURCE_EXT.test(documentPath))
+    nonMarkupRanges ??= collectNonMarkupRanges(sourceText, ASTRO_SOURCE_EXT.test(documentPath), VUE_SOURCE_EXT.test(documentPath))
     return !nonMarkupRanges.some((range) => range.start <= index && index < range.end)
   }
 
@@ -1056,6 +1093,9 @@ export default function getClassPositions(
   // A Vue `:class` binding quoted like an attribute value is one: the template compiler decodes
   // its character references before it parses the expression.
   const decodedBindingExpressions = new Set<ClassMatcher>()
+  // The decoded bindings found: the class function and string scans read the same text as
+  // written, and a reference splitting a string gives their positions other ranges.
+  const decodedBindingRanges: SourceRange[] = []
   const decodesBindings = VUE_SOURCE_EXT.test(documentPath)
   if (classAttributeBindings) {
     const bindingExpressions: ClassMatcher[] = []
@@ -1067,8 +1107,7 @@ export default function getClassPositions(
       if (decodesBindings && quoted && DECODED_CLASS_BINDINGS.has(eachClassAttribute)) decodedBindingExpressions.add(binding)
       bindingExpressions.push(binding)
     }
-    // First, so a class function call inside a quoted binding keeps the binding's decoding when
-    // both scans find its strings.
+    // First, so a range both scans find keeps the binding's reading.
     assignmentExpressions.unshift(...bindingExpressions)
   }
 
@@ -1093,6 +1132,7 @@ export default function getClassPositions(
         }
         return
       }
+      if (characterReferences) decodedBindingRanges.push({ start: eachAttrStart, end: eachClassPositionEnd })
 
       // Strings inside a template's `${…}` join its text at runtime; this scan cannot tell which
       // ends touch it, so it leaves them out.
@@ -1148,5 +1188,9 @@ export default function getClassPositions(
     })
   }
 
-  return sortAndDeduplicate(classPositions)
+  // Inside a decoded binding only the binding's own reading counts.
+  const inDecodedBinding = ({ range }: ClassPosition) => decodedBindingRanges.some((binding) => binding.start <= range.start && range.end <= binding.end)
+  return sortAndDeduplicate(decodedBindingRanges.length
+    ? classPositions.filter((position) => position.characterReferences || !inDecodedBinding(position))
+    : classPositions)
 }
