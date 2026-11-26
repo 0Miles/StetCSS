@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.3.0](https://github.com/0Miles/StetCSS/compare/lint-v0.2.0...lint-v0.3.0) (2026-11-26)
+
+
+### Bug Fixes
+
+* **lint:** give no fix when a respelled class would break a string read as written ([#240](https://github.com/0Miles/StetCSS/issues/240)) ([8704bcd](https://github.com/0Miles/StetCSS/commit/8704bcd7ce8051e279438c03dfc012153fc5fb0e))
+* **lint:** keep each class when an edit rejoins decoded spellings ([#240](https://github.com/0Miles/StetCSS/issues/240)) ([a8b8bf5](https://github.com/0Miles/StetCSS/commit/a8b8bf5d6c2cf85bc5111152117cebec93d0efcb))
+* **lint:** lint and fix class attributes with character references by their decoded classes ([#240](https://github.com/0Miles/StetCSS/issues/240)) ([a158092](https://github.com/0Miles/StetCSS/commit/a158092c8df12177f4d39ee1004417aafcbee3d4))
+* **lint:** rebuild a class list the parser read as written as written ([#240](https://github.com/0Miles/StetCSS/issues/240)) ([0071d82](https://github.com/0Miles/StetCSS/commit/0071d822e6cdb20213e3f0eb646dee20867df3a8))
+
 ## [0.2.0](https://github.com/0Miles/StetCSS/compare/lint-v0.1.0...lint-v0.2.0) (2026-11-26)
 
 

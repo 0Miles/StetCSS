@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/0Miles/StetCSS/compare/language-server-v0.2.0...language-server-v0.3.0) (2026-11-26)
+
+
+### Bug Fixes
+
+* **compiler,stylesheet,language-server:** close review 4 findings on unquoted directive arguments ([#239](https://github.com/0Miles/StetCSS/issues/239)) ([8431226](https://github.com/0Miles/StetCSS/commit/8431226384e58ca9e811317d7f301467451e935f))
+* **compiler:** fail on unquoted [@source](https://github.com/source), [@safelist](https://github.com/safelist) and [@blocklist](https://github.com/blocklist) arguments ([#239](https://github.com/0Miles/StetCSS/issues/239)) ([85ea14f](https://github.com/0Miles/StetCSS/commit/85ea14f07f892c321a609e33682d45caea84c2e8))
+
 ## [0.2.0](https://github.com/0Miles/StetCSS/compare/language-server-v0.1.0...language-server-v0.2.0) (2026-11-26)
 
 

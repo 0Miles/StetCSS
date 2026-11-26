@@ -1,6 +1,6 @@
 {
   "name": "@stet-css/project",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "build": "tsdown --config ../../shared/tsdown-package.config.ts",

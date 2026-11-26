@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/0Miles/StetCSS/compare/next-v0.2.0...next-v0.3.0) (2026-11-26)
+
+
+### Miscellaneous Chores
+
+* **next:** Synchronize stet-css versions
+
 ## [0.2.0](https://github.com/0Miles/StetCSS/compare/next-v0.1.0...next-v0.2.0) (2026-11-26)
 
 

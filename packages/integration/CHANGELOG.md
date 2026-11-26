@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/0Miles/StetCSS/compare/integration-v0.2.0...integration-v0.3.0) (2026-11-26)
+
+
+### Miscellaneous Chores
+
+* **integration:** Synchronize stet-css versions
+
 ## [0.2.0](https://github.com/0Miles/StetCSS/compare/integration-v0.1.0...integration-v0.2.0) (2026-11-26)
 
 

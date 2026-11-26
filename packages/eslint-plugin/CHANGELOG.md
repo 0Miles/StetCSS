@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/0Miles/StetCSS/compare/eslint-plugin-v0.2.0...eslint-plugin-v0.3.0) (2026-11-26)
+
+
+### Bug Fixes
+
+* **eslint-plugin:** decode Vue template strings only in :class bindings ([#240](https://github.com/0Miles/StetCSS/issues/240)) ([2e7a75a](https://github.com/0Miles/StetCSS/commit/2e7a75a46982ecb12b2bdd975741c01d2985f596))
+* **eslint-plugin:** fix class attributes spelled with character references ([#240](https://github.com/0Miles/StetCSS/issues/240)) ([2197b76](https://github.com/0Miles/StetCSS/commit/2197b7657fec7b700b66b980937fc943c15e29cf))
+
 ## [0.2.0](https://github.com/0Miles/StetCSS/compare/eslint-plugin-v0.1.0...eslint-plugin-v0.2.0) (2026-11-26)
 
 
