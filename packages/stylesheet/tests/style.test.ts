@@ -209,6 +209,29 @@ describe('style CSS extraction helpers', () => {
     ])
   })
 
+  /**
+   * Prevents (#239 review 4 F4): an unquoted directive argument in an imported stylesheet dropping
+   * every dependency but the entry. Webpack and Vite watch this list after a failed transform, so
+   * quoting the argument in `classes.css` would never rerun the entry.
+   * Reverse check: resolving the dependency graph with the directive-argument check on turns this
+   * test red.
+   */
+  it('collects the dependencies of an entry whose import holds an unquoted directive argument', () => {
+    const root = createFixture()
+    const entryPath = join(root, 'app/style.css')
+    const stetPath = join(root, 'app/stet.css')
+    const classesPath = join(root, 'app/classes.css')
+    writeFileSync(stetPath, '@import "@stet-css/core";')
+    writeFileSync(classesPath, '@blocklist debug-*;')
+    writeFileSync(entryPath, '@import "./stet.css";\n@import "./classes.css";')
+
+    expect(collectStyleCSSDependencies(entryPath, undefined, root)).toEqual([
+      entryPath,
+      stetPath,
+      classesPath
+    ])
+  })
+
   it('keeps direct style dependencies when dependency graph resolution fails', () => {
     const root = createFixture()
     const entryPath = join(root, 'app/globals.css')

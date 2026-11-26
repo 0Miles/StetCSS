@@ -44,6 +44,7 @@ test.concurrent.each([
   ["@safelist 'p:2', fg:blue;", "@safelist 'p:2', 'fg:blue';", 'fg:blue', policy({ safelist: ['p:2', 'fg:blue'] })],
   ['@safelist fg:blue bg:red;', "@safelist 'fg:blue' 'bg:red';", 'fg:blue bg:red', policy({ safelist: ['fg:blue', 'bg:red'] })],
   ['@safelist fg:blue /* note */;', "@safelist 'fg:blue' /* note */;", 'fg:blue', policy({ safelist: ['fg:blue'] })],
+  ["@safelist 'p:2'\tfg:blue;", "@safelist 'p:2' 'fg:blue';", 'fg:blue', policy({ safelist: ['p:2', 'fg:blue'] })],
   ['@source ./src/**/*.vue;', "@source './src/**/*.vue';", './src/**/*.vue', policy({ include: ['./src/**/*.vue'] })],
   [
     '@source not ../ui/**/*.stories.tsx;',
@@ -138,10 +139,13 @@ test.concurrent('keeps the extraction policy of quoted arguments', () => {
 /**
  * Guards #239 review F9: `not` written right against a string, comment or comma is still the
  * keyword, so these quoted forms keep excluding `./legacy` as they did before the check existed.
+ * The line-broken row guards review 4 F3: a newline or tab separates arguments like a space.
  * Reverse check: recognising `not` by the item's whole text instead of its text outside strings
- * and comments turns every row red.
+ * and comments turns every row red; splitting the prelude only at spaces turns the line-broken row
+ * red.
  */
 test.concurrent.each([
+  "@source not\n  './legacy';",
   "@source not'./legacy';",
   "@source not/* legacy */ './legacy';",
   "@source not,'./legacy';",
@@ -149,6 +153,49 @@ test.concurrent.each([
   "@source no/**/t './legacy';"
 ])('keeps %s an exclusion', (statement) => {
   expect(compileCSS(statement).extractionPolicy).toEqual(policy({ exclude: ['./legacy'] }))
+})
+
+/**
+ * Guards #239 review 4 F1: an unquoted glob holding `/*` opens a comment that swallows the `;` and
+ * the rest of the file, so the statement never ended, was never checked, and the rules after it
+ * vanished with no error. A statement that runs to the end of the file is checked too, underlined
+ * from its first unquoted argument to the end; a quoted one still compiles as before.
+ * Reverse check: scanning only `;`-terminated statements in the check turns every throwing row red.
+ */
+test.concurrent.each([
+  ['@source ./src/*.vue;\n.card { color: red; }', './src', "quote each argument, as in @source './src';"],
+  ['@source not ./src/*.vue;', './src', "quote each argument, as in @source not './src';"],
+  ['@safelist fg:blue/*', 'fg:blue', "quote each argument, as in @safelist 'fg:blue';"],
+  ['.card { color: red; }\n@safelist fg:blue', 'fg:blue', "so write @safelist 'fg:blue';"]
+])('rejects the unquoted argument of %j, which runs to the end of the file', (source, argument, advice) => {
+  const error = catchError(() => compileCSS(source, { from: '/app/entry.css' }))
+
+  expect(error).toMatchObject({
+    code: 'unquoted-directive-argument',
+    source: { file: '/app/entry.css', range: { start: source.indexOf(argument), end: source.length } }
+  })
+  expect(error.message).toContain(advice)
+})
+
+test.concurrent.each([
+  "@source './src' /* note",
+  "@safelist 'fg:blue'"
+])('leaves the quoted %j that runs to the end of the file as before', (source) => {
+  expect(compileCSS(source).extractionPolicy).toEqual(policy({}))
+})
+
+/**
+ * Guards the opt-out the language server uses for a document outside every StetCSS import graph:
+ * a Tailwind stylesheet's `@source inline(...)` must compile as it did before the check existed.
+ * Reverse check: ignoring `checkDirectiveArguments` in `compileCSS` turns this test red.
+ */
+test.concurrent('skips the unquoted-argument check when checkDirectiveArguments is false', () => {
+  const result = compileCSS('@source inline("underline");\n@safelist fg:blue;\n@source ./src/*.vue;', {
+    checkDirectiveArguments: false
+  })
+
+  // The policy before the check existed: the string inside `inline(...)` read as an include.
+  expect(result.extractionPolicy).toEqual(policy({ include: ['underline'] }))
 })
 
 /**

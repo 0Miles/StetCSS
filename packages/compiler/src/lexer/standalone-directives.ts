@@ -5,13 +5,14 @@ import {
 } from '@stet-css/schema/css-directives'
 import {
   escapeRegExp,
+  findCSSStatementEnd,
   findMasterAtRule,
   skipCSSEscapeStringOrComment,
   type CSSDirectiveRuleRange,
   type SourceRange
 } from '@stet-css/lexer'
 import { countSourcePatternExpansions, MAX_SOURCE_PATTERN_EXPANSIONS } from './source-pattern'
-import { findAtRuleStatementEnd, removeSourceRanges } from './source'
+import { removeSourceRanges } from './source'
 
 export type StandaloneCSSDirectiveName = 'source' | 'safelist' | 'blocklist' | 'preserve'
 
@@ -23,6 +24,15 @@ export interface StandaloneCSSDirectiveStatement {
   statement: string
   args: string[]
   modifiers: string[]
+}
+
+/**
+ * A statement the unquoted-argument check also reads: one that runs to the end of the source with
+ * no `;`, such as `@source ./src/*.vue;`, whose `/*` opens a comment that swallows the rest.
+ */
+interface CheckedCSSDirectiveStatement extends StandaloneCSSDirectiveStatement {
+  /** The statement reached the end of the source without a `;`, so its prelude runs to `end`. */
+  unterminated?: boolean
 }
 
 export const REMOVED_MASTER_AT_RULE_ERROR_CODE = 'removed-master-at-rule'
@@ -234,13 +244,14 @@ const ECHOED_DIRECTIVE_ARGUMENT_RE = /^(?:[^'"\\,)\]/]|\/(?!\*)|\/\*\*\/)+$/
  */
 function assertQuotedDirectiveArguments(
   source: string,
-  statement: StandaloneCSSDirectiveStatement,
+  statement: CheckedCSSDirectiveStatement,
   filename: string | undefined,
   locate: boolean
 ) {
   const keywords = STRING_ARGUMENT_DIRECTIVE_KEYWORDS[statement.atRuleName]
   if (!keywords) return
-  const items = splitDirectivePrelude(source, statement.start + statement.atRuleName.length + 1, statement.end - 1)
+  const preludeEnd = statement.unterminated ? statement.end : statement.end - 1
+  const items = splitDirectivePrelude(source, statement.start + statement.atRuleName.length + 1, preludeEnd)
   const text = (item: DirectivePreludeItem) => source.slice(item.start, item.end)
   // A keyword must also read as one word to the compile, which a comma or string splits (`n,ot`).
   const isKeyword = (item: DirectivePreludeItem) => keywords.includes(item.bareText)
@@ -262,13 +273,14 @@ function assertQuotedDirectiveArguments(
 }
 
 /**
- * Throws on the first `@source`, `@safelist` or `@blocklist` with an unquoted argument in `source`.
- * The import-graph reader runs it on every stylesheet it reads, so the error points into the file
- * that holds the directive rather than into the expanded graph.
+ * Throws on the first `@source`, `@safelist` or `@blocklist` with an unquoted argument in `source`,
+ * also one that runs to the end of the source with no `;`. The import-graph reader runs it on every
+ * stylesheet it reads, so the error points into the file that holds the directive rather than into
+ * the expanded graph.
  */
 export function assertQuotedCSSDirectiveArguments(source: string, filename?: string, locate = false) {
   if (!source.includes('@source') && !source.includes('@safelist') && !source.includes('@blocklist')) return
-  for (const statement of findStandaloneCSSDirectiveStatements(source)) {
+  for (const statement of scanStandaloneCSSDirectiveStatements(source, true)) {
     assertQuotedDirectiveArguments(source, statement, filename, locate)
   }
 }
@@ -323,28 +335,39 @@ function parseAtRuleName(source: string, start: number) {
 function parseStandaloneCSSDirectiveStatement(
   source: string,
   start: number,
-  atRuleName: StandaloneCSSDirectiveName
-) {
-  const end = findAtRuleStatementEnd(source, start)
-  if (end === -1) return
+  atRuleName: StandaloneCSSDirectiveName,
+  withUnterminated: boolean
+): CheckedCSSDirectiveStatement | undefined {
+  const statementEnd = findCSSStatementEnd(source, start)
+  const unterminated = statementEnd.reason === 'eof'
+  if (statementEnd.reason !== 'semicolon' && !(withUnterminated && unterminated)) return
+  const end = statementEnd.end
   const statement = source.slice(start, end)
-  const prelude = statement
-    .replace(new RegExp(`^@${atRuleName}\\b`), '')
-    .replace(/;$/, '')
+  const prelude = statement.replace(new RegExp(`^@${atRuleName}\\b`), '')
+  const terminatedPrelude = unterminated ? prelude : prelude.replace(/;$/, '')
   return {
     start,
     end,
     atRuleName,
     name: atRuleName,
     statement,
-    args: parseQuotedStrings(prelude),
-    modifiers: parseUnquotedWords(prelude)
-  } satisfies StandaloneCSSDirectiveStatement
+    args: parseQuotedStrings(terminatedPrelude),
+    modifiers: parseUnquotedWords(terminatedPrelude),
+    ...(unterminated ? { unterminated } : {})
+  }
 }
 
-export function findStandaloneCSSDirectiveStatements(source: string, filename = 'stet.css') {
+export function findStandaloneCSSDirectiveStatements(source: string, filename = 'stet.css'): StandaloneCSSDirectiveStatement[] {
   void filename
-  const statements: StandaloneCSSDirectiveStatement[] = []
+  return scanStandaloneCSSDirectiveStatements(source, false)
+}
+
+/**
+ * The top-level standalone directive statements in `source`; with `withUnterminated`, also the one
+ * that runs to the end of the source with no `;`, which only the unquoted-argument check reads.
+ */
+function scanStandaloneCSSDirectiveStatements(source: string, withUnterminated: boolean) {
+  const statements: CheckedCSSDirectiveStatement[] = []
   let depth = 0
   for (let index = 0; index < source.length; index++) {
     const skipped = skipCSSEscapeStringOrComment(source, index)
@@ -366,7 +389,7 @@ export function findStandaloneCSSDirectiveStatements(source: string, filename = 
     const name = parseAtRuleName(source, index)
     if (!STANDALONE_CSS_DIRECTIVE_NAMES.has(name as StandaloneCSSDirectiveName)) continue
     if (isIdentChar(source[index + name.length + 1])) continue
-    const statement = parseStandaloneCSSDirectiveStatement(source, index, name as StandaloneCSSDirectiveName)
+    const statement = parseStandaloneCSSDirectiveStatement(source, index, name as StandaloneCSSDirectiveName, withUnterminated)
     if (!statement) continue
     statements.push(statement)
     index = statement.end - 1
@@ -385,14 +408,18 @@ function assertSourcePatternsExpandable(patterns: string[], directive: string, f
 }
 
 /**
- * Rejects removed directives (`@master`, `@preserve`) on the way; pass `locate` when `source` is
- * the whole of `filename`, so the errors carry source references.
+ * Rejects removed directives (`@master`, `@preserve`) on the way, and unquoted arguments unless
+ * `checkArguments` is false; pass `locate` when `source` is the whole of `filename`, so the errors
+ * carry source references.
  */
-export function collectStandaloneCSSDirectiveExtractionPolicy(source: string, filename?: string, locate = false) {
+export function collectStandaloneCSSDirectiveExtractionPolicy(source: string, filename?: string, locate = false, checkArguments = true) {
   assertNoMasterAtRules(source, filename, locate)
   const policy = createCSSDirectiveExtractionPolicy()
-  for (const statement of findStandaloneCSSDirectiveStatements(source, filename)) {
-    assertQuotedDirectiveArguments(source, statement, filename, locate)
+  for (const statement of scanStandaloneCSSDirectiveStatements(source, checkArguments)) {
+    if (checkArguments) assertQuotedDirectiveArguments(source, statement, filename, locate)
+    // An unterminated statement is checked only: as before the check, it neither configures the
+    // policy nor leaves the output.
+    if (statement.unterminated) continue
     switch (statement.atRuleName) {
       case 'source': {
         const negated = statement.modifiers.includes('not')
