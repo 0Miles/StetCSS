@@ -207,12 +207,12 @@ describe.concurrent('group items', () => {
    * names no property (`block`, `hidden`, `block>div`) or a nested group (`{bg:blue}`), that `:`
    * starts a state, not a value. Such an item generates nothing and the group wrote it raw, so
    * `{fg:red;block:url(,.a)}` emitted an unconditional `color` beside a dead `block:url(,.a)`,
-   * and passed validation, where the base generated nothing.
-   * Trade-off: whether `block` names a property is the native declaration matcher's answer, so
-   * an instance without one keeps writing `{block:url(,.a)}` raw, as it writes every item it
-   * cannot judge; only a key that cannot be a property is rejected there.
+   * and passed validation, where the base generated nothing. An instance without a native
+   * declaration matcher cannot ask whether `block` names a property; there `block` is a class
+   * that sets `display`, not a property of its own, so it is read as a state as well.
    *
-   * Reverse check: writing such an item raw again fails these rows.
+   * Reverse check: writing such an item raw again fails these rows; writing it raw whenever no
+   * matcher can judge its key fails the `block` and `hidden` rows without a matcher.
    */
   test.each([
     '{fg:red;block:url(,.a)}',
@@ -222,12 +222,6 @@ describe.concurrent('group items', () => {
     '{fg:red;{bg:blue}:url(,)}'
   ])('%s generates no CSS', (className) => {
     expect(generateText(className)).toBe('')
-  })
-
-  test.each([
-    '{fg:red;block>div:url(,.a)}',
-    '{fg:red;{bg:blue}:url(,)}'
-  ])('%s generates no CSS without a native declaration matcher', (className) => {
     expect(generateText(className, createMatcherlessCSS())).toBe('')
   })
 
@@ -235,12 +229,15 @@ describe.concurrent('group items', () => {
    * Guards (#234): rejecting a raw item for its `var()` with an empty fallback when its key names a
    * property. Many properties are classes too (`flex-wrap`, `text-wrap`, `container`), and reading
    * every such key as a state dropped these valid groups, which the base emitted. An instance
-   * without a native declaration matcher writes these items raw; one whose matcher knows the
-   * property but rejects the value does too, and keeps them.
+   * without a native declaration matcher writes these items raw: such a class sets the property
+   * it is named after, or a longhand of it (`container` sets `container-type`). One whose matcher
+   * knows the property but rejects the value does too, and keeps them.
+   * Trade-off: without a matcher, a property whose class sets another property (`flex`, `grid`
+   * set `display`) is read as a state, and its group generates nothing, as at the base.
    *
    * Reverse check: rejecting every raw item that holds an empty function argument fails these
    * rows; reading a key that is a class on its own as a state fails the `flex-wrap`, `text-wrap`
-   * and `container` rows.
+   * and `container` rows; without the longhand, only the `container` row fails.
    */
   test.each([
     ['{flex-wrap:var(--x,)}', '@layer utilities{.\\{flex-wrap\\:var\\(--x\\,\\)\\}{flex-wrap:var(--x,)}}'],
@@ -252,6 +249,11 @@ describe.concurrent('group items', () => {
   ])('%s keeps its rule', (className, text) => {
     expect(generateText(className, createMatcherlessCSS())).toBe(text)
     expect(generateText(className, createPropertyAwareCSS())).toBe(text)
+  })
+
+  test('{fg:red;flex-wrap:var(--x,)} keeps both declarations without a native declaration matcher', () => {
+    expect(generateText('{fg:red;flex-wrap:var(--x,)}', createMatcherlessCSS()))
+      .toContain('@layer utilities{.\\{fg\\:red\\;flex-wrap\\:var\\(--x\\,\\)\\}{color:var(--color-red);flex-wrap:var(--x,)}}')
   })
 })
 
