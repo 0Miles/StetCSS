@@ -41,6 +41,11 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
+    "./astro": {
+      "types": "./dist/astro.d.ts",
+      "import": "./dist/astro.js",
+      "default": "./dist/astro.js"
+    },
     "./character-reference": {
       "types": "./dist/character-reference.d.ts",
       "import": "./dist/character-reference.js",
@@ -51,6 +56,9 @@
     "*": {
       ".": [
         "./dist/index.d.ts"
+      ],
+      "./astro": [
+        "./dist/astro.d.ts"
       ],
       "./character-reference": [
         "./dist/character-reference.d.ts"

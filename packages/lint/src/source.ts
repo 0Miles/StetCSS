@@ -2,8 +2,7 @@ import type { StetCSS } from '@stet-css/engine'
 import {
   collectCSSDirectiveRanges,
   type CSSDirectiveRuleRange,
-  type SourceRange,
-  type StetCSSScriptStringQuote
+  type SourceRange
 } from '@stet-css/lexer'
 import { getClassPositions, languageSettings } from '@stet-css/language'
 import { extname } from 'node:path'
@@ -28,6 +27,7 @@ import {
   type StetCSSUnapprovedRawValueClassesReportOptions
 } from './diagnostics'
 import { defaultClassLintSettings } from './constants'
+import type { StetCSSClassListEditOptions } from './class-list-edits'
 
 const MAX_FIX_PASSES = 10
 
@@ -136,8 +136,8 @@ interface ClassListContext {
   range: SourceRange
   text: string
   sourceKind: Exclude<StetCSSLintDiagnosticSourceKind, 'manifest'>
-  unescape?: string | false
-  scriptString?: StetCSSScriptStringQuote
+  /** How the text decodes into classes, passed to every rule and edit on it. */
+  decoding: StetCSSClassListEditOptions
   directive?: CSSDirectiveRuleRange
 }
 
@@ -250,8 +250,11 @@ function collectClassListContexts(
       range: contextRange,
       text: content.slice(contextRange.start, contextRange.end),
       sourceKind: directive ? 'compose-directive' : inferClassSourceKind(content, contextRange),
-      unescape: detectClassListUnescape(content, contextRange),
-      scriptString: position.scriptString,
+      decoding: {
+        unescape: detectClassListUnescape(content, contextRange),
+        scriptString: position.scriptString,
+        characterReferences: position.characterReferences
+      },
       ...(directive ? { directive } : {})
     })
   }
@@ -325,8 +328,7 @@ function createClassListLintOptions(
 ): StetCSSClassListLintReportOptions {
   return {
     ...getRuleOptions(options),
-    unescape: context.unescape,
-    scriptString: context.scriptString
+    ...context.decoding
   }
 }
 
@@ -339,8 +341,7 @@ function withSourceRuleOptions(
     ...getRuleOptions(options),
     ...getSpecificRuleOptions(options, ruleId),
     severity: options.severities?.[ruleId],
-    unescape: context.unescape,
-    scriptString: context.scriptString
+    ...context.decoding
   }
 }
 

@@ -1,4 +1,5 @@
 import {
+  decodeStetCSSClassListSource,
   parseStetCSSClassList,
   type StetCSSClassListItem,
   type StetCSSClassListParseOptions
@@ -6,7 +7,7 @@ import {
 import type { StetCSS } from '@stet-css/engine'
 import sortClassNames from './sort-class-names'
 
-export type StetCSSClassListEditOptions = Pick<StetCSSClassListParseOptions, 'unescape' | 'scriptString'>
+export type StetCSSClassListEditOptions = Pick<StetCSSClassListParseOptions, 'unescape' | 'scriptString' | 'characterReferences'>
 
 function parseClassList(classList: string, options: StetCSSClassListEditOptions = {}) {
   return parseStetCSSClassList(classList, {
@@ -19,8 +20,37 @@ function cloneClassListItems(items: StetCSSClassListItem[]) {
   return items.map((item) => ({ ...item }))
 }
 
-function buildClassList(items: StetCSSClassListItem[]) {
-  return items.map((item) => item.raw).join('')
+/**
+ * The class list `items`, edited from `classList`, spell, or undefined when no spelling reads as
+ * its items do. In a list the parser decoded, joining spellings that were not next to each other
+ * can change how they read: a space spelled `&#x20`, without its `;`, reads on into a class that
+ * now starts with a hex digit (`&#x20bg:black` is one reference). Such a space gets a `;` when
+ * that keeps its meaning, or is written as the whitespace it decodes to. An item that does not
+ * decode on its own (a replacement holding the string's quote) has no safe spelling. Each edit
+ * leaves a list it cannot spell as it is, so it gets no fix. A list the parser read as written
+ * (a string body that does not decode, such as one holding a line break) is rebuilt as written,
+ * still with no fix when a class spelling does not decode on its own: one holding the string's
+ * quote, or one ending in a lone `\` that would escape what follows it, breaks the string.
+ */
+function buildClassList(items: StetCSSClassListItem[], classList: string, options: StetCSSClassListEditOptions) {
+  const spellings = items.map((item) => item.raw)
+  if (!options.scriptString && !options.characterReferences) return spellings.join('')
+  const decode = (spelling: string) => decodeStetCSSClassListSource(spelling, options)?.value
+  if (!decodeStetCSSClassListSource(classList, options)) {
+    return items.every((item) => item.type === 'space' || decode(item.raw) !== undefined) ? spellings.join('') : undefined
+  }
+  const values = spellings.map(decode)
+  if (values.some((value) => value === undefined)) return
+  const value = values.join('')
+  if (decode(spellings.join('')) === value) return spellings.join('')
+
+  const respelled = spellings.map((spelling, index) => {
+    if (items[index].type !== 'space' || index === items.length - 1) return spelling
+    const keeps = (candidate: string) => decode(candidate) === values[index] &&
+      decode(candidate + spellings[index + 1]) === values[index]! + values[index + 1]
+    return [spelling, spelling + ';', values[index]!].find(keeps) ?? spelling
+  })
+  return decode(respelled.join('')) === value ? respelled.join('') : undefined
 }
 
 function removeClassListItemAt(items: StetCSSClassListItem[], index: number) {
@@ -98,7 +128,7 @@ export function sortClassList(classList: string, css: StetCSS, options: StetCSSC
     item.token = token
   }
 
-  return buildClassList(fixedItems)
+  return buildClassList(fixedItems, classList, options) ?? classList
 }
 
 export function removeClassNamesFromClassList(
@@ -110,7 +140,7 @@ export function removeClassNamesFromClassList(
   for (const className of classNames) {
     removeClassListToken(items, className)
   }
-  return buildClassList(items)
+  return buildClassList(items, classList, options) ?? classList
 }
 
 export function replaceClassNameInClassList(
@@ -121,7 +151,7 @@ export function replaceClassNameInClassList(
 ) {
   const items = parseClassList(classList, options)
   replaceClassListToken(items, className, replacement)
-  return buildClassList(items)
+  return buildClassList(items, classList, options) ?? classList
 }
 
 export function replaceClassGroupInClassList(
@@ -136,5 +166,5 @@ export function replaceClassGroupInClassList(
   for (const className of classNamesToRemove) {
     removeClassListToken(items, className)
   }
-  return buildClassList(items)
+  return buildClassList(items, classList, options) ?? classList
 }

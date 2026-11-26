@@ -1,12 +1,14 @@
 import { RuleContext } from '@typescript-eslint/utils/ts-eslint'
 import {
-  decodeStetCSSScriptString,
+  decodeStetCSSClassListSource,
   getStetCSSWholeClassRange,
   isASCIIWhitespace,
   parseStetCSSClassList,
+  type StetCSSCharacterReferenceDecoder,
   type StetCSSExpressionNeighbours,
   type StetCSSScriptStringQuote
 } from '@stet-css/lexer'
+import { decodeStetCSSHTMLAttributeValue, decodeStetCSSJSXAttributeString } from '@stet-css/lexer/character-reference'
 import type { StetCSSClassListEditOptions } from '@stet-css/lint'
 
 export interface ResolvedClassListNode {
@@ -56,6 +58,21 @@ function getWholeClassRange(text: string, neighbours?: StetCSSExpressionNeighbou
 }
 
 /**
+ * Whether a script node sits in a Vue `:class` binding. The template compiler decodes the
+ * attribute before it parses the expression, so its strings are spelled with character
+ * references, and the build reads them decoded; it reads other template expressions, such as
+ * interpolations, as written.
+ */
+function isInVueClassBinding(node: any) {
+  for (let parent = node.parent; parent; parent = parent.parent) {
+    if (parent.type === 'VAttribute') {
+      return parent.directive && parent.key?.name?.name === 'bind' && parent.key?.argument?.name === 'class'
+    }
+  }
+  return false
+}
+
+/**
  * Resolves a class-bearing node into a class list with source ranges. Pass `neighbours` for a
  * static part of a value that also holds expressions; fragments touching them are left out.
  */
@@ -69,24 +86,33 @@ export default function resolveClassNode(
   let start: number = null
   let end: number = null
   let script = false
+  // How the host decodes the attribute value that holds the class list, as the build does.
+  let characterReferences: StetCSSCharacterReferenceDecoder | undefined
   switch (node.type) {
     case 'Literal':
       value = node.value
       start = node.range[0]
       end = node.range[1]
-      // JSX attribute strings hold no escape sequences.
-      script = node.parent?.type !== 'JSXAttribute'
+      // JSX attribute strings hold character references, not escape sequences.
+      if (node.parent?.type === 'JSXAttribute') {
+        characterReferences = decodeStetCSSJSXAttributeString
+      } else {
+        script = true
+        if (isInVueClassBinding(node)) characterReferences = decodeStetCSSHTMLAttributeValue
+      }
       break
     case 'VLiteral':
     case 'SvelteLiteral':
       value = node.value
       start = node.range[0]
       end = node.range[1]
+      characterReferences = decodeStetCSSHTMLAttributeValue
       break
     case 'TextAttribute':
       value = node.value
       start = node.valueSpan.fullStart.offset
       end = node.valueSpan.end.offset
+      characterReferences = decodeStetCSSHTMLAttributeValue
       break
     case 'TemplateElement':
       if (node.parent.expressions.length) {
@@ -96,6 +122,7 @@ export default function resolveClassNode(
       start = node.range[0]
       end = node.range[1]
       script = true
+      if (isInVueClassBinding(node)) characterReferences = decodeStetCSSHTMLAttributeValue
       break
     default:
       return
@@ -128,11 +155,12 @@ export default function resolveClassNode(
     value = value.slice(...valueRange)
   }
 
-  const options: StetCSSClassListEditOptions = script && quote
-    ? { scriptString: quote as StetCSSScriptStringQuote }
-    : {}
-  const decoded = options.scriptString ? decodeStetCSSScriptString(raw, options.scriptString)?.value : raw
-  const fixable = decoded === value
+  const options: StetCSSClassListEditOptions = {
+    ...(script && quote ? { scriptString: quote as StetCSSScriptStringQuote } : {}),
+    ...(characterReferences ? { characterReferences } : {})
+  }
+  // Where the parser decodes differently from the lexer, the list does not map back onto its source.
+  const fixable = decodeStetCSSClassListSource(raw, options)?.value === value
 
   const nodes: ResolvedClassListNode[] = parseStetCSSClassList(fixable ? raw : value, {
     preserveSpaces: true,

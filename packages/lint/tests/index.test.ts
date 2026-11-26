@@ -70,6 +70,19 @@ const customManifest = createPresetManifest({
 })
 const customCSS = createCSSWithNativeDeclarations(customManifest)
 
+/** The unknown classes no-invalid-classes reports in `content`, linted as `filePath`. */
+function unknownClassNames(content: string, filePath: string) {
+  return lintStetCSSContent({
+    content,
+    filePath,
+    css,
+    rules: { 'no-invalid-classes': true },
+    ruleOptions: { 'no-invalid-classes': { disallowUnknownClass: true } }
+  }).diagnostics
+    .filter((diagnostic) => diagnostic.code === 'unknown-class')
+    .map((diagnostic) => diagnostic.data?.className)
+}
+
 type PresetManifestInput = Parameters<typeof createPresetManifest>[0]
 const registryFieldCSS = createCSSWithNativeDeclarations(createPresetManifest({
   variables: [
@@ -504,6 +517,121 @@ describe('source content linting', () => {
     expect(unknownClassNames('<div className={clsx("\\x62lock")} />', '/project/content.mdx')).toEqual([])
     expect(unknownClassNames('<div class="\\x62lock"></div>', '/project/index.html')).toEqual(['\\x62lock'])
     expect(unknownClassNames('<div className="\\x62lock" />', '/project/component.tsx')).toEqual(['\\x62lock'])
+  })
+
+  /**
+   * #240: the build decodes character references in class attributes (#194), so
+   * `class="block&#32;hidden"` generates `.block` and `.hidden`. Lint read the attribute as
+   * written and reported `block&#32;hidden` as an unknown class the build never sees.
+   * Reverse checks: dropping `characterReferences` from the source contexts reds this test and the
+   * fix test below; dropping it from the compose-directive options reds the `@compose` row only.
+   */
+  test('checks class attributes by the classes the build reads', () => {
+    for (const filePath of ['/project/index.html', '/project/App.vue', '/project/App.svelte', '/project/Page.astro']) {
+      // HTML reads a numeric reference without its `;` too.
+      expect(unknownClassNames('<div class="block&#32;hidden inline&#x2d;flex flex&#32grid"></div>', filePath), filePath).toEqual([])
+    }
+    expect(unknownClassNames('<div className="block&#32;hidden" />', '/project/component.tsx')).toEqual([])
+    expect(unknownClassNames('<div :class="[\'block&#32;hidden\']"></div>', '/project/App.vue')).toEqual([])
+    // A class function's string inside the binding, split by a reference, is read only decoded.
+    expect(unknownClassNames('<template><div :class="[ clsx(\'&#32;hidden fg:white bg:black\') ]"></div></template>', '/project/App.vue')).toEqual([])
+    // A class attribute inside a `@compose` prelude is linted as part of the directive (whose
+    // own words are reported too).
+    expect(unknownClassNames('@compose /* <span class="block&#32;hidden"></span> */;', '/project/index.html')).not.toContain('block&#32;hidden')
+  })
+
+  /**
+   * #240: lint decodes only where the build does. Files the build extracts as plain text (PHP,
+   * Pug, Markdown, MDX, unknown extensions), `<script>` text and Astro frontmatter, which it reads
+   * as JavaScript, and attributes other than `class` and Vue's `:class` are read as written, so lint
+   * neither passes `blockk&#32;hiddenn` as two classes nor rewrites it.
+   * Reverse checks: decoding every `html` document regardless of its extension reds the PHP, Pug
+   * and `.txt` rows; decoding inside `<script>` or frontmatter, or every attribute name, reds those
+   * rows; closing Astro frontmatter at any `---` reds the `// --- helpers ---` row.
+   */
+  test('reads as written the class attributes the build reads as written', () => {
+    const asWritten = ['blockk&#32;hiddenn']
+    for (const filePath of ['/project/index.php', '/project/index.pug', '/project/notes.txt', '/project/content.md', '/project/content.mdx']) {
+      expect(unknownClassNames('<div class="blockk&#32;hiddenn"></div>', filePath), filePath).toEqual(asWritten)
+    }
+    expect(unknownClassNames('<script>el.innerHTML = \'<p class="blockk&#32;hiddenn"></p>\'</script>', '/project/index.html')).toEqual(asWritten)
+    expect(unknownClassNames('---\nconst html = \'<p class="blockk&#32;hiddenn"></p>\'\n---\n<div></div>', '/project/Page.astro')).toEqual(asWritten)
+    // The frontmatter closes at the first `---` outside a comment or string.
+    expect(unknownClassNames('---\n// --- helpers ---\nconst html = \'<b class="blockk&#32;hiddenn"></b>\'\n---\n<div></div>', '/project/Page.astro')).toEqual(asWritten)
+    expect(unknownClassNames('<template><Comp className="blockk&#32;hiddenn" /></template>', '/project/App.vue')).toEqual(asWritten)
+    expect(unknownClassNames('<div :class="\'blockk&#32;hiddenn\'"></div>', '/project/index.html')).toEqual(asWritten)
+    // A Vue template in another language, which Vue reads as raw text.
+    expect(unknownClassNames('<template lang="pug">\ndiv(id="x" class="blockk&#32;hiddenn")\n</template>', '/project/App.vue')).toEqual(asWritten)
+  })
+
+  /**
+   * #240: with decoded classes mapped back onto their source spelling, an attribute holding a
+   * character reference is fixed in place: each class keeps its spelling and the reference
+   * between them stays where it was. A space spelled `&#x20` without its `;` reads on into a hex
+   * digit, so before a class that now starts with one (`bg:black`) it gets its `;`, or the fix
+   * would join the two classes into one. Expected outputs are the fixes of the same lists written
+   * without references (`fg:white bg:black` sorts to `bg:black fg:white`, `bg:black m:0.5rem` to
+   * `m:0.5rem bg:black`); text the build reads as written is left alone.
+   * Reverse checks: joining edited items without checking how they decode reds the `&#x20` rows;
+   * checking a list the parser read as written reds the PHP rows; closing Astro frontmatter at any
+   * `---` reds the Astro row.
+   */
+  test('fixes class attributes with character references at their source spelling', () => {
+    const fix = (content: string, filePath: string) => fixStetCSSContent({
+      content,
+      filePath,
+      css,
+      // Sorting only: canonical suggestions would rewrite `m:0.5rem` to `m:xs`.
+      rules: { 'sort-classes': true, 'prefer-canonical-classes': false }
+    })
+
+    expect(fix('<div class="fg:white&#32;bg:black"></div>', '/project/index.html'))
+      .toBe('<div class="bg:black&#32;fg:white"></div>')
+    expect(fix('<div class="fg:&#x77;hite bg:black"></div>', '/project/index.html'))
+      .toBe('<div class="bg:black fg:&#x77;hite"></div>')
+    expect(fix('<div className="fg:white&#32;bg:black" />', '/project/component.tsx'))
+      .toBe('<div className="bg:black&#32;fg:white" />')
+    expect(fix('<div :class="[\'fg:white&#32;bg:black\']"></div>', '/project/App.vue'))
+      .toBe('<div :class="[\'bg:black&#32;fg:white\']"></div>')
+    for (const filePath of ['/project/index.html', '/project/App.vue', '/project/App.svelte']) {
+      expect(fix('<div class="bg:black&#x20m:0.5rem"></div>', filePath), filePath)
+        .toBe('<div class="m:0.5rem&#x20;bg:black"></div>')
+    }
+    expect(fix('<div :class="[\'bg:black&#x20m:0.5rem\']"></div>', '/project/App.vue'))
+      .toBe('<div :class="[\'m:0.5rem&#x20;bg:black\']"></div>')
+    expect(fix('<div class="fg:white&#32;bg:black"></div>', '/project/index.php'))
+      .toBe('<div class="fg:white&#32;bg:black"></div>')
+    expect(fix('<script>el.innerHTML = \'<p class="fg:white&#32;bg:black"></p>\'</script><div class="fg:white&#32;bg:black"></div>', '/project/index.html'))
+      .toBe('<script>el.innerHTML = \'<p class="fg:white&#32;bg:black"></p>\'</script><div class="bg:black&#32;fg:white"></div>')
+    for (const [content, filePath] of [
+      ['<script id="t"type="module">el.innerHTML = \'<p class="fg:white&#32;bg:black"></p>\'</script>', '/project/index.html'],
+      ['<script define:vars={{ msg: \'hi\' }}>el.innerHTML = \'<p class="fg:white&#32;bg:black"></p>\'</script>', '/project/Page.astro'],
+      ['---\n---\n<!-- the analytics <script> sits at the end -->\n<div class="fg:white&#32;bg:black"></div>\n<script>console.log(1)</script>', '/project/Page.astro']
+    ]) {
+      expect(fix(content, filePath), content).toBe(content)
+    }
+    const astro = (line: string) => `---\n${line}\nconst html = '<b class="fg:white&#32;bg:black"></b>'\n---\n<div></div>`
+    expect(fix(astro('const rule = \'---\''), '/project/Page.astro')).toBe(astro('const rule = \'---\''))
+    // A string the parser cannot decode (a line break inside quotes) is read and rebuilt as written.
+    expect(fix('<?php echo clsx(\'fg:white\n  bg:black\'); ?>', '/project/index.php'))
+      .toBe('<?php echo clsx(\'bg:black\n  fg:white\'); ?>')
+    expect(fix('<?php echo clsx("fg:white\r\n  bg:black"); ?>', '/project/index.php'))
+      .toBe('<?php echo clsx("bg:black\r\n  fg:white"); ?>')
+    // Rebuilt as written, a class spelling that would end the string (a replacement holding its
+    // quote, a spelling ending in a lone backslash moved before the quote) still gets no fix.
+    const canonical = (content: string) => fixStetCSSContent({
+      content,
+      filePath: '/project/index.php',
+      css,
+      rules: { 'sort-classes': true, 'prefer-canonical-classes': true }
+    })
+    for (const content of [
+      '<?php echo clsx(\'block\n  background:url(\\\'a.png\\\')|red\'); ?>',
+      '<?php echo clsx("block\n  background:url(\\"a.png\\")|red"); ?>',
+      '<?php echo clsx(\'bg:black\n  zz\\ fg:white\'); ?>'
+    ]) {
+      expect(canonical(content), content).toBe(content)
+    }
   })
 
   /**

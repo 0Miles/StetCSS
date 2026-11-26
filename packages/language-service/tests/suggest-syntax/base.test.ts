@@ -11,3 +11,13 @@ it.concurrent('types dynamic enum key should hint enum values', () => {
 test.todo('types any trigger character in "" should not hint')
 test.todo(`types any trigger character in '' should not hint`)
 test.todo('emit class="" should hint completions')
+
+/**
+ * Prevents (#240): completion after a class that a character reference separates, as in
+ * `block&#32;user-select:`, querying `block&#32;user-select:` as one class and offering nothing.
+ * Reverse-checked: dropping the HTML decoder for `class` attributes in `@stet-css/language` reds
+ * this test.
+ */
+it.concurrent('completes a class that an attribute separates with a character reference', () => {
+  expect(hint('block&#32;user-select:')?.some(({ label }) => label === 'none')).toBe(true)
+})

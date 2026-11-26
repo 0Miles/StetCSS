@@ -8,9 +8,12 @@ import {
   getStetCSSTemplateExpressionNeighbours,
   getStetCSSWholeClassRange,
   parseStetCSSClassList,
+  type StetCSSCharacterReferenceDecoder,
   type StetCSSExpressionNeighbours,
   type StetCSSScriptStringQuote
 } from '@stet-css/lexer'
+import { getStetCSSAstroFrontmatter, getStetCSSAstroMarkupElements } from '@stet-css/lexer/astro'
+import { decodeStetCSSHTMLAttributeValue, decodeStetCSSJSXAttributeString } from '@stet-css/lexer/character-reference'
 import { parseOxcOnSourceStack } from './oxc-stack'
 
 export interface ClassPosition {
@@ -24,6 +27,14 @@ export interface ClassPosition {
    * attribute strings and CSS directives leave it unset.
    */
   scriptString?: StetCSSScriptStringQuote
+  /**
+   * Set when the context sits in a markup attribute value whose character references the build
+   * decodes: the decoder for the host's rules, as `parseStetCSSClassList` takes it. `class`
+   * attributes in the markup of HTML, Vue, Svelte and Astro files, JSX attribute strings that oxc
+   * reads, and the strings of a Vue `:class` binding (with `scriptString`) set it; everything the
+   * build reads as written (other files and attributes, scripts, frontmatter) leaves it unset.
+   */
+  characterReferences?: StetCSSCharacterReferenceDecoder
   /**
    * Set when the class touches a runtime expression with no whitespace between, as `-50` does in
    * Svelte's `bg:{color}-50` or `x` in `` `x${on ? 'a' : ''}` ``: it is part of a class that only
@@ -115,6 +126,56 @@ const JS_LANGUAGE_IDS = new Set([
   'typescriptreact'
 ])
 
+/**
+ * Files whose `class` attributes the build reads with character references decoded by HTML's
+ * rules: the extensions `@stet-css/source`'s HTML, Vue, Svelte and Astro adapters match, which
+ * this package does not import. The build extracts other files (PHP, Pug, Markdown, MDX, unknown
+ * extensions) as plain text, as written, whatever language the editor or lint reads them as.
+ */
+const HTML_ATTRIBUTE_SOURCE_EXT = /\.(?:html?|vue|svelte|astro)$/
+const VUE_SOURCE_EXT = /\.vue$/
+const ASTRO_SOURCE_EXT = /\.astro$/
+
+/** The bindings the build reads decoded: Vue compiles `:class` from the decoded attribute. */
+const DECODED_CLASS_BINDINGS = new Set([':class', 'v-bind:class'])
+
+/**
+ * The rest of a tag after its name, through its `>`, as the HTML tokenizer reads it: attributes
+ * need no whitespace between them, a name runs to whitespace, `/`, `>` or `=` (quotes included),
+ * a quoted value to its closing quote and an unquoted one to whitespace or `>`. Whitespace is
+ * HTML's: tab, line feed, form feed, carriage return and space. A tag left open runs to the end
+ * of the file, as in the tokenizer, so no `<` is scanned twice.
+ */
+const TAG_REST = String.raw`(?:[\t\n\f\r /]+|[^\t\n\f\r />][^\t\n\f\r />=]*(?:[\t\n\f\r ]*=[\t\n\f\r ]*(?:"[^"]*"?|'[^']*'?|[^\t\n\f\r >]*))?)*(?:>|$)`
+
+/**
+ * What the HTML tokenizer reads before it reaches markup text in HTML, Vue and Svelte files:
+ * comments, `<script>` and `<style>` elements (whose content the build reads as JavaScript or not
+ * at all), and other tags with their attribute values. Scanned left to right, so a `<style>`
+ * inside a comment or an attribute value opens nothing. Astro's build finds its elements by
+ * pattern instead (`getStetCSSAstroMarkupElements`). Other tags capture their `/`, name and rest
+ * so Vue's root `<template>` can be told apart.
+ */
+const MARKUP_TOKEN = new RegExp(String.raw`<!--[\s\S]*?(?:-->|$)|<(script|style)(?=[\t\n\f\r />]|$)(${TAG_REST})[\s\S]*?(?:<\/\1(?=[\t\n\f\r />]|$)${TAG_REST}|$)|<(\/?)([A-Za-z][^\t\n\f\r />]*)(${TAG_REST})`, 'gi')
+
+/** One attribute of a tag's rest (`TAG_REST`): its name and its value as written, quotes included. */
+const TAG_ATTRIBUTE = /([^\t\n\f\r />][^\t\n\f\r />=]*)(?:[\t\n\f\r ]*=[\t\n\f\r ]*("[^"]*"?|'[^']*'?|[^\t\n\f\r >]*))?/g
+
+/** Where Vue's SFC tokenizer ends a root `<template>` it reads as raw text. */
+const VUE_TEMPLATE_END = /<\/template(?=[\t\n\f\r />]|$)/gi
+
+/**
+ * Whether Vue reads a root `<template>` with this start tag rest as raw text, as its SFC
+ * tokenizer does when a `lang` attribute (case-sensitive) holds a language other than `html`
+ * (`lang="pug"`). The build then reads the template as written.
+ */
+function isRawVueTemplate(tagRest: string) {
+  return [...tagRest.matchAll(TAG_ATTRIBUTE)].some(([, name, value]) => {
+    const lang = value?.replace(/^(["'])([\s\S]*?)\1?$/, '$2')
+    return name === 'lang' && !!lang && lang !== 'html'
+  })
+}
+
 const OXC_CACHE_LIMIT = 20
 
 const OXC_SOURCE_BY_LANGUAGE_ID: Record<string, string> = {
@@ -191,6 +252,60 @@ function getOxcCacheKey(textDocument: TextDocument) {
 
 function isJavaScriptDocument(textDocument: TextDocument) {
   return JS_LANGUAGE_IDS.has(textDocument.languageId)
+}
+
+function getDocumentPath(textDocument: TextDocument) {
+  return textDocument.uri.split(/[?#]/)[0]
+}
+
+function collectNonMarkupRanges(source: string, astro: boolean, vue: boolean) {
+  const ranges: SourceRange[] = []
+  if (astro) {
+    // Astro's frontmatter and what precedes it, and its script and style elements, located with
+    // the build's own scans.
+    const markupStart = getStetCSSAstroFrontmatter(source)?.markupStart ?? 0
+    if (markupStart) ranges.push({ start: 0, end: markupStart })
+    for (const { start, end } of getStetCSSAstroMarkupElements(source.slice(markupStart)).elements) {
+      ranges.push({ start: markupStart + start, end: markupStart + end })
+    }
+    return ranges
+  }
+  const token = new RegExp(MARKUP_TOKEN.source, MARKUP_TOKEN.flags)
+  // How many Vue `<template>` elements are open: at 0, a `<template>` is the SFC's root one.
+  let templateDepth = 0
+  for (let match = token.exec(source); match; match = token.exec(source)) {
+    const [element, name, startTagRest, closing, tagName, tagRest] = match
+    if (name) {
+      // The element's content, after its start tag.
+      ranges.push({ start: match.index + 1 + name.length + startTagRest.length, end: match.index + element.length })
+      continue
+    }
+    if (!vue || tagName !== 'template') continue
+    if (closing) {
+      templateDepth = Math.max(0, templateDepth - 1)
+    } else if (templateDepth === 0 && isRawVueTemplate(tagRest)) {
+      // Raw text up to the first `</template`, which the scan then reads as the closing tag.
+      VUE_TEMPLATE_END.lastIndex = token.lastIndex
+      const end = VUE_TEMPLATE_END.exec(source)?.index ?? source.length
+      ranges.push({ start: token.lastIndex, end })
+      token.lastIndex = end
+      templateDepth++
+    } else if (!tagRest.endsWith('/>')) {
+      templateDepth++
+    }
+  }
+  return ranges
+}
+
+/** How a context's source spelling decodes into its classes; `ClassPosition` carries the same fields. */
+type ClassListDecoding = Pick<ClassPosition, 'scriptString' | 'characterReferences'>
+
+/** `decoding` without its unset fields, so positions only carry the ones that apply. */
+function compactDecoding({ scriptString, characterReferences }: ClassListDecoding): ClassListDecoding {
+  return {
+    ...(scriptString ? { scriptString } : {}),
+    ...(characterReferences ? { characterReferences } : {})
+  }
 }
 
 function isOxcNode(value: unknown): value is OxcNode {
@@ -321,12 +436,14 @@ function collectClassPositions(
     start: classNameStart,
     end: classNameStart + className.length
   },
-  scriptString?: StetCSSScriptStringQuote
+  decoding: ClassListDecoding = {}
 ) {
   const classPositions: ClassPosition[] = []
+  // Script strings keep their quote unescaping here; lint decodes them by `scriptString`.
   for (const item of parseStetCSSClassList(className, {
     includeEmpty,
-    unescape: escapeCharacter || false
+    unescape: escapeCharacter || false,
+    characterReferences: decoding.characterReferences
   })) {
     if (item.type !== 'class') continue
     if (!item.raw && !includeEmpty) continue
@@ -339,7 +456,7 @@ function collectClassPositions(
       contextRange,
       raw: item.raw,
       token: item.token,
-      ...(scriptString ? { scriptString } : {})
+      ...compactDecoding(decoding)
     })
   }
   return classPositions
@@ -357,7 +474,7 @@ function collectSegmentClassPositions(
   includeEmpty: boolean,
   accept: ClassPositionAccept | undefined,
   neighbours: StetCSSExpressionNeighbours = {},
-  scriptString?: StetCSSScriptStringQuote
+  decoding: ClassListDecoding = {}
 ) {
   const [wholeStart, wholeEnd] = getStetCSSWholeClassRange(text, neighbours)
   const collect = (from: number, to: number, fragment: boolean) => {
@@ -370,7 +487,7 @@ function collectSegmentClassPositions(
       includeEmpty,
       accept,
       { start: start + from, end: start + to },
-      scriptString
+      decoding
     )
     return fragment ? positions.map((position) => ({ ...position, fragment: true as const })) : positions
   }
@@ -405,10 +522,10 @@ function collectSpannedClassPositions(
   escapeCharacter: string,
   includeEmpty: boolean,
   accept: ClassPositionAccept | undefined,
-  scriptString?: StetCSSScriptStringQuote
+  decoding: ClassListDecoding = {}
 ) {
   if (!spans.length) {
-    return collectClassPositions(text, start, escapeCharacter, includeEmpty, accept, undefined, scriptString)
+    return collectClassPositions(text, start, escapeCharacter, includeEmpty, accept, undefined, decoding)
   }
   const classPositions: ClassPosition[] = []
   let segmentStart = 0
@@ -421,7 +538,7 @@ function collectSpannedClassPositions(
         includeEmpty,
         accept,
         { before: segmentStart > 0, after: spanStart < text.length },
-        scriptString
+        decoding
       ))
     }
     segmentStart = spanEnd
@@ -598,7 +715,7 @@ function collectOxcStringLiteral(
   node: OxcNode,
   includeEmpty: boolean,
   accept?: ClassPositionAccept,
-  script = true,
+  jsxAttribute = false,
   neighbours?: StetCSSExpressionNeighbours
 ) {
   if (typeof node.value !== 'string') return []
@@ -616,7 +733,8 @@ function collectOxcStringLiteral(
     includeEmpty,
     accept,
     neighbours,
-    script ? quote : undefined
+    // JSX attribute strings hold character references, not JavaScript escapes.
+    jsxAttribute ? { characterReferences: decodeStetCSSJSXAttributeString } : { scriptString: quote }
   )
 }
 
@@ -644,7 +762,7 @@ function collectOxcTemplateLiteral(
         before: index > 0 || neighbours.before,
         after: index < quasis.length - 1 || neighbours.after
       },
-      '`'
+      { scriptString: '`' }
     ))
   })
   return classPositions
@@ -667,7 +785,7 @@ function collectOxcClassStrings(
     if (!isOxcNode(eachNode)) return
     if (eachNode.type === 'Property' && matchesAny(getStaticPropertyKey(eachNode), ignoredKeyMatchers)) return
     if (eachNode.type === 'Literal') {
-      classPositions.push(...collectOxcStringLiteral(source, eachNode, includeEmpty, accept, true, neighbours))
+      classPositions.push(...collectOxcStringLiteral(source, eachNode, includeEmpty, accept, false, neighbours))
       return
     }
     if (eachNode.type === 'TemplateLiteral') {
@@ -745,8 +863,7 @@ function createOxcClassPositions(
       const attributeName = getJSXAttributeName(node.name)
       const attributeValue = node.value
       if (attributeName && classAttributes.has(attributeName) && isOxcNode(attributeValue) && attributeValue.type === 'Literal') {
-        // JSX attribute strings hold no JavaScript escapes.
-        classPositions.push(...collectOxcStringLiteral(source, attributeValue, true, undefined, false))
+        classPositions.push(...collectOxcStringLiteral(source, attributeValue, true, undefined, true))
       }
       if (attributeName && classAttributeBindings.has(attributeName) && isOxcNode(attributeValue) && attributeValue.type === 'JSXExpressionContainer') {
         collect(attributeValue.expression)
@@ -902,11 +1019,25 @@ export default function getClassPositions(
   const stringExpressions: ClassMatcher[] = []
   const assignmentExpressions: ClassMatcher[] = []
 
+  // The build decodes character references only in markup it reads as markup: a `class`
+  // attribute, or a Vue `:class` binding, in an HTML, Vue, Svelte or Astro file, outside its
+  // scripts. In JS/TS documents only oxc tells a JSX attribute from a string, so this scan reads
+  // every match there as written.
+  const documentPath = getDocumentPath(textDocument)
+  const decodesMarkup = HTML_ATTRIBUTE_SOURCE_EXT.test(documentPath)
+  let nonMarkupRanges: SourceRange[] | undefined
+  const isMarkup = (index: number) => {
+    nonMarkupRanges ??= collectNonMarkupRanges(sourceText, ASTRO_SOURCE_EXT.test(documentPath), VUE_SOURCE_EXT.test(documentPath))
+    return !nonMarkupRanges.some((range) => range.start <= index && index < range.end)
+  }
+
   const markupStringExpressions = new Set<ClassMatcher>()
+  const decodedMarkupExpressions = new Set<ClassMatcher>()
   classAttributes?.forEach((eachClassAttribute) => {
     const doubleQuoted: ClassMatcher = [eachClassAttribute + '=', '"', '"']
     const singleQuoted: ClassMatcher = [eachClassAttribute + '=', '\'', '\'']
     markupStringExpressions.add(doubleQuoted).add(singleQuoted)
+    if (decodesMarkup && eachClassAttribute === 'class') decodedMarkupExpressions.add(doubleQuoted).add(singleQuoted)
     stringExpressions.push(doubleQuoted, singleQuoted)
   })
 
@@ -948,22 +1079,44 @@ export default function getClassPositions(
         pair,
         includeEmpty,
         acceptsClassRange,
-        markup ? undefined : pair as StetCSSScriptStringQuote
+        markup
+          ? {
+            characterReferences: decodedMarkupExpressions.has(eachClassMatcher) && isMarkup(eachAttrStart)
+              ? decodeStetCSSHTMLAttributeValue
+              : undefined
+          }
+          : { scriptString: pair as StetCSSScriptStringQuote }
       ))
     })
   }
 
+  // A Vue `:class` binding quoted like an attribute value is one: the template compiler decodes
+  // its character references before it parses the expression.
+  const decodedBindingExpressions = new Set<ClassMatcher>()
+  // The decoded bindings found: the class function and string scans read the same text as
+  // written, and a reference splitting a string gives their positions other ranges.
+  const decodedBindingRanges: SourceRange[] = []
+  const decodesBindings = VUE_SOURCE_EXT.test(documentPath)
   if (classAttributeBindings) {
+    const bindingExpressions: ClassMatcher[] = []
     for (const eachClassAttribute in classAttributeBindings) {
       const eachClassAttributeBinding = classAttributeBindings[eachClassAttribute]
       if (eachClassAttributeBinding === false) continue
-      assignmentExpressions.push([eachClassAttribute + '=', eachClassAttributeBinding[0], eachClassAttributeBinding[1]])
+      const binding: ClassMatcher = [eachClassAttribute + '=', eachClassAttributeBinding[0], eachClassAttributeBinding[1]]
+      const quoted = binding[1] === '"' || binding[1] === '\''
+      if (decodesBindings && quoted && DECODED_CLASS_BINDINGS.has(eachClassAttribute)) decodedBindingExpressions.add(binding)
+      bindingExpressions.push(binding)
     }
+    // First, so a range both scans find keeps the binding's reading.
+    assignmentExpressions.unshift(...bindingExpressions)
   }
 
   if (assignmentExpressions.length) {
     const ignoredKeyValuePattern = createIgnoredKeyValuePattern(settings.ignoredKeys)
-    resolve(assignmentExpressions, (eachAttrStart, eachClassPositionEnd) => {
+    resolve(assignmentExpressions, (eachAttrStart, eachClassPositionEnd, eachClassMatcher) => {
+      const characterReferences = decodedBindingExpressions.has(eachClassMatcher) && isMarkup(eachAttrStart)
+        ? decodeStetCSSHTMLAttributeValue
+        : undefined
       const eachClassPositionExpression = sourceText.substring(eachAttrStart, eachClassPositionEnd)
       const ignoredRanges = collectIgnoredKeyValueRanges(eachClassPositionExpression, ignoredKeyValuePattern)
       const isIgnored = (index: number) => ignoredRanges.some((range) => range.start <= index && index < range.end)
@@ -979,6 +1132,7 @@ export default function getClassPositions(
         }
         return
       }
+      if (characterReferences) decodedBindingRanges.push({ start: eachAttrStart, end: eachClassPositionEnd })
 
       // Strings inside a template's `${…}` join its text at runtime; this scan cannot tell which
       // ends touch it, so it leaves them out.
@@ -998,7 +1152,7 @@ export default function getClassPositions(
           includeEmpty,
           acceptsClassRange,
           { start: classNameStart, end: classNameStart + eachClassName.length },
-          '"'
+          { scriptString: '"', characterReferences }
         ))
       }
 
@@ -1013,7 +1167,7 @@ export default function getClassPositions(
           includeEmpty,
           acceptsClassRange,
           { start: classNameStart, end: classNameStart + eachClassName.length },
-          '\''
+          { scriptString: '\'', characterReferences }
         ))
       }
 
@@ -1028,11 +1182,15 @@ export default function getClassPositions(
           '`',
           includeEmpty,
           acceptsClassRange,
-          '`'
+          { scriptString: '`', characterReferences }
         ))
       }
     })
   }
 
-  return sortAndDeduplicate(classPositions)
+  // Inside a decoded binding only the binding's own reading counts.
+  const inDecodedBinding = ({ range }: ClassPosition) => decodedBindingRanges.some((binding) => binding.start <= range.start && range.end <= binding.end)
+  return sortAndDeduplicate(decodedBindingRanges.length
+    ? classPositions.filter((position) => position.characterReferences || !inDecodedBinding(position))
+    : classPositions)
 }

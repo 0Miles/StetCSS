@@ -54,3 +54,14 @@ test.concurrent('falls back to quote unescaping when the body does not decode', 
     { type: 'class', start: 14, end: 16, raw: '\\x', token: '\\x' }
   ])
 })
+
+/**
+ * A script string's tokens are already cooked, so lint's quote unescaping must not run on them
+ * again (#240): `'content:\\\'x\\\''` holds the class `content:\'x\'`, which unescaped twice
+ * reads `content:'x'` and passes lint as a class the build never sees. Reverse check: applying
+ * `unescape` to decoded script string tokens reds this test.
+ */
+test.concurrent('does not unescape the quote of a cooked script string token again', () => {
+  expect(parseStetCSSClassList('content:\\\\\\\'x\\\\\\\'', { scriptString: '\'', unescape: '\'' }).map((item) => item.token))
+    .toEqual(['content:\\\'x\\\''])
+})
