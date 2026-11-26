@@ -1,6 +1,7 @@
 import { fileURLToPath } from 'node:url'
 import type { Compiler, RuleSetRule } from 'webpack'
 import type { StetCSSWebpackContext, WebpackSubPlugin } from '../plugin'
+import { STYLE_FILE_RE } from '../utils/transform-style-source'
 
 /** vue-loader's request for a `.vue` `<style>` block: `App.vue?vue&type=style&index=0&…`. */
 const VUE_STYLE_BLOCK_QUERY_RE = /(?:^\?|&)type=style(?:&|$)/
@@ -72,7 +73,7 @@ export default function StyleEntryPlugin(context: StetCSSWebpackContext): Webpac
         installed = true
         const rules = compiler.options.module.rules
         rules.push({
-          test: /\.(css|scss|sass)$/,
+          test: STYLE_FILE_RE,
           enforce: 'pre',
           use: createUse()
         })

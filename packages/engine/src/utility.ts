@@ -983,15 +983,18 @@ export class Utility {
         const rawSelector = generateSelector(rawNodes, '&')
         const invalid = hasUnknownPseudoClass(rawNodes, this.css)
           || !isSelectorSuffix(rawNodes, segmentIndex === segments.length - 1)
-        branches = branches.map((branch) => ({
-          ...branch,
-          ...(invalid ? { valid: false } : {}),
-          key: branch.key + segment,
-          selectorTemplate: composeSelectorTemplate(branch.selectorTemplate, rawSelector),
-          selectorNodes: parseSelector((branch.selectorTemplate
-            ? removeSelectorNesting(composeSelectorTemplate(branch.selectorTemplate, rawSelector) || '')
-            : segment), this.css)
-        }))
+        branches = branches.map((branch) => {
+          const selectorTemplate = composeSelectorTemplate(branch.selectorTemplate, rawSelector)
+          return {
+            ...branch,
+            ...(invalid ? { valid: false } : {}),
+            key: branch.key + segment,
+            selectorTemplate,
+            selectorNodes: parseSelector((branch.selectorTemplate
+              ? removeSelectorNesting(selectorTemplate || '')
+              : segment), this.css)
+          }
+        })
         continue
       }
 

@@ -80,7 +80,7 @@ export default function resolveSelectorAliases(selector: string, css: StetCSS, a
         index++
         continue
       }
-      const matchedToken = selectorTokens.find((token) => {
+      const matchedToken = char === ':' && selectorTokens.find((token) => {
         if (!selector.startsWith(token, index)) return false
         const next = selector[index + token.length]
         return next === undefined || next === '(' || !/[-_a-zA-Z0-9]/.test(next)

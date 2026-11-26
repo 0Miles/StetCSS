@@ -36,6 +36,7 @@ import {
   findCSSBlockEnd,
   findCSSClosingQuote,
   findCSSStatementEnd,
+  isASCIIWhitespace,
   replaceCSSNestingSelector,
   replaceSourceRanges,
   removeSourceRanges,
@@ -1408,28 +1409,26 @@ function collectDirectiveStyleRuleBody(
   native = false
 ) {
   const items: StyleRuleBodyItem[] = []
-  const leading = native
-    ? collectNativeDeclarations(block, transformDeclarations)
-    : { declarations: transformDeclarations(collectDeclarations(block)) }
-  if (Object.keys(leading.declarations).length) {
-    items.push({
-      type: 'declarations',
-      ...leading
-    })
+  const pushDeclarations = (
+    declarationBlock: DeclarationBlock<Declaration>,
+    transform: (declarations: Record<string, string>) => Record<string, string>
+  ) => {
+    const collected = native
+      ? collectNativeDeclarations(declarationBlock, transform)
+      : { declarations: transform(collectDeclarations(declarationBlock)) }
+    if (Object.keys(collected.declarations).length) {
+      items.push({
+        type: 'declarations',
+        ...collected
+      })
+    }
   }
+  pushDeclarations(block, transformDeclarations)
   for (const child of rules) {
     assertNotSlotRule(child)
 
     if (child.type === 'nested-declarations') {
-      const nested = native
-        ? collectNativeDeclarations(child.value.declarations)
-        : { declarations: collectDeclarations(child.value.declarations) }
-      if (Object.keys(nested.declarations).length) {
-        items.push({
-          type: 'declarations',
-          ...nested
-        })
-      }
+      pushDeclarations(child.value.declarations, (declarations) => declarations)
       continue
     }
     if (isNestedStyleRule(child)) {
@@ -2435,17 +2434,17 @@ function isCommentOnly(statement: string) {
   return !statement.replace(/\/\*[\s\S]*?\*\//g, '').trim()
 }
 
-/** The text inside the braces of the rule at `loc`. */
-function readRawRuleBlock(loc: any, fallbacks: NativeFallbacks) {
-  const { source } = fallbacks
-  fallbacks.resolveLocation ??= createSourceLocationResolver(source)
-  const blockRange = findRawRuleBlockRange(source, fallbacks.resolveLocation(loc))
-  return blockRange && source.slice(blockRange.start, blockRange.end)
+/** Where the rule at `loc` starts in the source, and the range inside its braces. */
+function findRawRule(loc: any, fallbacks: NativeFallbacks) {
+  fallbacks.resolveLocation ??= createSourceLocationResolver(fallbacks.source)
+  const start = fallbacks.resolveLocation(loc)
+  const blockRange = findRawRuleBlockRange(fallbacks.source, start)
+  return blockRange && { start, blockRange }
 }
 
 /** Skips CSS whitespace only: U+00A0 and other Unicode spaces are part of an identifier in CSS. */
 function skipRawCSSWhitespace(source: string, index: number) {
-  while (index < source.length && ' \t\n\r\f'.includes(source[index])) index++
+  while (isASCIIWhitespace(source[index])) index++
   return index
 }
 
@@ -2477,12 +2476,10 @@ function splitRawDeclarationGroups(block: string) {
  * declarations as written, in source order.
  */
 function readRawKeyframes(rule: any, fallbacks: NativeFallbacks) {
-  const { source } = fallbacks
-  fallbacks.resolveLocation ??= createSourceLocationResolver(source)
-  const start = fallbacks.resolveLocation(rule.value.loc)
-  const blockRange = findRawRuleBlockRange(source, start)
-  if (!blockRange) return
-  const text = source.slice(start, blockRange.end + 1)
+  const raw = findRawRule(rule.value.loc, fallbacks)
+  if (!raw) return
+  const { start, blockRange } = raw
+  const text = fallbacks.source.slice(start, blockRange.end + 1)
   const blockEnd = blockRange.end - start
   const frames: { range: { start: number, end: number }, declarations: string[] }[] = []
   for (
@@ -2539,8 +2536,9 @@ function preserveNativeFallbacks(rule: any, fallbacks: NativeFallbacks) {
   const targets = [rule, ...(rule.value.rules || []).filter((child: any) => child.type === 'nested-declarations')]
   const overridden = targets.map((target) => hasOverriddenDeclarations(target.value.declarations))
   if (!overridden.includes(true)) return
-  const block = readRawRuleBlock(rule.value.loc, fallbacks)
-  const groups = block === undefined ? undefined : splitRawDeclarationGroups(block)
+  const blockRange = findRawRule(rule.value.loc, fallbacks)?.blockRange
+  if (!blockRange) return
+  const groups = splitRawDeclarationGroups(fallbacks.source.slice(blockRange.start, blockRange.end))
   if (!groups) return
   // The leading group always belongs to the rule; later ones map onto its children only when the counts agree.
   const mapped = groups.length === targets.length ? targets.length : 1

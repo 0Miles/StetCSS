@@ -34,7 +34,7 @@ export async function extractCSSResult(context: PluginContext) {
 }
 
 /** Extracts the CSS the managed CSS modules serve, and records it for dev updates. */
-export async function getExtractedCSSResult(context: PluginContext) {
+async function getExtractedCSSResult(context: PluginContext) {
   const result = await extractCSSResult(context)
   context.emittedGlobals = result.emittedGlobals
   context.extractedCSS = result.css
