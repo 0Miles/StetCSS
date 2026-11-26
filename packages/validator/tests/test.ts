@@ -259,13 +259,15 @@ it('validates block@sm\\@md with its conditions joined', () => {
  * `fg:rgb(1,` row already passed before #234, since css-tree drops `color:rgb(1,)`; it stays to
  * record the ticket's criterion, not to catch the engine change.
  *
- * The last six rows hold an empty function argument in an item's selector, at-rule or raw
+ * The last nine rows hold an empty function argument in an item's selector, at-rule or raw
  * declaration, which no item rule checks; they keep the group's own parse rejecting them, also
- * when the name in the selector or at-rule is one a value may leave empty (`env`, `url`).
+ * when the name in the selector or at-rule is one a value may leave empty (`env`, `url`, `var`),
+ * whichever sign starts the selector.
  *
  * Reverse check: with the engine source before #234, the three group rows after `fg:rgb(1,` fail;
- * skipping the empty-argument check on a group's own parse fails the last six rows; exempting
- * `env` and `url` outside an item's value fails the last two.
+ * skipping the empty-argument check on a group's own parse fails the last nine rows; exempting
+ * `env`, `url` and `var` outside an item's value fails the last five; leaving an item's value
+ * only on `;`, `:` and `@` fails the last three.
  */
 it.each([
   'fg:rgb(1,',
@@ -277,7 +279,10 @@ it.each([
   '{fg:red;bg:blue:is(.a,)}',
   '{fg:red;foo$:rgb(1,2,)}',
   '{fg:red@env(a,)}',
-  '{fg:red:url(,.a)}'
+  '{fg:red:url(,.a)}',
+  '{fg:red>url(,.a)}',
+  '{fg:red;bg:blue~var(,.a)}',
+  '{fg:red[url(,)]}'
 ])('reports %s, whose value is invalid, as unmatched', (className) => {
   expect(generateValidRules(className)).toHaveLength(0)
   expectClassInvalid(className)

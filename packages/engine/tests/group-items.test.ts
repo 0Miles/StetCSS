@@ -132,6 +132,45 @@ describe.concurrent('group items', () => {
   ])('%s generates no CSS', (className) => {
     expect(generateText(className)).toBe('')
   })
+
+  /**
+   * Guards (#234): the exemption reaching into a selector that starts with a sign other than `:`
+   * or `@`. A class value ends at `>`, `~`, `+`, `*`, `!`, `[`, `_`, a `.` before no digit or a
+   * `#` after a value, so `{fg:red>url(,.a)}` emitted an unconditional `color` and
+   * `{fg:red#url(,)}` a dead raw declaration, both passing validation, where the base generated
+   * nothing.
+   *
+   * Reverse check: leaving an item's value only on `;`, `:` and `@` again fails these rows.
+   */
+  test.each([
+    '{fg:red>url(,.a)}',
+    '{fg:red~url(,.a)}',
+    '{fg:red+url(,.a)}',
+    '{fg:red.url(,.a)}',
+    '{fg:red;bg:blue~var(,.a)}',
+    '{fg:red>env(a,)}',
+    '{fg:red*url(,)}',
+    '{fg:red!url(,)}',
+    '{fg:red[url(,)]}',
+    '{fg:red#url(,)}'
+  ])('%s generates no CSS', (className) => {
+    expect(generateText(className)).toBe('')
+  })
+
+  /**
+   * Guards (#234): a hex color or a decimal read as a selector start. A `#` that starts a value
+   * and a `.` before a digit stay in the value, so the `var()` after them keeps its empty
+   * fallback and the group keeps its rule.
+   *
+   * Reverse check: leaving an item's value on every `#` and `.` fails these rows.
+   */
+  test.each([
+    ['{bg:#fff|var(--x,)}', '@layer utilities{.\\{bg\\:\\#fff\\|var\\(--x\\,\\)\\}{background:#fff var(--x,)}}'],
+    ['{box-shadow:0|0|1px|#000,var(--x,)}', '@layer utilities{.\\{box-shadow\\:0\\|0\\|1px\\|\\#000\\,var\\(--x\\,\\)\\}{box-shadow:0 0 1px #000,var(--x,)}}'],
+    ['{transition:opacity|.3s|var(--x,)}', '@layer utilities{.\\{transition\\:opacity\\|\\.3s\\|var\\(--x\\,\\)\\}{transition:opacity 0.3s var(--x,)}}']
+  ])('%s keeps its rule', (className, text) => {
+    expect(generateText(className)).toBe(text)
+  })
 })
 
 // Not concurrent: a slow run here must not push the tests above past their timeout.
@@ -150,6 +189,22 @@ describe('long classes', () => {
     const start = performance.now()
     expect(generateText(`fg:calc(${name}+b(1,))`)).toBe('')
     expect(generateText(`{${name}:b(1,)}`)).toBe('')
+    expect(performance.now() - start).toBeLessThan(1_000)
+  })
+
+  /**
+   * Guards (#234): unnamed parentheses re-reading the name they inherit. Each `(1,)` inside a
+   * function with a long name read that whole name again to decide the `var()` exemption, so this
+   * 80,000-character class took about 2 s where the base took about 13 ms. The verdict is now
+   * decided once where the named function opens.
+   * Trade-off: a wall-clock bound, like the test above.
+   *
+   * Reverse check: deciding the exemption from the inherited name at every `)` again fails only
+   * this test.
+   */
+  test('decides the exemption of a long function name once for its unnamed parentheses', () => {
+    const start = performance.now()
+    expect(generateText(`fg:calc(${'a'.repeat(40_000)}(${'(1,),'.repeat(8_000)}))`)).toBe('')
     expect(performance.now() - start).toBeLessThan(1_000)
   })
 })
