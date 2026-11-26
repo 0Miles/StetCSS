@@ -538,7 +538,7 @@ describe('style CSS extraction helpers', () => {
 
   /**
    * Prevents (#189): the scoped Vue transform split a generated rule's selector list on every
-   * top-level comma, so an escaped comma in a mode class (`@theme a\\,b` gives `.a\,b`) became
+   * top-level comma, so an escaped comma in a mode class (`@theme a\,b` gives `.a\,b`) became
    * `:global(.a\),:global(b)` and the mode's variables never applied.
    * Reverse check: splitting with `splitStetCSSTopLevel` again turns only this test red.
    */
@@ -546,7 +546,7 @@ describe('style CSS extraction helpers', () => {
     const root = createFixture()
     writeFileSync(join(root, 'app/tokens.css'), [
       '@settings { mode-trigger: class; }',
-      '@theme a\\\\,b { --color-brand: #abcdef; }'
+      '@theme a\\,b { --color-brand: #abcdef; }'
     ].join('\n'))
     const source = '@reference "./tokens.css"; .button { color: var(--color-brand); }'
 
