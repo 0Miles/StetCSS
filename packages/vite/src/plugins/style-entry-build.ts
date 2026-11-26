@@ -1,6 +1,7 @@
 import type { Plugin } from 'vite'
+import { collectStyleCSSLeadingLayers } from '@stet-css/stylesheet'
 import type { PluginContext } from '../core'
-import getExtractedCSS from '../utils/extracted-css'
+import getExtractedCSS, { getStylesheetSourceContext } from '../utils/extracted-css'
 import { getScanner } from '../utils/scanner-context'
 import { getEnvironmentName } from '../utils/environment'
 import { createSlotCSSRulePattern, getSlotSelector } from '../utils/slot'
@@ -43,6 +44,8 @@ export default function StyleEntryBuildPlugin(context: PluginContext): Plugin {
       const slotCSSRule = getScanner(context).slotCSSRule
       const slotPattern = createSlotCSSRulePattern(slotCSSRule)
       const realCSS = await getExtractedCSS(context)
+      // Every entry the build imports has registered by now; the spliced CSS leads with these.
+      const leadingLayers = collectStyleCSSLeadingLayers(getStylesheetSourceContext(context).styleCSSSources)
       const buildDigest = await createBuildDigest(context)
       const cssFileNames = Object.keys(bundle).filter(eachFileName => eachFileName.endsWith('.css'))
       const staleFileNames: string[] = []
@@ -53,7 +56,7 @@ export default function StyleEntryBuildPlugin(context: PluginContext): Plugin {
           const oldSource = String(chunk.source)
           const result = replaceSlotCSSRules(oldSource, slotPattern, realCSS)
           if (!result.digests.length) continue
-          chunk.source = restoreLayerStatementsBeforeImports(result.source, context.hostLayerStatements ?? new Set())
+          chunk.source = restoreLayerStatementsBeforeImports(result.source, context.hostLayerStatements ?? new Set(), leadingLayers)
           replacedAny = true
           if (!result.digests.includes(buildDigest)) staleFileNames.push(eachCssFileName)
         }

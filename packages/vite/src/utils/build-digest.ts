@@ -15,11 +15,8 @@ import { collectProjectEntries } from './project-entries'
  * a stylesheet transformed before a lazily loaded chunk's entry was registered still carries
  * that entry. Over-covering is harmless, since an entry the build does not import only renames
  * the asset when it changes.
- *
- * Also returns the extracted CSS the digest was made from: the CSS spliced in later, as far as
- * transform order allows knowing it, whose layers a host source declares ahead of a kept import.
  */
-export async function createBuildExtraction(context: PluginContext) {
+export async function createBuildDigest(context: PluginContext) {
   const projectDir = getProjectDir(context)
   const { entries, styleCSSSources } = await collectProjectEntries(context)
   const { css } = await createExtractedCSSResult({
@@ -34,10 +31,5 @@ export async function createBuildExtraction(context: PluginContext) {
     hash.update('\0' + name + '\0' + (entry.styleSource?.source ?? '') + '\0' + (entry.error ?? ''))
   }
   // An identifier, so CSS minifiers keep it as is: a leading digit would read as a number.
-  return { css, digest: 'h' + hash.digest('hex').slice(0, 16) }
-}
-
-/** The build digest alone; see `createBuildExtraction`. */
-export async function createBuildDigest(context: PluginContext) {
-  return (await createBuildExtraction(context)).digest
+  return 'h' + hash.digest('hex').slice(0, 16)
 }
