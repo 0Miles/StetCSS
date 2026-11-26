@@ -171,20 +171,30 @@ const ITEM_STATE_SIGNS = new Set(['!', '*', '>', '+', '~', ':', '[', '@', '_'])
 /** Functions whose arguments may hold empty items: `var(--x,)`, `env(a,)`, unquoted `url(a,)`. */
 const OPAQUE_ARGUMENT_FUNCTIONS = new Set(['var', 'env', 'attr', 'url', 'inherit'])
 
+/** A name character: ASCII word characters, `-`, and any non-ASCII character (`--fé`, `--色`). */
+function isNameCharacter(char: string) {
+  return char >= '\u0080' || /[-\w]/.test(char)
+}
+
 /**
  * The text before `(` can hold more than the function name: an operator in `calc()`
  * (`100%+var`), or in a group the item key and earlier items (`fg:red;bg:var`). The function is
- * its last name, read backwards so a long class stays linear.
+ * its last name, read backwards so a long class stays linear; non-ASCII characters belong to
+ * the name (`--fé`). An escaped character never reaches here: the value's parse ends the text
+ * before `(` at it.
  */
 function hasOpaqueArguments(functionName: string) {
   let start = functionName.length
-  while (start && /[-\w]/.test(functionName[start - 1])) start--
+  while (start && isNameCharacter(functionName[start - 1])) start--
   const name = functionName.slice(start)
   return OPAQUE_ARGUMENT_FUNCTIONS.has(name) || name.startsWith('--')
 }
 
-/** A key a raw group item can write as a declaration: `top`, `-webkit-x`, `--x`. */
+/** A key a raw group item can write as a declaration: `top`, `-webkit-x`. */
 const PROPERTY_NAME = /^-{0,2}[a-zA-Z_][-\w]*$/
+
+/** A custom property key, whose name may hold non-ASCII and escaped characters: `--色`, `--x\.y`, `--1x`. */
+const CUSTOM_PROPERTY_NAME = /^--(?:[-\w\u0080-\uffff]|\\[\s\S])*$/
 
 /**
  * Whether a function in the text, a raw group item, has an empty list item: `url(,.a)`,
@@ -970,6 +980,7 @@ export class Utility {
     const indexOfColon = item.indexOf(':')
     if (indexOfColon === -1 || !hasEmptyFunctionArgument(item)) return false
     const key = item.slice(0, indexOfColon)
+    if (CUSTOM_PROPERTY_NAME.test(key)) return false
     if (!PROPERTY_NAME.test(key)) return true
     return !(this.css.namesNativeProperty(key) ?? this.classNamesItsProperty(key))
   }
