@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/0Miles/StetCSS/compare/diagnostics-v0.2.0...diagnostics-v0.3.0) (2026-11-26)
+
+
+### Miscellaneous Chores
+
+* **diagnostics:** Synchronize stet-css versions
+
 ## [0.2.0](https://github.com/0Miles/StetCSS/compare/diagnostics-v0.1.0...diagnostics-v0.2.0) (2026-11-26)
 
 

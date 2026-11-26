@@ -1,6 +1,6 @@
 {
   "name": "@stet-css/nuxt",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "build": "nuxt-module-build prepare && nuxt-module-build && node scripts/normalize-module-build.js",

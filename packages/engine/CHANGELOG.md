@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.3.0](https://github.com/0Miles/StetCSS/compare/engine-v0.2.0...engine-v0.3.0) (2026-11-26)
+
+
+### Bug Fixes
+
+* **engine:** end a group item's value at every selector sign, and decide the var() exemption once ([#234](https://github.com/0Miles/StetCSS/issues/234)) ([08fd684](https://github.com/0Miles/StetCSS/commit/08fd68491e6b3eee262729cfcc1bbdfb1e989967))
+* **engine:** generate no group when one item has an invalid value ([#234](https://github.com/0Miles/StetCSS/issues/234)) ([9e59fd1](https://github.com/0Miles/StetCSS/commit/9e59fd16f5a7df416e93a0022d6fd246f19a75a7))
+* **engine:** generate no group whose closing brace an open function takes ([#234](https://github.com/0Miles/StetCSS/issues/234)) ([a67ecbe](https://github.com/0Miles/StetCSS/commit/a67ecbe63dd31c4b8c006190dba79ec1d9762473))
+* **engine:** generate no group whose raw item holds an empty argument in a state ([#234](https://github.com/0Miles/StetCSS/issues/234)) ([2f4fbca](https://github.com/0Miles/StetCSS/commit/2f4fbca9c8ad6090da620f9a61dc30c5cf06c6d6))
+* **engine:** judge a group's function arguments per item, not on the group's parse ([#234](https://github.com/0Miles/StetCSS/issues/234)) ([7aa99f2](https://github.com/0Miles/StetCSS/commit/7aa99f2c3159bb4b451b994fc3ce553c5daa4b02))
+* **engine:** keep a group's own empty-argument check, reading the function past the item key ([#234](https://github.com/0Miles/StetCSS/issues/234)) ([8161190](https://github.com/0Miles/StetCSS/commit/8161190520287cfdaee1edde686d522a8512e9cc))
+* **engine:** keep a raw group item whose key names a property, though it is a class too ([#234](https://github.com/0Miles/StetCSS/issues/234)) ([381d6a1](https://github.com/0Miles/StetCSS/commit/381d6a1c3451bee2add9ee823a070ad6cfbed3fe))
+* **engine:** read a value-less class key as a state without a native declaration matcher ([#234](https://github.com/0Miles/StetCSS/issues/234)) ([5e7c635](https://github.com/0Miles/StetCSS/commit/5e7c6351c751b59fe7f4770a9b2fbd23a4bac45b))
+* **engine:** read an opaque function's name linearly, and only in a group item's value ([#234](https://github.com/0Miles/StetCSS/issues/234)) ([3f93835](https://github.com/0Miles/StetCSS/commit/3f9383563174be206aef47543097457f562a1e96))
+* **engine:** read non-ASCII and escaped custom names in group items and opaque functions ([#234](https://github.com/0Miles/StetCSS/issues/234)) ([8f3af05](https://github.com/0Miles/StetCSS/commit/8f3af05bc98db13952144d730752136f89731dcd))
+* **engine:** reject an empty item in a function the class leaves open ([#234](https://github.com/0Miles/StetCSS/issues/234)) ([96de82a](https://github.com/0Miles/StetCSS/commit/96de82af8849e3d0b387e3814846c4bfe5d11622))
+
+
+### Performance Improvements
+
+* **engine:** check for an empty argument before reading the function name ([#234](https://github.com/0Miles/StetCSS/issues/234)) ([ebdb52a](https://github.com/0Miles/StetCSS/commit/ebdb52a2f75b6582dd3f4a255189949d1eeb4963))
+
 ## [0.2.0](https://github.com/0Miles/StetCSS/compare/engine-v0.1.0...engine-v0.2.0) (2026-11-26)
 
 

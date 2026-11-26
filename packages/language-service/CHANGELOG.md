@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/0Miles/StetCSS/compare/language-service-v0.2.0...language-service-v0.3.0) (2026-11-26)
+
+
+### Bug Fixes
+
+* **language:** decode class attributes only where the build does ([#240](https://github.com/0Miles/StetCSS/issues/240)) ([4507dd2](https://github.com/0Miles/StetCSS/commit/4507dd298fe7b21f45e9e8f5eeaeefc98e480880))
+* **language:** read class attributes by the classes the build extracts ([#240](https://github.com/0Miles/StetCSS/issues/240)) ([fc57533](https://github.com/0Miles/StetCSS/commit/fc575336fb952e3062b440dc271e09225ee70651))
+
 ## [0.2.0](https://github.com/0Miles/StetCSS/compare/language-service-v0.1.0...language-service-v0.2.0) (2026-11-26)
 
 

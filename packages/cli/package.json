@@ -1,6 +1,6 @@
 {
   "name": "@stet-css/cli",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "scripts": {
     "build": "tsdown --config ../../shared/tsdown-package.config.ts",
     "dev": "tsdown --config ../../shared/tsdown-package.config.ts --watch",

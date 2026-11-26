@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/0Miles/StetCSS/compare/lexer-v0.2.0...lexer-v0.3.0) (2026-11-26)
+
+
+### Features
+
+* **lexer:** parse class lists by the character references of their attribute ([#240](https://github.com/0Miles/StetCSS/issues/240)) ([e9b5bcc](https://github.com/0Miles/StetCSS/commit/e9b5bcc09de080a19a5cf8d49be55b6ea6051aba))
+
 ## [0.2.0](https://github.com/0Miles/StetCSS/compare/lexer-v0.1.0...lexer-v0.2.0) (2026-11-26)
 
 

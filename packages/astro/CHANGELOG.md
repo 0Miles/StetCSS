@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/0Miles/StetCSS/compare/astro-v0.2.0...astro-v0.3.0) (2026-11-26)
+
+
+### Miscellaneous Chores
+
+* **astro:** Synchronize stet-css versions
+
 ## [0.2.0](https://github.com/0Miles/StetCSS/compare/astro-v0.1.0...astro-v0.2.0) (2026-11-26)
 
 
