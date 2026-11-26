@@ -959,18 +959,19 @@ export class Utility {
 
   /**
    * Whether a group item that generates nothing holds an empty function argument after a first
-   * `:` that starts a state, not a value: after a key that is a class on its own
-   * (`block:url(,.a)`, `hidden:env(a,)`), names no property (`block>div:url(,.a)`) or opens a
-   * nested group (`{bg:blue}:url(,)`). The group's own parse cannot tell these keys from
-   * properties and exempts `url()` and the like after any item's first `:`; an item whose key
-   * names a property is a raw declaration and keeps the exemption
-   * (`grid-template-columns:repeat(2,var(--x,))`).
+   * `:` that starts a state, not a value: after a key that names no property, whether it cannot
+   * (`block>div:url(,.a)`, a nested group's `{bg:blue}:url(,)`) or the native declaration
+   * matcher says so (`block:url(,.a)`, `hidden:env(a,)`). The group's own parse cannot tell these
+   * keys from properties and exempts `url()` and the like after any item's first `:`; an item
+   * whose key names a property is a raw declaration and keeps the exemption
+   * (`flex-wrap:var(--x,)`), though `flex-wrap` is a class too. Without a matcher the engine
+   * cannot tell `block` from `flex-wrap`, and writes either raw.
    */
   private holdsEmptyArgumentInState(item: string) {
     const indexOfColon = item.indexOf(':')
     if (indexOfColon === -1 || !hasEmptyFunctionArgument(item)) return false
     const key = item.slice(0, indexOfColon)
-    return !PROPERTY_NAME.test(key) || Boolean(this.css.generateGroupItem(key, this.mode)?.length)
+    return !PROPERTY_NAME.test(key) || this.css.namesNativeProperty(key) === false
   }
 
   /** The branches a state token selects; `undefined`, leaving the class invalid, past `MAX_STATE_BRANCHES`. */

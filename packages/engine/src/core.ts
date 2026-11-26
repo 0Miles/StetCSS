@@ -818,6 +818,16 @@ export default class StetCSS {
   }
 
   /**
+   * Whether `property` names a CSS property: `flex-wrap` does, `block` does not. Custom
+   * properties always do; others are asked of the native declaration matcher with the CSS-wide
+   * `inherit`. `undefined` without a matcher, which leaves the engine no way to tell.
+   */
+  namesNativeProperty(property: string): boolean | undefined {
+    if (!property.startsWith('--') && !this.options.nativeDeclarationMatcher) return
+    return this.matchNativeDeclaration({ property, value: 'inherit' })
+  }
+
+  /**
    * Create utility from given class name
    * @param className
    * @returns Utility
