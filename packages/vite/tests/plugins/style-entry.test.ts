@@ -185,6 +185,32 @@ describe('StyleEntryPlugin', () => {
   })
 
   /**
+   * Guards #250 across a dev edit: the entry's leading layers come from a file it imports before
+   * `@import "@stet-css/core"`. Dev kept reading them from the copy of the entry it discovered on
+   * disk, cached until the entry's own text changed, so after `layers.css` moved `w` ahead of
+   * `reset` and Vite transformed the entry again, dev still declared `w` after `utilities` until
+   * a restart, while the build and the CLI declared it first.
+   * Reverse check: caching the discovered entry by its own text alone reds only this test.
+   */
+  test('serve transform declares the leading layers of an edited imported file without a restart', async () => {
+    const context = createProjectContext({ command: 'serve', html: '<div class="w fg:blue"></div>' })
+    const root = context.config.root
+    mkdirSync(join(root, 'src'))
+    const entry = join(root, 'src/style.css')
+    const layers = join(root, 'src/layers.css')
+    writeFileSync(layers, '@layer reset;')
+    writeFileSync(entry, '@import "./layers.css";\n@import "@stet-css/core";\n@layer w { .w { color: rgb(0 128 0); } }')
+    const plugin = StyleEntryPlugin(context)
+
+    const before = await (plugin as any).transform.call({}, readFileSync(entry, 'utf8'), entry)
+    writeFileSync(layers, '@layer w, reset;')
+    const after = await (plugin as any).transform.call({}, readFileSync(entry, 'utf8'), entry)
+
+    expect(cssLayerOrder(before.code)).toEqual(['reset', 'theme', 'base', 'defaults', 'components', 'utilities', 'w'])
+    expect(cssLayerOrder(after.code)).toEqual(['w', 'reset', 'theme', 'base', 'defaults', 'components', 'utilities'])
+  })
+
+  /**
    * Prevents: a stylesheet still marked with the removed `@master entry;` passing the build
    * untouched. It is no longer an entry, so the transform itself must fail and name
    * `@import '@stet-css/core'`, or the developer gets no CSS and no error.

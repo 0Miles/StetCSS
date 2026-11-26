@@ -3,6 +3,7 @@ import { findCSSManifestEntryFiles, STYLE_ENTRY_EXTENSIONS } from '@stet-css/pro
 import {
   cleanStyleRequest,
   registerStyleCSSSource,
+  resolveStyleCSSImportGraph,
   type StyleCSSSource,
   type StyleCSSSources
 } from '@stet-css/stylesheet'
@@ -11,14 +12,26 @@ import { normalizeFilePath } from './path'
 import { getProjectDir } from './project-dir'
 import { getScanner } from './scanner-context'
 
-/** A discovered entry read from disk, reused while its source stays the same. */
+/** A discovered entry read from disk, reused while its import graph stays the same. */
 export interface DiscoveredEntry {
   source: string
   styleSource?: StyleCSSSource
   error?: string
 }
 
-const discoveredEntries = new WeakMap<PluginContext, Map<string, DiscoveredEntry>>()
+const discoveredEntries = new WeakMap<PluginContext, Map<string, { graph: string, entry: DiscoveredEntry }>>()
+
+/**
+ * The entry with the stylesheets it imports inlined: what its registration, leading layers
+ * included, is read from. A failed resolution keys on its error, which registration repeats.
+ */
+function readEntryGraph(context: PluginContext, file: string, source: string) {
+  try {
+    return resolveStyleCSSImportGraph(file, source, getProjectDir(context), { expandStetCSSPackage: false }).source
+  } catch (error) {
+    return source + '\0' + String(error)
+  }
+}
 
 /** The entry's file path, with the request's query kept: a Vue style block is one of several. */
 function toEntryKey(id: string) {
@@ -33,8 +46,11 @@ async function readDiscoveredEntry(context: PluginContext, file: string): Promis
   } catch (error) {
     return { source: '', error: String(error) }
   }
+  // Keyed on the whole import graph, not the entry's own text: editing a file the entry imports
+  // ahead of `@import '@stet-css/core'` changes its leading layers (#250).
+  const graph = readEntryGraph(context, file, source)
   const cached = cache.get(file)
-  if (cached?.source === source) return cached
+  if (cached?.graph === graph) return cached.entry
   const styleCSSSources: StyleCSSSources = new Map()
   let entry: DiscoveredEntry
   try {
@@ -46,7 +62,7 @@ async function readDiscoveredEntry(context: PluginContext, file: string): Promis
     // An entry this build never imports must not fail it; its error still marks the digest.
     entry = { source, error: error instanceof Error ? error.message : String(error) }
   }
-  cache.set(file, entry)
+  cache.set(file, { graph, entry })
   return entry
 }
 
