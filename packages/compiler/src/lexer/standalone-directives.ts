@@ -241,14 +241,17 @@ function assertQuotedDirectiveArguments(
   const keywords = STRING_ARGUMENT_DIRECTIVE_KEYWORDS[statement.atRuleName]
   if (!keywords) return
   const items = splitDirectivePrelude(source, statement.start + statement.atRuleName.length + 1, statement.end - 1)
-  const isUnquoted = (item: DirectivePreludeItem) => item.bareText && !keywords.includes(item.bareText)
+  const text = (item: DirectivePreludeItem) => source.slice(item.start, item.end)
+  // A keyword must also read as one word to the compile, which a comma or string splits (`n,ot`).
+  const isKeyword = (item: DirectivePreludeItem) => keywords.includes(item.bareText)
+    && parseUnquotedWords(text(item)).length === 1
+  const isUnquoted = (item: DirectivePreludeItem) => item.bareText && !isKeyword(item)
   const unquoted = items.filter(isUnquoted)
   if (!unquoted.length) return
   const name = `@${statement.atRuleName}`
-  const text = (item: DirectivePreludeItem) => source.slice(item.start, item.end)
   const advice = unquoted.every((item) => ECHOED_DIRECTIVE_ARGUMENT_RE.test(text(item)))
     ? `so write ${name} ${items.map((item) => isUnquoted(item) ? `'${text(item)}'` : text(item)).join(' ')};`
-    : `quote each argument, as in ${name}${items.some((item) => keywords.includes(item.bareText)) ? ' not' : ''} '${STRING_ARGUMENT_DIRECTIVE_EXAMPLES[statement.atRuleName]}';`
+    : `quote each argument, as in ${name}${items.some(isKeyword) ? ' not' : ''} '${STRING_ARGUMENT_DIRECTIVE_EXAMPLES[statement.atRuleName]}';`
   const location = filename ? ` (in ${filename})` : ''
   const range = { start: unquoted[0].start, end: unquoted[unquoted.length - 1].end }
   throw new CSSDirectiveError(
