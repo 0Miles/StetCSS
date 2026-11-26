@@ -1,11 +1,9 @@
-import { getStetCSSAstroFrontmatter } from '@stet-css/lexer/astro-frontmatter'
+import { getStetCSSAstroFrontmatter, getStetCSSAstroMarkupElements } from '@stet-css/lexer/astro'
 import { decodeStetCSSHTMLAttributeValue } from '@stet-css/lexer/character-reference'
 import { extractClassCandidates } from '../extract-class-candidates'
 import { extractOxcClasses, extractParsedOxcClasses } from './oxc'
 import type { SourceAdapter, SourceAdapterInput } from './types'
 
-const SCRIPT_BLOCK = /<script\b[^>]*>([\s\S]*?)<\/script>/gi
-const STYLE_BLOCK = /<style\b[^>]*>[\s\S]*?<\/style>/gi
 // A static `class` attribute: quoted, or unquoted up to the characters that end an unquoted value.
 const STATIC_CLASS_ATTRIBUTE = /(?<=\s)class\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`{]+))/g
 
@@ -66,15 +64,20 @@ export function extractAstroClasses(source: string, content: string): string[] {
     add(classes, extractFrontmatterClasses(source, frontmatter))
   }
 
-  let template = markup
-  template = template.replace(SCRIPT_BLOCK, (_, scriptContent: string) => {
+  const { scripts, elements } = getStetCSSAstroMarkupElements(markup)
+  for (const script of scripts) {
     // Astro processes every `<script>` but `is:inline` ones as TypeScript; an
     // inline script is plain JavaScript, which parses as TypeScript as well.
-    add(classes, extractOxcClasses(`${source}.ts`, scriptContent))
-    return ''
-  })
-  template = template.replace(STYLE_BLOCK, '')
-  template = extractDecodedClassAttributes(classes, template)
+    add(classes, extractOxcClasses(`${source}.ts`, markup.slice(script.start, script.end)))
+  }
+  // The markup text: the markup without its script and style elements.
+  let template = ''
+  let cursor = 0
+  for (const element of elements) {
+    template += markup.slice(cursor, element.start)
+    cursor = element.end
+  }
+  template = extractDecodedClassAttributes(classes, template + markup.slice(cursor))
   add(classes, extractClassCandidates(template))
 
   return [...classes]
