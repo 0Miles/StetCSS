@@ -6,9 +6,11 @@
  * learn about it only when the next release PR re-collects old commits.
  *
  * Reverse check (docs/agents/testing.md, rule 5): in release-tags.mjs, the
- * `missingTags` filter replaced with `() => false` turns only "names the
- * missing tag" red; the `missingReleases` filter replaced with `() => false`
- * turns only "names the missing release" red.
+ * `missingTags` filter replaced with `() => false` turns "names the missing
+ * tag" and "names the first component" red; the `missingReleases` filter
+ * replaced with `() => false` turns "names the missing release" and "names
+ * the first component" red; `components.slice(1).map` turns only "names the
+ * first component" red.
  */
 
 import assert from 'node:assert/strict'
@@ -30,6 +32,18 @@ test('names the missing tag', () => {
     assert.deepEqual(
         findMissingReleases({ version: '0.3.0', components, tags, releases: all }),
         { missingTags: ['vite-v0.3.0'], missingReleases: [] },
+    )
+})
+
+test('names the first component when its tag and release are missing', () => {
+    const rest = ['vite-v0.3.0', 'webpack-v0.3.0']
+    assert.deepEqual(
+        findMissingReleases({ version: '0.3.0', components, tags: rest, releases: all }),
+        { missingTags: ['core-v0.3.0'], missingReleases: [] },
+    )
+    assert.deepEqual(
+        findMissingReleases({ version: '0.3.0', components, tags: all, releases: rest }),
+        { missingTags: [], missingReleases: ['core-v0.3.0'] },
     )
 })
 
