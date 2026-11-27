@@ -115,7 +115,10 @@ jobs:
       # run red. These steps come last, so a failure here skips nothing in this
       # job, and !cancelled() runs them even when the bun.lock sync failed.
       # They do not stop npm: `pack` runs on releases_created whatever this
-      # job's result. The checkout is the commit this run was started for,
+      # job's result. When this job is red, recover a failed publish by
+      # rerunning the publish job alone: "Re-run failed jobs" would rerun this
+      # job too, which then creates no release and skips pack and publish.
+      # The checkout is the commit this run was started for,
       # whose manifest holds the version just released, in its own directory
       # so it leaves the release PR branch checkout alone.
       - name: Check out the release check
@@ -205,7 +208,7 @@ jobs:
           name: npm-tarballs
           path: ${{ runner.temp }}/tarballs/*.tgz
           if-no-files-found: error
-          # Rerunning only the failed publish job works while this lasts.
+          # Rerunning the publish job alone works while this lasts.
           retention-days: 7
 
   # Uploads the tarballs with npm, because `bun publish` (1.4.4) supports
