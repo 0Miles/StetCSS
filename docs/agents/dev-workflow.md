@@ -110,6 +110,20 @@
 - workflow 只在 repo 變數 `RELEASE_PLEASE_ENABLED` 是 `true` 時執行。workflow 全程用 `GITHUB_TOKEN`，不存個人 token。release PR 由 `github-actions[bot]` 開，它的 CI 每次更新後都停在等待核准，維護者要在 PR 上按 "Approve and run workflows"，PR 才會有 `required`。變數由維護者設定。
 - 不要手改版號，版號只由 release PR 改。新增或移除套件時，在 manifest、config 的 `packages` 與 `linked-versions` 各加或刪一筆，版號照目前的共用版號。
 
+**檢查 tag 與 GitHub release**
+
+release-please 曾經只替部分套件建立 tag 與 GitHub release 而沒有失敗（0.1.0 到 0.3.0，見 #279）。缺 tag 的套件找不到上一版，下一張 release PR 會從 `bootstrap-sha` 重新收 commit，CHANGELOG 重複列出舊 commit。
+
+- 檢查什麼：建立 release 的那次執行（`releases_created` 是 `true`），`release-please` job 最後一步跑 `scripts/check-release-tags.mjs`。版號取 manifest 的共用版號，套件取 config 的 `packages`，逐一確認 `<component>-v<版號>` 的 tag 與 GitHub release 都在。草稿 release 不算。判斷邏輯在 `scripts/release-tags.mjs`，測試由 `bun run check` 跑。
+- 紅燈代表什麼：log 的 `missing tag …`、`missing GitHub release for …` 每行一個缺的項目。npm 照常發佈：這一步在 job 的最後，`pack` 只看 release-please 有沒有建立 release，不看這個 job 成功與否；`pack`、`publish` 自己的結果照常判讀。
+- 怎麼補：在那次的 release commit（`Release Please` 執行的 commit，也是已建立的 tag 指向的 commit）補建缺的 tag 與 GitHub release。release 的標題照 release-please 的格式 `<component>: v<版號>`，正文是該套件 `CHANGELOG.md` 的這一版段落，不標 latest，例如：
+
+  ```sh
+  gh release create vite-v0.3.0 --target <release commit 的完整 SHA> --title 'vite: v0.3.0' --notes-file <這一版的 CHANGELOG 段落> --latest=false
+  ```
+
+  `gh release create` 在 tag 不存在時一併建立 tag。只缺 release 時用同一個指令，tag 已經在就沿用。補完後在本機跑 `GH_REPO=0Miles/StetCSS bun run check:release-tags` 確認沒有缺的項目；重跑那次 workflow 沒有用，release-please 第二次不會回報建立了 release，檢查會被跳過。這些是對 GitHub 的寫入，由維護者做。
+
 **發佈到 npm**
 
 同一個 workflow 在 release-please 建立 release 之後，接著跑兩個 job。沒有建立 release 的執行不會發佈。
