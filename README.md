@@ -107,8 +107,9 @@ bun run build
 | `bun run test` | Unit tests for every package |
 | `bun run lint` | ESLint for every package |
 | `bun run type-check` | Type checking for every package |
-| `bun run check` | `test`, `lint` and `type-check` together |
+| `bun run check` | Root script tests (`node --test`), then `test`, `lint` and `type-check` together |
 | `bun run check:release` | Release-please config and manifest list every published package at its `package.json` version |
+| `bun run check:release-tags` | Every package has its tag and GitHub release for the current version (reads GitHub through `gh`) |
 | `bun run check:naming` | No upstream product name left in file names or contents |
 | `bun run check:packages` | Builds, packs every published package, and checks the tarball contents |
 | `bun run e2e` | Playwright end-to-end tests |
