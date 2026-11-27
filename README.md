@@ -51,7 +51,7 @@ bun run build
 | `bun run test` | Unit tests for every package |
 | `bun run lint` | ESLint for every package |
 | `bun run type-check` | Type checking for every package |
-| `bun run check` | `test`, `lint` and `type-check` together |
+| `bun run check` | Root script tests (`node --test`), then `test`, `lint` and `type-check` together |
 | `bun run e2e` | Playwright end-to-end tests |
 | `bun run build:examples` | Builds every example |
 

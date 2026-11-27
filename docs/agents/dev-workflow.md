@@ -122,7 +122,7 @@ release-please 曾經只替部分套件建立 tag 與 GitHub release 而沒有�
   gh release create vite-v0.3.0 --target <release commit 的完整 SHA> --title 'vite: v0.3.0' --notes-file <這一版的 CHANGELOG 段落> --latest=false
   ```
 
-  `gh release create` 在 tag 不存在時一併建立 tag。只缺 release 時用同一個指令，tag 已經在就沿用。補完後在本機跑 `GH_REPO=0Miles/StetCSS bun run check:release-tags` 確認沒有缺的項目；重跑那次 workflow 沒有用，release-please 第二次不會回報建立了 release，檢查會被跳過。這些是對 GitHub 的寫入，由維護者做。
+  `gh release create` 在 tag 不存在時一併建立 tag。只缺 release 時用同一個指令，tag 已經在就沿用。補完後在最新的 main 上跑 `GH_REPO=0Miles/StetCSS bun run check:release-tags`，確認它印出的版號就是補的那一版，而且沒有缺的項目（它檢查本機 manifest 的版號）；重跑那次 workflow 沒有用，release-please 第二次不會回報建立了 release，檢查會被跳過。這些是對 GitHub 的寫入，由維護者做。
 
 **發佈到 npm**
 
