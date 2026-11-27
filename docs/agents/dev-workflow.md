@@ -38,6 +38,7 @@
 
 - `checks`：在 Linux 上跑全套的第 1 到 4 條。
 - `all-platforms`：裝齊 VS Code 擴充每個 target 的原生套件，跑 `stet-css-vscode` 的測試，再確認每個 target 的原生套件都解析得到；也跑第 4 條。本機的安裝只有本機平台的原生套件，所以這個 job 只在 CI 跑。
+- `commit-text`：PR 上檢查標題與 base..head 每個 commit 的 subject 和 BREAKING CHANGE 文字，推到 main 時檢查推上來的 commit，規則見〈分支、commit 與合併〉的 commit。標題從 API 讀，改完標題後重跑這個 job 就會檢查新的標題。
 - `required`：等其他 job 跑完，全部是 success 才是 success。合併只看它，見〈分支、commit 與合併〉。
 
 看結果：
@@ -69,6 +70,17 @@
 - **沒有票的改動**：用 `<type>/<slug>`，`type` 取 Conventional Commits 的類型。
 
 **commit**：英文 Conventional Commits，格式是 `<type>(<scope>): <summary>`，scope 用套件目錄名。一個 commit 只做一件事。
+
+- **不寫類似 HTML 標籤的文字**：PR 標題、commit subject 與 BREAKING CHANGE 文字（`BREAKING CHANGE:` 或 `BREAKING-CHANGE:` footer 的整段，到下一個 footer 為止）裡，不能出現 `<`、可選的 `/`、標籤名，後面接空白、`/` 或 `>` 的寫法，例如 `<style>`、`</style>`、`<details>`、`Array<string>`。release PR 的 notes 經 HTML 解析，這類文字會吃掉之後其他套件的段落，release-please 因而只替部分套件建立 release（#279）。用文字描述元素，例如 `<style>` 寫成「style element」；反引號沒有用，HTML 解析不認 Markdown。email（`<…@…>`）與一般內文不受限制。CI 的 `commit-text` 檢查這條，本機可以先跑 `node scripts/check-commit-text.mjs origin/main..HEAD --title "<PR 標題>"`。
+- **壞 commit 已經合併時**：不改寫 main 的歷史，改寫 release notes。在那個 commit 的來源 PR 正文加上下面的區塊，列出改寫後的 commit 訊息；多個訊息之間空一行，每個都以 Conventional Commits 的類型開頭。release-please 產生 release PR 時讀 PR 正文，把那個 PR 的每一個 commit 的訊息都換成區塊裡的訊息。這個 repo 用 rebase 合併，PR 有多個 commit 時，區塊會套用到每一個，notes 的條目可能重複，release PR 更新後要看一次。PR 合併後正文仍可編輯；在那一版的 release PR 合併前改好，下一次 Release Please 執行（下一次推到 main）就會更新 release PR 的 notes。
+
+  ```txt
+  BEGIN_COMMIT_OVERRIDE
+  feat(runtime)!: rename the style element id and globals to Stet
+
+  BREAKING CHANGE: the runtime's own style element id and its two global names change.
+  END_COMMIT_OVERRIDE
+  ```
 
 **跟上主線**：`git fetch origin && git rebase origin/main`。目標是整合分支時，就 rebase 到整合分支。不要把主線 merge 進來，歷史保持線性。
 
