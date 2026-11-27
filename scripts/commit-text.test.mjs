@@ -11,8 +11,12 @@
  * commit-text.mjs, against `node --test scripts/*.test.mjs`:
  * - subject not flagged: the subject, details, unknown tag and closing tag
  *   tests go red (all four carry their tag in a subject);
- * - BREAKING regex never matching: both BREAKING CHANGE tests and the
- *   commit message test go red;
+ * - BREAKING regex never matching: the three BREAKING CHANGE footer tests
+ *   (footer, continuation line, tag name ending a line) and the commit
+ *   message test go red;
+ * - BREAKING regex without its `^` anchor: only the mid-line BREAKING
+ *   CHANGE test;
+ * - TAG lookahead without `|$`: only the tag-name-ending-a-line test;
  * - every line ending the footer (`else inBreaking = false`): only the
  *   continuation line test goes red;
  * - BREAKING regex without `-`: only the BREAKING CHANGE footer test;
@@ -20,7 +24,8 @@
  * - TAG names limited to script, noscript, style, pre and details: only the
  *   unknown tag test;
  * - `@` added to the lookahead's characters: only the email test;
- * - every body line pushed as BREAKING CHANGE text: only the plain body test;
+ * - every body line pushed as BREAKING CHANGE text: the plain body and
+ *   mid-line BREAKING CHANGE tests;
  * - title never flagged: the PR title and title message tests;
  * - the full sha in the message: only the commit message test;
  * - `${name}` instead of `${name} element`: both message tests.
@@ -53,6 +58,17 @@ test('rejects a tag in a BREAKING CHANGE footer', () => {
 test('rejects a tag on a continuation line of a BREAKING CHANGE footer', () => {
     const body = 'BREAKING CHANGE: the runtime no longer injects its own\nstyle element; add a <style> yourself.\n\nRefs #92'
     assert.deepEqual(lines(check({ subject: 'feat!: drop it', body })), ['style element; add a <style> yourself.'])
+})
+
+// The notes join the footer's lines, so a tag name ending a line is followed by whitespace there.
+test('rejects a tag name that ends a line', () => {
+    const body = 'BREAKING CHANGE: drops the <style\nelement the runtime injected.'
+    assert.deepEqual(lines(check({ subject: 'feat!: drop it', body })), ['BREAKING CHANGE: drops the <style'])
+})
+
+test('passes BREAKING CHANGE written mid-line in plain body text', () => {
+    const body = 'This is noted as BREAKING CHANGE: <style> goes away.'
+    assert.deepEqual(check({ subject: 'feat(runtime): drop it', body }), [])
 })
 
 test('rejects a details tag', () => {
