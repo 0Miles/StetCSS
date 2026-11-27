@@ -115,13 +115,55 @@ jobs:
       - name: Require native packages for every VS Code target
         run: node --input-type=module -e "const core = await import('./packages/vscode/scripts/package-target-core.js'); core.assertRuntimePackagesResolvable(core.TARGETS)"
 
+  # Release notes are parsed as HTML, so a tag-like <style> in a PR title,
+  # commit subject or BREAKING CHANGE text makes release-please release only
+  # some packages (#279). On a PR this checks the title and base..head; on a
+  # push to main it checks the pushed commits, because a skipped job would
+  # fail required.
+  commit-text:
+    name: commit-text
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      # The title is read from the API rather than the event, so rerunning
+      # the job after editing the title checks the new one.
+      - name: Reject HTML-like tags in the PR title and commit text
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.event.after }}
+        run: |
+          if [ "$EVENT" = pull_request ]; then
+            title=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq .title)
+            node scripts/check-commit-text.mjs "$BASE..$HEAD" --title "$title"
+          elif git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            node scripts/check-commit-text.mjs "$BASE..$HEAD"
+          else
+            # A force push can leave the old tip unreachable: check the new tip alone.
+            node scripts/check-commit-text.mjs "$HEAD^!"
+          fi
+
   # The only check branch protection requires. It also fails when a job is
   # missing from `needs`, because a job it does not wait for could fail
   # without blocking the merge. Keep `if: always()`: without it a failed job
   # makes required skip, and a skipped required check counts as passing.
   required:
     name: required
-    needs: [checks, all-platforms]
+    needs: [checks, all-platforms, commit-text]
     if: ${{ always() }}
     runs-on: ubuntu-latest
     permissions:
