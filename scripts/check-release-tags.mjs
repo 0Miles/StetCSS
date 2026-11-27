@@ -46,7 +46,7 @@ for (const tag of missingTags) console.error(`error: missing tag ${tag}`)
 for (const tag of missingReleases) console.error(`error: missing GitHub release for ${tag}`)
 
 if (missingTags.length || missingReleases.length) {
-    console.error(`${missingTags.length} tags and ${missingReleases.length} GitHub releases of ${components.length} packages at ${version} are missing; create them on the release commit (docs/agents/dev-workflow.md, "發佈到 npm").`)
+    console.error(`${missingTags.length} tags and ${missingReleases.length} GitHub releases of ${components.length} packages at ${version} are missing; create them on the release commit (docs/agents/dev-workflow.md, "檢查 tag 與 GitHub release").`)
     process.exit(1)
 }
 console.log(`all ${components.length} packages at ${version} have their tag and GitHub release`)
