@@ -93,11 +93,15 @@ jobs:
 
       # --lockfile-only resolves without downloading packages or running
       # lifecycle scripts; only the workspace versions change.
+      # A step's env is evaluated even when its `if` skips it, and `pr` is
+      # empty on a run that opens no release PR, so fromJSON stays in the
+      # script: in env it would fail every such run.
       - name: Sync bun.lock with the release versions
         if: ${{ steps.release.outputs.prs_created == 'true' }}
         env:
-          BRANCH: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
+          PR: ${{ steps.release.outputs.pr }}
         run: |
+          BRANCH=$(jq -r .headBranchName <<<"$PR")
           bun install --lockfile-only --ignore-scripts
           if git diff --quiet -- bun.lock; then
             echo "bun.lock already matches the release versions"
