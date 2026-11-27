@@ -27,7 +27,7 @@
     "build": "node scripts/with-typescript-tooling-compat.mjs turbo run build --filter=\"./packages/*\"",
     "build:examples": "node scripts/with-typescript-tooling-compat.mjs turbo run build --filter=\"./examples/*\"",
     "release:vscode": "node packages/vscode/scripts/release.js",
-    "check": "node --test 'scripts/*.test.mjs' && node scripts/with-typescript-tooling-compat.mjs turbo run test lint type-check --filter=\"./packages/*\"",
+    "check": "node scripts/check.mjs",
     "check:release": "node scripts/check-release-manifest.mjs",
     "check:release-tags": "node scripts/check-release-tags.mjs",
     "check:naming": "node scripts/check-naming.mjs",
