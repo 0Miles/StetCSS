@@ -72,13 +72,37 @@
 **commit**：英文 Conventional Commits，格式是 `<type>(<scope>): <summary>`，scope 用套件目錄名。一個 commit 只做一件事。
 
 - **不寫類似 HTML 標籤的文字**：PR 標題、commit subject 與 BREAKING CHANGE 文字（`BREAKING CHANGE:` 或 `BREAKING-CHANGE:` footer 的整段，到下一個 footer 為止）裡，不能出現 `<`、可選的 `/`、標籤名，後面接空白、`/` 或 `>` 的寫法，例如 `<style>`、`</style>`、`<details>`、`Array<string>`。release PR 的 notes 經 HTML 解析，這類文字會吃掉之後其他套件的段落，release-please 因而只替部分套件建立 release（#279）。用文字描述元素，例如 `<style>` 寫成「style element」；反引號沒有用，HTML 解析不認 Markdown。email（`<…@…>`）與一般內文不受限制。CI 的 `commit-text` 檢查這條，本機可以先跑 `node scripts/check-commit-text.mjs origin/main..HEAD --title "<PR 標題>"`。
-- **壞 commit 已經合併時**：不改寫 main 的歷史，改寫 release notes。在那個 commit 的來源 PR 正文加上下面的區塊，列出改寫後的 commit 訊息；多個訊息之間空一行，每個都以 Conventional Commits 的類型開頭。release-please 產生 release PR 時讀 PR 正文，把那個 PR 的每一個 commit 的訊息都換成區塊裡的訊息。這個 repo 用 rebase 合併，PR 有多個 commit 時，區塊會套用到每一個，notes 的條目可能重複，release PR 更新後要看一次。PR 合併後正文仍可編輯；在那一版的 release PR 合併前改好，下一次 Release Please 執行（下一次推到 main）就會更新 release PR 的 notes。
+- **壞 commit 已經合併時**：不改寫 main 的歷史，改寫 release notes。在那個 commit 的來源 PR 正文加上 `BEGIN_COMMIT_OVERRIDE … END_COMMIT_OVERRIDE` 區塊。release-please 產生 release PR 時讀 PR 正文，把那個 PR 的**每一個** commit 的訊息整個換成這個區塊（這個 repo 用 rebase 合併，PR 的每個 commit 都連到來源 PR），所以：
+  - 區塊要依序列出來源 PR **每一個** commit 的完整訊息，有問題的改寫，其他的照抄，包括 BREAKING CHANGE footer。只列有問題的那個，其他 commit 的條目與 BREAKING CHANGE 都會消失，而且全部變成那一個 commit。
+  - 訊息之間空一行，每個都以 `<type>(<scope>): ` 開頭。release-please 只在「空行後接 `feat`、`fix`、`docs`、`style`、`refactor`、`perf`、`test`、`build`、`ci`、`chore` 或 `revert`，加可選的 scope 與 `: `」的地方切開訊息，標頭的 `!` 不在這個規則裡：`feat(runtime)!: ` 不會被切開，前後的訊息和 BREAKING CHANGE 會混在一起。所以區塊裡的標頭不寫 `!`，破壞性變更只靠 BREAKING CHANGE footer 標示，release-please 照樣把它當成破壞性變更。
+  - 每個 commit 都帶著整個區塊，那個 PR 動到的每個套件都會列出區塊裡的全部條目，同一個條目也可能重複。release PR 更新後看一次 notes。
+  - PR 合併後正文仍可編輯；在那一版的 release PR 合併前改好，下一次 Release Please 執行（下一次推到 main）就會更新 release PR 的 notes。
+
+  例如 #144 有 7 個 commit，只有 runtime 那個的 BREAKING CHANGE 有問題，區塊仍列出全部 7 個，四個 `feat(…)!` 的標頭拿掉 `!`：
 
   ```txt
   BEGIN_COMMIT_OVERRIDE
-  feat(runtime)!: rename the style element id and globals to Stet
+  feat(integration): rename virtual module ids to stet-css
 
-  BREAKING CHANGE: the runtime's own style element id and its two global names change.
+  BREAKING CHANGE: imports of the old virtual ids and query no longer resolve; there is no alias because nothing has been published yet. client.d.ts declares only the new ids. Generated CSS is unchanged.
+
+  feat(runtime): rename the style element id and globals to Stet
+
+  BREAKING CHANGE: the runtime's own style element id and its two global names change; pages or scripts reading the old names no longer find them. Generated CSS rules are unchanged.
+
+  feat(scanner): rename the build placeholder rule to #stet-css-slot
+
+  BREAKING CHANGE: intermediate CSS that a build plugin has not yet spliced carries the new selector. Final generated CSS is unchanged: the placeholder never survives a successful build.
+
+  feat(vite,webpack): rename build plugin names and log prefixes to stet-css
+
+  BREAKING CHANGE: Vite configs or tools that find these plugins by name must use the new names. Generated CSS is unchanged.
+
+  test: retarget no-runtime and removed-feature guards to Stet names
+
+  docs(runtime): name upstream's old style element id as the stale element to remove
+
+  refactor: tidy tests and the virtual dir constant touched by the rename
   END_COMMIT_OVERRIDE
   ```
 
