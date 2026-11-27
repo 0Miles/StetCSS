@@ -4,7 +4,8 @@ name: Release Please
 # package to one shared version and writes their changelogs. Once the release
 # PR is merged, the next run creates one GitHub release and tag per package
 # (`core-v0.1.0`, ...), and the `pack` and `publish` jobs then put that
-# release on npm.
+# release on npm. That run fails when any package's tag or GitHub release is
+# missing, but still publishes.
 #
 # Repository settings this workflow reads (set by a maintainer):
 # - variable RELEASE_PLEASE_ENABLED: the release-please job runs only when it
@@ -107,6 +108,43 @@ jobs:
           git add bun.lock
           git commit -m 'chore: sync bun.lock with the release versions'
           git push origin "HEAD:refs/heads/$BRANCH"
+
+      # release-please has created only some packages' tags and releases
+      # without failing (0.1.0 to 0.3.0). After a run that created releases,
+      # list every package whose tag or GitHub release is missing and turn the
+      # run red. These steps come last, so a failure here skips nothing in this
+      # job, and !cancelled() runs them even when the bun.lock sync failed.
+      # They do not stop npm: `pack` runs on releases_created whatever this
+      # job's result. The checkout is the commit this run was started for,
+      # whose manifest holds the version just released, in its own directory
+      # so it leaves the release PR branch checkout alone.
+      - name: Check out the release check
+        if: ${{ !cancelled() && steps.release.outputs.releases_created == 'true' }}
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          path: release-tag-check
+          persist-credentials: false
+          sparse-checkout: |
+            .nvmrc
+            .release-please-manifest.json
+            release-please-config.json
+            scripts/check-release-tags.mjs
+            scripts/release-tags.mjs
+          sparse-checkout-cone-mode: false
+
+      - name: Set up Node for the release check
+        if: ${{ !cancelled() && steps.release.outputs.releases_created == 'true' }}
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: release-tag-check/.nvmrc
+
+      - name: Check every package has its tag and GitHub release
+        if: ${{ !cancelled() && steps.release.outputs.releases_created == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: node release-tag-check/scripts/check-release-tags.mjs
 
   # Builds the released commit and packs the tarballs. Dependencies are
   # installed and built here, in a job that cannot publish.
