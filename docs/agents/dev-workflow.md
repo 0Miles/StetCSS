@@ -19,7 +19,7 @@
 
 以下五條都要在本機跑：開 PR 前跑一次；PR 開了之後又有新的 commit，合併前在最後的 HEAD 上再跑一次。CI 會再跑第 1 到 4 條。
 
-1. `bun run check -- --continue`：所有套件的 `test`、`lint`，以及有 `type-check` script 的套件的型別檢查。`--continue` 讓所有 task 跑完再回報。
+1. `bun run check -- --continue`：根目錄腳本的 `node:test` 測試（`scripts/*.test.mjs`），以及所有套件的 `test`、`lint`，和有 `type-check` script 的套件的型別檢查。兩部分都會跑完，任一失敗就以非零結束；參數只傳給 turbo，`--continue` 讓所有 task 跑完再回報。
    - 另跑 `bun run check:release`：release-please 的 config 與 manifest 要剛好列出每個要發佈的 `@stet-css/*` 套件，版號和各自的 `package.json` 相同。新增、改名或刪除套件時要一起改這兩個檔。
    - 另跑 `bun run check:naming`：檔名與檔案內容不能再出現上游的舊產品名（不分大小寫）。保留的只有 `scripts/check-naming.mjs` 的 `ALLOWED` 列出的項目，每項都寫了原因：指向上游的引用、已移除的 `@master` at-rule、證明舊名稱已不再使用的測試、第三方名稱。新的命中要改成 Stet；真的要保留時，在 `ALLOWED` 加一項並寫明原因。
    - 另跑 `bun run check:packages`：先建置，再用 `bun pm pack` 打包每個要發佈的 `@stet-css/*`（不連 registry），檢查 tarball：`exports`、`main`、`types`、`browser`、`bin`、`typesVersions` 指到的檔都在，有 `LICENSE`；`.js`／`.d.ts` 的相對 import 都解析得到、沒有 repo 內部的 `~/` 路徑，import 的套件都列在 `dependencies`、`peerDependencies` 或 `optionalDependencies`（宿主專案提供的套件列成 optional peer）；依賴沒有留下 `workspace:` 之類的本地協定，`package.json` 有 `files`，`repository`／`bugs`／`homepage` 指向 `0Miles/StetCSS`。
@@ -110,6 +110,20 @@
 - workflow 只在 repo 變數 `RELEASE_PLEASE_ENABLED` 是 `true` 時執行。workflow 全程用 `GITHUB_TOKEN`，不存個人 token。release PR 由 `github-actions[bot]` 開，它的 CI 每次更新後都停在等待核准，維護者要在 PR 上按 "Approve and run workflows"，PR 才會有 `required`。變數由維護者設定。
 - 不要手改版號，版號只由 release PR 改。新增或移除套件時，在 manifest、config 的 `packages` 與 `linked-versions` 各加或刪一筆，版號照目前的共用版號。
 
+**檢查 tag 與 GitHub release**
+
+release-please 曾經只替部分套件建立 tag 與 GitHub release 而沒有失敗（0.1.0 到 0.3.0，見 #279）。缺 tag 的套件找不到上一版，下一張 release PR 會從 `bootstrap-sha` 重新收 commit，CHANGELOG 重複列出舊 commit。
+
+- 檢查什麼：建立 release 的那次執行（`releases_created` 是 `true`），`release-please` job 最後一步跑 `scripts/check-release-tags.mjs`。版號取 manifest 的共用版號，套件取 config 的 `packages`，逐一確認 `<component>-v<版號>` 的 tag 與 GitHub release 都在。草稿 release 不算。判斷邏輯在 `scripts/release-tags.mjs`，測試由 `bun run check` 跑。
+- 紅燈代表什麼：log 的 `missing tag …`、`missing GitHub release for …` 每行一個缺的項目。npm 照常發佈：這一步在 job 的最後，`pack` 只看 release-please 有沒有建立 release，不看這個 job 成功與否；`pack`、`publish` 自己的結果照常判讀。 這時 `publish` 若也失敗，補發只重跑 `publish`，見〈發佈到 npm〉。
+- 怎麼補：在那次的 release commit（`Release Please` 執行的 commit，也是已建立的 tag 指向的 commit）補建缺的 tag 與 GitHub release。release 的標題照 release-please 的格式 `<component>: v<版號>`，正文是該套件 `CHANGELOG.md` 的這一版段落，不標 latest，例如：
+
+  ```sh
+  gh release create vite-v0.3.0 --target <release commit 的完整 SHA> --title 'vite: v0.3.0' --notes-file <這一版的 CHANGELOG 段落> --latest=false
+  ```
+
+  `gh release create` 在 tag 不存在時一併建立 tag。只缺 release 時用同一個指令，tag 已經在就沿用。補完後在最新的 main 上跑 `GH_REPO=0Miles/StetCSS bun run check:release-tags`，確認它印出的版號就是補的那一版，而且沒有缺的項目（它檢查本機 manifest 的版號）；重跑那次 workflow 沒有用，release-please 第二次不會回報建立了 release，檢查會被跳過。這些是對 GitHub 的寫入，由維護者做。
+
 **發佈到 npm**
 
 同一個 workflow 在 release-please 建立 release 之後，接著跑兩個 job。沒有建立 release 的執行不會發佈。
@@ -119,7 +133,8 @@
 - 用 npm 上傳而不是 `bun publish`：Bun 1.4.4 的 `bun publish` 不支援 npm trusted publishing（OIDC），也產生不了 provenance；`bun pm pack` 負責把 `workspace:^` 改寫成實際版號。
 - 順序與中斷：npm 沒有跨套件的交易。腳本（`scripts/publish-packages.mjs`）先問 registry 每個版號在不在，再照依賴順序上傳缺的，已經在 npm 上的跳過，任何一個失敗就停。先發被依賴的套件，所以中斷時 npm 上不會有套件依賴還沒發佈的版號。
 - 中斷後補發，兩種都只補還沒發佈的套件：
-  - `publish` 失敗後 7 天內：在那次執行按「Re-run failed jobs」。tarball 的 artifact 只留 7 天，過期後這個做法會在下載 artifact 時失敗。
+  - `publish` 失敗後 7 天內：在那次執行只重跑 `publish` 這個 job（在 job 上按「Re-run job」，或 `gh run rerun <run-id> --job <publish 的 job id>`，job id 用 `gh run view <run-id> --json jobs` 查）。它沿用同一次執行的 `pack` 結果與 tarball。tarball 的 artifact 只留 7 天，過期後這個做法會在下載 artifact 時失敗。
+  - 不要按「Re-run failed jobs」：tag 檢查讓 `release-please` job 也紅時，它會連 `release-please` 一起重跑，第二次不會回報建立了 release，`pack`、`publish` 被跳過，npm 仍缺套件，執行卻變綠。
   - 其他情況：從 main 手動執行 workflow（`workflow_dispatch`），`tag` 填那次 release 的任一個 tag，例如 `core-v0.1.0`。包括 artifact 過期、`pack` 回報 release-please 沒有給 tag、release-please 建立 release 到一半就失敗。從其他分支執行會被拒絕。
   - 「Re-run all jobs」沒有用：release 已經存在，release-please 第二次不會回報建立了 release，`pack` 會被跳過。
 - 開關：repo 變數 `NPM_PUBLISH_ENABLED` 是 `true` 才會跑，沒設時兩個 job 都跳過。首次發佈（#96）前保持不設。
